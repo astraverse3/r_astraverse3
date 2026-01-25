@@ -49,11 +49,18 @@ export default function RootLayout({
           {/* Sidebar */}
           <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-10">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
+              <div className="flex items-center gap-3 mb-10 px-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50 flex-shrink-0">
                   <Server className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-xl font-bold tracking-tight">IMS <span className="text-blue-400 text-xs font-normal">v2.4</span></span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold tracking-tight text-white whitespace-nowrap overflow-visible">
+                    땅끝황토친환경
+                  </span>
+                  <span className="text-[10px] text-blue-400 font-medium tracking-wider">
+                    IMS v2.4
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-1">
