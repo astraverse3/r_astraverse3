@@ -1,6 +1,6 @@
 {
-    "name": "Milling Log",
-    "short_name": "도정일지",
+    "name": "땅끝황토친환경 도정일지",
+    "short_name": "땅끝황토",
     "description": "Premium Rice Milling Management Application",
     "start_url": "/",
     "display": "standalone",

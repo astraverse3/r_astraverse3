@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Milling Log - 도정 일지",
-  description: "Rice Milling Log Application",
+  title: "땅끝황토친환경 - 도정 일지",
+  description: "영농조합법인 땅끝황토친환경 도정 관리 시스템",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "도정일지",
+    title: "땅끝황토",
   },
   formatDetection: {
     telephone: false,
@@ -49,7 +49,10 @@ export default function RootLayout({
         <div className="fixed top-3 md:top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-3 md:px-4">
           <header className="glass rounded-xl md:rounded-2xl h-12 md:h-16 flex items-center px-4 md:px-8 border border-white/40">
             <div className="mr-auto font-black text-lg md:text-2xl tracking-tighter italic text-stone-900 flex items-center gap-2">
-              <Link href="/">🌾 <span className="text-gradient">도정일지</span></Link>
+              <Link href="/" className="flex items-center gap-2">
+                <img src="/icon-512.png" alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
+                <span className="text-gradient font-black">도정일지</span>
+              </Link>
             </div>
             <nav className="flex items-center space-x-4 md:space-x-8 text-[11px] md:text-sm font-bold uppercase tracking-widest text-stone-500">
               <Link href="/stocks" className="transition-all hover:text-primary relative group">
