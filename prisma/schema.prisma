@@ -47,3 +47,17 @@ model MillingOutputPackage {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
+
+// 4. User (사용자 계정)
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique // 아이디 (astraverse)
+  password    String   // 비밀번호 (Hashed)
+  name        String   // 이름 (문희준)
+  department  String?  // 부서 (공장)
+  position    String?  // 직책 (주임)
+  phone       String?  // 연락처 (01086549345)
+  role        String   @default("USER") // ADMIN, USER
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
