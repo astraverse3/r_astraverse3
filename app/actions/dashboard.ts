@@ -16,9 +16,9 @@ export async function getDashboardStats() {
             prisma.millingOutputPackage.aggregate({
                 _sum: { totalWeight: true }
             }),
-            // 4. Recent 5 milling logs
+            // 4. Recent 10 milling logs
             prisma.millingBatch.findMany({
-                take: 5,
+                take: 10,
                 orderBy: { date: 'desc' },
                 include: {
                     outputs: true
