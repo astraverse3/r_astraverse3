@@ -1,14 +1,23 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
+  <!-- Background: White rounded square -->
   <rect width="512" height="512" rx="100" fill="white"/>
   
-  <!-- Symbol Components (Simplified representation of the leaf shapes) -->
-  <!-- Bottom Green Leaf -->
-  <path d="M120 320C120 320 180 380 280 380C380 380 440 320 440 320C440 320 380 260 280 260C180 260 120 320 120 320Z" fill="#8CC63F"/>
-  
-  <!-- Top Left Orange Leaf -->
-  <path d="M140 240C140 240 160 160 220 160C280 160 300 240 300 240C300 240 260 280 220 280C180 280 140 240 140 240Z" fill="#F7941D"/>
-  
-  <!-- Top Right Blue Leaf -->
-  <path d="M260 220C260 220 300 140 360 140C420 140 440 220 440 220C440 220 400 280 360 280C320 280 260 220 260 220Z" fill="#00AEEF"/>
+  <!-- Content Group: Centered in 512x512 -->
+  <!-- Original bounding box was roughly x=120, y=140, w=320, h=240. Center was ~280, 260. 
+       Canvas center is 256, 256. Shift needed: x-24, y-4.
+       Let's center it more precisely. The combined shape width is approx 320 (120 to 440).
+       Height is approx 240 (140 to 380).
+       Target center: 256, 256. 
+       Current roughly: 280, 260.
+       We will apply a group transform to shift it. -->
+  <g transform="translate(-24, -4)">
+    <!-- Bottom Green Leaf -->
+    <path d="M120 320C120 320 180 380 280 380C380 380 440 320 440 320C440 320 380 260 280 260C180 260 120 320 120 320Z" fill="#8CC63F"/>
+    
+    <!-- Top Left Orange Leaf -->
+    <path d="M140 240C140 240 160 160 220 160C280 160 300 240 300 240C300 240 260 280 220 280C180 280 140 240 140 240Z" fill="#F7941D"/>
+    
+    <!-- Top Right Blue Leaf -->
+    <path d="M260 220C260 220 300 140 360 140C420 140 440 220 440 220C440 220 400 280 360 280C320 280 260 220 260 220Z" fill="#00AEEF"/>
+  </g>
 </svg>
