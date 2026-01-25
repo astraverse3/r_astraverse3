@@ -50,7 +50,7 @@ export default function RootLayout({
           <header className="glass rounded-xl md:rounded-2xl h-12 md:h-16 flex items-center px-4 md:px-8 border border-white/40">
             <div className="mr-auto font-black text-lg md:text-2xl tracking-tighter italic text-stone-900 flex items-center gap-2">
               <Link href="/" className="flex items-center gap-2">
-                <img src="/icon-512.png" alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
+                <img src="/logo-symbol.svg" alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
                 <span className="text-gradient font-black">도정일지</span>
               </Link>
             </div>
