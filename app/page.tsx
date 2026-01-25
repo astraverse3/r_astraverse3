@@ -54,6 +54,69 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* Variety Statistics Section */}
+      <div className="grid md:grid-cols-2 gap-6 mb-12 animate-in slide-in-from-bottom duration-1000 delay-300">
+        {/* Stock by Variety */}
+        <div className="glass p-6 rounded-[32px] border border-stone-100 shadow-sm">
+          <h3 className="text-sm font-black text-stone-900 mb-6 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary"></span>
+            품종별 보유 재고
+          </h3>
+          <div className="space-y-4">
+            {stats?.stockByVariety.map((item: any) => (
+              <div key={item.variety} className="flex justify-between items-center group">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-bold text-stone-600 group-hover:text-primary transition-colors">
+                    {item.variety}
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-black text-stone-900 group-hover:scale-110 transition-transform">
+                    {item._sum.weightKg.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-bold">kg</span>
+                </div>
+              </div>
+            ))}
+            {!stats?.stockByVariety.length && (
+              <div className="text-center py-8 text-stone-400 text-xs font-medium">
+                보유 중인 재고가 없습니다.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Milled by Variety */}
+        <div className="glass p-6 rounded-[32px] border border-stone-100 shadow-sm">
+          <h3 className="text-sm font-black text-stone-900 mb-6 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            품종별 누적 도정량 (투입)
+          </h3>
+          <div className="space-y-4">
+            {stats?.milledByVariety.map((item: any) => (
+              <div key={item.variety} className="flex justify-between items-center group">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-bold text-stone-600 group-hover:text-amber-600 transition-colors">
+                    {item.variety}
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-black text-stone-900 group-hover:scale-110 transition-transform">
+                    {item._sum.weightKg.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-bold">kg</span>
+                </div>
+              </div>
+            ))}
+            {!stats?.milledByVariety.length && (
+              <div className="text-center py-8 text-stone-400 text-xs font-medium">
+                도정 내역이 없습니다.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Navigation Links */}
         <div className="lg:col-span-1 space-y-4">

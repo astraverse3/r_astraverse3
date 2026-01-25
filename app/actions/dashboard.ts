@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function getDashboardStats() {
     try {
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, recentLogs] = await Promise.all([
+        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, recentLogs, stockByVariety, milledByVariety] = await Promise.all([
             // 1. Total available stock weight (KG)
             prisma.stock.aggregate({
                 where: { status: 'AVAILABLE' },
@@ -23,6 +23,20 @@ export async function getDashboardStats() {
                 include: {
                     outputs: true
                 }
+            }),
+            // 5. Stock by Variety (AVAILABLE)
+            prisma.stock.groupBy({
+                by: ['variety'],
+                where: { status: 'AVAILABLE' },
+                _sum: { weightKg: true },
+                orderBy: { _sum: { weightKg: 'desc' } }
+            }),
+            // 6. Milled Quantity by Variety (CONSUMED) - Total Input
+            prisma.stock.groupBy({
+                by: ['variety'],
+                where: { status: 'CONSUMED' },
+                _sum: { weightKg: true },
+                orderBy: { _sum: { weightKg: 'desc' } }
             })
         ]);
 
@@ -32,7 +46,9 @@ export async function getDashboardStats() {
                 availableStockKg: totalAvailableStock._sum.weightKg || 0,
                 totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutputWeight._sum.totalWeight || 0,
-                recentLogs
+                recentLogs,
+                stockByVariety,
+                milledByVariety
             }
         }
     } catch (error) {
