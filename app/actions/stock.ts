@@ -1,0 +1,109 @@
+'use server'
+
+import { PrismaClient } from '@prisma/client'
+import { revalidatePath } from 'next/cache'
+
+import { prisma } from '@/lib/prisma'
+
+export type StockFormData = {
+    bagNo: number
+    farmerName: string
+    variety: string
+    certType: string
+    weightKg: number
+}
+
+export async function createStock(data: StockFormData) {
+    try {
+        const stock = await prisma.stock.create({
+            data: {
+                ...data,
+                status: 'AVAILABLE',
+            },
+        })
+        revalidatePath('/stocks')
+        return { success: true, data: stock }
+    } catch (error) {
+        console.error('Failed to create stock:', error)
+        return { success: false, error: 'Failed to create stock' }
+    }
+}
+
+export async function updateStock(id: number, data: StockFormData) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Get current stock info
+            const currentStock = await tx.stock.findUnique({
+                where: { id },
+                select: { weightKg: true, batchId: true }
+            });
+
+            if (!currentStock) throw new Error('Stock not found');
+
+            // 2. Calculate weight difference
+            const weightDiff = data.weightKg - currentStock.weightKg;
+
+            // 3. Update stock
+            const updatedStock = await tx.stock.update({
+                where: { id },
+                data: { ...data },
+            });
+
+            // 4. If stock is linked to a batch and weight changed, update batch total
+            if (currentStock.batchId && weightDiff !== 0) {
+                await tx.millingBatch.update({
+                    where: { id: currentStock.batchId },
+                    data: {
+                        totalInputKg: {
+                            increment: weightDiff
+                        }
+                    }
+                });
+            }
+
+            return updatedStock;
+        });
+
+        revalidatePath('/stocks')
+        revalidatePath('/milling')
+        return { success: true, data: result }
+    } catch (error) {
+        console.error('Failed to update stock:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to update stock' }
+    }
+}
+
+export async function deleteStock(id: number) {
+    try {
+        const stock = await prisma.stock.findUnique({
+            where: { id },
+            select: { status: true }
+        });
+
+        if (stock?.status === 'CONSUMED') {
+            return { success: false, error: '도정 완료된 데이터는 삭제할 수 없습니다.' }
+        }
+
+        await prisma.stock.delete({
+            where: { id },
+        })
+        revalidatePath('/stocks')
+        revalidatePath('/milling')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to delete stock:', error)
+        return { success: false, error: 'Failed to delete stock' }
+    }
+}
+
+export async function getStocks() {
+    try {
+        const stocks = await prisma.stock.findMany({
+            orderBy: { createdAt: 'desc' }
+        })
+        return { success: true, data: stocks }
+    } catch (error) {
+        console.error('Failed to get stocks:', error)
+        return { success: false, error: 'Failed to get stocks' }
+    }
+}

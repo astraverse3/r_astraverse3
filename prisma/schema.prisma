@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Stock (벼 재고)
+model Stock {
+  id          Int           @id @default(autoincrement())
+  bagNo       Int           // 톤백 번호
+  farmerName  String        // 농가명
+  variety     String        // 품종
+  certType    String        // 인증
+  weightKg    Float         // 입고 중량
+  status      String        // AVAILABLE / CONSUMED
+  batchId     Int?          // 어떤 도정 작업에 투입되었는지
+  batch       MillingBatch? @relation(fields: [batchId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// 2. MillingBatch (도정 작업 메인)
+model MillingBatch {
+  id             Int                    @id @default(autoincrement())
+  date           DateTime               @default(now())
+  title          String                 
+  totalInputKg   Float                  
+  stocks         Stock[]                // 투입된 벼 리스트
+  outputs        MillingOutputPackage[] // 생산된 포장 리스트
+  isClosed       Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+}
+
+// 3. MillingOutputPackage (포장 상세)
+model MillingOutputPackage {
+  id            Int           @id @default(autoincrement())
+  batchId       Int
+  batch         MillingBatch  @relation(fields: [batchId], references: [id])
+  packageType   String        // '20kg', '10kg', '5kg', 'Tonbag', etc.
+  weightPerUnit Float         
+  count         Int           
+  totalWeight   Float         
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}

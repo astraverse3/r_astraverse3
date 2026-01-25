@@ -1,0 +1,62 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Milling Log - 도정 일지",
+  description: "Rice Milling Log Application",
+};
+
+import Link from "next/link"
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ko" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background selection:bg-primary/10`}
+      >
+        <div className="fixed top-3 md:top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-3 md:px-4">
+          <header className="glass rounded-xl md:rounded-2xl h-12 md:h-16 flex items-center px-4 md:px-8 border border-white/40">
+            <div className="mr-auto font-black text-lg md:text-2xl tracking-tighter italic text-stone-900 flex items-center gap-2">
+              <Link href="/">🌾 <span className="text-gradient">도정일지</span></Link>
+            </div>
+            <nav className="flex items-center space-x-4 md:space-x-8 text-[11px] md:text-sm font-bold uppercase tracking-widest text-stone-500">
+              <Link href="/stocks" className="transition-all hover:text-primary relative group">
+                입고 관리
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              </Link>
+              <Link href="/milling" className="transition-all hover:text-primary relative group">
+                도정 내역
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+              </Link>
+            </nav>
+          </header>
+        </div>
+
+        <main className="flex-1 pt-20 md:pt-32 pb-8 md:pb-12">
+          {children}
+        </main>
+
+        <footer className="py-8 border-t border-stone-100 mt-20">
+          <div className="container mx-auto px-4 text-center text-xs text-stone-400 font-medium">
+            © 2026 MILLING LOG SYSTEM • PREMIUM RICE MANAGEMENT
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}
