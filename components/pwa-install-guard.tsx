@@ -23,6 +23,12 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
         setIsMobile(mobile);
         setIsStandalone(standalone);
+
+        // Allow bypassing the guard with ?bypass=true query param
+        if (window.location.search.includes('bypass=true')) {
+            setIsStandalone(true);
+        }
+
         setIsMounted(true);
 
         // 2. Listen for display-mode changes
