@@ -47,52 +47,69 @@
 }
 
 :root {
-  --radius: 1rem;
-  --background: oklch(0.99 0.01 90);
-  --foreground: oklch(0.18 0.02 90);
+  --radius: 0.5rem;
+  --background: #f1f5f9;
+  /* Slate-100 */
+  --foreground: #0f172a;
+  /* Slate-900 */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 90);
+  --card: #ffffff;
+  --card-foreground: #334155;
+  /* Slate-700 */
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 90);
+  --popover: #ffffff;
+  --popover-foreground: #334155;
 
-  /* Signature Rice Emerald */
-  --primary: oklch(0.35 0.12 150);
-  --primary-foreground: oklch(0.98 0.01 150);
+  /* Enterprise Blue */
+  --primary: #2563eb;
+  /* Blue-600 */
+  --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.94 0.02 90);
-  --secondary-foreground: oklch(0.2 0.02 90);
+  --secondary: #f8fafc;
+  /* Slate-50 */
+  --secondary-foreground: #0f172a;
 
-  --muted: oklch(0.96 0.01 90);
-  --muted-foreground: oklch(0.45 0.02 90);
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  /* Slate-500 */
 
-  --accent: oklch(0.92 0.04 150);
-  --accent-foreground: oklch(0.25 0.1 150);
+  --accent: #e2e8f0;
+  /* Slate-200 */
+  --accent-foreground: #0f172a;
 
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.98 0.01 25);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(0.9 0.01 90);
-  --input: oklch(0.9 0.01 90);
-  --ring: oklch(0.35 0.12 150 / 0.3);
+  --border: #e2e8f0;
+  /* Slate-200 */
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+  /* Blue-500 */
 
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.5rem;
+  --sidebar-bg: #0f172a;
+  /* Slate-900 */
+  --sidebar-fg: #f8fafc;
+  /* Slate-50 */
+  --sidebar-hover: #1e293b;
+  /* Slate-800 */
 }
 
 .dark {
-  --background: oklch(0.15 0.02 240);
-  --foreground: oklch(0.95 0.01 240);
+  --background: #020617;
+  --foreground: #f8fafc;
 
-  --card: oklch(0.18 0.02 240);
-  --card-foreground: oklch(0.95 0.01 240);
+  --card: #0f172a;
+  --card-foreground: #e2e8f0;
 
-  --primary: oklch(0.45 0.15 150);
-  --primary-foreground: oklch(0.15 0.02 240);
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
 
-  --border: oklch(0.25 0.02 240);
-  --input: oklch(0.25 0.02 240);
+  --border: #1e293b;
+  --input: #1e293b;
+
+  --sidebar-bg: #020617;
+  --sidebar-fg: #cbd5e1;
+  --sidebar-hover: #1e293b;
 }
 
 @layer utilities {

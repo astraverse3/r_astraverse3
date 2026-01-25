@@ -1,5 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, Package, ClipboardList, Warehouse, TrendingUp, History } from "lucide-react";
+import {
+  ArrowRight,
+  Package,
+  ClipboardList,
+  Warehouse,
+  TrendingUp,
+  History,
+  Download,
+  Plus,
+  Clock,
+  CheckCircle2,
+  MoreHorizontal
+} from "lucide-react";
 import { getDashboardStats } from "@/app/actions/dashboard";
 
 export default async function Home() {
@@ -7,202 +19,242 @@ export default async function Home() {
   const stats = statsResponse.success ? statsResponse.data : null;
 
   return (
-    <div className="container mx-auto px-4 max-w-5xl py-8 md:py-12">
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/5 mb-4 animate-in fade-in zoom-in duration-700">
-          <Warehouse className="w-8 h-8 text-primary" />
+    <>
+      {/* Page Title & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">운영 현황 대시보드</h1>
+          <p className="text-xs text-slate-500 mt-1">실시간 원료곡 재고 및 공정 진행 상태를 확인합니다.</p>
         </div>
-        <h1 className="text-2xl md:text-4xl font-black text-stone-900 tracking-tight mb-2 animate-in slide-in-from-bottom duration-700">
-          영농조합법인 <span className="text-gradient">땅끝황토친환경</span>
-        </h1>
-        <p className="text-stone-500 text-sm md:text-base font-medium animate-in slide-in-from-bottom duration-1000">
-          실시간 도정 현항 및 재고 대시보드
-        </p>
+        <div className="flex gap-2">
+          <button className="bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center shadow-sm">
+            <Download className="w-3 h-3 mr-1" /> 엑셀 내보내기
+          </button>
+          <Link href="/stocks" className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors flex items-center">
+            <Plus className="w-3 h-3 mr-1" /> 입고 신규 등록
+          </Link>
+        </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-        <div className="glass p-6 rounded-2xl border border-white/40 shadow-sm">
-          <div className="flex items-center gap-3 text-stone-400 mb-3">
+      {/* KPI Widgets */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Total Stock */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-start mb-2 text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">총 원료곡 재고</span>
             <Warehouse className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">현재 가용 재고</span>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-stone-900">{(stats?.availableStockKg || 0).toLocaleString()}</span>
-            <span className="text-sm font-bold text-stone-400">kg</span>
+          <div className="flex items-end gap-2">
+            <span className="text-2xl font-bold text-slate-800">{(stats?.availableStockKg || 0).toLocaleString()}</span>
+            <span className="text-sm text-slate-500 font-medium pb-1">kg</span>
           </div>
-        </div>
-        <div className="glass p-6 rounded-2xl border border-white/40 shadow-sm">
-          <div className="flex items-center gap-3 text-stone-400 mb-3">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">총 누적 생산량</span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-stone-900">{(stats?.totalOutputKg || 0).toLocaleString()}</span>
-            <span className="text-sm font-bold text-stone-400">kg</span>
+          <div className="mt-2 text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" /> 가용 재고
           </div>
         </div>
-        <div className="glass p-6 rounded-2xl border border-white/40 shadow-sm">
-          <div className="flex items-center gap-3 text-stone-400 mb-3">
+
+        {/* Total Output */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-start mb-2 text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">누적 생산량</span>
+            <Package className="w-4 h-4" />
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-2xl font-bold text-slate-800">{(stats?.totalOutputKg || 0).toLocaleString()}</span>
+            <span className="text-sm text-slate-500 font-medium pb-1">kg</span>
+          </div>
+          <div className="mt-2 text-[10px] text-blue-600 font-medium flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> 정상 생산 완료
+          </div>
+        </div>
+
+        {/* Milling Batches */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-start mb-2 text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">도정 작업 횟수</span>
             <ClipboardList className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">누적 도정 횟수</span>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-stone-900">{(stats?.totalBatches || 0).toLocaleString()}</span>
-            <span className="text-sm font-bold text-stone-400">회</span>
+          <div className="flex items-end gap-2">
+            <span className="text-2xl font-bold text-slate-800">{(stats?.totalBatches || 0).toLocaleString()}</span>
+            <span className="text-sm text-slate-500 font-medium pb-1">회</span>
+          </div>
+          <div className="mt-2 text-[10px] text-slate-400 font-medium">
+            최근 작업: {stats?.recentLogs[0] ? new Date(stats.recentLogs[0].date).toLocaleDateString() : '-'}
+          </div>
+        </div>
+
+        {/* System Status */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-start mb-2 text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">시스템 상태</span>
+            <Clock className="w-4 h-4" />
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-2xl font-bold text-emerald-600">Normal</span>
+          </div>
+          <div className="mt-2 text-[10px] text-slate-400 font-medium uppercase">
+            Last Sync: {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
 
       {/* Variety Statistics Section */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12 animate-in slide-in-from-bottom duration-1000 delay-300">
-        {/* Stock by Variety */}
-        <div className="glass p-6 rounded-[32px] border border-stone-100 shadow-sm">
-          <h3 className="text-sm font-black text-stone-900 mb-6 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-primary"></span>
-            품종별 보유 재고
-          </h3>
-          <div className="space-y-4">
-            {stats?.stockByVariety.map((item: any) => (
-              <div key={item.variety} className="flex justify-between items-center group">
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-bold text-stone-600 group-hover:text-primary transition-colors">
-                    {item.variety}
-                  </div>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-black text-stone-900 group-hover:scale-110 transition-transform">
-                    {item._sum.weightKg.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] text-stone-400 font-bold">kg</span>
-                </div>
-              </div>
-            ))}
-            {!stats?.stockByVariety.length && (
-              <div className="text-center py-8 text-stone-400 text-xs font-medium">
-                보유 중인 재고가 없습니다.
-              </div>
-            )}
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Stock by Variety Table */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">품종별 재고 현황</h3>
           </div>
-        </div>
-
-        {/* Milled by Variety */}
-        <div className="glass p-6 rounded-[32px] border border-stone-100 shadow-sm">
-          <h3 className="text-sm font-black text-stone-900 mb-6 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            품종별 누적 도정량 (투입)
-          </h3>
-          <div className="space-y-4">
-            {stats?.milledByVariety.map((item: any) => (
-              <div key={item.variety} className="flex justify-between items-center group">
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-bold text-stone-600 group-hover:text-amber-600 transition-colors">
-                    {item.variety}
-                  </div>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-black text-stone-900 group-hover:scale-110 transition-transform">
-                    {item._sum.weightKg.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] text-stone-400 font-bold">kg</span>
-                </div>
-              </div>
-            ))}
-            {!stats?.milledByVariety.length && (
-              <div className="text-center py-8 text-stone-400 text-xs font-medium">
-                도정 내역이 없습니다.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Navigation Links */}
-        <div className="lg:col-span-1 space-y-4">
-          <h3 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2">
-            Quick Actions
-          </h3>
-          <Link href="/stocks" className="block group">
-            <div className="glass p-5 rounded-2xl border border-white/40 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                <Package className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-stone-900">입고 관리</div>
-                <div className="text-[11px] text-stone-400">톤백 재고 및 현황</div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-stone-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </div>
-          </Link>
-          <Link href="/milling" className="block group">
-            <div className="glass p-5 rounded-2xl border border-white/40 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                <ClipboardList className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-stone-900">도정 일지</div>
-                <div className="text-[11px] text-stone-400">작업 등록 및 생산기록</div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-stone-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </div>
-          </Link>
-        </div>
-
-        {/* Recent Logs Table */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between px-2 mb-4">
-            <h3 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] flex items-center gap-2">
-              <History className="w-3 h-3" />
-              최근 도정 내역
-            </h3>
-            <Link href="/milling" className="text-[10px] font-bold text-stone-400 hover:text-primary transition-colors flex items-center gap-1">
-              전체보기 <ArrowRight className="w-2 h-2" />
-            </Link>
-          </div>
-
-          <div className="glass rounded-2xl border border-white/40 overflow-hidden shadow-sm">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-stone-100 bg-stone-50/50">
-                  <th className="px-4 py-3 font-bold text-stone-400">날짜</th>
-                  <th className="px-4 py-3 font-bold text-stone-400">작업명</th>
-                  <th className="px-4 py-3 font-bold text-stone-400 text-right">투입(kg)</th>
-                  <th className="px-4 py-3 font-bold text-stone-400 text-right">생산(kg)</th>
+          <div className="p-0">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase text-slate-500 font-semibold">
+                <tr>
+                  <th className="px-5 py-2">품종명</th>
+                  <th className="px-5 py-2 text-right">보유량 (kg)</th>
+                  <th className="px-5 py-2 text-right">비중</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-50">
-                {stats?.recentLogs.map((log: any) => {
-                  const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
+              <tbody className="divide-y divide-slate-50 text-xs">
+                {stats?.stockByVariety.map((item: any, idx: number) => {
+                  const percent = stats.availableStockKg > 0 ? (item._sum.weightKg / stats.availableStockKg) * 100 : 0;
                   return (
-                    <tr key={log.id} className="hover:bg-stone-50/50 transition-colors group">
-                      <td className="px-4 py-4 text-stone-500 font-medium">
-                        {new Date(log.date).toLocaleDateString()}
+                    <tr key={item.variety} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3 font-medium text-slate-700 flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-blue-500' : 'bg-slate-300'}`}></span>
+                        {item.variety}
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="font-bold text-stone-900">{log.title}</div>
+                      <td className="px-5 py-3 text-right font-bold text-slate-900">
+                        {item._sum.weightKg.toLocaleString()}
                       </td>
-                      <td className="px-4 py-4 text-right font-medium text-stone-600">
-                        {log.totalInputKg.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <span className="font-bold text-primary">{productionSum.toLocaleString()}</span>
+                      <td className="px-5 py-3 text-right text-slate-500">
+                        {percent.toFixed(1)}%
                       </td>
                     </tr>
                   );
                 })}
-                {!stats?.recentLogs.length && (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center text-stone-400 font-medium italic">
-                      진행된 도정 내역이 없습니다.
+                {!stats?.stockByVariety.length && (
+                  <tr><td colSpan={3} className="px-5 py-4 text-center text-slate-400 italic">데이터 없음</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Milled by Variety Table */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">품종별 도정 투입 현황 (누적)</h3>
+          </div>
+          <div className="p-0">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase text-slate-500 font-semibold">
+                <tr>
+                  <th className="px-5 py-2">품종명</th>
+                  <th className="px-5 py-2 text-right">투입량 (kg)</th>
+                  <th className="px-5 py-2 text-right">상태</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 text-xs">
+                {stats?.milledByVariety.map((item: any, idx: number) => (
+                  <tr key={item.variety} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3 font-medium text-slate-700 flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-amber-500' : 'bg-slate-300'}`}></span>
+                      {item.variety}
+                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-slate-900">
+                      {item._sum.weightKg.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-100">
+                        Process
+                      </span>
                     </td>
                   </tr>
+                ))}
+                {!stats?.milledByVariety.length && (
+                  <tr><td colSpan={3} className="px-5 py-4 text-center text-slate-400 italic">데이터 없음</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Recent Logs Table (Main Data Card) */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+          <h3 className="font-bold text-sm text-slate-800 italic">LATEST <span className="text-blue-600">MILLING LOGS</span></h3>
+          <div className="flex gap-2">
+            <Link href="/milling" className="text-xs text-slate-500 hover:text-blue-600 font-medium flex items-center gap-1 transition-colors">
+              전체 보기 <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b-2 border-slate-200 text-xs text-slate-500 uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="px-5 py-3">작업 ID</th>
+                <th className="px-5 py-3">작업일자</th>
+                <th className="px-5 py-3">작업명 (Title)</th>
+                <th className="px-5 py-3 text-right">투입 중량(kg)</th>
+                <th className="px-5 py-3 text-right">생산 중량(kg)</th>
+                <th className="px-5 py-3 text-center">상태</th>
+                <th className="px-5 py-3 text-right">관리</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs divide-y divide-slate-100">
+              {stats?.recentLogs.map((log: any) => {
+                const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
+                // Calculate yield rate roughly for status pill
+                const yieldRate = log.totalInputKg > 0 ? (productionSum / log.totalInputKg) * 100 : 0;
+
+                return (
+                  <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-5 py-4 font-mono font-bold text-slate-400">#{log.id.toString().padStart(4, '0')}</td>
+                    <td className="px-5 py-4 text-slate-600 font-medium">
+                      {new Date(log.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-5 py-4 font-bold text-slate-800">
+                      {log.title}
+                    </td>
+                    <td className="px-5 py-4 text-right font-medium text-slate-600">
+                      {log.totalInputKg.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-4 text-right font-bold text-slate-900">
+                      {productionSum.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold border ${log.isClosed ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+                        {log.isClosed ? '마감완료' : '진행중'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button className="text-slate-400 hover:text-blue-600 transition-colors p-1 hover:bg-slate-100 rounded">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!stats?.recentLogs.length && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                    등록된 도정 작업이 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500">
+          <span>Showing {stats?.recentLogs.length || 0} recent items</span>
+          <div className="flex gap-1 opacity-50 cursor-not-allowed">
+            <button className="w-6 h-6 flex items-center justify-center border rounded bg-white hover:bg-slate-50">1</button>
+            <button className="w-6 h-6 flex items-center justify-center border rounded bg-white hover:bg-slate-50">2</button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
