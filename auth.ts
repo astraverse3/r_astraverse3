@@ -22,21 +22,39 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     providers: [
         Credentials({
             async authorize(credentials) {
-                const parsedCredentials = z
-                    .object({ username: z.string(), password: z.string().min(6) })
-                    .safeParse(credentials);
+                try {
+                    console.log('Authorizing user...');
+                    const parsedCredentials = z
+                        .object({ username: z.string(), password: z.string().min(6) })
+                        .safeParse(credentials);
 
-                if (parsedCredentials.success) {
-                    const { username, password } = parsedCredentials.data;
-                    const user = await getUser(username);
-                    if (!user) return null;
+                    if (parsedCredentials.success) {
+                        const { username, password } = parsedCredentials.data;
+                        console.log(`Searching for user: ${username}`);
+                        const user = await getUser(username);
+                        if (!user) {
+                            console.log('User not found in database');
+                            return null;
+                        }
 
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
-                    if (passwordsMatch) return user;
+                        console.log('User found, comparing password...');
+                        const passwordsMatch = await bcrypt.compare(password, user.password);
+                        if (passwordsMatch) {
+                            console.log('Password match! Login successful.');
+                            return user;
+                        } else {
+                            console.log('Password mismatch');
+                        }
+                    } else {
+                        console.log('Invalid credentials format');
+                    }
+
+                    console.log('Invalid credentials');
+                    return null;
+                } catch (error) {
+                    console.error('Authorization error:', error);
+                    return null;
                 }
-
-                console.log('Invalid credentials');
-                return null;
             },
         }),
     ],
