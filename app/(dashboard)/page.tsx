@@ -29,9 +29,9 @@ export default async function Home() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-800">실시간 현황</h2>
-            <span className="text-sm text-slate-500 font-medium flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) : '--:--'} 기준
+            <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) : '--:--'} 기준
             </span>
           </div>
 
@@ -86,9 +86,9 @@ export default async function Home() {
                 : 0;
 
               const colors = [
-                { bar: 'bg-blue-500' },
-                { bar: 'bg-amber-500' },
-                { bar: 'bg-emerald-500' }
+                { bar: 'bg-blue-300' },
+                { bar: 'bg-amber-300' },
+                { bar: 'bg-emerald-300' }
               ];
               const color = colors[idx % colors.length];
 

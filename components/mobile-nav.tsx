@@ -24,7 +24,7 @@ export function MobileNav() {
                 className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/stocks') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
                 <Package className="w-6 h-6" />
-                {isActive('/stocks') ? <span className="text-xs font-bold">재고관리</span> : <span className="hidden sm:inline text-xs font-medium">재고관리</span>}
+                <span className={`text-xs ${isActive('/stocks') ? 'font-bold' : 'font-medium'}`}>재고관리</span>
             </Link>
 
             <Link
@@ -32,7 +32,7 @@ export function MobileNav() {
                 className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/milling') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
                 <ClipboardList className="w-6 h-6" />
-                {isActive('/milling') ? <span className="text-xs font-bold">도정관리</span> : <span className="hidden sm:inline text-xs font-medium">도정관리</span>}
+                <span className={`text-xs ${isActive('/milling') ? 'font-bold' : 'font-medium'}`}>도정관리</span>
             </Link>
 
             <Link
@@ -40,7 +40,7 @@ export function MobileNav() {
                 className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/stats') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
                 <BarChart3 className="w-6 h-6" />
-                {isActive('/stats') && <span className="text-xs font-bold">통계</span>}
+                <span className="text-xs font-bold">통계</span>
             </Link>
         </nav>
     );
