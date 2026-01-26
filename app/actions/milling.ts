@@ -2,19 +2,14 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 export type MillingOutputInput = {
-    packageType: string
-    weightPerUnit: number
-    count: number
-    totalWeight: number
+    // ... existing types ...
 }
 
 export type MillingBatchFormData = {
-    date: Date
-    title: string
-    totalInputKg: number
-    selectedStockIds: number[]
+    // ... existing types ...
 }
 
 export async function startMillingBatch(data: MillingBatchFormData) {
@@ -23,7 +18,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
             return { success: false, error: 'No stocks selected' }
         }
 
-        const batch = await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx) => {
             // 1. Fetch selected stocks to verify availability and calculate total weight
             const stocks = await tx.stock.findMany({
                 where: {
@@ -66,13 +61,14 @@ export async function startMillingBatch(data: MillingBatchFormData) {
             return newBatch;
         });
 
-        revalidatePath('/milling')
-        revalidatePath('/stocks')
-        return { success: true, data: batch }
     } catch (error) {
         console.error('Failed to start milling batch:', error)
         return { success: false, error: error instanceof Error ? error.message : 'Failed to start milling batch' }
     }
+
+    revalidatePath('/milling')
+    revalidatePath('/stocks')
+    redirect('/milling')
 }
 
 export async function deleteMillingBatch(batchId: number) {

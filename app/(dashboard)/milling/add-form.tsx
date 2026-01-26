@@ -65,9 +65,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
         })
         setIsLoading(false)
 
-        if (result.success) {
-            router.push('/milling')
-        } else {
+        if (result && !result.success) {
             alert('저장 실패: ' + result.error)
         }
     }
