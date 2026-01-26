@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { getDashboardStats } from "@/app/actions/dashboard";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const statsResponse = await getDashboardStats();
   const stats = statsResponse.success ? statsResponse.data : null;
