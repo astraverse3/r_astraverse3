@@ -31,7 +31,7 @@ export default async function Home() {
             <h2 className="text-xl font-bold text-slate-800">실시간 현황</h2>
             <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) : '--:--'} 기준
+              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) : '--:--'} 기준
             </span>
           </div>
 

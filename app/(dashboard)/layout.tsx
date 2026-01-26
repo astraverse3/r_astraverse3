@@ -76,7 +76,7 @@ export default function DashboardLayout({
                 </header>
 
                 {/* Scrollable Page Content */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                <main className="flex-1 w-full">
                     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
                         {children}
                     </div>
