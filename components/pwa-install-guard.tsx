@@ -12,6 +12,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [isMounted, setIsMounted] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [isInstalling, setIsInstalling] = useState(false);
 
     useEffect(() => {
         // 1. Detect device/mode
@@ -54,10 +55,13 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) return;
+        setIsInstalling(true); // Hide manual guide immediately
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
             setDeferredPrompt(null);
+        } else {
+            setIsInstalling(false); // Show manual guide again if rejected
         }
     };
 
@@ -80,7 +84,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 {/* Brand Logo */}
                 <div className="mb-12 relative">
                     <div className="p-8 rounded-[48px] bg-stone-50 shadow-inner">
-                        <img src="/logo-symbol.svg" alt="App Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
+                        <img src="/logo-full.png" alt="App Logo" className="w-56 h-auto object-contain" />
                     </div>
                 </div>
 
@@ -121,7 +125,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                     </button>
                 )}
 
-                {!isIOS && !deferredPrompt && (
+                {!isIOS && !deferredPrompt && !isInstalling && (
                     <div className="w-full bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-8 space-y-4">
                         <div className="text-stone-500 text-sm font-bold">
                             자동 설치가 준비되지 않았습니다.<br />
