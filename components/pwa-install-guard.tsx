@@ -88,22 +88,19 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 <div className="mb-12 relative">
                     <div className="p-8 rounded-[48px] bg-stone-50 shadow-inner">
                         {/* Use PNG for better compatibility */}
-                        <img src="/logo-symbol.svg" alt="Company Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
+                        {/* Use PNG for better compatibility and fallback */}
+                        <img src="/icon-512.png" alt="App Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
                     </div>
                     <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2.5 rounded-full shadow-xl">
                         <PlusSquare size={22} strokeWidth={3} />
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-black text-stone-900 mb-4 tracking-tighter leading-tight">
-                    땅끝황토친환경 <br />
-                    <span className="text-gradient">전용 앱 설치안내</span>
+                <h1 className="text-2xl font-black text-stone-900 mb-8 tracking-tighter leading-tight">
+                    전용 앱을 설치해주세요
                 </h1>
 
-                <p className="text-stone-400 mb-8 font-bold text-sm leading-relaxed">
-                    보안 지침에 따라 모바일에서는 <br />
-                    반드시 <span className="text-stone-900 underline decoration-primary decoration-4 underline-offset-4">공식 앱</span>으로 접속해야 합니다.
-                </p>
+                {/* Simplified text removal */}{/* Simplified text removal */}
 
                 {/* Install Button (Android/Chrome) */}
                 {deferredPrompt && (
@@ -112,7 +109,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                         className="mb-8 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 animate-bounce hover:bg-blue-700 transition-colors"
                     >
                         <Download className="w-5 h-5" />
-                        지금 앱 설치하기
+                        앱 설치하기
                     </button>
                 )}
 
