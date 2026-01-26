@@ -129,6 +129,8 @@ export default async function Home() {
               const isToday = new Date(log.date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }) === new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
               const timeStr = new Date(log.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
 
+              const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety))].join(', ');
+
               return (
                 <div key={log.id} className={`bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-blue-500' : ''}`}>
                   <div className="flex items-center gap-4">
@@ -140,10 +142,10 @@ export default async function Home() {
                     </div>
                     <div>
                       <p className="text-base font-bold text-slate-800">
-                        {log.title} <span className="text-xs text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{log.totalInputKg.toLocaleString()} kg</span>
+                        {varieties || log.title || '미지정'} <span className="text-xs text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{log.totalInputKg.toLocaleString()} kg</span>
                       </p>
                       <p className="text-xs text-slate-500 mt-1 font-medium">
-                        {log.isClosed ? `수율 ${yieldRate}% (백미 ${productionSum.toLocaleString()} kg)` : <span className="text-blue-600 font-bold animate-pulse">현재 작업 진행 중...</span>}
+                        {log.isClosed ? `수율 ${yieldRate}% (생산 ${productionSum.toLocaleString()} kg)` : <span className="text-blue-600 font-bold animate-pulse">현재 작업 진행 중...</span>}
                       </p>
                     </div>
                   </div>

@@ -50,7 +50,8 @@ export async function getDashboardStats() {
                 take: 10,
                 orderBy: { date: 'desc' },
                 include: {
-                    outputs: true
+                    outputs: true,
+                    stocks: true
                 }
             }),
             // 6. Stock by Variety (ALL Statuses for Year) - Modified to calculate Total vs Available
