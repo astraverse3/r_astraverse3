@@ -146,13 +146,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 </div>
             )}
 
-            {/* Debug Info Footer */}
-            <div className="fixed bottom-0 left-0 w-full bg-black/80 text-white text-[10px] p-1 text-center z-[100001] opacity-50 hover:opacity-100 pointer-events-none">
-                SW: {typeof navigator !== 'undefined' && navigator.serviceWorker?.controller ? 'Active✅' : 'Missing❌'} |
-                Event: {deferredPrompt ? 'Fired✅' : 'Waiting...'} |
-                Display: {isStandalone ? 'Standalone' : 'Browser'} |
-                Mobile: {isMobile ? 'Yes' : 'No'}
-            </div>
+            {/* Debug Info Footer Removed */}
         </div>
     );
 }
