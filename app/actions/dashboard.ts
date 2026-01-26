@@ -69,7 +69,7 @@ export async function getDashboardStats() {
                 where: { status: 'CONSUMED' },
                 _sum: { weightKg: true },
                 orderBy: { _sum: { weightKg: 'desc' } }
-            })
+            }),
             // 8. Latest Update Time (Stock or MillingBatch or MillingOutputPackage)
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } })
