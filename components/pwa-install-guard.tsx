@@ -88,7 +88,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 <div className="mb-12 relative">
                     <div className="p-8 rounded-[48px] bg-stone-50 shadow-inner">
                         {/* Use PNG for better compatibility */}
-                        <img src="/icon-512.png" alt="Company Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
+                        <img src="/logo-symbol.svg" alt="Company Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
                     </div>
                     <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2.5 rounded-full shadow-xl">
                         <PlusSquare size={22} strokeWidth={3} />
@@ -116,32 +116,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                     </button>
                 )}
 
-                {/* Installation Steps Card */}
-                <div className="w-full glass p-8 rounded-[40px] border border-stone-100 shadow-sm mb-12 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-primary/20" />
-
-                    {!deferredPrompt && (
-                        <div className="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30 mx-auto mb-6">
-                            <Download className="w-7 h-7" />
-                        </div>
-                    )}
-
-                    <div className="font-extrabold text-stone-900 text-lg mb-6">
-                        {deferredPrompt ? '위 버튼을 누르거나' : '설치 방법'}
-                    </div>
-
-                    {isIOS ? (
-                        <div className="text-stone-500 leading-loose font-bold text-sm space-y-2">
-                            <p>1. 하단 중앙의 <span className="text-blue-500 inline-flex items-center gap-1 bg-blue-50 px-2 rounded-md"><Share size={14} /> [공유]</span> 클릭</p>
-                            <p>2. 메뉴에서 <span className="text-stone-900 bg-stone-100 px-2 rounded-md">[홈 화면에 추가]</span> 클릭</p>
-                        </div>
-                    ) : (
-                        <div className="text-stone-500 leading-loose font-bold text-sm space-y-2">
-                            <p>1. 상단 또는 메뉴의 <span className="text-stone-900 bg-stone-100 px-2 rounded-md">[⋮]</span> 버튼 클릭</p>
-                            <p>2. <span className="text-stone-900 bg-stone-100 px-2 rounded-md">[앱 설치]</span> 또는 <span className="text-stone-900 bg-stone-100 px-2 rounded-md">[홈 화면 추가]</span> 클릭</p>
-                        </div>
-                    )}
-                </div>
+                {/* Installation Steps Removed as per request */}
 
                 <div className="flex flex-col items-center animate-pulse text-stone-300">
                     <ArrowBigDown size={32} />
