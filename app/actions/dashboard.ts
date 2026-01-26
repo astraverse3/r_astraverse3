@@ -72,12 +72,42 @@ export async function getDashboardStats() {
             }),
             // 8. Latest Update Time (Stock or MillingBatch or MillingOutputPackage)
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
-            prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } })
+            prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
+            // 9. Closed Batch Input (For Yield)
+            prisma.millingBatch.aggregate({
+                where: {
+                    isClosed: true,
+                    date: {
+                        gte: new Date(`${currentYear}-01-01`),
+                        lt: new Date(`${currentYear + 1}-01-01`)
+                    }
+                },
+                _sum: { totalInputKg: true }
+            }),
+            // 10. Closed Batch Output (For Yield)
+            prisma.millingOutputPackage.aggregate({
+                where: {
+                    batch: {
+                        isClosed: true,
+                        date: {
+                            gte: new Date(`${currentYear}-01-01`),
+                            lt: new Date(`${currentYear + 1}-01-01`)
+                        }
+                    }
+                },
+                _sum: { totalWeight: true }
+            })
         ]);
 
         const totalOutput = totalOutputWeight._sum?.totalWeight || 0;
-        const totalInput = totalInputWeight._sum?.totalInputKg || 0;
-        const yieldPercentage = totalInput > 0 ? (totalOutput / totalInput) * 100 : 0;
+        // Yield calculation based on CLOSED batches only
+        const closedInput = results[2] as { _sum: { totalInputKg: number | null } }; // Index 9 in full array, but rest syntax makes it index 2 in 'results'
+        const closedOutput = results[3] as { _sum: { totalWeight: number | null } }; // Index 10 -> index 3
+
+        const closedInputSum = closedInput._sum?.totalInputKg || 0;
+        const closedOutputSum = closedOutput._sum?.totalWeight || 0;
+
+        const yieldPercentage = closedInputSum > 0 ? (closedOutputSum / closedInputSum) * 100 : 0;
 
         // Calculate latest update time
         // results[0] -> Stock update
@@ -98,7 +128,7 @@ export async function getDashboardStats() {
                 availableStockKg: totalAvailableStock._sum?.weightKg || 0,
                 totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutput,
-                yieldPercentage: yieldPercentage, // New Field
+                yieldPercentage: yieldPercentage, // New Field (Closed Batches Only)
                 recentLogs,
                 stockByVariety,
                 milledByVariety,
