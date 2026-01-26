@@ -5,11 +5,17 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export type MillingOutputInput = {
-    // ... existing types ...
+    packageType: string
+    weightPerUnit: number
+    count: number
+    totalWeight: number
 }
 
 export type MillingBatchFormData = {
-    // ... existing types ...
+    date: Date
+    title: string
+    totalInputKg: number
+    selectedStockIds: number[]
 }
 
 export async function startMillingBatch(data: MillingBatchFormData) {
