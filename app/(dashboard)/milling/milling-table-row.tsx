@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Lock, Package, AlertCircle, Trash2, Info } from 'lucide-react'
+import { MoreHorizontal, Lock, Package, AlertCircle, Trash2 } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -87,32 +87,30 @@ export function MillingTableRow({ log }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
-                onClick={handleRowClick}
+                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0"
             >
                 {/* 1. Date */}
-                <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[60px]">
+                <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
                     {new Date(log.date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                 </TableCell>
 
                 {/* 2. Status */}
                 <TableCell className="py-2 px-2 text-center w-[50px]">
-                    {log.isClosed ? (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400">마감</Badge>
-                    ) : (
-                        <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
-                    )}
+                    <div onClick={handleRowClick} className="cursor-pointer inline-block">
+                        {log.isClosed ? (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
+                        ) : (
+                            <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
+                        )}
+                    </div>
                 </TableCell>
 
                 {/* 3. Variety (Previously Title/Variety mixed) */}
                 <TableCell className="py-2 px-2 text-xs font-bold text-slate-800 w-[100px]">
                     <div className="flex items-center gap-1">
-                        <span className="truncate max-w-[90px]">{varieties}</span>
-                        {/* Small info icon for stock list details */}
                         <MillingStockListDialog
                             stocks={log.stocks || []}
                             varieties={varieties}
-                            trigger={<Info className="h-3 w-3 text-slate-300 hover:text-blue-500 transition-colors" />}
                         />
                     </div>
                 </TableCell>

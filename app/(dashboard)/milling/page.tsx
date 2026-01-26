@@ -38,7 +38,7 @@ export default async function MillingListPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[60px]">날짜</TableHead>
+                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[50px]">날짜</TableHead>
                             <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
                             <TableHead className="py-2 px-2 text-xs font-bold text-slate-500 w-[100px]">품종</TableHead>
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">톤백</TableHead>
