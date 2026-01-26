@@ -19,18 +19,40 @@ export type MillingBatchFormData = {
 
 export async function startMillingBatch(data: MillingBatchFormData) {
     try {
-        // Use a transaction to create the batch and update stock status
+        if (!data.selectedStockIds || data.selectedStockIds.length === 0) {
+            return { success: false, error: 'No stocks selected' }
+        }
+
         const batch = await prisma.$transaction(async (tx) => {
-            // 1. Create the MillingBatch
+            // 1. Fetch selected stocks to verify availability and calculate total weight
+            const stocks = await tx.stock.findMany({
+                where: {
+                    id: { in: data.selectedStockIds }
+                }
+            });
+
+            if (stocks.length !== data.selectedStockIds.length) {
+                throw new Error('Some stocks could not be found');
+            }
+
+            const alreadyConsumed = stocks.filter(s => s.status !== 'AVAILABLE');
+            if (alreadyConsumed.length > 0) {
+                throw new Error(`Stocks ${alreadyConsumed.map(s => s.farmerName).join(', ')} are already consumed`);
+            }
+
+            // Calculate ACTUAL total input weight from DB
+            const actualTotalInputKg = stocks.reduce((sum, s) => sum + s.weightKg, 0);
+
+            // 2. Create the MillingBatch
             const newBatch = await tx.millingBatch.create({
                 data: {
                     date: data.date,
                     title: data.title,
-                    totalInputKg: data.totalInputKg,
+                    totalInputKg: actualTotalInputKg, // Use server-calculated weight
                 },
             });
 
-            // 2. Update and link stocks
+            // 3. Update and link stocks
             await tx.stock.updateMany({
                 where: {
                     id: { in: data.selectedStockIds }
@@ -49,7 +71,48 @@ export async function startMillingBatch(data: MillingBatchFormData) {
         return { success: true, data: batch }
     } catch (error) {
         console.error('Failed to start milling batch:', error)
-        return { success: false, error: 'Failed to start milling batch' }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to start milling batch' }
+    }
+}
+
+export async function deleteMillingBatch(batchId: number) {
+    try {
+        await prisma.$transaction(async (tx) => {
+            // 1. Get batch info
+            const batch = await tx.millingBatch.findUnique({
+                where: { id: batchId },
+                include: { outputs: true }
+            });
+
+            if (!batch) throw new Error('Batch not found');
+            if (batch.isClosed) throw new Error('Cannot delete a closed batch. Please reopen it first.');
+
+            // 2. Release Stocks (Set back to AVAILABLE and unlink)
+            await tx.stock.updateMany({
+                where: { batchId: batchId },
+                data: {
+                    status: 'AVAILABLE',
+                    batchId: null
+                }
+            });
+
+            // 3. Delete Outputs
+            await tx.millingOutputPackage.deleteMany({
+                where: { batchId: batchId }
+            });
+
+            // 4. Delete Batch
+            await tx.millingBatch.delete({
+                where: { id: batchId }
+            });
+        });
+
+        revalidatePath('/milling')
+        revalidatePath('/stocks')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to delete milling batch:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to delete milling batch' }
     }
 }
 

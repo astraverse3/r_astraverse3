@@ -33,13 +33,24 @@ export async function createStock(data: StockFormData) {
 export async function updateStock(id: number, data: StockFormData) {
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Get current stock info
+            // 1. Get current stock info with batch status
             const currentStock = await tx.stock.findUnique({
                 where: { id },
-                select: { weightKg: true, batchId: true }
+                select: {
+                    weightKg: true,
+                    batchId: true,
+                    batch: {
+                        select: { isClosed: true }
+                    }
+                }
             });
 
             if (!currentStock) throw new Error('Stock not found');
+
+            // SAFETY CHECK: Cannot update stock if it belongs to a closed batch
+            if (currentStock.batch?.isClosed) {
+                throw new Error('마감된 도정 작업에 포함된 재고는 수정할 수 없습니다.');
+            }
 
             // 2. Calculate weight difference
             const weightDiff = data.weightKg - currentStock.weightKg;

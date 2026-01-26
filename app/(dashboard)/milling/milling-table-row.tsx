@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Lock, Package, AlertCircle } from 'lucide-react'
+import { MoreHorizontal, Lock, Package, AlertCircle, Trash2 } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { AddPackagingDialog } from './add-packaging-dialog'
-import { closeMillingBatch, reopenMillingBatch } from '@/app/actions/milling'
+import { closeMillingBatch, reopenMillingBatch, deleteMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
 
 interface MillingBatch {
@@ -68,6 +68,19 @@ export function MillingTableRow({ log }: Props) {
 
         if (!result.success) {
             alert(result.error || '마감 실패')
+        }
+    }
+
+    const handleDeleteBatch = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm('정말 삭제하시겠습니까? 투입된 재고는 [보관중] 상태로 복구됩니다.')) return
+
+        setIsActionLoading(true)
+        const result = await deleteMillingBatch(log.id)
+        setIsActionLoading(false)
+
+        if (!result.success) {
+            alert(result.error || '삭제 실패')
         }
     }
 
@@ -137,10 +150,17 @@ export function MillingTableRow({ log }: Props) {
                                 포장 관리
                             </DropdownMenuItem>
                             {!log.isClosed && (
-                                <DropdownMenuItem onClick={handleCloseBatch} className="gap-2 text-xs text-red-600 focus:text-red-700 focus:bg-red-50">
-                                    <Lock className="h-3.5 w-3.5" />
-                                    작업 마감
-                                </DropdownMenuItem>
+                                <>
+                                    <DropdownMenuItem onClick={handleCloseBatch} className="gap-2 text-xs text-amber-600 focus:text-amber-700 focus:bg-amber-50">
+                                        <Lock className="h-3.5 w-3.5" />
+                                        작업 마감
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleDeleteBatch} className="gap-2 text-xs text-red-600 focus:text-red-700 focus:bg-red-50">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        작업 삭제
+                                    </DropdownMenuItem>
+                                </>
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
