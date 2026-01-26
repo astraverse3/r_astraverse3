@@ -12,7 +12,7 @@ export async function getDashboardStats() {
         const latestYear = latestStock?.productionYear || new Date().getFullYear();
         const currentYear = new Date().getFullYear();
 
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, milledByVariety] = await Promise.all([
+        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, milledByVariety, ...results] = await Promise.all([
             // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
                 where: {
@@ -70,11 +70,25 @@ export async function getDashboardStats() {
                 _sum: { weightKg: true },
                 orderBy: { _sum: { weightKg: 'desc' } }
             })
+            // 8. Latest Update Time (Stock or MillingBatch or MillingOutputPackage)
+            prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
+            prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } })
         ]);
 
         const totalOutput = totalOutputWeight._sum?.totalWeight || 0;
         const totalInput = totalInputWeight._sum?.totalInputKg || 0;
         const yieldPercentage = totalInput > 0 ? (totalOutput / totalInput) * 100 : 0;
+
+        // Calculate latest update time
+        // results[0] -> Stock update
+        // results[1] -> Batch update
+        const latestStockUpdate = (results[0] as { updatedAt: Date } | null)?.updatedAt?.getTime() || 0;
+        const latestBatchUpdate = (results[1] as { updatedAt: Date } | null)?.updatedAt?.getTime() || 0;
+        const lastUpdated = new Date(Math.max(latestStockUpdate, latestBatchUpdate));
+        // If no data exists, fallback to current time is optional, but user asked for "latest change".
+        // If 0, it means no data. Let's keep it as is or default to now if 0?
+        // Let's default to now() only if BOTH are 0, to avoid showing 1970.
+        const finalLastUpdated = lastUpdated.getTime() === 0 ? new Date() : lastUpdated;
 
         return {
             success: true,
@@ -88,7 +102,7 @@ export async function getDashboardStats() {
                 recentLogs,
                 stockByVariety,
                 milledByVariety,
-                lastUpdated: new Date() // For Clock
+                lastUpdated: finalLastUpdated // For Clock
             }
         }
     } catch (error) {
