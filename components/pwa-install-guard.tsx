@@ -53,7 +53,10 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
+        if (!deferredPrompt) {
+            alert("브라우저 메뉴의 [홈 화면에 추가] 또는 [앱 설치]를 눌러주세요.");
+            return;
+        }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
@@ -102,16 +105,14 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
                 {/* Simplified text removal */}{/* Simplified text removal */}
 
-                {/* Install Button (Android/Chrome) */}
-                {deferredPrompt && (
-                    <button
-                        onClick={handleInstallClick}
-                        className="mb-8 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 animate-bounce hover:bg-blue-700 transition-colors"
-                    >
-                        <Download className="w-5 h-5" />
-                        앱 설치하기
-                    </button>
-                )}
+                {/* Install Button (Always Visible) */}
+                <button
+                    onClick={handleInstallClick}
+                    className="mb-8 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 animate-bounce hover:bg-blue-700 transition-colors"
+                >
+                    <Download className="w-5 h-5" />
+                    앱 설치하기
+                </button>
 
                 {/* Installation Steps Removed as per request */}
 
