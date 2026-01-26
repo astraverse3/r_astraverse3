@@ -17,6 +17,7 @@ export function SWRegister() {
                 })
                 .catch((error) => {
                     console.error('SW Registration failed: ', error);
+                    alert(`SW Error: ${error.message}`);
                 });
         }
     }, []);
