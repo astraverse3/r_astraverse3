@@ -31,7 +31,7 @@ export default async function Home() {
             <h2 className="text-lg font-bold">실시간 현황</h2>
             <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '--:--'} 기준
+              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }) : '--:--'} 기준
             </span>
           </div>
 
@@ -120,8 +120,8 @@ export default async function Home() {
             {stats?.recentLogs.map((log: any) => {
               const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
               const yieldRate = log.totalInputKg > 0 ? ((productionSum / log.totalInputKg) * 100).toFixed(1) : '0.0';
-              const isToday = new Date(log.date).toDateString() === new Date().toDateString();
-              const timeStr = new Date(log.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+              const isToday = new Date(log.date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }) === new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+              const timeStr = new Date(log.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
 
               return (
                 <div key={log.id} className={`bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-blue-500' : ''}`}>
