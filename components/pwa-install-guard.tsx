@@ -53,10 +53,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) {
-            alert("브라우저 메뉴의 [홈 화면에 추가] 또는 [앱 설치]를 눌러주세요.");
-            return;
-        }
+        if (!deferredPrompt) return;
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
@@ -65,22 +62,15 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     };
 
     // While checking or before mounting, show a completely blank white screen
-    // This prevents any "flash" of the app content
-    if (!isMounted) {
-        return <div className="fixed inset-0 bg-white z-[99999]" />;
-    }
+    if (!isMounted) return <div className="fixed inset-0 bg-white z-[99999]" />;
 
-    // On desktop, render children normally
-    if (!isMobile) {
-        return <>{children}</>;
-    }
+    // Desktop -> render children
+    if (!isMobile) return <>{children}</>;
 
-    // On mobile, if already installed as PWA, render children normally
-    if (isStandalone) {
-        return <>{children}</>;
-    }
+    // Installed PWA -> render children
+    if (isStandalone) return <>{children}</>;
 
-    // If on mobile but NOT installed, HERO guide (No children rendered)
+    // Not installed Mobile -> Show Guide
     const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) ||
         (navigator.maxTouchPoints > 1 && /macintosh/.test(window.navigator.userAgent.toLowerCase()));
 
@@ -90,12 +80,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 {/* Brand Logo */}
                 <div className="mb-12 relative">
                     <div className="p-8 rounded-[48px] bg-stone-50 shadow-inner">
-                        {/* Use PNG for better compatibility */}
-                        {/* Use PNG for better compatibility and fallback */}
                         <img src="/icon-512.png" alt="App Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2.5 rounded-full shadow-xl">
-                        <PlusSquare size={22} strokeWidth={3} />
                     </div>
                 </div>
 
@@ -103,32 +88,61 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                     전용 앱을 설치해주세요
                 </h1>
 
-                {/* Simplified text removal */}{/* Simplified text removal */}
+                {/* iOS Logic: Always show Share guide, never buttons */}
+                {isIOS && (
+                    <div className="w-full bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-8 space-y-4">
+                        <div className="flex items-center gap-3 text-left">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                <Share size={20} />
+                            </div>
+                            <div className="text-sm font-bold text-stone-600">
+                                1. 하단 <span className="text-stone-900">공유 버튼</span>을 누르세요
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-left">
+                            <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 shrink-0">
+                                <PlusSquare size={20} />
+                            </div>
+                            <div className="text-sm font-bold text-stone-600">
+                                2. <span className="text-stone-900">홈 화면에 추가</span>를 선택하세요
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                {/* Install Button (Always Visible) */}
-                <button
-                    onClick={handleInstallClick}
-                    className="mb-8 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 animate-bounce hover:bg-blue-700 transition-colors"
-                >
-                    <Download className="w-5 h-5" />
-                    앱 설치하기
-                </button>
+                {/* Android Logic: Button ONLY if ready, else Manual Guide */}
+                {!isIOS && deferredPrompt && (
+                    <button
+                        onClick={handleInstallClick}
+                        className="mb-8 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 animate-bounce hover:bg-blue-700 transition-colors"
+                    >
+                        <Download className="w-5 h-5" />
+                        앱 설치하기
+                    </button>
+                )}
 
-                {/* Installation Steps Removed as per request */}
-
-                <div className="flex flex-col items-center animate-pulse text-stone-300">
-                    <ArrowBigDown size={32} />
-                </div>
+                {!isIOS && !deferredPrompt && (
+                    <div className="w-full bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-8 space-y-4">
+                        <div className="text-stone-500 text-sm font-bold">
+                            자동 설치가 준비되지 않았습니다.<br />
+                            브라우저 메뉴 <span className="bg-stone-200 px-1.5 rounded text-stone-800">[⋮]</span>에서<br />
+                            <span className="text-stone-900 underline underline-offset-4 decoration-blue-500 decoration-2">앱 설치</span>를 눌러주세요.
+                        </div>
+                        <div className="flex flex-col items-center animate-pulse text-stone-300 mt-4">
+                            <ArrowBigDown size={24} />
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Floating IOS Helper */}
+            {/* iOS Floating Helper */}
             {isIOS && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100000] animate-in slide-in-from-bottom-20 duration-1000 w-max max-w-[90%]">
-                    <div className="bg-stone-900 text-white px-6 py-4 rounded-full text-sm font-black flex items-center gap-3 shadow-[0_30px_60px_rgba(0,0,0,0.4)] border border-white/10">
-                        <Share className="w-5 h-5 text-blue-400 animate-pulse shrink-0" />
-                        <span>[공유] → [홈 화면에 추가]</span>
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100000] animate-in slide-in-from-bottom-20 duration-1000 w-max">
+                    <div className="bg-stone-900 text-white px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 shadow-2xl">
+                        <Share className="w-4 h-4 text-blue-400" />
+                        <span className="text-blue-200">↓</span>
+                        <span>여기를 눌러주세요</span>
                     </div>
-                    <div className="w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[15px] border-t-stone-900 mx-auto -mt-1" />
                 </div>
             )}
         </div>
