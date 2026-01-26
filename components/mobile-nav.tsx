@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, BarChart3, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Package, BarChart3, ClipboardList } from 'lucide-react';
 
 export function MobileNav() {
     const pathname = usePathname();
@@ -27,8 +27,13 @@ export function MobileNav() {
                 <span className="text-[10px] font-bold">재고</span>
             </Link>
 
-            {/* Spacer for FAB */}
-            <div className="w-12"></div>
+            <Link
+                href="/milling"
+                className={`flex flex-col items-center gap-1 p-2 ${isActive('/milling') ? 'text-blue-600' : 'text-slate-400'}`}
+            >
+                <ClipboardList className="w-6 h-6" />
+                <span className="text-[10px] font-bold">도정</span>
+            </Link>
 
             <Link
                 href="#"
@@ -36,14 +41,6 @@ export function MobileNav() {
             >
                 <BarChart3 className="w-6 h-6" />
                 <span className="text-[10px] font-bold">통계</span>
-            </Link>
-
-            <Link
-                href="#"
-                className={`flex flex-col items-center gap-1 p-2 ${isActive('/profile') ? 'text-blue-600' : 'text-slate-400'}`}
-            >
-                <UserCircle className="w-6 h-6" />
-                <span className="text-[10px] font-bold">프로필</span>
             </Link>
         </nav>
     );
