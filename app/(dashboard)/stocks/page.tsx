@@ -1,9 +1,15 @@
+```typescript
 import { getStocks } from '@/app/actions/stock'
 import { AddStockDialog } from './add-stock-dialog'
-import { EditStockDialog } from './edit-stock-dialog'
-import { DeleteStockButton } from './delete-stock-button'
+import { StockTableRow } from './stock-table-row'
+import {
+    Table,
+    TableBody,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Package, Calendar, User, FileBadge } from 'lucide-react'
 
 interface Stock {
     id: number
@@ -23,79 +29,49 @@ export default async function StockPage() {
     const stocks = result.success && result.data ? result.data : []
 
     return (
-        <div className="grid grid-cols-1 gap-6 pb-24">
+        <div className="grid grid-cols-1 gap-2 pb-24">
             {/* Header */}
-            <section className="flex items-center justify-between pt-2">
-                <h1 className="text-xl font-bold text-slate-800">재고 관리</h1>
+            <section className="flex items-center justify-between pt-2 px-1">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-slate-800">재고 관리</h1>
+                    <Badge variant="secondary" className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0">
+                        {stocks.length}
+                    </Badge>
+                </div>
                 <AddStockDialog />
             </section>
 
-            {/* List */}
-            <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="flex flex-col divide-y divide-slate-100">
-                    {stocks.length > 0 ? (
-                        stocks.map((stock: Stock) => (
-                            <div key={stock.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
-                                {/* Top Row: Basic Info & Status */}
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className="text-xs font-bold text-slate-500 border-slate-200 px-2 py-0.5 rounded-md">
-                                            {stock.productionYear}년
-                                        </Badge>
-                                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">
-                                            {stock.variety}
-                                        </h3>
-                                        <Badge variant="secondary" className="text-[10px] font-bold text-slate-500 bg-slate-100 hover:bg-slate-100">
-                                            {stock.certType}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {stock.status === 'AVAILABLE' ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                보관중
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold">
-                                                사용완료
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Bottom Row: Details & Actions */}
-                                <div className="flex items-end justify-between">
-                                    <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <User className="w-3.5 h-3.5" />
-                                            <span className="text-sm font-medium">{stock.farmerName}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <FileBadge className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-mono">#{stock.bagNo}</span>
-                                            <span className="text-xs text-slate-300">|</span>
-                                            <span className="text-sm font-bold text-slate-700">{stock.weightKg.toLocaleString()} kg</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <EditStockDialog stock={stock} />
-                                        <DeleteStockButton
-                                            stockId={stock.id}
-                                            stockTitle={`${stock.farmerName} (${stock.variety})`}
-                                            isConsumed={stock.status === 'CONSUMED'}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="p-12 text-center text-slate-400 text-sm">
-                            등록된 재고가 없습니다.
-                        </div>
-                    )}
-                </div>
+            {/* Dense Table */}
+            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[60px]">년도</TableHead>
+                            <TableHead className="py-2 px-2 text-xs font-bold text-slate-500">품종</TableHead>
+                            <TableHead className="py-2 px-2 text-xs font-bold text-slate-500">농가</TableHead>
+                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500">인증</TableHead>
+                            <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">톤백#</TableHead>
+                            <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">중량</TableHead>
+                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[40px]">상태</TableHead>
+                            <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500 w-[40px]">관리</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {stocks.length > 0 ? (
+                            stocks.map((stock: Stock) => (
+                                <StockTableRow key={stock.id} stock={stock} />
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableHead colSpan={8} className="h-32 text-center text-xs text-slate-400 font-medium">
+                                    등록된 재고가 없습니다.
+                                </TableHead>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </section>
         </div>
     )
 }
+```

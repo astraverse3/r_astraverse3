@@ -34,11 +34,18 @@ interface Stock {
 
 interface Props {
     stock: Stock
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    trigger?: React.ReactNode
 }
 
-export function EditStockDialog({ stock }: Props) {
-    const [open, setOpen] = useState(false)
+export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props) {
+    const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+
+    const isControlled = controlledOpen !== undefined
+    const open = isControlled ? controlledOpen : internalOpen
+    const setOpen = isControlled ? setControlledOpen! : setInternalOpen
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -68,11 +75,13 @@ export function EditStockDialog({ stock }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-900">
-                    <Pencil className="h-4 w-4" />
-                </Button>
-            </DialogTrigger>
+            {trigger !== undefined ? trigger : (
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-900">
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>입고 정보 수정</DialogTitle>
