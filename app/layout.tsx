@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link"
 import { PWAInstallGuard } from "@/components/pwa-install-guard"
+import { SWRegister } from "@/components/sw-register"
 import {
   LayoutDashboard,
   Package,
@@ -45,6 +46,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="antialiased min-h-screen flex bg-slate-100 font-sans text-slate-900 selection:bg-blue-100 overflow-hidden">
+        <SWRegister />
         <PWAInstallGuard>
           {/* Sidebar */}
           <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
