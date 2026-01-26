@@ -17,6 +17,7 @@ import { Info } from 'lucide-react'
 
 interface Stock {
     id: number
+    productionYear: number
     bagNo: number
     farmerName: string
     variety: string
@@ -63,6 +64,7 @@ export default async function StockPage() {
                             <TableHeader>
                                 <TableRow className="bg-stone-50 border-b border-stone-100 divide-x divide-stone-100">
                                     <TableHead className="py-3 md:py-6 px-3 md:px-6 font-black text-stone-400 text-[9px] md:text-[10px] tracking-widest">입고일</TableHead>
+                                    <TableHead className="px-3 md:px-6 font-black text-stone-400 text-[9px] md:text-[10px] tracking-widest">생산년도</TableHead>
                                     <TableHead className="px-3 md:px-6 font-black text-stone-400 text-[9px] md:text-[10px] tracking-widest">농가</TableHead>
                                     <TableHead className="px-3 md:px-6 font-black text-stone-400 text-[9px] md:text-[10px] tracking-widest">품종</TableHead>
                                     <TableHead className="px-3 md:px-6 font-black text-stone-400 text-[9px] md:text-[10px] tracking-widest">인증</TableHead>
@@ -78,6 +80,9 @@ export default async function StockPage() {
                                         <TableRow key={stock.id} className="group hover:bg-stone-50 transition-all duration-300 ease-out divide-x divide-stone-50 font-medium text-stone-600">
                                             <TableCell className="py-3 md:py-6 px-3 md:px-6 font-mono font-bold text-stone-900 text-[11px] md:text-[13px]">
                                                 {new Date(stock.createdAt).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })}
+                                            </TableCell>
+                                            <TableCell className="px-3 md:px-6 font-black text-stone-900 text-xs md:text-sm">
+                                                {stock.productionYear}
                                             </TableCell>
                                             <TableCell className="px-3 md:px-6 font-black text-stone-900 italic text-xs md:text-sm">
                                                 {stock.farmerName}
