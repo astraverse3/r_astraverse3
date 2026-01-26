@@ -66,38 +66,47 @@ export default async function Home() {
 
         {/* Stock Levels Vertical List */}
         <section className="bg-white p-5 -mx-4 sm:mx-0 sm:rounded-3xl sm:shadow-md sm:border sm:border-slate-100">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-800">품종별 재고 ({targetYear})</h2>
             <Link href="/stocks" className="text-sm text-blue-600 font-bold px-3 py-1.5 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">관리</Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex flex-col">
             {stats?.stockByVariety.map((item: any, idx: number) => {
-              const total = stats.availableStockKg || 1;
-              const percent = (item._sum.weightKg / total) * 100;
+              // Logic: Remaining Ratio = Available / (Available + Consumed)
+              // Find consumed amount for this variety
+              const consumedItem = stats.milledByVariety.find((m: any) => m.variety === item.variety);
+              const consumedWeight = consumedItem?._sum?.weightKg || 0;
+              const availableWeight = item._sum.weightKg;
+              const totalVarietyWeight = availableWeight + consumedWeight;
+
+              // Prevent division by zero
+              const remainingPercent = totalVarietyWeight > 0
+                ? (availableWeight / totalVarietyWeight) * 100
+                : 0;
+
               const colors = [
-                { bg: 'bg-blue-50', text: 'text-blue-600', bar: 'bg-blue-500' },
-                { bg: 'bg-amber-50', text: 'text-amber-600', bar: 'bg-amber-500' },
-                { bg: 'bg-emerald-50', text: 'text-emerald-600', bar: 'bg-emerald-500' }
+                { bar: 'bg-blue-500' },
+                { bar: 'bg-amber-500' },
+                { bar: 'bg-emerald-500' }
               ];
               const color = colors[idx % colors.length];
 
               return (
-                <div key={item.variety} className={`bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl ${color.bg} flex items-center justify-center ${color.text} flex-shrink-0`}>
-                      <Package className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-base font-bold text-slate-800">{item.variety}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 font-medium">{percent.toFixed(1)}% 점유</p>
+                <div key={item.variety} className="flex flex-col py-3 border-b border-slate-100 last:border-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-base font-bold text-slate-700">{item.variety}</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-slate-900">{availableWeight.toLocaleString()}</span>
+                      <span className="text-xs font-medium text-slate-400">kg</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-slate-900">{item._sum.weightKg.toLocaleString()} <span className="text-xs font-semibold text-slate-400">kg</span></p>
-                    <div className="w-24 bg-slate-100 h-2 rounded-full mt-1.5 ml-auto">
-                      <div className={`${color.bar} h-full rounded-full`} style={{ width: `${percent}%` }}></div>
-                    </div>
+                  {/* Progress Bar (Remaining Ratio) */}
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`${color.bar} h-full rounded-full transition-all duration-500`}
+                      style={{ width: `${remainingPercent}%` }}
+                    ></div>
                   </div>
                 </div>
               );
