@@ -66,13 +66,13 @@ export default async function Home() {
 
         {/* Stock Levels Horizontal Scroll */}
         {/* Stock Levels Vertical List */}
-        <section className="bg-white p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">품종별 재고 ({targetYear})</h2>
-            <Link href="/stocks" className="text-sm text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-lg">관리</Link>
+        <section className="bg-white p-3 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold">품종별 재고 ({targetYear})</h2>
+            <Link href="/stocks" className="text-xs text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-lg">관리</Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {stats?.stockByVariety.map((item: any, idx: number) => {
               const total = stats.availableStockKg || 1;
               const percent = (item._sum.weightKg / total) * 100;
@@ -84,19 +84,19 @@ export default async function Home() {
               const color = colors[idx % colors.length];
 
               return (
-                <div key={item.variety} className={`bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center ${color.text} flex-shrink-0`}>
-                      <Package className="w-5 h-5" />
+                <div key={item.variety} className={`bg-white p-2.5 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-full ${color.bg} flex items-center justify-center ${color.text} flex-shrink-0`}>
+                      <Package className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-700">{item.variety}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{percent.toFixed(1)}% 점유</p>
+                      <p className="text-xs font-bold text-slate-700">{item.variety}</p>
+                      <p className="text-[10px] text-slate-400">{percent.toFixed(1)}%</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-slate-800">{item._sum.weightKg.toLocaleString()} <span className="text-xs font-normal text-slate-400">kg</span></p>
-                    <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1 ml-auto">
+                    <p className="text-xs font-bold text-slate-800">{item._sum.weightKg.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">kg</span></p>
+                    <div className="w-16 bg-slate-100 h-1 rounded-full mt-1 ml-auto">
                       <div className={`${color.bar} h-full rounded-full`} style={{ width: `${percent}%` }}></div>
                     </div>
                   </div>
@@ -104,19 +104,19 @@ export default async function Home() {
               );
             })}
             {!stats?.stockByVariety.length && (
-              <div className="w-full text-center text-slate-400 text-xs py-8 italic bg-slate-50 rounded-xl">등록된 재고가 없습니다 ({targetYear})</div>
+              <div className="w-full text-center text-slate-400 text-xs py-6 italic bg-slate-50 rounded-xl">등록된 재고가 없습니다 ({targetYear})</div>
             )}
           </div>
         </section>
 
         {/* Recent Logs List */}
-        <section className="bg-white p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">최근 도정 기록</h2>
-            <Link href="/milling" className="text-slate-400 p-1 bg-slate-100 rounded-full"><ArrowRight className="w-4 h-4" /></Link>
+        <section className="bg-white p-3 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold">최근 도정 기록</h2>
+            <Link href="/milling" className="text-slate-400 p-1 bg-slate-100 rounded-full"><ArrowRight className="w-3 h-3" /></Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {stats?.recentLogs.map((log: any) => {
               const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
               const yieldRate = log.totalInputKg > 0 ? ((productionSum / log.totalInputKg) * 100).toFixed(1) : '0.0';
@@ -124,24 +124,24 @@ export default async function Home() {
               const timeStr = new Date(log.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
               return (
-                <div key={log.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-blue-500' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center border ${log.isClosed ? 'bg-slate-50 border-slate-100' : 'bg-blue-50 border-blue-100'}`}>
-                      <span className={`text-[9px] font-bold leading-none ${log.isClosed ? 'text-slate-400' : 'text-blue-400'}`}>
+                <div key={log.id} className={`bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-blue-500' : ''}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center border ${log.isClosed ? 'bg-slate-50 border-slate-100' : 'bg-blue-50 border-blue-100'}`}>
+                      <span className={`text-[8px] font-bold leading-none ${log.isClosed ? 'text-slate-400' : 'text-blue-400'}`}>
                         {isToday ? '오늘' : '이전'}
                       </span>
-                      <span className={`text-sm font-bold ${log.isClosed ? 'text-slate-700' : 'text-blue-700'}`}>{timeStr}</span>
+                      <span className={`text-xs font-bold ${log.isClosed ? 'text-slate-700' : 'text-blue-700'}`}>{timeStr}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-800">
-                        {log.title} <span className="text-[11px] text-slate-400 font-normal ml-1">{log.totalInputKg.toLocaleString()} kg</span>
+                      <p className="text-xs font-bold text-slate-800">
+                        {log.title} <span className="text-[10px] text-slate-400 font-normal ml-1">{log.totalInputKg.toLocaleString()} kg</span>
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-[10px] text-slate-500 mt-0.5">
                         {log.isClosed ? `수율 ${yieldRate}% (백미 ${productionSum.toLocaleString()} kg)` : <span className="text-blue-600 font-medium animate-pulse">현재 작업 진행 중...</span>}
                       </p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tight ${log.isClosed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight ${log.isClosed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                     {log.isClosed ? '완료' : '진행'}
                   </span>
                 </div>
