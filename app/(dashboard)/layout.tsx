@@ -64,9 +64,9 @@ export default function DashboardLayout({
                 {/* Desktop Header (Hidden on Mobile) */}
                 <header className="hidden lg:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6 z-40">
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                        <span className="opacity-50">시스템</span>
+                        <span className="opacity-50">땅끝황토친환경</span>
                         <span className="opacity-30">/</span>
-                        <span>대시보드</span>
+                        <span>도정관리시스템</span>
                     </div>
                     <div className="flex items-center gap-4">
                         <span className="text-xs text-slate-500 font-medium font-mono">
