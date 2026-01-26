@@ -53,23 +53,16 @@ export async function getDashboardStats() {
                     outputs: true
                 }
             }),
-            // 6. Stock by Variety (AVAILABLE) - Filtered by Latest Year
+            // 6. Stock by Variety (ALL Statuses for Year) - Modified to calculate Total vs Available
             prisma.stock.groupBy({
-                by: ['variety'],
+                by: ['variety', 'status'],
                 where: {
-                    status: 'AVAILABLE',
                     productionYear: latestYear
                 },
-                _sum: { weightKg: true },
-                orderBy: { _sum: { weightKg: 'desc' } }
+                _sum: { weightKg: true }
             }),
-            // 7. Milled Quantity by Variety (CONSUMED)
-            prisma.stock.groupBy({
-                by: ['variety'],
-                where: { status: 'CONSUMED' },
-                _sum: { weightKg: true },
-                orderBy: { _sum: { weightKg: 'desc' } }
-            }),
+            // 7. Consumed (Legacy/Redundant - keeping slot to preserve indices for now, or just return empty)
+            Promise.resolve([]),
             // 8. Latest Update Time (Stock or MillingBatch or MillingOutputPackage)
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
@@ -120,6 +113,36 @@ export async function getDashboardStats() {
         // Let's default to now() only if BOTH are 0, to avoid showing 1970.
         const finalLastUpdated = lastUpdated.getTime() === 0 ? new Date() : lastUpdated;
 
+        // Process Stock Data
+        const rawStockData = stockByVariety as unknown as Array<{ variety: string, status: string, _sum: { weightKg: number | null } }>;
+
+        // Group by variety to calculate Current vs Total
+        const varietyMap = new Map<string, { current: number, total: number }>();
+
+        rawStockData.forEach(item => {
+            const weight = item._sum.weightKg || 0;
+            const current = varietyMap.get(item.variety) || { current: 0, total: 0 };
+
+            // Total includes everything for the year
+            current.total += weight;
+
+            // Current only includes AVAILABLE
+            if (item.status === 'AVAILABLE') {
+                current.current += weight;
+            }
+
+            varietyMap.set(item.variety, current);
+        });
+
+        // Convert Map to sorted array
+        const processedStockByVariety = Array.from(varietyMap.entries())
+            .map(([variety, data]) => ({
+                variety,
+                currentWeight: data.current,
+                totalWeight: data.total
+            }))
+            .sort((a, b) => b.totalWeight - a.totalWeight); // Sort by total weight
+
         return {
             success: true,
             data: {
@@ -130,8 +153,8 @@ export async function getDashboardStats() {
                 totalOutputKg: totalOutput,
                 yieldPercentage: yieldPercentage, // New Field (Closed Batches Only)
                 recentLogs,
-                stockByVariety,
-                milledByVariety,
+                stockByVariety: processedStockByVariety,
+                milledByVariety: [], // Deprecated/Unused
                 lastUpdated: finalLastUpdated // For Clock
             }
         }

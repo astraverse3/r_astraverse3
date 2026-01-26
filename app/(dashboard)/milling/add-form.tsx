@@ -54,7 +54,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
             return
         }
 
-        const title = remarks.trim() || `${new Date().toLocaleDateString('ko-KR')} 도정 작업`
+        const title = remarks.trim()
 
         setIsLoading(true)
         const result = await startMillingBatch({

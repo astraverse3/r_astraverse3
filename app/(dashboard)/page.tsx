@@ -73,14 +73,10 @@ export default async function Home() {
 
           <div className="flex flex-col">
             {stats?.stockByVariety.map((item: any, idx: number) => {
-              // Logic: Remaining Ratio = Available / (Available + Consumed)
-              // Find consumed amount for this variety
-              const consumedItem = stats.milledByVariety.find((m: any) => m.variety === item.variety);
-              const consumedWeight = consumedItem?._sum?.weightKg || 0;
-              const availableWeight = item._sum.weightKg;
-              const totalVarietyWeight = availableWeight + consumedWeight;
+              const availableWeight = item.currentWeight;
+              const totalVarietyWeight = item.totalWeight;
 
-              // Prevent division by zero
+              // Calculate remaining percentage
               const remainingPercent = totalVarietyWeight > 0
                 ? (availableWeight / totalVarietyWeight) * 100
                 : 0;
@@ -98,7 +94,9 @@ export default async function Home() {
                     <span className="text-base font-bold text-slate-700">{item.variety}</span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-lg font-bold text-slate-900">{availableWeight.toLocaleString()}</span>
-                      <span className="text-xs font-medium text-slate-400">kg</span>
+                      <span className="text-sm font-medium text-slate-400 mx-1">/</span>
+                      <span className="text-sm font-bold text-slate-500">{totalVarietyWeight.toLocaleString()}</span>
+                      <span className="text-xs font-medium text-slate-400 ml-0.5">kg</span>
                     </div>
                   </div>
                   {/* Progress Bar (Remaining Ratio) */}
