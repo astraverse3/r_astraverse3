@@ -65,13 +65,14 @@ export default async function Home() {
         </section>
 
         {/* Stock Levels Horizontal Scroll */}
-        <section className="bg-white/50 p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:bg-white sm:border sm:border-slate-100">
+        {/* Stock Levels Vertical List */}
+        <section className="bg-white p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">품목별 재고 ({targetYear})</h2>
+            <h2 className="text-lg font-bold">품종별 재고 ({targetYear})</h2>
             <Link href="/stocks" className="text-sm text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-lg">관리</Link>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+          <div className="space-y-3">
             {stats?.stockByVariety.map((item: any, idx: number) => {
               const total = stats.availableStockKg || 1;
               const percent = (item._sum.weightKg / total) * 100;
@@ -83,20 +84,27 @@ export default async function Home() {
               const color = colors[idx % colors.length];
 
               return (
-                <div key={item.variety} className={`flex-shrink-0 w-32 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center border-l-4 ${color.bar.replace('bg-', 'border-')}`}>
-                  <div className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center ${color.text} mb-2`}>
-                    <Package className="w-5 h-5" />
+                <div key={item.variety} className={`bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center ${color.text} flex-shrink-0`}>
+                      <Package className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-700">{item.variety}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{percent.toFixed(1)}% 점유</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-slate-700">{item.variety}</span>
-                  <span className="text-[10px] text-slate-400 mt-1">{item._sum.weightKg.toLocaleString()} kg</span>
-                  <div className="w-full bg-slate-100 h-1 rounded-full mt-3">
-                    <div className={`${color.bar} h-full rounded-full`} style={{ width: `${percent}%` }}></div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-slate-800">{item._sum.weightKg.toLocaleString()} <span className="text-xs font-normal text-slate-400">kg</span></p>
+                    <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1 ml-auto">
+                      <div className={`${color.bar} h-full rounded-full`} style={{ width: `${percent}%` }}></div>
+                    </div>
                   </div>
                 </div>
               );
             })}
             {!stats?.stockByVariety.length && (
-              <div className="w-full text-center text-slate-400 text-xs py-4 italic">등록된 재고가 없습니다 ({targetYear})</div>
+              <div className="w-full text-center text-slate-400 text-xs py-8 italic bg-slate-50 rounded-xl">등록된 재고가 없습니다 ({targetYear})</div>
             )}
           </div>
         </section>
