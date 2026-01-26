@@ -23,6 +23,7 @@ import { Pencil } from 'lucide-react'
 
 interface Stock {
     id: number
+    productionYear: number
     bagNo: number
     farmerName: string
     variety: string
@@ -45,6 +46,7 @@ export function EditStockDialog({ stock }: Props) {
 
         const formData = new FormData(event.currentTarget)
         const data: StockFormData = {
+            productionYear: parseInt(formData.get('productionYear') as string, 10),
             farmerName: formData.get('farmerName') as string,
             variety: formData.get('variety') as string,
             bagNo: parseInt(formData.get('bagNo') as string, 10),
@@ -82,6 +84,19 @@ export function EditStockDialog({ stock }: Props) {
                     </div>
                 )}
                 <form onSubmit={onSubmit} className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="productionYear" className="text-right">
+                            생산년도
+                        </Label>
+                        <Input
+                            id="productionYear"
+                            name="productionYear"
+                            type="number"
+                            defaultValue={stock.productionYear || new Date().getFullYear()}
+                            className="col-span-3"
+                            required
+                        />
+                    </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="farmerName" className="text-right">
                             농가명

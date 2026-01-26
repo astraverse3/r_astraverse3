@@ -4,19 +4,48 @@ import { prisma } from '@/lib/prisma'
 
 export async function getDashboardStats() {
     try {
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, recentLogs, stockByVariety, milledByVariety] = await Promise.all([
-            // 1. Total available stock weight (KG)
+        // 0. Calculate Latest Production Year from Stocks (or default to current year)
+        const latestStock = await prisma.stock.findFirst({
+            orderBy: { productionYear: 'desc' },
+            select: { productionYear: true }
+        });
+        const latestYear = latestStock?.productionYear || new Date().getFullYear();
+        const currentYear = new Date().getFullYear();
+
+        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, milledByVariety] = await Promise.all([
+            // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
-                where: { status: 'AVAILABLE' },
+                where: {
+                    status: 'AVAILABLE',
+                    productionYear: latestYear
+                },
                 _sum: { weightKg: true }
             }),
             // 2. Count of milling batches
             prisma.millingBatch.count(),
-            // 3. Total output production weight (KG)
+            // 3. Total output production weight (KG) - Filtered by Current Year (Batch Date)
             prisma.millingOutputPackage.aggregate({
+                where: {
+                    batch: {
+                        date: {
+                            gte: new Date(`${currentYear}-01-01`),
+                            lt: new Date(`${currentYear + 1}-01-01`)
+                        }
+                    }
+                },
                 _sum: { totalWeight: true }
             }),
-            // 4. Recent 10 milling logs
+            // 4. Total Input Weight for Yield Calculation (Current Year)
+            prisma.millingBatch.aggregate({
+                where: {
+                    date: {
+                        gte: new Date(`${currentYear}-01-01`),
+                        lt: new Date(`${currentYear + 1}-01-01`)
+                    }
+                },
+                _sum: { totalInputKg: true }
+            }),
+            // 5. Recent 10 milling logs
             prisma.millingBatch.findMany({
                 take: 10,
                 orderBy: { date: 'desc' },
@@ -24,14 +53,17 @@ export async function getDashboardStats() {
                     outputs: true
                 }
             }),
-            // 5. Stock by Variety (AVAILABLE)
+            // 6. Stock by Variety (AVAILABLE) - Filtered by Latest Year
             prisma.stock.groupBy({
                 by: ['variety'],
-                where: { status: 'AVAILABLE' },
+                where: {
+                    status: 'AVAILABLE',
+                    productionYear: latestYear
+                },
                 _sum: { weightKg: true },
                 orderBy: { _sum: { weightKg: 'desc' } }
             }),
-            // 6. Milled Quantity by Variety (CONSUMED) - Total Input
+            // 7. Milled Quantity by Variety (CONSUMED)
             prisma.stock.groupBy({
                 by: ['variety'],
                 where: { status: 'CONSUMED' },
@@ -40,15 +72,23 @@ export async function getDashboardStats() {
             })
         ]);
 
+        const totalOutput = totalOutputWeight._sum?.totalWeight || 0;
+        const totalInput = totalInputWeight._sum?.totalInputKg || 0;
+        const yieldPercentage = totalInput > 0 ? (totalOutput / totalInput) * 100 : 0;
+
         return {
             success: true,
             data: {
-                availableStockKg: totalAvailableStock._sum.weightKg || 0,
+                targetYear: latestYear, // For Stock Display
+                productionYear: currentYear, // For Production Display
+                availableStockKg: totalAvailableStock._sum?.weightKg || 0,
                 totalBatches: totalMillingBatches,
-                totalOutputKg: totalOutputWeight._sum.totalWeight || 0,
+                totalOutputKg: totalOutput,
+                yieldPercentage: yieldPercentage, // New Field
                 recentLogs,
                 stockByVariety,
-                milledByVariety
+                milledByVariety,
+                lastUpdated: new Date() // For Clock
             }
         }
     } catch (error) {

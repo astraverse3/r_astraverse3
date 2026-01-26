@@ -32,6 +32,7 @@ export function AddStockDialog() {
 
         const formData = new FormData(event.currentTarget)
         const data: StockFormData = {
+            productionYear: parseInt(formData.get('productionYear') as string, 10),
             farmerName: formData.get('farmerName') as string,
             variety: formData.get('variety') as string,
             bagNo: parseInt(formData.get('bagNo') as string, 10),
@@ -61,15 +62,17 @@ export function AddStockDialog() {
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="date" className="text-right">
-                            날짜
+                        <Label htmlFor="productionYear" className="text-right">
+                            생산년도
                         </Label>
-                        <div className="col-span-3">
-                            {/* Date is auto-generated in backend for now, but usually user selects it. 
-                   Schema has createdAt. Let's stick to current time for simplicity or add Date picker later.
-                   For now, just display today's date or omit. */}
-                            <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
-                        </div>
+                        <Input
+                            id="productionYear"
+                            name="productionYear"
+                            type="number"
+                            defaultValue={new Date().getFullYear()}
+                            className="col-span-3"
+                            required
+                        />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="farmerName" className="text-right">

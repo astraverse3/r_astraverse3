@@ -13,6 +13,7 @@ model Stock {
   bagNo       Int           // 톤백 번호
   farmerName  String        // 농가명
   variety     String        // 품종
+  productionYear Int        @default(2024) // 생산년도
   certType    String        // 인증
   weightKg    Float         // 입고 중량
   status      String        // AVAILABLE / CONSUMED

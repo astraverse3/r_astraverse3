@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 export type StockFormData = {
+    productionYear: number
     bagNo: number
     farmerName: string
     variety: string

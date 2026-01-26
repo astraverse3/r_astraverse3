@@ -17,6 +17,8 @@ import { getDashboardStats } from "@/app/actions/dashboard";
 export default async function Home() {
   const statsResponse = await getDashboardStats();
   const stats = statsResponse.success ? statsResponse.data : null;
+  const currentYear = stats?.productionYear || new Date().getFullYear();
+  const targetYear = stats?.targetYear || new Date().getFullYear();
 
   return (
     <>
@@ -25,41 +27,49 @@ export default async function Home() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold">실시간 현황</h2>
-            <span className="text-xs text-slate-400 font-medium">
-              {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 기준
+            <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '--:--'} 기준
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-              <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">현재 재고 (조곡)</p>
-              <p className="text-xl font-bold text-slate-800">
-                {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-sm font-medium ml-1">kg</span>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-28">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                현재 재고량 ({targetYear})
               </p>
-              <div className="mt-2 text-[10px] text-green-500 font-bold flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" /> 가용 재고
+              <div>
+                <p className="text-xl font-bold text-slate-800">
+                  {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-sm font-medium ml-1">kg</span>
+                </p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-              <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">금일 생산량</p>
-              <p className="text-xl font-bold text-slate-800">
-                {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-sm font-medium ml-1">kg</span>
+
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-28">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                현재 생산량 ({currentYear})
               </p>
-              <div className="mt-2 text-[10px] text-blue-500 font-bold flex items-center">
-                <CheckCircle2 className="w-3 h-3 mr-1" /> 정상 완료
+              <div>
+                <p className="text-xl font-bold text-slate-800">
+                  {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-sm font-medium ml-1">kg</span>
+                </p>
+                <div className="mt-1 text-[10px] text-blue-600 font-bold flex items-center">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  수율 {stats?.yieldPercentage.toFixed(1)}%
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Stock Levels Horizontal Scroll */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">품목별 재고</h2>
-            <Link href="/stocks" className="text-sm text-blue-600 font-semibold">관리</Link>
+        <section className="bg-white/50 p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:bg-white sm:border sm:border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold">품목별 재고 ({targetYear})</h2>
+            <Link href="/stocks" className="text-sm text-blue-600 font-semibold px-2 py-1 bg-blue-50 rounded-lg">관리</Link>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
             {stats?.stockByVariety.map((item: any, idx: number) => {
               const total = stats.availableStockKg || 1;
               const percent = (item._sum.weightKg / total) * 100;
@@ -84,16 +94,16 @@ export default async function Home() {
               );
             })}
             {!stats?.stockByVariety.length && (
-              <div className="w-full text-center text-slate-400 text-xs py-4 bg-white rounded-2xl italic">재고 데이터가 없습니다</div>
+              <div className="w-full text-center text-slate-400 text-xs py-4 italic">등록된 재고가 없습니다 ({targetYear})</div>
             )}
           </div>
         </section>
 
         {/* Recent Logs List */}
-        <section>
+        <section className="bg-white p-4 -mx-4 sm:mx-0 sm:rounded-2xl sm:shadow-sm sm:border sm:border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold">최근 도정 기록</h2>
-            <Link href="/milling" className="text-slate-400"><ArrowRight className="w-5 h-5" /></Link>
+            <Link href="/milling" className="text-slate-400 p-1 bg-slate-100 rounded-full"><ArrowRight className="w-4 h-4" /></Link>
           </div>
 
           <div className="space-y-3">
