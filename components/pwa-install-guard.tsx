@@ -80,7 +80,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                 {/* Brand Logo */}
                 <div className="mb-12 relative">
                     <div className="p-8 rounded-[48px] bg-stone-50 shadow-inner">
-                        <img src="/icon-512.png" alt="App Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
+                        <img src="/logo-symbol.svg" alt="App Logo" className="w-24 h-24 object-contain shadow-2xl rounded-2xl" />
                     </div>
                 </div>
 
