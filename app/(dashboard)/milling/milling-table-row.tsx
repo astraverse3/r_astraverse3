@@ -91,7 +91,7 @@ export function MillingTableRow({ log }: Props) {
                 onClick={handleRowClick}
             >
                 {/* 1. Date */}
-                <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[80px]">
+                <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[60px]">
                     {new Date(log.date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                 </TableCell>
 
@@ -104,11 +104,10 @@ export function MillingTableRow({ log }: Props) {
                     )}
                 </TableCell>
 
-                {/* 3. Variety/Content */}
-                <TableCell className="py-2 px-2 text-xs font-bold text-slate-800" onClick={(e) => e.stopPropagation()}>
+                {/* 3. Variety (Previously Title/Variety mixed) */}
+                <TableCell className="py-2 px-2 text-xs font-bold text-slate-800 w-[100px]" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
-                        <span className="truncate max-w-[120px]">{log.title}</span>
-                        <span className="text-[10px] text-slate-400 font-normal">({varieties})</span>
+                        <span className="truncate max-w-[90px]">{varieties}</span>
                         {/* Small info icon for stock list details */}
                         <MillingStockListDialog stocks={log.stocks || []} varieties={varieties} />
                     </div>
@@ -134,7 +133,12 @@ export function MillingTableRow({ log }: Props) {
                     {totalRiceKg > 0 ? `${Math.round(yieldRate)}%` : '-'}
                 </TableCell>
 
-                {/* 8. Actions */}
+                {/* 8. Remarks (Title) */}
+                <TableCell className="py-2 px-2 text-left text-xs text-slate-400 truncate max-w-[120px]">
+                    {log.title}
+                </TableCell>
+
+                {/* 9. Actions */}
                 <TableCell className="py-2 px-2 text-right" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

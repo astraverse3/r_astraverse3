@@ -38,13 +38,14 @@ export default async function MillingListPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[80px]">날짜</TableHead>
+                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[60px]">날짜</TableHead>
                             <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
-                            <TableHead className="py-2 px-2 text-xs font-bold text-slate-500">작업명/품종</TableHead>
+                            <TableHead className="py-2 px-2 text-xs font-bold text-slate-500 w-[100px]">품종</TableHead>
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">톤백</TableHead>
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">투입</TableHead>
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">생산</TableHead>
                             <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500">수율</TableHead>
+                            <TableHead className="py-2 px-2 text-left text-xs font-bold text-slate-500">비고</TableHead>
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500 w-[40px]">관리</TableHead>
                         </TableRow>
                     </TableHeader>
