@@ -1,4 +1,4 @@
-```typescript
+
 import { getStocks } from '@/app/actions/stock'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
@@ -74,4 +74,4 @@ export default async function StockPage() {
         </div>
     )
 }
-```
+

@@ -67,7 +67,65 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
         }
     }
 
-    // ... (rest of logic) ...
+    const addPackage = (template: { label: string, weight: number }) => {
+        setOutputs(prev => {
+            const existing = prev.find(o => o.packageType === template.label)
+            if (existing) {
+                return prev.map(o =>
+                    o.packageType === template.label
+                        ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
+                        : o
+                )
+            }
+            return [...prev, {
+                packageType: template.label,
+                weightPerUnit: template.weight,
+                count: 1,
+                totalWeight: template.weight
+            }]
+        })
+    }
+
+    const setCount = (type: string, count: number) => {
+        setOutputs(prev => prev.map(o => {
+            if (o.packageType === type) {
+                const validCount = isNaN(count) ? 0 : Math.max(0, count)
+                return { ...o, count: validCount, totalWeight: validCount * o.weightPerUnit }
+            }
+            return o
+        }))
+    }
+
+    const removePackage = (type: string) => {
+        setOutputs(prev => prev.filter(o => o.packageType !== type))
+    }
+
+    const updateCount = (type: string, delta: number) => {
+        const item = outputs.find(o => o.packageType === type)
+        if (item) {
+            setCount(type, item.count + delta)
+        }
+    }
+
+    async function handleSubmit() {
+        const validOutputs = outputs.filter(o => o.count > 0)
+        if (validOutputs.length === 0) {
+            alert('포장 내역을 입력해주세요.')
+            return
+        }
+
+        setIsLoading(true)
+        const result = await updatePackagingLogs(batchId, validOutputs)
+        setIsLoading(false)
+
+        if (result.success) {
+            setOpen(false)
+            setOutputs([])
+            // Reload page is handled by revalidatePath in action
+        } else {
+            alert(result.error || '저장 실패')
+        }
+    }
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
