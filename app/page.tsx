@@ -139,11 +139,6 @@ export default async function Home() {
           </div>
         </section>
       </div>
-
-      {/* Floating Action Button (FAB) */}
-      <Link href="/milling" className="fixed bottom-24 right-5 w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-600/30 active:scale-95 transition-transform z-30 lg:hidden">
-        <Plus className="w-7 h-7" />
-      </Link>
     </>
   );
 }
