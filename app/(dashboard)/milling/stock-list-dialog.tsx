@@ -29,17 +29,22 @@ interface Stock {
 interface Props {
     stocks: Stock[]
     varieties: string
+    trigger?: React.ReactNode
 }
 
-export function MillingStockListDialog({ stocks, varieties }: Props) {
+export function MillingStockListDialog({ stocks, varieties, trigger }: Props) {
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
     return (
         <Dialog>
-            <DialogTrigger asChild>
-                <button className="text-stone-900 font-bold hover:text-blue-600 hover:underline transition-colors text-left cursor-pointer">
-                    {varieties || '-'}
-                </button>
+            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+                {trigger ? (
+                    <div className="cursor-pointer inline-flex items-center">{trigger}</div>
+                ) : (
+                    <button className="text-stone-900 font-bold hover:text-blue-600 hover:underline transition-colors text-left cursor-pointer">
+                        {varieties || '-'}
+                    </button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
