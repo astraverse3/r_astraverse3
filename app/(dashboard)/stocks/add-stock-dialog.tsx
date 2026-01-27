@@ -21,7 +21,7 @@ import {
 import { createStock, type StockFormData } from '@/app/actions/stock'
 import { useRouter } from 'next/navigation'
 
-export function AddStockDialog() {
+export function AddStockDialog({ varieties }: { varieties: { id: number; name: string }[] }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
@@ -86,33 +86,41 @@ export function AddStockDialog() {
                             required
                         />
                     </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="variety" className="text-right">
                             품종
                         </Label>
-                        <Input
-                            id="variety"
-                            name="variety"
-                            placeholder="신동진"
-                            className="col-span-3"
-                            required
-                        />
+                        <Select name="variety" required>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="품종 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {varieties.map((v) => (
+                                    <SelectItem key={v.id} value={v.name}>
+                                        {v.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="certType" className="text-right">
                             인증
                         </Label>
-                        <Select name="certType" defaultValue="일반">
+                        <Select name="certType" defaultValue="유기농">
                             <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="인증 선택" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="일반">일반</SelectItem>
-                                <SelectItem value="무농약">무농약</SelectItem>
                                 <SelectItem value="유기농">유기농</SelectItem>
+                                <SelectItem value="무농약">무농약</SelectItem>
+                                <SelectItem value="일반">일반</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="bagNo" className="text-right">
                             톤백번호

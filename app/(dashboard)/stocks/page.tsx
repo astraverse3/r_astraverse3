@@ -1,4 +1,5 @@
 import { getStocks, GetStocksParams } from '@/app/actions/stock'
+import { getVarieties } from '@/app/actions/admin'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
@@ -44,6 +45,10 @@ export default async function StockPage({
     const result = await getStocks(filters)
     const stocks = result.success && result.data ? result.data : []
 
+    // Fetch varieties for AddStockDialog
+    const varietyResult = await getVarieties()
+    const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
+
     return (
         <div className="grid grid-cols-1 gap-2 pb-24">
             {/* Header */}
@@ -56,7 +61,7 @@ export default async function StockPage({
                 </div>
                 <div className="flex items-center gap-2">
                     <StockFilters />
-                    <AddStockDialog />
+                    <AddStockDialog varieties={varieties} />
                 </div>
             </section>
 
