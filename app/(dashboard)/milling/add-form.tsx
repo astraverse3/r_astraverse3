@@ -71,10 +71,11 @@ export function AddMillingLogForm({ availableStocks }: Props) {
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <Card>
+        <div className="lg:max-w-2xl lg:mx-auto fixed inset-0 top-[64px] bottom-[64px] bg-white z-20 flex flex-col lg:static lg:bg-transparent lg:block lg:h-auto lg:z-auto">
+            <div className="flex-none lg:bg-white lg:border lg:rounded-xl lg:shadow-sm lg:overflow-hidden flex flex-col h-full lg:h-auto">
 
-                <CardContent className="space-y-4 p-4">
+                {/* Fixed Top Section: Summary & Actions & Remarks */}
+                <div className="flex-none p-4 pb-0 lg:p-6 lg:pb-0 space-y-4 bg-white z-10">
                     {/* Top Action Bar & Summary */}
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex-1">
@@ -104,15 +105,17 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                         />
                     </div>
 
-                    {/* Stock List Header */}
-                    <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                    {/* Stock List Header - Separator */}
+                    <div className="flex items-center justify-between pt-4 border-t border-stone-100 pb-2">
                         <div className="text-sm font-bold text-stone-800">
                             투입할 톤백 선택 <span className="text-stone-400 font-normal ml-1">({selectedStockIds.length}개 선택됨)</span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Dense Stock List */}
-                    <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                {/* Scrollable Stock List */}
+                <div className="flex-1 overflow-y-auto px-4 pb-4 lg:px-6 lg:pb-6 custom-scrollbar bg-white">
+                    <div className="space-y-1">
                         {availableStocks.map(stock => (
                             <div
                                 key={stock.id}
@@ -147,8 +150,8 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                             </div>
                         ))}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     )
 }

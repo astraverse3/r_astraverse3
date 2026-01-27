@@ -11,7 +11,7 @@ export default async function NewMillingPage() {
 
     return (
         <div className="container mx-auto py-10 space-y-6 px-4">
-            <div className="space-y-1">
+            <div className="space-y-1 hidden lg:block">
                 <h1 className="text-3xl font-bold tracking-tight text-stone-900">새 도정 작업 시작</h1>
                 <p className="text-stone-500">도정에 투입할 원료곡(벼) 톤백을 선택해 주세요.</p>
             </div>
