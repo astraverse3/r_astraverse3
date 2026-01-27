@@ -105,8 +105,8 @@ export function MillingTableRow({ log }: Props) {
                     {totalRiceKg > 0 ? `${Math.round(yieldRate)}%` : '-'}
                 </TableCell>
 
-                {/* 8. Remarks (Strictly truncated ~5 chars) */}
-                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[70px]">
+                {/* 8. Remarks (Strictly truncated ~4 chars) */}
+                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px]">
                     <div className="truncate" title={log.title}>
                         {log.title}
                     </div>
