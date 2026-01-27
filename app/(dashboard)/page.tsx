@@ -68,7 +68,6 @@ export default async function Home() {
         <section className="bg-white p-5 -mx-4 sm:mx-0 sm:rounded-3xl sm:shadow-md sm:border sm:border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-800">품종별 재고 ({targetYear})</h2>
-            <Link href="/stocks" className="text-sm text-blue-600 font-bold px-3 py-1.5 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">관리</Link>
           </div>
 
           <div className="flex flex-col">
