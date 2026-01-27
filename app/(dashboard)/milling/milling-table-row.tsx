@@ -66,11 +66,11 @@ export function MillingTableRow({ log }: Props) {
             >
                 {/* 1. Date */}
                 <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
-                    {new Date(log.date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
+                    {new Date(log.date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '').replace('.', '')}
                 </TableCell>
 
                 {/* 2. Status */}
-                <TableCell className="py-2 px-2 text-center w-[50px]">
+                <TableCell className="py-2 px-1 text-center w-[40px]">
                     {log.isClosed ? (
                         <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
                     ) : (
@@ -78,39 +78,36 @@ export function MillingTableRow({ log }: Props) {
                     )}
                 </TableCell>
 
-                {/* 3. Variety (Previously Title/Variety mixed) */}
-                <TableCell className="py-2 px-2 text-xs font-bold text-slate-800 w-[100px]">
-                    <div className="flex items-center gap-1">
-                        <MillingStockListDialog
-                            stocks={log.stocks || []}
-                            varieties={varieties}
-                        />
+                {/* 3. Variety (Strictly truncated ~4 chars) */}
+                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[60px]">
+                    <div className="truncate" title={varieties}>
+                        {varieties}
                     </div>
                 </TableCell>
 
                 {/* 4. Tonbag Count */}
-                <TableCell className="py-2 px-2 text-right text-xs font-mono text-slate-400">
+                <TableCell className="py-2 px-1 text-right text-xs font-mono text-slate-400">
                     {tonbagCount}백
                 </TableCell>
 
                 {/* 5. Input Weight */}
-                <TableCell className="py-2 px-2 text-right text-xs font-bold text-slate-600">
+                <TableCell className="py-2 px-1 text-right text-xs font-bold text-slate-600">
                     {log.totalInputKg.toLocaleString()}
                 </TableCell>
 
                 {/* 6. Output Weight */}
-                <TableCell className="py-2 px-2 text-right text-xs font-bold text-blue-600">
+                <TableCell className="py-2 px-1 text-right text-xs font-bold text-blue-600">
                     {totalRiceKg > 0 ? totalRiceKg.toLocaleString() : '-'}
                 </TableCell>
 
                 {/* 7. Yield */}
-                <TableCell className="py-2 px-2 text-center text-xs font-mono font-bold text-slate-500">
+                <TableCell className="py-2 px-1 text-center text-xs font-mono font-bold text-slate-500">
                     {totalRiceKg > 0 ? `${Math.round(yieldRate)}%` : '-'}
                 </TableCell>
 
-                {/* 8. Remarks (Title) - Truncated with Tooltip */}
-                <TableCell className="py-2 px-2 text-left text-xs text-slate-400">
-                    <div className="truncate max-w-[100px]" title={log.title}>
+                {/* 8. Remarks (Strictly truncated ~5 chars) */}
+                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[70px]">
+                    <div className="truncate" title={log.title}>
                         {log.title}
                     </div>
                 </TableCell>
