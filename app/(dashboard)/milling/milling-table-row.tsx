@@ -94,7 +94,7 @@ export function MillingTableRow({ log }: Props) {
                         canDelete={log.outputs.length === 0}
                         trigger={
                             <div className="truncate cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
-                                {varieties}
+                                {varieties.length > 4 ? `${varieties.slice(0, 4)}..` : varieties}
                             </div>
                         }
                     />

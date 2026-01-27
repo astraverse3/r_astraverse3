@@ -262,16 +262,80 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
     }
 }
 
-export async function getMillingLogs() {
+// ... imports
+
+export type GetMillingLogsParams = {
+    status?: string // 'open' | 'closed' | 'all'
+    variety?: string
+    millingType?: string
+    keyword?: string // search in 'title' or 'remarks'
+    yieldRate?: string // 'upto_50' | 'upto_60' | 'over_70'
+}
+
+export async function getMillingLogs(params: GetMillingLogsParams = {}) {
     try {
+        const { status, variety, millingType, keyword, yieldRate } = params
+
+        // Build Prisma where clause
+        const where: any = {}
+
+        // 1. Status Filter
+        if (status === 'open') {
+            where.isClosed = false
+        } else if (status === 'closed') {
+            where.isClosed = true
+        }
+
+        // 2. Milling Type Filter
+        if (millingType && millingType !== 'ALL') {
+            where.millingType = millingType
+        }
+
+        // 3. Keyword Search (Title usually holds remarks/customer name)
+        if (keyword) {
+            where.OR = [
+                { title: { contains: keyword } },
+                // Add other string fields if necessary
+            ]
+        }
+
+        // 4. Variety Filter (Nested in Stocks)
+        if (variety && variety !== 'ALL') {
+            where.stocks = {
+                some: {
+                    variety: variety
+                }
+            }
+        }
+
         const logs = await prisma.millingBatch.findMany({
+            where,
             include: {
                 outputs: true,
                 stocks: true
             },
             orderBy: { date: 'desc' }
         })
-        return { success: true, data: logs }
+
+        // 5. Yield Filter (In-memory)
+        let filteredLogs = logs
+
+        if (yieldRate && yieldRate !== 'ALL') {
+            filteredLogs = logs.filter(log => {
+                const totalOutput = log.outputs.reduce((sum, o) => sum + o.totalWeight, 0)
+                const totalInput = log.totalInputKg
+                if (totalInput === 0) return false
+
+                const rate = (totalOutput / totalInput) * 100
+
+                if (yieldRate === 'upto_50') return rate <= 50
+                if (yieldRate === 'upto_60') return rate <= 60
+                if (yieldRate === 'over_70') return rate >= 70
+                return true
+            })
+        }
+
+        return { success: true, data: filteredLogs }
     } catch (error) {
         console.error('Failed to get milling logs:', error)
         return { success: false, error: 'Failed to get milling logs' }
