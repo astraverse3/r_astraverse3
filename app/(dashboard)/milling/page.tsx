@@ -69,12 +69,12 @@ export default async function MillingListPage({
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[50px]">날짜</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">상태</TableHead>
-                            <TableHead className="py-2 px-1 text-xs font-bold text-slate-500 w-[60px]">품종</TableHead>
+                            <TableHead className="py-2 px-1 text-xs font-bold text-slate-500 w-[60px] md:w-auto">품종</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">톤백</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">투입</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">생산</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500">수율</TableHead>
-                            <TableHead className="py-2 px-1 text-left text-xs font-bold text-slate-500 w-[50px]">비고</TableHead>
+                            <TableHead className="py-2 px-1 text-left text-xs font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

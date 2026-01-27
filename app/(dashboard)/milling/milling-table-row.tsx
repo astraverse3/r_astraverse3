@@ -86,7 +86,7 @@ export function MillingTableRow({ log }: Props) {
                 </TableCell>
 
                 {/* 3. Variety - Clickable for Input History */}
-                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px] md:max-w-none">
+                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px] md:max-w-[200px]">
                     <MillingStockListDialog
                         batchId={log.id}
                         stocks={log.stocks || []}
@@ -97,7 +97,7 @@ export function MillingTableRow({ log }: Props) {
                                 <span className="md:hidden">
                                     {varieties.length > 4 ? `${varieties.slice(0, 4)}..` : varieties}
                                 </span>
-                                <span className="hidden md:inline">
+                                <span className="hidden md:inline truncate block">
                                     {varieties}
                                 </span>
                             </div>
@@ -126,8 +126,8 @@ export function MillingTableRow({ log }: Props) {
                 </TableCell>
 
                 {/* 8. Remarks (Truncated on mobile, Full on PC) */}
-                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px] md:max-w-none">
-                    <div className="truncate md:whitespace-normal md:overflow-visible" title={displayRemarks}>
+                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px] md:max-w-[300px]">
+                    <div className="truncate md:truncate block" title={displayRemarks}>
                         {displayRemarks}
                     </div>
                 </TableCell>
