@@ -214,18 +214,48 @@ export async function closeMillingBatch(batchId: number) {
     }
 }
 
-export async function getMillingLogs() {
+export async function removeStockFromMilling(batchId: number, stockId: number) {
     try {
-        const logs = await prisma.millingBatch.findMany({
-            include: {
-                outputs: true,
-                stocks: true
-            },
-            orderBy: { date: 'desc' }
-        })
-        return { success: true, data: logs }
+        await prisma.$transaction(async (tx) => {
+            // 1. Verify batch state
+            const batch = await tx.millingBatch.findUnique({
+                where: { id: batchId },
+                include: { outputs: true }
+            });
+
+            if (!batch) throw new Error('Batch not found');
+            if (batch.isClosed) throw new Error('Cannot modify a closed batch');
+            if (batch.outputs.length > 0) throw new Error('포장 기록이 있어 투입 내역을 수정할 수 없습니다. 포장 기록을 먼저 삭제해주세요.');
+
+            // 2. Unlink Stock (Set back to AVAILABLE)
+            await tx.stock.update({
+                where: { id: stockId },
+                data: {
+                    status: 'AVAILABLE',
+                    batchId: null
+                }
+            });
+
+            // 3. Recalculate Total Input Weight
+            // Fetch remaining stocks for this batch
+            const remainingStocks = await tx.stock.findMany({
+                where: { batchId: batchId }
+            });
+
+            const newTotalInputKg = remainingStocks.reduce((sum, s) => sum + s.weightKg, 0);
+
+            // 4. Update Batch Total Input
+            await tx.millingBatch.update({
+                where: { id: batchId },
+                data: { totalInputKg: newTotalInputKg }
+            });
+        });
+
+        revalidatePath('/milling')
+        revalidatePath('/stocks')
+        return { success: true }
     } catch (error) {
-        console.error('Failed to get milling logs:', error)
-        return { success: false, error: 'Failed to get milling logs' }
+        console.error('Failed to remove stock from milling:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to remove stock' }
     }
 }

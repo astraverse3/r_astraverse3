@@ -1,5 +1,4 @@
-'use client'
-
+import { useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -16,6 +15,9 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
+import { removeStockFromMilling } from '@/app/actions/milling'
 
 interface Stock {
     id: number
@@ -27,13 +29,28 @@ interface Stock {
 }
 
 interface Props {
+    batchId: number
     stocks: Stock[]
     varieties: string
     trigger?: React.ReactNode
+    canDelete?: boolean
 }
 
-export function MillingStockListDialog({ stocks, varieties, trigger }: Props) {
+export function MillingStockListDialog({ batchId, stocks, varieties, trigger, canDelete = false }: Props) {
+    const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
+
+    const handleDelete = async (stockId: number) => {
+        if (!confirm('투입 내역에서 이 톤백을 제외하시겠습니까? (상태가 [보관중]으로 변경됩니다)')) return
+
+        setIsLoading(true)
+        const result = await removeStockFromMilling(batchId, stockId)
+        setIsLoading(false)
+
+        if (!result.success) {
+            alert(result.error || '삭제 실패')
+        }
+    }
 
     return (
         <Dialog>
@@ -63,6 +80,7 @@ export function MillingStockListDialog({ stocks, varieties, trigger }: Props) {
                                 <TableHead>품종</TableHead>
                                 <TableHead>인증</TableHead>
                                 <TableHead className="text-right">중량(kg)</TableHead>
+                                {canDelete && <TableHead className="w-[40px]"></TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -79,6 +97,19 @@ export function MillingStockListDialog({ stocks, varieties, trigger }: Props) {
                                     <TableCell className="text-right font-mono font-bold">
                                         {stock.weightKg.toLocaleString()}
                                     </TableCell>
+                                    {canDelete && (
+                                        <TableCell>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-stone-300 hover:text-red-500 hover:bg-red-50"
+                                                disabled={isLoading}
+                                                onClick={() => handleDelete(stock.id)}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

@@ -82,8 +82,10 @@ export function MillingTableRow({ log }: Props) {
                 {/* 3. Variety - Clickable for Input History */}
                 <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[60px]">
                     <MillingStockListDialog
+                        batchId={log.id}
                         stocks={log.stocks || []}
                         varieties={varieties}
+                        canDelete={log.outputs.length === 0}
                         trigger={
                             <div className="truncate cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
                                 {varieties}
