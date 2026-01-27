@@ -14,6 +14,7 @@ export type MillingOutputInput = {
 export type MillingBatchFormData = {
     date: Date
     title: string
+    millingType: string
     totalInputKg: number
     selectedStockIds: number[]
 }
@@ -49,6 +50,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
                 data: {
                     date: data.date,
                     title: data.title,
+                    millingType: data.millingType,
                     totalInputKg: actualTotalInputKg, // Use server-calculated weight
                 },
             });

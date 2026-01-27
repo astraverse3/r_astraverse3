@@ -33,6 +33,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
     const router = useRouter()
     const [selectedStockIds, setSelectedStockIds] = useState<number[]>([])
     const [remarks, setRemarks] = useState('')
+    const [millingType, setMillingType] = useState('백미')
     const [isLoading, setIsLoading] = useState(false)
 
     // Calculate total input weight based on selection
@@ -60,6 +61,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
         const result = await startMillingBatch({
             date: new Date(),
             title,
+            millingType,
             totalInputKg,
             selectedStockIds,
         })
@@ -91,6 +93,25 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                         >
                             {isLoading ? '저장 중...' : '도정 작업 시작'}
                         </Button>
+                    </div>
+
+                    {/* Milling Type Selector */}
+                    <div>
+                        <Label className="text-sm font-bold text-slate-800 mb-1.5 block">도정 구분</Label>
+                        <div className="flex gap-2">
+                            {['백미', '현미', '칠분도미', '기타'].map((type) => (
+                                <button
+                                    key={type}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-all ${millingType === type
+                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
+                                        }`}
+                                    onClick={() => setMillingType(type)}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Remarks Input */}

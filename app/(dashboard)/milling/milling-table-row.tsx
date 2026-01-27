@@ -20,6 +20,7 @@ import { MillingStockListDialog } from './stock-list-dialog'
 interface MillingBatch {
     id: number
     title: string
+    millingType: string
     date: Date
     totalInputKg: number
     isClosed: boolean
@@ -39,6 +40,11 @@ export function MillingTableRow({ log }: Props) {
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0
     const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety))].join(', ')
     const tonbagCount = (log.stocks || []).length
+
+    // Determine display remarks (Hide '백미')
+    const displayRemarks = log.millingType === '백미' || !log.millingType
+        ? log.title
+        : `${log.millingType} / ${log.title}`
 
     const handleRowClick = async () => {
         if (log.isClosed) {
@@ -116,8 +122,8 @@ export function MillingTableRow({ log }: Props) {
 
                 {/* 8. Remarks (Strictly truncated ~4 chars) */}
                 <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px]">
-                    <div className="truncate" title={log.title}>
-                        {log.title}
+                    <div className="truncate" title={displayRemarks}>
+                        {displayRemarks}
                     </div>
                 </TableCell>
             </TableRow>

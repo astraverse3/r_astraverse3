@@ -27,7 +27,8 @@ model Stock {
 model MillingBatch {
   id             Int                    @id @default(autoincrement())
   date           DateTime               @default(now())
-  title          String                 
+  title          String
+  millingType    String                 @default("백미") // 도정 구분 (백미, 현미, 칠분도미, 기타)
   totalInputKg   Float                  
   stocks         Stock[]                // 투입된 벼 리스트
   outputs        MillingOutputPackage[] // 생산된 포장 리스트
