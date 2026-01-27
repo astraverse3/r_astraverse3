@@ -29,55 +29,65 @@ export function StockFilters() {
 
     const [open, setOpen] = useState(false)
 
+    // Default Year
+    const currentYear = new Date().getFullYear().toString()
+
     // Filter States
-    const [year, setYear] = useState(searchParams.get('productionYear') || '')
+    const [year, setYear] = useState(searchParams.get('productionYear') || currentYear)
     const [variety, setVariety] = useState(searchParams.get('variety') || '')
     const [farmer, setFarmer] = useState(searchParams.get('farmerName') || '')
-    const [cert, setCert] = useState(searchParams.get('certType') || 'ALL')
-    const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
-    const [sort, setSort] = useState(searchParams.get('sort') || 'newest')
+    const [cert, setCert] = useState(searchParams.get('certType') || '유기농')
+    const [status, setStatus] = useState(searchParams.get('status') || 'AVAILABLE')
 
-    // Sync from URL when opening (optional, but good for consistency)
+    // Sort is always newest by default request
+    const sort = 'newest'
+
+    // Sync from URL when opening
     useEffect(() => {
         if (open) {
-            setYear(searchParams.get('productionYear') || '')
+            setYear(searchParams.get('productionYear') || currentYear)
             setVariety(searchParams.get('variety') || '')
             setFarmer(searchParams.get('farmerName') || '')
-            setCert(searchParams.get('certType') || 'ALL')
-            setStatus(searchParams.get('status') || 'ALL')
-            setSort(searchParams.get('sort') || 'newest')
+            setCert(searchParams.get('certType') || '유기농')
+            setStatus(searchParams.get('status') || 'AVAILABLE')
         }
-    }, [open, searchParams])
+    }, [open, searchParams, currentYear])
 
     const activeFilterCount = [
-        year,
+        year && year !== currentYear,
         variety,
         farmer,
-        cert !== 'ALL',
-        status !== 'ALL'
+        cert !== '유기농',
+        status !== 'AVAILABLE'
     ].filter(Boolean).length
 
     const handleApply = () => {
         const params = new URLSearchParams()
+        // If values match defaults, don't set them in URL to keep it clean? 
+        // Or always set them to be explicit? User request implies these are defaults for the UI.
+        // Let's set them if they differ from "ALL", but here defaults are specific values.
+        // If I want "All" behavior, I need "ALL" option. 
+        // User said: "Production Year: Latest Default", "Status: Stored Default", "Variety: All Default", "Cert: Organic Default".
+
         if (year && year !== 'ALL') params.set('productionYear', year)
         if (variety) params.set('variety', variety)
         if (farmer) params.set('farmerName', farmer)
         if (cert && cert !== 'ALL') params.set('certType', cert)
         if (status && status !== 'ALL') params.set('status', status)
-        if (sort && sort !== 'newest') params.set('sort', sort)
+
+        // Removed sort param management as UI is removed and default is implied newest.
 
         router.push(`/stocks?${params.toString()}`)
         setOpen(false)
     }
 
     const handleReset = () => {
-        setYear('')
+        setYear(currentYear)
         setVariety('')
         setFarmer('')
-        setCert('ALL')
-        setStatus('ALL')
-        setSort('newest')
-        router.push('/stocks')
+        setCert('유기농')
+        setStatus('AVAILABLE')
+        router.push(`/stocks?productionYear=${currentYear}&certType=유기농&status=AVAILABLE`)
         setOpen(false)
     }
 
@@ -87,7 +97,7 @@ export function StockFilters() {
                 <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className={`h-8 gap-1.5 ${activeFilterCount > 0 ? 'bg-blue-50 text-blue-600 border-blue-200' : 'text-slate-600'}`}>
                         <SlidersHorizontal className="h-3.5 w-3.5" />
-                        필터
+                        검색
                         {activeFilterCount > 0 && (
                             <Badge variant="secondary" className="h-5 px-1.5 bg-blue-100 text-blue-700 ml-0.5 rounded-full text-[10px]">
                                 {activeFilterCount}
@@ -97,7 +107,7 @@ export function StockFilters() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>검색 및 정렬</DialogTitle>
+                        <DialogTitle>검색</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -109,7 +119,7 @@ export function StockFilters() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">전체</SelectItem>
-                                        {[2023, 2024, 2025, 2026].map(y => (
+                                        {[2026, 2025, 2024, 2023].map(y => (
                                             <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -119,7 +129,7 @@ export function StockFilters() {
                                 <Label>상태</Label>
                                 <Select value={status} onValueChange={setStatus}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="전체" />
+                                        <SelectValue placeholder="상태 선택" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">전체</SelectItem>
@@ -154,21 +164,6 @@ export function StockFilters() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-
-                        <div className="space-y-2 pt-2 border-t">
-                            <Label>정렬 기준</Label>
-                            <Select value={sort} onValueChange={setSort}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="newest">최신순</SelectItem>
-                                    <SelectItem value="oldest">오래된순</SelectItem>
-                                    <SelectItem value="weight_desc">중량 높은순</SelectItem>
-                                    <SelectItem value="weight_asc">중량 낮은순</SelectItem>
-                                </SelectContent>
-                            </Select>
                         </div>
                     </div>
                     <DialogFooter className="flex gap-2 sm:justify-between">
