@@ -51,8 +51,7 @@ export default async function StockPage({
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
     return (
-        <div className="grid grid-cols-1 gap-2 pb-24">
-            {/* Header */}
+        <div className="grid grid-cols-1 gap-1 pb-24">
             {/* Header */}
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between">
@@ -67,13 +66,11 @@ export default async function StockPage({
                         <AddStockDialog varieties={varieties} />
                     </div>
                 </div>
+                <ActiveStockFilters />
             </section>
 
             {/* Dense Table */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-50/50">
-                    <ActiveStockFilters />
-                </div>
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
