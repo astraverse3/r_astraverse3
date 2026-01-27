@@ -144,19 +144,28 @@ export async function getDashboardStats() {
             }))
             .sort((a, b) => b.totalWeight - a.totalWeight); // Sort by total weight
 
+        // Calculate Total Stock for the year (Available + Consumed)
+        const totalStockWeight = processedStockByVariety.reduce((sum, item) => sum + item.totalWeight, 0);
+        const availableStockWeight = totalAvailableStock._sum?.weightKg || 0;
+        const consumedStockWeight = totalStockWeight - availableStockWeight;
+        const millingProgressRate = totalStockWeight > 0 ? (consumedStockWeight / totalStockWeight) * 100 : 0;
+
         return {
             success: true,
             data: {
                 targetYear: latestYear, // For Stock Display
                 productionYear: currentYear, // For Production Display
-                availableStockKg: totalAvailableStock._sum?.weightKg || 0,
+                availableStockKg: availableStockWeight,
+                consumedStockKg: consumedStockWeight, // New Field
+                totalStockKg: totalStockWeight, // New Field
+                millingProgressRate: millingProgressRate, // New Field
                 totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutput,
-                yieldPercentage: yieldPercentage, // New Field (Closed Batches Only)
+                yieldPercentage: yieldPercentage,
                 recentLogs,
                 stockByVariety: processedStockByVariety,
-                milledByVariety: [], // Deprecated/Unused
-                lastUpdated: finalLastUpdated // For Clock
+                milledByVariety: [],
+                lastUpdated: finalLastUpdated
             }
         }
     } catch (error) {

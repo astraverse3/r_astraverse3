@@ -38,18 +38,22 @@ export default async function Home() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                현재 재고량 ({targetYear})
+                원료곡 재고량 ({targetYear})
               </p>
               <div className="mt-2">
                 <p className="text-3xl font-extrabold text-slate-900">
                   {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-500 ml-1">kg</span>
                 </p>
+                <div className="mt-1 text-xs text-slate-500 font-bold flex items-center">
+                  <TrendingUp className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                  도정 진행률 {(stats?.millingProgressRate || 0).toFixed(1)}%
+                </div>
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                현재 생산량 ({currentYear})
+                도정 생산량 ({currentYear})
               </p>
               <div className="mt-2">
                 <p className="text-3xl font-extrabold text-slate-900">
