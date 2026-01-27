@@ -26,16 +26,19 @@ export default async function Home() {
     <>
       <div className="grid grid-cols-1 gap-6 pb-24">
         {/* Dashboard Summary */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">실시간 현황</h2>
-            <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+        <section className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+          <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-slate-800 rounded-full inline-block"></span>
+              실시간 현황
+            </h2>
+            <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-slate-200 shadow-sm">
               <Clock className="w-3.5 h-3.5" />
               {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' }) : '--:--'} 기준
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="p-5 grid grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 원료곡 재고량 ({targetYear})
@@ -69,12 +72,15 @@ export default async function Home() {
         </section>
 
         {/* Stock Levels Vertical List */}
-        <section className="bg-white p-5 -mx-4 sm:mx-0 sm:rounded-3xl sm:shadow-md sm:border sm:border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">품종별 재고 ({targetYear})</h2>
+        <section className="bg-white -mx-4 sm:mx-0 sm:rounded-3xl shadow-md border-y sm:border border-slate-100 overflow-hidden">
+          <div className="bg-slate-50 p-4 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-slate-800 rounded-full inline-block"></span>
+              품종별 재고 ({targetYear})
+            </h2>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col px-5 pb-5 pt-2">
             {stats?.stockByVariety.map((item: any, idx: number) => {
               const availableWeight = item.currentWeight;
               const totalVarietyWeight = item.totalWeight;
@@ -113,19 +119,22 @@ export default async function Home() {
               );
             })}
             {!stats?.stockByVariety.length && (
-              <div className="w-full text-center text-slate-400 text-sm py-8 italic bg-slate-50 rounded-2xl">등록된 재고가 없습니다 ({targetYear})</div>
+              <div className="w-full text-center text-slate-400 text-sm py-8 italic bg-slate-50 rounded-2xl mt-3">등록된 재고가 없습니다 ({targetYear})</div>
             )}
           </div>
         </section>
 
         {/* Recent Logs List */}
-        <section className="bg-white p-5 -mx-4 sm:mx-0 sm:rounded-3xl sm:shadow-md sm:border sm:border-slate-100">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-slate-800">최근 도정 기록</h2>
-            <Link href="/milling" className="text-slate-400 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"><ArrowRight className="w-4 h-4" /></Link>
+        <section className="bg-white -mx-4 sm:mx-0 sm:rounded-3xl shadow-md border-y sm:border border-slate-100 overflow-hidden">
+          <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-slate-800 rounded-full inline-block"></span>
+              최근 도정 기록
+            </h2>
+            <Link href="/milling" className="text-slate-400 p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors shadow-sm"><ArrowRight className="w-4 h-4" /></Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="px-5 pb-5 pt-5 space-y-3">
             {stats?.recentLogs.map((log: any) => {
               const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
               const yieldRate = log.totalInputKg > 0 ? ((productionSum / log.totalInputKg) * 100).toFixed(1) : '0.0';
