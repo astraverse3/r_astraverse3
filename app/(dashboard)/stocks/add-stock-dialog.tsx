@@ -56,7 +56,11 @@ export function AddStockDialog({ varieties }: { varieties: { id: number; name: s
             <DialogTrigger asChild>
                 <Button>입고 등록</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent
+                className="sm:max-w-[425px]"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle>벼 입고 등록</DialogTitle>
                 </DialogHeader>
