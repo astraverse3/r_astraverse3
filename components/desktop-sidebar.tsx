@@ -59,6 +59,31 @@ export function DesktopSidebar() {
                         통계
                     </Link>
                 </div>
+
+                <div className="mt-auto pt-6 border-t border-slate-100">
+                    <p className="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">
+                        Management
+                    </p>
+                    <div className="space-y-1">
+                        <div className="group">
+                            <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${isActive('/admin') ? 'bg-slate-50 text-slate-900' : ''}`}>
+                                <Server className="w-4 h-4" />
+                                <span>관리자 설정</span>
+                            </div>
+                            <div className="pl-10 mt-1 space-y-1">
+                                <Link
+                                    href="/admin/varieties"
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    품종 관리
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
     );
