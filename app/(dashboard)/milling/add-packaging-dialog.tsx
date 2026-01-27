@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -45,6 +45,12 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
             setInternalOpen(newOpen)
         }
     }
+
+    useEffect(() => {
+        if (open) {
+            setOutputs(initialOutputs)
+        }
+    }, [open, initialOutputs])
 
     const handleOpenChange = (newOpen: boolean) => {
         if (newOpen) {
