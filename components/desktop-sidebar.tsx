@@ -23,17 +23,7 @@ export function DesktopSidebar() {
         <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 flex-col">
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-3 mb-10 px-2 group cursor-pointer">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200 group-hover:shadow-blue-300 transition-all flex-shrink-0">
-                        <Server className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap overflow-visible group-hover:text-blue-600 transition-colors">
-                            땅끝황토친환경
-                        </span>
-                        <span className="text-[10px] text-blue-600 font-medium tracking-wider">
-                            IMS v2.4
-                        </span>
-                    </div>
+                    <img src="/logo-full.png" alt="MILL LOG" className="h-10 w-auto object-contain" />
                 </Link>
 
                 <div className="space-y-1">
@@ -42,8 +32,8 @@ export function DesktopSidebar() {
                     <Link
                         href="/stocks"
                         className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/stocks')
-                                ? 'bg-blue-50 text-blue-600'
-                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                             }`}
                     >
                         <Package className="w-4 h-4" />
@@ -53,8 +43,8 @@ export function DesktopSidebar() {
                     <Link
                         href="/milling"
                         className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/milling')
-                                ? 'bg-blue-50 text-blue-600'
-                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                             }`}
                     >
                         <ClipboardList className="w-4 h-4" />
