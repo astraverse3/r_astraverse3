@@ -108,10 +108,49 @@ export async function deleteStock(id: number) {
     }
 }
 
-export async function getStocks() {
+export type GetStocksParams = {
+    productionYear?: string
+    variety?: string
+    farmerName?: string
+    certType?: string
+    status?: string // 'ALL' | 'AVAILABLE' | 'CONSUMED'
+    sort?: string // 'newest' | 'oldest' | 'weight_desc' | 'weight_asc'
+}
+
+export async function getStocks(params?: GetStocksParams) {
     try {
+        const where: any = {}
+
+        // 1. Filter Construction
+        if (params?.productionYear) {
+            where.productionYear = parseInt(params.productionYear)
+        }
+        if (params?.variety) {
+            where.variety = { contains: params.variety } // Remove mode: 'insensitive' if using SQLite/MySQL without case-insensitive config, or keep for Postgres. Prisma default for SQLite is case-sensitive, but contains is usually what we want. Let's start simple.
+        }
+        if (params?.farmerName) {
+            where.farmerName = { contains: params.farmerName }
+        }
+        if (params?.certType && params.certType !== 'ALL') {
+            where.certType = params.certType
+        }
+        if (params?.status && params.status !== 'ALL') {
+            where.status = params.status
+        }
+
+        // 2. Sort Construction
+        let orderBy: any = { createdAt: 'desc' } // Default
+        if (params?.sort === 'oldest') {
+            orderBy = { createdAt: 'asc' }
+        } else if (params?.sort === 'weight_desc') {
+            orderBy = { weightKg: 'desc' }
+        } else if (params?.sort === 'weight_asc') {
+            orderBy = { weightKg: 'asc' }
+        }
+
         const stocks = await prisma.stock.findMany({
-            orderBy: { createdAt: 'desc' }
+            where,
+            orderBy
         })
         return { success: true, data: stocks }
     } catch (error) {
