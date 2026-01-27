@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
+import { useRouter } from 'next/navigation'
 
 interface Props {
     batchId: number
@@ -28,6 +29,7 @@ const PACKAGE_TEMPLATES = [
 ]
 
 export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
+    const router = useRouter()
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
     const [isLoading, setIsLoading] = useState(false)
@@ -61,6 +63,7 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
         if (result.success) {
             setOutputs(initialOutputs)
             setOpen(true)
+            router.refresh()
         } else {
             alert(result.error || '마감 해제 실패')
         }
@@ -75,6 +78,7 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
 
         if (result.success) {
             setOpen(false)
+            router.refresh()
         } else {
             alert(result.error || '마감 실패')
         }
@@ -89,6 +93,7 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
 
         if (result.success) {
             setOpen(false)
+            router.refresh()
         } else {
             alert(result.error || '삭제 실패')
         }
@@ -148,6 +153,7 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
         if (result.success) {
             setOpen(false)
             setOutputs([])
+            router.refresh()
         } else {
             alert(result.error || '저장 실패')
         }
