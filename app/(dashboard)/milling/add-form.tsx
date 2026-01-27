@@ -114,12 +114,12 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                 </div>
 
                 {/* Scrollable Stock List */}
-                <div className="flex-1 overflow-y-auto px-4 pb-4 lg:px-6 lg:pb-6 custom-scrollbar bg-white">
+                <div className="flex-1 overflow-y-auto px-2 pb-4 lg:px-6 lg:pb-6 custom-scrollbar bg-white">
                     <div className="space-y-1">
                         {availableStocks.map(stock => (
                             <div
                                 key={stock.id}
-                                className={`group flex items-center gap-3 py-2 px-3 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-amber-50 border-amber-500' : 'bg-white border-stone-100 hover:bg-stone-50 hover:border-stone-300'}`}
+                                className={`group flex items-center gap-2 py-2 px-2 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-amber-50 border-amber-500' : 'bg-white border-stone-100 hover:bg-stone-50 hover:border-stone-300'}`}
                                 onClick={() => toggleStock(stock.id)}
                             >
                                 {/* Checkbox */}
@@ -128,14 +128,14 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                                 </div>
 
                                 {/* Content Row: BagNo, Variety, Farmer, Cert, Weight */}
-                                <div className="flex-1 flex items-center gap-2 overflow-hidden text-sm">
-                                    <span className="font-mono font-medium text-stone-500 bg-stone-100 px-1.5 rounded text-xs">
+                                <div className="flex-1 flex items-center gap-1.5 overflow-hidden text-sm min-w-0">
+                                    <span className="font-mono font-medium text-stone-500 bg-stone-100 px-1.5 rounded text-xs flex-shrink-0">
                                         {stock.bagNo}
                                     </span>
-                                    <span className="font-bold text-stone-900 truncate shrink-0">
+                                    <span className="font-bold text-stone-900 truncate shrink-0 max-w-[80px] sm:max-w-none">
                                         {stock.variety}
                                     </span>
-                                    <span className="text-stone-500 truncate shrink">
+                                    <span className="text-stone-500 truncate shrink min-w-[40px]">
                                         {stock.farmerName}
                                     </span>
                                     <span className="text-[10px] bg-stone-50 text-stone-400 border border-stone-200 px-1 rounded flex-shrink-0">
@@ -144,7 +144,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                                 </div>
 
                                 {/* Weight */}
-                                <div className="text-sm font-black text-stone-800 flex-shrink-0 pl-2">
+                                <div className="text-sm font-black text-stone-800 flex-shrink-0 pl-1 text-right">
                                     {stock.weightKg.toLocaleString()} <span className="text-[10px] font-medium text-stone-400">kg</span>
                                 </div>
                             </div>
