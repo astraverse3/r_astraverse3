@@ -3,6 +3,7 @@ import { getVarieties } from '@/app/actions/admin'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
+import { ActiveStockFilters } from './active-filters'
 import {
     Table,
     TableBody,
@@ -45,24 +46,27 @@ export default async function StockPage({
     const result = await getStocks(filters)
     const stocks = result.success && result.data ? result.data : []
 
-    // Fetch varieties for AddStockDialog
+    // Fetch varieties for AddStockDialog and StockFilters
     const varietyResult = await getVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
     return (
         <div className="grid grid-cols-1 gap-2 pb-24">
             {/* Header */}
-            <section className="flex items-center justify-between pt-2 px-1">
-                <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-slate-800">재고 관리</h1>
-                    <Badge variant="secondary" className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0">
-                        {stocks.length}
-                    </Badge>
+            <section className="flex flex-col gap-2 pt-2 px-1">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-slate-800">재고 관리</h1>
+                        <Badge variant="secondary" className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0">
+                            {stocks.length}
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <StockFilters varieties={varieties} />
+                        <AddStockDialog varieties={varieties} />
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <StockFilters />
-                    <AddStockDialog varieties={varieties} />
-                </div>
+                <ActiveStockFilters />
             </section>
 
             {/* Dense Table */}
@@ -97,4 +101,3 @@ export default async function StockPage({
         </div>
     )
 }
-
