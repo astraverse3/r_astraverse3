@@ -18,8 +18,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { updateStock, type StockFormData } from '@/app/actions/stock'
-import { Pencil } from 'lucide-react'
+import { updateStock, deleteStock, type StockFormData } from '@/app/actions/stock'
+import { Pencil, Trash2 } from 'lucide-react'
 
 interface Stock {
     id: number
@@ -42,6 +42,7 @@ interface Props {
 export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -68,6 +69,29 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
             setOpen(false)
         } else {
             alert('Failed to update stock: ' + result.error)
+        }
+    }
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.preventDefault() // Prevent form submission if button is inside form
+
+        // Confirmation Logic
+        let message = `[${stock.farmerName}/${stock.variety}] 정보를 삭제하시겠습니까?`
+        if (stock.status === 'CONSUMED') {
+            message = `[${stock.farmerName}/${stock.variety}]는 이미 도정 작업에 사용되었습니다. 삭제 시 데이터 불일치가 발생할 수 있습니다. 그래도 삭제하시겠습니까?`
+        }
+
+        if (!confirm(message)) return
+
+        setIsDeleting(true)
+        const result = await deleteStock(stock.id)
+        setIsDeleting(false)
+
+        if (result.success) {
+            setOpen(false)
+            // The list will update automatically via server action revalidation
+        } else {
+            alert('삭제 실패: ' + result.error)
         }
     }
 
@@ -102,7 +126,7 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             name="productionYear"
                             type="number"
                             defaultValue={stock.productionYear || new Date().getFullYear()}
-                            className="col-span-3"
+                            className="col-span-3 h-9"
                             required
                         />
                     </div>
@@ -114,7 +138,7 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             id="farmerName"
                             name="farmerName"
                             defaultValue={stock.farmerName}
-                            className="col-span-3"
+                            className="col-span-3 h-9"
                             required
                         />
                     </div>
@@ -126,7 +150,7 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             id="variety"
                             name="variety"
                             defaultValue={stock.variety}
-                            className="col-span-3"
+                            className="col-span-3 h-9"
                             required
                         />
                     </div>
@@ -135,7 +159,7 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             인증
                         </Label>
                         <Select name="certType" defaultValue={stock.certType}>
-                            <SelectTrigger className="col-span-3">
+                            <SelectTrigger className="col-span-3 h-9">
                                 <SelectValue placeholder="인증 선택" />
                             </SelectTrigger>
                             <SelectContent>
@@ -154,7 +178,7 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             name="bagNo"
                             type="number"
                             defaultValue={stock.bagNo}
-                            className="col-span-3"
+                            className="col-span-3 h-9"
                             required
                         />
                     </div>
@@ -168,12 +192,21 @@ export function EditStockDialog({ stock, open: controlledOpen, onOpenChange: set
                             type="number"
                             step="0.1"
                             defaultValue={stock.weightKg}
-                            className="col-span-3"
+                            className="col-span-3 h-9"
                             required
                         />
                     </div>
-                    <div className="flex justify-end pt-4">
-                        <Button type="submit" disabled={isLoading}>
+                    <div className="flex justify-between items-center pt-4">
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="text-red-500 hover:text-red-700 hover:no-underline p-0 h-auto font-normal"
+                            disabled={isDeleting || isLoading}
+                            onClick={handleDelete}
+                        >
+                            {isDeleting ? '삭제 중...' : '데이터 삭제'}
+                        </Button>
+                        <Button type="submit" disabled={isLoading || isDeleting}>
                             {isLoading ? '저장 중...' : '수정 완료'}
                         </Button>
                     </div>
