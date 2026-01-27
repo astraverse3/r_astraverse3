@@ -15,7 +15,7 @@ export default function LoginForm() {
                         className="mb-2 block text-xs font-medium text-slate-500 uppercase tracking-wider"
                         htmlFor="username"
                     >
-                        아이디 (Username)
+                        아이디 (ID)
                     </label>
                     <div className="relative">
                         <input

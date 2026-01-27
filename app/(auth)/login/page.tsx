@@ -2,7 +2,7 @@ import LoginForm from '@/app/ui/login-form';
 
 export default function LoginPage() {
     return (
-        <main className="flex items-center justify-center h-screen bg-slate-100">
+        <main className="flex items-center justify-center min-h-screen bg-slate-100 w-full">
             <div className="relative mx-auto flex w-full max-w-[400px] flex-col space-y-2.5 p-4">
                 <div className="bg-white px-6 pb-8 pt-8 rounded-xl shadow-sm border border-slate-200">
                     <div className="text-center mb-6">
