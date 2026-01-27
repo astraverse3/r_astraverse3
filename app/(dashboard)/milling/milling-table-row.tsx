@@ -80,7 +80,7 @@ export function MillingTableRow({ log }: Props) {
                 </TableCell>
 
                 {/* 3. Variety - Clickable for Input History */}
-                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[60px]">
+                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px]">
                     <MillingStockListDialog
                         batchId={log.id}
                         stocks={log.stocks || []}
