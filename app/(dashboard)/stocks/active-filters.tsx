@@ -26,7 +26,7 @@ export function ActiveStockFilters() {
     if (activeFilterCount === 0 && sort === 'newest') return null
 
     return (
-        <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide justify-end">
+        <div className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-hide justify-end">
             {year !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{year}년</Badge>}
             {variety && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{variety}</Badge>}
             {farmer && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{farmer}</Badge>}
