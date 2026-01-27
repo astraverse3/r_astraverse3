@@ -26,8 +26,8 @@ export default async function Home() {
     <>
       <div className="grid grid-cols-1 gap-6 pb-24">
         {/* Dashboard Summary */}
-        <section className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
-          <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
+        <section>
+          <div className="bg-slate-50 p-4 border border-slate-200 rounded-2xl flex items-center justify-between shadow-sm mb-4">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <span className="w-1.5 h-6 bg-slate-800 rounded-full inline-block"></span>
               실시간 현황
@@ -38,7 +38,7 @@ export default async function Home() {
             </span>
           </div>
 
-          <div className="p-5 grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 원료곡 재고량 ({targetYear})
