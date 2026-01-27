@@ -61,28 +61,35 @@ export function MillingTableRow({ log }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
-                onClick={handleRowClick}
+                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0"
             >
                 {/* 1. Date */}
                 <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
                     {new Date(log.date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '').replace('.', '')}
                 </TableCell>
 
-                {/* 2. Status */}
+                {/* 2. Status - Clickable for Packaging/Edit */}
                 <TableCell className="py-2 px-1 text-center w-[40px]">
-                    {log.isClosed ? (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
-                    ) : (
-                        <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
-                    )}
+                    <div onClick={handleRowClick} className="cursor-pointer inline-block">
+                        {log.isClosed ? (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
+                        ) : (
+                            <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
+                        )}
+                    </div>
                 </TableCell>
 
-                {/* 3. Variety (Strictly truncated ~4 chars) */}
+                {/* 3. Variety - Clickable for Input History */}
                 <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[60px]">
-                    <div className="truncate" title={varieties}>
-                        {varieties}
-                    </div>
+                    <MillingStockListDialog
+                        stocks={log.stocks || []}
+                        varieties={varieties}
+                        trigger={
+                            <div className="truncate cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
+                                {varieties}
+                            </div>
+                        }
+                    />
                 </TableCell>
 
                 {/* 4. Tonbag Count */}

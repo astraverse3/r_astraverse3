@@ -46,18 +46,18 @@ export function MillingStockListDialog({ stocks, varieties, trigger }: Props) {
                     </button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden bg-white">
                 <DialogHeader className="p-6 pb-2">
-                    <DialogTitle className="text-2xl font-black text-stone-900 italic">
-                        INPUT DETAILS <span className="text-stone-300 font-normal not-italic">투입 상세</span>
+                    <DialogTitle className="text-lg font-bold">
+                        투입 상세 내역
                     </DialogTitle>
-                    <p className="text-sm text-stone-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역</p>
+                    <p className="text-sm text-stone-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
                     <Table>
                         <TableHeader className="sticky top-0 bg-white z-10">
-                            <TableRow>
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
                                 <TableHead className="w-[80px]">번호</TableHead>
                                 <TableHead>농가명</TableHead>
                                 <TableHead>품종</TableHead>
