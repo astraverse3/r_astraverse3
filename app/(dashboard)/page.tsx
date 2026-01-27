@@ -44,8 +44,8 @@ export default async function Home() {
                 <p className="text-3xl font-extrabold text-slate-900">
                   {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-500 ml-1">kg</span>
                 </p>
-                <div className="mt-1 text-xs text-slate-500 font-bold flex items-center">
-                  <TrendingUp className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                <div className="mt-1 text-xs text-emerald-600 font-bold flex items-center">
+                  <TrendingUp className="w-3.5 h-3.5 mr-1" />
                   도정 진행률 {(stats?.millingProgressRate || 0).toFixed(1)}%
                 </div>
               </div>
