@@ -12,7 +12,7 @@ export type VarietyFormData = {
 export async function getVarieties() {
     try {
         const varieties = await prisma.variety.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { name: 'asc' }
         })
         return { success: true, data: varieties }
     } catch (error) {
