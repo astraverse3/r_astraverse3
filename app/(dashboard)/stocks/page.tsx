@@ -27,16 +27,18 @@ interface Stock {
 export default async function StockPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined }
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+    const resolvedParams = await searchParams
+
     // Parse searchParams into GetStocksParams
     const filters: GetStocksParams = {
-        productionYear: typeof searchParams.productionYear === 'string' ? searchParams.productionYear : undefined,
-        variety: typeof searchParams.variety === 'string' ? searchParams.variety : undefined,
-        farmerName: typeof searchParams.farmerName === 'string' ? searchParams.farmerName : undefined,
-        certType: typeof searchParams.certType === 'string' ? searchParams.certType : undefined,
-        status: typeof searchParams.status === 'string' ? searchParams.status : undefined,
-        sort: typeof searchParams.sort === 'string' ? searchParams.sort : undefined,
+        productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
+        variety: typeof resolvedParams.variety === 'string' ? resolvedParams.variety : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
+        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+        status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
+        sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
     }
 
     const result = await getStocks(filters)
