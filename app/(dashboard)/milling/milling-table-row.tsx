@@ -131,6 +131,8 @@ export function MillingTableRow({ log }: Props) {
             <AddPackagingDialog
                 batchId={log.id}
                 batchTitle={log.title}
+                millingType={log.millingType}
+                totalInputKg={log.totalInputKg}
                 isClosed={log.isClosed}
                 initialOutputs={log.outputs}
                 open={packagingOpen}

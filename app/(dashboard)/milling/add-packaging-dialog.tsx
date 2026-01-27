@@ -15,6 +15,8 @@ import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMilli
 interface Props {
     batchId: number
     batchTitle: string
+    millingType?: string
+    totalInputKg?: number
     isClosed?: boolean
     initialOutputs?: MillingOutputInput[]
 }
@@ -25,7 +27,7 @@ const PACKAGE_TEMPLATES = [
     { label: '5kg', weight: 5 },
 ]
 
-export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
+export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
     const [isLoading, setIsLoading] = useState(false)
@@ -168,8 +170,18 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
             )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>포장 기록 추가</DialogTitle>
-                    <div className="text-sm text-stone-500">{batchTitle}</div>
+                    <DialogTitle>포장 기록 관리</DialogTitle>
+                    <div className="flex items-center gap-2 mt-1">
+                        {millingType && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                                {millingType}
+                            </span>
+                        )}
+                        <span className="text-sm font-bold text-slate-700">
+                            투입: {totalInputKg?.toLocaleString()}kg
+                        </span>
+                        {batchTitle && <span className="text-sm text-slate-400">| {batchTitle}</span>}
+                    </div>
                 </DialogHeader>
                 <div className="py-6 space-y-6">
                     <div className="space-y-3">
@@ -184,7 +196,7 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
                     </div>
 
                     <div className="space-y-3">
-                        <Label>입력된 내역</Label>
+                        <Label>생산(포장) 내역</Label>
                         <div className="space-y-2 min-h-[100px]">
                             {outputs.map((o) => (
                                 <div key={o.packageType} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
