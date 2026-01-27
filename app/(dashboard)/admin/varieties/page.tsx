@@ -2,10 +2,19 @@ import Link from 'next/link'
 import { ChevronLeft, Pencil } from 'lucide-react'
 import { getVarieties } from '@/app/actions/admin'
 import { VarietyDialog } from './variety-dialog'
+import { DeleteVarietyButton } from './delete-button'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
 
 export default async function VarietyPage() {
     const result = await getVarieties()
-    const varieties = result.success && result.data ? result.data : []
+    const varieties = (result.success && result.data ? result.data : []) as { id: number; name: string }[]
 
     return (
         <div className="space-y-6 pb-20">
@@ -20,35 +29,51 @@ export default async function VarietyPage() {
                 <VarietyDialog mode="create" />
             </div>
 
-            {/* Variety List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                {varieties.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
-                        {varieties.map((variety) => (
-                            <div key={variety.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
-                                <div>
-                                    <span className="font-bold text-slate-800">{variety.name}</span>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        ID: {variety.id}
-                                    </p>
-                                </div>
-                                <VarietyDialog
-                                    mode="edit"
-                                    variety={variety}
-                                    trigger={
-                                        <button className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors">
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                    }
-                                />
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="p-10 text-center text-slate-400 text-sm">
-                        등록된 품종이 없습니다.
-                    </div>
-                )}
+            {/* Variety List Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                            <TableHead className="w-[60px] text-center font-bold text-slate-500">No</TableHead>
+                            <TableHead className="font-bold text-slate-500">품종명</TableHead>
+                            <TableHead className="w-[100px] text-center font-bold text-slate-500">관리</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {varieties.length > 0 ? (
+                            varieties.map((variety, index) => (
+                                <TableRow key={variety.id} className="hover:bg-slate-50">
+                                    <TableCell className="text-center font-medium text-slate-600">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell className="font-medium text-slate-800">
+                                        {variety.name}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <VarietyDialog
+                                                mode="edit"
+                                                variety={variety}
+                                                trigger={
+                                                    <button className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors" title="수정">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                }
+                                            />
+                                            <DeleteVarietyButton id={variety.id} />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableHead colSpan={3} className="h-32 text-center text-slate-400 font-medium">
+                                    등록된 품종이 없습니다.
+                                </TableHead>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
 
             <p className="text-xs text-slate-400 text-center px-4">
