@@ -86,15 +86,20 @@ export function MillingTableRow({ log }: Props) {
                 </TableCell>
 
                 {/* 3. Variety - Clickable for Input History */}
-                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px]">
+                <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px] md:max-w-none">
                     <MillingStockListDialog
                         batchId={log.id}
                         stocks={log.stocks || []}
                         varieties={varieties}
                         canDelete={log.outputs.length === 0}
                         trigger={
-                            <div className="truncate cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
-                                {varieties.length > 4 ? `${varieties.slice(0, 4)}..` : varieties}
+                            <div className="group cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
+                                <span className="md:hidden">
+                                    {varieties.length > 4 ? `${varieties.slice(0, 4)}..` : varieties}
+                                </span>
+                                <span className="hidden md:inline">
+                                    {varieties}
+                                </span>
                             </div>
                         }
                     />
@@ -120,9 +125,9 @@ export function MillingTableRow({ log }: Props) {
                     {totalRiceKg > 0 ? `${Math.round(yieldRate)}%` : '-'}
                 </TableCell>
 
-                {/* 8. Remarks (Strictly truncated ~4 chars) */}
-                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px]">
-                    <div className="truncate" title={displayRemarks}>
+                {/* 8. Remarks (Truncated on mobile, Full on PC) */}
+                <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px] md:max-w-none">
+                    <div className="truncate md:whitespace-normal md:overflow-visible" title={displayRemarks}>
                         {displayRemarks}
                     </div>
                 </TableCell>

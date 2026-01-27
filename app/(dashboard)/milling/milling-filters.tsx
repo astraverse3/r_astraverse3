@@ -155,6 +155,7 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
                                     <SelectItem value="ALL">전체</SelectItem>
                                     <SelectItem value="upto_50">50% 이하</SelectItem>
                                     <SelectItem value="upto_60">60% 이하</SelectItem>
+                                    <SelectItem value="upto_70">70% 이하</SelectItem>
                                     <SelectItem value="over_70">70% 이상</SelectItem>
                                 </SelectContent>
                             </Select>

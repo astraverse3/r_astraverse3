@@ -330,6 +330,7 @@ export async function getMillingLogs(params: GetMillingLogsParams = {}) {
 
                 if (yieldRate === 'upto_50') return rate <= 50
                 if (yieldRate === 'upto_60') return rate <= 60
+                if (yieldRate === 'upto_70') return rate <= 70
                 if (yieldRate === 'over_70') return rate >= 70
                 return true
             })

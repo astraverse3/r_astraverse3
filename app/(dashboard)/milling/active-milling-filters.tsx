@@ -25,6 +25,7 @@ export function ActiveMillingFilters() {
     const getYieldLabel = (val: string) => {
         if (val === 'upto_50') return '수율 50%↓'
         if (val === 'upto_60') return '수율 60%↓'
+        if (val === 'upto_70') return '수율 70%↓'
         if (val === 'over_70') return '수율 70%↑'
         return val
     }
