@@ -259,3 +259,19 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
         return { success: false, error: error instanceof Error ? error.message : 'Failed to remove stock' }
     }
 }
+
+export async function getMillingLogs() {
+    try {
+        const logs = await prisma.millingBatch.findMany({
+            include: {
+                outputs: true,
+                stocks: true
+            },
+            orderBy: { date: 'desc' }
+        })
+        return { success: true, data: logs }
+    } catch (error) {
+        console.error('Failed to get milling logs:', error)
+        return { success: false, error: 'Failed to get milling logs' }
+    }
+}
