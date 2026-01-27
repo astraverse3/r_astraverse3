@@ -46,7 +46,6 @@ export default async function MillingListPage() {
                             <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500">생산</TableHead>
                             <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500">수율</TableHead>
                             <TableHead className="py-2 px-2 text-left text-xs font-bold text-slate-500">비고</TableHead>
-                            <TableHead className="py-2 px-2 text-right text-xs font-bold text-slate-500 w-[40px]">관리</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

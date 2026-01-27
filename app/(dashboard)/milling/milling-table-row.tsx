@@ -58,36 +58,11 @@ export function MillingTableRow({ log }: Props) {
         }
     }
 
-    const handleCloseBatch = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        if (!confirm('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.')) return
-
-        setIsActionLoading(true)
-        const result = await closeMillingBatch(log.id)
-        setIsActionLoading(false)
-
-        if (!result.success) {
-            alert(result.error || '마감 실패')
-        }
-    }
-
-    const handleDeleteBatch = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        if (!confirm('정말 삭제하시겠습니까? 투입된 재고는 [보관중] 상태로 복구됩니다.')) return
-
-        setIsActionLoading(true)
-        const result = await deleteMillingBatch(log.id)
-        setIsActionLoading(false)
-
-        if (!result.success) {
-            alert(result.error || '삭제 실패')
-        }
-    }
-
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0"
+                className="group hover:bg-blue-50/50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
+                onClick={handleRowClick}
             >
                 {/* 1. Date */}
                 <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
@@ -96,13 +71,11 @@ export function MillingTableRow({ log }: Props) {
 
                 {/* 2. Status */}
                 <TableCell className="py-2 px-2 text-center w-[50px]">
-                    <div onClick={handleRowClick} className="cursor-pointer inline-block">
-                        {log.isClosed ? (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
-                        ) : (
-                            <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
-                        )}
-                    </div>
+                    {log.isClosed ? (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
+                    ) : (
+                        <Badge variant="default" className="text-[10px] px-1 py-0 bg-blue-500 hover:bg-blue-600 animate-pulse">진행</Badge>
+                    )}
                 </TableCell>
 
                 {/* 3. Variety (Previously Title/Variety mixed) */}
@@ -135,41 +108,11 @@ export function MillingTableRow({ log }: Props) {
                     {totalRiceKg > 0 ? `${Math.round(yieldRate)}%` : '-'}
                 </TableCell>
 
-                {/* 8. Remarks (Title) */}
-                <TableCell className="py-2 px-2 text-left text-xs text-slate-400 truncate max-w-[120px]">
-                    {log.title}
-                </TableCell>
-
-                {/* 9. Actions */}
-                <TableCell className="py-2 px-2 text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-300 hover:text-slate-600">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel className="text-xs">관리 메뉴</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setPackagingOpen(true)} className="gap-2 text-xs">
-                                <Package className="h-3.5 w-3.5" />
-                                포장 관리
-                            </DropdownMenuItem>
-                            {!log.isClosed && (
-                                <>
-                                    <DropdownMenuItem onClick={handleCloseBatch} className="gap-2 text-xs text-amber-600 focus:text-amber-700 focus:bg-amber-50">
-                                        <Lock className="h-3.5 w-3.5" />
-                                        작업 마감
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleDeleteBatch} className="gap-2 text-xs text-red-600 focus:text-red-700 focus:bg-red-50">
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                        작업 삭제
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                {/* 8. Remarks (Title) - Truncated with Tooltip */}
+                <TableCell className="py-2 px-2 text-left text-xs text-slate-400">
+                    <div className="truncate max-w-[100px]" title={log.title}>
+                        {log.title}
+                    </div>
                 </TableCell>
             </TableRow>
 

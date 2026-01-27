@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,8 +9,8 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Minus, Package, Trash2 } from 'lucide-react'
-import { updatePackagingLogs, reopenMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
+import { Plus, Minus, Package, Trash2, Lock } from 'lucide-react'
+import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
 
 interface Props {
     batchId: number
@@ -32,10 +30,10 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
     const [isLoading, setIsLoading] = useState(false)
 
+    // ... (keep state logic same) ...
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
 
-    // Custom setOpen that handles both controlled and internal state
     const setOpen = (newOpen: boolean) => {
         if (isControlled) {
             setControlledOpen?.(newOpen)
@@ -44,7 +42,6 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
         }
     }
 
-    // Reset internal state to initialOutputs whenever the dialog is opened
     const handleOpenChange = (newOpen: boolean) => {
         if (newOpen) {
             setOutputs(initialOutputs)
@@ -64,6 +61,34 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
             setOpen(true)
         } else {
             alert(result.error || '마감 해제 실패')
+        }
+    }
+
+    const handleCloseBatch = async () => {
+        if (!confirm('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.')) return
+
+        setIsLoading(true)
+        const result = await closeMillingBatch(batchId)
+        setIsLoading(false)
+
+        if (result.success) {
+            setOpen(false)
+        } else {
+            alert(result.error || '마감 실패')
+        }
+    }
+
+    const handleDeleteBatch = async () => {
+        if (!confirm('정말 삭제하시겠습니까? 투입된 재고는 [보관중] 상태로 복구됩니다.')) return
+
+        setIsLoading(true)
+        const result = await deleteMillingBatch(batchId)
+        setIsLoading(false)
+
+        if (result.success) {
+            setOpen(false)
+        } else {
+            alert(result.error || '삭제 실패')
         }
     }
 
@@ -121,7 +146,6 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
         if (result.success) {
             setOpen(false)
             setOutputs([])
-            // Reload page is handled by revalidatePath in action
         } else {
             alert(result.error || '저장 실패')
         }
@@ -184,11 +208,39 @@ export function AddPackagingDialog({ batchId, batchTitle, isClosed, initialOutpu
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-between items-center border-t">
-                        <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
-                        <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
-                            {isLoading ? '저장 중...' : '기록 저장'}
-                        </Button>
+                    {/* Main Actions: Close, Delete, Save */}
+                    <div className="pt-4 border-t space-y-4">
+                        <div className="flex justify-between items-center">
+                            <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
+                            <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
+                                {isLoading ? '저장 중...' : '기록 저장'}
+                            </Button>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                            {!isClosed && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1"
+                                    disabled={isLoading}
+                                    onClick={handleCloseBatch}
+                                >
+                                    <Lock className="mr-1 h-3 w-3" /> 작업 마감
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
+                                disabled={isLoading}
+                                onClick={handleDeleteBatch}
+                            >
+                                <Trash2 className="mr-1 h-3 w-3" /> 작업 삭제
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </DialogContent>
