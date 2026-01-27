@@ -64,7 +64,7 @@ model User {
   updatedAt   DateTime @updatedAt
 }
 
-// 5. Variety (Ç°Á¾ °ü¸®)
+// 5. Variety (í’ˆì¢… ê´€ë¦¬)
 model Variety {
   id        Int      @id @default(autoincrement())
   name      String   @unique
