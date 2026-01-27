@@ -127,19 +127,21 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                                     {selectedStockIds.includes(stock.id) && <Plus className="w-3.5 h-3.5 text-white" />}
                                 </div>
 
-                                {/* Content Row: BagNo, Variety, Farmer, Cert, Weight */}
-                                <div className="flex-1 flex items-center gap-1.5 overflow-hidden text-sm min-w-0">
-                                    <span className="font-mono font-medium text-slate-500 bg-slate-100 px-1.5 rounded text-xs flex-shrink-0">
+                                {/* Content Grid: BagNo, Variety, Cert, Farmer, Weight */}
+                                <div className="flex-1 grid grid-cols-[30px_50px_40px_1fr] gap-2 items-center text-sm min-w-0">
+                                    <span className="font-mono font-medium text-slate-500 bg-slate-100 px-1 rounded text-xs text-center">
                                         {stock.bagNo}
                                     </span>
-                                    <span className="font-bold text-slate-900 truncate shrink-0 max-w-[80px] sm:max-w-none">
+                                    <span className="font-bold text-slate-900 truncate" title={stock.variety}>
                                         {stock.variety}
                                     </span>
-                                    <span className="text-slate-500 truncate shrink min-w-[40px]">
-                                        {stock.farmerName}
+                                    <span className="flex justify-center">
+                                        <span className="text-[10px] bg-slate-50 text-slate-400 border border-slate-200 px-1 rounded whitespace-nowrap">
+                                            {stock.certType}
+                                        </span>
                                     </span>
-                                    <span className="text-[10px] bg-slate-50 text-slate-400 border border-slate-200 px-1 rounded flex-shrink-0">
-                                        {stock.certType}
+                                    <span className="text-slate-500 truncate text-xs" title={stock.farmerName}>
+                                        {stock.farmerName}
                                     </span>
                                 </div>
 
