@@ -54,11 +54,11 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
     }, [open, searchParams, currentYear])
 
     const activeFilterCount = [
-        year && year !== currentYear,
-        variety,
-        farmer,
-        cert !== '유기농',
-        status !== 'AVAILABLE'
+        year !== 'ALL',
+        variety !== 'ALL' && variety !== '',
+        farmer !== '',
+        cert !== 'ALL',
+        status !== 'ALL'
     ].filter(Boolean).length
 
     const handleApply = () => {

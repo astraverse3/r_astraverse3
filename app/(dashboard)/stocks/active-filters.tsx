@@ -16,11 +16,11 @@ export function ActiveStockFilters() {
     const sort = searchParams.get('sort') || 'newest'
 
     const activeFilterCount = [
-        year !== currentYear,
-        variety,
-        farmer,
-        cert !== '유기농',
-        status !== 'AVAILABLE'
+        year !== 'ALL',
+        variety !== 'ALL' && variety !== '',
+        farmer !== '',
+        cert !== 'ALL',
+        status !== 'ALL'
     ].filter(Boolean).length
 
     if (activeFilterCount === 0 && sort === 'newest') return null
