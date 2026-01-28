@@ -60,7 +60,7 @@ export function ExcelButtons() {
     }
 
     return (
-        <div className="flex gap-2">
+        <div className="hidden md:flex gap-2">
             <input
                 type="file"
                 ref={fileInputRef}
