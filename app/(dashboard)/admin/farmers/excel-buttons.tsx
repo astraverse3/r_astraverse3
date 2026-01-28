@@ -4,19 +4,13 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload } from 'lucide-react'
 import { exportFarmers, importFarmers } from '@/app/actions/excel'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { useSearchParams } from 'next/navigation'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
-    const [targetYear, setTargetYear] = useState<string>('2025')
+    const searchParams = useSearchParams()
 
     const handleExport = async () => {
         setExporting(true)
@@ -45,6 +39,10 @@ export function ExcelButtons() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        // Determine year from search params or default
+        const paramYear = searchParams.get('cropYear')
+        const targetYear = (paramYear && paramYear !== 'ALL') ? paramYear : '2025'
+
         if (!confirm(`${targetYear}년도 데이터로 등록하시겠습니까? (기준년도: ${targetYear})`)) {
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
@@ -70,17 +68,6 @@ export function ExcelButtons() {
 
     return (
         <div className="hidden md:flex gap-2 items-center">
-            <Select value={targetYear} onValueChange={setTargetYear}>
-                <SelectTrigger className="w-[100px] h-9 text-sm bg-white">
-                    <SelectValue placeholder="년도" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="2024">2024년</SelectItem>
-                    <SelectItem value="2025">2025년</SelectItem>
-                    <SelectItem value="2026">2026년</SelectItem>
-                </SelectContent>
-            </Select>
-
             <input
                 type="file"
                 ref={fileInputRef}
