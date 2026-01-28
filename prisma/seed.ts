@@ -24,14 +24,21 @@ async function main() {
 
     // 2. Create Sample Farmer & Cert
     // 2. Create Sample Producer Group
+    // 2. Create Sample Producer Group
     const group = await prisma.producerGroup.upsert({
-        where: { code: '01' },
+        where: {
+            code_cropYear: {
+                code: '01',
+                cropYear: 2025
+            }
+        },
         update: {},
         create: {
             name: '해남작목반',
             code: '01',
             certNo: '15-02-3-06',
             certType: '유기농',
+            cropYear: 2025
         }
     })
 

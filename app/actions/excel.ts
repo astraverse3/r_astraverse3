@@ -44,6 +44,9 @@ export async function exportFarmers() {
 export async function importFarmers(formData: FormData) {
     try {
         const file = formData.get('file') as File
+        const yearInput = formData.get('year') // Get year from FormData
+        const targetYear = yearInput ? parseInt(yearInput.toString()) : 2025
+
         if (!file) return { success: false, error: '파일이 없습니다.' }
 
         const buffer = await file.arrayBuffer()
@@ -61,8 +64,8 @@ export async function importFarmers(formData: FormData) {
                 const groupName = row['작목반명'] ? String(row['작목반명']) : undefined
                 const certNo = row['인증번호'] ? String(row['인증번호']) : undefined
 
-                const farmerNo = row['농가번호'] ? String(row['농가번호']) : undefined
-                const farmerName = row['농가명'] ? String(row['농가명']) : undefined
+                const farmerNo = row['생산자번호'] ? String(row['생산자번호']) : (row['농가번호'] ? String(row['농가번호']) : undefined) // Support both old and new headers
+                const farmerName = row['생산자명'] ? String(row['생산자명']) : (row['농가명'] ? String(row['농가명']) : undefined)
                 const items = row['취급품목'] ? String(row['취급품목']) : undefined
 
                 // Validate Essential Fields
@@ -79,7 +82,12 @@ export async function importFarmers(formData: FormData) {
                 else if (thirdChar === '3') certType = '무농약'
 
                 let group = await tx.producerGroup.findUnique({
-                    where: { code: groupCode }
+                    where: {
+                        code_cropYear: {
+                            code: groupCode,
+                            cropYear: targetYear
+                        }
+                    }
                 })
 
                 if (!group) {
@@ -88,11 +96,13 @@ export async function importFarmers(formData: FormData) {
                             code: groupCode,
                             name: groupName,
                             certNo: certNo,
-                            certType: certType
+                            certType: certType,
+                            cropYear: targetYear
                         }
                     })
                 } else {
                     // Update Group Info if changed (e.g. CertNo update)
+                    // Only update if it's the same year
                     if (group.name !== groupName || group.certNo !== certNo) {
                         group = await tx.producerGroup.update({
                             where: { id: group.id },
@@ -139,7 +149,7 @@ export async function importFarmers(formData: FormData) {
         })
 
         revalidatePath('/admin/farmers')
-        return { success: true, message: `${successCount}건 처리 완료` }
+        return { success: true, message: `${targetYear}년 데이터: ${successCount}건 처리 완료` }
 
     } catch (error) {
         console.error('Import failed:', error)
