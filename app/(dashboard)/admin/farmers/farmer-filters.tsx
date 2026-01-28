@@ -22,11 +22,13 @@ export function FarmerFilters() {
     const [groupName, setGroupName] = useState(searchParams.get('groupName') || '')
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [certType, setCertType] = useState(searchParams.get('certType') || 'ALL')
+    const [cropYear, setCropYear] = useState(searchParams.get('cropYear') || 'ALL')
 
     const activeFilterCount = [
         groupName !== '',
         farmerName !== '',
-        certType !== 'ALL'
+        certType !== 'ALL',
+        cropYear !== 'ALL'
     ].filter(Boolean).length
 
     const handleApply = () => {
@@ -34,6 +36,7 @@ export function FarmerFilters() {
         if (groupName) params.set('groupName', groupName)
         if (farmerName) params.set('farmerName', farmerName)
         if (certType && certType !== 'ALL') params.set('certType', certType)
+        if (cropYear && cropYear !== 'ALL') params.set('cropYear', cropYear)
 
         router.push(`/admin/farmers?${params.toString()}`)
     }
@@ -42,6 +45,7 @@ export function FarmerFilters() {
         setGroupName('')
         setFarmerName('')
         setCertType('ALL')
+        setCropYear('ALL')
         router.push('/admin/farmers')
     }
 
@@ -53,7 +57,22 @@ export function FarmerFilters() {
 
     return (
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500">생산년도</Label>
+                    <Select value={cropYear} onValueChange={setCropYear}>
+                        <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="전체" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">전체</SelectItem>
+                            <SelectItem value="2024">2024년</SelectItem>
+                            <SelectItem value="2025">2025년</SelectItem>
+                            <SelectItem value="2026">2026년</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="space-y-2">
                     <Label className="text-xs font-bold text-slate-500">작목반명</Label>
                     <Input

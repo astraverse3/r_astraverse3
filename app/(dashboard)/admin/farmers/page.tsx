@@ -32,11 +32,12 @@ export default async function AdminFarmersPage({
                     <p className="text-slate-500">생산자 목록과 인증 정보를 관리합니다.</p>
                 </div>
                 <div className="flex gap-2">
-                    <FarmerFilters />
                     <ExcelButtons />
                     <AddFarmerDialog />
                 </div>
             </div>
+
+            <FarmerFilters />
 
             <Suspense fallback={<div>Loading...</div>}>
                 <FarmerList farmers={farmers} />
