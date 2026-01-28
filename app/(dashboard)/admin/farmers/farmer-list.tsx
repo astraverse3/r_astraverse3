@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, ShieldCheck, MoreHorizontal } from 'lucide-react'
+import { Edit, Trash2, MoreHorizontal } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,25 +20,27 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { deleteFarmer, type FarmerFormData } from '@/app/actions/admin'
+import { deleteFarmer } from '@/app/actions/admin'
 import { AddFarmerDialog } from './add-farmer-dialog'
-import { ManageCertificationsDialog } from './manage-certifications-dialog'
 
 interface Farmer {
     id: number
     name: string
+    farmerNo: string
+    items: string | null
     phone: string | null
-    certifications: {
+    groupId: number
+    group: {
         id: number
-        certType: string
+        code: string
+        name: string
         certNo: string
-        personalNo: string | null
-    }[]
+        certType: string
+    }
 }
 
 export function FarmerList({ farmers }: { farmers: Farmer[] }) {
     const [editingFarmer, setEditingFarmer] = useState<Farmer | null>(null)
-    const [managingCertFarmer, setManagingCertFarmer] = useState<Farmer | null>(null)
 
     const handleDelete = async (id: number) => {
         if (!confirm('정말 삭제하시겠습니까? 관련 재고가 있으면 삭제할 수 없습니다.')) return
@@ -53,39 +55,40 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50">
-                        <TableHead className="w-[80px]">ID</TableHead>
+                        <TableHead>작목반</TableHead>
+                        <TableHead>인증번호</TableHead>
+                        <TableHead>No.</TableHead>
                         <TableHead>생산자명</TableHead>
+                        <TableHead>품목</TableHead>
                         <TableHead>연락처</TableHead>
-                        <TableHead>인증 정보</TableHead>
                         <TableHead className="text-right">관리</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {farmers.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                                 등록된 생산자가 없습니다.
                             </TableCell>
                         </TableRow>
                     ) : (
                         farmers.map((farmer) => (
                             <TableRow key={farmer.id}>
-                                <TableCell className="font-mono text-xs text-slate-500">{farmer.id}</TableCell>
-                                <TableCell className="font-bold">{farmer.name}</TableCell>
-                                <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
                                 <TableCell>
-                                    <div className="flex flex-wrap gap-1">
-                                        {farmer.certifications.length > 0 ? (
-                                            farmer.certifications.map(cert => (
-                                                <Badge key={cert.id} variant="secondary" className="text-[10px] font-normal border-slate-200">
-                                                    {cert.certType} {cert.certNo}
-                                                </Badge>
-                                            ))
-                                        ) : (
-                                            <span className="text-xs text-slate-400">인증 없음</span>
-                                        )}
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-slate-800">{farmer.group.name}</span>
+                                        <span className="text-xs text-slate-400">Code: {farmer.group.code}</span>
                                     </div>
                                 </TableCell>
+                                <TableCell>
+                                    <Badge variant="secondary" className="font-normal border-slate-200">
+                                        {farmer.group.certType} {farmer.group.certNo}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-mono">{farmer.farmerNo}</TableCell>
+                                <TableCell className="font-bold text-slate-900">{farmer.name}</TableCell>
+                                <TableCell className="text-slate-600 text-sm">{farmer.items || '-'}</TableCell>
+                                <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
                                 <TableCell className="text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -95,9 +98,6 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuLabel>작업</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => setManagingCertFarmer(farmer)}>
-                                                <ShieldCheck className="mr-2 h-4 w-4" /> 인증 관리
-                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setEditingFarmer(farmer)}>
                                                 <Edit className="mr-2 h-4 w-4" /> 정보 수정
                                             </DropdownMenuItem>
@@ -120,15 +120,6 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                     farmer={editingFarmer}
                     open={!!editingFarmer}
                     onOpenChange={(open) => !open && setEditingFarmer(null)}
-                />
-            )}
-
-            {/* Manage Cert Dialog */}
-            {managingCertFarmer && (
-                <ManageCertificationsDialog
-                    farmer={managingCertFarmer}
-                    open={!!managingCertFarmer}
-                    onOpenChange={(open) => !open && setManagingCertFarmer(null)}
                 />
             )}
         </div>

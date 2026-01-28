@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getFarmersWithCerts } from '@/app/actions/admin'
+import { getFarmersWithGroups } from '@/app/actions/admin'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddFarmerDialog } from './add-farmer-dialog'
@@ -7,7 +7,7 @@ import { FarmerList } from './farmer-list'
 import { ExcelButtons } from './excel-buttons'
 
 export default async function AdminFarmersPage() {
-    const response = await getFarmersWithCerts()
+    const response = await getFarmersWithGroups()
     const farmers = response.success ? response.data || [] : []
 
     return (

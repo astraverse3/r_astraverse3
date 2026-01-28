@@ -24,7 +24,7 @@ import { Stock } from './page' // Import Stock interface
 
 interface Props {
     stock: Stock
-    farmers: { id: number; name: string; certifications: any[] }[]
+    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[]
     varieties: { id: number; name: string }[]
     open?: boolean
     onOpenChange?: (open: boolean) => void
@@ -46,46 +46,26 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
         }
     }
 
-    // Initial State from stock
-    // Find farmer ID from stock's certification relation
-    // We assume stock has certification loaded which has farmer loaded
-    // But stock interface in props might depend on what is passed. 
-    // From page.tsx: stock struct has certification.farmer.name. But NOT farmer ID?
-    // Wait, Stock interface in page.tsx:
-    // certification: { certType: string; farmer: { name: string } }
-    // It does NOT have farmerId.
-    // However, I can infer farmer name matching? No, unique ID is better.
-    // IMPORTANT: I need to update Stock interface in page.tsx and getStocks to include IDs!
-    // But for now, to fix build, I will try to find farmer by name (risky but works if names unique) OR I should really update getStocks to include IDs.
-    // getStocks includes `certification: { include: { farmer: true } }` so it SHOULD return farmer object including ID!
-    // I will assume stock.certification.farmer.id exists if I simply add it to interface in page.tsx.
+    // Initial State logic
+    // We try to match the farmer by name since ID might not be in the Stock view model yet, or we assume it is refetched.
+    // If stock.farmer.name is available, we use it.
+    const initialFarmerId = farmers.find(f => f.name === stock.farmer?.name)?.id.toString() || ''
 
-    // For now I will assume I can access it if I cast or if I fix page.tsx interface.
-    // Let's rely on finding farmer by name if ID missing, or just assume ID is there (runtime object likely has it).
+    // We assume variety name is unique or we rely on ID if available
+    const initialVarietyId = (stock as any).varietyId?.toString() || varieties.find(v => v.name === stock.variety.name)?.id.toString() || ''
 
-    // Actually, `stock.certification` has `farmerId` (the foreign key on certification table), but `stock` has `certId`.
-    // We can find the certification object in `farmers` list that matches `stock.certId`.
-    // Iterate farmers, find one that has a cert with id === stock.certId.
-
-    const initialFarmer = farmers.find(f => f.certifications.some(c => c.certType === stock.certification.certType && c.farmerId === f.id))
-    // Wait, simpler: I know `stock.certification.farmer.name`. I can find farmer by that name.
-
-    const [selectedFarmerId, setSelectedFarmerId] = useState<string>(
-        farmers.find(f => f.name === stock.certification?.farmer?.name)?.id.toString() || ''
-    )
-    const [selectedCertId, setSelectedCertId] = useState<string>(
-        // We know the certId is NOT directly in Stock interface defined in page.tsx, but Prisma returns it.
-        // Let's assume passed stock object (from server) has `certId`. (Prisma returns all scalars by default)
-        // If not, we have to find it.
-        (stock as any).certId?.toString() || ''
-    )
-    const [selectedVarietyId, setSelectedVarietyId] = useState<string>(
-        (stock as any).varietyId?.toString() || varieties.find(v => v.name === stock.variety.name)?.id.toString() || ''
-    )
+    const [selectedFarmerId, setSelectedFarmerId] = useState<string>(initialFarmerId)
+    const [selectedVarietyId, setSelectedVarietyId] = useState<string>(initialVarietyId)
 
     // Derived state
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
-    const availableCerts = selectedFarmer?.certifications || []
+    // Cert Info from group
+    const certInfo = selectedFarmer?.group
+
+    // Update state when open changes or props change
+    if (open && selectedFarmerId === '' && initialFarmerId !== '') {
+        setSelectedFarmerId(initialFarmerId)
+    }
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -93,7 +73,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
 
         const formData = new FormData(event.currentTarget)
 
-        if (!selectedFarmerId || !selectedCertId || !selectedVarietyId) {
+        if (!selectedFarmerId || !selectedVarietyId) {
             alert('필수 항목을 선택해주세요.')
             setIsLoading(false)
             return
@@ -104,7 +84,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
             bagNo: parseInt(formData.get('bagNo') as string, 10),
             weightKg: parseFloat(formData.get('weightKg') as string),
             incomingDate: new Date(formData.get('incomingDate') as string),
-            certId: parseInt(selectedCertId),
+            farmerId: parseInt(selectedFarmerId),
             varietyId: parseInt(selectedVarietyId),
         }
 
@@ -121,7 +101,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
     const handleDelete = async (e: React.MouseEvent) => {
         e.preventDefault()
 
-        let message = `[${stock.certification?.farmer?.name}/${stock.variety?.name}] 정보를 삭제하시겠습니까?`
+        let message = `[${stock.farmer?.name}/${stock.variety?.name}] 정보를 삭제하시겠습니까?`
         if (stock.status === 'CONSUMED') {
             message = `이미 도정 작업에 사용되었습니다. 삭제 시 데이터 불일치가 발생할 수 있습니다. 그래도 삭제하시겠습니까?`
         }
@@ -188,7 +168,6 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         <Label>생산자</Label>
                         <Select value={selectedFarmerId} onValueChange={(val) => {
                             setSelectedFarmerId(val)
-                            setSelectedCertId('')
                         }}>
                             <SelectTrigger>
                                 <SelectValue placeholder="생산자 선택" />
@@ -196,27 +175,16 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                             <SelectContent>
                                 {farmers.map((f) => (
                                     <SelectItem key={f.id} value={f.id.toString()}>
-                                        {f.name}
+                                        [{f.group.certType}] {f.name} ({f.group.name})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>인증 정보</Label>
-                        <Select value={selectedCertId} onValueChange={setSelectedCertId} disabled={!selectedFarmerId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder={!selectedFarmerId ? "생산자를 먼저 선택하세요" : "인증 선택"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableCerts.map((c) => (
-                                    <SelectItem key={c.id} value={c.id.toString()}>
-                                        {c.certType} ({c.certNo})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {selectedFarmer && (
+                            <p className="text-xs text-slate-500 mt-1">
+                                인증번호: {selectedFarmer.group.certNo} ({selectedFarmer.group.certType})
+                            </p>
+                        )}
                     </div>
 
                     <div className="space-y-2">

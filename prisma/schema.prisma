@@ -7,27 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. Farmer (생산자 관리)
-model Farmer {
-  id             Int                    @id @default(autoincrement())
-  name           String                 // 생산자명
-  phone          String?                // 연락처
-  certifications FarmerCertification[]
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-}
-
-// 2. FarmerCertification (인증 정보)
-model FarmerCertification {
+// 1. ProducerGroup (작목반 관리) - 인증정보는 여기서 관리
+model ProducerGroup {
   id             Int       @id @default(autoincrement())
-  farmerId       Int
-  farmer         Farmer    @relation(fields: [farmerId], references: [id])
-  certType       String    // 인증 종류 (유기농, 무농약, 일반 등)
-  certNo         String    // 인증 번호
-  personalNo     String?   // 생산자 개인번호/식별자
-  stocks         Stock[]
+  code           String    // 작목반번호 (e.g., '1')
+  name           String    // 작목반명
+  
+  certType       String    // 인증 종류 (유기농, 무농약, 일반)
+  certNo         String    // 인증 번호 (15102443 등)
+  
+  farmers        Farmer[]
+  
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@unique([code]) // 작목반번호 유니크
+}
+
+// 2. Farmer (생산자/농가 관리)
+model Farmer {
+  id             Int            @id @default(autoincrement())
+  name           String         // 농가명
+  farmerNo       String         // 농가번호 (e.g., '1')
+  items          String?        // 취급품목
+  phone          String?        // 연락처 (선택)
+  
+  groupId        Int
+  group          ProducerGroup  @relation(fields: [groupId], references: [id])
+  
+  stocks         Stock[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([groupId, farmerNo]) // 그룹 내 농가번호는 유니크해야 함
 }
 
 // 3. Variety (품종 관리)
@@ -45,8 +58,8 @@ model Stock {
   id             Int                  @id @default(autoincrement())
   bagNo          Int                  // 톤백 번호
   
-  certId         Int
-  certification  FarmerCertification  @relation(fields: [certId], references: [id])
+  farmerId       Int
+  farmer         Farmer               @relation(fields: [farmerId], references: [id])
   
   varietyId      Int
   variety        Variety              @relation(fields: [varietyId], references: [id])

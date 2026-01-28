@@ -7,48 +7,32 @@ import * as XLSX from 'xlsx'
 // --- EXPORT LOGIC ---
 export async function exportFarmers() {
     try {
-        // Fetch all farmers with certifications
         const farmers = await prisma.farmer.findMany({
             include: {
-                certifications: true
+                group: true
             },
-            orderBy: { name: 'asc' }
+            orderBy: [
+                { group: { code: 'asc' } },
+                { farmerNo: 'asc' }
+            ]
         })
 
-        // Flatten data for Excel
-        const rows: any[] = []
+        const rows: any[] = farmers.map(farmer => ({
+            '작목반번호': farmer.group.code,
+            '작목반명': farmer.group.name,
+            '인증번호': farmer.group.certNo,
+            '농가번호': farmer.farmerNo,
+            '농가명': farmer.name,
+            '취급품목': farmer.items || ''
+        }))
 
-        farmers.forEach(farmer => {
-            if (farmer.certifications.length === 0) {
-                // Farmer without cert
-                rows.push({
-                    '생산자명': farmer.name,
-                    '연락처': farmer.phone || '',
-                    '인증번호': '',
-                    '생산자식별번호': ''
-                })
-            } else {
-                // Farmer with certs
-                farmer.certifications.forEach(cert => {
-                    rows.push({
-                        '생산자명': farmer.name,
-                        '연락처': farmer.phone || '',
-                        '인증번호': cert.certNo,
-                        '생산자식별번호': cert.personalNo || ''
-                    })
-                })
-            }
-        })
-
-        // Generate Excel Buffer
         const worksheet = XLSX.utils.json_to_sheet(rows)
         const workbook = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Farmers')
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'ProducerGroups')
 
-        // Write to buffer
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
 
-        return { success: true, daa: buf, fileName: `farmers_export_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, daa: buf, fileName: `producer_groups_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
         console.error('Export failed:', error)
@@ -60,98 +44,105 @@ export async function exportFarmers() {
 export async function importFarmers(formData: FormData) {
     try {
         const file = formData.get('file') as File
-        if (!file) {
-            return { success: false, error: '파일이 없습니다.' }
-        }
+        if (!file) return { success: false, error: '파일이 없습니다.' }
 
         const buffer = await file.arrayBuffer()
         const workbook = XLSX.read(buffer)
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[]
 
-        // Validation & Processing
         let successCount = 0
         let errorCount = 0
 
-        for (const row of jsonData) {
-            const name = row['생산자명']
-            const phone = row['연락처'] ? String(row['연락처']) : undefined
-            const certNo = row['인증번호'] ? String(row['인증번호']) : undefined
-            const personalNo = row['생산자식별번호'] ? String(row['생산자식별번호']) : undefined
+        // Transaction to ensure data integrity
+        await prisma.$transaction(async (tx) => {
+            for (const row of jsonData) {
+                const groupCode = row['작목반번호'] ? String(row['작목반번호']) : undefined
+                const groupName = row['작목반명'] ? String(row['작목반명']) : undefined
+                const certNo = row['인증번호'] ? String(row['인증번호']) : undefined
 
-            if (!name) {
-                errorCount++
-                continue
-            }
+                const farmerNo = row['농가번호'] ? String(row['농가번호']) : undefined
+                const farmerName = row['농가명'] ? String(row['농가명']) : undefined
+                const items = row['취급품목'] ? String(row['취급품목']) : undefined
 
-            // 1. Upsert Farmer (Name + Phone unique-ish check)
-            // Since name is not unique in DB but treated as main ID here, we try to find by Name first.
-            let farmer = await prisma.farmer.findFirst({
-                where: { name: name } // Phone check strictly? Let's just match Name for simplicity or Name+Phone
-            })
+                // Validate Essential Fields
+                if (!groupCode || !groupName || !certNo || !farmerNo || !farmerName) {
+                    errorCount++ // Log this?
+                    continue
+                }
 
-            if (!farmer) {
-                farmer = await prisma.farmer.create({
-                    data: { name, phone }
-                })
-            } else if (phone && farmer.phone !== phone) {
-                // Update phone if different
-                await prisma.farmer.update({
-                    where: { id: farmer.id },
-                    data: { phone }
-                })
-            }
-
-            // 2. Process Certification
-            if (certNo) {
-                // Derive Cert Type
-                // Rule: 3rd digit. Index 2 (0,1,2).
-                // Example: 151xxxxx -> '1' -> 유기농
-                // Example: 153xxxxx -> '3' -> 무농약
+                // 1. Process Producer Group (Upsert)
+                // Derive Cert Type from CertNo (3rd digit)
                 const thirdChar = certNo.length >= 3 ? certNo.charAt(2) : ''
                 let certType = '일반'
                 if (thirdChar === '1') certType = '유기농'
                 else if (thirdChar === '3') certType = '무농약'
 
-                // Upsert Cert
-                const existingCert = await prisma.farmerCertification.findFirst({
-                    where: {
-                        farmerId: farmer.id,
-                        certNo: certNo
-                    }
+                let group = await tx.producerGroup.findUnique({
+                    where: { code: groupCode }
                 })
 
-                if (!existingCert) {
-                    await prisma.farmerCertification.create({
+                if (!group) {
+                    group = await tx.producerGroup.create({
                         data: {
-                            farmerId: farmer.id,
-                            certType,
-                            certNo,
-                            personalNo
+                            code: groupCode,
+                            name: groupName,
+                            certNo: certNo,
+                            certType: certType
                         }
                     })
                 } else {
-                    // Update details
-                    await prisma.farmerCertification.update({
-                        where: { id: existingCert.id },
+                    // Update Group Info if changed (e.g. CertNo update)
+                    if (group.name !== groupName || group.certNo !== certNo) {
+                        group = await tx.producerGroup.update({
+                            where: { id: group.id },
+                            data: { name: groupName, certNo, certType }
+                        })
+                    }
+                }
+
+                // 2. Process Farmer (Upsert)
+                // Use Composite Unique [groupId, farmerNo]
+                const existingFarmer = await tx.farmer.findUnique({
+                    where: {
+                        groupId_farmerNo: {
+                            groupId: group.id,
+                            farmerNo: farmerNo
+                        }
+                    }
+                })
+
+                if (!existingFarmer) {
+                    await tx.farmer.create({
                         data: {
-                            certType,
-                            personalNo
+                            groupId: group.id,
+                            farmerNo: farmerNo,
+                            name: farmerName,
+                            items: items
+                        }
+                    })
+                } else {
+                    // Update Farmer Info
+                    await tx.farmer.update({
+                        where: { id: existingFarmer.id },
+                        data: {
+                            name: farmerName,
+                            items: items
                         }
                     })
                 }
+                successCount++
             }
-            successCount++
-        }
+        }, {
+            maxWait: 10000,
+            timeout: 20000
+        })
 
         revalidatePath('/admin/farmers')
-        return {
-            success: true,
-            message: `${successCount}건 처리 완료 (실패/누락 ${errorCount}건)`
-        }
+        return { success: true, message: `${successCount}건 처리 완료` }
 
     } catch (error) {
         console.error('Import failed:', error)
-        return { success: false, error: '엑셀 가져오기에 실패했습니다.' }
+        return { success: false, error: '엑셀 데이터 처리 중 오류가 발생했습니다. 데이터 형식을 확인해주세요.' }
     }
 }

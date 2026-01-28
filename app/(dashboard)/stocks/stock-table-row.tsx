@@ -19,7 +19,7 @@ import { Stock } from './page' // Import Stock interface from page
 
 interface Props {
     stock: Stock
-    farmers: { id: number; name: string; certifications: any[] }[]
+    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[]
     varieties: { id: number; name: string }[]
 }
 
@@ -28,8 +28,8 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
 
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
-    const farmerName = stock.certification?.farmer?.name || 'Unknown'
-    const certType = stock.certification?.certType || 'None'
+    const farmerName = stock.farmer?.name || 'Unknown'
+    const certType = stock.farmer?.group?.certType || 'None'
 
     return (
         <>

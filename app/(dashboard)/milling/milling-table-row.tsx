@@ -87,10 +87,18 @@ export function MillingTableRow({ log }: Props) {
                 </TableCell>
 
                 {/* 3. Variety - Clickable for Input History */}
+                {/* 3. Variety - Clickable for Input History */}
                 <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px] md:max-w-[200px]">
                     <MillingStockListDialog
                         batchId={log.id}
-                        stocks={log.stocks || []}
+                        stocks={(log.stocks || []).map((s: any) => ({
+                            id: s.id,
+                            bagNo: s.bagNo,
+                            weightKg: s.weightKg,
+                            farmerName: s.farmer?.name || 'Unknown',
+                            variety: s.variety?.name || 'Unknown',
+                            certType: s.farmer?.group?.certType || 'Unknown'
+                        }))}
                         varieties={varieties}
                         canDelete={log.outputs.length === 0}
                         trigger={

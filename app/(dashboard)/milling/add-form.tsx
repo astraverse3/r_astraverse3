@@ -18,10 +18,10 @@ interface Stock {
     variety: {
         name: string
     }
-    certification: {
-        certType: string
-        farmer: {
-            name: string
+    farmer: {
+        name: string
+        group: {
+            certType: string
         }
     }
 }
@@ -145,9 +145,9 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                 <div className="flex-1 overflow-y-auto px-2 pb-4 lg:px-6 lg:pb-6 custom-scrollbar bg-white">
                     <div className="space-y-1">
                         {availableStocks.map(stock => {
-                            const farmerName = stock.certification?.farmer?.name || 'Unknown'
+                            const farmerName = stock.farmer?.name || 'Unknown'
                             const varietyName = stock.variety?.name || 'Unknown'
-                            const certType = stock.certification?.certType || 'None'
+                            const certType = stock.farmer?.group?.certType || 'None'
 
                             return (
                                 <div

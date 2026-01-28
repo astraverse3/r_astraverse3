@@ -24,11 +24,12 @@ import { useRouter } from 'next/navigation'
 interface Farmer {
     id: number
     name: string
-    certifications: {
+    group: {
         id: number
+        name: string
         certType: string
         certNo: string
-    }[]
+    }
 }
 
 interface Variety {
@@ -40,11 +41,11 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
-    const [selectedCertId, setSelectedCertId] = useState<string>('')
 
     // Derived state for certifications based on selected farmer
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
-    const availableCerts = selectedFarmer?.certifications || []
+    // Cert Info is now fixed per farmer (via group)
+    const certInfo = selectedFarmer?.group
 
     const router = useRouter()
 
@@ -54,9 +55,9 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
         const formData = new FormData(event.currentTarget)
 
-        // Validation check for Selects (since they might not be part of native form validation if controlled improperly)
-        if (!selectedFarmerId || !selectedCertId) {
-            alert('생산자와 인증을 선택해주세요.')
+        // Validation check for Selects
+        if (!selectedFarmerId) {
+            alert('생산자를 선택해주세요.')
             setIsLoading(false)
             return
         }
@@ -67,7 +68,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             weightKg: parseFloat(formData.get('weightKg') as string),
             incomingDate: new Date(formData.get('incomingDate') as string),
             // IDs
-            certId: parseInt(selectedCertId),
+            farmerId: parseInt(selectedFarmerId),
             varietyId: parseInt(formData.get('varietyId') as string),
         }
 
@@ -85,7 +86,6 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
     function resetForm() {
         setSelectedFarmerId('')
-        setSelectedCertId('')
     }
 
     return (
@@ -117,15 +117,12 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                     </div>
 
-                    {/* 2. Farmer & Certification */}
+                    {/* 2. Farmer Only (Cert Implied) */}
                     <div className="space-y-2">
-                        <Label>생산자</Label>
+                        <Label>생산자 (작목반 - 인증)</Label>
                         <Select
                             value={selectedFarmerId}
-                            onValueChange={(val) => {
-                                setSelectedFarmerId(val)
-                                setSelectedCertId('') // Reset cert when farmer changes
-                            }}
+                            onValueChange={setSelectedFarmerId}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="생산자 선택" />
@@ -133,31 +130,16 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                             <SelectContent>
                                 {farmers.map((f) => (
                                     <SelectItem key={f.id} value={f.id.toString()}>
-                                        {f.name}
+                                        [{f.group.certType}] {f.name} ({f.group.name})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>인증 정보</Label>
-                        <Select
-                            value={selectedCertId}
-                            onValueChange={setSelectedCertId}
-                            disabled={!selectedFarmerId}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={!selectedFarmerId ? "생산자를 먼저 선택하세요" : "인증 선택"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableCerts.map((c) => (
-                                    <SelectItem key={c.id} value={c.id.toString()}>
-                                        {c.certType} ({c.certNo})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {selectedFarmer && (
+                            <p className="text-xs text-slate-500 mt-1">
+                                인증번호: {selectedFarmer.group.certNo} ({selectedFarmer.group.certType})
+                            </p>
+                        )}
                     </div>
 
                     {/* 3. Variety & Bag info */}

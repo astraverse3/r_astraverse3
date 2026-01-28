@@ -1,5 +1,5 @@
 import { getStocks, GetStocksParams } from '@/app/actions/stock'
-import { getVarieties, getFarmersWithCerts } from '@/app/actions/admin' // Updated import
+import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin' // Updated import
 import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
@@ -26,9 +26,10 @@ export interface Stock {
     variety: {
         name: string
     }
-    certification: {
-        certType: string
-        farmer: {
+    farmer: {
+        name: string
+        group: {
+            certType: string
             name: string
         }
     }
@@ -58,11 +59,11 @@ export default async function StockPage({
     // Fetch master data for Dialogs and Filters
     const [varietyResult, farmerResult] = await Promise.all([
         getVarieties(),
-        getFarmersWithCerts()
+        getFarmersWithGroups()
     ]);
 
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
-    const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, certifications: any[] }[]
+    const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, group: { id: number; name: string; certType: string; certNo: string } }[]
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">

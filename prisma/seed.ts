@@ -23,17 +23,26 @@ async function main() {
     }
 
     // 2. Create Sample Farmer & Cert
+    // 2. Create Sample Producer Group
+    const group = await prisma.producerGroup.upsert({
+        where: { code: '01' },
+        update: {},
+        create: {
+            name: '해남작목반',
+            code: '01',
+            certNo: '15-02-3-06',
+            certType: '유기농',
+        }
+    })
+
+    // 3. Create Sample Farmer linked to Group
     const farmer = await prisma.farmer.create({
         data: {
             name: '김철수',
             phone: '010-1234-5678',
-            certifications: {
-                create: {
-                    certType: '유기농',
-                    certNo: '15102443',
-                    personalNo: '371'
-                }
-            }
+            farmerNo: '1',
+            items: '쌀, 현미',
+            groupId: group.id
         }
     })
 

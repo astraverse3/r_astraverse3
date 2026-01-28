@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select'
 import { SlidersHorizontal } from 'lucide-react'
 
-export function StockFilters({ varieties, farmers }: { varieties: { id: number; name: string }[], farmers: { id: number; name: string }[] }) {
+export function StockFilters({ varieties, farmers }: { varieties: { id: number; name: string }[], farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[] }) {
     const router = useRouter()
     const searchParams = useSearchParams()
 

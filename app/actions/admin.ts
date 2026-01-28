@@ -1,10 +1,9 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
-import { prisma } from '@/lib/prisma'
-
+// --- VARIETY ACTIONS (Unchanged) ---
 export type VarietyFormData = {
     name: string
     type: string
@@ -22,24 +21,8 @@ export async function getVarieties() {
     }
 }
 
-export async function getFarmersWithCerts() {
-    try {
-        const farmers = await prisma.farmer.findMany({
-            include: {
-                certifications: true
-            },
-            orderBy: { name: 'asc' }
-        })
-        return { success: true, data: farmers }
-    } catch (error) {
-        console.error('Failed to get farmers:', error)
-        return { success: false, error: 'Failed to get farmers' }
-    }
-}
-
 export async function createVariety(data: VarietyFormData) {
     try {
-        // Check duplicate
         const existing = await prisma.variety.findUnique({
             where: { name: data.name }
         })
@@ -51,8 +34,8 @@ export async function createVariety(data: VarietyFormData) {
             data: { name: data.name, type: data.type }
         })
         revalidatePath('/admin/varieties')
-        revalidatePath('/stocks') // Maybe used in stock add dialog?
-        revalidatePath('/milling') // Maybe used in milling?
+        revalidatePath('/stocks')
+        revalidatePath('/milling')
         return { success: true, data: variety }
     } catch (error) {
         console.error('Failed to create variety:', error)
@@ -62,7 +45,6 @@ export async function createVariety(data: VarietyFormData) {
 
 export async function updateVariety(id: number, data: VarietyFormData) {
     try {
-        // Check duplicate if name changed
         const existing = await prisma.variety.findUnique({
             where: { name: data.name }
         })
@@ -97,19 +79,71 @@ export async function deleteVariety(id: number) {
     }
 }
 
-// --- FARMER ACTIONS ---
+// --- PRODUCER GROUP & FARMER ACTIONS ---
 
+// Fetch Farmers with nested Group info
+export async function getFarmersWithGroups() {
+    try {
+        const farmers = await prisma.farmer.findMany({
+            include: {
+                group: true // Include group for displaying Group Name/Cert No
+            },
+            orderBy: [
+                { group: { code: 'asc' } },
+                { farmerNo: 'asc' }
+            ]
+        })
+        return { success: true, data: farmers }
+    } catch (error) {
+        console.error('Failed to get farmers:', error)
+        return { success: false, error: 'Failed to get farmers' }
+    }
+}
+
+export async function getProducerGroups() {
+    try {
+        const groups = await prisma.producerGroup.findMany({
+            orderBy: { code: 'asc' }
+        })
+        return { success: true, data: groups }
+    } catch (error) {
+        console.error('Failed to get groups:', error)
+        return { success: false, error: 'Failed to get groups' }
+    }
+}
+
+// FARMER CRUD
 export type FarmerFormData = {
     name: string
+    farmerNo: string
+    items?: string
     phone?: string
+    groupId: number
 }
 
 export async function createFarmer(data: FarmerFormData) {
     try {
+        // Check duplicate within group
+        const existing = await prisma.farmer.findUnique({
+            where: {
+                groupId_farmerNo: {
+                    groupId: data.groupId,
+                    farmerNo: data.farmerNo
+                }
+            }
+        });
+
+        if (existing) {
+            return { success: false, error: `해당 작목반에 이미 농가번호 ${data.farmerNo}가 존재합니다.` }
+        }
+
         const farmer = await prisma.farmer.create({
             data: {
                 name: data.name,
-                phone: data.phone
+                farmerNo: data.farmerNo,
+                items: data.items,
+                phone: data.phone,
+                groupId: data.groupId
             }
         })
         revalidatePath('/admin/farmers')
@@ -127,7 +161,10 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
             where: { id },
             data: {
                 name: data.name,
-                phone: data.phone
+                farmerNo: data.farmerNo,
+                items: data.items,
+                phone: data.phone,
+                groupId: data.groupId
             }
         })
         revalidatePath('/admin/farmers')
@@ -141,13 +178,8 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
 
 export async function deleteFarmer(id: number) {
     try {
-        // Check if used in Stock (via Certification)
         const used = await prisma.stock.findFirst({
-            where: {
-                certification: {
-                    farmerId: id
-                }
-            }
+            where: { farmerId: id }
         })
         if (used) {
             return { success: false, error: '재고가 등록된 농가는 삭제할 수 없습니다.' }
@@ -165,69 +197,32 @@ export async function deleteFarmer(id: number) {
     }
 }
 
-// --- CERTIFICATION ACTIONS ---
-
-export type CertificationFormData = {
-    farmerId: number
-    certType: string
+// PRODUCER GROUP CRUD (Optional, mostly handled via Excel but good to have)
+export type ProducerGroupFormData = {
+    code: string
+    name: string
     certNo: string
-    personalNo?: string
 }
 
-export async function createCertification(data: CertificationFormData) {
+export async function createProducerGroup(data: ProducerGroupFormData) {
     try {
-        const cert = await prisma.farmerCertification.create({
+        // Derive certType
+        const thirdChar = data.certNo.length >= 3 ? data.certNo.charAt(2) : ''
+        let certType = '일반'
+        if (thirdChar === '1') certType = '유기농'
+        else if (thirdChar === '3') certType = '무농약'
+
+        const group = await prisma.producerGroup.create({
             data: {
-                farmerId: data.farmerId,
-                certType: data.certType,
+                code: data.code,
+                name: data.name,
                 certNo: data.certNo,
-                personalNo: data.personalNo
+                certType
             }
         })
-        revalidatePath('/admin/farmers')
-        return { success: true, data: cert }
+        return { success: true, data: group }
     } catch (error) {
-        console.error('Failed to create certification:', error)
-        return { success: false, error: 'Failed to create certification' }
-    }
-}
-
-export async function updateCertification(id: number, data: CertificationFormData) {
-    try {
-        const cert = await prisma.farmerCertification.update({
-            where: { id },
-            data: {
-                // farmerId usually doesn't change
-                certType: data.certType,
-                certNo: data.certNo,
-                personalNo: data.personalNo
-            }
-        })
-        revalidatePath('/admin/farmers')
-        return { success: true, data: cert }
-    } catch (error) {
-        console.error('Failed to update certification:', error)
-        return { success: false, error: 'Failed to update certification' }
-    }
-}
-
-export async function deleteCertification(id: number) {
-    try {
-        // Check usage in Stock
-        const used = await prisma.stock.findFirst({
-            where: { certId: id }
-        })
-        if (used) {
-            return { success: false, error: '재고가 등록된 인증 정보는 삭제할 수 없습니다.' }
-        }
-
-        await prisma.farmerCertification.delete({
-            where: { id }
-        })
-        revalidatePath('/admin/farmers')
-        return { success: true }
-    } catch (error) {
-        console.error('Failed to delete certification:', error)
-        return { success: false, error: 'Failed to delete certification' }
+        console.error('Failed to create group:', error)
+        return { success: false, error: 'Failed to create group' }
     }
 }

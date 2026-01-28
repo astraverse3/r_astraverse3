@@ -158,7 +158,7 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                             some: {
                                 OR: [
                                     { variety: { name: { contains: params.keyword } } },
-                                    { certification: { farmer: { name: { contains: params.keyword } } } }
+                                    { farmer: { name: { contains: params.keyword } } }
                                 ]
                             }
                         }
@@ -177,8 +177,8 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                 stocks: {
                     include: {
                         variety: true, // Need variety name
-                        certification: { // Need cert info for Lot
-                            include: { farmer: true }
+                        farmer: {
+                            include: { group: true }
                         }
                     }
                 },
@@ -229,7 +229,9 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
                 stocks: {
                     include: {
                         variety: true,
-                        certification: true
+                        farmer: {
+                            include: { group: true }
+                        }
                     }
                 }
             }
@@ -248,11 +250,11 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         // 2. Product Code
         const productCode = getProductCode(primaryStock.variety.type, batch.millingType);
 
-        // 3. Cert No
-        const certNo = primaryStock.certification.certNo;
+        // 3. Cert No (From Group)
+        const certNo = primaryStock.farmer.group.certNo;
 
-        // 4. Personal No (Optional)
-        const personalNo = primaryStock.certification.personalNo || '000';
+        // 4. Personal No (GroupCode + FarmerNo)
+        const personalNo = `${primaryStock.farmer.group.code}-${primaryStock.farmer.farmerNo}`;
 
         // Final Lot No
         const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
@@ -287,7 +289,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 where: { id: batchId },
                 include: {
                     stocks: {
-                        include: { variety: true, certification: true }
+                        include: { variety: true, farmer: { include: { group: true } } }
                     }
                 }
             });
@@ -306,8 +308,10 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 // Generate Lot No
                 const dateObj = new Date(primaryStock.incomingDate);
                 const yymmdd = dateObj.toISOString().slice(2, 10).replace(/-/g, '');
-                const certNo = primaryStock.certification.certNo;
-                const personalNo = primaryStock.certification.personalNo || '000';
+
+                const certNo = primaryStock.farmer.group.certNo;
+                const personalNo = `${primaryStock.farmer.group.code}-${primaryStock.farmer.farmerNo}`;
+
                 const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
 
                 await tx.millingOutputPackage.create({

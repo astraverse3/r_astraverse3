@@ -1,18 +1,16 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
-import { revalidatePath } from 'next/cache'
-
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 // Updated definition to match new schema relations
 export type StockFormData = {
     productionYear: number
     bagNo: number
-    certId: number     // ID of the FarmerCertification
+    farmerId: number     // ID of the Farmer (which links to Group for cert)
     varietyId: number  // ID of the Variety
     weightKg: number
-    incomingDate: Date // New field for Lot Tracking
+    incomingDate: Date
 }
 
 export async function createStock(data: StockFormData) {
@@ -23,7 +21,7 @@ export async function createStock(data: StockFormData) {
                 bagNo: data.bagNo,
                 weightKg: data.weightKg,
                 incomingDate: data.incomingDate,
-                certId: data.certId,
+                farmerId: data.farmerId,
                 varietyId: data.varietyId,
                 status: 'AVAILABLE',
             },
@@ -63,7 +61,7 @@ export async function updateStock(id: number, data: StockFormData) {
                     bagNo: data.bagNo,
                     weightKg: data.weightKg,
                     incomingDate: data.incomingDate,
-                    certId: data.certId,
+                    farmerId: data.farmerId,
                     varietyId: data.varietyId,
                 },
             });
@@ -117,9 +115,10 @@ export type GetStocksParams = {
     productionYear?: string
     varietyId?: string
     farmerId?: string
-    certType?: string
     status?: string // 'ALL' | 'AVAILABLE' | 'CONSUMED'
     sort?: string // 'newest' | 'oldest' | 'weight_desc' | 'weight_asc'
+    // certType filter becomes complex. Need to filter by farmer.group.certType
+    certType?: string
 }
 
 export async function getStocks(params?: GetStocksParams) {
@@ -133,27 +132,26 @@ export async function getStocks(params?: GetStocksParams) {
         if (params?.varietyId && params.varietyId !== 'ALL') {
             where.varietyId = parseInt(params.varietyId)
         }
+
+        // Filter by Farmer directly
         if (params?.farmerId && params.farmerId !== 'ALL') {
-            where.certification = {
-                farmerId: parseInt(params.farmerId)
-            }
+            where.farmerId = parseInt(params.farmerId)
         }
+
         if (params?.status && params.status !== 'ALL') {
             where.status = params.status
         }
-        // CertType filter might need to traverse relation if we keep it
+
+        // Filter by CertType via Farmer -> Group match
         if (params?.certType && params.certType !== 'ALL') {
-            where.certification = {
-                ...where.certification, // keep farmerId if exists (merged if both present? Prisma handles deep merge or overwrite? usually explicit needed)
-                // Actually need to be careful. certification object inside where.
-                // If farmerId is set, it sets certification: { farmerId: ... }
-                // If certType is set, it sets certification: { certType: ... }
-                // If BOTH are set, we need certification: { farmerId: ..., certType: ... }
-                certType: params.certType
+            where.farmer = {
+                group: {
+                    certType: params.certType
+                }
             }
-            // Fix deep merge logic manually:
+            // Preserve farmerId filter if exists
             if (params?.farmerId && params.farmerId !== 'ALL') {
-                where.certification.farmerId = parseInt(params.farmerId)
+                where.farmer.id = parseInt(params.farmerId)
             }
         }
 
@@ -172,9 +170,9 @@ export async function getStocks(params?: GetStocksParams) {
             orderBy,
             include: {
                 variety: true,
-                certification: {
+                farmer: {
                     include: {
-                        farmer: true
+                        group: true // Include group for Cert No
                     }
                 }
             }
