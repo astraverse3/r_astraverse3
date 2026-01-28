@@ -16,7 +16,7 @@ model ProducerGroup {
   certType       String    // 인증 종류 (유기농, 무농약, 일반)
   certNo         String    // 인증 번호 (15102443 등)
   
-  cropYear       Int       @default(2025) // 생산년도 (2024, 2025...)
+  cropYear       Int       // 생산년도 (2024, 2025...)
   
   farmers        Farmer[]
   
