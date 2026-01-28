@@ -237,6 +237,7 @@ export type ProducerGroupFormData = {
     code: string
     name: string
     certNo: string
+    cropYear?: number
 }
 
 export async function createProducerGroup(data: ProducerGroupFormData) {
@@ -252,7 +253,8 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
                 code: data.code,
                 name: data.name,
                 certNo: data.certNo,
-                certType
+                certType,
+                cropYear: data.cropYear || 2025
             }
         })
         return { success: true, data: group }
