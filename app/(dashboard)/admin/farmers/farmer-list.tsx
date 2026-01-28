@@ -55,9 +55,10 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50">
+                        <TableHead>작목반번호</TableHead>
                         <TableHead>작목반</TableHead>
                         <TableHead>인증번호</TableHead>
-                        <TableHead>No.</TableHead>
+                        <TableHead>생산자번호</TableHead>
                         <TableHead>생산자명</TableHead>
                         <TableHead>품목</TableHead>
                         <TableHead>연락처</TableHead>
@@ -67,25 +68,23 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                 <TableBody>
                     {farmers.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                                 등록된 생산자가 없습니다.
                             </TableCell>
                         </TableRow>
                     ) : (
                         farmers.map((farmer) => (
                             <TableRow key={farmer.id}>
+                                <TableCell className="font-mono text-center">{farmer.group.code}</TableCell>
                                 <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-slate-800">{farmer.group.name}</span>
-                                        <span className="text-xs text-slate-400">Code: {farmer.group.code}</span>
-                                    </div>
+                                    <span className="font-bold text-slate-800">{farmer.group.name}</span>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="secondary" className="font-normal border-slate-200">
                                         {farmer.group.certType} {farmer.group.certNo}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="font-mono">{farmer.farmerNo}</TableCell>
+                                <TableCell className="font-mono text-center">{farmer.farmerNo}</TableCell>
                                 <TableCell className="font-bold text-slate-900">{farmer.name}</TableCell>
                                 <TableCell className="text-slate-600 text-sm">{farmer.items || '-'}</TableCell>
                                 <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
