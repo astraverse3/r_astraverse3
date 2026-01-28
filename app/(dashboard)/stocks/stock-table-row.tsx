@@ -15,26 +15,21 @@ import { Button } from '@/components/ui/button'
 import { EditStockDialog } from './edit-stock-dialog'
 import { deleteStock } from '@/app/actions/stock'
 import { TableCell, TableRow } from '@/components/ui/table'
-
-interface Stock {
-    id: number
-    productionYear: number
-    bagNo: number
-    farmerName: string
-    variety: string
-    certType: string
-    weightKg: number
-    status: string
-    createdAt: Date
-    updatedAt: Date
-}
+import { Stock } from './page' // Import Stock interface from page
 
 interface Props {
     stock: Stock
+    farmers: { id: number; name: string; certifications: any[] }[]
+    varieties: { id: number; name: string }[]
 }
 
-export function StockTableRow({ stock }: Props) {
+export function StockTableRow({ stock, farmers, varieties }: Props) {
     const [editOpen, setEditOpen] = useState(false)
+
+    // Helper to get nested values safely
+    const varietyName = stock.variety?.name || 'Unknown'
+    const farmerName = stock.certification?.farmer?.name || 'Unknown'
+    const certType = stock.certification?.certType || 'None'
 
     return (
         <>
@@ -49,25 +44,25 @@ export function StockTableRow({ stock }: Props) {
 
                 {/* 2. Variety */}
                 <TableCell className="py-3 px-2 md:px-3 text-xs font-bold text-slate-800">
-                    <div className="truncate max-w-[80px] sm:max-w-none" title={stock.variety}>
-                        {stock.variety}
+                    <div className="truncate max-w-[80px] sm:max-w-none" title={varietyName}>
+                        {varietyName}
                     </div>
                 </TableCell>
 
                 {/* 3. Farmer */}
                 <TableCell className="py-3 px-2 md:px-3 text-xs text-slate-600">
-                    <div className="truncate max-w-[60px] sm:max-w-none" title={stock.farmerName}>
-                        {stock.farmerName}
+                    <div className="truncate max-w-[60px] sm:max-w-none" title={farmerName}>
+                        {farmerName}
                     </div>
                 </TableCell>
 
                 {/* 4. Cert */}
                 <TableCell className="py-3 px-2 md:px-3 text-center">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${stock.certType === '유기농' ? 'text-green-600 border-green-200 bg-green-50' :
-                        stock.certType === '무농약' ? 'text-blue-600 border-blue-200 bg-blue-50' :
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${certType === '유기농' ? 'text-green-600 border-green-200 bg-green-50' :
+                        certType === '무농약' ? 'text-blue-600 border-blue-200 bg-blue-50' :
                             'text-slate-500 border-slate-200 bg-slate-50'
                         }`}>
-                        {stock.certType}
+                        {certType}
                     </span>
                 </TableCell>
 
@@ -96,7 +91,8 @@ export function StockTableRow({ stock }: Props) {
                 stock={stock}
                 open={editOpen}
                 onOpenChange={setEditOpen}
-                trigger={<></>}
+                farmers={farmers}
+                varieties={varieties}
             />
         </>
     )

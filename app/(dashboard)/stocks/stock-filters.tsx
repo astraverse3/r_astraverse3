@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select'
 import { SlidersHorizontal } from 'lucide-react'
 
-export function StockFilters({ varieties }: { varieties: { id: number; name: string }[] }) {
+export function StockFilters({ varieties, farmers }: { varieties: { id: number; name: string }[], farmers: { id: number; name: string }[] }) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -34,29 +34,26 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
 
     // Filter States
     const [year, setYear] = useState(searchParams.get('productionYear') || currentYear)
-    const [variety, setVariety] = useState(searchParams.get('variety') || '')
-    const [farmer, setFarmer] = useState(searchParams.get('farmerName') || '')
-    const [cert, setCert] = useState(searchParams.get('certType') || '유기농')
+    const [variety, setVariety] = useState(searchParams.get('varietyId') || 'ALL')
+    const [farmer, setFarmer] = useState(searchParams.get('farmerId') || 'ALL')
+    const [cert, setCert] = useState(searchParams.get('certType') || 'ALL')
     const [status, setStatus] = useState(searchParams.get('status') || 'AVAILABLE')
-
-    // Sort is always newest by default request
-    const sort = 'newest'
 
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
             setYear(searchParams.get('productionYear') || currentYear)
-            setVariety(searchParams.get('variety') || '')
-            setFarmer(searchParams.get('farmerName') || '')
-            setCert(searchParams.get('certType') || '유기농')
+            setVariety(searchParams.get('varietyId') || 'ALL')
+            setFarmer(searchParams.get('farmerId') || 'ALL')
+            setCert(searchParams.get('certType') || 'ALL')
             setStatus(searchParams.get('status') || 'AVAILABLE')
         }
     }, [open, searchParams, currentYear])
 
     const activeFilterCount = [
         year !== 'ALL',
-        variety !== 'ALL' && variety !== '',
-        farmer !== '',
+        variety !== 'ALL',
+        farmer !== 'ALL',
         cert !== 'ALL',
         status !== 'ALL'
     ].filter(Boolean).length
@@ -65,8 +62,8 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
         const params = new URLSearchParams()
 
         if (year && year !== 'ALL') params.set('productionYear', year)
-        if (variety && variety !== 'ALL') params.set('variety', variety)
-        if (farmer) params.set('farmerName', farmer)
+        if (variety && variety !== 'ALL') params.set('varietyId', variety)
+        if (farmer && farmer !== 'ALL') params.set('farmerId', farmer)
         if (cert && cert !== 'ALL') params.set('certType', cert)
         if (status && status !== 'ALL') params.set('status', status)
 
@@ -76,11 +73,11 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
 
     const handleReset = () => {
         setYear(currentYear)
-        setVariety('')
-        setFarmer('')
-        setCert('유기농')
+        setVariety('ALL')
+        setFarmer('ALL')
+        setCert('ALL')
         setStatus('AVAILABLE')
-        router.push(`/stocks?productionYear=${currentYear}&certType=유기농&status=AVAILABLE`)
+        router.push(`/stocks?productionYear=${currentYear}&status=AVAILABLE`)
         setOpen(false)
     }
 
@@ -141,7 +138,7 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
                             <SelectContent>
                                 <SelectItem value="ALL">전체</SelectItem>
                                 {varieties.map((v) => (
-                                    <SelectItem key={v.id} value={v.name}>
+                                    <SelectItem key={v.id} value={v.id.toString()}>
                                         {v.name}
                                     </SelectItem>
                                 ))}
@@ -151,8 +148,20 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>농가명</Label>
-                            <Input placeholder="농가명 입력" value={farmer} onChange={e => setFarmer(e.target.value)} />
+                            <Label>농가</Label>
+                            <Select value={farmer} onValueChange={setFarmer}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="전체" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">전체</SelectItem>
+                                    {farmers.map((f) => (
+                                        <SelectItem key={f.id} value={f.id.toString()}>
+                                            {f.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>인증구분</Label>

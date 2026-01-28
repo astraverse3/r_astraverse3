@@ -39,7 +39,7 @@ export function MillingTableRow({ log }: Props) {
 
     const totalRiceKg = log.outputs.reduce((sum: number, o: any) => sum + o.totalWeight, 0)
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0
-    const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety))].join(', ')
+    const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))].join(', ')
     const tonbagCount = (log.stocks || []).length
 
     // Determine display remarks (Hide '백미')

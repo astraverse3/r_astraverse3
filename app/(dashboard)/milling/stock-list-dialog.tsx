@@ -48,7 +48,7 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
         setIsLoading(false)
 
         if (!result.success) {
-            alert(result.error || '삭제 실패')
+            alert((result as any).error || '삭제 실패')
         }
     }
 

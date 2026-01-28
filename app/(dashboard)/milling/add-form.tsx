@@ -13,10 +13,17 @@ import { useRouter } from 'next/navigation'
 interface Stock {
     id: number
     bagNo: number
-    farmerName: string
-    variety: string
     weightKg: number
-    [key: string]: any
+    // Relations
+    variety: {
+        name: string
+    }
+    certification: {
+        certType: string
+        farmer: {
+            name: string
+        }
+    }
 }
 
 interface Props {
@@ -67,6 +74,8 @@ export function AddMillingLogForm({ availableStocks }: Props) {
 
         if (result && !result.success) {
             alert('저장 실패: ' + result.error)
+        } else {
+            router.push('/milling')
         }
     }
 
@@ -135,41 +144,47 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                 {/* Scrollable Stock List */}
                 <div className="flex-1 overflow-y-auto px-2 pb-4 lg:px-6 lg:pb-6 custom-scrollbar bg-white">
                     <div className="space-y-1">
-                        {availableStocks.map(stock => (
-                            <div
-                                key={stock.id}
-                                className={`group flex items-center gap-2 py-2 px-2 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-300'}`}
-                                onClick={() => toggleStock(stock.id)}
-                            >
-                                {/* Checkbox */}
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${selectedStockIds.includes(stock.id) ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
-                                    {selectedStockIds.includes(stock.id) && <Plus className="w-3.5 h-3.5 text-white" />}
-                                </div>
+                        {availableStocks.map(stock => {
+                            const farmerName = stock.certification?.farmer?.name || 'Unknown'
+                            const varietyName = stock.variety?.name || 'Unknown'
+                            const certType = stock.certification?.certType || 'None'
 
-                                {/* Content Grid: BagNo, Variety, Cert, Farmer, Weight */}
-                                <div className="flex-1 grid grid-cols-[30px_50px_40px_1fr] gap-2 items-center text-sm min-w-0">
-                                    <span className="font-mono font-medium text-slate-500 bg-slate-100 px-1 rounded text-xs text-center">
-                                        {stock.bagNo}
-                                    </span>
-                                    <span className="font-bold text-slate-900 truncate" title={stock.variety}>
-                                        {stock.variety}
-                                    </span>
-                                    <span className="flex justify-center">
-                                        <span className="text-[10px] bg-slate-50 text-slate-400 border border-slate-200 px-1 rounded whitespace-nowrap">
-                                            {stock.certType}
+                            return (
+                                <div
+                                    key={stock.id}
+                                    className={`group flex items-center gap-2 py-2 px-2 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-300'}`}
+                                    onClick={() => toggleStock(stock.id)}
+                                >
+                                    {/* Checkbox */}
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${selectedStockIds.includes(stock.id) ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
+                                        {selectedStockIds.includes(stock.id) && <Plus className="w-3.5 h-3.5 text-white" />}
+                                    </div>
+
+                                    {/* Content Grid: BagNo, Variety, Cert, Farmer, Weight */}
+                                    <div className="flex-1 grid grid-cols-[30px_50px_40px_1fr] gap-2 items-center text-sm min-w-0">
+                                        <span className="font-mono font-medium text-slate-500 bg-slate-100 px-1 rounded text-xs text-center">
+                                            {stock.bagNo}
                                         </span>
-                                    </span>
-                                    <span className="text-slate-500 truncate text-xs" title={stock.farmerName}>
-                                        {stock.farmerName}
-                                    </span>
-                                </div>
+                                        <span className="font-bold text-slate-900 truncate" title={varietyName}>
+                                            {varietyName}
+                                        </span>
+                                        <span className="flex justify-center">
+                                            <span className="text-[10px] bg-slate-50 text-slate-400 border border-slate-200 px-1 rounded whitespace-nowrap">
+                                                {certType}
+                                            </span>
+                                        </span>
+                                        <span className="text-slate-500 truncate text-xs" title={farmerName}>
+                                            {farmerName}
+                                        </span>
+                                    </div>
 
-                                {/* Weight */}
-                                <div className="text-sm font-black text-slate-800 flex-shrink-0 pl-1 text-right">
-                                    {stock.weightKg.toLocaleString()} <span className="text-[10px] font-medium text-slate-400">kg</span>
+                                    {/* Weight */}
+                                    <div className="text-sm font-black text-slate-800 flex-shrink-0 pl-1 text-right">
+                                        {stock.weightKg.toLocaleString()} <span className="text-[10px] font-medium text-slate-400">kg</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </div>
             </div>

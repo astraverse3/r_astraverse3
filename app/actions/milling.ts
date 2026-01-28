@@ -1,16 +1,11 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 
-export type MillingOutputInput = {
-    packageType: string
-    weightPerUnit: number
-    count: number
-    totalWeight: number
-}
+import { prisma } from '@/lib/prisma'
 
+// Updated to match new schema relations
 export type MillingBatchFormData = {
     date: Date
     remarks?: string
@@ -19,217 +14,195 @@ export type MillingBatchFormData = {
     selectedStockIds: number[]
 }
 
+export type MillingOutputInput = {
+    packageType: string
+    weightPerUnit: number
+    count: number
+    totalWeight: number
+}
+
+// Helper to determine product code based on Variety Type and Milling Type
+function getProductCode(varietyType: string, millingType: string): string {
+    // varietyType: URUCHI, GLUTINOUS, BLACK
+    // millingType: 백미, 현미, 칠분도미, 오분도미
+
+    if (varietyType === 'BLACK') return '15'; // 흑미
+
+    // Normalize milling type (contains check)
+    const isBrown = millingType.includes('현미');
+
+    if (varietyType === 'URUCHI') {
+        return isBrown ? '13' : '11'; // 11: 백미/분도미, 13: 현미
+    }
+    if (varietyType === 'GLUTINOUS') {
+        return isBrown ? '14' : '12'; // 12: 백미(찹쌀), 14: 현미(찹쌀)
+    }
+
+    return '00'; // Fallback
+}
+
 export async function startMillingBatch(data: MillingBatchFormData) {
     try {
-        if (!data.selectedStockIds || data.selectedStockIds.length === 0) {
-            return { success: false, error: 'No stocks selected' }
-        }
-
-        await prisma.$transaction(async (tx) => {
-            // 1. Fetch selected stocks to verify availability and calculate total weight
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Validate stocks
             const stocks = await tx.stock.findMany({
-                where: {
-                    id: { in: data.selectedStockIds }
-                }
-            });
+                where: { id: { in: data.selectedStockIds } },
+                include: { batch: true }
+            })
 
             if (stocks.length !== data.selectedStockIds.length) {
-                throw new Error('Some stocks could not be found');
+                throw new Error('Some stocks not found')
             }
 
-            const alreadyConsumed = stocks.filter(s => s.status !== 'AVAILABLE');
-            if (alreadyConsumed.length > 0) {
-                throw new Error(`Stocks ${alreadyConsumed.map(s => s.farmerName).join(', ')} are already consumed`);
+            const alreadyUsed = stocks.find(s => s.status !== 'AVAILABLE')
+            if (alreadyUsed) {
+                throw new Error(`Stock ${alreadyUsed.bagNo} is already processed`)
             }
 
-            // Calculate ACTUAL total input weight from DB
-            const actualTotalInputKg = stocks.reduce((sum, s) => sum + s.weightKg, 0);
+            // Update user input total weight
+            const actualTotalInputKg = data.totalInputKg;
 
-            // 2. Create the MillingBatch
+            // 2. Create Batch
             const newBatch = await tx.millingBatch.create({
                 data: {
                     date: data.date,
                     remarks: data.remarks,
                     millingType: data.millingType,
-                    totalInputKg: actualTotalInputKg, // Use server-calculated weight
-                },
-            });
+                    totalInputKg: actualTotalInputKg,
+                    // Link stocks
+                    stocks: {
+                        connect: data.selectedStockIds.map(id => ({ id }))
+                    }
+                }
+            })
 
-            // 3. Update and link stocks
+            // 3. Update Stocks status
             await tx.stock.updateMany({
-                where: {
-                    id: { in: data.selectedStockIds }
-                },
+                where: { id: { in: data.selectedStockIds } },
                 data: {
                     status: 'CONSUMED',
                     batchId: newBatch.id
                 }
-            });
+            })
 
-            return newBatch;
-        });
-
-    } catch (error) {
-        console.error('Failed to start milling batch:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to start milling batch' }
-    }
-
-    revalidatePath('/milling')
-    revalidatePath('/stocks')
-    redirect('/milling')
-}
-
-export async function deleteMillingBatch(batchId: number) {
-    try {
-        await prisma.$transaction(async (tx) => {
-            // 1. Get batch info
-            const batch = await tx.millingBatch.findUnique({
-                where: { id: batchId },
-                include: { outputs: true }
-            });
-
-            if (!batch) throw new Error('Batch not found');
-            if (batch.isClosed) throw new Error('Cannot delete a closed batch. Please reopen it first.');
-
-            // 2. Release Stocks (Set back to AVAILABLE and unlink)
-            await tx.stock.updateMany({
-                where: { batchId: batchId },
-                data: {
-                    status: 'AVAILABLE',
-                    batchId: null
-                }
-            });
-
-            // 3. Delete Outputs
-            await tx.millingOutputPackage.deleteMany({
-                where: { batchId: batchId }
-            });
-
-            // 4. Delete Batch
-            await tx.millingBatch.delete({
-                where: { id: batchId }
-            });
-        });
+            return newBatch
+        })
 
         revalidatePath('/milling')
         revalidatePath('/stocks')
-        return { success: true }
+        return { success: true, data: result }
     } catch (error) {
-        console.error('Failed to delete milling batch:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to delete milling batch' }
+        console.error('Failed to start milling batch:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to start batch' }
     }
 }
 
-export async function addPackagingLog(batchId: number, outputs: MillingOutputInput[]) {
-    try {
-        const batch = await prisma.millingBatch.findUnique({
-            where: { id: batchId },
-            select: { isClosed: true }
-        });
+export type GetMillingLogsParams = {
+    keyword?: string
+    startDate?: Date
+    endDate?: Date
+    status?: string // 'active' | 'completed'
+    variety?: string // variety name search
+    millingType?: string
+    yieldRate?: string
+}
 
-        if (batch?.isClosed) {
-            return { success: false, error: 'Closed batches cannot be modified' }
+export async function getMillingLogs(params?: GetMillingLogsParams) {
+    try {
+        const where: any = {}
+
+        if (params?.startDate && params?.endDate) {
+            where.date = {
+                gte: params.startDate,
+                lte: params.endDate
+            }
         }
 
-        await prisma.millingOutputPackage.createMany({
-            data: outputs.map(output => ({
-                batchId,
-                packageType: output.packageType,
-                weightPerUnit: output.weightPerUnit,
-                count: output.count,
-                totalWeight: output.totalWeight,
-            }))
-        });
-
-        revalidatePath('/milling')
-        return { success: true }
-    } catch (error) {
-        console.error('Failed to add packaging log:', error)
-        return { success: false, error: 'Failed to add packaging log' }
-    }
-}
-
-export async function reopenMillingBatch(batchId: number) {
-    try {
-        await prisma.millingBatch.update({
-            where: { id: batchId },
-            data: { isClosed: false }
-        });
-
-        revalidatePath('/milling')
-        return { success: true }
-    } catch (error) {
-        console.error('Failed to reopen milling batch:', error)
-        return { success: false, error: 'Failed to reopen milling batch' }
-    }
-}
-
-export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
-    try {
-        const batch = await prisma.millingBatch.findUnique({
-            where: { id: batchId },
-            select: { isClosed: true }
-        });
-
-        if (batch?.isClosed) {
-            return { success: false, error: 'Closed batches cannot be modified' }
+        // Status filter
+        if (params?.status) {
+            if (params.status === 'active') {
+                where.isClosed = false
+            } else if (params.status === 'completed') {
+                where.isClosed = true
+            }
         }
 
-        await prisma.$transaction(async (tx) => {
-            // 1. Delete existing outputs for this batch
-            await tx.millingOutputPackage.deleteMany({
-                where: { batchId }
-            });
+        // Milling Type filter
+        if (params?.millingType) {
+            where.millingType = params.millingType
+        }
 
-            // 2. Create new outputs
-            await tx.millingOutputPackage.createMany({
-                data: outputs.map(output => ({
-                    batchId,
-                    packageType: output.packageType,
-                    weightPerUnit: output.weightPerUnit,
-                    count: output.count,
-                    totalWeight: output.totalWeight,
-                }))
-            });
-        });
+        const andConditions: any[] = []
 
-        revalidatePath('/milling')
-        return { success: true }
+        // Variety filter (check stocks)
+        if (params?.variety) {
+            andConditions.push({
+                stocks: {
+                    some: {
+                        variety: {
+                            name: { contains: params.variety }
+                        }
+                    }
+                }
+            })
+        }
+
+        // Keyword filter
+        if (params?.keyword) {
+            // remarks OR stock.variety.name OR stock.farmer.name
+            andConditions.push({
+                OR: [
+                    { remarks: { contains: params.keyword } },
+                    {
+                        stocks: {
+                            some: {
+                                OR: [
+                                    { variety: { name: { contains: params.keyword } } },
+                                    { certification: { farmer: { name: { contains: params.keyword } } } }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            })
+        }
+
+        if (andConditions.length > 0) {
+            where.AND = andConditions
+        }
+
+        const logs = await prisma.millingBatch.findMany({
+            where,
+            include: {
+                stocks: {
+                    include: {
+                        variety: true, // Need variety name
+                        certification: { // Need cert info for Lot
+                            include: { farmer: true }
+                        }
+                    }
+                },
+                outputs: true
+            },
+            orderBy: { date: 'desc' }
+        })
+
+        return { success: true, data: logs }
     } catch (error) {
-        console.error('Failed to update packaging logs:', error)
-        return { success: false, error: 'Failed to update packaging logs' }
+        console.error('Failed to get milling logs:', error)
+        return { success: false, error: 'Failed to get milling logs' }
     }
 }
 
-export async function closeMillingBatch(batchId: number) {
-    try {
-        await prisma.millingBatch.update({
-            where: { id: batchId },
-            data: { isClosed: true }
-        });
-
-        revalidatePath('/milling')
-        return { success: true }
-    } catch (error) {
-        console.error('Failed to close milling batch:', error)
-        return { success: false, error: 'Failed to close milling batch' }
-    }
-}
-
+// Helper: Remove stock from batch
 export async function removeStockFromMilling(batchId: number, stockId: number) {
     try {
-        await prisma.$transaction(async (tx) => {
-            // 1. Verify batch state
-            const batch = await tx.millingBatch.findUnique({
-                where: { id: batchId },
-                include: { outputs: true }
-            });
-
+        const result = await prisma.$transaction(async (tx) => {
+            const batch = await tx.millingBatch.findUnique({ where: { id: batchId }, include: { stocks: true } });
             if (!batch) throw new Error('Batch not found');
-            if (batch.isClosed) throw new Error('Cannot modify a closed batch');
-            if (batch.outputs.length > 0) throw new Error('포장 기록이 있어 투입 내역을 수정할 수 없습니다. 포장 기록을 먼저 삭제해주세요.');
+            if (batch.isClosed) throw new Error('Batch is closed');
 
-            // 2. Unlink Stock (Set back to AVAILABLE)
+            // Set stock back to AVAILABLE and unlink
             await tx.stock.update({
                 where: { id: stockId },
                 data: {
@@ -237,105 +210,202 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
                     batchId: null
                 }
             });
+            return { success: true };
+        });
+        revalidatePath('/milling')
+        return result;
+    } catch (error) {
+        console.error('Failed to remove stock:', error);
+        return { success: false, error: 'Failed to remove stock' };
+    }
+}
 
-            // 3. Recalculate Total Input Weight
-            // Fetch remaining stocks for this batch
-            const remainingStocks = await tx.stock.findMany({
-                where: { batchId: batchId }
-            });
-
-            const newTotalInputKg = remainingStocks.reduce((sum, s) => sum + s.weightKg, 0);
-
-            // 4. Update Batch Total Input
-            await tx.millingBatch.update({
-                where: { id: batchId },
-                data: { totalInputKg: newTotalInputKg }
-            });
+export async function addPackagingLog(batchId: number, data: MillingOutputInput) {
+    try {
+        // Fetch Batch and related Stock info for LOT NUMBER GENERATION
+        const batch = await prisma.millingBatch.findUnique({
+            where: { id: batchId },
+            include: {
+                stocks: {
+                    include: {
+                        variety: true,
+                        certification: true
+                    }
+                }
+            }
         });
 
+        if (!batch) throw new Error('Batch not found')
+
+        // --- LOT NUMBER GENERATION LOGIC ---
+        // 1. Date: Stock incoming date (YYMMDD). Use first stock's date or earliest.
+        const primaryStock = batch.stocks[0];
+        if (!primaryStock) throw new Error('No stock linked to this batch');
+
+        const dateObj = new Date(primaryStock.incomingDate);
+        const yymmdd = dateObj.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
+
+        // 2. Product Code
+        const productCode = getProductCode(primaryStock.variety.type, batch.millingType);
+
+        // 3. Cert No
+        const certNo = primaryStock.certification.certNo;
+
+        // 4. Personal No (Optional)
+        const personalNo = primaryStock.certification.personalNo || '000';
+
+        // Final Lot No
+        const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
+        // -----------------------------------
+
+        const output = await prisma.millingOutputPackage.create({
+            data: {
+                batchId,
+                packageType: data.packageType,
+                weightPerUnit: data.weightPerUnit,
+                count: data.count,
+                totalWeight: data.totalWeight,
+                productCode, // Save derived code
+                lotNo,       // Save generated LOT
+            }
+        })
+
+        revalidatePath('/milling')
+        return { success: true, data: output }
+    } catch (error) {
+        console.error('Failed to add packaging log:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to add packaging log' }
+    }
+}
+
+// Update multiple packaging logs (Replace all for batch)
+export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Fetch Batch and Stock info for LOT generation
+            const batch = await tx.millingBatch.findUnique({
+                where: { id: batchId },
+                include: {
+                    stocks: {
+                        include: { variety: true, certification: true }
+                    }
+                }
+            });
+            if (!batch || !batch.stocks.length) throw new Error('Batch or stocks not found');
+            const primaryStock = batch.stocks[0];
+
+            // 2. Delete existing outputs
+            await tx.millingOutputPackage.deleteMany({
+                where: { batchId }
+            });
+
+            // 3. Create new outputs
+            for (const output of outputs) {
+                const productCode = getProductCode(primaryStock.variety.type, batch.millingType);
+
+                // Generate Lot No
+                const dateObj = new Date(primaryStock.incomingDate);
+                const yymmdd = dateObj.toISOString().slice(2, 10).replace(/-/g, '');
+                const certNo = primaryStock.certification.certNo;
+                const personalNo = primaryStock.certification.personalNo || '000';
+                const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
+
+                await tx.millingOutputPackage.create({
+                    data: {
+                        batchId,
+                        packageType: output.packageType,
+                        weightPerUnit: output.weightPerUnit,
+                        count: output.count,
+                        totalWeight: output.totalWeight,
+                        productCode,
+                        lotNo
+                    }
+                });
+            }
+            return { success: true };
+        });
+
+        revalidatePath('/milling')
+        return result
+    } catch (error) {
+        console.error('Failed to update packaging logs:', error)
+        return { success: false, error: 'Failed to update logs' }
+    }
+}
+
+export async function deletePackagingLog(outputId: number) {
+    try {
+        await prisma.millingOutputPackage.delete({
+            where: { id: outputId }
+        })
+        revalidatePath('/milling')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to delete packaging log:', error)
+        return { success: false, error: 'Failed to delete packaging log' }
+    }
+}
+
+export async function closeMillingBatch(batchId: number) {
+    return updateMillingBatchStatus(batchId, true);
+}
+
+export async function reopenMillingBatch(batchId: number) {
+    return updateMillingBatchStatus(batchId, false);
+}
+
+export async function updateMillingBatchStatus(batchId: number, isClosed: boolean) {
+    try {
+        await prisma.millingBatch.update({
+            where: { id: batchId },
+            data: { isClosed }
+        })
         revalidatePath('/milling')
         revalidatePath('/stocks')
         return { success: true }
     } catch (error) {
-        console.error('Failed to remove stock from milling:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to remove stock' }
+        console.error('Failed to update status:', error)
+        return { success: false, error: 'Failed to update status' }
     }
 }
 
-export type GetMillingLogsParams = {
-    status?: string // 'open' | 'closed' | 'all'
-    variety?: string
-    millingType?: string
-    keyword?: string // search in 'title' or 'remarks'
-    yieldRate?: string // 'upto_50' | 'upto_60' | 'over_70'
-}
-
-export async function getMillingLogs(params: GetMillingLogsParams = {}) {
+export async function deleteMillingBatch(batchId: number) {
     try {
-        const { status, variety, millingType, keyword, yieldRate } = params
-
-        // Build Prisma where clause
-        const where: any = {}
-
-        // 1. Status Filter
-        if (status === 'open') {
-            where.isClosed = false
-        } else if (status === 'closed') {
-            where.isClosed = true
-        }
-
-        // 2. Milling Type Filter
-        if (millingType && millingType !== 'ALL') {
-            where.millingType = millingType
-        }
-
-        // 3. Keyword Search (Title or Remarks)
-        if (keyword) {
-            where.OR = [
-                { remarks: { contains: keyword } },
-            ]
-        }
-
-        // 4. Variety Filter (Nested in Stocks)
-        if (variety && variety !== 'ALL') {
-            where.stocks = {
-                some: {
-                    variety: variety
-                }
-            }
-        }
-
-        const logs = await prisma.millingBatch.findMany({
-            where,
-            include: {
-                outputs: true,
-                stocks: true
-            },
-            orderBy: { date: 'desc' }
-        })
-
-        // 5. Yield Filter (In-memory)
-        let filteredLogs = logs
-
-        if (yieldRate && yieldRate !== 'ALL') {
-            filteredLogs = logs.filter(log => {
-                const totalOutput = log.outputs.reduce((sum, o) => sum + o.totalWeight, 0)
-                const totalInput = log.totalInputKg
-                if (totalInput === 0) return false
-
-                const rate = (totalOutput / totalInput) * 100
-
-                if (yieldRate === 'upto_50') return rate <= 50
-                if (yieldRate === 'upto_60') return rate <= 60
-                if (yieldRate === 'upto_70') return rate <= 70
-                if (yieldRate === 'over_70') return rate >= 70
-                return true
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Check if safe to delete
+            const batch = await tx.millingBatch.findUnique({
+                where: { id: batchId },
+                include: { stocks: true }
             })
-        }
+            if (!batch) throw new Error('Batch not found');
 
-        return { success: true, data: filteredLogs }
+            // 2. Revert Stock status to AVAILABLE
+            await tx.stock.updateMany({
+                where: { batchId },
+                data: {
+                    status: 'AVAILABLE',
+                    batchId: null
+                }
+            });
+
+            // 3. Delete outputs first (cascade might handle, but explicit is safer)
+            await tx.millingOutputPackage.deleteMany({
+                where: { batchId }
+            });
+
+            // 4. Delete batch
+            await tx.millingBatch.delete({
+                where: { id: batchId }
+            });
+
+            return { success: true };
+        });
+
+        revalidatePath('/milling')
+        revalidatePath('/stocks')
+        return result
     } catch (error) {
-        console.error('Failed to get milling logs:', error)
-        return { success: false, error: 'Failed to get milling logs' }
+        console.error('Failed to delete batch:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to delete batch' }
     }
 }

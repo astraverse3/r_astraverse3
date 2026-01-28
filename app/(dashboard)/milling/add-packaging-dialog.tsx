@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -70,7 +72,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOpen(true)
             router.refresh()
         } else {
-            alert(result.error || '마감 해제 실패')
+            alert((result as any).error || '마감 해제 실패')
         }
     }
 
@@ -85,7 +87,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOpen(false)
             router.refresh()
         } else {
-            alert(result.error || '마감 실패')
+            alert((result as any).error || '마감 실패')
         }
     }
 
@@ -100,7 +102,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOpen(false)
             router.refresh()
         } else {
-            alert(result.error || '삭제 실패')
+            alert((result as any).error || '삭제 실패')
         }
     }
 
@@ -160,7 +162,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOutputs([])
             router.refresh()
         } else {
-            alert(result.error || '저장 실패')
+            alert((result as any).error || '저장 실패')
         }
     }
 
@@ -208,11 +210,14 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     <div className="space-y-3">
                         <Label>생산(포장) 내역</Label>
                         <div className="space-y-2 min-h-[100px]">
-                            {outputs.map((o) => (
-                                <div key={o.packageType} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
+                            {outputs.map((o, i) => (
+                                <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
                                     <div className="flex flex-col">
                                         <div className="font-bold">{o.packageType}</div>
                                         <div className="text-[10px] text-stone-400">{(o.weightPerUnit * o.count).toLocaleString()}kg</div>
+                                        {(o as any).lotNo && (
+                                            <div className="text-[10px] text-blue-600 font-mono mt-0.5">{(o as any).lotNo}</div>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(o.packageType, -1)}><Minus className="h-3 w-3" /></Button>

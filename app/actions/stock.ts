@@ -5,20 +5,26 @@ import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
 
+// Updated definition to match new schema relations
 export type StockFormData = {
     productionYear: number
     bagNo: number
-    farmerName: string
-    variety: string
-    certType: string
+    certId: number     // ID of the FarmerCertification
+    varietyId: number  // ID of the Variety
     weightKg: number
+    incomingDate: Date // New field for Lot Tracking
 }
 
 export async function createStock(data: StockFormData) {
     try {
         const stock = await prisma.stock.create({
             data: {
-                ...data,
+                productionYear: data.productionYear,
+                bagNo: data.bagNo,
+                weightKg: data.weightKg,
+                incomingDate: data.incomingDate,
+                certId: data.certId,
+                varietyId: data.varietyId,
                 status: 'AVAILABLE',
             },
         })
@@ -33,21 +39,15 @@ export async function createStock(data: StockFormData) {
 export async function updateStock(id: number, data: StockFormData) {
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Get current stock info with batch status
+            // 1. Get current stock info
             const currentStock = await tx.stock.findUnique({
                 where: { id },
-                select: {
-                    weightKg: true,
-                    batchId: true,
-                    batch: {
-                        select: { isClosed: true }
-                    }
-                }
+                include: { batch: { select: { isClosed: true } } }
             });
 
             if (!currentStock) throw new Error('Stock not found');
 
-            // SAFETY CHECK: Cannot update stock if it belongs to a closed batch
+            // SAFETY CHECK
             if (currentStock.batch?.isClosed) {
                 throw new Error('마감된 도정 작업에 포함된 재고는 수정할 수 없습니다.');
             }
@@ -58,17 +58,22 @@ export async function updateStock(id: number, data: StockFormData) {
             // 3. Update stock
             const updatedStock = await tx.stock.update({
                 where: { id },
-                data: { ...data },
+                data: {
+                    productionYear: data.productionYear,
+                    bagNo: data.bagNo,
+                    weightKg: data.weightKg,
+                    incomingDate: data.incomingDate,
+                    certId: data.certId,
+                    varietyId: data.varietyId,
+                },
             });
 
-            // 4. If stock is linked to a batch and weight changed, update batch total
+            // 4. Update batch total if needed
             if (currentStock.batchId && weightDiff !== 0) {
                 await tx.millingBatch.update({
                     where: { id: currentStock.batchId },
                     data: {
-                        totalInputKg: {
-                            increment: weightDiff
-                        }
+                        totalInputKg: { increment: weightDiff }
                     }
                 });
             }
@@ -110,8 +115,8 @@ export async function deleteStock(id: number) {
 
 export type GetStocksParams = {
     productionYear?: string
-    variety?: string
-    farmerName?: string
+    varietyId?: string
+    farmerId?: string
     certType?: string
     status?: string // 'ALL' | 'AVAILABLE' | 'CONSUMED'
     sort?: string // 'newest' | 'oldest' | 'weight_desc' | 'weight_asc'
@@ -125,17 +130,31 @@ export async function getStocks(params?: GetStocksParams) {
         if (params?.productionYear) {
             where.productionYear = parseInt(params.productionYear)
         }
-        if (params?.variety) {
-            where.variety = { contains: params.variety } // Remove mode: 'insensitive' if using SQLite/MySQL without case-insensitive config, or keep for Postgres. Prisma default for SQLite is case-sensitive, but contains is usually what we want. Let's start simple.
+        if (params?.varietyId && params.varietyId !== 'ALL') {
+            where.varietyId = parseInt(params.varietyId)
         }
-        if (params?.farmerName) {
-            where.farmerName = { contains: params.farmerName }
-        }
-        if (params?.certType && params.certType !== 'ALL') {
-            where.certType = params.certType
+        if (params?.farmerId && params.farmerId !== 'ALL') {
+            where.certification = {
+                farmerId: parseInt(params.farmerId)
+            }
         }
         if (params?.status && params.status !== 'ALL') {
             where.status = params.status
+        }
+        // CertType filter might need to traverse relation if we keep it
+        if (params?.certType && params.certType !== 'ALL') {
+            where.certification = {
+                ...where.certification, // keep farmerId if exists (merged if both present? Prisma handles deep merge or overwrite? usually explicit needed)
+                // Actually need to be careful. certification object inside where.
+                // If farmerId is set, it sets certification: { farmerId: ... }
+                // If certType is set, it sets certification: { certType: ... }
+                // If BOTH are set, we need certification: { farmerId: ..., certType: ... }
+                certType: params.certType
+            }
+            // Fix deep merge logic manually:
+            if (params?.farmerId && params.farmerId !== 'ALL') {
+                where.certification.farmerId = parseInt(params.farmerId)
+            }
         }
 
         // 2. Sort Construction
@@ -150,7 +169,15 @@ export async function getStocks(params?: GetStocksParams) {
 
         const stocks = await prisma.stock.findMany({
             where,
-            orderBy
+            orderBy,
+            include: {
+                variety: true,
+                certification: {
+                    include: {
+                        farmer: true
+                    }
+                }
+            }
         })
         return { success: true, data: stocks }
     } catch (error) {

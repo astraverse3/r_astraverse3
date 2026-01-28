@@ -1,5 +1,5 @@
 import { getStocks, GetStocksParams } from '@/app/actions/stock'
-import { getVarieties } from '@/app/actions/admin'
+import { getVarieties, getFarmersWithCerts } from '@/app/actions/admin' // Updated import
 import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
@@ -13,17 +13,25 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 
-interface Stock {
+// Updated Stock Interface to match getStocks return type (relations)
+export interface Stock {
     id: number
     productionYear: number
     bagNo: number
-    farmerName: string
-    variety: string
-    certType: string
     weightKg: number
     status: string
+    incomingDate: Date
     createdAt: Date
     updatedAt: Date
+    variety: {
+        name: string
+    }
+    certification: {
+        certType: string
+        farmer: {
+            name: string
+        }
+    }
 }
 
 export default async function StockPage({
@@ -36,19 +44,25 @@ export default async function StockPage({
     // Parse searchParams into GetStocksParams
     const filters: GetStocksParams = {
         productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
-        variety: typeof resolvedParams.variety === 'string' ? resolvedParams.variety : undefined,
-        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
+        varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
+        farmerId: typeof resolvedParams.farmerId === 'string' ? resolvedParams.farmerId : undefined,
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
     }
 
     const result = await getStocks(filters)
-    const stocks = result.success && result.data ? result.data : []
+    // Cast the result data to our Stock interface (Prisma return type is complex)
+    const stocks = (result.success && result.data ? result.data : []) as unknown as Stock[]
 
-    // Fetch varieties for AddStockDialog and StockFilters
-    const varietyResult = await getVarieties()
+    // Fetch master data for Dialogs and Filters
+    const [varietyResult, farmerResult] = await Promise.all([
+        getVarieties(),
+        getFarmersWithCerts()
+    ]);
+
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
+    const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, certifications: any[] }[]
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">
@@ -62,8 +76,9 @@ export default async function StockPage({
                         </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                        <StockFilters varieties={varieties} />
-                        <AddStockDialog varieties={varieties} />
+                        {/* Filters might need update to accept farmers/varieties too */}
+                        <StockFilters varieties={varieties} farmers={farmers} />
+                        <AddStockDialog varieties={varieties} farmers={farmers} />
                     </div>
                 </div>
                 <ActiveStockFilters />
@@ -86,7 +101,7 @@ export default async function StockPage({
                     <TableBody>
                         {stocks.length > 0 ? (
                             stocks.map((stock: Stock) => (
-                                <StockTableRow key={stock.id} stock={stock} />
+                                <StockTableRow key={stock.id} stock={stock} farmers={farmers} varieties={varieties} />
                             ))
                         ) : (
                             <TableRow>

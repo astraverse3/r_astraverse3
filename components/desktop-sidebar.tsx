@@ -74,11 +74,20 @@ export function DesktopSidebar() {
                                 <Link
                                     href="/admin/varieties"
                                     className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                         }`}
                                 >
                                     품종 관리
+                                </Link>
+                                <Link
+                                    href="/admin/farmers"
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    농가 관리
                                 </Link>
                             </div>
                         </div>

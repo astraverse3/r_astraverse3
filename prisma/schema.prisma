@@ -7,51 +7,98 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. Stock (벼 재고)
-model Stock {
-  id          Int           @id @default(autoincrement())
-  bagNo       Int           // 톤백 번호
-  farmerName  String        // 농가명
-  variety     String        // 품종
-  productionYear Int        @default(2024) // 생산년도
-  certType    String        // 인증
-  weightKg    Float         // 입고 중량
-  status      String        // AVAILABLE / CONSUMED
-  batchId     Int?          // 어떤 도정 작업에 투입되었는지
-  batch       MillingBatch? @relation(fields: [batchId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+// 1. Farmer (생산자 관리)
+model Farmer {
+  id             Int                    @id @default(autoincrement())
+  name           String                 // 생산자명
+  phone          String?                // 연락처
+  certifications FarmerCertification[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 }
 
-// 2. MillingBatch (도정 작업 메인)
+// 2. FarmerCertification (인증 정보)
+model FarmerCertification {
+  id             Int       @id @default(autoincrement())
+  farmerId       Int
+  farmer         Farmer    @relation(fields: [farmerId], references: [id])
+  certType       String    // 인증 종류 (유기농, 무농약, 일반 등)
+  certNo         String    // 인증 번호
+  personalNo     String?   // 생산자 개인번호/식별자
+  stocks         Stock[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// 3. Variety (품종 관리)
+model Variety {
+  id             Int       @id @default(autoincrement())
+  name           String    @unique // 품종명
+  type           String    // 곡종 구분 (URUCHI, GLUTINOUS, BLACK 등)
+  stocks         Stock[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// 4. Stock (벼 재고)
+model Stock {
+  id             Int                  @id @default(autoincrement())
+  bagNo          Int                  // 톤백 번호
+  
+  certId         Int
+  certification  FarmerCertification  @relation(fields: [certId], references: [id])
+  
+  varietyId      Int
+  variety        Variety              @relation(fields: [varietyId], references: [id])
+  
+  incomingDate   DateTime             @default(now()) // 입고일 (로트 생성 기준)
+  productionYear Int                  @default(2024)  // 생산년도
+  weightKg       Float                // 입고 중량
+  status         String               // AVAILABLE / CONSUMED
+  
+  batchId        Int?
+  batch          MillingBatch?        @relation(fields: [batchId], references: [id])
+  
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+// 5. MillingBatch (도정 작업 메인)
 model MillingBatch {
   id             Int                    @id @default(autoincrement())
   date           DateTime               @default(now())
-
-  millingType    String                 @default("백미") // 도정 구분 (백미, 현미, 칠분도미, 기타)
-  remarks        String?                // 비고
+  
+  millingType    String                 @default("백미")
+  remarks        String?
   totalInputKg   Float                  
+  
   stocks         Stock[]                // 투입된 벼 리스트
   outputs        MillingOutputPackage[] // 생산된 포장 리스트
+  
   isClosed       Boolean                @default(false)
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 }
 
-// 3. MillingOutputPackage (포장 상세)
+// 6. MillingOutputPackage (포장 상세 - 로트번호 생성 위치)
 model MillingOutputPackage {
   id            Int           @id @default(autoincrement())
   batchId       Int
   batch         MillingBatch  @relation(fields: [batchId], references: [id])
-  packageType   String        // '20kg', '10kg', '5kg', 'Tonbag', etc.
+  
+  packageType   String        // '20kg', '10kg', '5kg', 'Tonbag'
   weightPerUnit Float         
   count         Int           
   totalWeight   Float         
+  
+  productCode   String?       // 제품코드 (예: 11)
+  lotNo         String?       // 최종 로트번호 (예: 251119-11-15102443-371)
+  
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
 
-// 4. User (사용자 계정)
+// 7. User (사용자 계정)
 model User {
   id          Int      @id @default(autoincrement())
   username    String   @unique // 아이디 (astraverse)
@@ -63,12 +110,4 @@ model User {
   role        String   @default("USER") // ADMIN, USER
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-// 5. Variety (품종 관리)
-model Variety {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

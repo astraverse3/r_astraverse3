@@ -1,0 +1,27 @@
+import { Suspense } from 'react'
+import { getFarmersWithCerts } from '@/app/actions/admin'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { AddFarmerDialog } from './add-farmer-dialog'
+import { FarmerList } from './farmer-list'
+
+export default async function AdminFarmersPage() {
+    const response = await getFarmersWithCerts()
+    const farmers = response.success ? response.data || [] : []
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">농가(생산자) 관리</h1>
+                    <p className="text-slate-500">생산자 목록과 인증 정보를 관리합니다.</p>
+                </div>
+                <AddFarmerDialog />
+            </div>
+
+            <Suspense fallback={<div>Loading...</div>}>
+                <FarmerList farmers={farmers} />
+            </Suspense>
+        </div>
+    )
+}

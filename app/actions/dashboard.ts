@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function getDashboardStats() {
     try {
-        // 0. Calculate Latest Production Year from Stocks (or default to current year)
+        // 0. Calculate Latest Production Year from Stocks
         const latestStock = await prisma.stock.findFirst({
             orderBy: { productionYear: 'desc' },
             select: { productionYear: true }
@@ -12,7 +12,7 @@ export async function getDashboardStats() {
         const latestYear = latestStock?.productionYear || new Date().getFullYear();
         const currentYear = new Date().getFullYear();
 
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, milledByVariety, ...results] = await Promise.all([
+        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, consumedPlaceholder, latestStockUpdateLog, latestBatchUpdateLog] = await Promise.all([
             // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
                 where: {
@@ -23,7 +23,7 @@ export async function getDashboardStats() {
             }),
             // 2. Count of milling batches
             prisma.millingBatch.count(),
-            // 3. Total output production weight (KG) - Filtered by Current Year (Batch Date)
+            // 3. Total output production weight (KG) - Filtered by Current Year
             prisma.millingOutputPackage.aggregate({
                 where: {
                     batch: {
@@ -35,7 +35,7 @@ export async function getDashboardStats() {
                 },
                 _sum: { totalWeight: true }
             }),
-            // 4. Total Input Weight for Yield Calculation (Current Year)
+            // 4. Total Input Weight for Yield (Current Year)
             prisma.millingBatch.aggregate({
                 where: {
                     date: {
@@ -51,118 +51,85 @@ export async function getDashboardStats() {
                 orderBy: { date: 'desc' },
                 include: {
                     outputs: true,
-                    stocks: true
+                    stocks: {
+                        include: { variety: true } // Fetch variety object
+                    }
                 }
             }),
-            // 6. Stock by Variety (ALL Statuses for Year) - Modified to calculate Total vs Available
+            // 6. Stock by Variety (ALL Statuses for Year)
             prisma.stock.groupBy({
-                by: ['variety', 'status'],
+                by: ['varietyId', 'status'],
                 where: {
                     productionYear: latestYear
                 },
                 _sum: { weightKg: true }
             }),
-            // 7. Consumed (Legacy/Redundant - keeping slot to preserve indices for now, or just return empty)
+            // 7. Consumed (Legacy placeholder)
             Promise.resolve([]),
-            // 8. Latest Update Time (Stock or MillingBatch or MillingOutputPackage)
+            // 8. Latest Updates
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
-            // 9. Closed Batch Input (For Yield)
-            prisma.millingBatch.aggregate({
-                where: {
-                    isClosed: true,
-                    date: {
-                        gte: new Date(`${currentYear}-01-01`),
-                        lt: new Date(`${currentYear + 1}-01-01`)
-                    }
-                },
-                _sum: { totalInputKg: true }
-            }),
-            // 10. Closed Batch Output (For Yield)
-            prisma.millingOutputPackage.aggregate({
-                where: {
-                    batch: {
-                        isClosed: true,
-                        date: {
-                            gte: new Date(`${currentYear}-01-01`),
-                            lt: new Date(`${currentYear + 1}-01-01`)
-                        }
-                    }
-                },
-                _sum: { totalWeight: true }
-            })
         ]);
 
-        const totalOutput = totalOutputWeight._sum?.totalWeight || 0;
-        // Yield calculation based on CLOSED batches only
-        const closedInput = results[2] as { _sum: { totalInputKg: number | null } }; // Index 9 in full array, but rest syntax makes it index 2 in 'results'
-        const closedOutput = results[3] as { _sum: { totalWeight: number | null } }; // Index 10 -> index 3
+        // Process Stock Data (Mapped by ID -> need Names)
+        // Fetch all Varieties to map IDs to Names
+        const varieties = await prisma.variety.findMany();
+        const varietyNameMap = new Map(varieties.map(v => [v.id, v.name]));
 
-        const closedInputSum = closedInput._sum?.totalInputKg || 0;
-        const closedOutputSum = closedOutput._sum?.totalWeight || 0;
-
-        const yieldPercentage = closedInputSum > 0 ? (closedOutputSum / closedInputSum) * 100 : 0;
-
-        // Calculate latest update time
-        // results[0] -> Stock update
-        // results[1] -> Batch update
-        const latestStockUpdate = (results[0] as { updatedAt: Date } | null)?.updatedAt?.getTime() || 0;
-        const latestBatchUpdate = (results[1] as { updatedAt: Date } | null)?.updatedAt?.getTime() || 0;
-        const lastUpdated = new Date(Math.max(latestStockUpdate, latestBatchUpdate));
-        // If no data exists, fallback to current time is optional, but user asked for "latest change".
-        // If 0, it means no data. Let's keep it as is or default to now if 0?
-        // Let's default to now() only if BOTH are 0, to avoid showing 1970.
-        const finalLastUpdated = lastUpdated.getTime() === 0 ? new Date() : lastUpdated;
-
-        // Process Stock Data
-        const rawStockData = stockByVariety as unknown as Array<{ variety: string, status: string, _sum: { weightKg: number | null } }>;
-
-        // Group by variety to calculate Current vs Total
+        const rawStockData = stockByVariety as unknown as Array<{ varietyId: number, status: string, _sum: { weightKg: number | null } }>;
         const varietyMap = new Map<string, { current: number, total: number }>();
 
         rawStockData.forEach(item => {
+            const name = varietyNameMap.get(item.varietyId) || 'Unknown';
             const weight = item._sum.weightKg || 0;
-            const current = varietyMap.get(item.variety) || { current: 0, total: 0 };
+            const current = varietyMap.get(name) || { current: 0, total: 0 };
 
-            // Total includes everything for the year
             current.total += weight;
-
-            // Current only includes AVAILABLE
             if (item.status === 'AVAILABLE') {
                 current.current += weight;
             }
-
-            varietyMap.set(item.variety, current);
+            varietyMap.set(name, current);
         });
 
-        // Convert Map to sorted array
+        // Convert to sorted array
         const processedStockByVariety = Array.from(varietyMap.entries())
             .map(([variety, data]) => ({
                 variety,
                 currentWeight: data.current,
                 totalWeight: data.total
             }))
-            .sort((a, b) => b.totalWeight - a.totalWeight); // Sort by total weight
+            .sort((a, b) => b.totalWeight - a.totalWeight);
 
-        // Calculate Total Stock for the year (Available + Consumed)
+        // Stats Calculations
+        const totalOutput = totalOutputWeight._sum?.totalWeight || 0;
         const totalStockWeight = processedStockByVariety.reduce((sum, item) => sum + item.totalWeight, 0);
         const availableStockWeight = totalAvailableStock._sum?.weightKg || 0;
         const consumedStockWeight = totalStockWeight - availableStockWeight;
         const millingProgressRate = totalStockWeight > 0 ? (consumedStockWeight / totalStockWeight) * 100 : 0;
 
+        // Approx Yield (Overall)
+        const totalInput = totalInputWeight._sum?.totalInputKg || 0;
+        const yieldPercentage = totalInput > 0 ? (totalOutput / totalInput) * 100 : 0;
+
+        // Latest Update
+        const latestStockUpdate = latestStockUpdateLog?.updatedAt?.getTime() || 0;
+        const latestBatchUpdate = latestBatchUpdateLog?.updatedAt?.getTime() || 0;
+        const lastUpdated = new Date(Math.max(latestStockUpdate, latestBatchUpdate));
+        const finalLastUpdated = lastUpdated.getTime() === 0 ? new Date() : lastUpdated;
+
         return {
             success: true,
             data: {
-                targetYear: latestYear, // For Stock Display
-                productionYear: currentYear, // For Production Display
+                targetYear: latestYear,
+                productionYear: currentYear,
                 availableStockKg: availableStockWeight,
-                consumedStockKg: consumedStockWeight, // New Field
-                totalStockKg: totalStockWeight, // New Field
-                millingProgressRate: millingProgressRate, // New Field
+                consumedStockKg: consumedStockWeight,
+                totalStockKg: totalStockWeight,
+                millingProgressRate: millingProgressRate,
                 totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutput,
-                yieldPercentage: yieldPercentage,
-                recentLogs,
+                yieldPercentage: yieldPercentage, // Using rough global yield for now
+                recentLogs, // Note: UI will need to read variety.name from relations
                 stockByVariety: processedStockByVariety,
                 milledByVariety: [],
                 lastUpdated: finalLastUpdated

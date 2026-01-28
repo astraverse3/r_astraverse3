@@ -15,6 +15,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
 
 interface Props {
@@ -22,6 +29,7 @@ interface Props {
     variety?: {
         id: number
         name: string
+        type: string
     }
     trigger?: React.ReactNode
 }
@@ -30,13 +38,14 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [name, setName] = useState(variety?.name || '')
+    const [type, setType] = useState(variety?.type || 'URUCHI')
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
-        const data: VarietyFormData = { name }
+        const data: VarietyFormData = { name, type }
         let result
 
         if (mode === 'create') {
@@ -47,7 +56,10 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
 
         if (result?.success) {
             setOpen(false)
-            if (mode === 'create') setName('') // Reset only on create
+            if (mode === 'create') {
+                setName('')
+                setType('URUCHI')
+            }
             router.refresh()
         } else {
             alert(result?.error || '작업에 실패했습니다.')
@@ -96,6 +108,19 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
                             placeholder="예: 신동진"
                             required
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="type">곡종 구분</Label>
+                        <Select value={type} onValueChange={setType} required>
+                            <SelectTrigger>
+                                <SelectValue placeholder="곡종 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="URUCHI">일반계 (URUCHI)</SelectItem>
+                                <SelectItem value="GLUTINOUS">찰벼 (GLUTINOUS)</SelectItem>
+                                <SelectItem value="BLACK">흑미 (BLACK)</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <DialogFooter className="flex justify-between sm:justify-between gap-2">
                         {mode === 'edit' && (

@@ -14,7 +14,7 @@ import {
 
 export default async function VarietyPage() {
     const result = await getVarieties()
-    const varieties = (result.success && result.data ? result.data : []) as { id: number; name: string }[]
+    const varieties = (result.success && result.data ? result.data : []) as { id: number; name: string; type: string }[]
 
     return (
         <div className="space-y-6 pb-20">
@@ -36,6 +36,7 @@ export default async function VarietyPage() {
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead className="w-[60px] text-center font-bold text-slate-500">No</TableHead>
                             <TableHead className="font-bold text-slate-500">품종명</TableHead>
+                            <TableHead className="font-bold text-slate-500">곡종</TableHead>
                             <TableHead className="w-[100px] text-center font-bold text-slate-500">관리</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -48,6 +49,9 @@ export default async function VarietyPage() {
                                     </TableCell>
                                     <TableCell className="font-medium text-slate-800">
                                         {variety.name}
+                                    </TableCell>
+                                    <TableCell className="text-slate-600 text-sm">
+                                        {variety.type === 'URUCHI' ? '일반계' : variety.type === 'GLUTINOUS' ? '찰벼' : '흑미'}
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1">
