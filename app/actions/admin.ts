@@ -86,6 +86,7 @@ export type GetFarmersParams = {
     groupName?: string
     farmerName?: string
     certType?: string
+    cropYear?: number
 }
 
 export async function getFarmersWithGroups(params?: GetFarmersParams) {
@@ -94,6 +95,7 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
 
         if (params?.groupName) {
             where.group = {
+                ...where.group,
                 name: { contains: params.groupName }
             }
         }
@@ -103,8 +105,17 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         }
 
         if (params?.certType && params.certType !== 'ALL') {
-            if (!where.group) where.group = {}
-            where.group.certType = params.certType
+            where.group = {
+                ...where.group,
+                certType: params.certType
+            }
+        }
+
+        if (params?.cropYear) {
+            where.group = {
+                ...where.group, // Merge with existing group filter if any
+                cropYear: params.cropYear
+            }
         }
 
         const farmers = await prisma.farmer.findMany({
