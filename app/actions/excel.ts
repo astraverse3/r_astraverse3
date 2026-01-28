@@ -18,6 +18,7 @@ export async function exportFarmers() {
         })
 
         const rows: any[] = farmers.map(farmer => ({
+            '생산년도': farmer.group.cropYear,
             '작목반번호': farmer.group.code,
             '작목반명': farmer.group.name,
             '인증번호': farmer.group.certNo,
@@ -44,8 +45,6 @@ export async function exportFarmers() {
 export async function importFarmers(formData: FormData) {
     try {
         const file = formData.get('file') as File
-        const yearInput = formData.get('year') // Get year from FormData
-        const targetYear = yearInput ? parseInt(yearInput.toString()) : 2025
 
         if (!file) return { success: false, error: '파일이 없습니다.' }
 
@@ -56,6 +55,7 @@ export async function importFarmers(formData: FormData) {
 
         let successCount = 0
         let errorCount = 0
+        const currentYear = new Date().getFullYear()
 
         // Transaction to ensure data integrity
         await prisma.$transaction(async (tx) => {
@@ -64,13 +64,17 @@ export async function importFarmers(formData: FormData) {
                 const groupName = row['작목반명'] ? String(row['작목반명']) : undefined
                 const certNo = row['인증번호'] ? String(row['인증번호']) : undefined
 
-                const farmerNo = row['생산자번호'] ? String(row['생산자번호']) : (row['농가번호'] ? String(row['농가번호']) : undefined) // Support both old and new headers
+                const farmerNo = row['생산자번호'] ? String(row['생산자번호']) : (row['농가번호'] ? String(row['농가번호']) : undefined)
                 const farmerName = row['생산자명'] ? String(row['생산자명']) : (row['농가명'] ? String(row['농가명']) : undefined)
                 const items = row['취급품목'] ? String(row['취급품목']) : undefined
 
+                // Parse Year from Excel, default to current year if missing
+                let targetYear = row['생산년도'] ? parseInt(String(row['생산년도'])) : currentYear
+                if (isNaN(targetYear)) targetYear = currentYear
+
                 // Validate Essential Fields
                 if (!groupCode || !groupName || !certNo || !farmerNo || !farmerName) {
-                    errorCount++ // Log this?
+                    errorCount++
                     continue
                 }
 
@@ -102,7 +106,6 @@ export async function importFarmers(formData: FormData) {
                     })
                 } else {
                     // Update Group Info if changed (e.g. CertNo update)
-                    // Only update if it's the same year
                     if (group.name !== groupName || group.certNo !== certNo) {
                         group = await tx.producerGroup.update({
                             where: { id: group.id },
@@ -149,7 +152,7 @@ export async function importFarmers(formData: FormData) {
         })
 
         revalidatePath('/admin/farmers')
-        return { success: true, message: `${targetYear}년 데이터: ${successCount}건 처리 완료` }
+        return { success: true, message: `총 ${successCount}건 처리 완료 (생산년도 자동 반영)` }
 
     } catch (error) {
         console.error('Import failed:', error)

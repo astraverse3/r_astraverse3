@@ -4,13 +4,11 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload } from 'lucide-react'
 import { exportFarmers, importFarmers } from '@/app/actions/excel'
-import { useSearchParams } from 'next/navigation'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
-    const searchParams = useSearchParams()
 
     const handleExport = async () => {
         setExporting(true)
@@ -39,12 +37,7 @@ export function ExcelButtons() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        // Determine year from search params or default
-        const paramYear = searchParams.get('cropYear')
-        const currentYear = new Date().getFullYear().toString()
-        const targetYear = (paramYear && paramYear !== 'ALL') ? paramYear : currentYear
-
-        if (!confirm(`${targetYear}년도 데이터로 등록하시겠습니까? (기준년도: ${targetYear})`)) {
+        if (!confirm('파일을 업로드하여 데이터를 등록하시겠습니까? (파일 내 생산년도 기준)')) {
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
         }
@@ -52,7 +45,6 @@ export function ExcelButtons() {
         setImporting(true)
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('year', targetYear)
 
         const result = await importFarmers(formData)
 
