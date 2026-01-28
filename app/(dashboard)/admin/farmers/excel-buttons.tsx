@@ -41,7 +41,8 @@ export function ExcelButtons() {
 
         // Determine year from search params or default
         const paramYear = searchParams.get('cropYear')
-        const targetYear = (paramYear && paramYear !== 'ALL') ? paramYear : '2025'
+        const currentYear = new Date().getFullYear().toString()
+        const targetYear = (paramYear && paramYear !== 'ALL') ? paramYear : currentYear
 
         if (!confirm(`${targetYear}년도 데이터로 등록하시겠습니까? (기준년도: ${targetYear})`)) {
             if (fileInputRef.current) fileInputRef.current.value = ''
