@@ -5,9 +5,22 @@ import { Button } from '@/components/ui/button'
 import { AddFarmerDialog } from './add-farmer-dialog'
 import { FarmerList } from './farmer-list'
 import { ExcelButtons } from './excel-buttons'
+import { FarmerFilters } from './farmer-filters'
 
-export default async function AdminFarmersPage() {
-    const response = await getFarmersWithGroups()
+export default async function AdminFarmersPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const resolvedParams = await searchParams
+
+    const filters = {
+        groupName: typeof resolvedParams.groupName === 'string' ? resolvedParams.groupName : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
+        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+    }
+
+    const response = await getFarmersWithGroups(filters)
     const farmers = response.success ? response.data || [] : []
 
     return (
@@ -22,6 +35,8 @@ export default async function AdminFarmersPage() {
                     <AddFarmerDialog />
                 </div>
             </div>
+
+            <FarmerFilters />
 
             <Suspense fallback={<div>Loading...</div>}>
                 <FarmerList farmers={farmers} />

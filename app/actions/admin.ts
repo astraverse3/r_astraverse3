@@ -82,9 +82,33 @@ export async function deleteVariety(id: number) {
 // --- PRODUCER GROUP & FARMER ACTIONS ---
 
 // Fetch Farmers with nested Group info
-export async function getFarmersWithGroups() {
+export type GetFarmersParams = {
+    groupName?: string
+    farmerName?: string
+    certType?: string
+}
+
+export async function getFarmersWithGroups(params?: GetFarmersParams) {
     try {
+        const where: any = {}
+
+        if (params?.groupName) {
+            where.group = {
+                name: { contains: params.groupName }
+            }
+        }
+
+        if (params?.farmerName) {
+            where.name = { contains: params.farmerName }
+        }
+
+        if (params?.certType && params.certType !== 'ALL') {
+            if (!where.group) where.group = {}
+            where.group.certType = params.certType
+        }
+
         const farmers = await prisma.farmer.findMany({
+            where,
             include: {
                 group: true // Include group for displaying Group Name/Cert No
             },
