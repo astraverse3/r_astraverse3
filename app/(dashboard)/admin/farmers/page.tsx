@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddFarmerDialog } from './add-farmer-dialog'
 import { FarmerList } from './farmer-list'
+import { ExcelButtons } from './excel-buttons'
 
 export default async function AdminFarmersPage() {
     const response = await getFarmersWithCerts()
@@ -16,7 +17,10 @@ export default async function AdminFarmersPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">농가(생산자) 관리</h1>
                     <p className="text-slate-500">생산자 목록과 인증 정보를 관리합니다.</p>
                 </div>
-                <AddFarmerDialog />
+                <div className="flex gap-2">
+                    <ExcelButtons />
+                    <AddFarmerDialog />
+                </div>
             </div>
 
             <Suspense fallback={<div>Loading...</div>}>
