@@ -55,12 +55,10 @@ export function AddMillingLogForm({ availableStocks }: Props) {
             return
         }
 
-        const title = remarks.trim()
-
         setIsLoading(true)
         const result = await startMillingBatch({
             date: new Date(),
-            title,
+            remarks: remarks.trim(),
             millingType,
             totalInputKg,
             selectedStockIds,

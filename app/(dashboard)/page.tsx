@@ -154,7 +154,7 @@ export default async function Home() {
                     </div>
                     <div>
                       <p className="text-base font-bold text-slate-800">
-                        {varieties || log.title || '미지정'} <span className="text-xs text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{log.totalInputKg.toLocaleString()} kg</span>
+                        {varieties || log.remarks || '미지정'} <span className="text-xs text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{log.totalInputKg.toLocaleString()} kg</span>
                       </p>
                       <p className="text-xs text-slate-500 mt-1 font-medium">
                         {log.isClosed ? `수율 ${yieldRate}% (생산 ${productionSum.toLocaleString()} kg)` : <span className="text-blue-600 font-bold animate-pulse">현재 작업 진행 중...</span>}

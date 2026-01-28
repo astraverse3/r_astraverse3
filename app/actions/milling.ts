@@ -13,7 +13,7 @@ export type MillingOutputInput = {
 
 export type MillingBatchFormData = {
     date: Date
-    title: string
+    remarks?: string
     millingType: string
     totalInputKg: number
     selectedStockIds: number[]
@@ -49,7 +49,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
             const newBatch = await tx.millingBatch.create({
                 data: {
                     date: data.date,
-                    title: data.title,
+                    remarks: data.remarks,
                     millingType: data.millingType,
                     totalInputKg: actualTotalInputKg, // Use server-calculated weight
                 },
@@ -262,8 +262,6 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
     }
 }
 
-// ... imports
-
 export type GetMillingLogsParams = {
     status?: string // 'open' | 'closed' | 'all'
     variety?: string
@@ -291,11 +289,10 @@ export async function getMillingLogs(params: GetMillingLogsParams = {}) {
             where.millingType = millingType
         }
 
-        // 3. Keyword Search (Title usually holds remarks/customer name)
+        // 3. Keyword Search (Title or Remarks)
         if (keyword) {
             where.OR = [
-                { title: { contains: keyword } },
-                // Add other string fields if necessary
+                { remarks: { contains: keyword } },
             ]
         }
 

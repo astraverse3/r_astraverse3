@@ -20,6 +20,7 @@ import { MillingStockListDialog } from './stock-list-dialog'
 interface MillingBatch {
     id: number
     title: string
+    remarks: string | null
     millingType: string
     date: Date
     totalInputKg: number
@@ -127,15 +128,14 @@ export function MillingTableRow({ log }: Props) {
 
                 {/* 8. Remarks (Truncated on mobile, Full on PC) */}
                 <TableCell className="py-2 px-1 text-left text-xs text-slate-400 max-w-[50px] md:max-w-[300px]">
-                    <div className="truncate md:truncate block" title={displayRemarks}>
-                        {displayRemarks}
+                    <div className="truncate md:truncate block" title={log.remarks || ''}>
+                        {log.remarks || '-'}
                     </div>
                 </TableCell>
             </TableRow>
 
             <AddPackagingDialog
                 batchId={log.id}
-                batchTitle={log.title}
                 millingType={log.millingType}
                 totalInputKg={log.totalInputKg}
                 isClosed={log.isClosed}

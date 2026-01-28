@@ -15,7 +15,6 @@ import { useRouter } from 'next/navigation'
 
 interface Props {
     batchId: number
-    batchTitle: string
     millingType?: string
     totalInputKg?: number
     isClosed?: boolean
@@ -28,7 +27,7 @@ const PACKAGE_TEMPLATES = [
     { label: '5kg', weight: 5 },
 ]
 
-export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
+export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
     const router = useRouter()
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
@@ -192,7 +191,6 @@ export function AddPackagingDialog({ batchId, batchTitle, millingType, totalInpu
                         <span className="text-sm font-bold text-slate-700">
                             투입: {totalInputKg?.toLocaleString()}kg
                         </span>
-                        {batchTitle && <span className="text-sm text-slate-400">| {batchTitle}</span>}
                     </div>
                 </DialogHeader>
                 <div className="py-6 space-y-6">
