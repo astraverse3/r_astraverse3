@@ -126,12 +126,18 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         })
 
         // Sort naturally (handles "10" > "2" correctly)
+        // Order: cropYear (desc) -> group code (asc) -> farmerNo (asc)
         farmers.sort((a, b) => {
-            // First by Group Code
+            // 1. Crop Year (Descending - Latest first)
+            if (a.group.cropYear !== b.group.cropYear) {
+                return b.group.cropYear - a.group.cropYear
+            }
+
+            // 2. Group Code
             const groupCompare = a.group.code.localeCompare(b.group.code, undefined, { numeric: true })
             if (groupCompare !== 0) return groupCompare
 
-            // Then by Farmer No
+            // 3. Farmer No
             return a.farmerNo.localeCompare(b.farmerNo, undefined, { numeric: true })
         })
 

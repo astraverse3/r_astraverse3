@@ -36,6 +36,7 @@ interface Farmer {
         name: string
         certNo: string
         certType: string
+        cropYear: number
     }
 }
 
@@ -55,6 +56,7 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50">
+                        <TableHead>년도</TableHead>
                         <TableHead>작목반번호</TableHead>
                         <TableHead>작목반</TableHead>
                         <TableHead>인증번호</TableHead>
@@ -68,13 +70,14 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                 <TableBody>
                     {farmers.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={9} className="text-center py-8 text-slate-500">
                                 등록된 생산자가 없습니다.
                             </TableCell>
                         </TableRow>
                     ) : (
                         farmers.map((farmer) => (
                             <TableRow key={farmer.id}>
+                                <TableCell className="font-mono text-center text-slate-500">{farmer.group.cropYear}</TableCell>
                                 <TableCell className="font-mono text-center">{farmer.group.code}</TableCell>
                                 <TableCell>
                                     <span className="font-bold text-slate-800">{farmer.group.name}</span>
