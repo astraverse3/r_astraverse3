@@ -253,6 +253,77 @@ export type ProducerGroupFormData = {
     cropYear?: number
 }
 
+// Composite Actions
+export async function createFarmerWithGroup(
+    farmerData: Omit<FarmerFormData, 'groupId'>,
+    groupData: ProducerGroupFormData
+) {
+    try {
+        return await prisma.$transaction(async (tx) => {
+            // 1. Find or Create Group
+            let group = await tx.producerGroup.findUnique({
+                where: {
+                    code_cropYear: {
+                        code: groupData.code,
+                        cropYear: groupData.cropYear || 2024
+                    }
+                }
+            })
+
+            if (!group) {
+                // Derive certType
+                const thirdChar = groupData.certNo.length >= 3 ? groupData.certNo.charAt(2) : ''
+                let certType = '일반'
+                if (thirdChar === '1') certType = '유기농'
+                else if (thirdChar === '3') certType = '무농약'
+
+                group = await tx.producerGroup.create({
+                    data: {
+                        code: groupData.code,
+                        name: groupData.name,
+                        certNo: groupData.certNo,
+                        certType,
+                        cropYear: groupData.cropYear || 2024
+                    }
+                })
+            }
+
+            // 2. Check Farmer Duplicate
+            const existingFarmer = await tx.farmer.findUnique({
+                where: {
+                    groupId_farmerNo: {
+                        groupId: group.id,
+                        farmerNo: farmerData.farmerNo
+                    }
+                }
+            })
+
+            if (existingFarmer) {
+                throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${farmerData.farmerNo}가 존재합니다.`)
+            }
+
+            // 3. Create Farmer
+            const farmer = await tx.farmer.create({
+                data: {
+                    name: farmerData.name,
+                    farmerNo: farmerData.farmerNo,
+                    items: farmerData.items,
+                    phone: farmerData.phone,
+                    groupId: group.id
+                }
+            })
+
+            return { success: true, data: farmer }
+        })
+    } catch (error: any) {
+        console.error('Failed to create farmer with group:', error)
+        return { success: false, error: error.message || 'Failed to create farmer with group' }
+    } finally {
+        revalidatePath('/admin/farmers')
+        revalidatePath('/stocks')
+    }
+}
+
 export async function createProducerGroup(data: ProducerGroupFormData) {
     try {
         // Derive certType

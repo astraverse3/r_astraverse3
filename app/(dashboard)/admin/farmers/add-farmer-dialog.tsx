@@ -36,6 +36,7 @@ interface ProducerGroup {
     code: string
     name: string
     certNo: string
+    cropYear: number
 }
 
 interface Props {
@@ -48,6 +49,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [groups, setGroups] = useState<ProducerGroup[]>([])
+    const [isNewGroup, setIsNewGroup] = useState(false)
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -58,8 +60,12 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             getProducerGroups().then(res => {
                 if (res.success && res.data) setGroups(res.data)
             })
+            // Reset state when opening
+            if (!farmer) {
+                setIsNewGroup(false)
+            }
         }
-    }, [open])
+    }, [open, farmer])
 
     const setOpen = (newOpen: boolean) => {
         if (isControlled) {
@@ -74,29 +80,68 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
         setIsLoading(true)
 
         const formData = new FormData(event.currentTarget)
-        const groupId = parseInt(formData.get('groupId') as string)
-
-        const data: FarmerFormData = {
-            groupId,
-            farmerNo: formData.get('farmerNo') as string,
-            name: formData.get('name') as string,
-            items: formData.get('items') as string || undefined,
-            phone: formData.get('phone') as string || undefined,
-        }
+        const farmerName = formData.get('name') as string
+        const farmerNo = formData.get('farmerNo') as string
+        const items = formData.get('items') as string || undefined
+        const phone = formData.get('phone') as string || undefined
 
         let result
-        if (farmer) {
-            result = await updateFarmer(farmer.id, data)
-        } else {
-            result = await createFarmer(data)
-        }
+        try {
+            if (isNewGroup) {
+                // Create New Group + Farmer
+                const groupData = {
+                    code: formData.get('groupCode') as string,
+                    name: formData.get('groupName') as string,
+                    certNo: formData.get('certNo') as string,
+                    cropYear: parseInt(formData.get('cropYear') as string) || 2024
+                }
 
-        setIsLoading(false)
+                // Import Dynamically or Assume it exists (Need to import createFarmerWithGroup)
+                const { createFarmerWithGroup } = await import('@/app/actions/admin')
+                result = await createFarmerWithGroup({
+                    name: farmerName,
+                    farmerNo,
+                    items,
+                    phone
+                }, groupData)
 
-        if (result.success) {
-            setOpen(false)
-        } else {
-            alert(result.error || '저장 실패')
+            } else {
+                // Determine Group ID
+                const groupIdStr = formData.get('groupId') as string
+                if (!groupIdStr) {
+                    throw new Error('작목반을 선택해주세요.')
+                }
+                const groupId = parseInt(groupIdStr)
+
+                const data: FarmerFormData = {
+                    groupId,
+                    farmerNo,
+                    name: farmerName,
+                    items,
+                    phone,
+                }
+
+                if (farmer) {
+                    result = await updateFarmer(farmer.id, data)
+                } else {
+                    result = await createFarmer(data)
+                }
+            }
+
+            if (result.success) {
+                setOpen(false)
+                // Refresh groups for next time
+                getProducerGroups().then(res => {
+                    if (res.success && res.data) setGroups(res.data)
+                })
+            } else {
+                alert((result as any).error || '저장 실패')
+            }
+        } catch (error: any) {
+            console.error(error)
+            alert(error.message || '오류가 발생했습니다.')
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -114,20 +159,63 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     <DialogTitle>{farmer ? '농가 정보 수정' : '새 농가 등록'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="groupId">작목반 (필수)</Label>
-                        <Select name="groupId" defaultValue={farmer?.groupId.toString()} required>
-                            <SelectTrigger>
-                                <SelectValue placeholder="작목반 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {groups.map(group => (
-                                    <SelectItem key={group.id} value={group.id.toString()}>
-                                        [{group.code}] {group.name} ({group.certNo})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+
+                    <div className="space-y-4 border rounded-md p-4 bg-slate-50">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="groupId" className="font-bold text-slate-700">작목반 정보</Label>
+                            {!farmer && (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="newGroupToggle"
+                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        checked={isNewGroup}
+                                        onChange={(e) => setIsNewGroup(e.target.checked)}
+                                    />
+                                    <Label htmlFor="newGroupToggle" className="cursor-pointer text-sm font-normal text-slate-600">
+                                        새 작목반 등록
+                                    </Label>
+                                </div>
+                            )}
+                        </div>
+
+                        {isNewGroup ? (
+                            <div className="grid gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="cropYear" className="text-xs">생산년도</Label>
+                                        <Input id="cropYear" name="cropYear" defaultValue={2024} required />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="groupCode" className="text-xs">작목반번호</Label>
+                                        <Input id="groupCode" name="groupCode" placeholder="예: 1" required />
+                                    </div>
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="groupName" className="text-xs">작목반명</Label>
+                                    <Input id="groupName" name="groupName" placeholder="예: 땅끝황토친환경" required />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="certNo" className="text-xs">인증번호</Label>
+                                    <Input id="certNo" name="certNo" placeholder="예: 15102443" required />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid gap-2">
+                                <Select name="groupId" defaultValue={farmer?.groupId.toString()} required={!isNewGroup}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="작목반 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {groups.map(group => (
+                                            <SelectItem key={group.id} value={group.id.toString()}>
+                                                <span className="font-mono">[{group.cropYear}]</span> [{group.code}] {group.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
