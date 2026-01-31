@@ -123,11 +123,18 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
             include: {
                 group: true // Include group for displaying Group Name/Cert No
             },
-            orderBy: [
-                { group: { code: 'asc' } },
-                { farmerNo: 'asc' }
-            ]
         })
+
+        // Sort naturally (handles "10" > "2" correctly)
+        farmers.sort((a, b) => {
+            // First by Group Code
+            const groupCompare = a.group.code.localeCompare(b.group.code, undefined, { numeric: true })
+            if (groupCompare !== 0) return groupCompare
+
+            // Then by Farmer No
+            return a.farmerNo.localeCompare(b.farmerNo, undefined, { numeric: true })
+        })
+
         return { success: true, data: farmers }
     } catch (error) {
         console.error('Failed to get farmers:', error)
