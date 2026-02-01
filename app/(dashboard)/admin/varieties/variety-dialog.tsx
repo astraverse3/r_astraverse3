@@ -15,13 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+
 import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
 
 interface Props {
@@ -105,22 +99,47 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="예: 신동진"
+                            placeholder="예: 천지향"
                             required
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="type">곡종 구분</Label>
-                        <Select value={type} onValueChange={setType} required>
-                            <SelectTrigger>
-                                <SelectValue placeholder="곡종 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="URUCHI">일반계 (URUCHI)</SelectItem>
-                                <SelectItem value="GLUTINOUS">찰벼 (GLUTINOUS)</SelectItem>
-                                <SelectItem value="BLACK">흑미 (BLACK)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="space-y-3">
+                        <Label>곡종 구분</Label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="URUCHI"
+                                    checked={type === 'URUCHI'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                <span>메벼</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="GLUTINOUS"
+                                    checked={type === 'GLUTINOUS'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                <span>찰벼</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="OTHER"
+                                    checked={type === 'OTHER'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                <span>기타</span>
+                            </label>
+                        </div>
                     </div>
                     <DialogFooter className="flex justify-between sm:justify-between gap-2">
                         {mode === 'edit' && (
