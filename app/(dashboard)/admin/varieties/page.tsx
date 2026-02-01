@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronLeft, Pencil } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { getVarieties } from '@/app/actions/admin'
 import { VarietyDialog } from './variety-dialog'
 import { DeleteVarietyButton } from './delete-button'
@@ -58,11 +58,6 @@ export default async function VarietyPage() {
                                             <VarietyDialog
                                                 mode="edit"
                                                 variety={variety}
-                                                trigger={
-                                                    <button className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors" title="수정">
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                }
                                             />
                                             <DeleteVarietyButton id={variety.id} />
                                         </div>

@@ -25,15 +25,17 @@ interface Props {
         name: string
         type: string
     }
-    trigger?: React.ReactNode
 }
 
-export function VarietyDialog({ mode, variety, trigger }: Props) {
+export function VarietyDialog({ mode, variety }: Props) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [name, setName] = useState(variety?.name || '')
     const [type, setType] = useState(variety?.type || 'URUCHI')
     const [loading, setLoading] = useState(false)
+
+    // Ensure unique IDs for form inputs
+    const nameId = `name-${variety?.id || 'new'}`
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -78,11 +80,18 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                {trigger || (
+                {mode === 'create' ? (
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                         <Plus className="w-4 h-4 mr-1.5" />
                         품종 등록
                     </Button>
+                ) : (
+                    <button
+                        className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
+                        title="수정"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
                 )}
             </DialogTrigger>
             <DialogContent>
@@ -94,9 +103,9 @@ export function VarietyDialog({ mode, variety, trigger }: Props) {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">품종명</Label>
+                        <Label htmlFor={nameId}>품종명</Label>
                         <Input
-                            id="name"
+                            id={nameId}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="예: 천지향"
