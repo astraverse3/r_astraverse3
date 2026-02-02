@@ -76,7 +76,7 @@ export function StockExcelButtons() {
                 disabled={exporting}
             >
                 <Download className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '엑셀 다운로드'}
+                {exporting ? '다운로드 중...' : '엑셀 DOWN'}
             </Button>
 
             {/* Upload Button */}
@@ -88,7 +88,7 @@ export function StockExcelButtons() {
                 disabled={importing}
             >
                 <Upload className="w-4 h-4" />
-                {importing ? '업로드 중...' : '엑셀 업로드'}
+                {importing ? '업로드 중...' : '엑셀 UP'}
             </Button>
         </div>
     )

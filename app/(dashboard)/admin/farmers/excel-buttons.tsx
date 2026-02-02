@@ -77,7 +77,7 @@ export function ExcelButtons() {
                 disabled={importing}
             >
                 <Upload className="w-4 h-4" />
-                {importing ? '업로드 중...' : '엑셀 등록'}
+                {importing ? '업로드 중...' : '엑셀 UP'}
             </Button>
             <Button
                 variant="outline"
@@ -87,7 +87,7 @@ export function ExcelButtons() {
                 disabled={exporting}
             >
                 <Download className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '엑셀 다운로드'}
+                {exporting ? '다운로드 중...' : '엑셀 DOWN'}
             </Button>
         </div>
     )
