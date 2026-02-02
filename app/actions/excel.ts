@@ -70,10 +70,16 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
 
         const buffer = await file.arrayBuffer()
         const workbook = XLSX.read(buffer)
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[]
 
-        result.counts.total = jsonData.length
+        // Loop through all sheets
+        let allRows: any[] = []
+        for (const sheetName of workbook.SheetNames) {
+            const worksheet = workbook.Sheets[sheetName]
+            const sheetData = XLSX.utils.sheet_to_json(worksheet) as any[]
+            allRows = allRows.concat(sheetData)
+        }
+
+        result.counts.total = allRows.length
         const currentYear = new Date().getFullYear()
 
         // Transaction to ensure data integrity
@@ -88,7 +94,7 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
             // json_to_sheet usually handles header. 
             // So jsonData[0] is physically row 2.
 
-            for (const row of jsonData) {
+            for (const row of allRows) {
                 rowIndex++ // Increment for each data row (jsonData index 0 is row 2)
 
                 const groupCode = row['작목반번호'] ? String(row['작목반번호']) : undefined

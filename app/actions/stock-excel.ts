@@ -65,10 +65,17 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
 
         const buffer = await file.arrayBuffer()
         const workbook = XLSX.read(buffer)
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[]
 
-        result.counts.total = jsonData.length
+        // Loop through all sheets
+        let allRows: any[] = []
+        for (const sheetName of workbook.SheetNames) {
+            const worksheet = workbook.Sheets[sheetName]
+            const sheetData = XLSX.utils.sheet_to_json(worksheet) as any[]
+            // Optional: Tag data with sheetName if debugging is needed, but for now just merge
+            allRows = allRows.concat(sheetData)
+        }
+
+        result.counts.total = allRows.length
 
         // Pre-fetch all Farmers and Varieties to minimize DB calls inside loop?
         // Or just do findFirst/findUnique inside loop? 
@@ -80,7 +87,7 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
         await prisma.$transaction(async (tx) => {
             let rowIndex = 1
 
-            for (const row of jsonData) {
+            for (const row of allRows) {
                 rowIndex++
 
                 // Extract Fields
