@@ -4,6 +4,7 @@ import { AddStockDialog } from './add-stock-dialog'
 import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
 import { ActiveStockFilters } from './active-filters'
+import { StockExcelButtons } from './stock-excel-buttons'
 import {
     Table,
     TableBody,
@@ -79,6 +80,7 @@ export default async function StockPage({
                     <div className="flex items-center gap-2">
                         {/* Filters might need update to accept farmers/varieties too */}
                         <StockFilters varieties={varieties} farmers={farmers} />
+                        <StockExcelButtons />
                         <AddStockDialog varieties={varieties} farmers={farmers} />
                     </div>
                 </div>

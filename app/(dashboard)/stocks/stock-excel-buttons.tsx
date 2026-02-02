@@ -2,25 +2,24 @@
 
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download, Upload } from 'lucide-react'
-import { exportFarmers, importFarmers } from '@/app/actions/excel'
+import { Download, Upload, FileSpreadsheet } from 'lucide-react'
+import { importStocks, exportStocksSample } from '@/app/actions/stock-excel'
 import { formatImportResult } from '@/lib/excel-utils'
 
-export function ExcelButtons() {
+export function StockExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
 
-    const handleExport = async () => {
+    const handleDownloadSample = async () => {
         setExporting(true)
-        const result = await exportFarmers()
+        const result = await exportStocksSample()
 
         if (result.success && result.daa) {
-            // Trigger Download
             const base64Data = result.daa
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
-            link.download = result.fileName || 'farmers.xlsx'
+            link.download = result.fileName || 'stock_sample.xlsx'
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
@@ -38,7 +37,7 @@ export function ExcelButtons() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (!confirm('파일을 업로드하여 데이터를 등록하시겠습니까? (파일 내 생산년도 기준)')) {
+        if (!confirm('파일을 업로드하여 재고를 등록하시겠습니까? (생산자명/품종명 매칭)')) {
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
         }
@@ -47,7 +46,7 @@ export function ExcelButtons() {
         const formData = new FormData()
         formData.append('file', file)
 
-        const result = await importFarmers(formData)
+        const result = await importStocks(formData)
 
         if (result.success) {
             alert(formatImportResult(result))
@@ -55,7 +54,6 @@ export function ExcelButtons() {
             alert(result.message || '업로드에 실패했습니다.')
         }
 
-        // Reset input
         if (fileInputRef.current) fileInputRef.current.value = ''
         setImporting(false)
     }
@@ -69,6 +67,19 @@ export function ExcelButtons() {
                 className="hidden"
                 accept=".xlsx, .xls"
             />
+            {/* Sample Download Button */}
+            <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleDownloadSample}
+                disabled={exporting}
+            >
+                <FileSpreadsheet className="w-4 h-4" />
+                {exporting ? '다운로드 중...' : '양식 다운로드'}
+            </Button>
+
+            {/* Upload Button */}
             <Button
                 variant="outline"
                 size="sm"
@@ -77,17 +88,7 @@ export function ExcelButtons() {
                 disabled={importing}
             >
                 <Upload className="w-4 h-4" />
-                {importing ? '업로드 중...' : '엑셀 등록'}
-            </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={handleExport}
-                disabled={exporting}
-            >
-                <Download className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '엑셀 다운로드'}
+                {importing ? '업로드 중...' : '엑셀 업로드'}
             </Button>
         </div>
     )

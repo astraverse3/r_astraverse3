@@ -42,6 +42,10 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
     const [isLoading, setIsLoading] = useState(false)
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
 
+    // Default Year Logic: Previous Year until Oct, Current Year from Nov
+    const today = new Date()
+    const defaultYear = (today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1
+
     // Derived state for certifications based on selected farmer
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
     // Cert Info is now fixed per farmer (via group)
@@ -109,7 +113,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="productionYear">생산년도</Label>
-                            <Input id="productionYear" name="productionYear" type="number" defaultValue={new Date().getFullYear()} required />
+                            <Input id="productionYear" name="productionYear" type="number" defaultValue={defaultYear} required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="incomingDate">입고일자 (Lot 기준)</Label>
