@@ -67,18 +67,6 @@ export function StockExcelButtons() {
                 className="hidden"
                 accept=".xlsx, .xls"
             />
-            {/* Export Button */}
-            <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={handleExport}
-                disabled={exporting}
-            >
-                <Download className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '엑셀 DOWN'}
-            </Button>
-
             {/* Upload Button */}
             <Button
                 variant="outline"
@@ -89,6 +77,18 @@ export function StockExcelButtons() {
             >
                 <Upload className="w-4 h-4" />
                 {importing ? '업로드 중...' : '엑셀 UP'}
+            </Button>
+
+            {/* Export Button */}
+            <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleExport}
+                disabled={exporting}
+            >
+                <Download className="w-4 h-4" />
+                {exporting ? '다운로드 중...' : '엑셀 DOWN'}
             </Button>
         </div>
     )
