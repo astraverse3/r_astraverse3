@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload, FileSpreadsheet } from 'lucide-react'
-import { importStocks, exportStocksSample } from '@/app/actions/stock-excel'
+import { importStocks, exportStocks } from '@/app/actions/stock-excel'
 import { formatImportResult } from '@/lib/excel-utils'
 
 export function StockExcelButtons() {
@@ -11,15 +11,15 @@ export function StockExcelButtons() {
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
 
-    const handleDownloadSample = async () => {
+    const handleExport = async () => {
         setExporting(true)
-        const result = await exportStocksSample()
+        const result = await exportStocks()
 
         if (result.success && result.daa) {
             const base64Data = result.daa
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
-            link.download = result.fileName || 'stock_sample.xlsx'
+            link.download = result.fileName || 'stocks.xlsx'
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
@@ -67,16 +67,16 @@ export function StockExcelButtons() {
                 className="hidden"
                 accept=".xlsx, .xls"
             />
-            {/* Sample Download Button */}
+            {/* Export Button */}
             <Button
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={handleDownloadSample}
+                onClick={handleExport}
                 disabled={exporting}
             >
-                <FileSpreadsheet className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '양식 다운로드'}
+                <Download className="w-4 h-4" />
+                {exporting ? '다운로드 중...' : '엑셀 다운로드'}
             </Button>
 
             {/* Upload Button */}

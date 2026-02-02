@@ -29,26 +29,27 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
 
     const [open, setOpen] = useState(false)
 
-    // Default Year
-    const currentYear = new Date().getFullYear().toString()
+    // Default Year Logic: Previous Year until Oct, Current Year from Nov
+    const today = new Date()
+    const defaultYear = ((today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1).toString()
 
     // Filter States
-    const [year, setYear] = useState(searchParams.get('productionYear') || currentYear)
+    const [year, setYear] = useState(searchParams.get('productionYear') || defaultYear)
     const [variety, setVariety] = useState(searchParams.get('varietyId') || 'ALL')
     const [farmer, setFarmer] = useState(searchParams.get('farmerId') || 'ALL')
     const [cert, setCert] = useState(searchParams.get('certType') || 'ALL')
-    const [status, setStatus] = useState(searchParams.get('status') || 'AVAILABLE')
+    const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
 
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
-            setYear(searchParams.get('productionYear') || currentYear)
+            setYear(searchParams.get('productionYear') || defaultYear)
             setVariety(searchParams.get('varietyId') || 'ALL')
             setFarmer(searchParams.get('farmerId') || 'ALL')
             setCert(searchParams.get('certType') || 'ALL')
-            setStatus(searchParams.get('status') || 'AVAILABLE')
+            setStatus(searchParams.get('status') || 'ALL')
         }
-    }, [open, searchParams, currentYear])
+    }, [open, searchParams, defaultYear])
 
     const activeFilterCount = [
         year !== 'ALL',
@@ -72,12 +73,12 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     }
 
     const handleReset = () => {
-        setYear(currentYear)
+        setYear(defaultYear)
         setVariety('ALL')
         setFarmer('ALL')
         setCert('ALL')
-        setStatus('AVAILABLE')
-        router.push(`/stocks?productionYear=${currentYear}&status=AVAILABLE`)
+        setStatus('ALL')
+        router.push(`/stocks?productionYear=${defaultYear}`)
         setOpen(false)
     }
 

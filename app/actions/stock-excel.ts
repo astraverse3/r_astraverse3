@@ -6,39 +6,45 @@ import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
 
 // --- EXPORT LOGIC ---
-export async function exportStocksSample() {
+export async function exportStocks() {
     try {
-        // Create a sample workbook
-        const rows = [
-            {
-                '입고일자': '2024-10-15',
-                '생산년도': 2024,
-                '생산자명': '홍길동',
-                '품종': '신동진',
-                '톤백번호': 1,
-                '중량(kg)': 800
+        const stocks = await prisma.stock.findMany({
+            include: {
+                farmer: { include: { group: true } },
+                variety: true
             },
-            {
-                '입고일자': '2024-10-15',
-                '생산년도': 2024,
-                '생산자명': '김철수',
-                '품종': '삼광',
-                '톤백번호': 2,
-                '중량(kg)': 805.5
-            }
-        ]
+            orderBy: { id: 'desc' }
+        })
 
-        const worksheet = XLSX.utils.json_to_sheet(rows)
+        const rows = stocks.map(stock => ({
+            '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
+            '생산년도': stock.productionYear,
+            '생산자명': stock.farmer.name,
+            '품종': stock.variety.name,
+            '톤백번호': stock.bagNo,
+            '중량(kg)': stock.weightKg,
+            // Additional info for reference, but not required for import (or ignored if re-imported)
+            '상태': stock.status === 'AVAILABLE' ? '보관중' : '소진됨'
+        }))
+
+        // If no data, provide at least the headers (json_to_sheet handles empty array by default? No, need to force headers)
+        let worksheet
+        if (rows.length === 0) {
+            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '품종', '톤백번호', '중량(kg)']])
+        } else {
+            worksheet = XLSX.utils.json_to_sheet(rows)
+        }
+
         const workbook = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'StockSample')
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Stocks')
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
 
-        return { success: true, daa: buf, fileName: `stock_upload_sample.xlsx` }
+        return { success: true, daa: buf, fileName: `stock_list_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
-        console.error('Export sample failed:', error)
-        return { success: false, error: '샘플 다운로드에 실패했습니다.' }
+        console.error('Export failed:', error)
+        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
     }
 }
 
