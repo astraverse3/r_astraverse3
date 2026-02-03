@@ -3,7 +3,11 @@
 import { useSearchParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 
-export function ActiveMillingFilters() {
+interface ActiveMillingFiltersProps {
+    totalCount: number
+}
+
+export function ActiveMillingFilters({ totalCount }: ActiveMillingFiltersProps) {
     const searchParams = useSearchParams()
 
     const status = searchParams.get('status') || 'ALL'
@@ -31,12 +35,17 @@ export function ActiveMillingFilters() {
     }
 
     return (
-        <div className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-hide justify-end">
-            {status !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{status === 'open' ? '진행중' : '마감'}</Badge>}
-            {variety !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{variety}</Badge>}
-            {millingType !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{millingType}</Badge>}
-            {yieldRate !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{getYieldLabel(yieldRate)}</Badge>}
-            {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">"{keyword}"</Badge>}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto py-1 px-1 scrollbar-hide">
+            <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
+                검색결과 {totalCount}건
+            </span>
+            <div className="flex gap-2">
+                {status !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{status === 'open' ? '진행중' : '마감'}</Badge>}
+                {variety !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{variety}</Badge>}
+                {millingType !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{millingType}</Badge>}
+                {yieldRate !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{getYieldLabel(yieldRate)}</Badge>}
+                {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">"{keyword}"</Badge>}
+            </div>
         </div>
     )
 }

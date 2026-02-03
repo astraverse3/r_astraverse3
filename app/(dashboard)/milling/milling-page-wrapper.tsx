@@ -26,7 +26,7 @@ export function MillingPageWrapper({
                 onShowDelete={showDeleteDialog}
                 filtersSlot={filtersSlot}
             >
-                <ActiveMillingFilters />
+                <ActiveMillingFilters totalCount={logs.length} />
                 <MillingListClient
                     logs={logs}
                     filters={filters}

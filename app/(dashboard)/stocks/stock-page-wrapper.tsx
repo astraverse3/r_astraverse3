@@ -58,7 +58,7 @@ export function StockPageWrapper({
                 excelSlot={excelSlot}
                 addDialogSlot={addDialogSlot}
             >
-                <ActiveStockFilters />
+                <ActiveStockFilters totalCount={stocks.length} />
                 <StockListClient
                     stocks={stocks}
                     farmers={farmers}
