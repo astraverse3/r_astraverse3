@@ -14,10 +14,10 @@ export function BreadcrumbDisplay() {
     const pageName = PAGE_NAMES[pathname] || '도정관리시스템';
 
     return (
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-            <span className="opacity-50">도정관리시스템</span>
-            <span className="opacity-30">/</span>
-            <span>{pageName}</span>
+        <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">도정관리시스템</span>
+            <span className="text-sm text-slate-300">/</span>
+            <span className="text-xl font-bold text-slate-900">{pageName}</span>
         </div>
     );
 }

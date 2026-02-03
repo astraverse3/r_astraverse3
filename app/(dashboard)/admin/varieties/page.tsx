@@ -19,13 +19,7 @@ export default async function VarietyPage() {
     return (
         <div className="space-y-6 pb-20">
             {/* Header with Back Button */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Link href="/admin" className="p-2 -ml-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors">
-                        <ChevronLeft className="w-5 h-5" />
-                    </Link>
-                    <h1 className="text-xl font-bold text-slate-800">품종 관리</h1>
-                </div>
+            <div className="flex items-center justify-end">
                 <VarietyDialog mode="create" />
             </div>
 

@@ -42,22 +42,14 @@ export default async function MillingListPage({
         <div className="grid grid-cols-1 gap-1 pb-24">
             {/* Header */}
             <section className="flex flex-col gap-2 pt-2 px-1">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold text-slate-800">도정 관리</h1>
-                        <Badge variant="secondary" className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0">
-                            {logs.length}
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <MillingFilters varieties={varieties} />
-                        <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-8 text-xs font-bold px-3">
-                            <Link href="/milling/new" className="flex items-center gap-1.5">
-                                <Plus className="h-3.5 w-3.5" />
-                                작업 등록
-                            </Link>
-                        </Button>
-                    </div>
+                <div className="flex items-center justify-end gap-2">
+                    <MillingFilters varieties={varieties} />
+                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-8 text-xs font-bold px-3">
+                        <Link href="/milling/new" className="flex items-center gap-1.5">
+                            <Plus className="h-3.5 w-3.5" />
+                            작업 등록
+                        </Link>
+                    </Button>
                 </div>
                 <ActiveMillingFilters />
             </section>

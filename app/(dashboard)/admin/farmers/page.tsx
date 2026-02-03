@@ -26,16 +26,10 @@ export default async function AdminFarmersPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">생산자 관리</h1>
-                    <p className="text-slate-500">생산자 목록과 인증 정보를 관리합니다.</p>
-                </div>
-                <div className="flex gap-2">
-                    <FarmerFilters />
-                    <ExcelButtons />
-                    <AddFarmerDialog />
-                </div>
+            <div className="flex items-center justify-end gap-2">
+                <FarmerFilters />
+                <ExcelButtons />
+                <AddFarmerDialog />
             </div>
 
             <Suspense fallback={<div>Loading...</div>}>

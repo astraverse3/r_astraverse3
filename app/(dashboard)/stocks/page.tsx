@@ -71,19 +71,10 @@ export default async function StockPage({
         <div className="grid grid-cols-1 gap-1 pb-24">
             {/* Header */}
             <section className="flex flex-col gap-2 pt-2 px-1">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold text-slate-800">재고 관리</h1>
-                        <Badge variant="secondary" className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0">
-                            {stocks.length}
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {/* Filters might need update to accept farmers/varieties too */}
-                        <StockFilters varieties={varieties} farmers={farmers} />
-                        <StockExcelButtons />
-                        <AddStockDialog varieties={varieties} farmers={farmers} />
-                    </div>
+                <div className="flex items-center justify-end gap-2">
+                    <StockFilters varieties={varieties} farmers={farmers} />
+                    <StockExcelButtons />
+                    <AddStockDialog varieties={varieties} farmers={farmers} />
                 </div>
                 <ActiveStockFilters />
             </section>
