@@ -1,6 +1,7 @@
 import { MobileHeader } from "@/components/mobile-header"
 import { MobileNav } from "@/components/mobile-nav"
 import { DesktopSidebar } from "@/components/desktop-sidebar"
+import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
 
 export default function DashboardLayout({
     children,
@@ -20,11 +21,7 @@ export default function DashboardLayout({
 
                 {/* Desktop Header (Hidden on Mobile) */}
                 <header className="hidden lg:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6 z-40">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                        <span className="opacity-50">땅끝황토친환경</span>
-                        <span className="opacity-30">/</span>
-                        <span>도정관리시스템</span>
-                    </div>
+                    <BreadcrumbDisplay />
                     <div className="flex items-center gap-4">
                         <span className="text-xs text-slate-500 font-medium font-mono">
                             {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })}

@@ -251,6 +251,52 @@ export async function deleteFarmer(id: number) {
     }
 }
 
+export async function deleteFarmers(ids: number[]) {
+    try {
+        const results = {
+            success: [] as number[],
+            failed: [] as { id: number; reason: string }[]
+        }
+
+        for (const id of ids) {
+            // Check if farmer has stock
+            const used = await prisma.stock.findFirst({
+                where: { farmerId: id }
+            })
+
+            if (used) {
+                const farmer = await prisma.farmer.findUnique({ where: { id } })
+                results.failed.push({
+                    id,
+                    reason: `${farmer?.name || id}: 재고가 등록되어 삭제 불가`
+                })
+                continue
+            }
+
+            try {
+                await prisma.farmer.delete({ where: { id } })
+                results.success.push(id)
+            } catch (error) {
+                results.failed.push({
+                    id,
+                    reason: `${id}: 삭제 실패`
+                })
+            }
+        }
+
+        revalidatePath('/admin/farmers')
+        revalidatePath('/stocks')
+
+        return {
+            success: true,
+            data: results
+        }
+    } catch (error) {
+        console.error('Failed to delete farmers:', error)
+        return { success: false, error: 'Failed to delete farmers' }
+    }
+}
+
 // PRODUCER GROUP CRUD (Optional, mostly handled via Excel but good to have)
 export type ProducerGroupFormData = {
     code: string

@@ -20,6 +20,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Checkbox } from '@/components/ui/checkbox'
 import { deleteFarmer } from '@/app/actions/admin'
 import { AddFarmerDialog } from './add-farmer-dialog'
 
@@ -40,22 +41,44 @@ interface Farmer {
     }
 }
 
-export function FarmerList({ farmers }: { farmers: Farmer[] }) {
+export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
+    farmers: Farmer[]
+    selectedIds: Set<number>
+    onSelectionChange: (ids: Set<number>) => void
+}) {
     const [editingFarmer, setEditingFarmer] = useState<Farmer | null>(null)
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('정말 삭제하시겠습니까? 관련 재고가 있으면 삭제할 수 없습니다.')) return
-        const result = await deleteFarmer(id)
-        if (!result.success) {
-            alert(result.error)
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            onSelectionChange(new Set(farmers.map(f => f.id)))
+        } else {
+            onSelectionChange(new Set())
         }
     }
+
+    const handleSelectOne = (id: number, checked: boolean) => {
+        const newSelected = new Set(selectedIds)
+        if (checked) {
+            newSelected.add(id)
+        } else {
+            newSelected.delete(id)
+        }
+        onSelectionChange(newSelected)
+    }
+
+
 
     return (
         <div className="rounded-md border bg-white shadow-sm">
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50">
+                        <TableHead className="w-[40px]">
+                            <Checkbox
+                                checked={selectedIds.size === farmers.length && farmers.length > 0}
+                                onCheckedChange={handleSelectAll}
+                            />
+                        </TableHead>
                         <TableHead>년도</TableHead>
                         <TableHead>작목반번호</TableHead>
                         <TableHead>작목반</TableHead>
@@ -64,19 +87,25 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                         <TableHead>생산자명</TableHead>
                         <TableHead>품목</TableHead>
                         <TableHead>연락처</TableHead>
-                        <TableHead className="text-right">관리</TableHead>
+                        <TableHead className="text-center">수정</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {farmers.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={9} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={10} className="text-center py-8 text-slate-500">
                                 등록된 생산자가 없습니다.
                             </TableCell>
                         </TableRow>
                     ) : (
                         farmers.map((farmer) => (
                             <TableRow key={farmer.id}>
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selectedIds.has(farmer.id)}
+                                        onCheckedChange={(checked) => handleSelectOne(farmer.id, checked as boolean)}
+                                    />
+                                </TableCell>
                                 <TableCell className="font-mono text-center text-slate-500">{farmer.group.cropYear}</TableCell>
                                 <TableCell className="font-mono text-center">{farmer.group.code}</TableCell>
                                 <TableCell>
@@ -91,24 +120,15 @@ export function FarmerList({ farmers }: { farmers: Farmer[] }) {
                                 <TableCell className="font-bold text-slate-900">{farmer.name}</TableCell>
                                 <TableCell className="text-slate-600 text-sm">{farmer.items || '-'}</TableCell>
                                 <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>작업</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => setEditingFarmer(farmer)}>
-                                                <Edit className="mr-2 h-4 w-4" /> 정보 수정
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(farmer.id)}>
-                                                <Trash2 className="mr-2 h-4 w-4" /> 삭제
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                <TableCell className="text-center">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => setEditingFarmer(farmer)}
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))

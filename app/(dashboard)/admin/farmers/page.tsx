@@ -3,7 +3,7 @@ import { getFarmersWithGroups } from '@/app/actions/admin'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AddFarmerDialog } from './add-farmer-dialog'
-import { FarmerList } from './farmer-list'
+import { FarmerListWrapper } from './farmer-list-wrapper'
 import { ExcelButtons } from './excel-buttons'
 import { FarmerFilters } from './farmer-filters'
 
@@ -39,7 +39,7 @@ export default async function AdminFarmersPage({
             </div>
 
             <Suspense fallback={<div>Loading...</div>}>
-                <FarmerList farmers={farmers} />
+                <FarmerListWrapper farmers={farmers} />
             </Suspense>
         </div>
     )
