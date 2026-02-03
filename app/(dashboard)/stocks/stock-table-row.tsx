@@ -49,7 +49,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
                 className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 text-xs"
             >
                 {/* Checkbox */}
-                <TableCell className="py-2 px-1 w-[40px]">
+                <TableCell className="py-2 px-1 w-[40px] text-center">
                     <Checkbox
                         checked={selected}
                         onCheckedChange={onSelect}
