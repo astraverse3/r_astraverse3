@@ -31,6 +31,15 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
     const farmerName = stock.farmer?.name || 'Unknown'
     const certType = stock.farmer?.group?.certType || 'None'
 
+    const handleDelete = async () => {
+        if (confirm('정말 삭제하시겠습니까? (삭제 후 복구 불가)')) {
+            const result = await deleteStock(stock.id)
+            if (!result.success) {
+                alert('삭제에 실패했습니다.')
+            }
+        }
+    }
+
     return (
         <>
             <TableRow
@@ -67,8 +76,8 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
 
                 {/* 5. Lot No */}
                 <TableCell className="py-2 px-1 text-center">
-                    <div className="text-xs text-slate-500 font-mono tracking-tighter truncate max-w-[80px] mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
-                        {stock.lotNo ? stock.lotNo.split('-').slice(1).join('-') : '-'}
+                    <div className="text-[10px] text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
+                        {stock.lotNo || '-'}
                     </div>
                 </TableCell>
 
@@ -111,6 +120,14 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
                             >
                                 <Edit className="mr-2 h-3 w-3" />
                                 수정
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-xs cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={handleDelete}
+                            >
+                                <Trash2 className="mr-2 h-3 w-3" />
+                                삭제
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
