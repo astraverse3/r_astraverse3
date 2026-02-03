@@ -160,6 +160,60 @@ export async function deleteStock(id: number) {
     }
 }
 
+export async function deleteStocks(ids: number[]) {
+    try {
+        const results = {
+            success: [] as number[],
+            failed: [] as { id: number; reason: string }[]
+        }
+
+        for (const id of ids) {
+            const stock = await prisma.stock.findUnique({
+                where: { id },
+                select: { status: true, bagNo: true }
+            })
+
+            if (!stock) {
+                results.failed.push({
+                    id,
+                    reason: `재고 ${id}: 찾을 수 없음`
+                })
+                continue
+            }
+
+            if (stock.status === 'CONSUMED') {
+                results.failed.push({
+                    id,
+                    reason: `포대 ${stock.bagNo}: 도정 완료되어 삭제 불가`
+                })
+                continue
+            }
+
+            try {
+                await prisma.stock.delete({ where: { id } })
+                results.success.push(id)
+            } catch (error) {
+                results.failed.push({
+                    id,
+                    reason: `포대 ${stock.bagNo}: 삭제 실패`
+                })
+            }
+        }
+
+        revalidatePath('/stocks')
+        revalidatePath('/milling')
+
+        return {
+            success: true,
+            data: results
+        }
+    } catch (error) {
+        console.error('Failed to delete stocks:', error)
+        return { success: false, error: 'Failed to delete stocks' }
+    }
+}
+
+
 export type GetStocksParams = {
     productionYear?: string
     varietyId?: string

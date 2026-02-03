@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MoreHorizontal, Edit, Trash2, AlertCircle } from 'lucide-react'
 import {
     DropdownMenu,
@@ -21,9 +22,11 @@ interface Props {
     stock: Stock
     farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[]
     varieties: { id: number; name: string }[]
+    selected: boolean
+    onSelect: (checked: boolean) => void
 }
 
-export function StockTableRow({ stock, farmers, varieties }: Props) {
+export function StockTableRow({ stock, farmers, varieties, selected, onSelect }: Props) {
     const [editOpen, setEditOpen] = useState(false)
 
     // Helper to get nested values safely
@@ -45,6 +48,14 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
             <TableRow
                 className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 text-xs"
             >
+                {/* Checkbox */}
+                <TableCell className="py-2 px-1 w-[40px]">
+                    <Checkbox
+                        checked={selected}
+                        onCheckedChange={onSelect}
+                    />
+                </TableCell>
+
                 {/* 1. Year */}
                 <TableCell className="py-2 px-1 text-center text-xs font-medium text-slate-500 hidden sm:table-cell">
                     {stock.productionYear.toString().slice(-2)}
@@ -106,31 +117,14 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
 
                 {/* 9. Management */}
                 <TableCell className="py-2 px-1 text-center">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-6 w-6 p-0 hover:bg-slate-200 rounded-full">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4 text-slate-500" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[120px]">
-                            <DropdownMenuItem
-                                className="text-xs cursor-pointer"
-                                onClick={() => setEditOpen(true)}
-                            >
-                                <Edit className="mr-2 h-3 w-3" />
-                                수정
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-xs cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={handleDelete}
-                            >
-                                <Trash2 className="mr-2 h-3 w-3" />
-                                삭제
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setEditOpen(true)}
+                    >
+                        <Edit className="h-3 w-3" />
+                    </Button>
                 </TableCell>
             </TableRow>
 

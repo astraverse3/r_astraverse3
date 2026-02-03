@@ -84,6 +84,53 @@ export async function deleteVariety(id: number) {
     }
 }
 
+export async function deleteVarieties(ids: number[]) {
+    try {
+        const results = {
+            success: [] as number[],
+            failed: [] as { id: number; reason: string }[]
+        }
+
+        for (const id of ids) {
+            // Check if variety has stocks
+            const stockCount = await prisma.stock.count({
+                where: { varietyId: id }
+            })
+
+            if (stockCount > 0) {
+                const variety = await prisma.variety.findUnique({ where: { id } })
+                results.failed.push({
+                    id,
+                    reason: `${variety?.name || id}: 재고가 등록되어 삭제 불가`
+                })
+                continue
+            }
+
+            try {
+                await prisma.variety.delete({ where: { id } })
+                results.success.push(id)
+            } catch (error) {
+                results.failed.push({
+                    id,
+                    reason: `${id}: 삭제 실패`
+                })
+            }
+        }
+
+        revalidatePath('/admin/varieties')
+        revalidatePath('/stocks')
+
+        return {
+            success: true,
+            data: results
+        }
+    } catch (error) {
+        console.error('Failed to delete varieties:', error)
+        return { success: false, error: 'Failed to delete varieties' }
+    }
+}
+
+
 // --- PRODUCER GROUP & FARMER ACTIONS ---
 
 // Fetch Farmers with nested Group info

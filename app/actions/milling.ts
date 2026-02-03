@@ -398,3 +398,85 @@ export async function deleteMillingBatch(batchId: number) {
         return { success: false, error: error instanceof Error ? error.message : 'Failed to delete batch' }
     }
 }
+
+export async function deleteMillingBatches(ids: number[]) {
+    try {
+        const results = {
+            success: [] as number[],
+            failed: [] as { id: number; reason: string }[]
+        }
+
+        for (const id of ids) {
+            const batch = await prisma.millingBatch.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    date: true,
+                    _count: {
+                        select: { outputs: true }
+                    }
+                }
+            })
+
+            if (!batch) {
+                results.failed.push({
+                    id,
+                    reason: `작업 ${id}: 찾을 수 없음`
+                })
+                continue
+            }
+
+            // Check if any packaging has been done
+            if (batch._count.outputs > 0) {
+                const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')
+                results.failed.push({
+                    id,
+                    reason: `${dateStr} 작업: 포장 진행되어 삭제 불가`
+                })
+                continue
+            }
+
+            try {
+                await prisma.$transaction(async (tx) => {
+                    // Revert stock status
+                    await tx.stock.updateMany({
+                        where: { batchId: id },
+                        data: {
+                            status: 'AVAILABLE',
+                            batchId: null
+                        }
+                    })
+
+                    // Delete outputs
+                    await tx.millingOutputPackage.deleteMany({
+                        where: { batchId: id }
+                    })
+
+                    // Delete batch
+                    await tx.millingBatch.delete({
+                        where: { id }
+                    })
+                })
+                results.success.push(id)
+            } catch (error) {
+                const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')
+                results.failed.push({
+                    id,
+                    reason: `${dateStr} 작업: 삭제 실패`
+                })
+            }
+        }
+
+        revalidatePath('/milling')
+        revalidatePath('/stocks')
+
+        return {
+            success: true,
+            data: results
+        }
+    } catch (error) {
+        console.error('Failed to delete milling batches:', error)
+        return { success: false, error: 'Failed to delete milling batches' }
+    }
+}
+

@@ -1,10 +1,12 @@
 import { getStocks, GetStocksParams } from '@/app/actions/stock'
-import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin' // Updated import
+import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
 import { AddStockDialog } from './add-stock-dialog'
-import { StockTableRow } from './stock-table-row'
 import { StockFilters } from './stock-filters'
 import { ActiveStockFilters } from './active-filters'
 import { StockExcelButtons } from './stock-excel-buttons'
+import { StockListClient } from './stock-list-client'
+import { Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
     Table,
     TableBody,
@@ -79,37 +81,12 @@ export default async function StockPage({
                 <ActiveStockFilters />
             </section>
 
-            {/* Dense Table */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[70px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">농가</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[140px]">Lot No</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[40px]">톤백</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">중량</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">관리</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {stocks.length > 0 ? (
-                            stocks.map((stock: Stock) => (
-                                <StockTableRow key={stock.id} stock={stock} farmers={farmers} varieties={varieties} />
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableHead colSpan={8} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                    {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 재고가 없습니다.'}
-                                </TableHead>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </section>
+            <StockListClient
+                stocks={stocks}
+                farmers={farmers}
+                varieties={varieties}
+                filters={filters}
+            />
         </div >
     )
 }
