@@ -149,7 +149,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>농가</Label>
+                            <Label>생산자</Label>
                             <Select value={farmer} onValueChange={setFarmer}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="전체" />

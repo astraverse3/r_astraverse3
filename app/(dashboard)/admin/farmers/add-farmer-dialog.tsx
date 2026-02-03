@@ -165,13 +165,13 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             {!isControlled && (
                 <DialogTrigger asChild>
                     <Button>
-                        <Plus className="mr-2 h-4 w-4" /> 농가 등록
+                        <Plus className="mr-2 h-4 w-4" /> 생산자 등록
                     </Button>
                 </DialogTrigger>
             )}
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{farmer ? '농가 정보 수정' : '새 농가 등록'}</DialogTitle>
+                    <DialogTitle>{farmer ? '생산자 정보 수정' : '새 생산자 등록'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-4">
 
@@ -254,11 +254,11 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
 
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="farmerNo">농가번호 (필수)</Label>
+                            <Label htmlFor="farmerNo">생산자번호 (필수)</Label>
                             <Input id="farmerNo" name="farmerNo" defaultValue={farmer?.farmerNo} placeholder="예: 1" required />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="name">농가명 (필수)</Label>
+                            <Label htmlFor="name">생산자명 (필수)</Label>
                             <Input id="name" name="name" defaultValue={farmer?.name} placeholder="생산자 이름" required />
                         </div>
                     </div>
