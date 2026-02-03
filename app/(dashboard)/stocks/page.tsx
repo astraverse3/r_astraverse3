@@ -100,7 +100,8 @@ export default async function StockPage({
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">Lot No</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[40px]">톤백</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">중량</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[30px]">상</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">관리</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

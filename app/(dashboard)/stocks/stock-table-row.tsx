@@ -34,8 +34,7 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
-                onClick={() => setEditOpen(true)}
+                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 text-xs"
             >
                 {/* 1. Year */}
                 <TableCell className="py-2 px-1 text-center text-xs font-medium text-slate-500 hidden sm:table-cell">
@@ -79,28 +78,53 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
                 </TableCell>
 
                 {/* 7. Weight */}
-                <TableCell className="py-2 px-1 text-right text-xs font-bold text-slate-900">
+                <TableCell className="py-2 px-2 text-right text-xs font-bold text-slate-900">
                     {stock.weightKg.toLocaleString()}
                 </TableCell>
 
                 {/* 8. Status */}
                 <TableCell className="py-2 px-1 text-center">
                     {stock.status === 'AVAILABLE' ? (
-                        <div className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-blue-500 ring-2 ring-blue-100" title="보관중" />
+                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 ring-1 ring-blue-200" title="보관중">
+                            보
+                        </div>
                     ) : (
-                        <div className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-slate-200" title="사용완료" />
+                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-400 ring-1 ring-slate-200" title="사용완료">
+                            완
+                        </div>
                     )}
+                </TableCell>
+
+                {/* 9. Management */}
+                <TableCell className="py-2 px-1 text-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-6 w-6 p-0 hover:bg-slate-200 rounded-full">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[120px]">
+                            <DropdownMenuItem
+                                className="text-xs cursor-pointer"
+                                onClick={() => setEditOpen(true)}
+                            >
+                                <Edit className="mr-2 h-3 w-3" />
+                                수정
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </TableCell>
             </TableRow>
 
-            {/* Controlled Edit Dialog (Hidden Trigger) */}
+            {/* Controlled Edit Dialog (Hidden Trigger by default) */}
             <EditStockDialog
                 stock={stock}
                 open={editOpen}
                 onOpenChange={setEditOpen}
                 farmers={farmers}
                 varieties={varieties}
-                trigger={null} // Hide default trigger
+                trigger={null}
             />
         </>
     )

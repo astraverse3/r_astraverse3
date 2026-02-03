@@ -21,6 +21,7 @@ export async function exportStocks() {
             '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
             '생산년도': stock.productionYear,
             '생산자명': stock.farmer.name,
+            '작목반명': stock.farmer.group.name, // Added Group Name
             '품종': stock.variety.name,
             '톤백번호': stock.bagNo,
             '중량(kg)': stock.weightKg,
@@ -31,7 +32,7 @@ export async function exportStocks() {
         // If no data, provide at least the headers (json_to_sheet handles empty array by default? No, need to force headers)
         let worksheet
         if (rows.length === 0) {
-            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '품종', '톤백번호', '중량(kg)']])
+            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '작목반명', '품종', '톤백번호', '중량(kg)']])
         } else {
             worksheet = XLSX.utils.json_to_sheet(rows)
         }
@@ -95,6 +96,7 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
                 const dateStr = row['입고일자'] ? String(row['입고일자']) : undefined // Need to handle Excel date format carefully
                 const productionYear = row['생산년도'] ? parseInt(String(row['생산년도'])) : undefined
                 const farmerName = row['생산자명'] ? String(row['생산자명']).trim() : undefined
+                const groupName = row['작목반명'] ? String(row['작목반명']).trim() : undefined // Added Group Name
                 const varietyName = row['품종'] ? String(row['품종']).trim() : undefined
                 const bagNo = row['톤백번호'] ? parseInt(String(row['톤백번호'])) : undefined
                 const weightKg = row['중량(kg)'] ? parseFloat(String(row['중량(kg)'])) : (row['중량'] ? parseFloat(String(row['중량'])) : undefined)
@@ -104,6 +106,11 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
                 if (!dateStr) missingFields.push('입고일자')
                 if (!productionYear) missingFields.push('생산년도')
                 if (!farmerName) missingFields.push('생산자명')
+                // if (!groupName) missingFields.push('작목반명') // Optional? No, better to require it for ambiguity resolution. But let's verify if user wants it optional. User said "same name can be in multiple groups", so suggest strict.
+                // Resetting to optional logic: If groupName provided, use it. If not, fallback to name only? No, risky. 
+                // Let's enforce it if we want to fix the issue. The export provides it.
+                if (!groupName) missingFields.push('작목반명')
+
                 if (!varietyName) missingFields.push('품종')
                 if (bagNo === undefined) missingFields.push('톤백번호')
                 if (weightKg === undefined) missingFields.push('중량')
@@ -137,13 +144,19 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
 
                 try {
                     // 3. Lookups
+                    // Find farmer by Name AND Group Name
                     const farmer = await tx.farmer.findFirst({
-                        where: { name: farmerName },
+                        where: {
+                            name: farmerName,
+                            group: {
+                                name: groupName // Filter by Group Name
+                            }
+                        },
                         include: { group: true } // Include group for Lot No generation
                     })
                     if (!farmer) {
                         result.counts.failed++
-                        result.errors.push({ row: rowIndex, reason: `등록되지 않은 생산자: ${farmerName}` })
+                        result.errors.push({ row: rowIndex, reason: `등록되지 않은 생산자(작목반 불일치): ${farmerName} (${groupName})` })
                         continue
                     }
 
