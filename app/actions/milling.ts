@@ -51,7 +51,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
             const newBatch = await tx.millingBatch.create({
                 data: {
                     date: data.date,
-                    remarks: data.remarks,
+                    remarks: data.remarks?.trim(),
                     millingType: data.millingType,
                     totalInputKg: actualTotalInputKg,
                     // Link stocks

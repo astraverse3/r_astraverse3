@@ -76,7 +76,7 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
 
                 {/* 5. Lot No */}
                 <TableCell className="py-2 px-1 text-center">
-                    <div className="text-[10px] text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
+                    <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
                         {stock.lotNo || '-'}
                     </div>
                 </TableCell>

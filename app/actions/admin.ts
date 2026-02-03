@@ -23,15 +23,16 @@ export async function getVarieties() {
 
 export async function createVariety(data: VarietyFormData) {
     try {
+        const name = data.name.trim()
         const existing = await prisma.variety.findUnique({
-            where: { name: data.name }
+            where: { name }
         })
         if (existing) {
             return { success: false, error: '이미 존재하는 품종입니다.' }
         }
 
         const variety = await prisma.variety.create({
-            data: { name: data.name, type: data.type }
+            data: { name, type: data.type }
         })
         revalidatePath('/admin/varieties')
         revalidatePath('/stocks')
@@ -45,8 +46,9 @@ export async function createVariety(data: VarietyFormData) {
 
 export async function updateVariety(id: number, data: VarietyFormData) {
     try {
+        const name = data.name.trim()
         const existing = await prisma.variety.findUnique({
-            where: { name: data.name }
+            where: { name }
         })
         if (existing && existing.id !== id) {
             return { success: false, error: '이미 존재하는 품종입니다.' }
@@ -54,8 +56,11 @@ export async function updateVariety(id: number, data: VarietyFormData) {
 
         const variety = await prisma.variety.update({
             where: { id },
-            data: { name: data.name, type: data.type }
+            data: { name, type: data.type }
         })
+        revalidatePath('/admin/varieties')
+        revalidatePath('/stocks')
+        // ... (previous code for updateVariety)
         revalidatePath('/admin/varieties')
         revalidatePath('/stocks')
         return { success: true, data: variety }
@@ -171,26 +176,27 @@ export type FarmerFormData = {
 
 export async function createFarmer(data: FarmerFormData) {
     try {
+        const farmerNo = data.farmerNo.trim()
         // Check duplicate within group
         const existing = await prisma.farmer.findUnique({
             where: {
                 groupId_farmerNo: {
                     groupId: data.groupId,
-                    farmerNo: data.farmerNo
+                    farmerNo
                 }
             }
         });
 
         if (existing) {
-            return { success: false, error: `해당 작목반에 이미 농가번호 ${data.farmerNo}가 존재합니다.` }
+            return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
         }
 
         const farmer = await prisma.farmer.create({
             data: {
-                name: data.name,
-                farmerNo: data.farmerNo,
-                items: data.items,
-                phone: data.phone,
+                name: data.name.trim(),
+                farmerNo,
+                items: data.items?.trim(),
+                phone: data.phone?.trim(),
                 groupId: data.groupId
             }
         })
@@ -208,10 +214,10 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
         const farmer = await prisma.farmer.update({
             where: { id },
             data: {
-                name: data.name,
-                farmerNo: data.farmerNo,
-                items: data.items,
-                phone: data.phone,
+                name: data.name.trim(),
+                farmerNo: data.farmerNo.trim(),
+                items: data.items?.trim(),
+                phone: data.phone?.trim(),
                 groupId: data.groupId
             }
         })
@@ -260,11 +266,20 @@ export async function createFarmerWithGroup(
 ) {
     try {
         return await prisma.$transaction(async (tx) => {
+            // Trim Data
+            const gCode = groupData.code.trim()
+            const gName = groupData.name.trim()
+            const gCertNo = groupData.certNo.trim()
+            const fName = farmerData.name.trim()
+            const fNo = farmerData.farmerNo.trim()
+            const fItems = farmerData.items?.trim()
+            const fPhone = farmerData.phone?.trim()
+
             // 1. Find or Create Group
             let group = await tx.producerGroup.findUnique({
                 where: {
                     code_cropYear: {
-                        code: groupData.code,
+                        code: gCode,
                         cropYear: groupData.cropYear || 2024
                     }
                 }
@@ -272,16 +287,16 @@ export async function createFarmerWithGroup(
 
             if (!group) {
                 // Derive certType
-                const thirdChar = groupData.certNo.length >= 3 ? groupData.certNo.charAt(2) : ''
+                const thirdChar = gCertNo.length >= 3 ? gCertNo.charAt(2) : ''
                 let certType = '일반'
                 if (thirdChar === '1') certType = '유기농'
                 else if (thirdChar === '3') certType = '무농약'
 
                 group = await tx.producerGroup.create({
                     data: {
-                        code: groupData.code,
-                        name: groupData.name,
-                        certNo: groupData.certNo,
+                        code: gCode,
+                        name: gName,
+                        certNo: gCertNo,
                         certType,
                         cropYear: groupData.cropYear || 2024
                     }
@@ -293,22 +308,22 @@ export async function createFarmerWithGroup(
                 where: {
                     groupId_farmerNo: {
                         groupId: group.id,
-                        farmerNo: farmerData.farmerNo
+                        farmerNo: fNo
                     }
                 }
             })
 
             if (existingFarmer) {
-                throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${farmerData.farmerNo}가 존재합니다.`)
+                throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${fNo}가 존재합니다.`)
             }
 
             // 3. Create Farmer
             const farmer = await tx.farmer.create({
                 data: {
-                    name: farmerData.name,
-                    farmerNo: farmerData.farmerNo,
-                    items: farmerData.items,
-                    phone: farmerData.phone,
+                    name: fName,
+                    farmerNo: fNo,
+                    items: fItems,
+                    phone: fPhone,
                     groupId: group.id
                 }
             })
@@ -326,17 +341,21 @@ export async function createFarmerWithGroup(
 
 export async function createProducerGroup(data: ProducerGroupFormData) {
     try {
+        const code = data.code.trim()
+        const name = data.name.trim()
+        const certNo = data.certNo.trim()
+
         // Derive certType
-        const thirdChar = data.certNo.length >= 3 ? data.certNo.charAt(2) : ''
+        const thirdChar = certNo.length >= 3 ? certNo.charAt(2) : ''
         let certType = '일반'
         if (thirdChar === '1') certType = '유기농'
         else if (thirdChar === '3') certType = '무농약'
 
         const group = await prisma.producerGroup.create({
             data: {
-                code: data.code,
-                name: data.name,
-                certNo: data.certNo,
+                code,
+                name,
+                certNo,
                 certType,
                 cropYear: data.cropYear || 2025
             }
