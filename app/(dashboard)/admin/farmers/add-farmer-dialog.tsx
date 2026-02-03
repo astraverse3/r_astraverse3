@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { createFarmer, updateFarmer, getProducerGroups, type FarmerFormData } from '@/app/actions/admin'
+import { createFarmer, updateFarmer, getProducerGroups, updateProducerGroup, type FarmerFormData } from '@/app/actions/admin'
 import { Plus } from 'lucide-react'
 
 // Extended Farmer type to match list
@@ -29,6 +29,13 @@ interface Farmer {
     items: string | null
     phone: string | null
     groupId: number
+    group?: {
+        id: number
+        code: string
+        name: string
+        certNo: string
+        cropYear: number
+    }
 }
 
 interface ProducerGroup {
@@ -50,6 +57,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     const [isLoading, setIsLoading] = useState(false)
     const [groups, setGroups] = useState<ProducerGroup[]>([])
     const [isNewGroup, setIsNewGroup] = useState(false)
+    const [editedGroupName, setEditedGroupName] = useState<string>('')
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -63,6 +71,8 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             // Reset state when opening
             if (!farmer) {
                 setIsNewGroup(false)
+            } else if (farmer.group) {
+                setEditedGroupName(farmer.group.name)
             }
         }
     }, [open, farmer])
@@ -87,6 +97,11 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
 
         let result
         try {
+            // Update group name if changed (only when editing farmer)
+            if (farmer && farmer.group && editedGroupName && editedGroupName !== farmer.group.name) {
+                await updateProducerGroup(farmer.group.id, { name: editedGroupName })
+            }
+
             if (isNewGroup) {
                 // Create New Group + Farmer
                 const groupData = {
@@ -202,18 +217,36 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                             </div>
                         ) : (
                             <div className="grid gap-2">
-                                <Select name="groupId" defaultValue={farmer?.groupId.toString()} required={!isNewGroup}>
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue placeholder="작목반 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {groups.map(group => (
-                                            <SelectItem key={group.id} value={group.id.toString()}>
-                                                <span className="font-mono">[{group.cropYear}]</span> [{group.code}] {group.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {farmer && farmer.group ? (
+                                    <>
+                                        <div className="text-xs text-slate-500 mb-1">
+                                            <span className="font-mono">[{farmer.group.cropYear}]</span> [{farmer.group.code}] 인증번호: {farmer.group.certNo}
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="editGroupName" className="text-xs">작목반명 (수정 가능)</Label>
+                                            <Input
+                                                id="editGroupName"
+                                                value={editedGroupName}
+                                                onChange={(e) => setEditedGroupName(e.target.value)}
+                                                placeholder="작목반명"
+                                                className="bg-white"
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <Select name="groupId" defaultValue={farmer?.groupId.toString()} required={!isNewGroup}>
+                                        <SelectTrigger className="bg-white">
+                                            <SelectValue placeholder="작목반 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {groups.map(group => (
+                                                <SelectItem key={group.id} value={group.id.toString()}>
+                                                    <span className="font-mono">[{group.cropYear}]</span> [{group.code}] {group.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         )}
                     </div>

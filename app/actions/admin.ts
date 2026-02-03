@@ -366,3 +366,43 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
         return { success: false, error: 'Failed to create group' }
     }
 }
+
+export async function updateProducerGroup(id: number, data: Partial<ProducerGroupFormData>) {
+    try {
+        const updateData: any = {}
+
+        if (data.name !== undefined) {
+            updateData.name = data.name.trim()
+        }
+        if (data.code !== undefined) {
+            updateData.code = data.code.trim()
+        }
+        if (data.certNo !== undefined) {
+            const certNo = data.certNo.trim()
+            updateData.certNo = certNo
+
+            // Derive certType if certNo is being updated
+            const thirdChar = certNo.length >= 3 ? certNo.charAt(2) : ''
+            let certType = '일반'
+            if (thirdChar === '1') certType = '유기농'
+            else if (thirdChar === '3') certType = '무농약'
+            updateData.certType = certType
+        }
+        if (data.cropYear !== undefined) {
+            updateData.cropYear = data.cropYear
+        }
+
+        const group = await prisma.producerGroup.update({
+            where: { id },
+            data: updateData
+        })
+
+        revalidatePath('/admin/farmers')
+        revalidatePath('/stocks')
+        return { success: true, data: group }
+    } catch (error) {
+        console.error('Failed to update group:', error)
+        return { success: false, error: 'Failed to update group' }
+    }
+}
+
