@@ -40,6 +40,9 @@ export function getProductCode(varietyType: string, varietyName: string, milling
     if (varietyType === 'GLUTINOUS') {
         return isBrown ? '14' : '12'; // 14: 현미(찹쌀), 12: 백미(찹쌀)
     }
+    if (varietyType === 'INDICA') {
+        return isBrown ? '19' : '18'; // 19: 현미(인디카), 18: 백미(인디카) - Changed order? verification: user agreed to '백미(18) / 현미(19)'
+    }
 
     // Default Fallback
     return '00';
