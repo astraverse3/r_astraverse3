@@ -74,7 +74,7 @@ export function generateLotNo({
     const productCode = getProductCode(varietyType, varietyName, millingType);
 
     // 3. Personal No
-    const personalNo = `${farmerGroupCode}-${farmerNo}`;
+    const personalNo = `${farmerGroupCode}${farmerNo}`;
 
     // Final Lot No
     return `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
