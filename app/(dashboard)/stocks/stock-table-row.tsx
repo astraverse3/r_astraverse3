@@ -68,7 +68,7 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
 
                 {/* 5. Lot No */}
                 <TableCell className="py-2 px-1 text-center">
-                    <div className="text-[10px] text-slate-500 font-mono tracking-tighter truncate max-w-[80px] mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
+                    <div className="text-xs text-slate-500 font-mono tracking-tighter truncate max-w-[80px] mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
                         {stock.lotNo ? stock.lotNo.split('-').slice(1).join('-') : '-'}
                     </div>
                 </TableCell>
@@ -100,6 +100,7 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
                 onOpenChange={setEditOpen}
                 farmers={farmers}
                 varieties={varieties}
+                trigger={null} // Hide default trigger
             />
         </>
     )
