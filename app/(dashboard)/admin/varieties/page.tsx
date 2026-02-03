@@ -51,7 +51,7 @@ export default async function VarietyPage() {
                                         {variety.name}
                                     </TableCell>
                                     <TableCell className="text-slate-600 text-sm">
-                                        {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : '기타'}
+                                        {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : variety.type === 'INDICA' ? '인디카' : '기타'}
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1">
