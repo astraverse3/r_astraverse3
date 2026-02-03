@@ -51,7 +51,8 @@ export async function exportStocks() {
 }
 
 // --- IMPORT LOGIC ---
-export async function importStocks(formData: FormData): Promise<ExcelImportResult> {
+export async function importStocks(formData: FormData, options: { dryRun?: boolean } = {}): Promise<ExcelImportResult> {
+    const dryRun = options.dryRun || false
     const result: ExcelImportResult = {
         success: false,
         counts: { total: 0, success: 0, skipped: 0, failed: 0 },
@@ -180,20 +181,23 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
                         farmerNo: farmer!.farmerNo
                     });
 
-                    await tx.stock.create({
-                        data: {
-                            productionYear: productionYear!,
-                            bagNo: bagNo!,
-                            weightKg: weightKg!,
-                            incomingDate: incomingDate!,
-                            farmerId: farmer.id,
-                            varietyId: variety!.id,
-                            status: 'AVAILABLE',
-                            lotNo
-                        }
-                    })
+                    if (!dryRun) {
+                        await tx.stock.create({
+                            data: {
+                                productionYear: productionYear!,
+                                bagNo: bagNo!,
+                                weightKg: weightKg!,
+                                incomingDate: incomingDate!,
+                                farmerId: farmer.id,
+                                varietyId: variety!.id,
+                                status: 'AVAILABLE',
+                                lotNo
+                            }
+                        })
+                    }
 
                     result.counts.success++
+
 
                 } catch (innerError) {
                     console.error(`Row ${rowIndex} error:`, innerError)
