@@ -1,11 +1,9 @@
 import { Suspense } from 'react'
 import { getFarmersWithGroups } from '@/app/actions/admin'
-import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { AddFarmerDialog } from './add-farmer-dialog'
-import { FarmerListWrapper } from './farmer-list-wrapper'
 import { ExcelButtons } from './excel-buttons'
 import { FarmerFilters } from './farmer-filters'
+import { FarmerPageClient } from './farmer-page-client'
 
 export default async function AdminFarmersPage({
     searchParams,
@@ -25,16 +23,13 @@ export default async function AdminFarmersPage({
     const farmers = response.success ? response.data || [] : []
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-end gap-2">
-                <FarmerFilters />
-                <ExcelButtons />
-                <AddFarmerDialog />
-            </div>
-
-            <Suspense fallback={<div>Loading...</div>}>
-                <FarmerListWrapper farmers={farmers} />
-            </Suspense>
-        </div>
+        <Suspense fallback={<div>Loading...</div>}>
+            <FarmerPageClient
+                farmers={farmers}
+                filtersSlot={<FarmerFilters />}
+                excelSlot={<ExcelButtons />}
+                addDialogSlot={<AddFarmerDialog />}
+            />
+        </Suspense>
     )
 }
