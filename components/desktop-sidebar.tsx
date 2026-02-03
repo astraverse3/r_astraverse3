@@ -87,7 +87,7 @@ export function DesktopSidebar() {
                                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                         }`}
                                 >
-                                    농가 관리
+                                    생산자 관리
                                 </Link>
                             </div>
                         </div>
