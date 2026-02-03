@@ -40,16 +40,17 @@ interface StockListClientProps {
     farmers: any[]
     varieties: any[]
     filters: any
+    selectedIds: Set<number>
+    onSelectionChange: (ids: Set<number>) => void
 }
 
-export function StockListClient({ stocks, farmers, varieties, filters }: StockListClientProps) {
-    const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDeleteStocks()
+export function StockListClient({ stocks, farmers, varieties, filters, selectedIds, onSelectionChange }: StockListClientProps) {
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
-            setSelectedIds(new Set(stocks.map(s => s.id)))
+            onSelectionChange(new Set(stocks.map(s => s.id)))
         } else {
-            setSelectedIds(new Set())
+            onSelectionChange(new Set())
         }
     }
 
@@ -60,68 +61,52 @@ export function StockListClient({ stocks, farmers, varieties, filters }: StockLi
         } else {
             newSet.delete(id)
         }
-        setSelectedIds(newSet)
+        onSelectionChange(newSet)
     }
 
     return (
-        <>
-            {selectedIds.size > 0 && (
-                <div className="flex items-center gap-2 px-1">
-                    <Button
-                        variant={selectedIds.size > 0 ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={showDeleteDialog}
-                        disabled={selectedIds.size === 0}
-                    >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        선택 삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
-                    </Button>
-                </div>
-            )}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="w-[40px]">
-                                <Checkbox
-                                    checked={selectedIds.size === stocks.length && stocks.length > 0}
-                                    onCheckedChange={handleSelectAll}
-                                />
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <Table>
+                <TableHeader>
+                    <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableHead className="w-[40px] py-2 px-1 text-center">
+                            <Checkbox
+                                checked={selectedIds.size === stocks.length && stocks.length > 0}
+                                onCheckedChange={handleSelectAll}
+                            />
+                        </TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[70px]">품종</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">생산자</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[140px]">Lot No</TableHead>
+                        <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[40px]">톤백</TableHead>
+                        <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">중량</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">수정</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {stocks.length > 0 ? (
+                        stocks.map((stock: Stock) => (
+                            <StockTableRow
+                                key={stock.id}
+                                stock={stock}
+                                farmers={farmers}
+                                varieties={varieties}
+                                selected={selectedIds.has(stock.id)}
+                                onSelect={(checked) => handleSelectOne(stock.id, checked)}
+                            />
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableHead colSpan={10} className="h-32 text-center text-xs text-slate-400 font-medium">
+                                {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 재고가 없습니다.'}
                             </TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[70px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">생산자</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[140px]">Lot No</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[40px]">톤백</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">중량</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">수정</TableHead>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {stocks.length > 0 ? (
-                            stocks.map((stock: Stock) => (
-                                <StockTableRow
-                                    key={stock.id}
-                                    stock={stock}
-                                    farmers={farmers}
-                                    varieties={varieties}
-                                    selected={selectedIds.has(stock.id)}
-                                    onSelect={(checked) => handleSelectOne(stock.id, checked)}
-                                />
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableHead colSpan={10} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                    {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 재고가 없습니다.'}
-                                </TableHead>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </section>
-            <DeleteDialog />
-        </>
+                    )}
+                </TableBody>
+            </Table>
+        </section>
     )
 }

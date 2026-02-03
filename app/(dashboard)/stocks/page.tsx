@@ -2,21 +2,10 @@ import { getStocks, GetStocksParams } from '@/app/actions/stock'
 import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockFilters } from './stock-filters'
-import { ActiveStockFilters } from './active-filters'
 import { StockExcelButtons } from './stock-excel-buttons'
-import { StockListClient } from './stock-list-client'
-import { Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-    Table,
-    TableBody,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
+import { StockPageWrapper } from './stock-page-wrapper'
+import { Suspense } from 'react'
 
-// Updated Stock Interface to match getStocks return type (relations)
 export interface Stock {
     id: number
     productionYear: number
@@ -26,7 +15,7 @@ export interface Stock {
     incomingDate: Date
     createdAt: Date
     updatedAt: Date
-    lotNo: string | null // Added LotNo field
+    lotNo: string | null
     variety: {
         name: string
     }
@@ -39,54 +28,42 @@ export interface Stock {
     }
 }
 
-export default async function StockPage({
+export default async function StocksPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const resolvedParams = await searchParams
 
-    // Parse searchParams into GetStocksParams
     const filters: GetStocksParams = {
         productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
         varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
         farmerId: typeof resolvedParams.farmerId === 'string' ? resolvedParams.farmerId : undefined,
-        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
+        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
     }
 
-    const result = await getStocks(filters)
-    // Cast the result data to our Stock interface (Prisma return type is complex)
-    const stocks = (result.success && result.data ? result.data : []) as unknown as Stock[]
+    const stockResult = await getStocks(filters)
+    const stocks = (stockResult.success && stockResult.data ? stockResult.data : []) as unknown as Stock[]
 
-    // Fetch master data for Dialogs and Filters
-    const [varietyResult, farmerResult] = await Promise.all([
-        getVarieties(),
-        getFarmersWithGroups()
-    ]);
-
+    const varietyResult = await getVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
+
+    const farmerResult = await getFarmersWithGroups()
     const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, group: { id: number; name: string; certType: string; certNo: string } }[]
 
     return (
-        <div className="grid grid-cols-1 gap-1 pb-24">
-            {/* Header */}
-            <section className="flex flex-col gap-2 pt-2 px-1">
-                <div className="flex items-center justify-end gap-2">
-                    <StockFilters varieties={varieties} farmers={farmers} />
-                    <StockExcelButtons />
-                    <AddStockDialog varieties={varieties} farmers={farmers} />
-                </div>
-                <ActiveStockFilters />
-            </section>
-
-            <StockListClient
+        <Suspense fallback={<div>Loading...</div>}>
+            <StockPageWrapper
                 stocks={stocks}
                 farmers={farmers}
                 varieties={varieties}
                 filters={filters}
+                filtersSlot={<StockFilters varieties={varieties} farmers={farmers} />}
+                excelSlot={<StockExcelButtons />}
+                addDialogSlot={<AddStockDialog varieties={varieties} farmers={farmers} />}
             />
-        </div >
+        </Suspense>
     )
 }
