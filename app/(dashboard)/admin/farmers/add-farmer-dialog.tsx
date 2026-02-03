@@ -219,6 +219,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                             <div className="grid gap-2">
                                 {farmer && farmer.group ? (
                                     <>
+                                        <input type="hidden" name="groupId" value={farmer.group.id} />
                                         <div className="text-xs text-slate-500 mb-1">
                                             <span className="font-mono">[{farmer.group.cropYear}]</span> [{farmer.group.code}] 인증번호: {farmer.group.certNo}
                                         </div>
