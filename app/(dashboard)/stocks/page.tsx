@@ -93,14 +93,14 @@ export default async function StockPage({
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500 w-[60px] md:w-[80px]">년도</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-xs font-bold text-slate-500">품종</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-xs font-bold text-slate-500">농가</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500">인증</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500">Lot No</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-right text-xs font-bold text-slate-500">톤백#</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-right text-xs font-bold text-slate-500">중량</TableHead>
-                            <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500 w-[60px]">상태</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[70px]">품종</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">농가</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">Lot No</TableHead>
+                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[40px]">톤백</TableHead>
+                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">중량</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[30px]">상</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -118,6 +118,6 @@ export default async function StockPage({
                     </TableBody>
                 </Table>
             </section>
-        </div>
+        </div >
     )
 }
