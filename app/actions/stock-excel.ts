@@ -69,14 +69,15 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
         const buffer = await file.arrayBuffer()
         const workbook = XLSX.read(buffer)
 
-        // Loop through all sheets
-        let allRows: any[] = []
-        for (const sheetName of workbook.SheetNames) {
-            const worksheet = workbook.Sheets[sheetName]
-            const sheetData = XLSX.utils.sheet_to_json(worksheet) as any[]
-            // Optional: Tag data with sheetName if debugging is needed, but for now just merge
-            allRows = allRows.concat(sheetData)
+        // Read only the first sheet
+        const firstSheetName = workbook.SheetNames[0]
+        if (!firstSheetName) {
+            result.errors.push({ row: 0, reason: '시트가 없습니다.' })
+            return result
         }
+
+        const worksheet = workbook.Sheets[firstSheetName]
+        const allRows = XLSX.utils.sheet_to_json(worksheet) as any[]
 
         result.counts.total = allRows.length
 
