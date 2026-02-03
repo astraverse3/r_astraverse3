@@ -94,13 +94,13 @@ export function StockTableRow({ stock, farmers, varieties }: Props) {
                 {/* 8. Status */}
                 <TableCell className="py-2 px-1 text-center">
                     {stock.status === 'AVAILABLE' ? (
-                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 ring-1 ring-blue-200" title="보관중">
-                            보
-                        </div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            보유
+                        </span>
                     ) : (
-                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-400 ring-1 ring-slate-200" title="사용완료">
-                            완
-                        </div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                            소진
+                        </span>
                     )}
                 </TableCell>
 
