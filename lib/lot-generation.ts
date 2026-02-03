@@ -47,3 +47,35 @@ export function getProductCode(varietyType: string, varietyName: string, milling
     // Default Fallback
     return '00';
 }
+
+export interface LotGenerationParams {
+    incomingDate: Date
+    varietyType: string
+    varietyName: string
+    millingType: string
+    certNo: string
+    farmerGroupCode: string
+    farmerNo: string
+}
+
+export function generateLotNo({
+    incomingDate,
+    varietyType,
+    varietyName,
+    millingType,
+    certNo,
+    farmerGroupCode,
+    farmerNo
+}: LotGenerationParams): string {
+    // 1. Date: YYMMDD
+    const yymmdd = incomingDate.toISOString().slice(2, 10).replace(/-/g, '');
+
+    // 2. Product Code
+    const productCode = getProductCode(varietyType, varietyName, millingType);
+
+    // 3. Personal No
+    const personalNo = `${farmerGroupCode}-${farmerNo}`;
+
+    // Final Lot No
+    return `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
+}

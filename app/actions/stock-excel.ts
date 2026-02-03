@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
+import { generateLotNo } from '@/lib/lot-generation'
 
 // --- EXPORT LOGIC ---
 export async function exportStocks() {
@@ -137,7 +138,8 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
                 try {
                     // 3. Lookups
                     const farmer = await tx.farmer.findFirst({
-                        where: { name: farmerName }
+                        where: { name: farmerName },
+                        include: { group: true } // Include group for Lot No generation
                     })
                     if (!farmer) {
                         result.counts.failed++
@@ -155,15 +157,26 @@ export async function importStocks(formData: FormData): Promise<ExcelImportResul
                     }
 
                     // 4. Create Stock
+                    const lotNo = generateLotNo({
+                        incomingDate: incomingDate!,
+                        varietyType: variety!.type,
+                        varietyName: variety!.name,
+                        millingType: '백미', // Default assumption
+                        certNo: farmer!.group.certNo,
+                        farmerGroupCode: farmer!.group.code,
+                        farmerNo: farmer!.farmerNo
+                    });
+
                     await tx.stock.create({
                         data: {
                             productionYear: productionYear!,
                             bagNo: bagNo!,
                             weightKg: weightKg!,
-                            incomingDate: incomingDate,
+                            incomingDate: incomingDate!,
                             farmerId: farmer.id,
                             varietyId: variety!.id,
-                            status: 'AVAILABLE'
+                            status: 'AVAILABLE',
+                            lotNo
                         }
                     })
 

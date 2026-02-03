@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
-import { getProductCode } from '@/lib/lot-generation'
+import { getProductCode, generateLotNo } from '@/lib/lot-generation'
 
 // Updated to match new schema relations
 export type MillingBatchFormData = {
@@ -225,24 +225,22 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         if (!batch) throw new Error('Batch not found')
 
         // --- LOT NUMBER GENERATION LOGIC ---
-        // 1. Date: Stock incoming date (YYMMDD). Use first stock's date or earliest.
+        // 1. Date: Stock incoming date.
         const primaryStock = batch.stocks[0];
         if (!primaryStock) throw new Error('No stock linked to this batch');
 
-        const dateObj = new Date(primaryStock.incomingDate);
-        const yymmdd = dateObj.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
-
-        // 2. Product Code
         const productCode = getProductCode(primaryStock.variety.type, primaryStock.variety.name, batch.millingType);
 
-        // 3. Cert No (From Group)
-        const certNo = primaryStock.farmer.group.certNo;
-
-        // 4. Personal No (GroupCode + FarmerNo)
-        const personalNo = `${primaryStock.farmer.group.code}-${primaryStock.farmer.farmerNo}`;
-
-        // Final Lot No
-        const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
+        // Use helper to generate Lot No consistent with Stock logic
+        const lotNo = generateLotNo({
+            incomingDate: primaryStock.incomingDate,
+            varietyType: primaryStock.variety.type,
+            varietyName: primaryStock.variety.name,
+            millingType: batch.millingType, // Use ACTUAL milling type
+            certNo: primaryStock.farmer.group.certNo,
+            farmerGroupCode: primaryStock.farmer.group.code,
+            farmerNo: primaryStock.farmer.farmerNo
+        });
         // -----------------------------------
 
         const output = await prisma.millingOutputPackage.create({
@@ -291,13 +289,15 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 const productCode = getProductCode(primaryStock.variety.type, primaryStock.variety.name, batch.millingType);
 
                 // Generate Lot No
-                const dateObj = new Date(primaryStock.incomingDate);
-                const yymmdd = dateObj.toISOString().slice(2, 10).replace(/-/g, '');
-
-                const certNo = primaryStock.farmer.group.certNo;
-                const personalNo = `${primaryStock.farmer.group.code}-${primaryStock.farmer.farmerNo}`;
-
-                const lotNo = `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
+                const lotNo = generateLotNo({
+                    incomingDate: primaryStock.incomingDate,
+                    varietyType: primaryStock.variety.type,
+                    varietyName: primaryStock.variety.name,
+                    millingType: batch.millingType, // Use ACTUAL milling type
+                    certNo: primaryStock.farmer.group.certNo,
+                    farmerGroupCode: primaryStock.farmer.group.code,
+                    farmerNo: primaryStock.farmer.farmerNo
+                });
 
                 await tx.millingOutputPackage.create({
                     data: {

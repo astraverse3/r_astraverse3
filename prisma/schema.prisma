@@ -70,6 +70,7 @@ model Stock {
   productionYear Int                  @default(2024)  // 생산년도
   weightKg       Float                // 입고 중량
   status         String               // AVAILABLE / CONSUMED
+  lotNo          String?              // Pre-assigned Lot Number (Default: White Rice basis)
   
   batchId        Int?
   batch          MillingBatch?        @relation(fields: [batchId], references: [id])

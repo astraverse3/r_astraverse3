@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
 // Updated definition to match new schema relations
+import { generateLotNo } from '@/lib/lot-generation'
 export type StockFormData = {
     productionYear: number
     bagNo: number
@@ -15,6 +16,28 @@ export type StockFormData = {
 
 export async function createStock(data: StockFormData) {
     try {
+        // 1. Fetch related info for Lot Generation
+        const farmer = await prisma.farmer.findUnique({
+            where: { id: data.farmerId },
+            include: { group: true }
+        });
+        const variety = await prisma.variety.findUnique({
+            where: { id: data.varietyId }
+        });
+
+        if (!farmer || !variety) throw new Error('Invalid Farmer or Variety');
+
+        // 2. Generate Pre-assigned Lot No (Default: White Rice)
+        const lotNo = generateLotNo({
+            incomingDate: data.incomingDate,
+            varietyType: variety.type,
+            varietyName: variety.name,
+            millingType: '백미', // Default assumption
+            certNo: farmer.group.certNo,
+            farmerGroupCode: farmer.group.code,
+            farmerNo: farmer.farmerNo
+        });
+
         const stock = await prisma.stock.create({
             data: {
                 productionYear: data.productionYear,
@@ -24,6 +47,7 @@ export async function createStock(data: StockFormData) {
                 farmerId: data.farmerId,
                 varietyId: data.varietyId,
                 status: 'AVAILABLE',
+                lotNo // Save generated Lot No
             },
         })
         revalidatePath('/stocks')
@@ -53,7 +77,31 @@ export async function updateStock(id: number, data: StockFormData) {
             // 2. Calculate weight difference
             const weightDiff = data.weightKg - currentStock.weightKg;
 
-            // 3. Update stock
+            // 3. Prepare Update Data
+            // If critical fields changed, regenerate Lot No
+            let newLotNo = undefined;
+            if (
+                data.incomingDate.getTime() !== currentStock.incomingDate.getTime() ||
+                data.farmerId !== currentStock.farmerId ||
+                data.varietyId !== currentStock.varietyId
+            ) {
+                const farmer = await tx.farmer.findUnique({ where: { id: data.farmerId }, include: { group: true } });
+                const variety = await tx.variety.findUnique({ where: { id: data.varietyId } });
+
+                if (farmer && variety) {
+                    newLotNo = generateLotNo({
+                        incomingDate: data.incomingDate,
+                        varietyType: variety.type,
+                        varietyName: variety.name,
+                        millingType: '백미', // Default assumption
+                        certNo: farmer.group.certNo,
+                        farmerGroupCode: farmer.group.code,
+                        farmerNo: farmer.farmerNo
+                    });
+                }
+            }
+
+            // 4. Update stock
             const updatedStock = await tx.stock.update({
                 where: { id },
                 data: {
@@ -63,6 +111,7 @@ export async function updateStock(id: number, data: StockFormData) {
                     incomingDate: data.incomingDate,
                     farmerId: data.farmerId,
                     varietyId: data.varietyId,
+                    ...(newLotNo && { lotNo: newLotNo }) // Update LotNo if regenerated
                 },
             });
 

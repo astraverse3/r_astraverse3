@@ -24,6 +24,7 @@ export interface Stock {
     incomingDate: Date
     createdAt: Date
     updatedAt: Date
+    lotNo: string | null // Added LotNo field
     variety: {
         name: string
     }
@@ -96,6 +97,7 @@ export default async function StockPage({
                             <TableHead className="py-3 px-2 md:px-3 text-xs font-bold text-slate-500">품종</TableHead>
                             <TableHead className="py-3 px-2 md:px-3 text-xs font-bold text-slate-500">농가</TableHead>
                             <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500">인증</TableHead>
+                            <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500">Lot No</TableHead>
                             <TableHead className="py-3 px-2 md:px-3 text-right text-xs font-bold text-slate-500">톤백#</TableHead>
                             <TableHead className="py-3 px-2 md:px-3 text-right text-xs font-bold text-slate-500">중량</TableHead>
                             <TableHead className="py-3 px-2 md:px-3 text-center text-xs font-bold text-slate-500 w-[60px]">상태</TableHead>
@@ -108,7 +110,7 @@ export default async function StockPage({
                             ))
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={7} className="h-32 text-center text-xs text-slate-400 font-medium">
+                                <TableHead colSpan={8} className="h-32 text-center text-xs text-slate-400 font-medium">
                                     {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 재고가 없습니다.'}
                                 </TableHead>
                             </TableRow>
