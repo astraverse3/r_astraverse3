@@ -1,20 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Lock, Package, AlertCircle, Trash2 } from 'lucide-react'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { AddPackagingDialog } from './add-packaging-dialog'
-import { closeMillingBatch, reopenMillingBatch, deleteMillingBatch } from '@/app/actions/milling'
+import { reopenMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
 
 interface MillingBatch {
@@ -31,9 +22,11 @@ interface MillingBatch {
 
 interface Props {
     log: MillingBatch
+    selected: boolean
+    onSelect: (checked: boolean) => void
 }
 
-export function MillingTableRow({ log }: Props) {
+export function MillingTableRow({ log, selected, onSelect }: Props) {
     const [packagingOpen, setPackagingOpen] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
 
@@ -41,11 +34,6 @@ export function MillingTableRow({ log }: Props) {
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0
     const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))].join(', ')
     const tonbagCount = (log.stocks || []).length
-
-    // Determine display remarks (Hide '백미')
-    const displayRemarks = log.millingType === '백미' || !log.millingType
-        ? log.title
-        : `${log.millingType} / ${log.title}`
 
     const handleRowClick = async () => {
         if (log.isClosed) {
@@ -70,6 +58,14 @@ export function MillingTableRow({ log }: Props) {
             <TableRow
                 className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0"
             >
+                {/* Checkbox */}
+                <TableCell className="py-2 px-1 w-[40px] text-center">
+                    <Checkbox
+                        checked={selected}
+                        onCheckedChange={onSelect}
+                    />
+                </TableCell>
+
                 {/* 1. Date */}
                 <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
                     {new Date(log.date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '').replace('.', '')}
@@ -86,7 +82,6 @@ export function MillingTableRow({ log }: Props) {
                     </div>
                 </TableCell>
 
-                {/* 3. Variety - Clickable for Input History */}
                 {/* 3. Variety - Clickable for Input History */}
                 <TableCell className="py-2 px-1 text-xs font-bold text-slate-800 max-w-[50px] md:max-w-[200px]">
                     <MillingStockListDialog
