@@ -40,11 +40,10 @@ export function FarmerPageClient({
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between gap-2">
                     <Button
-                        variant="destructive"
+                        variant={selectedIds.size > 0 ? "destructive" : "outline"}
                         size="sm"
                         onClick={showDeleteDialog}
                         disabled={selectedIds.size === 0}
-                        className="disabled:opacity-50"
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
                         선택 삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
