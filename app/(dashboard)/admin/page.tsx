@@ -10,7 +10,14 @@ export default function AdminPage() {
             </div>
 
             <div className="grid gap-6">
-                <BackupManager />
+                {/* Backup Manager: Only available in local environment */}
+                {!process.env.VERCEL ? (
+                    <BackupManager />
+                ) : (
+                    <div className="p-4 border rounded-lg bg-slate-50 text-slate-500 text-sm">
+                        시스템 백업 및 복구 기능은 로컬 환경에서만 사용할 수 있습니다.
+                    </div>
+                )}
             </div>
         </div>
     )

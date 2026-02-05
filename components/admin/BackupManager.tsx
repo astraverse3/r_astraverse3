@@ -17,13 +17,18 @@ export function BackupManager() {
 
     const loadBackups = async () => {
         setLoading(true)
-        const result = await getBackups()
-        if (result.success && result.data) {
-            setBackups(result.data)
-        } else {
-            console.error(result.error)
+        try {
+            const result = await getBackups()
+            if (result.success && result.data) {
+                setBackups(result.data)
+            } else {
+                console.error(result.error)
+            }
+        } catch (error) {
+            console.error('Failed to load backups:', error)
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     useEffect(() => {

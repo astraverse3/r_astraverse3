@@ -11,9 +11,13 @@ const execAsync = promisify(exec)
 
 const BACKUP_DIR = path.join(process.cwd(), 'backups')
 
-// Ensure backup directory exists
-if (!fs.existsSync(BACKUP_DIR)) {
-    fs.mkdirSync(BACKUP_DIR, { recursive: true })
+// Ensure backup directory exists (Safe check for Vercel/ReadOnly env)
+try {
+    if (!fs.existsSync(BACKUP_DIR)) {
+        fs.mkdirSync(BACKUP_DIR, { recursive: true })
+    }
+} catch (error) {
+    console.warn('Backup directory creation failed (likely read-only fs):', error)
 }
 
 export interface BackupFile {
