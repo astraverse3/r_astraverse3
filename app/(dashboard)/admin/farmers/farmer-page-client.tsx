@@ -12,7 +12,7 @@ interface Farmer {
     items: string | null
     phone: string | null
     groupId: number | null
-    group: {
+    group?: {
         id: number
         code: string
         name: string
