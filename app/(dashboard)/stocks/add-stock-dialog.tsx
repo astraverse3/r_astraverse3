@@ -29,7 +29,7 @@ interface Farmer {
         name: string
         certType: string
         certNo: string
-    }
+    } | null
 }
 
 interface Variety {
@@ -134,14 +134,21 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                             <SelectContent>
                                 {farmers.map((f) => (
                                     <SelectItem key={f.id} value={f.id.toString()}>
-                                        [{f.group.certType}] {f.name} ({f.group.name})
+                                        {f.group
+                                            ? `[${f.group.certType}] ${f.name} (${f.group.name})`
+                                            : `[일반] ${f.name} (작목반 없음)`}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {selectedFarmer && (
+                        {selectedFarmer && selectedFarmer.group && (
                             <p className="text-xs text-slate-500 mt-1">
                                 인증번호: {selectedFarmer.group.certNo} ({selectedFarmer.group.certType})
+                            </p>
+                        )}
+                        {selectedFarmer && !selectedFarmer.group && (
+                            <p className="text-xs text-slate-500 mt-1">
+                                일반 재배 (작목반 미소속)
                             </p>
                         )}
                     </div>

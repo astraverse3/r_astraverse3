@@ -15,8 +15,11 @@ export const authConfig = {
                 return true;
             }
 
+            console.log(`[Middleware] Path: ${nextUrl.pathname}, LoggedIn: ${isLoggedIn}`);
+
             if (isOnLogin) {
                 if (isLoggedIn) {
+                    // Completely disabled for debugging
                     return Response.redirect(new URL('/', nextUrl));
                 }
                 return true; // Allow access to login page

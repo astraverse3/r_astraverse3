@@ -21,7 +21,7 @@ export async function exportStocks() {
             '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
             '생산년도': stock.productionYear,
             '생산자명': stock.farmer.name,
-            '작목반명': stock.farmer.group.name, // Group Name
+            '작목반명': stock.farmer.group?.name || '', // Group Name
             '품종': stock.variety.name,
             '톤백번호': stock.bagNo,
             '중량(kg)': stock.weightKg,
@@ -108,10 +108,8 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                 if (!dateStr) missingFields.push('입고일자')
                 if (!productionYear) missingFields.push('생산년도')
                 if (!farmerName) missingFields.push('생산자명')
-                // if (!groupName) missingFields.push('작목반명') // Optional? No, better to require it for ambiguity resolution. But let's verify if user wants it optional. User said "same name can be in multiple groups", so suggest strict.
-                // Resetting to optional logic: If groupName provided, use it. If not, fallback to name only? No, risky. 
-                // Let's enforce it if we want to fix the issue. The export provides it.
-                if (!groupName) missingFields.push('작목반명')
+                // groupName is now OPTIONAL
+                // if (!groupName) missingFields.push('작목반명')
 
                 if (!varietyName) missingFields.push('품종')
                 if (bagNo === undefined) missingFields.push('톤백번호')
@@ -146,19 +144,25 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
 
                 try {
                     // 3. Lookups
-                    // Find farmer by Name AND Group Name
+                    // Find farmer by Name AND Group Name (if provided)
+                    const whereClause: any = { name: farmerName }
+                    if (groupName) {
+                        whereClause.group = { name: groupName }
+                    } else {
+                        whereClause.groupId = null // Explicitly look for farmers with NO group
+                    }
+
                     const farmer = await tx.farmer.findFirst({
-                        where: {
-                            name: farmerName,
-                            group: {
-                                name: groupName // Filter by Group Name
-                            }
-                        },
+                        where: whereClause,
                         include: { group: true } // Include group for Lot No generation
                     })
+
                     if (!farmer) {
                         result.counts.failed++
-                        result.errors.push({ row: rowIndex, reason: `등록되지 않은 생산자(작목반 불일치): ${farmerName} (${groupName})` })
+                        const errorMsg = groupName
+                            ? `등록되지 않은 생산자(작목반 불일치): ${farmerName} (${groupName})`
+                            : `등록되지 않은 생산자(작목반 없음): ${farmerName}`
+                        result.errors.push({ row: rowIndex, reason: errorMsg })
                         continue
                     }
 
@@ -172,15 +176,19 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                     }
 
                     // 4. Create Stock
-                    const lotNo = generateLotNo({
-                        incomingDate: incomingDate!,
-                        varietyType: variety!.type,
-                        varietyName: variety!.name,
-                        millingType: '백미', // Default assumption
-                        certNo: farmer!.group.certNo,
-                        farmerGroupCode: farmer!.group.code,
-                        farmerNo: farmer!.farmerNo
-                    });
+                    let lotNo: string | null = null
+
+                    if (farmer.group) {
+                        lotNo = generateLotNo({
+                            incomingDate: incomingDate!,
+                            varietyType: variety!.type,
+                            varietyName: variety!.name,
+                            millingType: '백미', // Default assumption
+                            certNo: farmer.group.certNo,
+                            farmerGroupCode: farmer.group.code,
+                            farmerNo: farmer.farmerNo || ''
+                        });
+                    }
 
                     if (!dryRun) {
                         await tx.stock.create({

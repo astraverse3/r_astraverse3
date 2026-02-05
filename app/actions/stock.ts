@@ -28,15 +28,20 @@ export async function createStock(data: StockFormData) {
         if (!farmer || !variety) throw new Error('Invalid Farmer or Variety');
 
         // 2. Generate Pre-assigned Lot No (Default: White Rice)
-        const lotNo = generateLotNo({
-            incomingDate: data.incomingDate,
-            varietyType: variety.type,
-            varietyName: variety.name,
-            millingType: '백미', // Default assumption
-            certNo: farmer.group.certNo,
-            farmerGroupCode: farmer.group.code,
-            farmerNo: farmer.farmerNo
-        });
+        let lotNo: string | null = null;
+        // Only generate Lot No if Group exists AND Cert is NOT '일반'
+        if (farmer.group && farmer.group.certType !== '일반') {
+            lotNo = generateLotNo({
+                incomingDate: data.incomingDate,
+                varietyType: variety.type,
+                varietyName: variety.name,
+                millingType: '백미', // Default assumption
+                certNo: farmer.group.certNo,
+                farmerGroupCode: farmer.group.code,
+                farmerNo: farmer.farmerNo || ''
+            });
+        }
+
 
         const stock = await prisma.stock.create({
             data: {
@@ -47,7 +52,7 @@ export async function createStock(data: StockFormData) {
                 farmerId: data.farmerId,
                 varietyId: data.varietyId,
                 status: 'AVAILABLE',
-                lotNo // Save generated Lot No
+                lotNo // Save generated Lot No (or null)
             },
         })
         revalidatePath('/stocks')
@@ -89,30 +94,41 @@ export async function updateStock(id: number, data: StockFormData) {
                 const variety = await tx.variety.findUnique({ where: { id: data.varietyId } });
 
                 if (farmer && variety) {
-                    newLotNo = generateLotNo({
-                        incomingDate: data.incomingDate,
-                        varietyType: variety.type,
-                        varietyName: variety.name,
-                        millingType: '백미', // Default assumption
-                        certNo: farmer.group.certNo,
-                        farmerGroupCode: farmer.group.code,
-                        farmerNo: farmer.farmerNo
-                    });
+                    // Only generate if Group exists AND Cert is NOT '일반'
+                    if (farmer.group && farmer.group.certType !== '일반') {
+                        newLotNo = generateLotNo({
+                            incomingDate: data.incomingDate,
+                            varietyType: variety.type,
+                            varietyName: variety.name,
+                            millingType: '백미', // Default assumption
+                            certNo: farmer.group.certNo,
+                            farmerGroupCode: farmer.group.code,
+                            farmerNo: farmer.farmerNo || ''
+                        });
+                    } else {
+                        newLotNo = null; // Explicitly set to null if no group or General
+                    }
                 }
+
             }
 
             // 4. Update stock
+            const updateData: any = {
+                productionYear: data.productionYear,
+                bagNo: data.bagNo,
+                weightKg: data.weightKg,
+                incomingDate: data.incomingDate,
+                farmerId: data.farmerId,
+                varietyId: data.varietyId,
+            }
+
+            if (newLotNo !== undefined) {
+                updateData.lotNo = newLotNo
+            }
+
             const updatedStock = await tx.stock.update({
                 where: { id },
-                data: {
-                    productionYear: data.productionYear,
-                    bagNo: data.bagNo,
-                    weightKg: data.weightKg,
-                    incomingDate: data.incomingDate,
-                    farmerId: data.farmerId,
-                    varietyId: data.varietyId,
-                    ...(newLotNo && { lotNo: newLotNo }) // Update LotNo if regenerated
-                },
+                data: updateData
             });
 
             // 4. Update batch total if needed

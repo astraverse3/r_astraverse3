@@ -8,10 +8,10 @@ import { FarmerListWrapper, useBulkDelete } from './farmer-list-wrapper'
 interface Farmer {
     id: number
     name: string
-    farmerNo: string
+    farmerNo: string | null
     items: string | null
     phone: string | null
-    groupId: number
+    groupId: number | null
     group: {
         id: number
         code: string

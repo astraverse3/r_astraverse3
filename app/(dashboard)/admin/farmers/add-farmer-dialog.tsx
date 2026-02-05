@@ -25,7 +25,7 @@ import { Plus } from 'lucide-react'
 interface Farmer {
     id: number
     name: string
-    farmerNo: string
+    farmerNo: string | null
     items: string | null
     phone: string | null
     groupId: number
@@ -58,6 +58,15 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     const [groups, setGroups] = useState<ProducerGroup[]>([])
     const [isNewGroup, setIsNewGroup] = useState(false)
     const [editedGroupName, setEditedGroupName] = useState<string>('')
+
+    // Helper for default crop year
+    const getDefaultCropYear = () => {
+        const now = new Date()
+        const month = now.getMonth() + 1 // 0-indexed
+        const year = now.getFullYear()
+        // If Nov(11) or Dec(12), use current year. Else use previous year.
+        return month >= 11 ? year : year - 1
+    }
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -104,11 +113,12 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
 
             if (isNewGroup) {
                 // Create New Group + Farmer
+                const rawCertNo = formData.get('certNo') as string;
                 const groupData = {
                     code: formData.get('groupCode') as string,
                     name: formData.get('groupName') as string,
-                    certNo: formData.get('certNo') as string,
-                    cropYear: parseInt(formData.get('cropYear') as string) || 2024
+                    certNo: rawCertNo.trim() || '-', // Default to '-' for General
+                    cropYear: parseInt(formData.get('cropYear') as string) || getDefaultCropYear()
                 }
 
                 // Import Dynamically or Assume it exists (Need to import createFarmerWithGroup)
@@ -123,10 +133,9 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             } else {
                 // Determine Group ID
                 const groupIdStr = formData.get('groupId') as string
-                if (!groupIdStr) {
-                    throw new Error('작목반을 선택해주세요.')
-                }
-                const groupId = parseInt(groupIdStr)
+                // Allow empty group (General Farmer)
+                // Use undefined for "no group" to match FarmerFormData type
+                const groupId = groupIdStr && groupIdStr !== 'null_value_placeholder' ? parseInt(groupIdStr) : undefined;
 
                 const data: FarmerFormData = {
                     groupId,
@@ -199,7 +208,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="grid gap-1.5">
                                         <Label htmlFor="cropYear" className="text-xs">생산년도</Label>
-                                        <Input id="cropYear" name="cropYear" defaultValue={2024} required />
+                                        <Input id="cropYear" name="cropYear" defaultValue={getDefaultCropYear()} required />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <Label htmlFor="groupCode" className="text-xs">작목반번호</Label>
@@ -211,8 +220,8 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                     <Input id="groupName" name="groupName" placeholder="예: 땅끝황토친환경" required />
                                 </div>
                                 <div className="grid gap-1.5">
-                                    <Label htmlFor="certNo" className="text-xs">인증번호</Label>
-                                    <Input id="certNo" name="certNo" placeholder="예: 15102443" required />
+                                    <Label htmlFor="certNo" className="text-xs">인증번호 (일반은 생략)</Label>
+                                    <Input id="certNo" name="certNo" placeholder="입력 없으면 '일반'으로 저장됨" />
                                 </div>
                             </div>
                         ) : (
@@ -235,11 +244,14 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                         </div>
                                     </>
                                 ) : (
-                                    <Select name="groupId" defaultValue={farmer?.groupId.toString()} required={!isNewGroup}>
+                                    <Select name="groupId" defaultValue={farmer?.groupId?.toString() || ''}>
                                         <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder="작목반 선택" />
+                                            <SelectValue placeholder="작목반 선택 (선택 안 함 = 일반)" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            <SelectItem value="null_value_placeholder" className="text-slate-500 font-bold">
+                                                (작목반 없음 - 일반)
+                                            </SelectItem>
                                             {groups.map(group => (
                                                 <SelectItem key={group.id} value={group.id.toString()}>
                                                     <span className="font-mono">[{group.cropYear}]</span> [{group.code}] {group.name}
@@ -254,8 +266,8 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
 
                     <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="farmerNo">생산자번호 (필수)</Label>
-                            <Input id="farmerNo" name="farmerNo" defaultValue={farmer?.farmerNo} placeholder="예: 1" required />
+                            <Label htmlFor="farmerNo">생산자번호</Label>
+                            <Input id="farmerNo" name="farmerNo" defaultValue={farmer?.farmerNo || ''} placeholder="예: 1" required />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="name">생산자명 (필수)</Label>

@@ -139,6 +139,7 @@ export type GetFarmersParams = {
     farmerName?: string
     certType?: string
     cropYear?: number
+    sortBy?: 'name' | 'group'
 }
 
 export async function getFarmersWithGroups(params?: GetFarmersParams) {
@@ -175,9 +176,32 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
             include: {
                 group: true // Include group for displaying Group Name/Cert No
             },
-            orderBy: {
-                name: 'asc' // Sort by farmer name in ascending order
+        })
+
+        // Sorting
+        // 1. 'name' (Default): 가나다순
+        // 2. 'group': 년도(오름차순) -> 작목반번호(오름차순) -> 생산자명
+        //    (User requested Year -> Group No -> Name for List)
+        farmers.sort((a, b) => {
+            if (params?.sortBy === 'group') {
+                // 1. Year (DESC): Latest first (2025 -> 2024)
+                const yearA = a.group?.cropYear || 0
+                const yearB = b.group?.cropYear || 0
+                if (yearA !== yearB) return yearB - yearA
+
+                // 2. Group Name (Ascending) - User requested Name instead of Code
+                const groupNameA = a.group?.name || ''
+                const groupNameB = b.group?.name || ''
+                if (groupNameA !== groupNameB) return groupNameA.localeCompare(groupNameB, 'ko')
+
+                // 3. Farmer No (Ascending)
+                const fNoA = parseInt(a.farmerNo || '0')
+                const fNoB = parseInt(b.farmerNo || '0')
+                if (fNoA !== fNoB) return fNoA - fNoB
             }
+
+            // Default / Fallback: Name
+            return a.name.localeCompare(b.name, 'ko')
         })
 
         return { success: true, data: farmers }
@@ -200,38 +224,50 @@ export async function getProducerGroups() {
 }
 
 // FARMER CRUD
+// FARMER CRUD
 export type FarmerFormData = {
     name: string
-    farmerNo: string
+    farmerNo?: string
     items?: string
     phone?: string
-    groupId: number
+    groupId?: number
 }
 
 export async function createFarmer(data: FarmerFormData) {
     try {
-        const farmerNo = data.farmerNo.trim()
-        // Check duplicate within group
-        const existing = await prisma.farmer.findUnique({
-            where: {
-                groupId_farmerNo: {
-                    groupId: data.groupId,
-                    farmerNo
-                }
-            }
-        });
+        const farmerNo = data.farmerNo?.trim() || null
 
-        if (existing) {
-            return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
+        // 1. If Group exists, check duplicate farmerNo within group
+        if (data.groupId && farmerNo) {
+            const existing = await prisma.farmer.findUnique({
+                where: {
+                    groupId_farmerNo: {
+                        groupId: data.groupId,
+                        farmerNo
+                    }
+                }
+            });
+
+            if (existing) {
+                return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
+            }
+        }
+        // 2. If No Group (General Farmer), check duplicate name just in case (optional policy)
+        else {
+            /* 
+               For general farmers, we might want to allow duplicate names or warn.
+               Since there is no unique constraint on name only, strictly speaking duplicate names are allowed in DB.
+               But let's leave it as allowed for now, assuming user will manage names.
+            */
         }
 
         const farmer = await prisma.farmer.create({
             data: {
                 name: data.name.trim(),
-                farmerNo,
+                farmerNo: farmerNo,
                 items: data.items?.trim(),
                 phone: data.phone?.trim(),
-                groupId: data.groupId
+                groupId: data.groupId || null
             }
         })
         revalidatePath('/admin/farmers')
@@ -245,14 +281,30 @@ export async function createFarmer(data: FarmerFormData) {
 
 export async function updateFarmer(id: number, data: FarmerFormData) {
     try {
+        const farmerNo = data.farmerNo?.trim() || null
+
+        // If changing to a group, check duplicate
+        if (data.groupId && farmerNo) {
+            const existing = await prisma.farmer.findFirst({
+                where: {
+                    groupId: data.groupId,
+                    farmerNo,
+                    NOT: { id }
+                }
+            });
+            if (existing) {
+                return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
+            }
+        }
+
         const farmer = await prisma.farmer.update({
             where: { id },
             data: {
                 name: data.name.trim(),
-                farmerNo: data.farmerNo.trim(),
+                farmerNo: farmerNo,
                 items: data.items?.trim(),
                 phone: data.phone?.trim(),
-                groupId: data.groupId
+                groupId: data.groupId || null
             }
         })
         revalidatePath('/admin/farmers')
@@ -351,7 +403,7 @@ export async function createFarmerWithGroup(
             const gName = groupData.name.trim()
             const gCertNo = groupData.certNo.trim()
             const fName = farmerData.name.trim()
-            const fNo = farmerData.farmerNo.trim()
+            const fNo = farmerData.farmerNo?.trim() || null // Handle optional farmerNo
             const fItems = farmerData.items?.trim()
             const fPhone = farmerData.phone?.trim()
 
@@ -383,18 +435,18 @@ export async function createFarmerWithGroup(
                 })
             }
 
-            // 2. Check Farmer Duplicate
-            const existingFarmer = await tx.farmer.findUnique({
-                where: {
-                    groupId_farmerNo: {
+            // 2. Check Farmer Duplicate (Only if farmerNo is present)
+            if (fNo) {
+                const existingFarmer = await tx.farmer.findFirst({
+                    where: {
                         groupId: group.id,
                         farmerNo: fNo
                     }
-                }
-            })
+                })
 
-            if (existingFarmer) {
-                throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${fNo}가 존재합니다.`)
+                if (existingFarmer) {
+                    throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${fNo}가 존재합니다.`)
+                }
             }
 
             // 3. Create Farmer

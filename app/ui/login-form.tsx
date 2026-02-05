@@ -1,11 +1,11 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { authenticate } from '@/app/lib/actions';
 import { ArrowRight, Lock, User, AlertCircle } from 'lucide-react';
 
 export default function LoginForm() {
-    const [errorMessage, dispatch] = useFormState(authenticate, undefined);
+    const [errorMessage, dispatch, isPending] = useActionState(authenticate, undefined);
 
     return (
         <form action={dispatch} className="space-y-4">
@@ -64,7 +64,9 @@ export default function LoginForm() {
             </div>
             <button
                 type="submit"
-                className="mt-6 w-full flex items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:bg-blue-700"
+                aria-disabled={isPending}
+                disabled={isPending}
+                className="mt-6 w-full flex items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 Sign in <ArrowRight className="ml-auto h-5 w-5 text-gray-50" />
             </button>

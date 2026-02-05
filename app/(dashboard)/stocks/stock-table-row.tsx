@@ -20,7 +20,7 @@ import { Stock } from './page' // Import Stock interface from page
 
 interface Props {
     stock: Stock
-    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[]
+    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } | null }[]
     varieties: { id: number; name: string }[]
     selected: boolean
     onSelect: (checked: boolean) => void

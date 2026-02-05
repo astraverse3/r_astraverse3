@@ -17,6 +17,7 @@ export default async function AdminFarmersPage({
         farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
         cropYear: typeof resolvedParams.cropYear === 'string' && resolvedParams.cropYear !== 'ALL' ? parseInt(resolvedParams.cropYear) : undefined,
+        sortBy: 'group' as const, // Force Sort by Group for Admin List
     }
 
     const response = await getFarmersWithGroups(filters)
