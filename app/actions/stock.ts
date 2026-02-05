@@ -42,6 +42,20 @@ export async function createStock(data: StockFormData) {
             });
         }
 
+        // 3. Duplicate Check: (Year + Farmer + Variety + BagNo) must be unique
+        const existingStock = await prisma.stock.findFirst({
+            where: {
+                productionYear: data.productionYear,
+                farmerId: data.farmerId,
+                varietyId: data.varietyId,
+                bagNo: data.bagNo
+            }
+        });
+
+        if (existingStock) {
+            throw new Error(`이미 등록된 톤백번호입니다. (생산자: ${farmer.name}, 품종: ${variety.name}, 번호: ${data.bagNo})`);
+        }
+
 
         const stock = await prisma.stock.create({
             data: {
@@ -110,6 +124,30 @@ export async function updateStock(id: number, data: StockFormData) {
                     }
                 }
 
+            }
+
+            // 4. Duplicate Check for Update (Exclude self)
+            // Check if (Year + Farmer + Variety + BagNo) is being changed to something that conflicts
+            if (
+                data.productionYear !== currentStock.productionYear ||
+                data.farmerId !== currentStock.farmerId ||
+                data.varietyId !== currentStock.varietyId ||
+                data.bagNo !== currentStock.bagNo
+            ) {
+                const existing = await tx.stock.findFirst({
+                    where: {
+                        productionYear: data.productionYear,
+                        farmerId: data.farmerId,
+                        varietyId: data.varietyId,
+                        bagNo: data.bagNo,
+                        NOT: { id: id } // Exclude self
+                    },
+                    include: { farmer: true, variety: true }
+                });
+
+                if (existing) {
+                    throw new Error(`이미 등록된 톤백번호입니다. (생산자: ${existing.farmer.name}, 품종: ${existing.variety.name}, 번호: ${data.bagNo})`);
+                }
             }
 
             // 4. Update stock

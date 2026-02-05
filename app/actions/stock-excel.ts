@@ -175,7 +175,23 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                         continue
                     }
 
-                    // 4. Create Stock
+                    // 4. Duplicate Check: (Year + Farmer + Variety + BagNo)
+                    const existingStock = await tx.stock.findFirst({
+                        where: {
+                            productionYear: productionYear!,
+                            farmerId: farmer.id,
+                            varietyId: variety!.id,
+                            bagNo: bagNo!
+                        }
+                    });
+
+                    if (existingStock) {
+                        result.counts.failed++
+                        result.errors.push({ row: rowIndex, reason: `이미 등록된 톤백번호 (생산자+품종+번호 중복)` })
+                        continue
+                    }
+
+                    // 5. Create Stock
                     let lotNo: string | null = null
 
                     if (farmer.group) {
