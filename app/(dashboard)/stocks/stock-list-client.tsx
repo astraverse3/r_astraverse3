@@ -32,7 +32,7 @@ interface Stock {
         group: {
             certType: string
             name: string
-        } | null
+        }
     }
 }
 

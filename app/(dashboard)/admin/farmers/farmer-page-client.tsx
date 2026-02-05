@@ -8,10 +8,10 @@ import { FarmerListWrapper, useBulkDelete } from './farmer-list-wrapper'
 interface Farmer {
     id: number
     name: string
-    farmerNo: string | null
+    farmerNo: string
     items: string | null
     phone: string | null
-    groupId: number | null
+    groupId: number
     group: {
         id: number
         code: string
@@ -19,7 +19,7 @@ interface Farmer {
         certNo: string
         certType: string
         cropYear: number
-    } | null
+    }
 }
 
 export function FarmerPageClient({

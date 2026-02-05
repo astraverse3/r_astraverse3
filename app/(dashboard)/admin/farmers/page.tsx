@@ -26,7 +26,7 @@ export default async function AdminFarmersPage({
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <FarmerPageClient
-                farmers={farmers}
+                farmers={farmers as any}
                 filtersSlot={<FarmerFilters />}
                 excelSlot={<ExcelButtons />}
                 addDialogSlot={<AddFarmerDialog />}
