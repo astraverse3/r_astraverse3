@@ -30,12 +30,12 @@ model ProducerGroup {
 model Farmer {
   id             Int            @id @default(autoincrement())
   name           String         // 농가명
-  farmerNo       String         // 농가번호 (e.g., '1')
+  farmerNo       String?        // 농가번호 (e.g., '1')
   items          String?        // 취급품목
   phone          String?        // 연락처 (선택)
   
-  groupId        Int
-  group          ProducerGroup  @relation(fields: [groupId], references: [id])
+  groupId        Int?
+  group          ProducerGroup? @relation(fields: [groupId], references: [id])
   
   stocks         Stock[]
   

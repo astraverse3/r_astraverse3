@@ -225,6 +225,7 @@ export async function getProducerGroups() {
 
 // FARMER CRUD
 // FARMER CRUD
+// FARMER CRUD
 export type FarmerFormData = {
     name: string
     farmerNo?: string
@@ -252,14 +253,9 @@ export async function createFarmer(data: FarmerFormData) {
                 return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
             }
         }
+
         // 2. If No Group (General Farmer), check duplicate name just in case (optional policy)
-        else {
-            /* 
-               For general farmers, we might want to allow duplicate names or warn.
-               Since there is no unique constraint on name only, strictly speaking duplicate names are allowed in DB.
-               But let's leave it as allowed for now, assuming user will manage names.
-            */
-        }
+        // (Skipped as before)
 
         const farmer = await prisma.farmer.create({
             data: {
@@ -403,7 +399,7 @@ export async function createFarmerWithGroup(
             const gName = groupData.name.trim()
             const gCertNo = groupData.certNo.trim()
             const fName = farmerData.name.trim()
-            const fNo = farmerData.farmerNo?.trim() || null // Handle optional farmerNo
+            const fNo = farmerData.farmerNo?.trim() || null
             const fItems = farmerData.items?.trim()
             const fPhone = farmerData.phone?.trim()
 
@@ -435,7 +431,7 @@ export async function createFarmerWithGroup(
                 })
             }
 
-            // 2. Check Farmer Duplicate (Only if farmerNo is present)
+            // 2. Check Farmer Duplicate
             if (fNo) {
                 const existingFarmer = await tx.farmer.findFirst({
                     where: {

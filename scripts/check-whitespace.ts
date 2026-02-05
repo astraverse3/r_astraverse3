@@ -17,7 +17,7 @@ async function main() {
         if (farmer.name !== farmer.name.trim()) {
             issues.push(`name: "${farmer.name}"`)
         }
-        if (farmer.farmerNo !== farmer.farmerNo.trim()) {
+        if (farmer.farmerNo && farmer.farmerNo !== farmer.farmerNo.trim()) {
             issues.push(`farmerNo: "${farmer.farmerNo}"`)
         }
         if (farmer.items && farmer.items !== farmer.items.trim()) {

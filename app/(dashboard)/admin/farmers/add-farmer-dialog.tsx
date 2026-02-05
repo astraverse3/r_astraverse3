@@ -35,7 +35,7 @@ interface Farmer {
         name: string
         certNo: string
         cropYear: number
-    }
+    } | null
 }
 
 interface ProducerGroup {

@@ -14,7 +14,7 @@ async function main() {
         if (farmer.name !== farmer.name.trim()) {
             updates.name = farmer.name.trim()
         }
-        if (farmer.farmerNo !== farmer.farmerNo.trim()) {
+        if (farmer.farmerNo && farmer.farmerNo !== farmer.farmerNo.trim()) {
             updates.farmerNo = farmer.farmerNo.trim()
         }
         if (farmer.items && farmer.items !== farmer.items.trim()) {

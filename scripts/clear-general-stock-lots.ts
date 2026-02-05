@@ -11,10 +11,7 @@ async function main() {
     const stocks = await prisma.stock.findMany({
         where: {
             lotNo: { not: null },
-            OR: [
-                { farmer: { groupId: null } },
-                { farmer: { group: { certType: '일반' } } }
-            ]
+            farmer: { group: { certType: '일반' } }
         },
         include: {
             farmer: {

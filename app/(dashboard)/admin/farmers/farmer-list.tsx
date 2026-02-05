@@ -135,7 +135,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
 
     // Grouping Logic
     const groups = farmers.reduce((acc: any, farmer: Farmer) => {
-        // Use Group ID as key, or 'no-group'
+        // Use Group ID as key or 'no-group'
         const key = farmer.group ? farmer.group.id.toString() : 'no-group'
 
         if (!acc[key]) {

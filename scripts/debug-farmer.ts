@@ -14,7 +14,7 @@ async function main() {
 
     console.log(`Found ${farmers.length} farmers matching '최길순':`)
     farmers.forEach(f => {
-        console.log(`- ID: ${f.id}, Name: '[${f.name}]', Group: '[${f.group.name}]', FarmerNo: ${f.farmerNo}`)
+        console.log(`- ID: ${f.id}, Name: '[${f.name}]', Group: '[${f.group?.name}]', FarmerNo: ${f.farmerNo}`)
     })
 
     // 2. Search by Group Name
