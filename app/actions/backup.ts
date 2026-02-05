@@ -64,7 +64,18 @@ export async function createBackup(): Promise<{ success: boolean; message?: stri
         const filePath = path.join(BACKUP_DIR, filename)
 
         // pg_dump command
-        const command = `pg_dump "${dbUrl}" -f "${filePath}"`
+        const pgDumpPath17 = 'C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump.exe';
+        const pgDumpPath16 = 'C:\\Program Files\\PostgreSQL\\16\\bin\\pg_dump.exe';
+
+        let dumpCommand = 'pg_dump';
+        if (fs.existsSync(pgDumpPath17)) {
+            dumpCommand = `"${pgDumpPath17}"`;
+        } else if (fs.existsSync(pgDumpPath16)) {
+            dumpCommand = `"${pgDumpPath16}"`;
+        }
+
+        // Output file option (-f) must come BEFORE the connection URL (positional argument)
+        const command = `${dumpCommand} -f "${filePath}" "${dbUrl}"`
 
         await execAsync(command)
         revalidatePath('/admin')
@@ -97,7 +108,18 @@ export async function restoreBackup(filename: string): Promise<{ success: boolea
         // Warning: This appends/overwrites. Ideally we should drop schema first.
         // Let's try simple execution first.
 
-        const command = `psql "${dbUrl}" -f "${filePath}"`
+        const psqlPath17 = 'C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe';
+        const psqlPath16 = 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe';
+
+        let restoreCommand = 'psql';
+        if (fs.existsSync(psqlPath17)) {
+            restoreCommand = `"${psqlPath17}"`;
+        } else if (fs.existsSync(psqlPath16)) {
+            restoreCommand = `"${psqlPath16}"`;
+        }
+
+        // Input file option (-f) must come BEFORE the connection URL
+        const command = `${restoreCommand} -f "${filePath}" "${dbUrl}"`
 
         await execAsync(command)
         revalidatePath('/admin')

@@ -132,6 +132,7 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
             key: string,
             year: number,
             variety: string,
+            certType: string,
             totalWeight: number,
             count: number,
             farmerSet: Set<number>,
@@ -139,12 +140,14 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
         }> = {}
 
         stocks.forEach((stock: any) => {
-            const key = `${stock.productionYear}-${stock.variety.name}`
+            const certType = stock.farmer.group?.certType || '일반'
+            const key = `${stock.productionYear}-${stock.variety.name}-${certType}`
             if (!grouped[key]) {
                 grouped[key] = {
                     key,
                     year: stock.productionYear,
                     variety: stock.variety.name,
+                    certType,
                     totalWeight: 0,
                     count: 0,
                     farmerSet: new Set(),
@@ -157,10 +160,11 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
             grouped[key].farmerSet.add(stock.farmer.id)
         })
 
-        // Sort groups (Year Desc, Variety Asc)
+        // Sort groups (Year Desc, Variety Asc, Cert Asc)
         return Object.values(grouped).sort((a, b) => {
             if (a.year !== b.year) return b.year - a.year
-            return a.variety.localeCompare(b.variety, 'ko')
+            if (a.variety !== b.variety) return a.variety.localeCompare(b.variety, 'ko')
+            return a.certType.localeCompare(b.certType, 'ko')
         })
     }, [stocks])
 
@@ -195,8 +199,12 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
                                 {group.farmerSet.size}명
                             </TableCell>
 
-                            {/* Cert - Empty */}
-                            <TableCell className="hidden md:table-cell"></TableCell>
+                            {/* Cert - Display CertType */}
+                            <TableCell className="text-center text-sm font-medium hidden md:table-cell">
+                                <Badge variant="outline" className="font-normal">
+                                    {group.certType}
+                                </Badge>
+                            </TableCell>
 
                             {/* Lot No - Empty */}
                             <TableCell></TableCell>
