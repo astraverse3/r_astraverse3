@@ -194,7 +194,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                     // 5. Create Stock
                     let lotNo: string | null = null
 
-                    if (farmer.group) {
+                    if (farmer.group && farmer.group.certType !== '일반') {
                         lotNo = generateLotNo({
                             incomingDate: incomingDate!,
                             varietyType: variety!.type,

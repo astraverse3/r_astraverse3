@@ -32,7 +32,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
     const farmerName = stock.farmer?.name || 'Unknown'
-    const certType = stock.farmer?.group?.certType || 'None'
+    const certType = stock.farmer?.group?.certType || '일반'
 
     const handleDelete = async () => {
         if (confirm('정말 삭제하시겠습니까? (삭제 후 복구 불가)')) {
@@ -87,9 +87,11 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
 
                 {/* 5. Lot No */}
                 <TableCell className="py-2 px-1 text-center">
-                    <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
-                        {stock.lotNo || '-'}
-                    </div>
+                    {(certType === '유기농' || certType === '무농약') && (
+                        <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
+                            {stock.lotNo || '-'}
+                        </div>
+                    )}
                 </TableCell>
 
                 {/* 6. Bag No */}
