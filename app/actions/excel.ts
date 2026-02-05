@@ -16,24 +16,30 @@ export async function exportFarmers() {
         // Sort naturally (match list view)
         farmers.sort((a, b) => {
             // 1. Crop Year (Descending - Latest first)
-            if (a.group.cropYear !== b.group.cropYear) {
-                return b.group.cropYear - a.group.cropYear
+            const yearA = a.group?.cropYear || 0
+            const yearB = b.group?.cropYear || 0
+            if (yearA !== yearB) {
+                return yearB - yearA
             }
 
             // 2. Group Code
-            const groupCompare = a.group.code.localeCompare(b.group.code, undefined, { numeric: true })
+            const codeA = a.group?.code || ''
+            const codeB = b.group?.code || ''
+            const groupCompare = codeA.localeCompare(codeB, undefined, { numeric: true })
             if (groupCompare !== 0) return groupCompare
 
             // 3. Farmer No
-            return a.farmerNo.localeCompare(b.farmerNo, undefined, { numeric: true })
+            const farmerNoA = a.farmerNo || ''
+            const farmerNoB = b.farmerNo || ''
+            return farmerNoA.localeCompare(farmerNoB, undefined, { numeric: true })
         })
 
         const rows: any[] = farmers.map(farmer => ({
-            '생산년도': farmer.group.cropYear,
-            '작목반번호': farmer.group.code,
-            '작목반명': farmer.group.name,
-            '인증번호': farmer.group.certNo,
-            '농가번호': farmer.farmerNo,
+            '생산년도': farmer.group?.cropYear || '',
+            '작목반번호': farmer.group?.code || '',
+            '작목반명': farmer.group?.name || '',
+            '인증번호': farmer.group?.certNo || '',
+            '농가번호': farmer.farmerNo || '',
             '농가명': farmer.name,
             '취급품목': farmer.items || ''
         }))
