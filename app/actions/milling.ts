@@ -237,9 +237,9 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
             varietyType: primaryStock.variety.type,
             varietyName: primaryStock.variety.name,
             millingType: batch.millingType, // Use ACTUAL milling type
-            certNo: primaryStock.farmer.group.certNo,
-            farmerGroupCode: primaryStock.farmer.group.code,
-            farmerNo: primaryStock.farmer.farmerNo
+            certNo: primaryStock.farmer.group?.certNo || '00',
+            farmerGroupCode: primaryStock.farmer.group?.code || '00',
+            farmerNo: primaryStock.farmer.farmerNo || '00'
         });
         // -----------------------------------
 
@@ -294,9 +294,9 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     varietyType: primaryStock.variety.type,
                     varietyName: primaryStock.variety.name,
                     millingType: batch.millingType, // Use ACTUAL milling type
-                    certNo: primaryStock.farmer.group.certNo,
-                    farmerGroupCode: primaryStock.farmer.group.code,
-                    farmerNo: primaryStock.farmer.farmerNo
+                    certNo: primaryStock.farmer.group?.certNo || '00',
+                    farmerGroupCode: primaryStock.farmer.group?.code || '00',
+                    farmerNo: primaryStock.farmer.farmerNo || '00'
                 });
 
                 await tx.millingOutputPackage.create({
