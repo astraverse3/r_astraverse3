@@ -160,6 +160,16 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
             grouped[key].farmerSet.add(stock.farmer.id)
         })
 
+        // Sort items within each group: Farmer Name (Asc) -> Bag No (Asc)
+        Object.values(grouped).forEach(group => {
+            group.items.sort((a, b) => {
+                const farmerA = a.farmer?.name || ''
+                const farmerB = b.farmer?.name || ''
+                if (farmerA !== farmerB) return farmerA.localeCompare(farmerB, 'ko')
+                return a.bagNo - b.bagNo
+            })
+        })
+
         // Sort groups (Year Desc, Variety Asc, Cert Asc)
         return Object.values(grouped).sort((a, b) => {
             if (a.year !== b.year) return b.year - a.year
