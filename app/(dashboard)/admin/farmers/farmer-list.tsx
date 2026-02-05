@@ -30,7 +30,7 @@ interface Farmer {
     farmerNo: string | null
     items: string | null
     phone: string | null
-    groupId: number
+    groupId: number | null
     group?: {
         id: number
         code: string

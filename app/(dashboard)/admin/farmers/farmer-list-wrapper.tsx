@@ -19,11 +19,11 @@ import { FarmerList } from './farmer-list'
 interface Farmer {
     id: number
     name: string
-    farmerNo: string
+    farmerNo: string | null
     items: string | null
     phone: string | null
-    groupId: number
-    group: {
+    groupId: number | null
+    group?: {
         id: number
         code: string
         name: string
