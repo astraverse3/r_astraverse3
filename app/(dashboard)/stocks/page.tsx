@@ -52,7 +52,7 @@ export default async function StocksPage({
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
     const farmerResult = await getFarmersWithGroups()
-    const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, group: { id: number; name: string; certType: string; certNo: string } }[]
+    const farmers = (farmerResult.success && farmerResult.data ? farmerResult.data : []) as { id: number; name: string, group: { id: number; name: string; certType: string; certNo: string; cropYear: number } }[]
 
     return (
         <Suspense fallback={<div>Loading...</div>}>
