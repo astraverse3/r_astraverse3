@@ -1,10 +1,11 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload } from 'lucide-react'
 import { exportFarmers, importFarmers } from '@/app/actions/excel'
 import { formatImportResult } from '@/lib/excel-utils'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -60,35 +61,57 @@ export function ExcelButtons() {
         setImporting(false)
     }
 
+    // Navigation Guard
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (importing || exporting) {
+                e.preventDefault()
+                e.returnValue = ''
+                return ''
+            }
+        }
+
+        if (importing || exporting) {
+            window.addEventListener('beforeunload', handleBeforeUnload)
+        }
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+        }
+    }, [importing, exporting])
+
     return (
-        <div className="hidden md:flex gap-2 items-center">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".xlsx, .xls"
-            />
-            <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={handleImportClick}
-                disabled={importing}
-            >
-                <Upload className="w-4 h-4" />
-                {importing ? '업로드 중...' : '엑셀 UP'}
-            </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={handleExport}
-                disabled={exporting}
-            >
-                <Download className="w-4 h-4" />
-                {exporting ? '다운로드 중...' : '엑셀 DOWN'}
-            </Button>
-        </div>
+        <>
+            {(importing || exporting) && <FullScreenLoader message={importing ? "데이터 업로드 및 분석 중..." : "데이터 다운로드 중..."} />}
+            <div className="hidden md:flex gap-2 items-center">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".xlsx, .xls"
+                />
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleImportClick}
+                    disabled={importing}
+                >
+                    <Upload className="w-4 h-4" />
+                    {importing ? '업로드 중...' : '엑셀 UP'}
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleExport}
+                    disabled={exporting}
+                >
+                    <Download className="w-4 h-4" />
+                    {exporting ? '다운로드 중...' : '엑셀 DOWN'}
+                </Button>
+            </div>
+        </>
     )
 }

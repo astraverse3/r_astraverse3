@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload } from 'lucide-react'
 import { importStocks, exportStocks } from '@/app/actions/stock-excel'
@@ -15,6 +15,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 
 export function StockExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -106,8 +107,29 @@ export function StockExcelButtons() {
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
+    // Navigation Guard (Prevent Tab Close)
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (importing || exporting) {
+                e.preventDefault()
+                e.returnValue = '' // Chrome requires returnValue to be set
+                return ''
+            }
+        }
+
+        if (importing || exporting) {
+            window.addEventListener('beforeunload', handleBeforeUnload)
+        }
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+        }
+    }, [importing, exporting])
+
     return (
         <>
+            {(importing || exporting) && <FullScreenLoader message={importing ? "데이터 업로드 및 분석 중..." : "데이터 다운로드 중..."} />}
+
             <div className="hidden md:flex gap-2 items-center">
                 <input
                     type="file"
