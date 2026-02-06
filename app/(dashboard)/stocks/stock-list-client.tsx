@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StockTableRow } from './stock-table-row'
@@ -194,7 +194,7 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
                 const isExpanded = expandedGroups.has(group.key)
 
                 return (
-                    <div key={group.key} style={{ display: 'contents' }}>
+                    <Fragment key={group.key}>
                         {/* Summary Row (Aligned with columns) */}
                         <TableRow
                             className="bg-slate-200 hover:bg-slate-300 cursor-pointer border-y border-slate-300 font-bold text-slate-900 shadow-sm h-12"
@@ -257,7 +257,7 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
                                 onSelect={(checked) => onSelectOne(stock.id, checked)}
                             />
                         ))}
-                    </div>
+                    </Fragment>
                 )
             })}
         </>
