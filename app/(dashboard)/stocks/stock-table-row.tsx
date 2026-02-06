@@ -110,6 +110,10 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             보유
                         </span>
+                    ) : stock.status === 'RELEASED' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            출고
+                        </span>
                     ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
                             소진
@@ -119,14 +123,27 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
 
                 {/* 9. Management */}
                 <TableCell className="py-2 px-1 text-center">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => setEditOpen(true)}
-                    >
-                        <Edit className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setEditOpen(true)}
+                            title="수정"
+                        >
+                            <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={handleDelete}
+                            disabled={stock.status === 'CONSUMED'}
+                            title={stock.status === 'CONSUMED' ? '도정 완료된 재고는 삭제할 수 없습니다' : '삭제'}
+                        >
+                            <Trash2 className="h-3 w-3" />
+                        </Button>
+                    </div>
                 </TableCell>
             </TableRow>
 

@@ -39,6 +39,7 @@ export default async function StocksPage({
         productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
         varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
         farmerId: typeof resolvedParams.farmerId === 'string' ? resolvedParams.farmerId : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined, // Added
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,

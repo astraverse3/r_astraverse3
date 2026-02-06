@@ -69,14 +69,30 @@ model Stock {
   incomingDate   DateTime             @default(now()) // 입고일 (로트 생성 기준)
   productionYear Int                  @default(2024)  // 생산년도
   weightKg       Float                // 입고 중량
-  status         String               // AVAILABLE / CONSUMED
+  status         String               // AVAILABLE / CONSUMED / RELEASED
   lotNo          String?              // Pre-assigned Lot Number (Default: White Rice basis)
   
   batchId        Int?
   batch          MillingBatch?        @relation(fields: [batchId], references: [id])
+
+  releaseId      Int?
+  release        StockRelease?        @relation(fields: [releaseId], references: [id])
   
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+}
+
+// 4.5 StockRelease (재고 직접 출고/판매 기록)
+model StockRelease {
+  id          Int      @id @default(autoincrement())
+  date        DateTime // 출고일 (사용자 입력)
+  destination String   // 출고처
+  purpose     String?  // 출고목적/비고
+
+  stocks      Stock[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // 5. MillingBatch (도정 작업 메인)

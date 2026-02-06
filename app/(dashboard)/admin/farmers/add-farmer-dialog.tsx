@@ -246,12 +246,9 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                 ) : (
                                     <Select name="groupId" defaultValue={farmer?.groupId?.toString() || ''}>
                                         <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder="작목반 선택 (선택 안 함 = 일반)" />
+                                            <SelectValue placeholder="작목반 선택" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="null_value_placeholder" className="text-slate-500 font-bold">
-                                                (작목반 없음 - 일반)
-                                            </SelectItem>
                                             {groups.map(group => (
                                                 <SelectItem key={group.id} value={group.id.toString()}>
                                                     <span className="font-mono">[{group.cropYear}]</span> [{group.code}] {group.name}

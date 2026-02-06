@@ -36,7 +36,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     // Filter States
     const [year, setYear] = useState(searchParams.get('productionYear') || defaultYear)
     const [variety, setVariety] = useState(searchParams.get('varietyId') || 'ALL')
-    const [farmer, setFarmer] = useState(searchParams.get('farmerId') || 'ALL')
+    const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [cert, setCert] = useState(searchParams.get('certType') || 'ALL')
     const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
 
@@ -45,7 +45,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         if (open) {
             setYear(searchParams.get('productionYear') || defaultYear)
             setVariety(searchParams.get('varietyId') || 'ALL')
-            setFarmer(searchParams.get('farmerId') || 'ALL')
+            setFarmerName(searchParams.get('farmerName') || '')
             setCert(searchParams.get('certType') || 'ALL')
             setStatus(searchParams.get('status') || 'ALL')
         }
@@ -54,7 +54,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const activeFilterCount = [
         year !== 'ALL',
         variety !== 'ALL',
-        farmer !== 'ALL',
+        farmerName !== '',
         cert !== 'ALL',
         status !== 'ALL'
     ].filter(Boolean).length
@@ -64,7 +64,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
 
         if (year && year !== 'ALL') params.set('productionYear', year)
         if (variety && variety !== 'ALL') params.set('varietyId', variety)
-        if (farmer && farmer !== 'ALL') params.set('farmerId', farmer)
+        if (farmerName) params.set('farmerName', farmerName)
         if (cert && cert !== 'ALL') params.set('certType', cert)
         if (status && status !== 'ALL') params.set('status', status)
 
@@ -75,7 +75,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const handleReset = () => {
         setYear(defaultYear)
         setVariety('ALL')
-        setFarmer('ALL')
+        setFarmerName('')
         setCert('ALL')
         setStatus('ALL')
         router.push(`/stocks?productionYear=${defaultYear}`)
@@ -150,19 +150,11 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>생산자</Label>
-                            <Select value={farmer} onValueChange={setFarmer}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="전체" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">전체</SelectItem>
-                                    {farmers.map((f) => (
-                                        <SelectItem key={f.id} value={f.id.toString()}>
-                                            {f.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Input
+                                placeholder="생산자명 검색"
+                                value={farmerName}
+                                onChange={(e) => setFarmerName(e.target.value)}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label>인증구분</Label>

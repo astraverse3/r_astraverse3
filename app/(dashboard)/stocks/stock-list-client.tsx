@@ -1,10 +1,9 @@
 'use client'
 
-import { Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState, useMemo } from 'react'
+import { ChevronRight, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StockTableRow } from './stock-table-row'
-import { useBulkDeleteStocks } from './use-bulk-delete-stocks'
 import {
     Table,
     TableBody,
@@ -109,8 +108,6 @@ export function StockListClient({ stocks, farmers, varieties, filters, selectedI
     )
 }
 
-import { ChevronRight, ChevronDown } from 'lucide-react'
-import { useState, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 
 function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne }: any) {
@@ -140,13 +137,13 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
         }> = {}
 
         stocks.forEach((stock: any) => {
-            const certType = stock.farmer.group?.certType || '일반'
-            const key = `${stock.productionYear}-${stock.variety.name}-${certType}`
+            const certType = stock.farmer?.group?.certType || '일반'
+            const key = `${stock.productionYear}-${stock.variety?.name}-${certType}`
             if (!grouped[key]) {
                 grouped[key] = {
                     key,
                     year: stock.productionYear,
-                    variety: stock.variety.name,
+                    variety: stock.variety?.name || 'Unknown',
                     certType,
                     totalWeight: 0,
                     count: 0,
@@ -157,7 +154,9 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
             grouped[key].items.push(stock)
             grouped[key].totalWeight += stock.weightKg
             grouped[key].count += 1
-            grouped[key].farmerSet.add(stock.farmer.id)
+            if (stock.farmer?.id) {
+                grouped[key].farmerSet.add(stock.farmer.id)
+            }
         })
 
         // Sort items within each group: Farmer Name (Asc) -> Bag No (Asc)
@@ -170,10 +169,21 @@ function GroupedStockRows({ stocks, farmers, varieties, selectedIds, onSelectOne
             })
         })
 
-        // Sort groups (Year Desc, Variety Asc, Cert Asc)
+        // Sort groups (Year Desc -> Non-General First -> Variety Asc -> Cert Asc)
         return Object.values(grouped).sort((a, b) => {
+            // 1. Year Desc
             if (a.year !== b.year) return b.year - a.year
+
+            // 1.5. '일반' (General) always comes last
+            const aIsGeneral = a.certType === '일반'
+            const bIsGeneral = b.certType === '일반'
+            if (aIsGeneral && !bIsGeneral) return 1
+            if (!aIsGeneral && bIsGeneral) return -1
+
+            // 2. Variety Asc
             if (a.variety !== b.variety) return a.variety.localeCompare(b.variety, 'ko')
+
+            // 3. Cert Type Asc (for remaining ties)
             return a.certType.localeCompare(b.certType, 'ko')
         })
     }, [stocks])

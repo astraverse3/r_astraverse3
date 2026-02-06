@@ -268,10 +268,13 @@ export async function deleteStocks(ids: number[]) {
 }
 
 
+// ... imports
+
 export type GetStocksParams = {
     productionYear?: string
     varietyId?: string
     farmerId?: string
+    farmerName?: string // Added
     status?: string // 'ALL' | 'AVAILABLE' | 'CONSUMED'
     sort?: string // 'newest' | 'oldest' | 'weight_desc' | 'weight_asc'
     // certType filter becomes complex. Need to filter by farmer.group.certType
@@ -290,9 +293,22 @@ export async function getStocks(params?: GetStocksParams) {
             where.varietyId = parseInt(params.varietyId)
         }
 
-        // Filter by Farmer directly
+        // Filter by Farmer Name (Text Input)
+        if (params?.farmerName) {
+            where.farmer = {
+                name: { contains: params.farmerName } // Partial search
+            }
+        }
+
+        // Keep ID filter if specifically requested (though UI will use Name)
         if (params?.farmerId && params.farmerId !== 'ALL') {
-            where.farmerId = parseInt(params.farmerId)
+            // If name filter exists, merge or reuse. Name filter is nested in 'farmer'.
+            // If we already added 'farmer' object for name search:
+            if (where.farmer) {
+                where.farmer.id = parseInt(params.farmerId)
+            } else {
+                where.farmerId = parseInt(params.farmerId)
+            }
         }
 
         if (params?.status && params.status !== 'ALL') {
@@ -301,14 +317,12 @@ export async function getStocks(params?: GetStocksParams) {
 
         // Filter by CertType via Farmer -> Group match
         if (params?.certType && params.certType !== 'ALL') {
-            where.farmer = {
-                group: {
-                    certType: params.certType
-                }
-            }
-            // Preserve farmerId filter if exists
-            if (params?.farmerId && params.farmerId !== 'ALL') {
-                where.farmer.id = parseInt(params.farmerId)
+            // Ensure where.farmer exists
+            if (!where.farmer) where.farmer = {}
+
+            // Nested filtering: farmer -> group -> certType
+            where.farmer.group = {
+                certType: params.certType
             }
         }
 
