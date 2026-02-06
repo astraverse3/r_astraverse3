@@ -19,7 +19,7 @@ export default async function ReleaseHistoryPage({
     }
 
     const result = await getReleaseLogs(filters)
-    const logs = result.success ? result.data : []
+    const logs = result.success && result.data ? result.data : []
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">
