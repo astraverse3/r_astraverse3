@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import {
     Table,
     TableBody,
@@ -175,7 +175,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                 const isExpanded = expandedGroups.has(group.key)
 
                 return (
-                    <div key={group.key} style={{ display: 'contents' }}>
+                    <Fragment key={group.key}>
                         {/* Group Header (Only if > 1 items) */}
                         {isMultiFarmer && group.group && (
                             <TableRow
@@ -251,7 +251,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                 </TableCell>
                             </TableRow>
                         ))}
-                    </div>
+                    </Fragment>
                 )
             })}
         </>
