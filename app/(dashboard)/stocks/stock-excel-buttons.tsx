@@ -144,47 +144,49 @@ export function StockExcelButtons() {
                 <AlertDialogContent className="max-w-[500px] max-h-[80vh] overflow-y-auto">
                     <AlertDialogHeader>
                         <AlertDialogTitle>엑셀 업로드 미리보기</AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-4 pt-2">
-                            {previewResult && (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-4 gap-2 text-center bg-slate-50 p-3 rounded-lg">
-                                        <div>
-                                            <div className="text-xs text-slate-500">총 데이터</div>
-                                            <div className="font-bold">{previewResult.counts.total}건</div>
+                        <AlertDialogDescription asChild className="space-y-4 pt-2">
+                            <div>
+                                {previewResult && (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-4 gap-2 text-center bg-slate-50 p-3 rounded-lg">
+                                            <div>
+                                                <div className="text-xs text-slate-500">총 데이터</div>
+                                                <div className="font-bold">{previewResult.counts.total}건</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs text-green-600">등록 가능</div>
+                                                <div className="font-bold text-green-700">{previewResult.counts.success}건</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs text-amber-500">누락/제외</div>
+                                                <div className="font-bold text-amber-600">{previewResult.counts.skipped}건</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs text-red-500">오류</div>
+                                                <div className="font-bold text-red-600">{previewResult.counts.failed}건</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="text-xs text-green-600">등록 가능</div>
-                                            <div className="font-bold text-green-700">{previewResult.counts.success}건</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs text-amber-500">누락/제외</div>
-                                            <div className="font-bold text-amber-600">{previewResult.counts.skipped}건</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs text-red-500">오류</div>
-                                            <div className="font-bold text-red-600">{previewResult.counts.failed}건</div>
+
+                                        {(previewResult.counts.skipped > 0 || previewResult.counts.failed > 0) && (
+                                            <div className="bg-red-50 border border-red-100 rounded-md p-3 text-xs space-y-2">
+                                                <p className="font-bold text-red-700 mb-1">⚠️ 다음 데이터는 등록되지 않습니다:</p>
+                                                <ul className="list-disc pl-4 space-y-1 text-red-600 max-h-[150px] overflow-y-auto">
+                                                    {previewResult.errors.map((err, idx) => (
+                                                        <li key={idx}>[{err.row}행] {err.reason}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        <div className="text-sm font-medium text-slate-700 text-center">
+                                            {previewResult.counts.success > 0
+                                                ? `${previewResult.counts.success}건의 데이터를 등록하시겠습니까?`
+                                                : "등록할 수 있는 데이터가 없습니다."
+                                            }
                                         </div>
                                     </div>
-
-                                    {(previewResult.counts.skipped > 0 || previewResult.counts.failed > 0) && (
-                                        <div className="bg-red-50 border border-red-100 rounded-md p-3 text-xs space-y-2">
-                                            <p className="font-bold text-red-700 mb-1">⚠️ 다음 데이터는 등록되지 않습니다:</p>
-                                            <ul className="list-disc pl-4 space-y-1 text-red-600 max-h-[150px] overflow-y-auto">
-                                                {previewResult.errors.map((err, idx) => (
-                                                    <li key={idx}>[{err.row}행] {err.reason}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                    <div className="text-sm font-medium text-slate-700 text-center">
-                                        {previewResult.counts.success > 0
-                                            ? `${previewResult.counts.success}건의 데이터를 등록하시겠습니까?`
-                                            : "등록할 수 있는 데이터가 없습니다."
-                                        }
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
