@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Props {
     batchId: number
@@ -68,6 +69,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         setIsLoading(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOutputs(initialOutputs)
             setOpen(true)
             router.refresh()
@@ -84,6 +86,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         setIsLoading(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
             router.refresh()
         } else {
@@ -99,6 +102,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         setIsLoading(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
             router.refresh()
         } else {
@@ -158,6 +162,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         setIsLoading(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
             setOutputs([])
             router.refresh()

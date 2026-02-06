@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { createStock, type StockFormData } from '@/app/actions/stock'
 import { useRouter } from 'next/navigation'
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Farmer {
     id: number
@@ -100,6 +101,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
         if (result.success) {
             setOpen(false)
             resetForm()
+            triggerDataUpdate()
             // Optional: Show toast
         } else {
             alert('Failed to create stock')

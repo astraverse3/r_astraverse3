@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { createFarmer, updateFarmer, getProducerGroups, updateProducerGroup, type FarmerFormData } from '@/app/actions/admin'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { Plus } from 'lucide-react'
 
 // Extended Farmer type to match list
@@ -153,6 +154,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             }
 
             if (result.success) {
+                triggerDataUpdate()
                 setOpen(false)
                 // Refresh groups for next time
                 getProducerGroups().then(res => {

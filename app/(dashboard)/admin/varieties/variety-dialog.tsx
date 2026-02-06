@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Props {
     mode: 'create' | 'edit'
@@ -56,6 +57,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                 setName('')
                 setType('URUCHI')
             }
+            triggerDataUpdate()
             router.refresh()
         } else {
             alert(result?.error || '작업에 실패했습니다.')
@@ -69,6 +71,7 @@ export function VarietyDialog({ mode, variety }: Props) {
         setLoading(true)
         const result = await deleteVariety(variety.id)
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
             router.refresh()
         } else {

@@ -6,7 +6,8 @@ import {
     Package,
     ClipboardList,
     Server,
-    BarChart3
+    BarChart3,
+    Truck
 } from "lucide-react"
 
 export function DesktopSidebar() {
@@ -49,6 +50,17 @@ export function DesktopSidebar() {
                     >
                         <ClipboardList className="w-4 h-4" />
                         도정관리
+                    </Link>
+
+                    <Link
+                        href="/releases"
+                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/releases')
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                    >
+                        <Truck className="w-4 h-4" />
+                        출고관리
                     </Link>
 
                     <Link
@@ -96,7 +108,7 @@ export function DesktopSidebar() {
                                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                         }`}
                                 >
-                                    시스템 관리
+                                    시스템 백업
                                 </Link>
                             </div>
                         </div>

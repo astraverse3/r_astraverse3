@@ -2,6 +2,7 @@ import { MobileHeader } from "@/components/mobile-header"
 import { MobileNav } from "@/components/mobile-nav"
 import { DesktopSidebar } from "@/components/desktop-sidebar"
 import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
+import { LastUpdated } from "@/components/last-updated"
 
 export default function DashboardLayout({
     children,
@@ -22,11 +23,7 @@ export default function DashboardLayout({
                 {/* Desktop Header (Hidden on Mobile) */}
                 <header className="hidden lg:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6 z-40">
                     <BreadcrumbDisplay />
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs text-slate-500 font-medium font-mono">
-                            {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })}
-                        </span>
-                    </div>
+                    <LastUpdated />
                 </header>
 
                 {/* Scrollable Page Content */}

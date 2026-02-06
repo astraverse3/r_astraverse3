@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createStockRelease } from '@/app/actions/release'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,7 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
         setIsSubmitting(false)
 
         if (result.success) {
+            triggerDataUpdate()
             onOpenChange(false)
             onSuccess() // clear selection
             // Reset form

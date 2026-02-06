@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Minus, Trash2 } from 'lucide-react'
 import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Stock {
     id: number
@@ -75,6 +76,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
         if (result && !result.success) {
             alert('저장 실패: ' + result.error)
         } else {
+            triggerDataUpdate()
             router.push('/milling')
         }
     }

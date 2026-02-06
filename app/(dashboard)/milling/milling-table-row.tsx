@@ -7,6 +7,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { AddPackagingDialog } from './add-packaging-dialog'
 import { reopenMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface MillingBatch {
     id: number
@@ -43,6 +44,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 setIsActionLoading(false)
 
                 if (result.success) {
+                    triggerDataUpdate()
                     setPackagingOpen(true)
                 } else {
                     alert(result.error || '마감 해제 실패')

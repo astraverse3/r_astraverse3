@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, BarChart3, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Package, BarChart3, ClipboardList, Truck } from 'lucide-react';
 
 export function MobileNav() {
     const pathname = usePathname();
@@ -36,11 +36,11 @@ export function MobileNav() {
             </Link>
 
             <Link
-                href="#"
-                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/stats') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                href="/releases"
+                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/releases') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <BarChart3 className="w-6 h-6" />
-                <span className="text-xs font-bold">통계</span>
+                <Truck className="w-6 h-6" />
+                <span className={`text-xs ${isActive('/releases') ? 'font-bold' : 'font-medium'}`}>출고</span>
             </Link>
         </nav>
     );

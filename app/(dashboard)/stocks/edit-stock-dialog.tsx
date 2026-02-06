@@ -21,6 +21,7 @@ import {
 import { updateStock, deleteStock, type StockFormData } from '@/app/actions/stock'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Stock } from './page' // Import Stock interface
+import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Props {
     stock: Stock
@@ -92,6 +93,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
         setIsLoading(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
         } else {
             alert('Failed to update stock: ' + result.error)
@@ -113,6 +115,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
         setIsDeleting(false)
 
         if (result.success) {
+            triggerDataUpdate()
             setOpen(false)
         } else {
             alert('삭제 실패: ' + result.error)
