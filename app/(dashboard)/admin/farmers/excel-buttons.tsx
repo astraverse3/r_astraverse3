@@ -83,7 +83,7 @@ export function ExcelButtons() {
     return (
         <>
             {(importing || exporting) && <FullScreenLoader message={importing ? "데이터 업로드 및 분석 중..." : "데이터 다운로드 중..."} />}
-            <div className="hidden md:flex gap-2 items-center">
+            <div className="flex gap-1 items-center">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -94,22 +94,22 @@ export function ExcelButtons() {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2"
+                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-400 transition-colors"
                     onClick={handleImportClick}
                     disabled={importing}
+                    title="엑셀 등록"
                 >
                     <Upload className="w-4 h-4" />
-                    {importing ? '업로드 중...' : '엑셀 UP'}
                 </Button>
                 <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2"
+                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-green-100 hover:text-green-700 hover:border-green-400 transition-colors"
                     onClick={handleExport}
                     disabled={exporting}
+                    title="엑셀 다운로드"
                 >
                     <Download className="w-4 h-4" />
-                    {exporting ? '다운로드 중...' : '엑셀 DOWN'}
                 </Button>
             </div>
         </>

@@ -154,6 +154,9 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                                 placeholder="생산자명 검색"
                                 value={farmerName}
                                 onChange={(e) => setFarmerName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleApply()
+                                }}
                             />
                         </div>
                         <div className="space-y-2">

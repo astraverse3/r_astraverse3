@@ -1,9 +1,9 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+
 
 interface MillingPageClientProps {
     children: ReactNode
@@ -48,12 +48,6 @@ export function MillingPageClient({
                     </div>
                     <div className="flex items-center gap-2">
                         {filtersSlot}
-                        <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-8 text-xs font-bold px-3">
-                            <Link href="/milling/new" className="flex items-center gap-1.5">
-                                <Plus className="h-3.5 w-3.5" />
-                                작업 등록
-                            </Link>
-                        </Button>
                     </div>
                 </div>
             </section>

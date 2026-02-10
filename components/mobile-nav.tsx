@@ -32,7 +32,7 @@ export function MobileNav() {
                 className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/milling') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
                 <ClipboardList className="w-6 h-6" />
-                <span className={`text-xs ${isActive('/milling') ? 'font-bold' : 'font-medium'}`}>도정관리</span>
+                <span className={`text-xs ${isActive('/milling') ? 'font-bold' : 'font-medium'}`}>도정내역</span>
             </Link>
 
             <Link
@@ -40,7 +40,7 @@ export function MobileNav() {
                 className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/releases') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
             >
                 <Truck className="w-6 h-6" />
-                <span className={`text-xs ${isActive('/releases') ? 'font-bold' : 'font-medium'}`}>출고</span>
+                <span className={`text-xs ${isActive('/releases') ? 'font-bold' : 'font-medium'}`}>출고내역</span>
             </Link>
         </nav>
     );

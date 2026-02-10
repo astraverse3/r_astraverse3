@@ -47,7 +47,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                                 onCheckedChange={handleSelectAll}
                             />
                         </TableHead>
-                        <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[50px]">날짜</TableHead>
+                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">날짜</TableHead>
                         <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">상태</TableHead>
                         <TableHead className="py-2 px-1 text-xs font-bold text-slate-500 w-[60px] md:w-auto">품종</TableHead>
                         <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">톤백</TableHead>

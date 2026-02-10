@@ -58,24 +58,26 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0"
+                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
+                onClick={handleRowClick}
             >
                 {/* Checkbox */}
                 <TableCell className="py-2 px-1 w-[40px] text-center">
                     <Checkbox
                         checked={selected}
                         onCheckedChange={onSelect}
+                        onClick={(e) => e.stopPropagation()}
                     />
                 </TableCell>
 
                 {/* 1. Date */}
-                <TableCell className="py-2 px-2 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
+                <TableCell className="py-2 px-1 text-center text-xs font-mono font-medium text-slate-500 w-[50px] tracking-tighter">
                     {new Date(log.date).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '').replace('.', '')}
                 </TableCell>
 
                 {/* 2. Status - Clickable for Packaging/Edit */}
                 <TableCell className="py-2 px-1 text-center w-[40px]">
-                    <div onClick={handleRowClick} className="cursor-pointer inline-block">
+                    <div className="inline-block">
                         {log.isClosed ? (
                             <Badge variant="outline" className="text-[10px] px-1 py-0 border-slate-200 text-slate-400 hover:bg-slate-100">마감</Badge>
                         ) : (
@@ -99,7 +101,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                         varieties={varieties}
                         canDelete={log.outputs.length === 0}
                         trigger={
-                            <div className="group cursor-pointer hover:text-blue-600 hover:underline" title={varieties}>
+                            <div className="group hover:text-blue-600 hover:underline" title={varieties} onClick={(e) => e.stopPropagation()}>
                                 <span className="md:hidden">
                                     {varieties.length > 4 ? `${varieties.slice(0, 4)}..` : varieties}
                                 </span>

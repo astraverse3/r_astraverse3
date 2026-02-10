@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { Trash2, Truck, RotateCcw } from 'lucide-react'
+import { Trash2, Truck, RotateCcw, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface StockPageClientProps {
@@ -12,6 +12,7 @@ interface StockPageClientProps {
     selectedIds: Set<number>
     onShowDelete: () => void
     onShowRelease: () => void
+    onStartMilling: () => void // Added
     onCancelRelease: () => void
     isAllReleased: boolean
     isAllAvailable: boolean
@@ -26,6 +27,7 @@ export function StockPageClient({
     selectedIds,
     onShowDelete,
     onShowRelease,
+    onStartMilling, // Added
     onCancelRelease,
     isAllReleased,
     isAllAvailable,
@@ -40,24 +42,37 @@ export function StockPageClient({
                         {selectedIds.size > 0 ? (
                             <>
                                 <Button
-                                    variant="destructive"
+                                    variant="outline"
                                     size="sm"
                                     onClick={onShowDelete}
+                                    className="text-red-600 border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
                                 >
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     선택 삭제 ({selectedIds.size})
                                 </Button>
 
                                 {isAllAvailable && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={onShowRelease}
-                                        className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
-                                    >
-                                        <Truck className="mr-2 h-4 w-4" />
-                                        출고 처리 ({selectedIds.size})
-                                    </Button>
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onStartMilling}
+                                            className="text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
+                                        >
+                                            <ClipboardList className="mr-2 h-4 w-4" />
+                                            도정 시작 ({selectedIds.size})
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onShowRelease}
+                                            className="text-slate-600 border-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-600 transition-colors"
+                                        >
+                                            <Truck className="mr-2 h-4 w-4" />
+                                            출고 처리 ({selectedIds.size})
+                                        </Button>
+                                    </>
                                 )}
 
                                 {isAllReleased && (
@@ -66,7 +81,7 @@ export function StockPageClient({
                                         size="sm"
                                         onClick={onCancelRelease}
                                         disabled={isCanceling}
-                                        className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                        className="text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-colors"
                                     >
                                         <RotateCcw className="mr-2 h-4 w-4" />
                                         {isCanceling ? '취소 중...' : `출고 취소 (${selectedIds.size})`}

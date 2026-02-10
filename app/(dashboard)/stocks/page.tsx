@@ -1,4 +1,4 @@
-import { getStocks, GetStocksParams } from '@/app/actions/stock'
+import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
 import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockFilters } from './stock-filters'
@@ -45,8 +45,18 @@ export default async function StocksPage({
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
     }
 
-    const stockResult = await getStocks(filters)
-    const stocks = (stockResult.success && stockResult.data ? stockResult.data : []) as unknown as Stock[]
+    // 4. Fetch Stock Groups (Server Side Grouping for Lazy Loading)
+    const stockGroupsResult = await getStockGroups({
+        productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
+        varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
+        farmerId: typeof resolvedParams.farmerId === 'string' ? resolvedParams.farmerId : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
+        status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
+        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+        sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
+    })
+
+    const initialGroups = stockGroupsResult.success && stockGroupsResult.data ? stockGroupsResult.data : []
 
     const varietyResult = await getVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
@@ -57,7 +67,7 @@ export default async function StocksPage({
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <StockPageWrapper
-                stocks={stocks}
+                initialGroups={initialGroups}
                 farmers={farmers}
                 varieties={varieties}
                 filters={filters}

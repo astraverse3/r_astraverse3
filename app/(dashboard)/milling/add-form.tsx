@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Minus, Trash2 } from 'lucide-react'
 import { startMillingBatch } from '@/app/actions/milling'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { useEffect } from 'react'
 
 interface Stock {
     id: number
@@ -39,10 +40,25 @@ const PACKAGE_TEMPLATES = [
 
 export function AddMillingLogForm({ availableStocks }: Props) {
     const router = useRouter()
+    const searchParams = useSearchParams()
+
     const [selectedStockIds, setSelectedStockIds] = useState<number[]>([])
     const [remarks, setRemarks] = useState('')
     const [millingType, setMillingType] = useState('백미')
     const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        const idsParam = searchParams.get('ids')
+        if (idsParam) {
+            const ids = idsParam.split(',').map(Number).filter(id => !isNaN(id))
+            if (ids.length > 0) {
+                const validIds = ids.filter(id => availableStocks.some(s => s.id === id))
+                if (validIds.length > 0) {
+                    setSelectedStockIds(validIds)
+                }
+            }
+        }
+    }, [searchParams, availableStocks])
 
     // Calculate total input weight based on selection
     const totalInputKg = useMemo(() => {

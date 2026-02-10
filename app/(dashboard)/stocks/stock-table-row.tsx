@@ -19,15 +19,17 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Stock } from './page' // Import Stock interface from page
 
 interface Props {
-    stock: Stock
-    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } | null }[]
-    varieties: { id: number; name: string }[]
+    stock: any
+    farmers: any[]
+    varieties: any[]
     selected: boolean
     onSelect: (checked: boolean) => void
+    hideCheckbox?: boolean // Added
 }
 
-export function StockTableRow({ stock, farmers, varieties, selected, onSelect }: Props) {
+export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox }: Props) {
     const [editOpen, setEditOpen] = useState(false)
+    const isAvailable = stock.status === 'AVAILABLE'
 
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
@@ -46,14 +48,18 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 text-xs"
+                className={`group transition-colors border-b border-slate-100 last:border-0 text-xs ${isAvailable ? 'hover:bg-blue-50/50 cursor-pointer' : 'opacity-60 bg-slate-50'}`}
+                onClick={() => isAvailable && onSelect(!selected)}
             >
                 {/* Checkbox */}
                 <TableCell className="py-2 px-1 w-[40px] text-center">
-                    <Checkbox
-                        checked={selected}
-                        onCheckedChange={onSelect}
-                    />
+                    {!hideCheckbox && (
+                        <Checkbox
+                            checked={selected}
+                            onCheckedChange={onSelect}
+                            disabled={!isAvailable}
+                        />
+                    )}
                 </TableCell>
 
                 {/* 1. Year */}
@@ -128,7 +134,10 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => setEditOpen(true)}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setEditOpen(true)
+                            }}
                             title="수정"
                         >
                             <Edit className="h-3 w-3" />
@@ -137,7 +146,10 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect }:
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                            onClick={handleDelete}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete()
+                            }}
                             disabled={stock.status === 'CONSUMED'}
                             title={stock.status === 'CONSUMED' ? '도정 완료된 재고는 삭제할 수 없습니다' : '삭제'}
                         >

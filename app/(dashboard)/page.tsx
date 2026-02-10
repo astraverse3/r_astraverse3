@@ -38,40 +38,40 @@ export default async function Home() {
             </span>
           </div>
 
-          <div className="p-5 grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px] hover:bg-white hover:shadow-sm transition-all duration-300">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 원료곡 재고량 ({targetYear})
               </p>
               <div className="mt-2">
-                <p className="text-3xl font-extrabold text-slate-900">
-                  {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-500 ml-1">kg</span>
+                <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
                 </p>
-                <div className="mt-1 text-xs text-emerald-600 font-bold flex items-center">
-                  <TrendingUp className="w-3.5 h-3.5 mr-1" />
+                <div className="mt-1.5 text-xs text-emerald-600 font-bold flex items-center bg-emerald-50 w-fit px-2 py-0.5 rounded-full border border-emerald-100">
+                  <TrendingUp className="w-3 h-3 mr-1" />
                   도정 진행률 {(stats?.millingProgressRate || 0).toFixed(1)}%
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px]">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px] hover:bg-white hover:shadow-sm transition-all duration-300">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 도정 생산량 ({currentYear})
               </p>
               <div className="mt-2">
-                <p className="text-3xl font-extrabold text-slate-900">
-                  {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-500 ml-1">kg</span>
+                <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
                 </p>
-                <div className="mt-1 text-xs text-blue-600 font-bold flex items-center">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                  수율 {stats?.yieldPercentage.toFixed(1)}%
+                <div className="mt-1.5 text-xs text-blue-600 font-bold flex items-center bg-blue-50 w-fit px-2 py-0.5 rounded-full border border-blue-100">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  평균 수율 {stats?.yieldPercentage.toFixed(1)}%
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Stock Levels Vertical List */}
+        {/* Stock Levels Grid Layout */}
         <section className="bg-white -mx-4 sm:mx-0 sm:rounded-3xl shadow-md border-y sm:border border-slate-100 overflow-hidden">
           <div className="bg-slate-50 p-4 border-b border-slate-200">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -80,46 +80,58 @@ export default async function Home() {
             </h2>
           </div>
 
-          <div className="flex flex-col px-5 pb-5 pt-2">
-            {stats?.stockByVariety.map((item: any, idx: number) => {
-              const availableWeight = item.currentWeight;
-              const totalVarietyWeight = item.totalWeight;
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stats?.stockByVariety.map((item: any, idx: number) => {
+                const availableWeight = item.currentWeight;
+                const totalVarietyWeight = item.totalWeight;
 
-              // Calculate remaining percentage
-              const remainingPercent = totalVarietyWeight > 0
-                ? (availableWeight / totalVarietyWeight) * 100
-                : 0;
+                // Calculate remaining percentage
+                const remainingPercent = totalVarietyWeight > 0
+                  ? (availableWeight / totalVarietyWeight) * 100
+                  : 0;
 
-              const colors = [
-                { bar: 'bg-blue-300' },
-                { bar: 'bg-amber-300' },
-                { bar: 'bg-emerald-300' }
-              ];
-              const color = colors[idx % colors.length];
+                const colorProfiles = [
+                  { bar: 'bg-blue-400', bg: 'bg-blue-50/50', border: 'border-blue-100', text: 'text-blue-700' },
+                  { bar: 'bg-amber-400', bg: 'bg-amber-50/50', border: 'border-amber-100', text: 'text-amber-700' },
+                  { bar: 'bg-emerald-400', bg: 'bg-emerald-50/50', border: 'border-emerald-100', text: 'text-emerald-700' },
+                  { bar: 'bg-indigo-400', bg: 'bg-indigo-50/50', border: 'border-indigo-100', text: 'text-indigo-700' },
+                  { bar: 'bg-rose-400', bg: 'bg-rose-50/50', border: 'border-rose-100', text: 'text-rose-700' },
+                ];
+                const color = colorProfiles[idx % colorProfiles.length];
 
-              return (
-                <div key={item.variety} className="flex flex-col py-3 border-b border-slate-100 last:border-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-base font-bold text-slate-700">{item.variety}</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-lg font-bold text-slate-900">{availableWeight.toLocaleString()}</span>
-                      <span className="text-sm font-medium text-slate-400 mx-1">/</span>
-                      <span className="text-sm font-bold text-slate-500">{totalVarietyWeight.toLocaleString()}</span>
-                      <span className="text-xs font-medium text-slate-400 ml-0.5">kg</span>
+                return (
+                  <div key={item.variety} className={`p-4 rounded-2xl border ${color.border} ${color.bg} transition-all duration-300 hover:shadow-sm`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`text-base font-black ${color.text} truncate pr-2`}>{item.variety}</span>
+                      <span className="text-[10px] font-bold bg-white/80 px-2 py-0.5 rounded-full border border-white shadow-sm text-slate-500">
+                        {Math.round(remainingPercent)}% 잔여
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline justify-between mb-3">
+                      <div className="text-xl font-black text-slate-900">
+                        {availableWeight.toLocaleString()}
+                        <span className="text-xs font-bold text-slate-400 ml-0.5">kg</span>
+                      </div>
+                      <div className="text-xs font-bold text-slate-400 italic">
+                        / {totalVarietyWeight.toLocaleString()}kg
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-200/50 h-2 rounded-full overflow-hidden border border-white/50">
+                      <div
+                        className={`${color.bar} h-full rounded-full transition-all duration-700 ease-out shadow-sm`}
+                        style={{ width: `${remainingPercent}%` }}
+                      ></div>
                     </div>
                   </div>
-                  {/* Progress Bar (Remaining Ratio) */}
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`${color.bar} h-full rounded-full transition-all duration-500`}
-                      style={{ width: `${remainingPercent}%` }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
             {!stats?.stockByVariety.length && (
-              <div className="w-full text-center text-slate-400 text-sm py-8 italic bg-slate-50 rounded-2xl mt-3">등록된 재고가 없습니다 ({targetYear})</div>
+              <div className="w-full text-center text-slate-400 text-sm py-12 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">등록된 재고가 없습니다 ({targetYear})</div>
             )}
           </div>
         </section>

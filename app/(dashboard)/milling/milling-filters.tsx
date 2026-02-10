@@ -168,6 +168,9 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
                             placeholder="검색어 입력"
                             value={keyword}
                             onChange={e => setKeyword(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleApply()
+                            }}
                         />
                     </div>
                 </div>

@@ -49,7 +49,7 @@ export function DesktopSidebar() {
                             }`}
                     >
                         <ClipboardList className="w-4 h-4" />
-                        도정관리
+                        도정내역
                     </Link>
 
                     <Link
@@ -60,7 +60,7 @@ export function DesktopSidebar() {
                             }`}
                     >
                         <Truck className="w-4 h-4" />
-                        출고관리
+                        출고내역
                     </Link>
 
                     <Link
