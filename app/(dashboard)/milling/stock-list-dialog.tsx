@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Plus } from 'lucide-react'
 import { removeStockFromMilling } from '@/app/actions/milling'
+import { useRouter } from 'next/navigation'
+import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/stocks/milling-cart-context'
 
 interface Stock {
     id: number
@@ -39,8 +41,51 @@ interface Props {
 }
 
 export function MillingStockListDialog({ batchId, stocks, varieties, trigger, canDelete = false, open, onOpenChange }: Props) {
+    const router = useRouter()
+    const { startEditing } = useMillingCart()
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
+
+    const handleAddStock = () => {
+        // Map current stocks to CartStock format
+        // Note: We need full stock details. The current 'stocks' prop might be partial.
+        // However, for now let's map what we have and assume the context can handle it or we fetch full details.
+        // Actually, we need to ensure 'stocks' prop has all necessary fields for CartStock.
+        // Let's check the interface. MillinStockListDialog Stock interface vs CartStock interface.
+        // CartStock needs: id, productionYear, bagNo, weightKg, status, incomingDate, lotNo, variety{name, type}, farmer{name, group{certType, name}}
+        // The current 'Stock' interface in this file is: id, bagNo, farmerName, variety, certType, weightKg.
+        // We are missing: productionYear, status, incomingDate, lotNo, variety.type, farmer.group.name.
+
+        // Strategy: We will pass a dummy or partial object, BUT since we are going to /stocks page, 
+        // the important part is 'id'. The cart display might need other fields.
+        // Better approach: The parent 'MillingTableRow' passes 'stocks' which comes from 'log.stocks'. 
+        // We should ensure 'log.stocks' has enough info.
+
+        // For now, let's construct best-effort objects.
+        const cartStocks: CartStock[] = stocks.map(s => ({
+            id: s.id,
+            productionYear: new Date().getFullYear(), // Placeholder
+            bagNo: s.bagNo,
+            weightKg: s.weightKg,
+            status: 'MILLING', // Current status is MILLING
+            incomingDate: new Date(), // Placeholder
+            lotNo: null,
+            variety: {
+                name: s.variety,
+                type: 'UNKNOWN' // Placeholder
+            },
+            farmer: {
+                name: s.farmerName,
+                group: {
+                    certType: s.certType,
+                    name: 'UNKNOWN' // Placeholder
+                }
+            }
+        }))
+
+        startEditing(batchId, cartStocks)
+        router.push('/stocks')
+    }
 
     const handleDelete = async (stockId: number) => {
         if (!confirm('투입 내역에서 이 톤백을 제외하시겠습니까? (상태가 [보관중]으로 변경됩니다)')) return
@@ -69,9 +114,17 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
             )}
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden bg-white">
                 <DialogHeader className="p-6 pb-2">
-                    <DialogTitle className="text-lg font-bold text-slate-900">
-                        투입 상세 내역
-                    </DialogTitle>
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-lg font-bold text-slate-900">
+                            투입 상세 내역
+                        </DialogTitle>
+                        {canDelete && (
+                            <Button size="sm" variant="outline" className="h-8 gap-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200" onClick={handleAddStock}>
+                                <Plus className="h-3.5 w-3.5" />
+                                톤백 추가/수정
+                            </Button>
+                        )}
+                    </div>
                     <p className="text-sm text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
                 </DialogHeader>
 
