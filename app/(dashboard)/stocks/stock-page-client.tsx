@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { Trash2, Truck, RotateCcw, ClipboardList } from 'lucide-react'
+import { Trash2, Truck, RotateCcw, ClipboardList, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface StockPageClientProps {
@@ -12,7 +12,8 @@ interface StockPageClientProps {
     selectedIds: Set<number>
     onShowDelete: () => void
     onShowRelease: () => void
-    onStartMilling: () => void // Added
+    onStartMilling: () => void
+    onAddToCart: () => void
     onCancelRelease: () => void
     isAllReleased: boolean
     isAllAvailable: boolean
@@ -27,7 +28,8 @@ export function StockPageClient({
     selectedIds,
     onShowDelete,
     onShowRelease,
-    onStartMilling, // Added
+    onStartMilling,
+    onAddToCart,
     onCancelRelease,
     isAllReleased,
     isAllAvailable,
@@ -48,7 +50,17 @@ export function StockPageClient({
                                     className="text-red-600 border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
                                 >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    선택 삭제 ({selectedIds.size})
+                                    삭제 ({selectedIds.size})
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={onAddToCart}
+                                    className="text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors"
+                                >
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    담기 ({selectedIds.size})
                                 </Button>
 
                                 {isAllAvailable && (
@@ -60,7 +72,7 @@ export function StockPageClient({
                                             className="text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
                                         >
                                             <ClipboardList className="mr-2 h-4 w-4" />
-                                            도정 시작 ({selectedIds.size})
+                                            도정 ({selectedIds.size})
                                         </Button>
 
                                         <Button
@@ -70,7 +82,7 @@ export function StockPageClient({
                                             className="text-slate-600 border-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-600 transition-colors"
                                         >
                                             <Truck className="mr-2 h-4 w-4" />
-                                            출고 처리 ({selectedIds.size})
+                                            출고 ({selectedIds.size})
                                         </Button>
                                     </>
                                 )}
@@ -96,7 +108,7 @@ export function StockPageClient({
                                 className="text-slate-400"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                선택 삭제
+                                삭제
                             </Button>
                         )}
                     </div>

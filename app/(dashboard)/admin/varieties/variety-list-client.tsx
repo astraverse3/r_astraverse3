@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VarietyDialog } from './variety-dialog'
@@ -145,10 +145,8 @@ function GroupedVarietyRows({ varieties, selectedIds, onSelectOne }: {
         <>
             {groups.map(group => {
                 const isExpanded = expandedGroups.has(group.key)
-
                 return (
-                    <div key={group.key} style={{ display: 'contents' }}>
-                        {/* Group Header */}
+                    <Fragment key={group.key}>
                         <TableRow
                             className="bg-slate-100 hover:bg-slate-200 cursor-pointer border-y border-slate-200 font-bold text-slate-900 shadow-sm h-10"
                             onClick={() => toggleGroup(group.key)}
@@ -159,16 +157,10 @@ function GroupedVarietyRows({ varieties, selectedIds, onSelectOne }: {
                                     {isExpanded ? <ChevronDown className="h-4 w-4 text-slate-500" /> : <ChevronRight className="h-4 w-4 text-slate-500" />}
                                 </div>
                             </TableCell>
-                            <TableCell className="text-sm">
-                                {group.label}
-                            </TableCell>
+                            <TableCell className="text-sm">{group.label}</TableCell>
                             <TableCell></TableCell>
-                            <TableCell className="text-center text-sm text-slate-600">
-                                {group.count}개
-                            </TableCell>
+                            <TableCell className="text-center text-sm text-slate-600">{group.count}개</TableCell>
                         </TableRow>
-
-                        {/* Detailed Rows */}
                         {isExpanded && group.items.map((variety, index) => (
                             <TableRow key={variety.id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0">
                                 <TableCell className="py-2 px-1 w-[40px] text-center">
@@ -177,24 +169,17 @@ function GroupedVarietyRows({ varieties, selectedIds, onSelectOne }: {
                                         onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
                                     />
                                 </TableCell>
-                                <TableCell className="text-center font-medium text-slate-600 text-xs">
-                                    {index + 1}
-                                </TableCell>
-                                <TableCell className="font-medium text-slate-800 text-sm">
-                                    {variety.name}
-                                </TableCell>
+                                <TableCell className="text-center font-medium text-slate-600 text-xs">{index + 1}</TableCell>
+                                <TableCell className="font-medium text-slate-800 text-sm">{variety.name}</TableCell>
                                 <TableCell className="text-slate-500 text-xs">
                                     {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : variety.type === 'INDICA' ? '인디카' : '기타'}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <VarietyDialog
-                                        mode="edit"
-                                        variety={variety}
-                                    />
+                                    <VarietyDialog mode="edit" variety={variety} />
                                 </TableCell>
                             </TableRow>
                         ))}
-                    </div>
+                    </Fragment>
                 )
             })}
         </>

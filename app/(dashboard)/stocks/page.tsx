@@ -18,6 +18,7 @@ export interface Stock {
     lotNo: string | null
     variety: {
         name: string
+        type: string
     }
     farmer: {
         name: string

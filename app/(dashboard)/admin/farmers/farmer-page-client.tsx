@@ -46,7 +46,7 @@ export function FarmerPageClient({
                         disabled={selectedIds.size === 0}
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        선택 삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
+                        삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
                     </Button>
                     <div className="flex items-center gap-2">
                         {filtersSlot}

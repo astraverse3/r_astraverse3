@@ -30,7 +30,7 @@ export function VarietyPageClient({
                                 onClick={onShowDelete}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                선택 삭제 ({selectedIds.size})
+                                삭제 ({selectedIds.size})
                             </Button>
                         )}
                         {selectedIds.size === 0 && (
@@ -41,7 +41,7 @@ export function VarietyPageClient({
                                 className="text-slate-400"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                선택 삭제
+                                삭제
                             </Button>
                         )}
                     </div>

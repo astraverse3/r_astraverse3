@@ -25,6 +25,7 @@ interface StockListClientProps {
     loadedItems: Record<string, any[]>
     loadingGroups: Set<string>
     fetchGroupItems: (group: StockGroup) => Promise<void>
+    cartItemIds?: Set<number>
 }
 
 export function StockListClient({
@@ -36,7 +37,8 @@ export function StockListClient({
     onSelectionChange,
     loadedItems, // Prop
     loadingGroups, // Prop
-    fetchGroupItems // Prop 
+    fetchGroupItems, // Prop 
+    cartItemIds = new Set() // New Prop
 }: StockListClientProps) {
     // Local state removed (lifted to parent)
 
@@ -52,8 +54,12 @@ export function StockListClient({
 
     // fetchGroupItems removed (passed from parent)
 
+
+
     return (
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+
+
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50 border-b border-slate-200">
@@ -83,6 +89,7 @@ export function StockListClient({
                             selectedIds={selectedIds}
                             onSelectOne={handleSelectOne}
                             onSelectionChange={onSelectionChange}
+                            cartItemIds={cartItemIds}
                         />
                     ) : (
                         <TableRow>
@@ -106,7 +113,8 @@ function GroupedStockRows({
     varieties,
     selectedIds,
     onSelectOne,
-    onSelectionChange
+    onSelectionChange,
+    cartItemIds
 }: any) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
@@ -134,7 +142,11 @@ function GroupedStockRows({
                 // Group Selection Logic
                 // If items NOT loaded, we don't know if they are selected.
                 // WE MUST LOAD THEM TO SELECT THEM.
-                const availableItems = items.filter((s: any) => s.status === 'AVAILABLE')
+                // Exclude items already in cart from "available for selection"
+                const availableItems = items.filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+
+                // Group is selected if ALL available items (not in cart) are selected
+                // And there must be at least one available item
                 const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s: any) => selectedIds.has(s.id))
 
                 const handleGroupSelect = async (checked: boolean) => {
@@ -237,6 +249,7 @@ function GroupedStockRows({
                                 selected={selectedIds.has(stock.id)}
                                 onSelect={(checked) => onSelectOne(stock.id, checked)}
                                 hideCheckbox={isGroupSelected}
+                                isInCart={cartItemIds?.has(stock.id)}
                             />
                         ))}
                         {/* Loading State for Expansion */}

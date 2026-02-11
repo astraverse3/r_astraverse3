@@ -132,7 +132,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot }: { initialLogs: 
                                 onClick={handleBulkCancel}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                선택 출고취소 ({selectedIds.size})
+                                출고취소 ({selectedIds.size})
                             </Button>
                         ) : (
                             <Button
@@ -142,7 +142,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot }: { initialLogs: 
                                 className="text-slate-400"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                선택 출고취소
+                                출고취소
                             </Button>
                         )}
                     </div>

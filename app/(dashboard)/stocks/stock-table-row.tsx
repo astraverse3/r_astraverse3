@@ -24,12 +24,14 @@ interface Props {
     varieties: any[]
     selected: boolean
     onSelect: (checked: boolean) => void
-    hideCheckbox?: boolean // Added
+
+    hideCheckbox?: boolean
+    isInCart?: boolean
 }
 
-export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox }: Props) {
+export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart }: Props) {
     const [editOpen, setEditOpen] = useState(false)
-    const isAvailable = stock.status === 'AVAILABLE'
+    const isAvailable = stock.status === 'AVAILABLE' && !isInCart
 
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
@@ -51,6 +53,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0 text-xs 
                     ${isAvailable ? 'cursor-pointer hover:bg-blue-50' : 'opacity-60 bg-slate-50'}
                     ${selected ? 'bg-gradient-to-r from-blue-50 via-blue-50/50 to-white border-blue-100 shadow-sm' : ''}
+                    ${isInCart ? 'bg-slate-50 opacity-50 cursor-not-allowed' : ''}
                 `}
                 onClick={() => isAvailable && onSelect(!selected)}
             >
@@ -106,6 +109,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 {/* 6. Bag No */}
                 <TableCell className="py-2 px-1 text-right text-xs font-mono text-slate-400">
                     <span className="text-[10px]">#</span>{stock.bagNo}
+                    {isInCart && <span className="ml-1 text-[10px] text-blue-500 font-bold">(담김)</span>}
                 </TableCell>
 
                 {/* 7. Weight */}

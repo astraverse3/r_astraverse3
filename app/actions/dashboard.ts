@@ -12,7 +12,8 @@ export async function getDashboardStats() {
         const latestYear = latestStock?.productionYear || new Date().getFullYear();
         const currentYear = new Date().getFullYear();
 
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight, recentLogs, stockByVariety, consumedPlaceholder, latestStockUpdateLog, latestBatchUpdateLog] = await Promise.all([
+        // Batch 1: Key Aggregates (Lightweight)
+        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight] = await Promise.all([
             // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
                 where: {
@@ -44,7 +45,11 @@ export async function getDashboardStats() {
                     }
                 },
                 _sum: { totalInputKg: true }
-            }),
+            })
+        ]);
+
+        // Batch 2: Complex Queries & Lists (Heavier)
+        const [recentLogs, stockByVariety, latestStockUpdateLog, latestBatchUpdateLog] = await Promise.all([
             // 5. Recent 10 milling logs
             prisma.millingBatch.findMany({
                 take: 10,
@@ -64,8 +69,6 @@ export async function getDashboardStats() {
                 },
                 _sum: { weightKg: true }
             }),
-            // 7. Consumed (Legacy placeholder)
-            Promise.resolve([]),
             // 8. Latest Updates
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),

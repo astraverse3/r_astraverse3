@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState, useMemo } from 'react'
+import { ReactNode, useState, useMemo, useEffect } from 'react'
 import { StockListClient } from './stock-list-client'
 import { StockPageClient } from './stock-page-client'
 import { useBulkDeleteStocks } from './use-bulk-delete-stocks'
@@ -9,6 +9,11 @@ import { ReleaseStockDialog } from './release-stock-dialog'
 import { StartMillingDialog } from './start-milling-dialog'
 import { cancelStockRelease } from '@/app/actions/release'
 import { getStocksByGroup, StockGroup } from '@/app/actions/stock'
+import { useMillingCart } from './milling-cart-context'
+import { MillingCartSheet } from '@/components/milling-cart-sheet'
+import { Button } from '@/components/ui/button'
+import { ShoppingCart } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Stock {
     id: number
@@ -22,6 +27,7 @@ interface Stock {
     lotNo: string | null
     variety: {
         name: string
+        type: string
     }
     farmer: {
         name: string
@@ -54,11 +60,19 @@ export function StockPageWrapper({
     const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDeleteStocks()
     const [showReleaseDialog, setShowReleaseDialog] = useState(false)
     const [showMillingDialog, setShowMillingDialog] = useState(false)
+    const [millingSource, setMillingSource] = useState<'SELECTION' | 'CART'>('SELECTION') // Track source
     const [isCanceling, setIsCanceling] = useState(false)
+
+    const { items: cartItems, setIsOpen: setIsCartOpen, clearCart, addToCart } = useMillingCart()
 
     // Lazy Loading State (Lifted Up)
     const [loadedItems, setLoadedItems] = useState<Record<string, Stock[]>>({})
     const [loadingGroups, setLoadingGroups] = useState<Set<string>>(new Set())
+
+    // Clear loaded items when filters change to ensure fresh data is fetched
+    useEffect(() => {
+        setLoadedItems({})
+    }, [filters])
 
     const fetchGroupItems = async (group: StockGroup) => {
         if (loadedItems[group.key] || loadingGroups.has(group.key)) return
@@ -90,12 +104,22 @@ export function StockPageWrapper({
 
     // Derive Flat List of Stocks from Loaded Items for Selection Logic
     // Only includes items that have been loaded.
+    // Only includes items that have been loaded.
     const stocks = useMemo(() => {
         return Object.values(loadedItems).flat()
     }, [loadedItems])
 
+    // Create a Set of IDs for items currently in the cart
+    const cartItemIds = useMemo(() => {
+        return new Set(cartItems.map(item => item.id))
+    }, [cartItems])
+
     // Selection Analysis
     const selectedStocks = stocks.filter(s => selectedIds.has(s.id))
+
+    // Determine which stocks to use for Milling Dialog
+    const millingStocks = millingSource === 'CART' ? cartItems : selectedStocks
+
     const isAllReleased = selectedStocks.length > 0 && selectedStocks.every(s => s.status === 'RELEASED')
     const isAllAvailable = selectedStocks.length > 0 && selectedStocks.every(s => s.status === 'AVAILABLE')
 
@@ -120,13 +144,34 @@ export function StockPageWrapper({
         }
     }
 
+    const handleAddToCart = () => {
+        if (selectedIds.size === 0) return
+
+        // Use selectedStocks which is already filtered from all loaded items
+        // Wait, selectedStocks depends on `stocks` which is flattened `loadedItems`.
+        // So `selectedStocks` contains the full objects!
+        if (selectedStocks.length === 0) return
+
+        const result = addToCart(selectedStocks)
+        if (result.success) {
+            toast.success(`${selectedStocks.length}개 톤백을 장바구니에 담았습니다.`)
+            setSelectedIds(new Set()) // Clear selection
+        } else {
+            toast.error(result.error || '장바구니 담기 실패')
+        }
+    }
+
     return (
         <>
             <StockPageClient
                 selectedIds={selectedIds}
                 onShowDelete={showDeleteDialog}
+                onAddToCart={handleAddToCart}
                 onShowRelease={() => setShowReleaseDialog(true)}
-                onStartMilling={() => setShowMillingDialog(true)}
+                onStartMilling={() => {
+                    setMillingSource('SELECTION')
+                    setShowMillingDialog(true)
+                }}
                 onCancelRelease={handleCancelRelease}
                 isAllReleased={isAllReleased}
                 isAllAvailable={isAllAvailable}
@@ -146,8 +191,32 @@ export function StockPageWrapper({
                     filters={filters}
                     selectedIds={selectedIds}
                     onSelectionChange={setSelectedIds}
+                    cartItemIds={cartItemIds} // Pass cart IDs
                 />
             </StockPageClient>
+
+            {/* Floating Cart Button (Mobile/Desktop) */}
+            {cartItems.length > 0 && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <Button
+                        onClick={() => setIsCartOpen(true)}
+                        className="rounded-full w-14 h-14 shadow-xl bg-blue-600 hover:bg-blue-700 text-white p-0 relative"
+                    >
+                        <ShoppingCart className="h-6 w-6" />
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                            {cartItems.length}
+                        </span>
+                    </Button>
+                </div>
+            )}
+
+            <MillingCartSheet
+                onStartMilling={(items) => {
+                    setMillingSource('CART')
+                    setShowMillingDialog(true)
+                }}
+            />
+
             <DeleteDialog />
             <ReleaseStockDialog
                 open={showReleaseDialog}
@@ -158,8 +227,13 @@ export function StockPageWrapper({
             <StartMillingDialog
                 open={showMillingDialog}
                 onOpenChange={setShowMillingDialog}
-                selectedStocks={selectedStocks}
-                onSuccess={() => setSelectedIds(new Set())}
+                selectedStocks={millingStocks}
+                onSuccess={() => {
+                    setSelectedIds(new Set())
+                    if (millingSource === 'CART') {
+                        clearCart()
+                    }
+                }}
             />
         </>
     )
