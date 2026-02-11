@@ -480,3 +480,80 @@ export async function deleteMillingBatches(ids: number[]) {
     }
 }
 
+
+export async function updateMillingBatchStocks(batchId: number, stockIds: number[]) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Validate Batch
+            const batch = await tx.millingBatch.findUnique({
+                where: { id: batchId },
+                include: { stocks: true }
+            })
+            if (!batch) throw new Error('Batch not found')
+            if (batch.isClosed) throw new Error('Batch is closed')
+
+            // 2. Determine Removed Stocks -> Set to AVAILABLE
+            const currentStockIds = batch.stocks.map(s => s.id)
+            const remainingStockIds = currentStockIds.filter(id => stockIds.includes(id))
+            const removedStockIds = currentStockIds.filter(id => !stockIds.includes(id))
+
+            if (removedStockIds.length > 0) {
+                await tx.stock.updateMany({
+                    where: { id: { in: removedStockIds } },
+                    data: {
+                        status: 'AVAILABLE',
+                        batchId: null
+                    }
+                })
+            }
+
+            // 3. Determine New Stocks -> Set to CONSUMED & Link
+            // Note: existing stocks that are kept don't need update, but safe to re-link or just ensure they are fine.
+            // But we need to update status of NEW stocks.
+            const newStockIds = stockIds.filter(id => !currentStockIds.includes(id))
+
+            if (newStockIds.length > 0) {
+                // Verify new stocks are available
+                const newStocks = await tx.stock.findMany({
+                    where: { id: { in: newStockIds } }
+                })
+                const unavailable = newStocks.find(s => s.status !== 'AVAILABLE')
+                if (unavailable) {
+                    throw new Error(`Stock ${unavailable.bagNo} is not available`)
+                }
+
+                await tx.stock.updateMany({
+                    where: { id: { in: newStockIds } },
+                    data: {
+                        status: 'CONSUMED',
+                        batchId: batchId
+                    }
+                })
+            }
+
+            // 4. Recalculate Total Input Weight
+            // We need weights of ALL final stocks.
+            const allFinalStocks = await tx.stock.findMany({
+                where: { id: { in: stockIds } }
+            })
+            const newTotalInputKg = allFinalStocks.reduce((sum, s) => sum + s.weightKg, 0)
+
+            // 5. Update Batch
+            const updatedBatch = await tx.millingBatch.update({
+                where: { id: batchId },
+                data: {
+                    totalInputKg: newTotalInputKg
+                }
+            })
+
+            return updatedBatch
+        })
+
+        revalidatePath('/milling')
+        revalidatePath('/stocks')
+        return { success: true, data: result }
+    } catch (error) {
+        console.error('Failed to update milling batch stocks:', error)
+        return { success: false, error: 'Failed to update batch stocks' }
+    }
+}
