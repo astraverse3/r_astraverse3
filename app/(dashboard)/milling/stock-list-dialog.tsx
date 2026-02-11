@@ -141,7 +141,7 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                                     <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
                                     <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
                                     <TableCell className="px-1 text-center text-xs text-slate-800">
-                                        <div className="truncate" title={stock.variety}>{stock.variety}</div>
+                                        <div className="truncate" title={stock.variety.name}>{stock.variety.name}</div>
                                     </TableCell>
                                     <TableCell className="px-1 text-center">
                                         <Badge variant="secondary" className="text-[10px] py-0 px-1 font-normal bg-slate-100 text-slate-600 border-none">
