@@ -34,10 +34,17 @@ export default async function MillingListPage({
     const varietyResult = await getVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
+    const serializedLogs = logs.map(log => ({
+        ...log,
+        date: log.date.toISOString(),
+        inputs: log.inputs.map(i => ({ ...i, date: i.date.toISOString() })),
+        outputs: log.outputs.map(o => ({ ...o, date: o.date.toISOString() }))
+    }))
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <MillingPageWrapper
-                logs={logs}
+                logs={serializedLogs}
                 filters={filters}
                 filtersSlot={
                     <MillingFilters

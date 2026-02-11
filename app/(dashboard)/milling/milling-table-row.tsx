@@ -15,7 +15,8 @@ interface MillingBatch {
     title: string
     remarks: string | null
     millingType: string
-    date: Date
+    millingType: string
+    date: Date | string
     totalInputKg: number
     isClosed: boolean
     stocks: any[]
