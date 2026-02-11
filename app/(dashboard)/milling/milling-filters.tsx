@@ -65,8 +65,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
             const start = searchParams.get('startDate')
             const end = searchParams.get('endDate')
             setDateRange({
-                from: start ? new Date(start) : undefined,
-                to: end ? new Date(end) : undefined,
+                from: start ? new Date(start) : subMonths(new Date(), 3),
+                to: end ? new Date(end) : new Date(),
             })
         }
     }, [open, searchParams])
