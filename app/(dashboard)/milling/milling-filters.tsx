@@ -21,7 +21,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal, Calendar as CalendarIcon } from 'lucide-react'
+import { format, subYears, subMonths } from 'date-fns'
+import { Calendar } from "@/components/ui/calendar"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 export function MillingFilters({ varieties }: { varieties: { id: number; name: string }[] }) {
     const router = useRouter()
@@ -36,6 +44,15 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
     const [yieldRate, setYieldRate] = useState(searchParams.get('yieldRate') || 'ALL')
 
+    // Date Range State
+    const [dateRange, setDateRange] = useState<{
+        from: Date | undefined;
+        to: Date | undefined;
+    }>({
+        from: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : undefined,
+        to: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined,
+    })
+
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
@@ -44,6 +61,13 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
             setMillingType(searchParams.get('millingType') || 'ALL')
             setKeyword(searchParams.get('keyword') || '')
             setYieldRate(searchParams.get('yieldRate') || 'ALL')
+
+            const start = searchParams.get('startDate')
+            const end = searchParams.get('endDate')
+            setDateRange({
+                from: start ? new Date(start) : undefined,
+                to: end ? new Date(end) : undefined,
+            })
         }
     }, [open, searchParams])
 
@@ -52,7 +76,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
         variety !== 'ALL',
         millingType !== 'ALL',
         keyword !== '',
-        yieldRate !== 'ALL'
+        yieldRate !== 'ALL',
+        dateRange.from || dateRange.to
     ].filter(Boolean).length
 
     const handleApply = () => {
@@ -63,6 +88,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
         if (millingType && millingType !== 'ALL') params.set('millingType', millingType)
         if (keyword) params.set('keyword', keyword)
         if (yieldRate && yieldRate !== 'ALL') params.set('yieldRate', yieldRate)
+        if (dateRange.from) params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'))
+        if (dateRange.to) params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'))
 
         router.push(`/milling?${params.toString()}`)
         setOpen(false)
@@ -74,6 +101,7 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
         setMillingType('ALL')
         setKeyword('')
         setYieldRate('ALL')
+        setDateRange({ from: undefined, to: undefined })
         router.push(`/milling`)
         setOpen(false)
     }
@@ -96,6 +124,88 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
                     <DialogTitle>검색</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <Label>기간 설정</Label>
+                            <div className="flex gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setDateRange({ from: subMonths(new Date(), 3), to: new Date() })}
+                                >
+                                    3개월
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setDateRange({ from: subMonths(new Date(), 6), to: new Date() })}
+                                >
+                                    6개월
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setDateRange({ from: subYears(new Date(), 1), to: new Date() })}
+                                >
+                                    1년
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "justify-start text-left font-normal h-9 px-2 min-w-0",
+                                            !dateRange.from && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                                        <span className="truncate">
+                                            {dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "시작일"}
+                                        </span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateRange.from}
+                                        onSelect={(date) => setDateRange(prev => ({ ...prev, from: date }))}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <span className="text-slate-400 text-xs text-center shrink-0">~</span>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "justify-start text-left font-normal h-9 px-2 min-w-0",
+                                            !dateRange.to && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                                        <span className="truncate">
+                                            {dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : "종료일"}
+                                        </span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={dateRange.to}
+                                        onSelect={(date) => setDateRange(prev => ({ ...prev, to: date }))}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>상태</Label>

@@ -34,9 +34,11 @@ interface Props {
     varieties: string
     trigger?: React.ReactNode
     canDelete?: boolean
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
-export function MillingStockListDialog({ batchId, stocks, varieties, trigger, canDelete = false }: Props) {
+export function MillingStockListDialog({ batchId, stocks, varieties, trigger, canDelete = false, open, onOpenChange }: Props) {
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
@@ -53,16 +55,18 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
     }
 
     return (
-        <Dialog>
-            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                {trigger ? (
-                    <div className="cursor-pointer inline-flex items-center">{trigger}</div>
-                ) : (
-                    <button className="text-slate-900 font-bold hover:text-blue-600 hover:underline transition-colors text-left cursor-pointer">
-                        {varieties || '-'}
-                    </button>
-                )}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {trigger && (
+                <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    {typeof trigger === 'string' ? (
+                        <button className="text-slate-900 font-bold hover:text-blue-600 hover:underline transition-colors text-left cursor-pointer">
+                            {trigger}
+                        </button>
+                    ) : (
+                        <div className="cursor-pointer inline-flex items-center">{trigger}</div>
+                    )}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden bg-white">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-lg font-bold text-slate-900">

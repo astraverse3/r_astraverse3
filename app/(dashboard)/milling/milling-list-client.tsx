@@ -48,7 +48,6 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                             />
                         </TableHead>
                         <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[90px]">날짜</TableHead>
-                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">상태</TableHead>
                         <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[140px]">품종(원료)</TableHead>
                         <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[100px]">생산자</TableHead>
                         <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">구분</TableHead>
@@ -57,6 +56,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                         <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">생산</TableHead>
                         <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">수율</TableHead>
                         <TableHead className="py-3 px-3 text-left text-sm font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
+                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">상태</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

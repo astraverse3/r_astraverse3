@@ -11,12 +11,17 @@ export default async function MillingListPage({
 }) {
     const resolvedParams = await searchParams
 
+    const startDate = typeof resolvedParams.startDate === 'string' ? new Date(resolvedParams.startDate) : undefined
+    const endDate = typeof resolvedParams.endDate === 'string' ? new Date(resolvedParams.endDate) : undefined
+
     const filters: GetMillingLogsParams = {
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         variety: typeof resolvedParams.variety === 'string' ? resolvedParams.variety : undefined,
         millingType: typeof resolvedParams.millingType === 'string' ? resolvedParams.millingType : undefined,
         keyword: typeof resolvedParams.keyword === 'string' ? resolvedParams.keyword : undefined,
         yieldRate: typeof resolvedParams.yieldRate === 'string' ? resolvedParams.yieldRate : undefined,
+        startDate,
+        endDate
     }
 
     const result = await getMillingLogs(filters)
