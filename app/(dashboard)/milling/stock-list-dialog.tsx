@@ -79,9 +79,9 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                     <Table>
                         <TableHeader className="sticky top-0 bg-white z-10">
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-[40px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
+                                <TableHead className="w-[60px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
                                 <TableHead className="px-1 text-center text-xs font-bold text-slate-500">농가명</TableHead>
-                                <TableHead className="w-[50px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
+                                <TableHead className="w-[80px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
                                 <TableHead className="px-1 text-center text-xs font-bold text-slate-500">인증</TableHead>
                                 <TableHead className="text-right px-2 text-xs font-bold text-slate-500">중량</TableHead>
                                 {canDelete && <TableHead className="w-[40px] px-0"></TableHead>}
@@ -90,9 +90,9 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                         <TableBody>
                             {stocks.map((stock) => (
                                 <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                    <TableCell className="px-2 text-center font-mono text-xs text-slate-500">{stock.bagNo}</TableCell>
+                                    <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
                                     <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
-                                    <TableCell className="px-1 text-center text-xs text-slate-800 max-w-[50px]">
+                                    <TableCell className="px-1 text-center text-xs text-slate-800">
                                         <div className="truncate" title={stock.variety}>{stock.variety}</div>
                                     </TableCell>
                                     <TableCell className="px-1 text-center">
