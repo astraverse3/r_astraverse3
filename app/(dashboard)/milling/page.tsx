@@ -37,8 +37,8 @@ export default async function MillingListPage({
     const serializedLogs = logs.map(log => ({
         ...log,
         date: log.date.toISOString(),
-        inputs: log.inputs.map(i => ({ ...i, date: i.date.toISOString() })),
-        outputs: log.outputs.map(o => ({ ...o, date: o.date.toISOString() }))
+        inputs: (log.inputs || []).map((i: any) => ({ ...i, date: i.date instanceof Date ? i.date.toISOString() : i.date })),
+        outputs: (log.outputs || []).map((o: any) => ({ ...o, date: o.date instanceof Date ? o.date.toISOString() : o.date }))
     }))
 
     return (
