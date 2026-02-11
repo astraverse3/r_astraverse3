@@ -13,6 +13,7 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { getDashboardStats } from "@/app/actions/dashboard";
+import { RealtimeStatus } from "@/app/(dashboard)/_components/realtime-status";
 
 export const dynamic = 'force-dynamic';
 
@@ -38,36 +39,15 @@ export default async function Home() {
             </span>
           </div>
 
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-emerald-50/50 to-white p-5 rounded-2xl border border-emerald-100 flex flex-col justify-between h-auto min-h-[100px] hover:shadow-md transition-all duration-300">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                원료곡 재고량 ({targetYear})
-              </p>
-              <div className="mt-2">
-                <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
-                </p>
-                <div className="mt-1.5 text-xs text-emerald-600 font-bold flex items-center bg-white/80 w-fit px-2 py-0.5 rounded-full border border-emerald-100 shadow-sm">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  도정 진행률 {(stats?.millingProgressRate || 0).toFixed(1)}%
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50/50 to-white p-5 rounded-2xl border border-blue-100 flex flex-col justify-between h-auto min-h-[100px] hover:shadow-md transition-all duration-300">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                도정 생산량 ({currentYear})
-              </p>
-              <div className="mt-2">
-                <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
-                </p>
-                <div className="mt-1.5 text-xs text-blue-600 font-bold flex items-center bg-white/80 w-fit px-2 py-0.5 rounded-full border border-blue-100 shadow-sm">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  평균 수율 {stats?.yieldPercentage.toFixed(1)}%
-                </div>
-              </div>
-            </div>
+          <div className="p-5">
+            <RealtimeStatus
+              availableStock={stats?.availableStockKg || 0}
+              totalStock={stats?.totalStockKg || 0}
+              millingProgress={stats?.millingProgressRate || 0}
+              totalOutput={stats?.totalOutputKg || 0}
+              averageYield={stats?.yieldPercentage || 0}
+              years={{ target: targetYear, current: currentYear }}
+            />
           </div>
         </section>
 

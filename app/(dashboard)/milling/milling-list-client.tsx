@@ -41,20 +41,20 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
             <Table>
                 <TableHeader>
                     <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                        <TableHead className="w-[40px] py-2 px-1 text-center">
+                        <TableHead className="w-[50px] py-4 px-3 text-center">
                             <Checkbox
                                 checked={selectedIds.size === logs.length && logs.length > 0}
                                 onCheckedChange={handleSelectAll}
                             />
                         </TableHead>
-                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">날짜</TableHead>
-                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">상태</TableHead>
-                        <TableHead className="py-2 px-1 text-xs font-bold text-slate-500 w-[60px] md:w-auto">품종</TableHead>
-                        <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">톤백</TableHead>
-                        <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">투입</TableHead>
-                        <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500">생산</TableHead>
-                        <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500">수율</TableHead>
-                        <TableHead className="py-2 px-1 text-left text-xs font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
+                        <TableHead className="py-4 px-3 text-center text-sm font-bold text-slate-500 w-[100px]">날짜</TableHead>
+                        <TableHead className="py-4 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">상태</TableHead>
+                        <TableHead className="py-4 px-3 text-sm font-bold text-slate-500 md:w-[220px]">품종</TableHead>
+                        <TableHead className="py-4 px-3 text-right text-sm font-bold text-slate-500 w-[80px]">톤백</TableHead>
+                        <TableHead className="py-4 px-3 text-right text-sm font-bold text-slate-500 w-[100px]">투입</TableHead>
+                        <TableHead className="py-4 px-3 text-right text-sm font-bold text-slate-500 w-[100px]">생산</TableHead>
+                        <TableHead className="py-4 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">수율</TableHead>
+                        <TableHead className="py-4 px-3 text-left text-sm font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
