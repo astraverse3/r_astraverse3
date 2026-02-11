@@ -198,7 +198,10 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                     bagNo: s.bagNo,
                     weightKg: s.weightKg,
                     farmerName: s.farmer?.name || 'Unknown',
-                    variety: s.variety?.name || 'Unknown',
+                    variety: {
+                        name: s.variety?.name || 'Unknown',
+                        type: s.variety?.type || 'UNKNOWN'
+                    },
                     certType: s.farmer?.group?.certType || 'Unknown'
                 }))}
                 varieties={varietiesFull}

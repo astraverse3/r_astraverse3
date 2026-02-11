@@ -25,7 +25,10 @@ interface Stock {
     id: number
     bagNo: number
     farmerName: string
-    variety: string
+    variety: {
+        name: string
+        type: string
+    }
     certType: string
     weightKg: number
 }
@@ -71,8 +74,8 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
             incomingDate: new Date(), // Placeholder
             lotNo: null,
             variety: {
-                name: s.variety,
-                type: 'UNKNOWN' // Placeholder
+                name: s.variety.name,
+                type: s.variety.type
             },
             farmer: {
                 name: s.farmerName,
