@@ -5,7 +5,7 @@ import { Fragment } from "react"
 
 const ROUTE_NAME_MAP: Record<string, string> = {
     'stocks': '재고 관리',
-    'milling': '도정 관리',
+    'milling': '도정내역',
     'new': '작업 등록',
     'releases': '출고 관리',
     'admin': '관리자',
