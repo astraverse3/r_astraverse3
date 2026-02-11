@@ -138,84 +138,15 @@ function GroupedStockRows({
                 const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s: any) => selectedIds.has(s.id))
 
                 const handleGroupSelect = async (checked: boolean) => {
-                    // Logic:
-                    // 1. If loaded: Proceed as normal.
-                    // 2. If NOT loaded:
-                    //    - Trigger Fetch
-                    //    - Wait for Fetch? OR Optimistic?
-                    //    - Better: Trigger Fetch, then in 'then' block update selection.
-
-                    if (!items.length) {
-                        // Load first
-                        await fetchGroupItems(group)
-                        // Note: fetchGroupItems updates parent state. 
-                        // Since setState is async, we can't immediately see 'items' here updated in this closure.
-                        // However, we can't await state updates easily.
-                        // Hack: use a local fetch just for this handler, or assume the parent fetch resolves?
-                        // The parent `fetchGroupItems` returns void (promise).
-                        // Let's modify fetchGroupItems to return the items!
-                        // Redefining behavior: The user clicked check. 
-                        // We show loading.
-                        // When data arrives, we THEN select all.
-
-                        // Actually, I can't easily change the parent function return without refactoring parent.
-                        // Let's cheat: The user clicks. 
-                        // If not loaded, we expand the group (triggering load).
-                        // AND we need to set a "pending selection" state?
-                        // Simplify: "Please expand group to select all" if not loaded? No, bad UX.
-
-                        // Proper way:
-                        // Call action directly here to get IDs?
-                        // No, use the prop function. 
-                        // I will just leave it unresponsive if not loaded? No.
-                        // Let's make `fetchGroupItems` return the data!
-                    }
-
-                    // If we just loaded (or already loaded), we have items in `loadedItems` prop on NEXT render.
-                    // But we want to select NOW.
-                    // Accessing `loadedItems` from props... it's stable?
-                    // No.
-
-                    // SOLUTION: In `handleGroupSelect`, if items missing:
-                    // 1. Set Loading.
-                    // 2. Fetch data locally (call action).
-                    // 3. Update Parent `loadedItems`.
-                    // 4. Update Selection.
-
-                    if (items.length === 0) {
-                        // Must fetch
-                        // We can replicate the fetch logic or use a callback that returns data.
-                        // Let's assume for now UI handles "Loading" visually on the checkbox if `loadingGroups` has key.
-                        // But we need to actually do the select.
-
-                        // Quick Fix: For this iteration, I'll allow expanding to trigger load. 
-                        // Checkbox CLICK on unloaded group -> Trigger Load AND Expand?
-                        // Then user clicks again to select?
-                        // "Smart Select": Check -> Load -> Select.
-
-                        // To do "Check -> Load -> Select":
-                        // We need a way to execute the select AFTER load.
-                        // Use a temporary "autoSelectGroup" state?
-                        // Too complex for this step.
-
-                        // Simple approach: Checkbox is DISABLED if items not loaded?
-                        // User must expand first.
-                        // This is safe but slightly annoying.
-                        // Let's try it: Disabled if !isExpanded? 
-                        // Or better: Disabled if !items.length.
-                        // User clicks Expand -> Loaded -> Checkbox enables.
-                        // Message: "Groups must be loaded to select".
-                    } else {
-                        const newSet = new Set(selectedIds)
-                        availableItems.forEach((s: any) => {
-                            if (checked) {
-                                newSet.add(s.id)
-                            } else {
-                                newSet.delete(s.id)
-                            }
-                        })
-                        onSelectionChange(newSet)
-                    }
+                    const newSet = new Set(selectedIds)
+                    availableItems.forEach((s: any) => {
+                        if (checked) {
+                            newSet.add(s.id)
+                        } else {
+                            newSet.delete(s.id)
+                        }
+                    })
+                    onSelectionChange(newSet)
                 }
 
                 // IMPROVED Selection Logic to handle "Not Loaded"

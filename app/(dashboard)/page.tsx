@@ -39,7 +39,7 @@ export default async function Home() {
           </div>
 
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px] hover:bg-white hover:shadow-sm transition-all duration-300">
+            <div className="bg-gradient-to-br from-emerald-50/50 to-white p-5 rounded-2xl border border-emerald-100 flex flex-col justify-between h-auto min-h-[100px] hover:shadow-md transition-all duration-300">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 원료곡 재고량 ({targetYear})
               </p>
@@ -47,14 +47,14 @@ export default async function Home() {
                 <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
                   {(stats?.availableStockKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
                 </p>
-                <div className="mt-1.5 text-xs text-emerald-600 font-bold flex items-center bg-emerald-50 w-fit px-2 py-0.5 rounded-full border border-emerald-100">
+                <div className="mt-1.5 text-xs text-emerald-600 font-bold flex items-center bg-white/80 w-fit px-2 py-0.5 rounded-full border border-emerald-100 shadow-sm">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   도정 진행률 {(stats?.millingProgressRate || 0).toFixed(1)}%
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between h-auto min-h-[100px] hover:bg-white hover:shadow-sm transition-all duration-300">
+            <div className="bg-gradient-to-br from-blue-50/50 to-white p-5 rounded-2xl border border-blue-100 flex flex-col justify-between h-auto min-h-[100px] hover:shadow-md transition-all duration-300">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                 도정 생산량 ({currentYear})
               </p>
@@ -62,7 +62,7 @@ export default async function Home() {
                 <p className="text-3xl font-extrabold text-slate-900 tracking-tight">
                   {(stats?.totalOutputKg || 0).toLocaleString()}<span className="text-base font-bold text-slate-400 ml-1">kg</span>
                 </p>
-                <div className="mt-1.5 text-xs text-blue-600 font-bold flex items-center bg-blue-50 w-fit px-2 py-0.5 rounded-full border border-blue-100">
+                <div className="mt-1.5 text-xs text-blue-600 font-bold flex items-center bg-white/80 w-fit px-2 py-0.5 rounded-full border border-blue-100 shadow-sm">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   평균 수율 {stats?.yieldPercentage.toFixed(1)}%
                 </div>
@@ -92,11 +92,11 @@ export default async function Home() {
                   : 0;
 
                 const colorProfiles = [
-                  { bar: 'bg-blue-400', bg: 'bg-blue-50/50', border: 'border-blue-100', text: 'text-blue-700' },
-                  { bar: 'bg-amber-400', bg: 'bg-amber-50/50', border: 'border-amber-100', text: 'text-amber-700' },
-                  { bar: 'bg-emerald-400', bg: 'bg-emerald-50/50', border: 'border-emerald-100', text: 'text-emerald-700' },
-                  { bar: 'bg-indigo-400', bg: 'bg-indigo-50/50', border: 'border-indigo-100', text: 'text-indigo-700' },
-                  { bar: 'bg-rose-400', bg: 'bg-rose-50/50', border: 'border-rose-100', text: 'text-rose-700' },
+                  { bar: 'bg-blue-400', bg: 'bg-gradient-to-br from-blue-50 to-white', border: 'border-blue-100', text: 'text-blue-700' },
+                  { bar: 'bg-amber-400', bg: 'bg-gradient-to-br from-amber-50 to-white', border: 'border-amber-100', text: 'text-amber-700' },
+                  { bar: 'bg-emerald-400', bg: 'bg-gradient-to-br from-emerald-50 to-white', border: 'border-emerald-100', text: 'text-emerald-700' },
+                  { bar: 'bg-indigo-400', bg: 'bg-gradient-to-br from-indigo-50 to-white', border: 'border-indigo-100', text: 'text-indigo-700' },
+                  { bar: 'bg-rose-400', bg: 'bg-gradient-to-br from-rose-50 to-white', border: 'border-rose-100', text: 'text-rose-700' },
                 ];
                 const color = colorProfiles[idx % colorProfiles.length];
 
@@ -105,7 +105,7 @@ export default async function Home() {
                     <div className="flex items-center justify-between mb-3">
                       <span className={`text-base font-black ${color.text} truncate pr-2`}>{item.variety}</span>
                       <span className="text-[10px] font-bold bg-white/80 px-2 py-0.5 rounded-full border border-white shadow-sm text-slate-500">
-                        {Math.round(remainingPercent)}% 잔여
+                        {Math.round(remainingPercent)}%
                       </span>
                     </div>
 

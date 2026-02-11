@@ -48,7 +48,10 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     return (
         <>
             <TableRow
-                className={`group transition-colors border-b border-slate-100 last:border-0 text-xs ${isAvailable ? 'hover:bg-blue-50/50 cursor-pointer' : 'opacity-60 bg-slate-50'}`}
+                className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0 text-xs 
+                    ${isAvailable ? 'cursor-pointer hover:bg-blue-50' : 'opacity-60 bg-slate-50'}
+                    ${selected ? 'bg-gradient-to-r from-blue-50 via-blue-50/50 to-white border-blue-100 shadow-sm' : ''}
+                `}
                 onClick={() => isAvailable && onSelect(!selected)}
             >
                 {/* Checkbox */}
