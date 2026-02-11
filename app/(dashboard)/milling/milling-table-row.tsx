@@ -202,7 +202,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                     certType: s.farmer?.group?.certType || 'Unknown'
                 }))}
                 varieties={varietiesFull}
-                canDelete={log.outputs.length === 0}
+                canDelete={!log.isClosed}
                 open={stockListOpen}
                 onOpenChange={setStockListOpen}
             />

@@ -49,8 +49,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
         from: Date | undefined;
         to: Date | undefined;
     }>({
-        from: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : undefined,
-        to: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined,
+        from: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : subMonths(new Date(), 3),
+        to: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : new Date(),
     })
 
     // Sync from URL when opening
