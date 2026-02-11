@@ -117,76 +117,75 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                     <DialogTitle className="text-lg font-bold text-slate-900">
                         투입 상세 내역
                     </DialogTitle>
-                </div>
-                <p className="text-sm text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
-            </DialogHeader>
+                    <p className="text-sm text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
+                </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-white z-10">
-                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                            <TableHead className="w-[60px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
-                            <TableHead className="px-1 text-center text-xs font-bold text-slate-500">농가명</TableHead>
-                            <TableHead className="w-[80px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
-                            <TableHead className="px-1 text-center text-xs font-bold text-slate-500">인증</TableHead>
-                            <TableHead className="text-right px-2 text-xs font-bold text-slate-500">중량</TableHead>
-                            {canDelete && <TableHead className="w-[40px] px-0"></TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {stocks.map((stock) => (
-                            <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
-                                <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
-                                <TableCell className="px-1 text-center text-xs text-slate-800">
-                                    <div className="truncate" title={stock.variety}>{stock.variety}</div>
-                                </TableCell>
-                                <TableCell className="px-1 text-center">
-                                    <Badge variant="secondary" className="text-[10px] py-0 px-1 font-normal bg-slate-100 text-slate-600 border-none">
-                                        {stock.certType}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="px-2 text-right font-mono font-bold text-xs text-slate-700">
-                                    {stock.weightKg.toLocaleString()}
-                                </TableCell>
-                                {canDelete && (
-                                    <TableCell className="px-0 text-center">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50"
-                                            disabled={isLoading}
-                                            onClick={() => handleDelete(stock.id)}
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                    </TableCell>
-                                )}
+                <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-white z-10">
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                <TableHead className="w-[60px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
+                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">농가명</TableHead>
+                                <TableHead className="w-[80px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
+                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">인증</TableHead>
+                                <TableHead className="text-right px-2 text-xs font-bold text-slate-500">중량</TableHead>
+                                {canDelete && <TableHead className="w-[40px] px-0"></TableHead>}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                <div>
-                    {canDelete ? (
-                        <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200" onClick={handleAddStock}>
-                            <Plus className="h-4 w-4" />
-                            톤백 추가/수정
-                        </Button>
-                    ) : (
-                        <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개 톤백</div>
-                    )}
+                        </TableHeader>
+                        <TableBody>
+                            {stocks.map((stock) => (
+                                <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                    <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
+                                    <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
+                                    <TableCell className="px-1 text-center text-xs text-slate-800">
+                                        <div className="truncate" title={stock.variety}>{stock.variety}</div>
+                                    </TableCell>
+                                    <TableCell className="px-1 text-center">
+                                        <Badge variant="secondary" className="text-[10px] py-0 px-1 font-normal bg-slate-100 text-slate-600 border-none">
+                                            {stock.certType}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="px-2 text-right font-mono font-bold text-xs text-slate-700">
+                                        {stock.weightKg.toLocaleString()}
+                                    </TableCell>
+                                    {canDelete && (
+                                        <TableCell className="px-0 text-center">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50"
+                                                disabled={isLoading}
+                                                onClick={() => handleDelete(stock.id)}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </div>
-                <div className="flex items-center gap-4">
-                    {canDelete && <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개</div>}
-                    <div className="text-slate-500">
-                        합계 <span className="text-2xl font-black text-slate-900 ml-1">{totalWeight.toLocaleString()} <span className="text-sm font-medium text-slate-500">kg</span></span>
+
+                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                    <div>
+                        {canDelete ? (
+                            <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200" onClick={handleAddStock}>
+                                <Plus className="h-4 w-4" />
+                                톤백 추가/수정
+                            </Button>
+                        ) : (
+                            <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개 톤백</div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {canDelete && <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개</div>}
+                        <div className="text-slate-500">
+                            합계 <span className="text-2xl font-black text-slate-900 ml-1">{totalWeight.toLocaleString()} <span className="text-sm font-medium text-slate-500">kg</span></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </DialogContent>
+            </DialogContent>
         </Dialog >
     )
 }
