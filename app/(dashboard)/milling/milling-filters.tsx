@@ -31,7 +31,15 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-export function MillingFilters({ varieties }: { varieties: { id: number; name: string }[] }) {
+export function MillingFilters({
+    varieties,
+    defaultStartDate,
+    defaultEndDate
+}: {
+    varieties: { id: number; name: string }[]
+    defaultStartDate: Date
+    defaultEndDate: Date
+}) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -49,8 +57,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
         from: Date | undefined;
         to: Date | undefined;
     }>({
-        from: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : subMonths(new Date(), 3),
-        to: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : new Date(),
+        from: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : defaultStartDate,
+        to: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : defaultEndDate,
     })
 
     // Sync from URL when opening
@@ -65,8 +73,8 @@ export function MillingFilters({ varieties }: { varieties: { id: number; name: s
             const start = searchParams.get('startDate')
             const end = searchParams.get('endDate')
             setDateRange({
-                from: start ? new Date(start) : subMonths(new Date(), 3),
-                to: end ? new Date(end) : new Date(),
+                from: start ? new Date(start) : defaultStartDate,
+                to: end ? new Date(end) : defaultEndDate,
             })
         }
     }, [open, searchParams])

@@ -39,7 +39,13 @@ export default async function MillingListPage({
             <MillingPageWrapper
                 logs={logs}
                 filters={filters}
-                filtersSlot={<MillingFilters varieties={varieties} />}
+                filtersSlot={
+                    <MillingFilters
+                        varieties={varieties}
+                        defaultStartDate={startDate}
+                        defaultEndDate={endDate}
+                    />
+                }
             />
         </Suspense>
     )
