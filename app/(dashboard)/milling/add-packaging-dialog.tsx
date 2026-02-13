@@ -82,18 +82,6 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         if (!confirm('작업을 마감하시겠습니까?')) return
 
         setIsLoading(true)
-
-        // Auto-save current outputs before closing
-        const validOutputs = outputs.filter(o => o.count > 0)
-        if (validOutputs.length > 0) {
-            const saveResult = await updatePackagingLogs(batchId, validOutputs)
-            if (!saveResult.success) {
-                setIsLoading(false)
-                alert('포장 기록 저장에 실패했습니다.')
-                return
-            }
-        }
-
         const result = await closeMillingBatch(batchId)
         setIsLoading(false)
 

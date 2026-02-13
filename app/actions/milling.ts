@@ -318,7 +318,8 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
         return result
     } catch (error) {
         console.error('Failed to update packaging logs:', error)
-        return { success: false, error: 'Failed to update logs' }
+        const message = error instanceof Error ? error.message : 'Failed to update logs'
+        return { success: false, error: message }
     }
 }
 
