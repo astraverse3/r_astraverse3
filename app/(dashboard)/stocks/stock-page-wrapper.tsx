@@ -131,7 +131,7 @@ export function StockPageWrapper({
         setIsCanceling(false)
 
         if (result.success) {
-            alert('출고 처리가 취소되었습니다.')
+            toast.success('출고 처리가 취소되었습니다.')
             setSelectedIds(new Set())
             // Need to reload? 
             // In a perfect world we re-fetch the affected groups. 
@@ -140,7 +140,7 @@ export function StockPageWrapper({
             // Using window.location.reload() is crude but effective.
             window.location.reload()
         } else {
-            alert(result.error || '출고 취소 실패')
+            toast.error(result.error || '출고 취소 실패')
         }
     }
 

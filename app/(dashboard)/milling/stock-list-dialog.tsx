@@ -20,6 +20,7 @@ import { Trash2, Plus } from 'lucide-react'
 import { removeStockFromMilling } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/stocks/milling-cart-context'
+import { toast } from 'sonner'
 
 interface Stock {
     id: number
@@ -98,7 +99,7 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
         setIsLoading(false)
 
         if (!result.success) {
-            alert((result as any).error || '삭제 실패')
+            toast.error((result as any).error || '삭제 실패')
         }
     }
 

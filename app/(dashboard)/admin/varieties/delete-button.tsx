@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { deleteVariety } from '@/app/actions/admin'
+import { toast } from 'sonner'
 
 export function DeleteVarietyButton({ id }: { id: number }) {
     const router = useRouter()
@@ -17,7 +18,7 @@ export function DeleteVarietyButton({ id }: { id: number }) {
         if (result.success) {
             router.refresh()
         } else {
-            alert(result.error || '삭제에 실패했습니다.')
+            toast.error(result.error || '삭제에 실패했습니다.')
         }
         setLoading(false)
     }

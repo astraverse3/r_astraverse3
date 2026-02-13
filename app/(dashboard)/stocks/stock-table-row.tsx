@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { EditStockDialog } from './edit-stock-dialog'
 import { deleteStock } from '@/app/actions/stock'
 import { TableCell, TableRow } from '@/components/ui/table'
@@ -42,7 +43,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
         if (confirm('정말 삭제하시겠습니까? (삭제 후 복구 불가)')) {
             const result = await deleteStock(stock.id)
             if (!result.success) {
-                alert('삭제에 실패했습니다.')
+                toast.error('삭제에 실패했습니다.')
             }
         }
     }

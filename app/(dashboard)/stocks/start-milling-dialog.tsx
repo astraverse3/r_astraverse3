@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Stock {
@@ -56,7 +57,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         setIsLoading(false)
 
         if (result && !result.success) {
-            alert('작업 시작 실패: ' + result.error)
+            toast.error('작업 시작 실패: ' + result.error)
         } else {
             onOpenChange(false)
             onSuccess() // Clear selection

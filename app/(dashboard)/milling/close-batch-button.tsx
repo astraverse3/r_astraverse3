@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Lock } from 'lucide-react'
 import { closeMillingBatch } from '@/app/actions/milling'
+import { toast } from 'sonner'
 
 interface Props {
     batchId: number
@@ -20,7 +21,7 @@ export function CloseBatchButton({ batchId }: Props) {
         setIsLoading(false)
 
         if (!result.success) {
-            alert(result.error || '마감 실패')
+            toast.error(result.error || '마감 실패')
         }
     }
 

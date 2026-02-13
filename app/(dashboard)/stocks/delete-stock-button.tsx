@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
 import { deleteStock } from '@/app/actions/stock'
+import { toast } from 'sonner'
 
 interface Props {
     stockId: number
@@ -27,7 +28,7 @@ export function DeleteStockButton({ stockId, stockTitle, isConsumed }: Props) {
         setIsLoading(false)
 
         if (!result.success) {
-            alert('삭제 실패: ' + result.error)
+            toast.error('삭제 실패: ' + result.error)
         }
     }
 

@@ -14,6 +14,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { deleteStocks } from '@/app/actions/stock'
+import { toast } from 'sonner'
 
 export function useBulkDeleteStocks() {
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -32,10 +33,10 @@ export function useBulkDeleteStocks() {
             if (failed.length > 0) {
                 message += `\n\n삭제 실패 (${failed.length}개):\n${failed.map(f => f.reason).join('\n')}`
             }
-            alert(message)
+            toast.success(message)
             setSelectedIds(new Set())
         } else {
-            alert(result.error || '삭제 실패')
+            toast.error(result.error || '삭제 실패')
         }
     }
 

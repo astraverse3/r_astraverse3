@@ -6,6 +6,7 @@ import { Download, Upload } from 'lucide-react'
 import { exportFarmers, importFarmers } from '@/app/actions/excel'
 import { formatImportResult } from '@/lib/excel-utils'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { toast } from 'sonner'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -26,7 +27,7 @@ export function ExcelButtons() {
             link.click()
             document.body.removeChild(link)
         } else {
-            alert(result.error)
+            toast.error(result.error)
         }
         setExporting(false)
     }
@@ -51,9 +52,9 @@ export function ExcelButtons() {
         const result = await importFarmers(formData)
 
         if (result.success) {
-            alert(formatImportResult(result))
+            toast.success(formatImportResult(result))
         } else {
-            alert(result.message || '업로드에 실패했습니다.')
+            toast.error(result.message || '업로드에 실패했습니다.')
         }
 
         // Reset input

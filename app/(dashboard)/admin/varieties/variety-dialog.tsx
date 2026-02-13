@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label'
 
 import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { toast } from 'sonner'
 
 interface Props {
     mode: 'create' | 'edit'
@@ -60,7 +61,7 @@ export function VarietyDialog({ mode, variety }: Props) {
             triggerDataUpdate()
             router.refresh()
         } else {
-            alert(result?.error || '작업에 실패했습니다.')
+            toast.error(result?.error || '작업에 실패했습니다.')
         }
         setLoading(false)
     }
@@ -75,7 +76,7 @@ export function VarietyDialog({ mode, variety }: Props) {
             setOpen(false)
             router.refresh()
         } else {
-            alert(result.error || '삭제에 실패했습니다.')
+            toast.error(result.error || '삭제에 실패했습니다.')
         }
         setLoading(false)
     }

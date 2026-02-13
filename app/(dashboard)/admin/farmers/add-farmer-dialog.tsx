@@ -21,6 +21,7 @@ import {
 import { createFarmer, updateFarmer, getProducerGroups, updateProducerGroup, type FarmerFormData } from '@/app/actions/admin'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 
 // Extended Farmer type to match list
 interface Farmer {
@@ -161,11 +162,11 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     if (res.success && res.data) setGroups(res.data)
                 })
             } else {
-                alert((result as any).error || '저장 실패')
+                toast.error((result as any).error || '저장 실패')
             }
         } catch (error: any) {
             console.error(error)
-            alert(error.message || '오류가 발생했습니다.')
+            toast.error(error.message || '오류가 발생했습니다.')
         } finally {
             setIsLoading(false)
         }

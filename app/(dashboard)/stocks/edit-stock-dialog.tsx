@@ -22,6 +22,7 @@ import { updateStock, deleteStock, type StockFormData } from '@/app/actions/stoc
 import { Pencil, Trash2 } from 'lucide-react'
 import { Stock } from './page' // Import Stock interface
 import { triggerDataUpdate } from '@/components/last-updated'
+import { toast } from 'sonner'
 
 interface Props {
     stock: Stock
@@ -75,7 +76,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
         const formData = new FormData(event.currentTarget)
 
         if (!selectedFarmerId || !selectedVarietyId) {
-            alert('필수 항목을 선택해주세요.')
+            toast.warning('필수 항목을 선택해주세요.')
             setIsLoading(false)
             return
         }
@@ -96,7 +97,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
             triggerDataUpdate()
             setOpen(false)
         } else {
-            alert('Failed to update stock: ' + result.error)
+            toast.error('수정 실패: ' + result.error)
         }
     }
 
@@ -118,7 +119,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
             triggerDataUpdate()
             setOpen(false)
         } else {
-            alert('삭제 실패: ' + result.error)
+            toast.error('삭제 실패: ' + result.error)
         }
     }
 

@@ -21,6 +21,7 @@ import {
 import { createStock, type StockFormData } from '@/app/actions/stock'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { toast } from 'sonner'
 
 interface Farmer {
     id: number
@@ -80,7 +81,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
         // Validation check for Selects
         if (!selectedFarmerId) {
-            alert('생산자를 선택해주세요.')
+            toast.warning('생산자를 선택해주세요.')
             setIsLoading(false)
             return
         }
@@ -104,7 +105,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             triggerDataUpdate()
             // Optional: Show toast
         } else {
-            alert('Failed to create stock')
+            toast.error('재고 등록에 실패했습니다.')
         }
     }
 

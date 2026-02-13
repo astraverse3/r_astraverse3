@@ -16,6 +16,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { toast } from 'sonner'
 
 export function StockExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -40,7 +41,7 @@ export function StockExcelButtons() {
             link.click()
             document.body.removeChild(link)
         } else {
-            alert(result.error)
+            toast.error(result.error)
         }
         setExporting(false)
     }
@@ -65,7 +66,7 @@ export function StockExcelButtons() {
             setPreviewResult(result)
             setPreviewOpen(true)
         } catch (error) {
-            alert('파일 분석 중 오류가 발생했습니다.')
+            toast.error('파일 분석 중 오류가 발생했습니다.')
             if (fileInputRef.current) fileInputRef.current.value = ''
         } finally {
             setImporting(false)
@@ -86,12 +87,12 @@ export function StockExcelButtons() {
             const result = await importStocks(formData, { dryRun: false })
 
             if (result.success) {
-                alert(formatImportResult(result))
+                toast.success(formatImportResult(result))
             } else {
-                alert(result.message || '업로드에 실패했습니다.')
+                toast.error(result.message || '업로드에 실패했습니다.')
             }
         } catch (e) {
-            alert('업로드 중 오류가 발생했습니다.')
+            toast.error('업로드 중 오류가 발생했습니다.')
         } finally {
             setImporting(false)
             setSelectedFile(null)

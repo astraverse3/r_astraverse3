@@ -10,6 +10,7 @@ import { Plus, Minus, Trash2 } from 'lucide-react'
 import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { toast } from 'sonner'
 import { useEffect } from 'react'
 
 interface Stock {
@@ -75,7 +76,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
 
     async function handleSubmit() {
         if (selectedStockIds.length === 0) {
-            alert('투입할 재고를 선택해주세요.')
+            toast.warning('투입할 재고를 선택해주세요.')
             return
         }
 
@@ -90,7 +91,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
         setIsLoading(false)
 
         if (result && !result.success) {
-            alert('저장 실패: ' + result.error)
+            toast.error('저장 실패: ' + result.error)
         } else {
             triggerDataUpdate()
             router.push('/milling')
