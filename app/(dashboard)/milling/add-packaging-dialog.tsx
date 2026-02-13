@@ -250,12 +250,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                     type="number"
                                                     value={o.weightPerUnit}
                                                     onChange={(e) => setWeight(i, parseFloat(e.target.value))}
-                                                    className="h-6 w-16 text-right px-1 py-0 text-xs"
+                                                    className="h-6 w-20 text-right px-1 py-0 text-xs"
                                                 />
-                                                <span className="text-[10px] text-stone-500">kg/백</span>
-                                                <span className="text-[10px] text-stone-400 ml-1">
-                                                    (총 {(o.weightPerUnit * o.count).toLocaleString()}kg)
-                                                </span>
+                                                <span className="text-[10px] text-stone-500">kg</span>
                                             </div>
                                         ) : (
                                             <div className="text-[10px] text-stone-400">{(o.weightPerUnit * o.count).toLocaleString()}kg</div>
