@@ -111,14 +111,23 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     }
 
     const addPackage = (template: { label: string, weight: number }) => {
+        if (template.label === '톤백') {
+            setOutputs(prev => [...prev, {
+                packageType: template.label,
+                weightPerUnit: template.weight,
+                count: 1,
+                totalWeight: template.weight
+            }])
+            return
+        }
+
         setOutputs(prev => {
-            const existing = prev.find(o => o.packageType === template.label)
-            if (existing) {
-                return prev.map(o =>
-                    o.packageType === template.label
-                        ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
-                        : o
-                )
+            const existingIndex = prev.findIndex(o => o.packageType === template.label && o.packageType !== '톤백')
+            if (existingIndex >= 0) {
+                const newOutputs = [...prev]
+                const o = newOutputs[existingIndex]
+                newOutputs[existingIndex] = { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
+                return newOutputs
             }
             return [...prev, {
                 packageType: template.label,
@@ -129,9 +138,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         })
     }
 
-    const setCount = (type: string, count: number) => {
-        setOutputs(prev => prev.map(o => {
-            if (o.packageType === type) {
+    const setCount = (index: number, count: number) => {
+        setOutputs(prev => prev.map((o, i) => {
+            if (i === index) {
                 const validCount = isNaN(count) ? 0 : Math.max(0, count)
                 return { ...o, count: validCount, totalWeight: validCount * o.weightPerUnit }
             }
@@ -139,9 +148,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }))
     }
 
-    const setWeight = (type: string, weight: number) => {
-        setOutputs(prev => prev.map(o => {
-            if (o.packageType === type) {
+    const setWeight = (index: number, weight: number) => {
+        setOutputs(prev => prev.map((o, i) => {
+            if (i === index) {
                 const validWeight = isNaN(weight) ? 0 : Math.max(0, weight)
                 return { ...o, weightPerUnit: validWeight, totalWeight: o.count * validWeight }
             }
@@ -149,15 +158,18 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }))
     }
 
-    const removePackage = (type: string) => {
-        setOutputs(prev => prev.filter(o => o.packageType !== type))
+    const removePackage = (index: number) => {
+        setOutputs(prev => prev.filter((_, i) => i !== index))
     }
 
-    const updateCount = (type: string, delta: number) => {
-        const item = outputs.find(o => o.packageType === type)
-        if (item) {
-            setCount(type, item.count + delta)
-        }
+    const updateCount = (index: number, delta: number) => {
+        setOutputs(prev => prev.map((o, i) => {
+            if (i === index) {
+                const newCount = Math.max(0, o.count + delta)
+                return { ...o, count: newCount, totalWeight: newCount * o.weightPerUnit }
+            }
+            return o
+        }))
     }
 
     async function handleSubmit() {
@@ -219,7 +231,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                     {t.label}
                                 </Button>
                             ))}
-                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300" onClick={() => addPackage({ label: '톤백', weight: 800 })}>
+                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
                                 톤백
                             </Button>
                         </div>
@@ -227,7 +239,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
 
                     <div className="space-y-3">
                         <Label>생산(포장) 내역</Label>
-                        <div className="space-y-2 min-h-[100px]">
+                        <div className="space-y-2 min-h-[100px] max-h-[300px] overflow-y-auto custom-scrollbar">
                             {outputs.map((o, i) => (
                                 <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
                                     <div className="flex flex-col">
@@ -237,7 +249,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                 <Input
                                                     type="number"
                                                     value={o.weightPerUnit}
-                                                    onChange={(e) => setWeight(o.packageType, parseFloat(e.target.value))}
+                                                    onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                     className="h-6 w-16 text-right px-1 py-0 text-xs"
                                                 />
                                                 <span className="text-[10px] text-stone-500">kg/백</span>
@@ -253,15 +265,15 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(o.packageType, -1)}><Minus className="h-3 w-3" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
                                         <Input
                                             type="number"
                                             value={o.count === 0 ? '' : o.count}
-                                            onChange={(e) => setCount(o.packageType, parseInt(e.target.value))}
+                                            onChange={(e) => setCount(i, parseInt(e.target.value))}
                                             className="w-16 h-8 text-center"
                                         />
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(o.packageType, 1)}><Plus className="h-3 w-3" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-300 hover:text-red-500" onClick={() => removePackage(o.packageType)}><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-4 w-4" /></Button>
                                     </div>
                                 </div>
                             ))}
