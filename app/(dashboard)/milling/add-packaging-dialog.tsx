@@ -79,7 +79,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     }
 
     const handleCloseBatch = async () => {
-        if (!confirm('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.')) return
+        if (!confirm('작업을 마감하시겠습니까?')) return
 
         setIsLoading(true)
 
