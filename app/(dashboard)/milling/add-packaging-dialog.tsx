@@ -241,36 +241,34 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                         <Label>생산(포장) 내역</Label>
                         <div className="space-y-2 min-h-[100px] max-h-[300px] overflow-y-auto custom-scrollbar">
                             {outputs.map((o, i) => (
-                                <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
-                                    <div className="flex flex-col">
-                                        <div className="font-bold">{o.packageType}</div>
-                                        {o.packageType === '톤백' ? (
-                                            <div className="flex items-center gap-1 mt-0.5">
-                                                <Input
-                                                    type="number"
-                                                    value={o.weightPerUnit}
-                                                    onChange={(e) => setWeight(i, parseFloat(e.target.value))}
-                                                    className="h-6 w-20 text-right px-1 py-0 text-xs"
-                                                />
-                                                <span className="text-[10px] text-stone-500">kg</span>
-                                            </div>
-                                        ) : (
-                                            <div className="text-[10px] text-stone-400">{(o.weightPerUnit * o.count).toLocaleString()}kg</div>
-                                        )}
-                                        {(o as any).lotNo && (
-                                            <div className="text-[10px] text-blue-600 font-mono mt-0.5">{(o as any).lotNo}</div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
+                                <div key={`${o.packageType}-${i}`} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
+                                    <span className="font-bold text-sm w-10 shrink-0">{o.packageType}</span>
+                                    {o.packageType === '톤백' ? (
+                                        <div className="flex items-center gap-1">
+                                            <Input
+                                                type="number"
+                                                value={o.weightPerUnit}
+                                                onChange={(e) => setWeight(i, parseFloat(e.target.value))}
+                                                className="h-7 w-20 text-right px-1 py-0 text-xs"
+                                            />
+                                            <span className="text-[10px] text-stone-500">kg</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-stone-400 w-16 text-right">{(o.weightPerUnit * o.count).toLocaleString()}kg</span>
+                                    )}
+                                    {(o as any).lotNo && (
+                                        <span className="text-[10px] text-blue-600 font-mono">{(o as any).lotNo}</span>
+                                    )}
+                                    <div className="flex items-center gap-1 ml-auto">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
                                         <Input
                                             type="number"
                                             value={o.count === 0 ? '' : o.count}
                                             onChange={(e) => setCount(i, parseInt(e.target.value))}
-                                            className="w-16 h-8 text-center"
+                                            className="w-12 h-7 text-center text-sm"
                                         />
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
                                     </div>
                                 </div>
                             ))}
