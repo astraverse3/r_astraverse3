@@ -106,19 +106,19 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }
     }
 
-    const handleDeleteBatch = async () => {
-        if (!confirm('정말 삭제하시겠습니까? 투입된 재고는 [보관중] 상태로 복구됩니다.')) return
+    const handleClearPackaging = async () => {
+        if (!confirm('포장 기록을 모두 삭제하시겠습니까?')) return
 
         setIsLoading(true)
-        const result = await deleteMillingBatch(batchId)
+        const result = await updatePackagingLogs(batchId, [])
         setIsLoading(false)
 
         if (result.success) {
+            setOutputs([])
             triggerDataUpdate()
-            setOpen(false)
             router.refresh()
         } else {
-            alert((result as any).error || '삭제 실패')
+            alert('포장 기록 삭제 실패')
         }
     }
 
@@ -311,10 +311,10 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                 variant="ghost"
                                 size="sm"
                                 className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
-                                disabled={isLoading}
-                                onClick={handleDeleteBatch}
+                                disabled={isLoading || outputs.length === 0}
+                                onClick={handleClearPackaging}
                             >
-                                <Trash2 className="mr-1 h-3 w-3" /> 작업 삭제
+                                <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
                             </Button>
                         </div>
                     </div>
