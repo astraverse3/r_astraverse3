@@ -237,14 +237,17 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                 <div className="py-6 space-y-6">
                     <div className="space-y-3">
                         <Label>규격 선택</Label>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
+                                톤백
+                            </Button>
                             {PACKAGE_TEMPLATES.map(t => (
-                                <Button key={t.label} variant="secondary" className="flex-1" onClick={() => addPackage(t)}>
+                                <Button key={t.label} variant="secondary" className="flex-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
                                     {t.label}
                                 </Button>
                             ))}
-                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
-                                톤백
+                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
+                                잔량
                             </Button>
                         </div>
                     </div>
@@ -255,7 +258,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                             {outputs.map((o, i) => (
                                 <div key={`${o.packageType}-${i}`} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
                                     <span className="font-bold text-sm w-10 shrink-0">{o.packageType}</span>
-                                    {o.packageType === '톤백' ? (
+                                    {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                         <div className="flex items-center gap-1">
                                             <Input
                                                 type="number"
