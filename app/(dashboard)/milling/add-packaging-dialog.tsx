@@ -235,71 +235,91 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     </div>
                 </DialogHeader>
                 <div className="py-6 space-y-6">
-                    <div className="space-y-3">
-                        <Label>규격 선택</Label>
-                        <div className="flex gap-2 flex-wrap">
-                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
-                                톤백
-                            </Button>
-                            {PACKAGE_TEMPLATES.map(t => (
-                                <Button key={t.label} variant="secondary" className="flex-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
-                                    {t.label}
+                    {/* Template buttons - only when editable */}
+                    {!isClosed && (
+                        <div className="space-y-3">
+                            <Label>규격 선택</Label>
+                            <div className="flex gap-2 flex-wrap">
+                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
+                                    톤백
                                 </Button>
-                            ))}
-                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
-                                잔량
-                            </Button>
+                                {PACKAGE_TEMPLATES.map(t => (
+                                    <Button key={t.label} variant="secondary" className="flex-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
+                                        {t.label}
+                                    </Button>
+                                ))}
+                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
+                                    잔량
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="space-y-3">
                         <Label>생산(포장) 내역</Label>
-                        <div className="space-y-2 min-h-[100px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2 min-h-[60px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {outputs.length === 0 && (
+                                <div className="text-center text-sm text-stone-400 py-6">포장 내역이 없습니다</div>
+                            )}
                             {outputs.map((o, i) => (
                                 <div key={`${o.packageType}-${i}`} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
                                     <span className="font-bold text-sm w-10 shrink-0">{o.packageType}</span>
                                     {(o.packageType === '톤백' || o.packageType === '잔량') ? (
-                                        <div className="flex items-center gap-1">
-                                            <Input
-                                                type="number"
-                                                value={o.weightPerUnit}
-                                                onChange={(e) => setWeight(i, parseFloat(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="h-7 w-[5.5rem] text-right px-1 py-0 text-xs"
-                                            />
-                                            <span className="text-[10px] text-stone-500">kg</span>
-                                        </div>
+                                        isClosed ? (
+                                            <span className="text-xs text-stone-500">{o.weightPerUnit.toLocaleString()}kg</span>
+                                        ) : (
+                                            <div className="flex items-center gap-1">
+                                                <Input
+                                                    type="number"
+                                                    value={o.weightPerUnit}
+                                                    onChange={(e) => setWeight(i, parseFloat(e.target.value))}
+                                                    onFocus={(e) => e.target.select()}
+                                                    className="h-7 w-[5.5rem] text-right px-1 py-0 text-xs"
+                                                />
+                                                <span className="text-[10px] text-stone-500">kg</span>
+                                            </div>
+                                        )
                                     ) : (
                                         <span className="text-xs text-stone-400 w-16 text-right">{(o.weightPerUnit * o.count).toLocaleString()}kg</span>
                                     )}
-                                    <div className="flex items-center gap-1 ml-auto">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
-                                        <Input
-                                            type="number"
-                                            value={o.count === 0 ? '' : o.count}
-                                            onChange={(e) => setCount(i, parseInt(e.target.value))}
-                                            onFocus={(e) => e.target.select()}
-                                            className="w-12 h-7 text-center text-sm"
-                                        />
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                    </div>
+                                    {isClosed ? (
+                                        <span className="text-sm font-mono text-stone-600 ml-auto">{o.count}개</span>
+                                    ) : (
+                                        <div className="flex items-center gap-1 ml-auto">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
+                                            <Input
+                                                type="number"
+                                                value={o.count === 0 ? '' : o.count}
+                                                onChange={(e) => setCount(i, parseInt(e.target.value))}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-12 h-7 text-center text-sm"
+                                            />
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Main Actions: Close, Delete, Save */}
+                    {/* Footer */}
                     <div className="pt-4 border-t space-y-4">
                         <div className="flex justify-between items-center">
                             <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
-                            <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
-                                {isLoading ? '저장 중...' : '기록 저장'}
-                            </Button>
+                            {isClosed ? (
+                                <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
+                                    <Lock className="mr-1 h-3 w-3" /> 마감 해제
+                                </Button>
+                            ) : (
+                                <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
+                                    {isLoading ? '저장 중...' : '기록 저장'}
+                                </Button>
+                            )}
                         </div>
 
-                        <div className="flex justify-between items-center pt-2 border-t border-dashed">
-                            {!isClosed && (
+                        {!isClosed && (
+                            <div className="flex justify-between items-center pt-2 border-t border-dashed">
                                 <Button
                                     type="button"
                                     variant="ghost"
@@ -310,18 +330,18 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                 >
                                     <Lock className="mr-1 h-3 w-3" /> 작업 마감
                                 </Button>
-                            )}
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
-                                disabled={isLoading || outputs.length === 0}
-                                onClick={handleClearPackaging}
-                            >
-                                <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
-                            </Button>
-                        </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
+                                    disabled={isLoading || outputs.length === 0}
+                                    onClick={handleClearPackaging}
+                                >
+                                    <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </DialogContent>
