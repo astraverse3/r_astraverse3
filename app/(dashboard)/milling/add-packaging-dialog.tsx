@@ -264,7 +264,8 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                 type="number"
                                                 value={o.weightPerUnit}
                                                 onChange={(e) => setWeight(i, parseFloat(e.target.value))}
-                                                className="h-7 w-20 text-right px-1 py-0 text-xs"
+                                                onFocus={(e) => e.target.select()}
+                                                className="h-7 w-[5.5rem] text-right px-1 py-0 text-xs"
                                             />
                                             <span className="text-[10px] text-stone-500">kg</span>
                                         </div>
@@ -277,6 +278,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                             type="number"
                                             value={o.count === 0 ? '' : o.count}
                                             onChange={(e) => setCount(i, parseInt(e.target.value))}
+                                            onFocus={(e) => e.target.select()}
                                             className="w-12 h-7 text-center text-sm"
                                         />
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
