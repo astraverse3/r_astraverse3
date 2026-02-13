@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -35,6 +35,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
     const [isLoading, setIsLoading] = useState(false)
+    const scrollRef = useRef<HTMLDivElement>(null)
 
     // ... (keep state logic same) ...
     const isControlled = controlledOpen !== undefined
@@ -110,14 +111,23 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }
     }
 
+    const scrollToBottom = () => {
+        setTimeout(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+            }
+        }, 50)
+    }
+
     const addPackage = (template: { label: string, weight: number }) => {
         if (template.label === '톤백') {
             setOutputs(prev => [...prev, {
                 packageType: template.label,
-                weightPerUnit: template.weight,
+                weightPerUnit: 0,
                 count: 1,
-                totalWeight: template.weight
+                totalWeight: 0
             }])
+            scrollToBottom()
             return
         }
 
@@ -228,7 +238,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                         <div className="space-y-3">
                             <Label>규격 선택</Label>
                             <div className="flex gap-2 flex-wrap">
-                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 1000 })}>
+                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 0 })}>
                                     톤백
                                 </Button>
                                 {PACKAGE_TEMPLATES.map(t => (
@@ -245,7 +255,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
 
                     <div className="space-y-3">
                         <Label>생산(포장) 내역</Label>
-                        <div className="space-y-2 min-h-[60px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div ref={scrollRef} className="space-y-2 min-h-[60px] max-h-[300px] overflow-y-auto custom-scrollbar">
                             {outputs.length === 0 && (
                                 <div className="text-center text-sm text-stone-400 py-6">포장 내역이 없습니다</div>
                             )}
