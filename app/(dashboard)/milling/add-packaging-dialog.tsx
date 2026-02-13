@@ -268,9 +268,6 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                     ) : (
                                         <span className="text-xs text-stone-400 w-16 text-right">{(o.weightPerUnit * o.count).toLocaleString()}kg</span>
                                     )}
-                                    {(o as any).lotNo && (
-                                        <span className="text-[10px] text-blue-600 font-mono">{(o as any).lotNo}</span>
-                                    )}
                                     <div className="flex items-center gap-1 ml-auto">
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
                                         <Input
