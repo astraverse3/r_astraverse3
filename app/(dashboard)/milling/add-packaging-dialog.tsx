@@ -80,16 +80,28 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     }
 
     const handleCloseBatch = async () => {
-        // Check for unsaved changes
         const hasUnsavedChanges = JSON.stringify(outputs) !== JSON.stringify(initialOutputs)
+
         if (hasUnsavedChanges) {
-            alert('저장하지 않은 포장 데이터가 있습니다. 먼저 기록 저장을 해주세요.')
-            return
+            const validOutputs = outputs.filter(o => o.count > 0)
+            if (validOutputs.length === 0) {
+                alert('포장 내역을 입력해주세요.')
+                return
+            }
+            if (!confirm('포장 데이터를 저장하고 마감하시겠습니까?')) return
+
+            setIsLoading(true)
+            const saveResult = await updatePackagingLogs(batchId, validOutputs)
+            if (!saveResult.success) {
+                setIsLoading(false)
+                alert('포장 기록 저장 실패: ' + ((saveResult as any).error || ''))
+                return
+            }
+        } else {
+            if (!confirm('작업을 마감하시겠습니까?')) return
+            setIsLoading(true)
         }
 
-        if (!confirm('작업을 마감하시겠습니까?')) return
-
-        setIsLoading(true)
         const result = await closeMillingBatch(batchId)
         setIsLoading(false)
 

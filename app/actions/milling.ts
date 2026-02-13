@@ -312,7 +312,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 });
             }
             return { success: true };
-        });
+        }, { timeout: 30000 });
 
         revalidatePath('/milling')
         return result
