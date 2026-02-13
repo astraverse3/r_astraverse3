@@ -157,9 +157,15 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                     {log.totalInputKg.toLocaleString()}
                 </TableCell>
 
-                {/* 7. Output Weight */}
+                {/* 7. Output Weight - Clickable to open packaging */}
                 <TableCell className="py-3 px-3 text-right text-sm font-bold text-blue-600 w-[90px]">
-                    {totalRiceKg > 0 ? totalRiceKg.toLocaleString() : <span className="text-slate-300">-</span>}
+                    <span
+                        className="cursor-pointer underline decoration-dashed decoration-blue-300 underline-offset-2 hover:decoration-blue-500 hover:text-blue-700 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
+                        title="포장 내역 보기"
+                    >
+                        {totalRiceKg > 0 ? totalRiceKg.toLocaleString() : <span className="text-slate-300 no-underline">-</span>}
+                    </span>
                 </TableCell>
 
                 {/* 8. Yield */}
