@@ -139,6 +139,16 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }))
     }
 
+    const setWeight = (type: string, weight: number) => {
+        setOutputs(prev => prev.map(o => {
+            if (o.packageType === type) {
+                const validWeight = isNaN(weight) ? 0 : Math.max(0, weight)
+                return { ...o, weightPerUnit: validWeight, totalWeight: o.count * validWeight }
+            }
+            return o
+        }))
+    }
+
     const removePackage = (type: string) => {
         setOutputs(prev => prev.filter(o => o.packageType !== type))
     }
@@ -209,6 +219,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                     {t.label}
                                 </Button>
                             ))}
+                            <Button variant="secondary" className="flex-1 border-dashed border-stone-300" onClick={() => addPackage({ label: '톤백', weight: 800 })}>
+                                톤백
+                            </Button>
                         </div>
                     </div>
 
@@ -219,7 +232,22 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                 <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-200">
                                     <div className="flex flex-col">
                                         <div className="font-bold">{o.packageType}</div>
-                                        <div className="text-[10px] text-stone-400">{(o.weightPerUnit * o.count).toLocaleString()}kg</div>
+                                        {o.packageType === '톤백' ? (
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <Input
+                                                    type="number"
+                                                    value={o.weightPerUnit}
+                                                    onChange={(e) => setWeight(o.packageType, parseFloat(e.target.value))}
+                                                    className="h-6 w-16 text-right px-1 py-0 text-xs"
+                                                />
+                                                <span className="text-[10px] text-stone-500">kg/백</span>
+                                                <span className="text-[10px] text-stone-400 ml-1">
+                                                    (총 {(o.weightPerUnit * o.count).toLocaleString()}kg)
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="text-[10px] text-stone-400">{(o.weightPerUnit * o.count).toLocaleString()}kg</div>
+                                        )}
                                         {(o as any).lotNo && (
                                             <div className="text-[10px] text-blue-600 font-mono mt-0.5">{(o as any).lotNo}</div>
                                         )}

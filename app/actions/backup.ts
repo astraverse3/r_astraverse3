@@ -75,7 +75,8 @@ export async function createBackup(): Promise<{ success: boolean; message?: stri
         }
 
         // Output file option (-f) must come BEFORE the connection URL (positional argument)
-        const command = `${dumpCommand} -f "${filePath}" "${dbUrl}"`
+        // Add --clean --if-exists to drop existing objects before creating them in the dump
+        const command = `${dumpCommand} --clean --if-exists -f "${filePath}" "${dbUrl}"`
 
         await execAsync(command)
         revalidatePath('/admin')
@@ -118,6 +119,11 @@ export async function restoreBackup(filename: string): Promise<{ success: boolea
             restoreCommand = `"${psqlPath16}"`;
         }
 
+        // 1. Reset Schema (Drop & Recreate public schema to ensure clean slate)
+        const resetCommand = `${restoreCommand} "${dbUrl}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`;
+        await execAsync(resetCommand);
+
+        // 2. Restore Data
         // Input file option (-f) must come BEFORE the connection URL
         const command = `${restoreCommand} -f "${filePath}" "${dbUrl}"`
 
