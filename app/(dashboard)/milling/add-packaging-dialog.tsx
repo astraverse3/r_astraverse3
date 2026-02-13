@@ -15,6 +15,7 @@ import { Plus, Minus, Package, Trash2, Lock } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { toast } from 'sonner'
 
 interface Props {
     batchId: number
@@ -75,7 +76,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOpen(true)
             router.refresh()
         } else {
-            alert((result as any).error || '마감 해제 실패')
+            toast.error((result as any).error || '마감 해제 실패')
         }
     }
 
@@ -85,7 +86,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         if (hasUnsavedChanges) {
             const validOutputs = outputs.filter(o => o.count > 0)
             if (validOutputs.length === 0) {
-                alert('포장 내역을 입력해주세요.')
+                toast.warning('포장 내역을 입력해주세요.')
                 return
             }
             if (!confirm('포장 데이터를 저장하고 마감하시겠습니까?')) return
@@ -94,7 +95,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             const saveResult = await updatePackagingLogs(batchId, validOutputs)
             if (!saveResult.success) {
                 setIsLoading(false)
-                alert('포장 기록 저장 실패: ' + ((saveResult as any).error || ''))
+                toast.error('포장 기록 저장 실패: ' + ((saveResult as any).error || ''))
                 return
             }
         } else {
@@ -110,7 +111,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOpen(false)
             router.refresh()
         } else {
-            alert((result as any).error || '마감 실패')
+            toast.error((result as any).error || '마감 실패')
         }
     }
 
@@ -126,7 +127,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             triggerDataUpdate()
             router.refresh()
         } else {
-            alert('포장 기록 삭제 실패')
+            toast.error('포장 기록 삭제 실패')
         }
     }
 
@@ -204,7 +205,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     async function handleSubmit() {
         const validOutputs = outputs.filter(o => o.count > 0)
         if (validOutputs.length === 0) {
-            alert('포장 내역을 입력해주세요.')
+            toast.warning('포장 내역을 입력해주세요.')
             return
         }
 
@@ -218,7 +219,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             setOutputs([])
             router.refresh()
         } else {
-            alert((result as any).error || '저장 실패')
+            toast.error((result as any).error || '저장 실패')
         }
     }
 
