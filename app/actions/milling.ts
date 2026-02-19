@@ -8,6 +8,7 @@ import { getProductCode, generateLotNo } from '@/lib/lot-generation'
 
 // Updated to match new schema relations
 export type MillingBatchFormData = {
+    id?: number
     date: Date
     remarks?: string
     millingType: string
@@ -29,56 +30,111 @@ export type MillingOutputInput = {
 export async function startMillingBatch(data: MillingBatchFormData) {
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Validate stocks
-            const stocks = await tx.stock.findMany({
-                where: { id: { in: data.selectedStockIds } },
-                include: { batch: true }
-            })
+            // 0. Update Mode Check
+            if (data.id) {
+                // --- UPDATE Logic ---
+                const batch = await tx.millingBatch.findUnique({
+                    where: { id: data.id },
+                    include: { stocks: true }
+                })
+                if (!batch) throw new Error('Batch not found')
+                if (batch.isClosed) throw new Error('Batch is closed')
 
-            if (stocks.length !== data.selectedStockIds.length) {
-                throw new Error('Some stocks not found')
-            }
-
-            const alreadyUsed = stocks.find(s => s.status !== 'AVAILABLE')
-            if (alreadyUsed) {
-                throw new Error(`Stock ${alreadyUsed.bagNo} is already processed`)
-            }
-
-            // Update user input total weight
-            const actualTotalInputKg = data.totalInputKg;
-
-            // 2. Create Batch
-            const newBatch = await tx.millingBatch.create({
-                data: {
-                    date: data.date,
-                    remarks: data.remarks?.trim(),
-                    millingType: data.millingType,
-                    totalInputKg: actualTotalInputKg,
-                    // Link stocks
-                    stocks: {
-                        connect: data.selectedStockIds.map(id => ({ id }))
+                // Update Batch Metadata
+                await tx.millingBatch.update({
+                    where: { id: data.id },
+                    data: {
+                        date: data.date,
+                        remarks: data.remarks?.trim(),
+                        millingType: data.millingType,
+                        totalInputKg: data.totalInputKg // Updated Input Weight
                     }
-                }
-            })
+                })
 
-            // 3. Update Stocks status
-            await tx.stock.updateMany({
-                where: { id: { in: data.selectedStockIds } },
-                data: {
-                    status: 'CONSUMED',
-                    batchId: newBatch.id
-                }
-            })
+                // Stocks Handling
+                const currentStockIds = batch.stocks.map(s => s.id)
+                const newStockIds = data.selectedStockIds
 
-            return newBatch
+                // 1. Removed Stocks -> Set to AVAILABLE
+                const removedIds = currentStockIds.filter(id => !newStockIds.includes(id))
+                if (removedIds.length > 0) {
+                    await tx.stock.updateMany({
+                        where: { id: { in: removedIds } },
+                        data: { status: 'AVAILABLE', batchId: null }
+                    })
+                }
+
+                // 2. New Stocks -> Check Availability & Set to CONSUMED
+                const addedIds = newStockIds.filter(id => !currentStockIds.includes(id))
+                if (addedIds.length > 0) {
+                    const newStocks = await tx.stock.findMany({ where: { id: { in: addedIds } } })
+                    const unavailable = newStocks.find(s => s.status !== 'AVAILABLE')
+                    if (unavailable) throw new Error(`Stock ${unavailable.bagNo} is not available`)
+
+                    await tx.stock.updateMany({
+                        where: { id: { in: addedIds } },
+                        data: { status: 'CONSUMED', batchId: data.id }
+                    })
+                }
+
+                // 3. Ensure kept stocks are linked (redundant but safe) needed? 
+                // Existing links persist. We just updated status of broken ones.
+
+                // Refetch updated batch
+                return await tx.millingBatch.findUnique({ where: { id: data.id } })
+            } else {
+                // --- CREATE Logic (Original) ---
+                // 1. Validate stocks
+                const stocks = await tx.stock.findMany({
+                    where: { id: { in: data.selectedStockIds } },
+                    include: { batch: true }
+                })
+
+                if (stocks.length !== data.selectedStockIds.length) {
+                    throw new Error('Some stocks not found')
+                }
+
+                const alreadyUsed = stocks.find(s => s.status !== 'AVAILABLE')
+                if (alreadyUsed) {
+                    throw new Error(`Stock ${alreadyUsed.bagNo} is already processed`)
+                }
+
+                // Update user input total weight
+                const actualTotalInputKg = data.totalInputKg;
+
+                // 2. Create Batch
+                const newBatch = await tx.millingBatch.create({
+                    data: {
+                        date: data.date,
+                        remarks: data.remarks?.trim(),
+                        millingType: data.millingType,
+                        totalInputKg: actualTotalInputKg,
+                        // Link stocks
+                        stocks: {
+                            connect: data.selectedStockIds.map(id => ({ id }))
+                        }
+                    }
+                })
+
+                // 3. Update Stocks status
+                await tx.stock.updateMany({
+                    where: { id: { in: data.selectedStockIds } },
+                    data: {
+                        status: 'CONSUMED',
+                        batchId: newBatch.id
+                    }
+                })
+
+                return newBatch
+            }
         })
 
         revalidatePath('/milling')
         revalidatePath('/stocks')
         return { success: true, data: result }
     } catch (error) {
-        console.error('Failed to start milling batch:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to start batch' }
+        console.error('Failed to start/update milling batch:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to process batch' }
     }
 }
 
@@ -556,5 +612,22 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
     } catch (error) {
         console.error('Failed to update milling batch stocks:', error)
         return { success: false, error: 'Failed to update batch stocks' }
+    }
+}
+
+export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string }) {
+    try {
+        await prisma.millingBatch.update({
+            where: { id: batchId },
+            data: {
+                date: data.date,
+                remarks: data.remarks.trim() || null,
+            }
+        })
+        revalidatePath('/milling')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to update milling batch metadata:', error)
+        return { success: false, error: 'Failed to update' }
     }
 }

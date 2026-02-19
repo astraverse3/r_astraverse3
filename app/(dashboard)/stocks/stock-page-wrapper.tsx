@@ -226,7 +226,12 @@ export function StockPageWrapper({
             />
             <StartMillingDialog
                 open={showMillingDialog}
-                onOpenChange={setShowMillingDialog}
+                onOpenChange={(open) => {
+                    setShowMillingDialog(open)
+                    if (!open && millingSource === 'SELECTION') {
+                        setSelectedIds(new Set())
+                    }
+                }}
                 selectedStocks={millingStocks}
                 onSuccess={() => {
                     setSelectedIds(new Set())

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -32,12 +32,25 @@ interface Props {
     onSuccess: () => void
 }
 
+import { useMillingCart } from './milling-cart-context'
+
 export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSuccess }: Props) {
     const router = useRouter()
+    const { editingBatchId, editingDate, editingRemarks, editingMillingType, clearCart } = useMillingCart()
+
     const [remarks, setRemarks] = useState('')
     const [millingType, setMillingType] = useState('백미')
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0])
     const [isLoading, setIsLoading] = useState(false)
+
+    // 다이얼로그가 열릴 때 편집 상태로 form 초기화
+    useEffect(() => {
+        if (open && editingBatchId) {
+            if (editingDate) setDate(new Date(editingDate).toISOString().split('T')[0])
+            setRemarks(editingRemarks || '')
+            if (editingMillingType) setMillingType(editingMillingType)
+        }
+    }, [open, editingBatchId])
 
     const totalInputKg = useMemo(() => {
         return selectedStocks.reduce((sum, s) => sum + s.weightKg, 0)
@@ -47,22 +60,34 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         if (selectedStocks.length === 0) return
 
         setIsLoading(true)
-        const result = await startMillingBatch({
+
+        const payload = {
+            id: editingBatchId || undefined,
             date: new Date(date),
             remarks: remarks.trim(),
             millingType,
             totalInputKg,
             selectedStockIds: selectedStocks.map(s => s.id),
-        })
+        }
+
+        const result = await startMillingBatch(payload) // We will modify this action to handle ID
+
         setIsLoading(false)
 
         if (result && !result.success) {
-            toast.error('작업 시작 실패: ' + result.error)
+            toast.error((editingBatchId ? '작업 수정 실패: ' : '작업 시작 실패: ') + result.error)
         } else {
             onOpenChange(false)
-            onSuccess() // Clear selection
+            onSuccess() // Clear selection / cart logic handling
             triggerDataUpdate()
-            router.push('/milling') // Go to milling list to see result, or stay? User usually wants to see the result.
+
+            if (editingBatchId) {
+                toast.success('작업이 수정되었습니다.')
+                clearCart() // Clear editing state
+                router.push('/milling')
+            } else {
+                router.push('/milling')
+            }
         }
     }
 
@@ -70,7 +95,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>도정 작업 시작</DialogTitle>
+                    <DialogTitle>{editingBatchId ? '도정 작업을 수정합니다' : '도정 작업 시작'}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 py-2">
@@ -82,6 +107,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
+                            className="w-[240px]"
                         />
                     </div>
 
@@ -156,7 +182,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                 <DialogFooter className="gap-2 sm:gap-0">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
                     <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-                        {isLoading ? '처리 중...' : '작업 시작'}
+                        {isLoading ? '처리 중...' : (editingBatchId ? '작업 수정 완료' : '작업 시작')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import {
     Dialog,
@@ -16,11 +18,14 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Trash2, Plus } from 'lucide-react'
-import { removeStockFromMilling } from '@/app/actions/milling'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Trash2, Plus, Pencil, Check, X } from 'lucide-react'
+import { removeStockFromMilling, updateMillingBatchMetadata } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/stocks/milling-cart-context'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
 
 interface Stock {
     id: number
@@ -36,6 +41,9 @@ interface Stock {
 
 interface Props {
     batchId: number
+    millingType: string
+    date: Date | string
+    remarks: string | null
     stocks: Stock[]
     varieties: string
     trigger?: React.ReactNode
@@ -44,35 +52,50 @@ interface Props {
     onOpenChange?: (open: boolean) => void
 }
 
-export function MillingStockListDialog({ batchId, stocks, varieties, trigger, canDelete = false, open, onOpenChange }: Props) {
+export function MillingStockListDialog({ batchId, millingType, date, remarks, stocks, varieties, trigger, canDelete = false, open, onOpenChange }: Props) {
     const router = useRouter()
     const { startEditing } = useMillingCart()
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
+    // Inline editing state for date/remarks
+    const [isEditingMeta, setIsEditingMeta] = useState(false)
+    const [editDate, setEditDate] = useState(() => {
+        const d = new Date(date)
+        return d.toISOString().split('T')[0]
+    })
+    const [editRemarks, setEditRemarks] = useState(remarks || '')
+    const [isSavingMeta, setIsSavingMeta] = useState(false)
+
+    const handleSaveMeta = async () => {
+        setIsSavingMeta(true)
+        const result = await updateMillingBatchMetadata(batchId, {
+            date: new Date(editDate),
+            remarks: editRemarks,
+        })
+        setIsSavingMeta(false)
+        if (result.success) {
+            toast.success('수정되었습니다.')
+            setIsEditingMeta(false)
+        } else {
+            toast.error('수정 실패: ' + result.error)
+        }
+    }
+
+    const handleCancelMeta = () => {
+        setEditDate(new Date(date).toISOString().split('T')[0])
+        setEditRemarks(remarks || '')
+        setIsEditingMeta(false)
+    }
+
     const handleAddStock = () => {
-        // Map current stocks to CartStock format
-        // Note: We need full stock details. The current 'stocks' prop might be partial.
-        // However, for now let's map what we have and assume the context can handle it or we fetch full details.
-        // Actually, we need to ensure 'stocks' prop has all necessary fields for CartStock.
-        // Let's check the interface. MillinStockListDialog Stock interface vs CartStock interface.
-        // CartStock needs: id, productionYear, bagNo, weightKg, status, incomingDate, lotNo, variety{name, type}, farmer{name, group{certType, name}}
-        // The current 'Stock' interface in this file is: id, bagNo, farmerName, variety, certType, weightKg.
-        // We are missing: productionYear, status, incomingDate, lotNo, variety.type, farmer.group.name.
-
-        // Strategy: We will pass a dummy or partial object, BUT since we are going to /stocks page, 
-        // the important part is 'id'. The cart display might need other fields.
-        // Better approach: The parent 'MillingTableRow' passes 'stocks' which comes from 'log.stocks'. 
-        // We should ensure 'log.stocks' has enough info.
-
-        // For now, let's construct best-effort objects.
         const cartStocks: CartStock[] = stocks.map(s => ({
             id: s.id,
-            productionYear: new Date().getFullYear(), // Placeholder
+            productionYear: new Date().getFullYear(),
             bagNo: s.bagNo,
             weightKg: s.weightKg,
-            status: 'MILLING', // Current status is MILLING
-            incomingDate: new Date(), // Placeholder
+            status: 'MILLING',
+            incomingDate: new Date(),
             lotNo: null,
             variety: {
                 name: s.variety.name,
@@ -82,12 +105,18 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                 name: s.farmerName,
                 group: {
                     certType: s.certType,
-                    name: 'UNKNOWN' // Placeholder
+                    name: 'UNKNOWN'
                 }
             }
         }))
 
-        startEditing(batchId, cartStocks)
+        startEditing(
+            batchId,
+            cartStocks,
+            new Date(date),
+            remarks || '',
+            millingType
+        )
         router.push('/stocks')
     }
 
@@ -123,6 +152,74 @@ export function MillingStockListDialog({ batchId, stocks, varieties, trigger, ca
                     </DialogTitle>
                     <p className="text-sm text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
                 </DialogHeader>
+
+                {/* 날짜 / 비고 수정 영역 */}
+                <div className="px-6 py-3 border-b border-slate-100 bg-slate-50">
+                    {isEditingMeta ? (
+                        <div className="space-y-3">
+                            <div className="flex gap-4 items-start">
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-slate-500">작업 날짜</Label>
+                                    <Input
+                                        type="date"
+                                        value={editDate}
+                                        onChange={e => setEditDate(e.target.value)}
+                                        className="h-8 w-[160px] text-sm"
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <Label className="text-xs text-slate-500">비고</Label>
+                                    <Input
+                                        value={editRemarks}
+                                        onChange={e => setEditRemarks(e.target.value)}
+                                        placeholder="비고 내용 입력"
+                                        className="h-8 text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleCancelMeta}>
+                                    <X className="h-3 w-3 mr-1" />취소
+                                </Button>
+                                <Button size="sm" className="h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleSaveMeta} disabled={isSavingMeta}>
+                                    <Check className="h-3 w-3 mr-1" />
+                                    {isSavingMeta ? '저장 중...' : '저장'}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-sm">
+                                <div>
+                                    <span className="text-xs text-slate-400 mr-1">날짜</span>
+                                    <span className="font-semibold text-slate-700">
+                                        {format(new Date(date), 'yyyy-MM-dd')}
+                                    </span>
+                                </div>
+                                {(remarks || editRemarks) && (
+                                    <div>
+                                        <span className="text-xs text-slate-400 mr-1">비고</span>
+                                        <span className="text-slate-700">{remarks || editRemarks}</span>
+                                    </div>
+                                )}
+                                {!remarks && !editRemarks && (
+                                    <span className="text-xs text-slate-400">비고 없음</span>
+                                )}
+                            </div>
+                            {canDelete && (
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 px-2 text-xs text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setIsEditingMeta(true)}
+                                >
+                                    <Pencil className="h-3 w-3 mr-1" />
+                                    수정
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
                     <Table>

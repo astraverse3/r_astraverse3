@@ -200,6 +200,9 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
             {/* Input History Dialog (Controlled) */}
             <MillingStockListDialog
                 batchId={log.id}
+                millingType={log.millingType}
+                date={log.date}
+                remarks={log.remarks}
                 stocks={(log.stocks || []).map((s: any) => ({
                     id: s.id,
                     bagNo: s.bagNo,

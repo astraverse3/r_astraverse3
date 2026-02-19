@@ -31,7 +31,10 @@ interface MillingCartContextType {
     isOpen: boolean
     setIsOpen: (open: boolean) => void
     editingBatchId: number | null
-    startEditing: (batchId: number, currentStocks: Stock[]) => void
+    editingDate: Date | null
+    editingRemarks: string
+    editingMillingType: string
+    startEditing: (batchId: number, currentStocks: Stock[], date: Date, remarks: string, millingType: string) => void
     cancelEditing: () => void
 }
 
@@ -46,13 +49,22 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<Stock[]>([])
     const [isOpen, setIsOpen] = useState(false)
     const [editingBatchId, setEditingBatchId] = useState<number | null>(null)
+    const [editingDate, setEditingDate] = useState<Date | null>(null)
+    const [editingRemarks, setEditingRemarks] = useState('')
+    const [editingMillingType, setEditingMillingType] = useState('백미')
 
     useEffect(() => {
         const saved = localStorage.getItem('milling-cart')
         const savedBatchId = localStorage.getItem('milling-editing-batch-id')
+        const savedDate = localStorage.getItem('milling-editing-date')
+        const savedRemarks = localStorage.getItem('milling-editing-remarks')
+        const savedMillingType = localStorage.getItem('milling-editing-type')
 
         if (savedBatchId) {
             setEditingBatchId(Number(savedBatchId))
+            if (savedDate) setEditingDate(new Date(savedDate))
+            if (savedRemarks) setEditingRemarks(savedRemarks)
+            if (savedMillingType) setEditingMillingType(savedMillingType)
         }
 
         if (saved) {
@@ -75,10 +87,18 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('milling-cart', JSON.stringify(items))
         if (editingBatchId) {
             localStorage.setItem('milling-editing-batch-id', editingBatchId.toString())
+            if (editingDate) localStorage.setItem('milling-editing-date', editingDate.toISOString())
+            localStorage.setItem('milling-editing-remarks', editingRemarks)
+            localStorage.setItem('milling-editing-type', editingMillingType)
         } else {
             localStorage.removeItem('milling-editing-batch-id')
+            localStorage.removeItem('milling-editing-date')
+            localStorage.removeItem('milling-editing-remarks')
+            localStorage.removeItem('milling-editing-type')
         }
-    }, [items, editingBatchId])
+    }, [items, editingBatchId, editingDate, editingRemarks, editingMillingType])
+
+    // ... addToCart ...
 
     const addToCart = (newStocks: Stock[]) => {
         if (newStocks.length === 0) return { success: true }
@@ -90,21 +110,17 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
         const conflictingStock = newStocks.find(s => currentType && s.variety.type !== currentType)
 
         if (conflictingStock && currentType) {
-            // Check if user is trying to mix
-            // Actually, we should check if ALL new stocks match each other too, but that's unlikely in single selection.
             return {
                 success: false,
                 error: `곡종이 다른 톤백은 함께 담을 수 없습니다.\n현재 담긴 곡종: ${getVarietyTypeName(currentType)}\n추가하려는 톤백: ${conflictingStock.variety.name} (${getVarietyTypeName(conflictingStock.variety.type)})`
             }
         }
 
-        // Also check if newStocks mix types themselves (e.g. multi-select across different types? Unlikely in UI but possible visually)
+        // Also check if newStocks mix types themselves
         const firstNewType = newStocks[0].variety.type
         if (newStocks.some(s => s.variety.type !== firstNewType)) {
             return { success: false, error: '선택한 톤백들 간에 곡종이 섞여 있어 담을 수 없습니다.' }
         }
-
-        // If empty cart, allow.
 
         // Filter out duplicates
         const existingIds = new Set(items.map(s => s.id))
@@ -127,16 +143,25 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
         setItems([])
         setIsOpen(false)
         setEditingBatchId(null)
+        setEditingDate(null)
+        setEditingRemarks('')
+        setEditingMillingType('백미')
     }
 
-    const startEditing = (batchId: number, currentStocks: Stock[]) => {
+    const startEditing = (batchId: number, currentStocks: Stock[], date: Date, remarks: string, millingType: string) => {
         setItems(currentStocks)
         setEditingBatchId(batchId)
+        setEditingDate(date)
+        setEditingRemarks(remarks)
+        setEditingMillingType(millingType)
         setIsOpen(true)
     }
 
     const cancelEditing = () => {
         setEditingBatchId(null)
+        setEditingDate(null)
+        setEditingRemarks('')
+        setEditingMillingType('백미')
         setItems([])
         setIsOpen(false)
     }
@@ -150,7 +175,20 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <MillingCartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, isOpen, setIsOpen, editingBatchId, startEditing, cancelEditing }}>
+        <MillingCartContext.Provider value={{
+            items,
+            addToCart,
+            removeFromCart,
+            clearCart,
+            isOpen,
+            setIsOpen,
+            editingBatchId,
+            editingDate,
+            editingRemarks,
+            editingMillingType,
+            startEditing,
+            cancelEditing
+        }}>
             {children}
         </MillingCartContext.Provider>
     )

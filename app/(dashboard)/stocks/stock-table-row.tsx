@@ -101,7 +101,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 {/* 5. Lot No */}
                 <TableCell className="py-2 px-1 text-center">
                     {(certType === '유기농' || certType === '무농약') && (
-                        <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto cursor-help" title={stock.lotNo || 'Not Generated'}>
+                        <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto" title={stock.lotNo || 'Not Generated'}>
                             {stock.lotNo || '-'}
                         </div>
                     )}
