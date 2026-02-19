@@ -63,7 +63,7 @@ export function StockPageWrapper({
     const [millingSource, setMillingSource] = useState<'SELECTION' | 'CART'>('SELECTION') // Track source
     const [isCanceling, setIsCanceling] = useState(false)
 
-    const { items: cartItems, setIsOpen: setIsCartOpen, clearCart, addToCart } = useMillingCart()
+    const { items: cartItems, setIsOpen: setIsCartOpen, clearCart, addToCart, editingBatchId } = useMillingCart()
 
     // Lazy Loading State (Lifted Up)
     const [loadedItems, setLoadedItems] = useState<Record<string, Stock[]>>({})
@@ -233,6 +233,7 @@ export function StockPageWrapper({
                     }
                 }}
                 selectedStocks={millingStocks}
+                editMode={millingSource === 'CART' && !!editingBatchId}
                 onSuccess={() => {
                     setSelectedIds(new Set())
                     if (millingSource === 'CART') {

@@ -30,27 +30,29 @@ interface Props {
     onOpenChange: (open: boolean) => void
     selectedStocks: Stock[]
     onSuccess: () => void
+    editMode?: boolean  // 명시적으로 편집 모드 여부를 전달
 }
 
 import { useMillingCart } from './milling-cart-context'
 
-export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSuccess }: Props) {
+export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSuccess, editMode = false }: Props) {
     const router = useRouter()
     const { editingBatchId, editingDate, editingRemarks, editingMillingType, clearCart } = useMillingCart()
 
+    // editMode prop이 false면 항상 신규 작업 모드 (editingBatchId 무시)
+    const isEditing = editMode && !!editingBatchId
     const [remarks, setRemarks] = useState('')
     const [millingType, setMillingType] = useState('백미')
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0])
     const [isLoading, setIsLoading] = useState(false)
 
-    // 다이얼로그가 열릴 때 편집 상태로 form 초기화
     useEffect(() => {
-        if (open && editingBatchId) {
+        if (open && isEditing) {
             if (editingDate) setDate(new Date(editingDate).toISOString().split('T')[0])
             setRemarks(editingRemarks || '')
             if (editingMillingType) setMillingType(editingMillingType)
         }
-    }, [open, editingBatchId])
+    }, [open, isEditing])
 
     const totalInputKg = useMemo(() => {
         return selectedStocks.reduce((sum, s) => sum + s.weightKg, 0)
@@ -62,7 +64,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         setIsLoading(true)
 
         const payload = {
-            id: editingBatchId || undefined,
+            id: isEditing ? (editingBatchId || undefined) : undefined,
             date: new Date(date),
             remarks: remarks.trim(),
             millingType,
@@ -70,20 +72,20 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
             selectedStockIds: selectedStocks.map(s => s.id),
         }
 
-        const result = await startMillingBatch(payload) // We will modify this action to handle ID
+        const result = await startMillingBatch(payload)
 
         setIsLoading(false)
 
         if (result && !result.success) {
-            toast.error((editingBatchId ? '작업 수정 실패: ' : '작업 시작 실패: ') + result.error)
+            toast.error((isEditing ? '작업 수정 실패: ' : '작업 시작 실패: ') + result.error)
         } else {
             onOpenChange(false)
-            onSuccess() // Clear selection / cart logic handling
+            onSuccess()
             triggerDataUpdate()
 
-            if (editingBatchId) {
+            if (isEditing) {
                 toast.success('작업이 수정되었습니다.')
-                clearCart() // Clear editing state
+                clearCart()
                 router.push('/milling')
             } else {
                 router.push('/milling')
@@ -95,7 +97,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{editingBatchId ? '도정 작업을 수정합니다' : '도정 작업 시작'}</DialogTitle>
+                    <DialogTitle>{isEditing ? '도정 작업을 수정합니다' : '도정 작업 시작'}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 py-2">
@@ -182,7 +184,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                 <DialogFooter className="gap-2 sm:gap-0">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
                     <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-                        {isLoading ? '처리 중...' : (editingBatchId ? '작업 수정 완료' : '작업 시작')}
+                        {isLoading ? '처리 중...' : (isEditing ? '작업 수정 완료' : '작업 시작')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
