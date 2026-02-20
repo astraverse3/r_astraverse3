@@ -1,17 +1,9 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Package,
-  ClipboardList,
-  Warehouse,
-  TrendingUp,
-  History,
-  Download,
-  Plus,
   Clock,
-  CheckCircle2,
-  MoreHorizontal
 } from "lucide-react";
+import { format } from "date-fns";
 import { getDashboardStats } from "@/app/actions/dashboard";
 import { RealtimeStatus } from "@/app/(dashboard)/_components/realtime-status";
 
@@ -130,31 +122,39 @@ export default async function Home() {
             {stats?.recentLogs.map((log: any) => {
               const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
               const yieldRate = log.totalInputKg > 0 ? ((productionSum / log.totalInputKg) * 100).toFixed(1) : '0.0';
-              const isToday = new Date(log.date).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }) === new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
-              const timeStr = new Date(log.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+              const dateStr = format(new Date(log.date), 'MM/dd');
 
-              const varieties = [...new Set((log.stocks || []).map((s: any) => s.variety))].join(', ');
+              // variety는 객체이므로 name 추출
+              const varietyNames = [...new Set((log.stocks || []).map((s: any) => s.variety?.name).filter(Boolean))];
+              const varietySummary = varietyNames.length > 1
+                ? `${varietyNames[0]} 외 ${varietyNames.length - 1}종`
+                : varietyNames[0] || '-';
+
+              const tonbagCount = (log.stocks || []).length;
 
               return (
-                <div key={log.id} className={`bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-blue-500' : ''}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border ${log.isClosed ? 'bg-slate-50 border-slate-100' : 'bg-blue-50 border-blue-100'}`}>
-                      <span className={`text-[10px] font-bold leading-none ${log.isClosed ? 'text-slate-500' : 'text-blue-500'}`}>
-                        {isToday ? '오늘' : '이전'}
-                      </span>
-                      <span className={`text-sm font-bold mt-0.5 ${log.isClosed ? 'text-slate-700' : 'text-blue-700'}`}>{timeStr}</span>
+                <div key={log.id} className={`bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between ${!log.isClosed ? 'border-l-4 border-l-blue-500' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center border ${log.isClosed ? 'bg-slate-50 border-slate-100' : 'bg-blue-50 border-blue-100'}`}>
+                      <span className={`text-sm font-bold ${log.isClosed ? 'text-slate-700' : 'text-blue-700'}`}>{dateStr}</span>
                     </div>
                     <div>
-                      <p className="text-base font-bold text-slate-800">
-                        {varieties || log.remarks || '미지정'} <span className="text-xs text-slate-500 font-medium ml-1 bg-slate-100 px-1.5 py-0.5 rounded-md">{log.totalInputKg.toLocaleString()} kg</span>
+                      <p className="text-sm font-bold text-slate-800">
+                        {varietySummary}
+                        <span className="text-xs text-slate-400 font-medium ml-1.5">{log.millingType}</span>
+                        <span className="text-xs text-slate-400 font-medium ml-1.5 bg-slate-100 px-1.5 py-0.5 rounded">{tonbagCount}백 · {log.totalInputKg.toLocaleString()}kg</span>
                       </p>
                       <p className="text-xs text-slate-500 mt-1 font-medium">
-                        {log.isClosed ? `수율 ${yieldRate}% (생산 ${productionSum.toLocaleString()} kg)` : <span className="text-blue-600 font-bold animate-pulse">현재 작업 진행 중...</span>}
+                        {log.isClosed
+                          ? `수율 ${yieldRate}% · 생산 ${productionSum.toLocaleString()}kg`
+                          : <span className="text-blue-600 font-bold animate-pulse">작업 진행 중...</span>
+                        }
+                        {log.remarks && <span className="text-slate-400 ml-2">· {log.remarks}</span>}
                       </p>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${log.isClosed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {log.isClosed ? '완료' : '진행'}
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide shrink-0 ${log.isClosed ? 'bg-slate-100 text-slate-500' : 'bg-blue-100 text-blue-700'}`}>
+                    {log.isClosed ? '마감' : '포장'}
                   </span>
                 </div>
               );
