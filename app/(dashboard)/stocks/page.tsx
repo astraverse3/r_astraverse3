@@ -73,7 +73,7 @@ export default async function StocksPage({
                 varieties={varieties}
                 filters={filters}
                 filtersSlot={<StockFilters varieties={varieties} farmers={farmers} />}
-                excelSlot={<StockExcelButtons />}
+                excelSlot={<StockExcelButtons filters={filters} />}
                 addDialogSlot={<AddStockDialog varieties={varieties} farmers={farmers} />}
             />
         </Suspense>

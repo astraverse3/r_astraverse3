@@ -6,10 +6,38 @@ import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
 import { generateLotNo } from '@/lib/lot-generation'
 
+import { GetStocksParams } from './stock'
+
 // --- EXPORT LOGIC ---
-export async function exportStocks() {
+export async function exportStocks(params?: GetStocksParams) {
     try {
+        const whereClause: any = {}
+
+        if (params) {
+            if (params.productionYear) whereClause.productionYear = parseInt(params.productionYear)
+            if (params.varietyId) whereClause.varietyId = parseInt(params.varietyId)
+            if (params.farmerId) whereClause.farmerId = parseInt(params.farmerId)
+            if (params.status && params.status !== 'ALL') whereClause.status = params.status
+
+            if (params.certType) {
+                if (params.certType === 'NONE') {
+                    // Filter farmers who do NOT have a group
+                    whereClause.farmer = { groupId: null }
+                } else {
+                    whereClause.farmer = { group: { certType: params.certType } }
+                }
+            }
+
+            if (params.farmerName) {
+                whereClause.farmer = {
+                    ...whereClause.farmer, // Preserve existing farmer conditions (like groupId)
+                    name: { contains: params.farmerName }
+                }
+            }
+        }
+
         const stocks = await prisma.stock.findMany({
+            where: whereClause,
             include: {
                 farmer: { include: { group: true } },
                 variety: true
@@ -25,6 +53,8 @@ export async function exportStocks() {
             '품종': stock.variety.name,
             '톤백번호': stock.bagNo,
             '중량(kg)': stock.weightKg,
+            '인증구분': stock.farmer.group?.certType || '일반',
+            '인증번호': stock.farmer.group?.certNo || '',
             // Additional info for reference, but not required for import (or ignored if re-imported)
             '상태': stock.status === 'AVAILABLE' ? '보관중' : '소진됨'
         }))
@@ -32,7 +62,7 @@ export async function exportStocks() {
         // If no data, provide at least the headers (json_to_sheet handles empty array by default? No, need to force headers)
         let worksheet
         if (rows.length === 0) {
-            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '작목반명', '품종', '톤백번호', '중량(kg)']])
+            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '작목반명', '품종', '톤백번호', '중량(kg)', '인증구분', '인증번호', '상태']])
         } else {
             worksheet = XLSX.utils.json_to_sheet(rows)
         }

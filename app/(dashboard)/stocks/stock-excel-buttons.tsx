@@ -18,7 +18,7 @@ import {
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { toast } from 'sonner'
 
-export function StockExcelButtons() {
+export function StockExcelButtons({ filters }: { filters?: any }) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
@@ -30,7 +30,7 @@ export function StockExcelButtons() {
 
     const handleExport = async () => {
         setExporting(true)
-        const result = await exportStocks()
+        const result = await exportStocks(filters)
 
         if (result.success && result.daa) {
             const base64Data = result.daa
