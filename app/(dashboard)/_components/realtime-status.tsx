@@ -101,62 +101,66 @@ export function RealtimeStatus({
 
     return (
         <div className="flex flex-col gap-3 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* 1. Grain Inventory Card */}
-                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
-                    <div className="mb-4 md:mb-0">
-                        <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
-                            원곡 재고
-                            <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
-                        </h3>
-                        <div className="flex items-baseline mb-1">
-                            <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedAvailable.toLocaleString()}</span>
-                            <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
+            <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-3">
+                {/* Left section: Stock & Production sharing the 7fr space */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* 1. Grain Inventory Card */}
+                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
+                        <div className="mb-4 md:mb-0">
+                            <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
+                                원곡 재고
+                                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
+                            </h3>
+                            <div className="flex items-baseline mb-1">
+                                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedAvailable.toLocaleString()}</span>
+                                <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
+                            </div>
+                            <div className="text-xs font-medium text-slate-400">현재 재고</div>
                         </div>
-                        <div className="text-xs font-medium text-slate-400">현재 재고</div>
+
+                        <div className="mt-auto">
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2">
+                                <div
+                                    className="bg-[#2EB85C] h-full rounded-full transition-all duration-1000 ease-out"
+                                    style={{ width: `${remainingPercent}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                                <span className="text-slate-700">전체 {totalStock.toLocaleString()} kg 중 {Math.round(remainingPercent)}%</span>
+                                <span className="text-slate-400 font-medium">도정됨 {Math.round(milledPercent)}%</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="mt-auto">
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2">
-                            <div
-                                className="bg-[#2EB85C] h-full rounded-full transition-all duration-1000 ease-out"
-                                style={{ width: `${remainingPercent}%` }}
-                            />
+                    {/* 2. Total Production Card */}
+                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
+                        <div className="mb-4 md:mb-0">
+                            <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">총 생산량</h3>
+                            <div className="flex items-baseline mb-1">
+                                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedOutput.toLocaleString()}</span>
+                                <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
+                            </div>
+                            <div className="text-xs font-medium text-slate-400">올해 누적 도정 생산량</div>
                         </div>
-                        <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-                            <span className="text-slate-700">전체 {totalStock.toLocaleString()} kg 중 {Math.round(remainingPercent)}%</span>
-                            <span className="text-slate-400 font-medium">도정됨 {Math.round(milledPercent)}%</span>
+
+                        <div className="mt-auto">
+                            <div className="w-full bg-slate-100 h-2 flex rounded-full overflow-hidden mb-2">
+                                <div className="bg-[#2EB85C] h-full transition-all duration-1000 ease-out" style={{ width: `${uruchiOutPercent}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`} />
+                                <div className="bg-[#E74C3C] h-full transition-all duration-1000 ease-out" style={{ width: `${indicaOutPercent}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`} />
+                                <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />
+                                <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase">
+                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.uruchi).toLocaleString()}</span></div>
+                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#E74C3C]"></span>인디카 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.indica).toLocaleString()}</span></div>
+                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F6C000]"></span>찰벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.glutinous).toLocaleString()}</span></div>
+                                {outputsByType.others > 0 && <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#95A5A6]"></span>기타 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.others).toLocaleString()}</span></div>}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. Total Production Card */}
-                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
-                    <div className="mb-4 md:mb-0">
-                        <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">총 생산량</h3>
-                        <div className="flex items-baseline mb-1">
-                            <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedOutput.toLocaleString()}</span>
-                            <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
-                        </div>
-                        <div className="text-xs font-medium text-slate-400">올해 누적 도정 생산량</div>
-                    </div>
-
-                    <div className="mt-auto">
-                        <div className="w-full bg-slate-100 h-2 flex rounded-full overflow-hidden mb-2">
-                            <div className="bg-[#2EB85C] h-full transition-all duration-1000 ease-out" style={{ width: `${uruchiOutPercent}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`} />
-                            <div className="bg-[#E74C3C] h-full transition-all duration-1000 ease-out" style={{ width: `${indicaOutPercent}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`} />
-                            <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />
-                            <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />
-                        </div>
-                        <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase">
-                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.uruchi).toLocaleString()}</span></div>
-                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#E74C3C]"></span>인디카 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.indica).toLocaleString()}</span></div>
-                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F6C000]"></span>찰벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.glutinous).toLocaleString()}</span></div>
-                            {outputsByType.others > 0 && <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#95A5A6]"></span>기타 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.others).toLocaleString()}</span></div>}
-                        </div>
-                    </div>
-                </div>
-
+                {/* Right section: Yield card taking the 3fr space to match bottom layout */}
                 {/* 3. Average Yield Card */}
                 <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[160px]">
                     <div className="w-full">
