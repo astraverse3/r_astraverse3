@@ -24,6 +24,7 @@ export default async function MillingListPage({
         millingType: typeof resolvedParams.millingType === 'string' ? resolvedParams.millingType : undefined,
         keyword: typeof resolvedParams.keyword === 'string' ? resolvedParams.keyword : undefined,
         yieldRate: typeof resolvedParams.yieldRate === 'string' ? resolvedParams.yieldRate : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
         startDate,
         endDate
     }

@@ -14,6 +14,7 @@ export function ActiveMillingFilters({ totalCount }: ActiveMillingFiltersProps) 
     const variety = searchParams.get('variety') || 'ALL'
     const millingType = searchParams.get('millingType') || 'ALL'
     const keyword = searchParams.get('keyword') || ''
+    const farmerName = searchParams.get('farmerName') || ''
     const yieldRate = searchParams.get('yieldRate') || 'ALL'
 
     const activeFilterCount = [
@@ -21,6 +22,7 @@ export function ActiveMillingFilters({ totalCount }: ActiveMillingFiltersProps) 
         variety !== 'ALL',
         millingType !== 'ALL',
         keyword !== '',
+        farmerName !== '',
         yieldRate !== 'ALL'
     ].filter(Boolean).length
 
@@ -43,6 +45,7 @@ export function ActiveMillingFilters({ totalCount }: ActiveMillingFiltersProps) 
                 {status !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{status === 'open' ? '진행중' : '마감'}</Badge>}
                 {variety !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{variety}</Badge>}
                 {millingType !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{millingType}</Badge>}
+                {farmerName && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">생산자: {farmerName}</Badge>}
                 {yieldRate !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{getYieldLabel(yieldRate)}</Badge>}
                 {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">"{keyword}"</Badge>}
             </div>

@@ -146,6 +146,7 @@ export type GetMillingLogsParams = {
     variety?: string // variety name search
     millingType?: string
     yieldRate?: string
+    farmerName?: string
 }
 
 export async function getMillingLogs(params?: GetMillingLogsParams) {
@@ -182,6 +183,19 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                     some: {
                         variety: {
                             name: { contains: params.variety }
+                        }
+                    }
+                }
+            })
+        }
+
+        // Farmer Name filter (check stocks)
+        if (params?.farmerName) {
+            andConditions.push({
+                stocks: {
+                    some: {
+                        farmer: {
+                            name: { contains: params.farmerName }
                         }
                     }
                 }

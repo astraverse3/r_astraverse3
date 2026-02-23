@@ -50,6 +50,7 @@ export function MillingFilters({
     const [variety, setVariety] = useState(searchParams.get('variety') || 'ALL')
     const [millingType, setMillingType] = useState(searchParams.get('millingType') || 'ALL')
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
+    const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [yieldRate, setYieldRate] = useState(searchParams.get('yieldRate') || 'ALL')
 
     // Date Range State
@@ -68,6 +69,7 @@ export function MillingFilters({
             setVariety(searchParams.get('variety') || 'ALL')
             setMillingType(searchParams.get('millingType') || 'ALL')
             setKeyword(searchParams.get('keyword') || '')
+            setFarmerName(searchParams.get('farmerName') || '')
             setYieldRate(searchParams.get('yieldRate') || 'ALL')
 
             const start = searchParams.get('startDate')
@@ -84,6 +86,7 @@ export function MillingFilters({
         variety !== 'ALL',
         millingType !== 'ALL',
         keyword !== '',
+        farmerName !== '',
         yieldRate !== 'ALL',
         dateRange.from || dateRange.to
     ].filter(Boolean).length
@@ -95,6 +98,7 @@ export function MillingFilters({
         if (variety && variety !== 'ALL') params.set('variety', variety)
         if (millingType && millingType !== 'ALL') params.set('millingType', millingType)
         if (keyword) params.set('keyword', keyword)
+        if (farmerName) params.set('farmerName', farmerName)
         if (yieldRate && yieldRate !== 'ALL') params.set('yieldRate', yieldRate)
         if (dateRange.from) params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'))
         if (dateRange.to) params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'))
@@ -108,6 +112,7 @@ export function MillingFilters({
         setVariety('ALL')
         setMillingType('ALL')
         setKeyword('')
+        setFarmerName('')
         setYieldRate('ALL')
         setDateRange({ from: undefined, to: undefined })
         router.push(`/milling`)
@@ -280,16 +285,29 @@ export function MillingFilters({
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>비고 (텍스트 검색)</Label>
-                        <Input
-                            placeholder="검색어 입력"
-                            value={keyword}
-                            onChange={e => setKeyword(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleApply()
-                            }}
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>생산자명 (텍스트 검색)</Label>
+                            <Input
+                                placeholder="농가명 입력"
+                                value={farmerName}
+                                onChange={e => setFarmerName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleApply()
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>비고 (텍스트 검색)</Label>
+                            <Input
+                                placeholder="비고 입력"
+                                value={keyword}
+                                onChange={e => setKeyword(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleApply()
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
                 <DialogFooter className="flex gap-2 sm:justify-between">
