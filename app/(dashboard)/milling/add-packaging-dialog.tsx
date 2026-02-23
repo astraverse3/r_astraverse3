@@ -347,7 +347,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                         {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                             isClosed ? (
                                                 <div className="flex items-center gap-1.5 opacity-60">
-                                                    <div className="h-8 w-20 flex items-center justify-center text-sm font-bold">
+                                                    <div className="h-8 w-20 flex items-center justify-end pr-1 text-sm font-bold">
                                                         {o.weightPerUnit.toLocaleString()}
                                                     </div>
                                                     <span className="text-xs font-medium shrink-0">kg</span>
@@ -359,14 +359,14 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                         value={o.weightPerUnit}
                                                         onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                         onFocus={(e) => e.target.select()}
-                                                        className="h-8 w-20 text-center text-sm font-medium border-stone-200 rounded-lg shadow-none"
+                                                        className="h-8 w-20 text-right pr-2 text-sm font-medium border-stone-200 rounded-lg shadow-none"
                                                     />
                                                     <span className="text-xs text-stone-400 font-medium shrink-0">kg</span>
                                                 </div>
                                             )
                                         ) : (
                                             <div className="flex items-center gap-1.5 opacity-40">
-                                                <div className="h-8 w-20 flex items-center justify-center text-sm font-bold">
+                                                <div className="h-8 w-20 flex items-center justify-end pr-1 text-sm font-bold">
                                                     {(o.weightPerUnit * o.count).toLocaleString()}
                                                 </div>
                                                 <span className="text-xs font-medium shrink-0">kg</span>
