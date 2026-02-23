@@ -36,7 +36,10 @@ interface Props {
 const PACKAGE_TEMPLATES = [
     { label: '20kg', weight: 20 },
     { label: '10kg', weight: 10 },
+    { label: '8kg', weight: 8 },
     { label: '5kg', weight: 5 },
+    { label: '4kg', weight: 4 },
+    { label: '1kg', weight: 1 },
 ]
 
 export function AddMillingLogForm({ availableStocks }: Props) {

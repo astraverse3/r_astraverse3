@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Minus, Package, Trash2, Lock } from 'lucide-react'
+import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
@@ -28,7 +28,10 @@ interface Props {
 const PACKAGE_TEMPLATES = [
     { label: '20kg', weight: 20 },
     { label: '10kg', weight: 10 },
+    { label: '8kg', weight: 8 },
     { label: '5kg', weight: 5 },
+    { label: '4kg', weight: 4 },
+    { label: '1kg', weight: 1 },
 ]
 
 export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
@@ -36,6 +39,8 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
     const [isLoading, setIsLoading] = useState(false)
+    const [isCustomInput, setIsCustomInput] = useState(false)
+    const [customWeight, setCustomWeight] = useState('')
     const scrollRef = useRef<HTMLDivElement>(null)
 
     // ... (keep state logic same) ...
@@ -152,7 +157,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }
 
         setOutputs(prev => {
-            const existingIndex = prev.findIndex(o => o.packageType === template.label && o.packageType !== '톤백')
+            const existingIndex = prev.findIndex(o => o.packageType === template.label && o.packageType !== '톤백' && o.packageType !== '잔량')
             if (existingIndex >= 0) {
                 const newOutputs = [...prev]
                 const o = newOutputs[existingIndex]
@@ -166,6 +171,17 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                 totalWeight: template.weight
             }]
         })
+    }
+
+    const handleCustomAdd = () => {
+        const weight = parseFloat(customWeight)
+        if (weight > 0) {
+            addPackage({ label: `${weight}kg`, weight })
+            setCustomWeight('')
+            setIsCustomInput(false)
+        } else {
+            toast.warning('올바른 무게를 입력해주세요.')
+        }
     }
 
     const setCount = (index: number, count: number) => {
@@ -255,20 +271,62 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                 <div className="py-6 space-y-6">
                     {/* Template buttons - only when editable */}
                     {!isClosed && (
-                        <div className="space-y-3">
-                            <Label>규격 선택</Label>
-                            <div className="flex gap-2 flex-wrap">
-                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 0 })}>
+                        <div className="space-y-2">
+                            <Label className="mb-2 block">규격 선택</Label>
+
+                            {/* Row 1 */}
+                            <div className="grid grid-cols-5 gap-1.5 h-9">
+                                <Button variant="secondary" className="h-full px-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 0 })}>
                                     톤백
                                 </Button>
-                                {PACKAGE_TEMPLATES.map(t => (
-                                    <Button key={t.label} variant="secondary" className="flex-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
+                                {[{ label: '20kg', weight: 20 }, { label: '10kg', weight: 10 }, { label: '8kg', weight: 8 }, { label: '5kg', weight: 5 }].map(t => (
+                                    <Button key={t.label} variant="secondary" className="h-full px-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
                                         {t.label}
                                     </Button>
                                 ))}
-                                <Button variant="secondary" className="flex-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
+                            </div>
+
+                            {/* Row 2 */}
+                            <div className="grid grid-cols-5 gap-1.5 h-9">
+                                {[{ label: '4kg', weight: 4 }, { label: '3kg', weight: 3 }, { label: '1kg', weight: 1 }].map(t => (
+                                    <Button key={t.label} variant="secondary" className="h-full px-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
+                                        {t.label}
+                                    </Button>
+                                ))}
+                                <Button variant="secondary" className="h-full px-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
                                     잔량
                                 </Button>
+
+                                {/* Custom Input Toggle */}
+                                {isCustomInput ? (
+                                    <div className="flex gap-0.5 h-full items-center bg-stone-100 rounded-md border border-stone-200">
+                                        <div className="relative flex-1">
+                                            <Input
+                                                type="number"
+                                                value={customWeight}
+                                                onChange={(e) => setCustomWeight(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleCustomAdd()
+                                                    if (e.key === 'Escape') setIsCustomInput(false)
+                                                }}
+                                                placeholder="입력"
+                                                autoFocus
+                                                className="h-full w-full pr-3 pl-1 text-xs text-right border-none shadow-none bg-transparent focus-visible:ring-0"
+                                            />
+                                            <span className="absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] text-stone-500 font-bold">kg</span>
+                                        </div>
+                                        <Button size="icon" variant="ghost" className="h-full w-6 shrink-0 text-blue-600 p-0" onClick={handleCustomAdd}>
+                                            <Check className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-full w-6 shrink-0 text-stone-400 p-0" onClick={() => setIsCustomInput(false)}>
+                                            <X className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button variant="outline" className="h-full px-1 text-xs border-dashed border-stone-300 hover:bg-stone-100 text-stone-500 p-0" onClick={() => setIsCustomInput(true)}>
+                                        직접입력
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     )}
