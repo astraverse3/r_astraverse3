@@ -338,42 +338,68 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                 <div className="text-center text-sm text-stone-400 py-6">포장 내역이 없습니다</div>
                             )}
                             {outputs.map((o, i) => (
-                                <div key={`${o.packageType}-${i}`} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg border border-stone-200">
-                                    <span className="font-bold text-sm w-10 shrink-0">{o.packageType}</span>
-                                    {(o.packageType === '톤백' || o.packageType === '잔량') ? (
-                                        isClosed ? (
-                                            <span className="text-xs text-stone-500">{o.weightPerUnit.toLocaleString()}kg</span>
+                                <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-stone-200">
+                                    {/* Left: Label */}
+                                    <span className="font-bold text-sm w-12 shrink-0">{o.packageType}</span>
+
+                                    {/* Middle: Weight Info */}
+                                    <div className="flex-1 flex items-center justify-center">
+                                        {(o.packageType === '톤백' || o.packageType === '잔량') ? (
+                                            isClosed ? (
+                                                <div className="flex items-center gap-1.5 opacity-60">
+                                                    <div className="h-8 w-20 flex items-center justify-center text-sm font-bold">
+                                                        {o.weightPerUnit.toLocaleString()}
+                                                    </div>
+                                                    <span className="text-xs font-medium shrink-0">kg</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Input
+                                                        type="number"
+                                                        value={o.weightPerUnit}
+                                                        onChange={(e) => setWeight(i, parseFloat(e.target.value))}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="h-8 w-20 text-center text-sm font-medium border-stone-200 rounded-lg shadow-none"
+                                                    />
+                                                    <span className="text-xs text-stone-400 font-medium shrink-0">kg</span>
+                                                </div>
+                                            )
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 opacity-40">
+                                                <div className="h-8 w-20 flex items-center justify-center text-sm font-bold">
+                                                    {(o.weightPerUnit * o.count).toLocaleString()}
+                                                </div>
+                                                <span className="text-xs font-medium shrink-0">kg</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Right: Controls */}
+                                    <div className="flex items-center shrink-0 ml-auto">
+                                        {isClosed ? (
+                                            <span className="text-sm font-mono text-stone-600 px-4">{o.count}개</span>
                                         ) : (
                                             <div className="flex items-center gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
+                                                    <Minus className="h-4 w-4" />
+                                                </Button>
                                                 <Input
                                                     type="number"
-                                                    value={o.weightPerUnit}
-                                                    onChange={(e) => setWeight(i, parseFloat(e.target.value))}
+                                                    value={o.count === 0 ? '' : o.count}
+                                                    onChange={(e) => setCount(i, parseInt(e.target.value))}
                                                     onFocus={(e) => e.target.select()}
-                                                    className="h-7 w-[5.5rem] text-right px-1 py-0 text-xs"
+                                                    className="w-14 h-8 text-center text-sm font-bold bg-transparent border-stone-200 rounded-lg shadow-none font-mono"
                                                 />
-                                                <span className="text-[10px] text-stone-500">kg</span>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                                <div className="w-px h-4 bg-stone-200 mx-1"></div>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                        )
-                                    ) : (
-                                        <span className="text-xs text-stone-400 w-16 text-right">{(o.weightPerUnit * o.count).toLocaleString()}kg</span>
-                                    )}
-                                    {isClosed ? (
-                                        <span className="text-sm font-mono text-stone-600 ml-auto">{o.count}개</span>
-                                    ) : (
-                                        <div className="flex items-center gap-1 ml-auto">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, -1)}><Minus className="h-3 w-3" /></Button>
-                                            <Input
-                                                type="number"
-                                                value={o.count === 0 ? '' : o.count}
-                                                onChange={(e) => setCount(i, parseInt(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-16 h-7 text-center text-sm px-1 font-mono"
-                                            />
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
