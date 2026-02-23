@@ -225,7 +225,10 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                 },
                 outputs: true
             },
-            orderBy: { date: 'desc' }
+            orderBy: [
+                { date: 'desc' },
+                { id: 'desc' }
+            ]
         })
 
         return { success: true, data: logs }
