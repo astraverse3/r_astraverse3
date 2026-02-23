@@ -10,7 +10,6 @@ export async function getDashboardStats() {
             select: { productionYear: true }
         });
         const latestYear = latestStock?.productionYear || new Date().getFullYear();
-        const currentYear = new Date().getFullYear();
 
         // Batch 1: Key Aggregates (Lightweight)
         const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight] = await Promise.all([
@@ -24,27 +23,21 @@ export async function getDashboardStats() {
             }),
             // 2. Count of milling batches
             prisma.millingBatch.count(),
-            // 3. Total output production weight (KG) - Filtered by Current Year AND Closed
+            // 3. Total output production weight (KG) - Filtered by closed and latestYear
             prisma.millingOutputPackage.aggregate({
                 where: {
                     batch: {
                         isClosed: true,
-                        date: {
-                            gte: new Date(`${currentYear}-01-01`),
-                            lt: new Date(`${currentYear + 1}-01-01`)
-                        }
+                        stocks: { some: { productionYear: latestYear } }
                     }
                 },
                 _sum: { totalWeight: true }
             }),
-            // 4. Total Input Weight for Yield (Current Year AND Closed)
+            // 4. Total Input Weight for Yield
             prisma.millingBatch.aggregate({
                 where: {
                     isClosed: true,
-                    date: {
-                        gte: new Date(`${currentYear}-01-01`),
-                        lt: new Date(`${currentYear + 1}-01-01`)
-                    }
+                    stocks: { some: { productionYear: latestYear } }
                 },
                 _sum: { totalInputKg: true }
             })
@@ -78,10 +71,7 @@ export async function getDashboardStats() {
             prisma.millingBatch.findMany({
                 where: {
                     isClosed: true,
-                    date: {
-                        gte: new Date(`${currentYear}-01-01`),
-                        lt: new Date(`${currentYear + 1}-01-01`)
-                    }
+                    stocks: { some: { productionYear: latestYear } }
                 },
                 select: {
                     millingType: true,
@@ -200,7 +190,7 @@ export async function getDashboardStats() {
             success: true,
             data: {
                 targetYear: latestYear,
-                productionYear: currentYear,
+                productionYear: latestYear,
                 availableStockKg: availableStockWeight,
                 consumedStockKg: consumedStockWeight,
                 totalStockKg: totalStockWeight,
