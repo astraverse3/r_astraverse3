@@ -145,8 +145,8 @@ export async function getDashboardStats() {
                     else if (vType === 'INDICA') outputsByType.indica += proratedOut;
                     else outputsByType.others += proratedOut;
 
-                    // Exclude from yield statistics: glutinous rice (찰벼) OR non-'백미' milling types
-                    if (vType === 'GLUTINOUS' || b.millingType !== '백미') return;
+                    // Exclude from yield statistics: non-'백미' milling types (현미 등)
+                    if (b.millingType !== '백미') return;
 
                     const curr = varietyYieldMap.get(vName) || { in: 0, out: 0 };
                     curr.in += proratedIn;

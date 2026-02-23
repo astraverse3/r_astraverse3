@@ -148,11 +148,11 @@ export function RealtimeStatus({
                             <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />
                             <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />
                         </div>
-                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼</div>
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#E74C3C]"></span>인디카</div>
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F6C000]"></span>찰벼</div>
-                            {outputsByType.others > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#95A5A6]"></span>기타</div>}
+                        <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase">
+                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.uruchi).toLocaleString()}</span></div>
+                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#E74C3C]"></span>인디카 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.indica).toLocaleString()}</span></div>
+                            <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F6C000]"></span>찰벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.glutinous).toLocaleString()}</span></div>
+                            {outputsByType.others > 0 && <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#95A5A6]"></span>기타 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.others).toLocaleString()}</span></div>}
                         </div>
                     </div>
                 </div>

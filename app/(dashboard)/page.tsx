@@ -120,7 +120,7 @@ export default async function Home() {
           <section className="bg-white sm:rounded-[24px] shadow-sm border border-slate-100 p-5 sm:p-6 h-full flex flex-col">
             <div className="mb-4 flex items-center justify-between shrink-0">
               <h2 className="text-base font-bold text-slate-800 font-sans">
-                품종별 재고 비율 & 수율
+                품종별 재고 비율 & 백미수율
               </h2>
             </div>
 
