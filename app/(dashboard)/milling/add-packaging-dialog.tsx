@@ -368,7 +368,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                 value={o.count === 0 ? '' : o.count}
                                                 onChange={(e) => setCount(i, parseInt(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
-                                                className="w-12 h-7 text-center text-sm"
+                                                className="w-16 h-7 text-center text-sm px-1 font-mono"
                                             />
                                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateCount(i, 1)}><Plus className="h-3 w-3" /></Button>
                                             <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500" onClick={() => removePackage(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
