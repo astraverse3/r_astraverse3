@@ -24,6 +24,7 @@ export default async function Home() {
           totalStock={stats?.totalStockKg || 0}
           millingProgress={stats?.millingProgressRate || 0}
           totalOutput={stats?.totalOutputKg || 0}
+          outputsByType={stats?.outputsByType || { uruchi: 0, glutinous: 0, indica: 0, others: 0 }}
           yields={{ uruchi: stats?.uruchiYield || 0, indica: stats?.indicaYield || 0 }}
           years={{ target: stats?.targetYear || currentYear, current: currentYear }}
         />

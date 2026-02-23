@@ -74,17 +74,17 @@ export async function getDashboardStats() {
             // 8. Latest Updates
             prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
-            // 9. All closed '백미' milling batches for variety yield calculation
+            // 9. All closed milling batches for variety yield and output breakdown
             prisma.millingBatch.findMany({
                 where: {
                     isClosed: true,
-                    millingType: '백미',
                     date: {
                         gte: new Date(`${currentYear}-01-01`),
                         lt: new Date(`${currentYear + 1}-01-01`)
                     }
                 },
                 select: {
+                    millingType: true,
                     totalInputKg: true,
                     stocks: { select: { weightKg: true, variety: { select: { name: true, type: true } } } },
                     outputs: { select: { totalWeight: true } }
@@ -112,12 +112,18 @@ export async function getDashboardStats() {
             varietyMap.set(name, current);
         });
 
-        // Process Variety & Split Yields (Uruchi / Indica)
+        // Process Variety & Split Yields (Uruchi / Indica) and Total Output by Type
         const varietyYieldMap = new Map<string, { in: number, out: number }>();
         let uruchiIn = 0;
         let uruchiOut = 0;
         let indicaIn = 0;
         let indicaOut = 0;
+        const outputsByType = {
+            uruchi: 0,
+            glutinous: 0,
+            indica: 0,
+            others: 0
+        };
 
         if (yearBatches) {
             yearBatches.forEach(b => {
@@ -129,12 +135,18 @@ export async function getDashboardStats() {
                     const vName = st.variety.name;
                     const vType = st.variety.type;
 
-                    // Exclude glutinous rice (찰벼) from yield statistics
-                    if (vType === 'GLUTINOUS') return;
-
                     const ratio = st.weightKg / batchStockInput;
                     const proratedOut = batchOut * ratio;
                     const proratedIn = b.totalInputKg * ratio;
+
+                    // Add to total outputs by type
+                    if (vType === 'URUCHI') outputsByType.uruchi += proratedOut;
+                    else if (vType === 'GLUTINOUS') outputsByType.glutinous += proratedOut;
+                    else if (vType === 'INDICA') outputsByType.indica += proratedOut;
+                    else outputsByType.others += proratedOut;
+
+                    // Exclude from yield statistics: glutinous rice (찰벼) OR non-'백미' milling types
+                    if (vType === 'GLUTINOUS' || b.millingType !== '백미') return;
 
                     const curr = varietyYieldMap.get(vName) || { in: 0, out: 0 };
                     curr.in += proratedIn;
@@ -195,6 +207,7 @@ export async function getDashboardStats() {
                 millingProgressRate: millingProgressRate,
                 totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutput,
+                outputsByType,
                 uruchiYield,
                 indicaYield,
                 recentLogs, // Note: UI will need to read variety.name from relations
