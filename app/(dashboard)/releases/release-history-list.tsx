@@ -36,7 +36,7 @@ interface ReleaseLog {
     stocks: Stock[]
 }
 
-export function ReleaseHistoryList({ initialLogs, filtersSlot }: { initialLogs: any[], filtersSlot?: React.ReactNode }) {
+export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { initialLogs: any[], filtersSlot?: React.ReactNode, excelSlot?: React.ReactNode }) {
     const logs = initialLogs as ReleaseLog[]
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -147,6 +147,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot }: { initialLogs: 
                         )}
                     </div>
                     <div className="flex items-center gap-2">
+                        {excelSlot}
                         {filtersSlot}
                     </div>
                 </div>

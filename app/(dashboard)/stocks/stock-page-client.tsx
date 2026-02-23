@@ -113,8 +113,8 @@ export function StockPageClient({
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                        {filtersSlot}
                         {excelSlot}
+                        {filtersSlot}
                         {addDialogSlot}
                     </div>
                 </div>

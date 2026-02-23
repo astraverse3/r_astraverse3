@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { getReleaseLogs } from '@/app/actions/release'
 import { ReleaseHistoryList } from './release-history-list'
 import { ReleaseFilters } from './release-filters'
+import { ReleaseExcelButton } from './release-excel-button'
 import { subYears, startOfDay, endOfDay } from 'date-fns'
 
 export default async function ReleaseHistoryPage({
@@ -27,6 +28,7 @@ export default async function ReleaseHistoryPage({
                 <ReleaseHistoryList
                     initialLogs={logs}
                     filtersSlot={<ReleaseFilters />}
+                    excelSlot={<ReleaseExcelButton filters={filters} />}
                 />
             </Suspense>
         </div>

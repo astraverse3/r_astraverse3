@@ -145,10 +145,10 @@ export function RealtimeStatus({
 
                         <div className="mt-auto">
                             <div className="w-full bg-slate-100 h-2 flex rounded-full overflow-hidden mb-2">
-                                <div className="bg-[#2EB85C] h-full transition-all duration-1000 ease-out" style={{ width: `${uruchiOutPercent}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`} />
-                                <div className="bg-[#E74C3C] h-full transition-all duration-1000 ease-out" style={{ width: `${indicaOutPercent}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`} />
-                                <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />
-                                <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />
+                                {uruchiOutPercent > 0 && <div className="bg-[#2EB85C] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${uruchiOutPercent}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`} />}
+                                {indicaOutPercent > 0 && <div className="bg-[#E74C3C] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${indicaOutPercent}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`} />}
+                                {glutinousOutPercent > 0 && <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />}
+                                {othersOutPercent > 0 && <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />}
                             </div>
                             <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase">
                                 <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.uruchi).toLocaleString()}</span></div>

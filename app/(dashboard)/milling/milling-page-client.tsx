@@ -3,20 +3,23 @@
 import { ReactNode } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
+import { GetMillingLogsParams } from '@/app/actions/milling'
+import { MillingExcelButton } from './milling-excel-button'
 
 interface MillingPageClientProps {
     children: ReactNode
     filtersSlot: ReactNode
     selectedIds: Set<number>
     onShowDelete: () => void
+    filters?: GetMillingLogsParams
 }
 
 export function MillingPageClient({
     children,
     filtersSlot,
     selectedIds,
-    onShowDelete
+    onShowDelete,
+    filters
 }: MillingPageClientProps) {
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">
@@ -47,6 +50,7 @@ export function MillingPageClient({
                         )}
                     </div>
                     <div className="flex items-center gap-2">
+                        <MillingExcelButton filters={filters} />
                         {filtersSlot}
                     </div>
                 </div>
