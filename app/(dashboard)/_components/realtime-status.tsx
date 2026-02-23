@@ -164,12 +164,12 @@ export function RealtimeStatus({
                         <div className="flex gap-3 w-full">
                             {/* Uruchi */}
                             <div className="flex-1 bg-[#EBF4FA] rounded-[16px] px-3 py-3 flex flex-col items-center justify-center border border-blue-50/50">
-                                <span className="text-2xl font-black text-slate-800 mb-0.5">{animatedUruchi.toFixed(1)}%</span>
+                                <span className="text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedUruchi * 10) / 10).toFixed(1)}%</span>
                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tighter">메벼</span>
                             </div>
                             {/* Indica */}
                             <div className="flex-1 bg-[#F4F1EA] rounded-[16px] px-3 py-3 flex flex-col items-center justify-center border border-amber-50/50">
-                                <span className="text-2xl font-black text-slate-800 mb-0.5">{animatedIndica.toFixed(1)}%</span>
+                                <span className="text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedIndica * 10) / 10).toFixed(1)}%</span>
                                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tighter">인디카</span>
                             </div>
                         </div>

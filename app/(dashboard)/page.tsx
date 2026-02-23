@@ -91,7 +91,7 @@ export default async function Home() {
                       {/* Yield */}
                       <div className="w-[15%] text-[13px] font-black text-slate-800 text-right">
                         {log.isClosed ? (
-                          <span className="text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md">{yieldRate.toFixed(1)}%</span>
+                          <span className="text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
@@ -157,7 +157,7 @@ export default async function Home() {
                         <div className="shrink-0 w-[52px]">
                           {item.yieldRate > 0 ? (
                             <div className="bg-blue-50/80 px-2 py-1.5 rounded-lg flex flex-col items-center justify-center border border-blue-100/50 h-[38px]">
-                              <span className="text-[12px] font-black text-blue-600 leading-none">{item.yieldRate.toFixed(1)}%</span>
+                              <span className="text-[12px] font-black text-blue-600 leading-none">{(Math.round(item.yieldRate * 10) / 10).toFixed(1)}%</span>
                             </div>
                           ) : (
                             <div className="bg-slate-50/80 px-2 py-1.5 rounded-lg flex flex-col items-center justify-center border border-slate-100/50 h-[38px]">
