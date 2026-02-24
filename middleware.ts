@@ -35,8 +35,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - public files (images, manifest, etc)
+         * - public files (images, manifest, sw.js, etc)
          */
-        "/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.json|icon-*|logo-*).*)",
+        "/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.json|icon-.*|logo-.*|sw\\.js|workbox-.*).*)",
     ],
 }
