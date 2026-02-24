@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 // 보호할 라우트와 공개 라우트 설정
 export default withAuth(
-    function middleware(req) {
+    function proxy(req) {
         // 사용자가 로그인한 상태에서 로그인 페이지로 가려고 하면 대시보드로 리다이렉트
         if (req.nextUrl.pathname === "/login") {
             return NextResponse.redirect(new URL("/", req.url))
