@@ -8,7 +8,7 @@ export function KakaoLoginButton() {
     return (
         <Button
             className="w-full bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#000000] font-semibold h-12 flex items-center justify-center gap-2"
-            onClick={() => signIn("kakao", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("kakao", { callbackUrl: "/" })}
         >
             <MessageCircle className="w-5 h-5 fill-current" />
             카카오톡으로 로그인
