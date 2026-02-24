@@ -7,11 +7,16 @@ import { exportFarmers, importFarmers } from '@/app/actions/excel'
 import { formatImportResult } from '@/lib/excel-utils'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
 
     const handleExport = async () => {
         setExporting(true)
@@ -85,23 +90,27 @@ export function ExcelButtons() {
         <>
             {(importing || exporting) && <FullScreenLoader message={importing ? "데이터 업로드 및 분석 중..." : "데이터 다운로드 중..."} />}
             <div className="flex gap-1 items-center">
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".xlsx, .xls"
-                />
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-400 transition-colors"
-                    onClick={handleImportClick}
-                    disabled={importing}
-                    title="엑셀 등록"
-                >
-                    <Upload className="w-4 h-4" />
-                </Button>
+                {canManage && (
+                    <>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept=".xlsx, .xls"
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-400 transition-colors"
+                            onClick={handleImportClick}
+                            disabled={importing}
+                            title="엑셀 등록"
+                        >
+                            <Upload className="w-4 h-4" />
+                        </Button>
+                    </>
+                )}
                 <Button
                     variant="outline"
                     size="sm"

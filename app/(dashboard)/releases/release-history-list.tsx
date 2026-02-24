@@ -18,6 +18,8 @@ import { deleteStockReleases, removeStockFromRelease } from '@/app/actions/relea
 import { EditReleaseDialog } from './edit-release-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Stock {
     id: number
@@ -41,6 +43,9 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
     const [editRelease, setEditRelease] = useState<ReleaseLog | null>(null)
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
 
     const toggleExpand = (id: number) => {
         const newSet = new Set(expandedIds)
@@ -124,7 +129,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        {selectedIds.size > 0 ? (
+                        {canManage && selectedIds.size > 0 ? (
                             <Button
                                 variant="destructive"
                                 size="sm"
@@ -134,7 +139,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 출고취소 ({selectedIds.size})
                             </Button>
-                        ) : (
+                        ) : canManage ? (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -144,7 +149,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 출고취소
                             </Button>
-                        )}
+                        ) : null}
                     </div>
                     <div className="flex items-center gap-2">
                         {excelSlot}
@@ -221,14 +226,16 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                                 {totalWeight.toLocaleString()} kg
                                             </TableCell>
                                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                                                    onClick={() => setEditRelease(log)}
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
+                                                {canManage && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                                                        onClick={() => setEditRelease(log)}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
 
@@ -269,14 +276,16 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                                                             <TableCell className="py-1 text-xs text-center font-bold text-slate-700">{stock.bagNo}번</TableCell>
                                                                             <TableCell className="py-1 text-xs text-right font-mono font-bold text-slate-600">{stock.weightKg.toLocaleString()}</TableCell>
                                                                             <TableCell className="py-1 text-center">
-                                                                                <Button
-                                                                                    variant="ghost"
-                                                                                    size="icon"
-                                                                                    className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50"
-                                                                                    onClick={() => handleRemoveStock(stock.id)}
-                                                                                >
-                                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                                </Button>
+                                                                                {canManage && (
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="h-7 w-7 text-slate-300 hover:text-red-500 hover:bg-red-50"
+                                                                                        onClick={() => handleRemoveStock(stock.id)}
+                                                                                    >
+                                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                                    </Button>
+                                                                                )}
                                                                             </TableCell>
                                                                         </TableRow>
                                                                     ))}

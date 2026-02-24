@@ -17,7 +17,9 @@ import { toast } from 'sonner'
 import { EditStockDialog } from './edit-stock-dialog'
 import { deleteStock } from '@/app/actions/stock'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { Stock } from './page' // Import Stock interface from page
+import { Stock } from './page'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Props {
     stock: any
@@ -33,6 +35,9 @@ interface Props {
 export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart }: Props) {
     const [editOpen, setEditOpen] = useState(false)
     const isAvailable = stock.status === 'AVAILABLE' && !isInCart
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
 
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
@@ -137,33 +142,35 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
 
                 {/* 9. Management */}
                 <TableCell className="py-2 px-1 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                setEditOpen(true)
-                            }}
-                            title="수정"
-                        >
-                            <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                handleDelete()
-                            }}
-                            disabled={stock.status === 'CONSUMED'}
-                            title={stock.status === 'CONSUMED' ? '도정 완료된 재고는 삭제할 수 없습니다' : '삭제'}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
-                    </div>
+                    {canManage && (
+                        <div className="flex items-center justify-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditOpen(true)
+                                }}
+                                title="수정"
+                            >
+                                <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDelete()
+                                }}
+                                disabled={stock.status === 'CONSUMED'}
+                                title={stock.status === 'CONSUMED' ? '도정 완료된 재고는 삭제할 수 없습니다' : '삭제'}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    )}
                 </TableCell>
             </TableRow>
 
