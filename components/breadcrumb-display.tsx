@@ -11,6 +11,7 @@ const ROUTE_NAME_MAP: Record<string, string> = {
     'admin': '관리자',
     'varieties': '품종 관리',
     'farmers': '생산자 관리',
+    'users': '사용자 관리',
 }
 
 export function BreadcrumbDisplay() {

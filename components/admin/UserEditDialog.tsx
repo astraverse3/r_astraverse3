@@ -10,6 +10,7 @@ interface UserEditDialogProps {
     user: {
         id: string
         name: string | null
+        email: string | null
         department: string | null
         position: string | null
         phone: string | null
@@ -19,6 +20,7 @@ interface UserEditDialogProps {
 }
 
 export function UserEditDialog({ user, open, onClose }: UserEditDialogProps) {
+    const [email, setEmail] = useState(user.email || '')
     const [department, setDepartment] = useState(user.department || '')
     const [position, setPosition] = useState(user.position || '')
     const [phone, setPhone] = useState(user.phone || '')
@@ -30,6 +32,7 @@ export function UserEditDialog({ user, open, onClose }: UserEditDialogProps) {
         setLoading(true)
         try {
             const result = await updateUserInfo(user.id, {
+                email: email || null,
                 department: department || null,
                 position: position || null,
                 phone: phone || null,
@@ -57,6 +60,16 @@ export function UserEditDialog({ user, open, onClose }: UserEditDialogProps) {
                 </h2>
 
                 <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">이메일</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="예: user@example.com"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 mb-1">부서</label>
                         <input

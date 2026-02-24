@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
             // 매 요청마다 DB에서 최신 역할/정보 동기화
             if (token.id) {
                 const dbUser = await prisma.user.findUnique({
-                    where: { id: token.id as string },
+                    where: { id: String(token.id) },
                     select: { role: true, department: true, position: true }
                 })
                 if (dbUser) {

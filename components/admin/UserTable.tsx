@@ -80,8 +80,8 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                             <div><span className="text-slate-400">직책:</span> {user.position || '-'}</div>
                             <div><span className="text-slate-400">연락처:</span> {user.phone || '-'}</div>
                         </div>
-                        {user.id !== currentUserId && (
-                            <div className="flex gap-2 pt-1 border-t border-slate-100">
+                        <div className="flex gap-2 pt-1 border-t border-slate-100">
+                            {user.id !== currentUserId && (
                                 <button
                                     onClick={() => handleRoleToggle(user)}
                                     className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
@@ -89,20 +89,22 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                     {user.role === 'ADMIN' ? <ShieldOff className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
                                     {user.role === 'ADMIN' ? '권한 해제' : '관리자 지정'}
                                 </button>
-                                <button
-                                    onClick={() => setEditingUser(user)}
-                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-                                >
-                                    <Pencil className="w-3.5 h-3.5" /> 수정
-                                </button>
+                            )}
+                            <button
+                                onClick={() => setEditingUser(user)}
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+                            >
+                                <Pencil className="w-3.5 h-3.5" /> {user.id === currentUserId ? '내 정보 수정' : '수정'}
+                            </button>
+                            {user.id !== currentUserId && (
                                 <button
                                     onClick={() => handleDelete(user)}
                                     className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-red-50 text-red-500 transition-colors"
                                 >
                                     <Trash2 className="w-3.5 h-3.5" /> 삭제
                                 </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -154,8 +156,8 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                     {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                                 </td>
                                 <td className="px-5 py-3.5">
-                                    {user.id !== currentUserId ? (
-                                        <div className="flex items-center justify-center gap-1">
+                                    <div className="flex items-center justify-center gap-1">
+                                        {user.id !== currentUserId && (
                                             <button
                                                 onClick={() => handleRoleToggle(user)}
                                                 title={user.role === 'ADMIN' ? '권한 해제' : '관리자 지정'}
@@ -163,13 +165,15 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                             >
                                                 {user.role === 'ADMIN' ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
                                             </button>
-                                            <button
-                                                onClick={() => setEditingUser(user)}
-                                                title="정보 수정"
-                                                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setEditingUser(user)}
+                                            title={user.id === currentUserId ? '내 정보 수정' : '정보 수정'}
+                                            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        {user.id !== currentUserId && (
                                             <button
                                                 onClick={() => handleDelete(user)}
                                                 title="삭제"
@@ -177,10 +181,8 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-slate-400 flex justify-center">본인</span>
-                                    )}
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

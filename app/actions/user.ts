@@ -62,13 +62,14 @@ export async function updateUserRole(userId: string, role: string) {
 // 사용자 정보 수정
 export async function updateUserInfo(
     userId: string,
-    data: { department?: string | null; position?: string | null; phone?: string | null }
+    data: { email?: string | null; department?: string | null; position?: string | null; phone?: string | null }
 ) {
     await requireAdmin()
 
     await prisma.user.update({
         where: { id: userId },
         data: {
+            email: data.email ?? null,
             department: data.department ?? null,
             position: data.position ?? null,
             phone: data.phone ?? null,

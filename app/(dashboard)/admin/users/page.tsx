@@ -17,10 +17,8 @@ export default async function AdminUsersPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-slate-600" />
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">사용자 관리</h1>
-                <span className="ml-2 text-sm text-slate-400">총 {users.length}명</span>
+            <div className="flex items-center">
+                <span className="text-sm text-slate-400">총 {users.length}명</span>
             </div>
 
             <UserTable
