@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) {
+                // 최초 로그인 시 기본 세팅
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 token.id = String(user.id)
@@ -53,6 +54,20 @@ export const authOptions: NextAuthOptions = {
                 token.department = user.department || null
                 token.position = user.position || null
             }
+
+            // 매 요청마다 DB에서 최신 역할/정보 동기화
+            if (token.id) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { role: true, department: true, position: true }
+                })
+                if (dbUser) {
+                    token.role = dbUser.role
+                    token.department = dbUser.department || null
+                    token.position = dbUser.position || null
+                }
+            }
+
             return token
         }
     },
