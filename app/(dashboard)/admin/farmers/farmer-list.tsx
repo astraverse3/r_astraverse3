@@ -184,7 +184,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {/* Group Header (Only if > 1 items) */}
                         {isMultiFarmer && group.group && (
                             <TableRow
-                                className={`group hover:bg-blue-50/50 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors ${isExpanded ? 'bg-blue-50/60' : 'bg-white'}`}
+                                className={`group hover:bg-blue-100/80 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors ${isExpanded ? 'bg-blue-100' : 'bg-white'}`}
                                 onClick={() => toggleGroup(group.key)}
                             >
                                 <TableCell></TableCell>
@@ -218,7 +218,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
 
                         {/* Farmer Rows */}
                         {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
-                            <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-blue-50/20' : 'bg-white'}`}>
+                            <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-blue-50/70' : 'bg-white'}`}>
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedIds.has(farmer.id)}
