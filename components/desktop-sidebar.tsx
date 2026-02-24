@@ -10,7 +10,6 @@ import {
     BarChart3,
     Truck
 } from "lucide-react"
-import { LastUpdated } from "@/components/last-updated"
 import { hasPermission } from "@/lib/permissions"
 
 export function DesktopSidebar() {
@@ -134,11 +133,6 @@ export function DesktopSidebar() {
                     </div>
                 </div>
 
-            </div>
-
-            {/* 하단 고정: 최근 업데이트 */}
-            <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex justify-center">
-                <LastUpdated />
             </div>
 
         </aside>

@@ -4,6 +4,7 @@ import { DesktopSidebar } from "@/components/desktop-sidebar"
 import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
 import { HeaderUserProfile } from "@/components/header/header-user-profile"
 import { MillingCartProvider } from "./stocks/milling-cart-context"
+import { LastUpdated } from "@/components/last-updated"
 
 export default function DashboardLayout({
     children,
@@ -29,9 +30,14 @@ export default function DashboardLayout({
                     </header>
 
                     {/* Scrollable Page Content */}
-                    <main className="flex-1 w-full">
-                        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+                    <main className="flex-1 w-full relative">
+                        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 pb-16">
                             {children}
+                        </div>
+
+                        {/* Bottom Right Update Timestamp */}
+                        <div className="absolute bottom-4 right-6 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50 z-10 hidden md:block">
+                            <LastUpdated />
                         </div>
                     </main>
                 </div>

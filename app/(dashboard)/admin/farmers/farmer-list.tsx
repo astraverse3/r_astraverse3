@@ -123,9 +123,20 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
 }
 
 function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
+
+    const toggleGroup = (key: string) => {
+        const newSet = new Set(expandedGroups)
+        if (newSet.has(key)) {
+            newSet.delete(key)
+        } else {
+            newSet.add(key)
+        }
+        setExpandedGroups(newSet)
+    }
 
     // Grouping Logic
     const groups = farmers.reduce((acc: any, farmer: Farmer) => {
@@ -165,10 +176,48 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
     return (
         <>
             {sortedGroups.map((group) => {
+                const isMultiFarmer = group.items.length > 1
+                const isExpanded = expandedGroups.has(group.key)
+
                 return (
                     <Fragment key={group.key}>
+                        {/* Group Header (Only if > 1 items) */}
+                        {isMultiFarmer && group.group && (
+                            <TableRow
+                                className="group bg-slate-50 hover:bg-blue-50/50 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors"
+                                onClick={() => toggleGroup(group.key)}
+                            >
+                                <TableCell></TableCell>
+                                <TableCell className="text-center text-sm">
+                                    <div className="flex items-center justify-center gap-1">
+                                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                        {group.group.cropYear}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center text-sm">{group.group.code}</TableCell>
+                                <TableCell className="text-sm">{group.group.name}</TableCell>
+                                <TableCell>
+                                    <Badge variant="secondary" className="font-normal border-slate-300 bg-white">
+                                        {group.group.certType} {group.group.certNo}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell></TableCell> {/* Farmer No Column (Empty) */}
+                                <TableCell className="text-sm text-blue-700 font-bold">
+                                    <div className="flex items-center gap-2">
+                                        <span className="underline decoration-blue-300 underline-offset-4">
+                                            총 {group.items.length}명
+                                        </span>
+                                        <span className="text-[10px] font-normal text-blue-500 bg-blue-100/50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:inline-block">
+                                            클릭해서 {isExpanded ? '접기' : '펼치기'}
+                                        </span>
+                                    </div>
+                                </TableCell> {/* Farmer Name Column (Count) */}
+                                <TableCell colSpan={3}></TableCell>
+                            </TableRow>
+                        )}
+
                         {/* Farmer Rows */}
-                        {group.items.map((farmer: Farmer) => (
+                        {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
                             <TableRow key={farmer.id} className="hover:bg-slate-50">
                                 <TableCell>
                                     <Checkbox
