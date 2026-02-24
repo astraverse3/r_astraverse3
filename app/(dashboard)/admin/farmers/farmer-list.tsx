@@ -226,13 +226,6 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                 </TableCell>
-                                {/* Hide redundant info if under a group header? Or keep consistent? 
-                                    User said "List height/font same". 
-                                    If distinct color separates group, maybe we can dim or hide repeated columns?
-                                    But simplistic request: "Year, Group... showing" in header. 
-                                    Rows usually show specific farmer data. 
-                                    Let's keep standard display for now to avoid empty columns unless requested.
-                                */}
                                 <TableCell className="font-mono text-center text-slate-500 text-xs">
                                     {farmer.group?.cropYear || '-'}
                                 </TableCell>
