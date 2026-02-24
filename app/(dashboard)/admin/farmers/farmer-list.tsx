@@ -123,20 +123,9 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
 }
 
 function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
-    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
-
-    const toggleGroup = (key: string) => {
-        const newSet = new Set(expandedGroups)
-        if (newSet.has(key)) {
-            newSet.delete(key)
-        } else {
-            newSet.add(key)
-        }
-        setExpandedGroups(newSet)
-    }
 
     // Grouping Logic
     const groups = farmers.reduce((acc: any, farmer: Farmer) => {
@@ -176,41 +165,10 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
     return (
         <>
             {sortedGroups.map((group) => {
-                const isMultiFarmer = group.items.length > 1
-                const isExpanded = expandedGroups.has(group.key)
-
                 return (
                     <Fragment key={group.key}>
-                        {/* Group Header (Only if > 1 items) */}
-                        {isMultiFarmer && group.group && (
-                            <TableRow
-                                className="bg-slate-100 hover:bg-slate-200 border-y border-slate-300 font-bold text-slate-800 cursor-pointer"
-                                onClick={() => toggleGroup(group.key)}
-                            >
-                                <TableCell></TableCell>
-                                <TableCell className="text-center text-sm">
-                                    <div className="flex items-center justify-center gap-1">
-                                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                        {group.group.cropYear}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center text-sm">{group.group.code}</TableCell>
-                                <TableCell className="text-sm">{group.group.name}</TableCell>
-                                <TableCell>
-                                    <Badge variant="secondary" className="font-normal border-slate-300 bg-white">
-                                        {group.group.certType} {group.group.certNo}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell></TableCell> {/* Farmer No Column (Empty) */}
-                                <TableCell className="text-sm text-slate-600 font-bold">
-                                    총 {group.items.length}명
-                                </TableCell> {/* Farmer Name Column (Count) */}
-                                <TableCell colSpan={3}></TableCell>
-                            </TableRow>
-                        )}
-
                         {/* Farmer Rows */}
-                        {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
+                        {group.items.map((farmer: Farmer) => (
                             <TableRow key={farmer.id} className="hover:bg-slate-50">
                                 <TableCell>
                                     <Checkbox

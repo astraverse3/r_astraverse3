@@ -9,16 +9,18 @@ export function LastUpdated() {
     useEffect(() => {
         // Function to update state from localStorage
         const updateTimestamp = () => {
-            const stored = localStorage.getItem('last-updated');
-            if (stored) {
-                const date = new Date(stored);
-                setLastUpdated(date.toLocaleTimeString('ko-KR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                }));
+            let stored = localStorage.getItem('last-updated');
+            if (!stored) {
+                stored = new Date().toISOString();
+                localStorage.setItem('last-updated', stored);
             }
+            const date = new Date(stored);
+            setLastUpdated(date.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }));
         };
 
         // Initial load
