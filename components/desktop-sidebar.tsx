@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import {
     Package,
     ClipboardList,
@@ -10,9 +11,13 @@ import {
     Truck
 } from "lucide-react"
 import { LastUpdated } from "@/components/last-updated"
+import { hasPermission } from "@/lib/permissions"
 
 export function DesktopSidebar() {
     const pathname = usePathname();
+    const { data: session } = useSession();
+    // @ts-ignore
+    const user = session?.user as { role?: string; permissions?: string[] } | undefined;
 
     const isActive = (path: string) => {
         if (path === '/') {
@@ -102,24 +107,28 @@ export function DesktopSidebar() {
                                 >
                                     생산자 관리
                                 </Link>
-                                <Link
-                                    href="/admin/users"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    사용자 관리
-                                </Link>
-                                <Link
-                                    href="/admin"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${pathname === '/admin'
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    시스템 백업
-                                </Link>
+                                {hasPermission(user, 'USER_MANAGE') && (
+                                    <Link
+                                        href="/admin/users"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        사용자 관리
+                                    </Link>
+                                )}
+                                {hasPermission(user, 'SYSTEM_MANAGE') && (
+                                    <Link
+                                        href="/admin"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${pathname === '/admin'
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        시스템 백업
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
