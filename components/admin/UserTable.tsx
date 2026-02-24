@@ -84,9 +84,9 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                             <div><span className="text-slate-400">직책:</span> {user.position || '-'}</div>
                             <div><span className="text-slate-400">연락처:</span> {user.phone || '-'}</div>
                         </div>
-                        {user.role !== 'ADMIN' && user.permissions.length > 0 && (
+                        {user.role !== 'ADMIN' && (user.permissions?.length ?? 0) > 0 && (
                             <div className="flex flex-wrap gap-1">
-                                {user.permissions.map(p => (
+                                {(user.permissions || []).map(p => (
                                     <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
                                         {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
                                     </span>
@@ -169,9 +169,9 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                         }`}>
                                         {user.role}
                                     </span>
-                                    {user.role !== 'ADMIN' && user.permissions.length > 0 && (
+                                    {user.role !== 'ADMIN' && (user.permissions?.length ?? 0) > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
-                                            {user.permissions.map(p => (
+                                            {(user.permissions || []).map(p => (
                                                 <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
                                                     {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
                                                 </span>
