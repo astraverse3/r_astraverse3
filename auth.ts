@@ -1,43 +1,60 @@
-import NextAuth from 'next-auth';
-import { authConfig } from './auth.config';
-import Credentials from 'next-auth/providers/credentials';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import { NextAuthOptions } from "next-auth"
+import KakaoProvider from "next-auth/providers/kakao"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import { prisma } from "@/lib/prisma"
 
-async function getUser(username: string) {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { username },
-        });
-        return user;
-    } catch (error) {
-        console.error('Failed to fetch user:', error);
-        throw new Error('Failed to fetch user.');
-    }
-}
-
-export const { auth, signIn, signOut, handlers } = NextAuth({
-    ...authConfig,
+export const authOptions: NextAuthOptions = {
+    adapter: PrismaAdapter(prisma),
     providers: [
-        Credentials({
-            async authorize(credentials) {
-                const parsedCredentials = z
-                    .object({ username: z.string(), password: z.string().min(4) })
-                    .safeParse(credentials);
-
-                if (parsedCredentials.success) {
-                    const { username, password } = parsedCredentials.data;
-                    const user = await getUser(username);
-                    if (!user) return null;
-
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
-                    if (passwordsMatch) return user;
-                }
-
-                return null;
+        KakaoProvider({
+            clientId: process.env.KAKAO_CLIENT_ID!,
+            clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+            profile(profile) {
+                return {
+                    id: profile.id.toString(),
+                    name: profile.kakao_account?.profile?.nickname,
+                    email: profile.kakao_account?.email,
+                    image: profile.kakao_account?.profile?.profile_image_url,
+                    role: "USER"
+                } as any
             },
         }),
     ],
-    secret: process.env.AUTH_SECRET,
-});
+    session: {
+        strategy: "jwt",
+    },
+    pages: {
+        signIn: "/login",
+    },
+    callbacks: {
+        async session({ session, token }) {
+            if (session.user) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                session.user.id = token.id as string
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                session.user.role = token.role as string || "USER"
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                session.user.department = (token.department as string | null) || null
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                session.user.position = (token.position as string | null) || null
+            }
+            return session
+        },
+        async jwt({ token, user }) {
+            if (user) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                token.id = String(user.id)
+                token.role = user.role
+                token.department = user.department || null
+                token.position = user.position || null
+            }
+            return token
+        }
+    },
+    debug: true,
+}

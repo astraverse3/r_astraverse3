@@ -4,7 +4,8 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { promisify } from 'util'
-import { auth } from '@/auth'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
 
 const execAsync = promisify(exec)
@@ -28,7 +29,7 @@ export interface BackupFile {
 
 export async function getBackups(): Promise<{ success: boolean; data?: BackupFile[]; error?: string }> {
     try {
-        const session = await auth()
+        const session = await getServerSession(authOptions)
         if (!session) return { success: false, error: 'Unauthorized' }
 
         const files = fs.readdirSync(BACKUP_DIR)
@@ -53,7 +54,7 @@ export async function getBackups(): Promise<{ success: boolean; data?: BackupFil
 
 export async function createBackup(): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-        const session = await auth()
+        const session = await getServerSession(authOptions)
         if (!session) return { success: false, error: 'Unauthorized' }
 
         const dbUrl = process.env.DATABASE_URL
@@ -89,7 +90,7 @@ export async function createBackup(): Promise<{ success: boolean; message?: stri
 
 export async function restoreBackup(filename: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-        const session = await auth()
+        const session = await getServerSession(authOptions)
         if (!session) return { success: false, error: 'Unauthorized' }
 
         const dbUrl = process.env.DATABASE_URL
