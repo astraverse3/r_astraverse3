@@ -201,7 +201,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                         {group.group.certType} {group.group.certNo}
                                     </Badge>
                                 </TableCell>
-                                <TableCell></TableCell> {/* Farmer No Column (Empty) */}
+                                <TableCell></TableCell>
                                 <TableCell className="text-sm text-blue-700 font-bold">
                                     <div className="flex items-center gap-2">
                                         <span className="underline decoration-blue-300 underline-offset-4">
@@ -211,7 +211,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                             클릭해서 {isExpanded ? '접기' : '펼치기'}
                                         </span>
                                     </div>
-                                </TableCell> {/* Farmer Name Column (Count) */}
+                                </TableCell>
                                 <TableCell colSpan={3}></TableCell>
                             </TableRow>
                         )}
