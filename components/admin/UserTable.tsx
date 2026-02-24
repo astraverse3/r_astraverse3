@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { updateUserRole, deleteUser } from '@/app/actions/user'
 import { UserEditDialog } from './UserEditDialog'
+import { UserPermissionDialog } from './UserPermissionDialog'
 import { toast } from 'sonner'
-import { Shield, ShieldOff, Pencil, Trash2 } from 'lucide-react'
+import { Shield, ShieldOff, Pencil, Trash2, KeyRound } from 'lucide-react'
+import { ALL_PERMISSIONS } from '@/lib/permissions'
 
 interface User {
     id: string
@@ -15,11 +17,13 @@ interface User {
     department: string | null
     position: string | null
     phone: string | null
+    permissions: string[]
     createdAt: Date
 }
 
 export function UserTable({ users, currentUserId }: { users: User[]; currentUserId: string }) {
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [permUser, setPermUser] = useState<User | null>(null)
 
     const handleRoleToggle = async (user: User) => {
         const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN'
@@ -80,6 +84,15 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                             <div><span className="text-slate-400">직책:</span> {user.position || '-'}</div>
                             <div><span className="text-slate-400">연락처:</span> {user.phone || '-'}</div>
                         </div>
+                        {user.role !== 'ADMIN' && user.permissions.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {user.permissions.map(p => (
+                                    <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
+                                        {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         <div className="flex gap-2 pt-1 border-t border-slate-100">
                             {user.id !== currentUserId && (
                                 <button
@@ -96,6 +109,14 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                             >
                                 <Pencil className="w-3.5 h-3.5" /> {user.id === currentUserId ? '내 정보 수정' : '수정'}
                             </button>
+                            {user.id !== currentUserId && (
+                                <button
+                                    onClick={() => setPermUser(user)}
+                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+                                >
+                                    <KeyRound className="w-3.5 h-3.5" /> 권한
+                                </button>
+                            )}
                             {user.id !== currentUserId && (
                                 <button
                                     onClick={() => handleDelete(user)}
@@ -148,6 +169,15 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                         }`}>
                                         {user.role}
                                     </span>
+                                    {user.role !== 'ADMIN' && user.permissions.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {user.permissions.map(p => (
+                                                <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
+                                                    {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-5 py-3.5 text-sm text-slate-600">{user.department || '-'}</td>
                                 <td className="px-5 py-3.5 text-sm text-slate-600">{user.position || '-'}</td>
@@ -175,6 +205,15 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                         </button>
                                         {user.id !== currentUserId && (
                                             <button
+                                                onClick={() => setPermUser(user)}
+                                                title="권한 설정"
+                                                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition-colors"
+                                            >
+                                                <KeyRound className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {user.id !== currentUserId && (
+                                            <button
                                                 onClick={() => handleDelete(user)}
                                                 title="삭제"
                                                 className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
@@ -195,6 +234,14 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                     user={editingUser}
                     open={!!editingUser}
                     onClose={() => setEditingUser(null)}
+                />
+            )}
+
+            {permUser && (
+                <UserPermissionDialog
+                    user={permUser}
+                    open={!!permUser}
+                    onClose={() => setPermUser(null)}
                 />
             )}
         </>

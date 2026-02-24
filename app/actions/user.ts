@@ -26,6 +26,7 @@ export async function getUsers() {
             email: true,
             image: true,
             role: true,
+            permissions: true,
             department: true,
             position: true,
             phone: true,
@@ -94,6 +95,19 @@ export async function deleteUser(userId: string) {
     // Account, Session도 cascade로 삭제됨 (schema에 onDelete: Cascade 설정됨)
     await prisma.user.delete({
         where: { id: userId },
+    })
+
+    revalidatePath('/admin/users')
+    return { success: true }
+}
+
+// 사용자 권한 변경
+export async function updateUserPermissions(userId: string, permissions: string[]) {
+    await requireAdmin()
+
+    await prisma.user.update({
+        where: { id: userId },
+        data: { permissions },
     })
 
     revalidatePath('/admin/users')

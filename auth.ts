@@ -37,6 +37,9 @@ export const authOptions: NextAuthOptions = {
                 session.user.role = token.role as string || "USER"
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
+                session.user.permissions = (token.permissions as string[]) || []
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 session.user.department = (token.department as string | null) || null
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
@@ -59,10 +62,11 @@ export const authOptions: NextAuthOptions = {
             if (token.id) {
                 const dbUser = await prisma.user.findUnique({
                     where: { id: String(token.id) },
-                    select: { role: true, department: true, position: true }
+                    select: { role: true, permissions: true, department: true, position: true }
                 })
                 if (dbUser) {
                     token.role = dbUser.role
+                    token.permissions = dbUser.permissions || []
                     token.department = dbUser.department || null
                     token.position = dbUser.position || null
                 }

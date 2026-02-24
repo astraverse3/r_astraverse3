@@ -148,6 +148,7 @@ model User {
   phone         String?   // 연락처
   
   role          String    @default("USER") // ADMIN, USER
+  permissions   String[]  @default([])      // 개별 권한 배열: STOCK_MANAGE, MILLING_MANAGE 등
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
