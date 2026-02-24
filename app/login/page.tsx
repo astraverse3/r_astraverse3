@@ -14,7 +14,7 @@ export default function LoginPage() {
                     <img
                         src="/logo-full.png"
                         alt="땅끝황토친환경 도정 일지 시스템"
-                        className="h-16 w-auto mb-2"
+                        className="w-56 h-auto object-contain mb-2"
                     />
                     <p className="mt-4 text-sm text-gray-600">
                         카카오 계정으로 간편하게 로그인하세요
