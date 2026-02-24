@@ -4,6 +4,8 @@ import { Suspense } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FarmerListWrapper, useBulkDelete } from './farmer-list-wrapper'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Farmer {
     id: number
@@ -34,24 +36,29 @@ export function FarmerPageClient({
     addDialogSlot: React.ReactNode
 }) {
     const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDelete()
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between gap-2">
-                    <Button
-                        variant={selectedIds.size > 0 ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={showDeleteDialog}
-                        disabled={selectedIds.size === 0}
-                    >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
-                    </Button>
+                    {canManage && (
+                        <Button
+                            variant={selectedIds.size > 0 ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={showDeleteDialog}
+                            disabled={selectedIds.size === 0}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            삭제 {selectedIds.size > 0 && `(${selectedIds.size})`}
+                        </Button>
+                    )}
                     <div className="flex items-center gap-2">
                         {filtersSlot}
                         {excelSlot}
-                        {addDialogSlot}
+                        {canManage && addDialogSlot}
                     </div>
                 </div>
             </section>

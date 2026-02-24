@@ -3,6 +3,8 @@
 import { ReactNode } from 'react'
 import { Trash2, Truck, RotateCcw, ClipboardList, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface StockPageClientProps {
     children: ReactNode
@@ -35,13 +37,17 @@ export function StockPageClient({
     isAllAvailable,
     isCanceling
 }: StockPageClientProps) {
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
+
     return (
         <div className="grid grid-cols-1 gap-1 pb-24">
             {/* Header */}
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        {selectedIds.size > 0 ? (
+                        {canManage && selectedIds.size > 0 ? (
                             <>
                                 <Button
                                     variant="outline"
@@ -100,7 +106,7 @@ export function StockPageClient({
                                     </Button>
                                 )}
                             </>
-                        ) : (
+                        ) : canManage ? (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -110,12 +116,12 @@ export function StockPageClient({
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 삭제
                             </Button>
-                        )}
+                        ) : null}
                     </div>
                     <div className="flex items-center gap-2">
                         {excelSlot}
                         {filtersSlot}
-                        {addDialogSlot}
+                        {canManage && addDialogSlot}
                     </div>
                 </div>
             </section>
