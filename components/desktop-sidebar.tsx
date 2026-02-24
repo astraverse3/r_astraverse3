@@ -9,6 +9,7 @@ import {
     BarChart3,
     Truck
 } from "lucide-react"
+import { LastUpdated } from "@/components/last-updated"
 
 export function DesktopSidebar() {
     const pathname = usePathname();
@@ -113,6 +114,11 @@ export function DesktopSidebar() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* 하단 고정: 최근 업데이트 */}
+                <div className="mt-4 px-3 pb-6 flex justify-center">
+                    <LastUpdated />
                 </div>
             </div>
         </aside>

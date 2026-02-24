@@ -3,6 +3,7 @@ import "./globals.css";
 import { PWAInstallGuard } from "@/components/pwa-install-guard"
 import { SWRegister } from "@/components/sw-register"
 import { Toaster } from "sonner"
+import { Providers } from "@/components/providers/session-provider"
 
 export const metadata: Metadata = {
   title: "땅끝황토친환경 - 도정 일지",
@@ -33,11 +34,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="antialiased min-h-screen flex bg-slate-100 font-sans text-slate-900 selection:bg-blue-100">
+      <body className="antialiased min-h-screen bg-slate-100 font-sans text-slate-900 selection:bg-blue-100">
         <SWRegister />
-        <PWAInstallGuard>
-          {children}
-        </PWAInstallGuard>
+        <Providers>
+          <PWAInstallGuard>
+            {children}
+          </PWAInstallGuard>
+        </Providers>
         <Toaster position="top-center" richColors />
       </body>
     </html>

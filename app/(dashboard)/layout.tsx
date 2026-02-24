@@ -2,7 +2,7 @@ import { MobileHeader } from "@/components/mobile-header"
 import { MobileNav } from "@/components/mobile-nav"
 import { DesktopSidebar } from "@/components/desktop-sidebar"
 import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
-import { LastUpdated } from "@/components/last-updated"
+import { HeaderUserProfile } from "@/components/header/header-user-profile"
 import { MillingCartProvider } from "./stocks/milling-cart-context"
 
 export default function DashboardLayout({
@@ -25,7 +25,7 @@ export default function DashboardLayout({
                     {/* Desktop Header (Hidden on Mobile) */}
                     <header className="hidden lg:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6 z-40">
                         <BreadcrumbDisplay />
-                        <LastUpdated />
+                        <HeaderUserProfile />
                     </header>
 
                     {/* Scrollable Page Content */}

@@ -130,16 +130,56 @@ model MillingOutputPackage {
   updatedAt     DateTime      @updatedAt
 }
 
-// 7. User (사용자 계정)
+// ------------------------------------------------------
+// 7. Authentication (카카오 로그인 전용)
+// ------------------------------------------------------
+
+// 사용자 기본 정보 (카카오에서 제공받는 정보 + 우리 앱 전용 정보)
 model User {
-  id          Int      @id @default(autoincrement())
-  username    String   @unique // 아이디 (astraverse)
-  password    String   // 비밀번호 (Hashed)
-  name        String   // 이름 (문희준)
-  department  String?  // 부서 (공장)
-  position    String?  // 직책 (주임)
-  phone       String?  // 연락처 (01086549345)
-  role        String   @default("USER") // ADMIN, USER
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String    @id @default(cuid())
+  name          String?   // 카카오 닉네임
+  email         String?   @unique // 카카오 이메일
+  emailVerified DateTime?
+  image         String?   // 카카오 프로필 이미지 URL
+  
+  // 커스텀 칼럼 추가 ✨
+  department    String?   // 부서
+  position      String?   // 직책
+  phone         String?   // 연락처
+  
+  role          String    @default("USER") // ADMIN, USER
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+}
+
+// 카카오 계정 연결 정보
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String  // "kakao"
+  providerAccountId  String  
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// 로그인 세션 관리용
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
