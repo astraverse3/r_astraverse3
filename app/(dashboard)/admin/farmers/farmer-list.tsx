@@ -23,6 +23,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { deleteFarmer } from '@/app/actions/admin'
 import { AddFarmerDialog } from './add-farmer-dialog'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Farmer {
     id: number
@@ -122,6 +124,9 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
 
 function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
 
     const toggleGroup = (key: string) => {
         const newSet = new Set(expandedGroups)
@@ -240,14 +245,16 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                 <TableCell className="text-slate-600 text-sm">{farmer.items || '-'}</TableCell>
                                 <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
                                 <TableCell className="text-center">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => setEditingFarmer(farmer)}
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
+                                    {canManage && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setEditingFarmer(farmer)}
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}

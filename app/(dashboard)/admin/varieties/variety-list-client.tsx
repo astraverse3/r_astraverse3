@@ -12,6 +12,8 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Variety {
     id: number
@@ -87,6 +89,9 @@ function GroupedVarietyRows({ varieties, selectedIds, onSelectOne }: {
     onSelectOne: (id: number, checked: boolean) => void
 }) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'VARIETY_MANAGE')
 
     const toggleGroup = (key: string) => {
         const newSet = new Set(expandedGroups)
@@ -175,7 +180,7 @@ function GroupedVarietyRows({ varieties, selectedIds, onSelectOne }: {
                                     {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : variety.type === 'INDICA' ? '인디카' : '기타'}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <VarietyDialog mode="edit" variety={variety} />
+                                    {canManage && <VarietyDialog mode="edit" variety={variety} />}
                                 </TableCell>
                             </TableRow>
                         ))}
