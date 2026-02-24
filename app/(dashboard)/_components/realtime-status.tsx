@@ -44,7 +44,7 @@ interface RealtimeStatusProps {
         indica: number;
         others: number;
     };
-    yields: { uruchi: number; indica: number };
+    yields: { uruchi: number; indica: number; glutinous: number };
     years: { target: number; current: number };
 }
 
@@ -62,6 +62,7 @@ export function RealtimeStatus({
 
     const [animatedUruchi, setAnimatedUruchi] = useState(0);
     const [animatedIndica, setAnimatedIndica] = useState(0);
+    const [animatedGlutinous, setAnimatedGlutinous] = useState(0);
 
     useEffect(() => {
         let startTime: number | null = null;
@@ -76,17 +77,19 @@ export function RealtimeStatus({
 
             setAnimatedUruchi(yields.uruchi * easeOut(percentage));
             setAnimatedIndica(yields.indica * easeOut(percentage));
+            setAnimatedGlutinous(yields.glutinous * easeOut(percentage));
 
             if (progress < duration) {
                 animationFrameId = requestAnimationFrame(animate);
             } else {
                 setAnimatedUruchi(yields.uruchi);
                 setAnimatedIndica(yields.indica);
+                setAnimatedGlutinous(yields.glutinous);
             }
         };
         animationFrameId = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [yields.uruchi, yields.indica]);
+    }, [yields.uruchi, yields.indica, yields.glutinous]);
 
     // calculate percentages
     const remainingPercent = totalStock > 0 ? (availableStock / totalStock) * 100 : 0;
@@ -165,16 +168,21 @@ export function RealtimeStatus({
                 <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[160px]">
                     <div className="w-full">
                         <h3 className="text-sm font-bold text-slate-500 mb-3 font-sans uppercase tracking-wider">백미 평균 수율</h3>
-                        <div className="flex gap-3 w-full">
+                        <div className="flex gap-2 w-full">
                             {/* Uruchi */}
-                            <div className="flex-1 bg-[#EBF4FA] rounded-[16px] px-3 py-3 flex flex-col items-center justify-center border border-blue-50/50">
-                                <span className="text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedUruchi * 10) / 10).toFixed(1)}%</span>
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tighter">메벼</span>
+                            <div className="flex-1 bg-[#EBF4FA] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-blue-50/50">
+                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedUruchi * 10) / 10).toFixed(1)}%</span>
+                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">메벼</span>
                             </div>
                             {/* Indica */}
-                            <div className="flex-1 bg-[#F4F1EA] rounded-[16px] px-3 py-3 flex flex-col items-center justify-center border border-amber-50/50">
-                                <span className="text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedIndica * 10) / 10).toFixed(1)}%</span>
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-tighter">인디카</span>
+                            <div className="flex-1 bg-[#F4F1EA] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-amber-50/50">
+                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedIndica * 10) / 10).toFixed(1)}%</span>
+                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">인디카</span>
+                            </div>
+                            {/* Glutinous */}
+                            <div className="flex-1 bg-[#FAF6E3] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-yellow-50/50">
+                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedGlutinous * 10) / 10).toFixed(1)}%</span>
+                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">찰벼</span>
                             </div>
                         </div>
                     </div>

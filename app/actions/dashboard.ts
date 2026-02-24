@@ -108,6 +108,8 @@ export async function getDashboardStats() {
         let uruchiOut = 0;
         let indicaIn = 0;
         let indicaOut = 0;
+        let glutinousIn = 0;
+        let glutinousOut = 0;
         const outputsByType = {
             uruchi: 0,
             glutinous: 0,
@@ -150,6 +152,9 @@ export async function getDashboardStats() {
                     } else if (vType === 'INDICA') {
                         indicaIn += proratedIn;
                         indicaOut += proratedOut;
+                    } else if (vType === 'GLUTINOUS') {
+                        glutinousIn += proratedIn;
+                        glutinousOut += proratedOut;
                     }
                 });
             });
@@ -157,6 +162,7 @@ export async function getDashboardStats() {
 
         const uruchiYield = uruchiIn > 0 ? (uruchiOut / uruchiIn) * 100 : 0;
         const indicaYield = indicaIn > 0 ? (indicaOut / indicaIn) * 100 : 0;
+        const glutinousYield = glutinousIn > 0 ? (glutinousOut / glutinousIn) * 100 : 0;
 
         // Convert to sorted array
         const processedStockByVariety = Array.from(varietyMap.entries())
@@ -200,6 +206,7 @@ export async function getDashboardStats() {
                 outputsByType,
                 uruchiYield,
                 indicaYield,
+                glutinousYield,
                 recentLogs, // Note: UI will need to read variety.name from relations
                 stockByVariety: processedStockByVariety,
                 milledByVariety: [],
