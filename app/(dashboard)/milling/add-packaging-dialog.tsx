@@ -16,6 +16,8 @@ import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMilli
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface Props {
     batchId: number
@@ -42,6 +44,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
     const [isCustomInput, setIsCustomInput] = useState(false)
     const [customWeight, setCustomWeight] = useState('')
     const scrollRef = useRef<HTMLDivElement>(null)
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
 
     // ... (keep state logic same) ...
     const isControlled = controlledOpen !== undefined
@@ -270,7 +275,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                 </DialogHeader>
                 <div className="py-6 space-y-6">
                     {/* Template buttons - only when editable */}
-                    {!isClosed && (
+                    {!isClosed && canManage && (
                         <div className="space-y-2">
                             <Label className="mb-2 block">규격 선택</Label>
 
@@ -376,7 +381,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
 
                                     {/* Right: Controls */}
                                     <div className="flex items-center shrink-0 ml-auto">
-                                        {isClosed ? (
+                                        {isClosed || !canManage ? (
                                             <span className="text-sm font-mono text-stone-600 px-4">{o.count}개</span>
                                         ) : (
                                             <div className="flex items-center gap-1">
@@ -405,46 +410,48 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                         </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="pt-4 border-t space-y-4">
-                        <div className="flex justify-between items-center">
-                            <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
-                            {isClosed ? (
-                                <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
-                                    <Lock className="mr-1 h-3 w-3" /> 마감 해제
-                                </Button>
-                            ) : (
-                                <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
-                                    {isLoading ? '저장 중...' : '기록 저장'}
-                                </Button>
+                    {/* Footer - only for managers */}
+                    {canManage && (
+                        <div className="pt-4 border-t space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
+                                {isClosed ? (
+                                    <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
+                                        <Lock className="mr-1 h-3 w-3" /> 마감 해제
+                                    </Button>
+                                ) : (
+                                    <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
+                                        {isLoading ? '저장 중...' : '기록 저장'}
+                                    </Button>
+                                )}
+                            </div>
+
+                            {!isClosed && (
+                                <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1"
+                                        disabled={isLoading}
+                                        onClick={handleCloseBatch}
+                                    >
+                                        <Lock className="mr-1 h-3 w-3" /> 작업 마감
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
+                                        disabled={isLoading || outputs.length === 0}
+                                        onClick={handleClearPackaging}
+                                    >
+                                        <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
+                                    </Button>
+                                </div>
                             )}
                         </div>
-
-                        {!isClosed && (
-                            <div className="flex justify-between items-center pt-2 border-t border-dashed">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1"
-                                    disabled={isLoading}
-                                    onClick={handleCloseBatch}
-                                >
-                                    <Lock className="mr-1 h-3 w-3" /> 작업 마감
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
-                                    disabled={isLoading || outputs.length === 0}
-                                    onClick={handleClearPackaging}
-                                >
-                                    <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
-                                </Button>
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

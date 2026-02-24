@@ -10,6 +10,8 @@ import { reopenMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
 
 interface MillingBatch {
     id: number
@@ -33,6 +35,9 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
     const [packagingOpen, setPackagingOpen] = useState(false)
     const [stockListOpen, setStockListOpen] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
 
     const totalRiceKg = log.outputs.reduce((sum: number, o: any) => sum + o.totalWeight, 0)
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0
@@ -89,6 +94,11 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
         e.stopPropagation() // Prevent row click
 
         if (log.isClosed) {
+            if (!canManage) {
+                setPackagingOpen(true)
+                return
+            }
+
             if (confirm('마감된 작업입니다. 다시 작업하시겠습니까? (마감 해제)')) {
                 setIsActionLoading(true)
                 const result = await reopenMillingBatch(log.id)
