@@ -23,7 +23,7 @@ export function DesktopSidebar() {
 
     return (
         <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 flex-col">
-            <div className="p-6">
+            <div className="p-6 flex-1 overflow-y-auto">
                 <Link href="/" className="flex items-center gap-3 mb-10 px-2 group cursor-pointer">
                     <img src="/logo-full.png" alt="MILL LOG" className="h-10 w-auto object-contain" />
                 </Link>
@@ -116,11 +116,13 @@ export function DesktopSidebar() {
                     </div>
                 </div>
 
-                {/* 하단 고정: 최근 업데이트 */}
-                <div className="mt-4 px-3 pb-6 flex justify-center">
-                    <LastUpdated />
-                </div>
             </div>
+
+            {/* 하단 고정: 최근 업데이트 */}
+            <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex justify-center">
+                <LastUpdated />
+            </div>
+
         </aside>
     );
 }
