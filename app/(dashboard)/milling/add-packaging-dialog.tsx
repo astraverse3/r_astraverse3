@@ -264,7 +264,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     <DialogTitle>포장 기록 관리</DialogTitle>
                     <div className="flex items-center gap-2 mt-1">
                         {millingType && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#00a2e8]/20 text-[#007ab3]">
                                 {millingType}
                             </span>
                         )}
@@ -320,7 +320,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                             />
                                             <span className="absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] text-stone-500 font-bold">kg</span>
                                         </div>
-                                        <Button size="icon" variant="ghost" className="h-full w-6 shrink-0 text-blue-600 p-0" onClick={handleCustomAdd}>
+                                        <Button size="icon" variant="ghost" className="h-full w-6 shrink-0 text-[#00a2e8] p-0" onClick={handleCustomAdd}>
                                             <Check className="h-3.5 w-3.5" />
                                         </Button>
                                         <Button size="icon" variant="ghost" className="h-full w-6 shrink-0 text-stone-400 p-0" onClick={() => setIsCustomInput(false)}>

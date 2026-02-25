@@ -82,7 +82,7 @@ export function StockPageClient({
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={onStartMilling}
-                                                className="text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
+                                                className="text-[#00a2e8] border-[#00a2e8]/30 hover:bg-[#00a2e8] hover:text-white hover:border-[#00a2e8] transition-colors"
                                             >
                                                 <ClipboardList className="mr-2 h-4 w-4" />
                                                 도정 ({selectedIds.size})

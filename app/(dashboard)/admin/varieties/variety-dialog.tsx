@@ -85,13 +85,13 @@ export function VarietyDialog({ mode, variety }: Props) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                         <Plus className="w-4 h-4 mr-1.5" />
                         품종 등록
                     </Button>
                 ) : (
                     <button
-                        className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
+                        className="p-2 text-slate-400 hover:text-[#00a2e8] rounded-full hover:bg-[#00a2e8]/10 transition-colors"
                         title="수정"
                     >
                         <Pencil className="w-4 h-4" />
@@ -126,7 +126,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                                     value="URUCHI"
                                     checked={type === 'URUCHI'}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="accent-blue-600 w-4 h-4"
+                                    className="accent-[#00a2e8] w-4 h-4"
                                 />
                                 <span>메벼</span>
                             </label>
@@ -137,7 +137,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                                     value="GLUTINOUS"
                                     checked={type === 'GLUTINOUS'}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="accent-blue-600 w-4 h-4"
+                                    className="accent-[#00a2e8] w-4 h-4"
                                 />
                                 <span>찰벼</span>
                             </label>
@@ -148,7 +148,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                                     value="INDICA"
                                     checked={type === 'INDICA'}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="accent-blue-600 w-4 h-4"
+                                    className="accent-[#00a2e8] w-4 h-4"
                                 />
                                 <span>인디카</span>
                             </label>
@@ -159,7 +159,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                                     value="OTHER"
                                     checked={type === 'OTHER'}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="accent-blue-600 w-4 h-4"
+                                    className="accent-[#00a2e8] w-4 h-4"
                                 />
                                 <span>기타</span>
                             </label>
@@ -180,7 +180,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                         )}
                         <div className="flex gap-2">
                             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>취소</Button>
-                            <Button type="submit" disabled={loading || !name.trim()}>
+                            <Button type="submit" disabled={loading || !name.trim()} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                                 {loading ? '처리 중...' : '저장'}
                             </Button>
                         </div>

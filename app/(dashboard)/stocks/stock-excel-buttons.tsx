@@ -149,7 +149,7 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-400 transition-colors"
+                            className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#00a2e8]/20 hover:text-[#008cc9] hover:border-[#00a2e8]/50 transition-colors"
                             onClick={handleImportClick}
                             disabled={importing}
                             title="엑셀 등록"
@@ -162,7 +162,7 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-green-100 hover:text-green-700 hover:border-green-400 transition-colors"
+                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
                     onClick={handleExport}
                     disabled={exporting}
                     title="엑셀 다운로드"
@@ -186,8 +186,8 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
                                                 <div className="font-bold">{previewResult.counts.total}건</div>
                                             </div>
                                             <div>
-                                                <div className="text-xs text-green-600">등록 가능</div>
-                                                <div className="font-bold text-green-700">{previewResult.counts.success}건</div>
+                                                <div className="text-xs text-[#8dc540]">등록 가능</div>
+                                                <div className="font-bold text-[#7db037]">{previewResult.counts.success}건</div>
                                             </div>
                                             <div>
                                                 <div className="text-xs text-amber-500">누락/제외</div>
@@ -226,7 +226,7 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
                         <AlertDialogAction
                             onClick={handleConfirmUpload}
                             disabled={!previewResult || previewResult.counts.success === 0}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-[#00a2e8] hover:bg-[#008cc9]"
                         >
                             {previewResult && (previewResult.counts.skipped > 0 || previewResult.counts.failed > 0)
                                 ? '오류 제외하고 등록'

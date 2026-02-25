@@ -52,7 +52,10 @@ export async function getDashboardStats() {
                 include: {
                     outputs: true,
                     stocks: {
-                        include: { variety: true } // Fetch variety object
+                        include: {
+                            variety: true, // Fetch variety object
+                            farmer: { select: { name: true, group: { select: { name: true } } } } // Fetch farmer and group name
+                        }
                     }
                 }
             }),

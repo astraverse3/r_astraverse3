@@ -184,7 +184,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {/* Group Header (Only if > 1 items) */}
                         {isMultiFarmer && group.group && (
                             <TableRow
-                                className={`group hover:bg-blue-100/80 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors ${isExpanded ? 'bg-blue-100' : 'bg-white'}`}
+                                className={`group hover:bg-[#00a2e8]/16 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors ${isExpanded ? 'bg-[#00a2e8]/20' : 'bg-white'}`}
                                 onClick={() => toggleGroup(group.key)}
                             >
                                 <TableCell></TableCell>
@@ -202,12 +202,12 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                     </Badge>
                                 </TableCell>
                                 <TableCell></TableCell>
-                                <TableCell className="text-sm text-blue-700 font-bold">
+                                <TableCell className="text-sm text-[#008cc9] font-bold">
                                     <div className="flex items-center gap-2">
-                                        <span className="underline decoration-blue-300 underline-offset-4">
+                                        <span className="underline decoration-[#00a2e8]/40 underline-offset-4">
                                             총 {group.items.length}명
                                         </span>
-                                        <span className="text-[10px] font-normal text-blue-500 bg-blue-100/50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:inline-block">
+                                        <span className="text-[10px] font-normal text-[#00a2e8] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:inline-block">
                                             클릭해서 {isExpanded ? '접기' : '펼치기'}
                                         </span>
                                     </div>
@@ -218,7 +218,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
 
                         {/* Farmer Rows */}
                         {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
-                            <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-blue-50/70' : 'bg-white'}`}>
+                            <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-[#00a2e8]/7' : 'bg-white'}`}>
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedIds.has(farmer.id)}

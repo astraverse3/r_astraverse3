@@ -195,7 +195,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                         <TableRow
                                             className={cn(
                                                 "cursor-pointer group transition-colors",
-                                                isSelected ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-slate-50",
+                                                isSelected ? "bg-[#00a2e8]/10 hover:bg-[#00a2e8]/20" : "hover:bg-slate-50",
                                                 isExpanded && "border-b-0"
                                             )}
                                         >
@@ -222,7 +222,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                                     {log.stocks.length}개
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right text-sm font-bold text-blue-600" onClick={() => toggleExpand(log.id)}>
+                                            <TableCell className="text-right text-sm font-bold text-[#00a2e8]" onClick={() => toggleExpand(log.id)}>
                                                 {totalWeight.toLocaleString()} kg
                                             </TableCell>
                                             <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
@@ -230,7 +230,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                                                        className="h-8 w-8 text-slate-400 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
                                                         onClick={() => setEditRelease(log)}
                                                     >
                                                         <Edit className="h-4 w-4" />
@@ -243,7 +243,7 @@ export function ReleaseHistoryList({ initialLogs, filtersSlot, excelSlot }: { in
                                         {isExpanded && (
                                             <TableRow className={cn(
                                                 "transition-colors",
-                                                isSelected ? "bg-blue-50/50 hover:bg-blue-100/50" : "bg-slate-50 hover:bg-slate-100/50"
+                                                isSelected ? "bg-[#00a2e8]/5 hover:bg-[#00a2e8]/10" : "bg-slate-50 hover:bg-slate-100/50"
                                             )}>
                                                 <TableCell colSpan={8} className="p-0 border-t border-slate-100">
                                                     <div className="p-4 pl-16 pb-6">

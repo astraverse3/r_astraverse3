@@ -102,7 +102,7 @@ export function ExcelButtons() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-400 transition-colors"
+                            className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#00a2e8]/20 hover:text-[#008cc9] hover:border-[#00a2e8]/50 transition-colors"
                             onClick={handleImportClick}
                             disabled={importing}
                             title="엑셀 등록"
@@ -114,7 +114,7 @@ export function ExcelButtons() {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-green-100 hover:text-green-700 hover:border-green-400 transition-colors"
+                    className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
                     onClick={handleExport}
                     disabled={exporting}
                     title="엑셀 다운로드"

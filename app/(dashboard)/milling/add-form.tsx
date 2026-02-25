@@ -116,7 +116,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                             </div>
                         </div>
                         <Button
-                            className="h-12 px-6 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-[0.98]"
+                            className="h-12 px-6 text-lg font-bold bg-[#00a2e8] hover:bg-[#008cc9] rounded-xl shadow-lg shadow-[#00a2e8]/30 transition-transform active:scale-[0.98]"
                             disabled={isLoading || selectedStockIds.length === 0}
                             onClick={handleSubmit}
                         >
@@ -132,7 +132,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                                 <button
                                     key={type}
                                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-all ${millingType === type
-                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                                        ? 'bg-[#00a2e8] border-[#00a2e8] text-white shadow-md shadow-[#00a2e8]/30'
                                         : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
                                         }`}
                                     onClick={() => setMillingType(type)}
@@ -151,7 +151,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                             placeholder="발주처 입력 (선택사항)"
                             value={remarks}
                             onChange={(e) => setRemarks(e.target.value)}
-                            className="h-9 rounded-lg border-slate-200 focus:ring-blue-500 text-sm"
+                            className="h-9 rounded-lg border-slate-200 focus:ring-[#00a2e8] text-sm"
                         />
                     </div>
 
@@ -174,11 +174,11 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                             return (
                                 <div
                                     key={stock.id}
-                                    className={`group flex items-center gap-2 py-2 px-2 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-300'}`}
+                                    className={`group flex items-center gap-2 py-2 px-2 border rounded-lg cursor-pointer transition-colors ${selectedStockIds.includes(stock.id) ? 'bg-[#00a2e8]/10 border-[#00a2e8]' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-300'}`}
                                     onClick={() => toggleStock(stock.id)}
                                 >
                                     {/* Checkbox */}
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${selectedStockIds.includes(stock.id) ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-300'}`}>
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${selectedStockIds.includes(stock.id) ? 'bg-[#00a2e8] border-[#00a2e8]' : 'bg-white border-slate-300'}`}>
                                         {selectedStockIds.includes(stock.id) && <Plus className="w-3.5 h-3.5 text-white" />}
                                     </div>
 

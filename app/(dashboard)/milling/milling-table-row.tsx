@@ -119,7 +119,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
+                className="group hover:bg-[#00a2e8]/5 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
                 onClick={handleRowClick}
             >
                 {/* Checkbox */}
@@ -139,7 +139,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 {/* 2. Variety - Clickable for Input History */}
                 <TableCell className="py-3 px-3 text-sm font-bold text-slate-800 md:w-[140px]">
                     <div className="flex items-center gap-2">
-                        <div className="group hover:text-blue-600 hover:underline cursor-pointer flex items-center gap-1.5" title={varietiesFull}>
+                        <div className="group hover:text-[#00a2e8] hover:underline cursor-pointer flex items-center gap-1.5" title={varietiesFull}>
                             <span className="font-bold text-slate-900 line-clamp-1 break-all">
                                 {varietiesSummary}
                             </span>
@@ -169,9 +169,9 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 7. Output Weight - Clickable to open packaging */}
-                <TableCell className="py-3 px-3 text-right text-sm font-bold text-blue-600 w-[90px]">
+                <TableCell className="py-3 px-3 text-right text-sm font-bold text-[#00a2e8] w-[90px]">
                     <span
-                        className="cursor-pointer underline decoration-dashed decoration-blue-300 underline-offset-2 hover:decoration-blue-500 hover:text-blue-700 transition-colors"
+                        className="cursor-pointer underline decoration-dashed decoration-[#00a2e8]/40 underline-offset-2 hover:decoration-[#00a2e8] hover:text-[#008cc9] transition-colors"
                         onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
                         title="포장 내역 보기"
                     >
@@ -182,7 +182,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 {/* 8. Yield */}
                 <TableCell className="py-3 px-3 text-center text-sm font-mono font-bold w-[60px]">
                     {totalRiceKg > 0 ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : 'bg-slate-50 text-slate-500'}`}>
                             {Math.round(yieldRate)}%
                         </span>
                     ) : <span className="text-slate-300">-</span>}
@@ -199,9 +199,9 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 <TableCell className="py-3 px-3 text-center w-[60px]">
                     <button onClick={handleStatusClick} className="inline-block transition-transform hover:scale-105 active:scale-95">
                         {log.isClosed ? (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5 border-slate-200 text-slate-500 hover:bg-slate-100 font-medium cursor-pointer">마감</Badge>
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 border-[#8dc540]/30 text-[#7db037] hover:bg-[#8dc540]/10 font-bold cursor-pointer">마감</Badge>
                         ) : (
-                            <Badge variant="default" className="text-xs px-2 py-0.5 bg-blue-500 hover:bg-blue-600 hover:bg-blue-600 animate-pulse font-bold cursor-pointer">포장</Badge>
+                            <Badge variant="default" className="text-xs px-2 py-0.5 bg-[#00a2e8] hover:bg-[#00a2e8] animate-pulse font-bold cursor-pointer">포장</Badge>
                         )}
                     </button>
                 </TableCell>

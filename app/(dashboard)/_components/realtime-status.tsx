@@ -108,56 +108,72 @@ export function RealtimeStatus({
                 {/* Left section: Stock & Production sharing the 7fr space */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* 1. Grain Inventory Card */}
-                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
-                        <div className="mb-4 md:mb-0">
+                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-start min-h-[160px]">
+                        <div className="mb-0">
                             <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
                                 원곡 재고
                                 <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
                             </h3>
-                            <div className="flex items-baseline mb-1">
-                                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedAvailable.toLocaleString()}</span>
-                                <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
+                            <div className="flex items-baseline flex-wrap gap-x-2">
+                                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{animatedAvailable.toLocaleString()}</span>
+                                <span className="text-base sm:text-lg font-bold text-slate-600 tracking-tight">kg</span>
+                                <span className="text-[11px] md:text-xs font-medium text-slate-400 ml-1">/ 총 {totalStock.toLocaleString()}kg 중</span>
                             </div>
-                            <div className="text-xs font-medium text-slate-400">현재 재고</div>
                         </div>
 
-                        <div className="mt-auto">
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2">
+                        <div className="mt-5">
+                            <div className="w-full bg-[#f1f5f9] shadow-inner h-6 md:h-8 rounded-full overflow-hidden relative border border-slate-200/60">
                                 <div
-                                    className="bg-[#2EB85C] h-full rounded-full transition-all duration-1000 ease-out"
-                                    style={{ width: `${remainingPercent}%` }}
-                                />
-                            </div>
-                            <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-                                <span className="text-slate-700">전체 {totalStock.toLocaleString()} kg 중 {Math.round(remainingPercent)}%</span>
-                                <span className="text-slate-400 font-medium">도정됨 {Math.round(milledPercent)}%</span>
+                                    className="bg-gradient-to-r from-[#00a2e8] to-[#007cb3] shadow-[inset_0_-6px_8px_rgba(0,0,0,0.15),inset_0_4px_6px_rgba(255,255,255,0.25)] border border-black/10 h-full rounded-full transition-all duration-1000 ease-out flex items-center justify-center px-4"
+                                    style={{ width: `${Math.max(remainingPercent, 12)}%` }}
+                                >
+                                    <span className="text-[11px] md:text-xs font-bold text-white drop-shadow-sm tracking-wide">{Math.round(remainingPercent)}%</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* 2. Total Production Card */}
-                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
-                        <div className="mb-4 md:mb-0">
-                            <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">총 생산량</h3>
-                            <div className="flex items-baseline mb-1">
-                                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{animatedOutput.toLocaleString()}</span>
-                                <span className="text-lg sm:text-xl font-bold text-slate-600 tracking-tight ml-1.5">kg</span>
+                    <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-start min-h-[160px]">
+                        <div className="mb-0">
+                            <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
+                                총 도정 생산량
+                                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
+                            </h3>
+                            <div className="flex items-baseline flex-wrap gap-x-2">
+                                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{animatedOutput.toLocaleString()}</span>
+                                <span className="text-base sm:text-lg font-bold text-slate-600 tracking-tight">kg</span>
                             </div>
-                            <div className="text-xs font-medium text-slate-400">올해 누적 도정 생산량</div>
                         </div>
 
-                        <div className="mt-auto">
-                            <div className="w-full bg-slate-100 h-2 flex rounded-full overflow-hidden mb-2">
-                                {uruchiOutPercent > 0 && <div className="bg-[#2EB85C] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${uruchiOutPercent}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`} />}
-                                {indicaOutPercent > 0 && <div className="bg-[#E74C3C] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${indicaOutPercent}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`} />}
-                                {glutinousOutPercent > 0 && <div className="bg-[#F6C000] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${glutinousOutPercent}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`} />}
-                                {othersOutPercent > 0 && <div className="bg-[#95A5A6] h-full transition-all duration-1000 ease-out border-r-[2px] border-white last:border-r-0" style={{ width: `${othersOutPercent}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`} />}
-                            </div>
-                            <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase">
-                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2EB85C]"></span>메벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.uruchi).toLocaleString()}</span></div>
-                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#E74C3C]"></span>인디카 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.indica).toLocaleString()}</span></div>
-                                <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#F6C000]"></span>찰벼 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.glutinous).toLocaleString()}</span></div>
-                                {outputsByType.others > 0 && <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#95A5A6]"></span>기타 <span className="text-[10px] text-slate-400 font-medium ml-0.5">{Math.round(outputsByType.others).toLocaleString()}</span></div>}
+                        <div className="mt-5">
+                            <div className="w-full bg-[#f1f5f9] shadow-inner h-6 md:h-8 flex rounded-full overflow-hidden border border-slate-200/60 relative">
+                                {uruchiOutPercent > 0 && (
+                                    <div className="bg-gradient-to-r from-[#00a2e8] to-[#007cb3] shadow-[inset_0_-6px_8px_rgba(0,0,0,0.15),inset_0_4px_6px_rgba(255,255,255,0.25)] border-y border-r border-black/10 h-full transition-all duration-1000 ease-out flex items-center justify-center px-1 md:px-2 overflow-hidden" style={{ width: `${Math.max(uruchiOutPercent, 18)}%` }} title={`메벼: ${outputsByType.uruchi.toLocaleString()}kg`}>
+                                        <span className="text-[10px] md:text-[11px] font-bold text-white whitespace-nowrap drop-shadow-md tracking-wide">메벼 {Math.round(uruchiOutPercent)}%</span>
+                                    </div>
+                                )}
+                                {indicaOutPercent > 0 && (
+                                    <div className="bg-gradient-to-r from-[#8dc540] to-[#6da12c] shadow-[inset_0_-6px_8px_rgba(0,0,0,0.15),inset_0_4px_6px_rgba(255,255,255,0.25)] border-y border-r border-black/10 h-full transition-all duration-1000 ease-out flex items-center justify-center px-1 md:px-2 overflow-hidden" style={{ width: `${Math.max(indicaOutPercent, 18)}%` }} title={`인디카: ${outputsByType.indica.toLocaleString()}kg`}>
+                                        <span className="text-[10px] md:text-[11px] font-bold text-white whitespace-nowrap drop-shadow-md tracking-wide">인디카 {Math.round(indicaOutPercent)}%</span>
+                                    </div>
+                                )}
+                                {glutinousOutPercent > 0 && (
+                                    <div className="bg-gradient-to-r from-[#f89c1e] to-[#cc7b0c] shadow-[inset_0_-6px_8px_rgba(0,0,0,0.15),inset_0_4px_6px_rgba(255,255,255,0.25)] border-y border-r border-black/10 h-full transition-all duration-1000 ease-out flex items-center justify-center px-1 md:px-2 overflow-hidden" style={{ width: `${Math.max(glutinousOutPercent, 18)}%` }} title={`찰벼: ${outputsByType.glutinous.toLocaleString()}kg`}>
+                                        <span className="text-[10px] md:text-[11px] font-bold text-white whitespace-nowrap drop-shadow-md tracking-wide">찰벼 {Math.round(glutinousOutPercent)}%</span>
+                                    </div>
+                                )}
+                                {othersOutPercent > 0 && (
+                                    <div className="bg-gradient-to-r from-[#94a3b8] to-[#475569] shadow-[inset_0_-6px_8px_rgba(0,0,0,0.15),inset_0_4px_6px_rgba(255,255,255,0.25)] border-y border-r border-black/10 h-full transition-all duration-1000 ease-out flex items-center justify-center px-1 md:px-2 overflow-hidden" style={{ width: `${Math.max(othersOutPercent, 18)}%` }} title={`기타: ${outputsByType.others.toLocaleString()}kg`}>
+                                        <span className="text-[10px] md:text-[11px] font-bold text-white whitespace-nowrap drop-shadow-md tracking-wide">기타</span>
+                                    </div>
+                                )}
+                                {/* Empty State fallback if all percentages are 0 */}
+                                {uruchiOutPercent === 0 && indicaOutPercent === 0 && glutinousOutPercent === 0 && othersOutPercent === 0 && (
+                                    <div className="w-full flex items-center justify-center h-full">
+                                        <span className="text-[10px] md:text-xs font-bold text-slate-400">데이터 없음</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -165,25 +181,81 @@ export function RealtimeStatus({
 
                 {/* Right section: Yield card taking the 3fr space to match bottom layout */}
                 {/* 3. Average Yield Card */}
-                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[160px]">
-                    <div className="w-full">
-                        <h3 className="text-sm font-bold text-slate-500 mb-3 font-sans uppercase tracking-wider">백미 평균 수율</h3>
-                        <div className="flex gap-2 w-full">
-                            {/* Uruchi */}
-                            <div className="flex-1 bg-[#EBF4FA] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-blue-50/50">
-                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedUruchi * 10) / 10).toFixed(1)}%</span>
-                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">메벼</span>
+                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between min-h-[160px]">
+                    <h3 className="text-sm font-bold text-slate-500 font-sans uppercase tracking-wider relative z-10 shrink-0">
+                        백미 평균 수율
+                        <span className="text-[11px] font-medium text-slate-400 normal-case ml-2 tracking-tight">(기준 65%)</span>
+                    </h3>
+
+                    <div className="flex-1 w-full flex flex-col justify-end mt-[-26px]">
+                        {/* Chart Area */}
+                        <div className="relative h-[105px] w-full max-w-[280px] mx-auto border-b-[1.5px] border-slate-300 pb-0">
+                            {/* Y-axis Labels & Grid Lines (50, 55, 60, 65) */}
+                            {[50, 55, 60, 65].map(val => (
+                                <div
+                                    key={`label-${val}`}
+                                    className={`absolute left-[32px] right-0 z-0 flex items-center ${val === 65 ? 'border-t-[1.5px] border-slate-300 shadow-sm' : ''}`}
+                                    style={{ bottom: `${(val - 50) / 30 * 100}%` }}
+                                >
+                                    <span className={`absolute -top-[7px] -left-[36px] w-[34px] ${val === 65 ? 'text-[9.5px] font-bold text-slate-500 -top-[9px]' : 'text-[8.5px] font-medium text-slate-400'} bg-white tracking-tighter text-right pr-1.5`}>
+                                        {val}
+                                    </span>
+                                    {val > 50 && val !== 65 && (
+                                        <div className="w-full border-t border-slate-100" />
+                                    )}
+                                </div>
+                            ))}
+
+                            <div className="absolute inset-0 flex justify-between items-end z-10 pl-[46px] pr-2 md:pr-4">
+                                {[
+                                    { label: '메벼', value: animatedUruchi, color: 'bg-gradient-to-t from-[#008cc9] via-[#00a2e8] to-[#33c9ff] shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),inset_0_-4px_6px_rgba(0,0,0,0.15)] border-x border-t border-black/10', overColor: 'bg-black/15' }, // Blue
+                                    { label: '인디카', value: animatedIndica, color: 'bg-gradient-to-t from-[#6da12c] via-[#8dc540] to-[#aae35f] shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),inset_0_-4px_6px_rgba(0,0,0,0.15)] border-x border-t border-black/10', overColor: 'bg-black/15' }, // Green
+                                    { label: '찰벼', value: animatedGlutinous, color: 'bg-gradient-to-t from-[#cc7b0c] via-[#f89c1e] to-[#ffb44d] shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),inset_0_-4px_6px_rgba(0,0,0,0.15)] border-x border-t border-black/10', overColor: 'bg-black/15' }, // Orange
+                                ].map(item => {
+                                    // Scale: 50% ~ 80%
+                                    const clampedValue = Math.max(50, Math.min(80, item.value));
+                                    const heightPct = (clampedValue - 50) / 30 * 100;
+                                    const isOver = item.value > 65;
+                                    const coloredPct = isOver ? ((item.value - 65) / (clampedValue - 50) * 100) : 0;
+                                    const displayValue = (Math.round(item.value * 10) / 10).toFixed(1);
+
+                                    return (
+                                        <div key={item.label} className="flex flex-col items-center justify-end h-full w-[40px] md:w-[46px]">
+                                            {/* Bar Container */}
+                                            {item.value > 0 ? (
+                                                <div
+                                                    className={`w-full rounded-t-[4px] overflow-hidden flex flex-col items-center relative group transition-all ${item.color}`}
+                                                    style={{ height: `${heightPct}%` }}
+                                                >
+                                                    {/* Text inside Bar (at bottom) */}
+                                                    <div className="absolute bottom-[2px] left-0 right-0 flex justify-center z-20 pointer-events-none">
+                                                        <span className="text-[11px] sm:text-[11.5px] font-black text-white drop-shadow-sm">
+                                                            {displayValue}
+                                                        </span>
+                                                    </div>
+
+                                                    {isOver && (
+                                                        <div className={`w-full ${item.overColor} z-10 relative border-b border-black/10`} style={{ height: `${coloredPct}%` }} />
+                                                    )}
+                                                    {/* Base bar color */}
+                                                    <div className={`w-full flex-1 z-0 relative`} />
+                                                </div>
+                                            ) : (
+                                                <div className="w-full h-0 flex items-end justify-center">
+                                                    <span className="text-[10px] font-medium text-slate-300 pb-1">-</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            {/* Indica */}
-                            <div className="flex-1 bg-[#F4F1EA] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-amber-50/50">
-                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedIndica * 10) / 10).toFixed(1)}%</span>
-                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">인디카</span>
-                            </div>
-                            {/* Glutinous */}
-                            <div className="flex-1 bg-[#FAF6E3] rounded-[16px] px-2 py-3 flex flex-col items-center justify-center border border-yellow-50/50">
-                                <span className="text-xl sm:text-2xl font-black text-slate-800 mb-0.5">{(Math.round(animatedGlutinous * 10) / 10).toFixed(1)}%</span>
-                                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-tighter">찰벼</span>
-                            </div>
+                        </div>
+
+                        {/* X Axis Labels */}
+                        <div className="flex justify-between items-center w-full max-w-[280px] mx-auto mt-2 shrink-0 pl-[46px] pr-2 md:pr-4">
+                            <div className="text-[11px] font-bold text-slate-500 tracking-wider text-center w-[40px] md:w-[46px] whitespace-nowrap">메벼</div>
+                            <div className="text-[11px] font-bold text-slate-500 tracking-wider text-center w-[40px] md:w-[46px] whitespace-nowrap">인디카</div>
+                            <div className="text-[11px] font-bold text-slate-500 tracking-wider text-center w-[40px] md:w-[46px] whitespace-nowrap">찰벼</div>
                         </div>
                     </div>
                 </div>

@@ -195,7 +195,7 @@ function GroupedStockRows({
                                         onCheckedChange={() => { }} // Handled by onClick wrapper
                                         onClick={onCheckboxClick}
                                         disabled={availableItems.length === 0 && items.length > 0} // Disabled if loaded but no available items
-                                        className="border-slate-400 bg-white data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                        className="border-slate-400 bg-white data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
                                     />
                                 )}
                             </TableCell>
@@ -231,7 +231,7 @@ function GroupedStockRows({
                             </TableCell>
 
                             {/* Total Weight */}
-                            <TableCell className="text-right text-sm text-blue-700">
+                            <TableCell className="text-right text-sm text-[#008cc9]">
                                 {group.totalWeight.toLocaleString()}
                             </TableCell>
 

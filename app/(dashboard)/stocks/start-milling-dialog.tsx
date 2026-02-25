@@ -121,7 +121,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                         </div>
                         <div className="text-right">
                             <div className="text-xs font-medium text-slate-500">총 투입 중량</div>
-                            <div className="text-2xl font-black text-blue-600">
+                            <div className="text-2xl font-black text-[#00a2e8]">
                                 {totalInputKg.toLocaleString()} <span className="text-sm text-slate-500 font-medium">kg</span>
                             </div>
                         </div>
@@ -136,7 +136,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                                     key={type}
                                     type="button"
                                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-all ${millingType === type
-                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                                        ? 'bg-[#00a2e8] border-[#00a2e8] text-white shadow-md'
                                         : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                                         }`}
                                     onClick={() => setMillingType(type)}
@@ -183,7 +183,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
 
                 <DialogFooter className="gap-2 sm:gap-0">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-                    <Button onClick={handleSubmit} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={handleSubmit} disabled={isLoading} className="bg-[#00a2e8] hover:bg-[#008cc9]">
                         {isLoading ? '처리 중...' : (isEditing ? '작업 수정 완료' : '작업 시작')}
                     </Button>
                 </DialogFooter>

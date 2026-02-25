@@ -122,11 +122,11 @@ export function MillingFilters({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className={`h-8 gap-1.5 ${activeFilterCount > 0 ? 'bg-blue-50 text-blue-600 border-blue-200' : 'text-slate-600'}`}>
+                <Button variant="outline" size="sm" className={`h-8 gap-1.5 ${activeFilterCount > 0 ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30' : 'text-slate-600'}`}>
                     <SlidersHorizontal className="h-3.5 w-3.5" />
                     검색
                     {activeFilterCount > 0 && (
-                        <Badge variant="secondary" className="h-5 px-1.5 bg-blue-100 text-blue-700 ml-0.5 rounded-full text-[10px]">
+                        <Badge variant="secondary" className="h-5 px-1.5 bg-[#00a2e8]/20 text-[#008cc9] ml-0.5 rounded-full text-[10px]">
                             {activeFilterCount}
                         </Badge>
                     )}
@@ -144,7 +144,7 @@ export function MillingFilters({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
                                     onClick={() => setDateRange({ from: subMonths(new Date(), 3), to: new Date() })}
                                 >
                                     3개월
@@ -152,7 +152,7 @@ export function MillingFilters({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
                                     onClick={() => setDateRange({ from: subMonths(new Date(), 6), to: new Date() })}
                                 >
                                     6개월
@@ -160,7 +160,7 @@ export function MillingFilters({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
                                     onClick={() => setDateRange({ from: subYears(new Date(), 1), to: new Date() })}
                                 >
                                     1년

@@ -53,7 +53,7 @@ export function ReleaseExcelButton({ filters }: { filters?: { startDate?: Date; 
             <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-green-100 hover:text-green-700 hover:border-green-400 transition-colors shrink-0"
+                className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors shrink-0"
                 onClick={handleExport}
                 disabled={exporting}
                 title="엑셀 다운로드"

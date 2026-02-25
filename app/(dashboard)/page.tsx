@@ -43,18 +43,19 @@ export default async function Home() {
             </div>
 
             <div className="w-full">
-              {/* Table Header - Styled */}
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 bg-slate-50/80 rounded-lg py-2.5 px-3 mb-1 uppercase tracking-wider">
-                <div className="w-[14%]">등록일자</div>
-                <div className="w-[26%]">품종 및 분류</div>
-                <div className="w-[15%] text-right">투입량</div>
-                <div className="w-[15%] text-right">생산량</div>
-                <div className="w-[15%] text-right">수율</div>
-                <div className="w-[15%] text-right px-2">상태</div>
+              {/* Table Header - Styled (Hidden on Mobile) */}
+              <div className="hidden md:flex items-center justify-between text-[11px] font-bold text-slate-500 bg-slate-50/80 rounded-lg py-2.5 px-3 mb-1 uppercase tracking-wider">
+                <div className="w-[12%]">등록일자</div>
+                <div className="w-[22%]">품종 및 분류</div>
+                <div className="w-[14%]">생산자</div>
+                <div className="w-[13%] text-right">투입량</div>
+                <div className="w-[13%] text-right">생산량</div>
+                <div className="w-[13%] text-right">수율</div>
+                <div className="w-[13%] text-right px-2">상태</div>
               </div>
 
               {/* Table Body */}
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-2 md:gap-0">
                 {stats?.recentLogs.slice(0, 10).map((log: any) => {
                   const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
                   const yieldRate = log.totalInputKg > 0 ? (productionSum / log.totalInputKg) * 100 : 0;
@@ -65,44 +66,91 @@ export default async function Home() {
                     ? `${varietyNames[0]} 외 ${varietyNames.length - 1}종`
                     : varietyNames[0] || '-';
 
+                  const farmerNames = Array.from(new Set((log.stocks || []).map((s: any) => s.farmer?.name).filter(Boolean))) as string[];
+                  const farmerSummary = farmerNames.length > 1
+                    ? `${farmerNames[0]} 외 ${farmerNames.length - 1}명`
+                    : farmerNames[0] || '알 수 없음';
+
                   return (
-                    <div key={log.id} className="flex items-center justify-between py-2 px-3 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
-                      {/* Date */}
-                      <div className="w-[14%] text-[13px] font-semibold text-slate-500">
-                        {dateStr}
+                    <div key={log.id} className="flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0">
+
+                      {/* Mobile Top Row: Variety, Type, Status */}
+                      <div className="flex items-center justify-between md:hidden w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800 text-[14px] truncate">{varietySummary}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">{log.millingType}</span>
+                        </div>
+                        <div>
+                          {log.isClosed ? (
+                            <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap">완료</span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap">진행중</span>
+                          )}
+                        </div>
                       </div>
-                      {/* Variety & Type */}
-                      <div className="w-[26%] flex items-center gap-2 pr-2">
-                        <span className="font-bold text-slate-800 text-[13px] truncate">{varietySummary}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 whitespace-nowrap">{log.millingType}</span>
-                      </div>
-                      {/* Input */}
-                      <div className="w-[15%] text-[13px] font-semibold text-slate-600 text-right">
-                        {log.totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-400 ml-0.5">kg</span>
-                      </div>
-                      {/* Output */}
-                      <div className="w-[15%] text-[13px] font-black text-slate-800 text-right">
-                        {log.isClosed ? (
-                          <>{productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span></>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
-                      </div>
-                      {/* Yield */}
-                      <div className="w-[15%] text-[13px] font-black text-slate-800 text-right">
-                        {log.isClosed ? (
-                          <span className="text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
-                      </div>
-                      {/* Status */}
-                      <div className="w-[15%] text-right px-2 flex justify-end">
-                        {log.isClosed ? (
-                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full whitespace-nowrap border border-emerald-100/50">완료</span>
-                        ) : (
-                          <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full whitespace-nowrap border border-amber-100/50">진행중</span>
-                        )}
+
+                      {/* Mobile Bottom Row / Desktop full row */}
+                      <div className="flex items-center justify-between w-full md:w-auto md:contents text-[13px]">
+                        {/* Date */}
+                        <div className="w-auto md:w-[12%] font-semibold text-slate-500 flex items-center">
+                          <Clock className="w-3.5 h-3.5 mr-1.5 inline-block md:hidden text-slate-400" />
+                          {dateStr}
+                        </div>
+
+                        {/* Variety & Type (Desktop Only) */}
+                        <div className="hidden md:flex w-[22%] items-center gap-2 pr-2">
+                          <span className="font-bold text-slate-800 text-[13px] truncate">{varietySummary}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 whitespace-nowrap">{log.millingType}</span>
+                        </div>
+
+                        {/* Producer (Desktop Only) */}
+                        <div className="hidden md:flex w-[14%] items-center pr-2">
+                          <span className="font-medium text-slate-700 text-[13px] truncate">{farmerSummary}</span>
+                        </div>
+
+                        {/* Mobile Right Side Stats / Desktop Center Stats */}
+                        <div className="flex items-center gap-3 md:contents">
+                          {/* Input */}
+                          <div className="w-auto md:w-[13%] font-semibold text-slate-600 text-right flex flex-col md:block items-end">
+                            <span className="text-[10px] text-slate-400 font-normal md:hidden leading-none mb-0.5">투입</span>
+                            <div>{log.totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-400 ml-0.5">kg</span></div>
+                          </div>
+
+                          <ArrowRight className="w-4 h-4 text-slate-300 md:hidden flex-shrink-0" />
+
+                          {/* Output */}
+                          <div className="w-auto md:w-[13%] font-black text-slate-800 text-right flex flex-col md:block items-end">
+                            <span className="text-[10px] text-slate-400 font-normal md:hidden leading-none mb-0.5">조곡</span>
+                            <div>
+                              {log.isClosed ? (
+                                <>{productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span></>
+                              ) : (
+                                <span className="text-slate-300">-</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Yield */}
+                          <div className="w-auto md:w-[13%] font-black text-slate-800 text-right flex flex-col md:block items-end">
+                            <span className="text-[10px] text-slate-400 font-normal md:hidden leading-none mb-0.5">수율</span>
+                            <div>
+                              {log.isClosed ? (
+                                <span className="text-[#00a2e8] bg-[#00a2e8]/5 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
+                              ) : (
+                                <span className="text-slate-300">-</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Status (Desktop Only) */}
+                        <div className="hidden md:flex w-[13%] text-right px-2 justify-end">
+                          {log.isClosed ? (
+                            <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#8dc540]/20">완료</span>
+                          ) : (
+                            <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20">진행중</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -144,23 +192,23 @@ export default async function Home() {
                             </div>
                           </div>
 
-                          {/* Simple Progress Bar */}
-                          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          {/* Thin Progress Bar mimicking "Occupancy" Reference */}
+                          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
                             <div
-                              className="bg-[#2B6CB0] h-full rounded-full transition-all duration-700 ease-out opacity-90 group-hover:opacity-100"
+                              className="bg-gradient-to-r from-[#aae35f] via-[#8dc540] to-[#7db037] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] h-full rounded-full transition-all duration-700 ease-out"
                               style={{ width: `${Math.min(relativePercent, 100)}%` }}
                             ></div>
                           </div>
                         </div>
 
-                        {/* Right: Yield Badge (Fixed width) */}
-                        <div className="shrink-0 w-[52px]">
+                        {/* Right: Capsule Badge [ 93% ] */}
+                        <div className="shrink-0 w-[56px] flex items-center justify-end">
                           {item.yieldRate > 0 ? (
-                            <div className="bg-blue-50/80 px-2 py-1.5 rounded-lg flex flex-col items-center justify-center border border-blue-100/50 h-[38px]">
-                              <span className="text-[12px] font-black text-blue-600 leading-none">{(Math.round(item.yieldRate * 10) / 10).toFixed(1)}%</span>
+                            <div className="bg-white border-[1.5px] border-slate-200 px-2 py-1.5 rounded-[12px] flex items-center justify-center min-w-full shadow-sm">
+                              <span className="text-[11px] font-bold text-slate-600 leading-none">{(Math.round(item.yieldRate * 10) / 10).toFixed(1)}%</span>
                             </div>
                           ) : (
-                            <div className="bg-slate-50/80 px-2 py-1.5 rounded-lg flex flex-col items-center justify-center border border-slate-100/50 h-[38px]">
+                            <div className="bg-slate-50 border-[1.5px] border-slate-200 px-2 py-1.5 rounded-[12px] flex items-center justify-center min-w-full">
                               <span className="text-[11px] font-bold text-slate-400 leading-none uppercase">-</span>
                             </div>
                           )}

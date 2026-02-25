@@ -176,7 +176,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
         <Dialog open={open} onOpenChange={setOpen}>
             {!isControlled && (
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                         <Plus className="mr-2 h-4 w-4" /> 생산자 등록
                     </Button>
                 </DialogTrigger>
@@ -195,7 +195,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                     <input
                                         type="checkbox"
                                         id="newGroupToggle"
-                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className="h-4 w-4 rounded border-gray-300 text-[#00a2e8] focus:ring-[#00a2e8]"
                                         checked={isNewGroup}
                                         onChange={(e) => setIsNewGroup(e.target.checked)}
                                     />
@@ -286,7 +286,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     </div>
 
                     <div className="flex justify-end pt-2">
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                             {isLoading ? '저장 중...' : '저장'}
                         </Button>
                     </div>

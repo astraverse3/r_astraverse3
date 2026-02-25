@@ -253,7 +253,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         >
                             {isDeleting ? '삭제 중...' : '데이터 삭제'}
                         </Button>
-                        <Button type="submit" disabled={isLoading || isDeleting}>
+                        <Button type="submit" disabled={isLoading || isDeleting} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                             {isLoading ? '저장 중...' : '수정 완료'}
                         </Button>
                     </div>

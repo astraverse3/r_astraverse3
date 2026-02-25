@@ -137,7 +137,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
             {trigger && (
                 <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
                     {typeof trigger === 'string' ? (
-                        <button className="text-slate-900 font-bold hover:text-blue-600 hover:underline transition-colors text-left cursor-pointer">
+                        <button className="text-slate-900 font-bold hover:text-[#00a2e8] hover:underline transition-colors text-left cursor-pointer">
                             {trigger}
                         </button>
                     ) : (
@@ -181,7 +181,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleCancelMeta}>
                                     <X className="h-3 w-3 mr-1" />취소
                                 </Button>
-                                <Button size="sm" className="h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleSaveMeta} disabled={isSavingMeta}>
+                                <Button size="sm" className="h-7 px-2 text-xs bg-[#00a2e8] hover:bg-[#008cc9]" onClick={handleSaveMeta} disabled={isSavingMeta}>
                                     <Check className="h-3 w-3 mr-1" />
                                     {isSavingMeta ? '저장 중...' : '저장'}
                                 </Button>
@@ -210,7 +210,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 px-2 text-xs text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    className="h-7 px-2 text-xs text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
                                     onClick={() => setIsEditingMeta(true)}
                                 >
                                     <Pencil className="h-3 w-3 mr-1" />
@@ -271,7 +271,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                 <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
                     <div>
                         {canDelete ? (
-                            <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200" onClick={handleAddStock}>
+                            <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10 hover:border-[#00a2e8]/30" onClick={handleAddStock}>
                                 <Plus className="h-4 w-4" />
                                 톤백 추가/수정
                             </Button>

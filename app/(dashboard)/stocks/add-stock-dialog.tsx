@@ -119,7 +119,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             if (!open) resetForm()
         }}>
             <DialogTrigger asChild>
-                <Button>입고 등록</Button>
+                <Button className="bg-[#8dc540] hover:bg-[#7db037] text-white">입고 등록</Button>
             </DialogTrigger>
             <DialogContent
                 className="sm:max-w-[500px]"
@@ -226,7 +226,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     </div>
 
                     <div className="flex justify-end pt-4">
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                             {isLoading ? '저장 중...' : '저장'}
                         </Button>
                     </div>

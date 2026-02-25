@@ -57,8 +57,8 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
         <>
             <TableRow
                 className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0 text-xs 
-                    ${isAvailable ? 'cursor-pointer hover:bg-blue-50' : 'opacity-60 bg-slate-50'}
-                    ${selected ? 'bg-gradient-to-r from-blue-50 via-blue-50/50 to-white border-blue-100 shadow-sm' : ''}
+                    ${isAvailable ? 'cursor-pointer hover:bg-[#00a2e8]/10' : 'opacity-60 bg-slate-50'}
+                    ${selected ? 'bg-gradient-to-r from-[#00a2e8]/10 via-[#00a2e8]/5 to-white border-[#00a2e8]/20 shadow-sm' : ''}
                     ${isInCart ? 'bg-slate-50 opacity-50 cursor-not-allowed' : ''}
                 `}
                 onClick={() => isAvailable && onSelect(!selected)}
@@ -95,8 +95,8 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
 
                 {/* 4. Cert */}
                 <TableCell className="py-2 px-1 text-center hidden md:table-cell">
-                    <span className={`text-[10px] font-bold px-1 py-0.5 rounded-md border ${certType === '유기농' ? 'text-green-600 border-green-200 bg-green-50' :
-                        certType === '무농약' ? 'text-blue-600 border-blue-200 bg-blue-50' :
+                    <span className={`text-[10px] font-bold px-1 py-0.5 rounded-md border ${certType === '유기농' ? 'text-[#8dc540] border-[#8dc540]/30 bg-[#8dc540]/10' :
+                        certType === '무농약' ? 'text-[#00a2e8] border-[#00a2e8]/30 bg-[#00a2e8]/10' :
                             'text-slate-500 border-slate-200 bg-slate-50'
                         }`}>
                         {certType === '유기농' ? '유기' : certType === '무농약' ? '무농' : '일반'}
@@ -115,7 +115,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 {/* 6. Bag No */}
                 <TableCell className="py-2 px-1 text-right text-xs font-mono text-slate-400">
                     <span className="text-[10px]">#</span>{stock.bagNo}
-                    {isInCart && <span className="ml-1 text-[10px] text-blue-500 font-bold">(담김)</span>}
+                    {isInCart && <span className="ml-1 text-[10px] text-[#00a2e8] font-bold">(담김)</span>}
                 </TableCell>
 
                 {/* 7. Weight */}
@@ -126,7 +126,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 {/* 8. Status */}
                 <TableCell className="py-2 px-1 text-center">
                     {stock.status === 'AVAILABLE' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#00a2e8]/10 text-[#008cc9]">
                             보유
                         </span>
                     ) : stock.status === 'RELEASED' ? (
