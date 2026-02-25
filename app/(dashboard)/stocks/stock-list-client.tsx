@@ -181,7 +181,7 @@ function GroupedStockRows({
                     <Fragment key={group.key}>
                         {/* Summary Row */}
                         <TableRow
-                            className="bg-slate-200 hover:bg-slate-300 cursor-pointer border-y border-slate-300 font-bold text-slate-900 shadow-sm h-12"
+                            className="bg-[#00a2e8]/[0.04] hover:bg-[#00a2e8]/[0.08] cursor-pointer border-y border-[#00a2e8]/20 font-bold text-slate-800 shadow-sm h-12"
                             onClick={() => toggleGroup(group)}
                         >
                             {/* Checkbox Column */}

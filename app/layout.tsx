@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="antialiased min-h-screen bg-slate-100 font-sans text-slate-900 selection:bg-blue-100">
+      <body className="antialiased min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 font-sans text-slate-900 selection:bg-blue-100">
         <SWRegister />
         <Providers>
           <PWAInstallGuard>
