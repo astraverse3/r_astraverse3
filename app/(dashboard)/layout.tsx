@@ -35,7 +35,7 @@ export default function DashboardLayout({
                             {children}
 
                             {/* Bottom Right Update Timestamp (Desktop flow) */}
-                            <div className="hidden md:flex justify-end pt-0 pb-4 -mt-2">
+                            <div className="hidden md:flex justify-end pt-4 pb-4">
                                 <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50 inline-block">
                                     <LastUpdated />
                                 </div>
