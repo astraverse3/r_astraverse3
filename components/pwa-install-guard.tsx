@@ -137,6 +137,16 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
                         </div>
                     </div>
                 )}
+
+                {/* Local Development Bypass Button */}
+                {process.env.NODE_ENV === 'development' && (
+                    <button
+                        onClick={() => setIsStandalone(true)}
+                        className="mt-4 text-xs font-bold text-stone-400 underline underline-offset-4 decoration-stone-300 hover:text-stone-600 transition-colors"
+                    >
+                        개발 모드 강제 진입하기 🚀
+                    </button>
+                )}
             </div>
 
             {/* iOS Floating Helper */}

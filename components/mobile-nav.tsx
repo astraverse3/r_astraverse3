@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, BarChart3, ClipboardList, Truck } from 'lucide-react';
+import { Box, Clipboard, Compass, Activity, ArrowRightLeft } from 'lucide-react';
 
 export function MobileNav() {
     const pathname = usePathname();
@@ -10,37 +10,45 @@ export function MobileNav() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-between h-16 px-6 z-40 lg:hidden pb-[env(safe-area-inset-bottom)]">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-between h-14 px-3 z-40 lg:hidden pb-[env(safe-area-inset-bottom)]">
             <Link
                 href="/"
-                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`flex flex-row items-center justify-center h-full px-2 gap-1.5 transition-colors ${isActive('/') ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <LayoutDashboard className="w-6 h-6" />
-                {isActive('/') && <span className="text-xs font-bold">홈</span>}
+                <Compass className="w-[16px] h-[16px] stroke-[2px]" />
+                <span className={`text-[11px] ${isActive('/') ? 'font-bold' : 'font-medium'}`}>홈</span>
             </Link>
 
             <Link
                 href="/stocks"
-                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/stocks') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`flex flex-row items-center justify-center h-full px-2 gap-1.5 transition-colors ${isActive('/stocks') ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <Package className="w-6 h-6" />
-                <span className={`text-xs ${isActive('/stocks') ? 'font-bold' : 'font-medium'}`}>재고관리</span>
+                <Box className="w-[16px] h-[16px] stroke-[2px]" />
+                <span className={`text-[11px] ${isActive('/stocks') ? 'font-bold' : 'font-medium'}`}>재고</span>
             </Link>
 
             <Link
                 href="/milling"
-                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/milling') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`flex flex-row items-center justify-center h-full px-2 gap-1.5 transition-colors ${isActive('/milling') ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <ClipboardList className="w-6 h-6" />
-                <span className={`text-xs ${isActive('/milling') ? 'font-bold' : 'font-medium'}`}>도정내역</span>
+                <Clipboard className="w-[16px] h-[16px] stroke-[2px]" />
+                <span className={`text-[11px] ${isActive('/milling') ? 'font-bold' : 'font-medium'}`}>도정</span>
             </Link>
 
             <Link
                 href="/releases"
-                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isActive('/releases') ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`flex flex-row items-center justify-center h-full px-2 gap-1.5 transition-colors ${isActive('/releases') ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <Truck className="w-6 h-6" />
-                <span className={`text-xs ${isActive('/releases') ? 'font-bold' : 'font-medium'}`}>출고내역</span>
+                <ArrowRightLeft className="w-[16px] h-[16px] stroke-[2px]" />
+                <span className={`text-[11px] ${isActive('/releases') ? 'font-bold' : 'font-medium'}`}>출고</span>
+            </Link>
+
+            <Link
+                href="/statistics"
+                className={`flex flex-row items-center justify-center h-full px-2 gap-1.5 transition-colors ${isActive('/statistics') ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+                <Activity className="w-[16px] h-[16px] stroke-[2px]" />
+                <span className={`text-[11px] ${isActive('/statistics') ? 'font-bold' : 'font-medium'}`}>통계</span>
             </Link>
         </nav>
     );
