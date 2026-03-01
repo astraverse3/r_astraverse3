@@ -31,11 +31,11 @@ export default function DashboardLayout({
 
                     {/* Scrollable Page Content */}
                     <main className="flex-1 w-full flex flex-col">
-                        <div className="w-full px-0 pt-1.5 pb-0 sm:p-6 space-y-1.5 sm:space-y-6 sm:pb-8 flex-1">
+                        <div className="w-full px-0 pt-1.5 pb-0 sm:px-6 sm:pt-6 sm:pb-8 flex-1 flex flex-col">
                             {children}
 
                             {/* Bottom Right Update Timestamp (Desktop flow) */}
-                            <div className="hidden md:flex justify-end pt-2 pb-4">
+                            <div className="hidden md:flex justify-end pt-0 pb-4 -mt-2">
                                 <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50 inline-block">
                                     <LastUpdated />
                                 </div>

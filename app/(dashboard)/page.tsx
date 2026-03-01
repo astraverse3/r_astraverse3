@@ -17,7 +17,7 @@ export default async function Home() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 pb-12 max-w-[1400px] mx-auto w-full px-0 sm:px-4 lg:px-6">
+      <div className="flex flex-col gap-3 sm:gap-6 w-full">
         {/* Remove the wrapper for RealtimeStatus as it handles its own card containers now */}
         <RealtimeStatus
           availableStock={stats?.availableStockKg || 0}
