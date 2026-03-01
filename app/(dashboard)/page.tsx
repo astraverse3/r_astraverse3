@@ -59,7 +59,7 @@ export default async function Home() {
 
               {/* Table Body */}
               <div className="flex flex-col gap-2 md:gap-0">
-                {stats?.recentLogs.slice(0, 7).map((log: any) => {
+                {stats?.recentLogs.slice(0, 10).map((log: any, index: number) => {
                   const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
                   const yieldRate = log.totalInputKg > 0 ? (productionSum / log.totalInputKg) * 100 : 0;
                   const dateStr = format(new Date(log.date), 'yyyy-MM-dd');
@@ -75,7 +75,7 @@ export default async function Home() {
                     : farmerNames[0] || '알 수 없음';
 
                   return (
-                    <div key={log.id} className="flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0">
+                    <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 ${index >= 7 ? 'hidden lg:flex' : ''}`}>
 
                       {/* Mobile Top Row: Variety, Type, Status */}
                       {/* Mobile View: Custom Compact Layout (Name/Badge/Status, Date/Numbers) */}
@@ -132,33 +132,30 @@ export default async function Home() {
                           <span className="font-medium text-slate-700 text-[13px] truncate">{farmerSummary}</span>
                         </div>
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-3 contents">
-                          {/* Input */}
-                          <div className="w-[13%] font-semibold text-slate-600 block items-end text-right">
-                            <div>{log.totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-400 ml-0.5">kg</span></div>
-                          </div>
+                        {/* Input */}
+                        <div className="w-[13%] font-semibold text-slate-600 block items-end text-right">
+                          <div>{log.totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-400 ml-0.5">kg</span></div>
+                        </div>
 
-                          {/* Output */}
-                          <div className="w-[13%] font-black text-slate-800 block items-end text-right">
-                            <div>
-                              {log.isClosed ? (
-                                <>{productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span></>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </div>
+                        {/* Output */}
+                        <div className="w-[13%] font-black text-slate-800 block items-end text-right">
+                          <div>
+                            {log.isClosed ? (
+                              <>{productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span></>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )}
                           </div>
+                        </div>
 
-                          {/* Yield */}
-                          <div className="w-[13%] font-black text-slate-800 block items-end text-right">
-                            <div>
-                              {log.isClosed ? (
-                                <span className="text-[#00a2e8] bg-[#00a2e8]/5 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
-                              ) : (
-                                <span className="text-slate-300">-</span>
-                              )}
-                            </div>
+                        {/* Yield */}
+                        <div className="w-[13%] font-black text-slate-800 block items-end text-right">
+                          <div>
+                            {log.isClosed ? (
+                              <span className="text-[#00a2e8] bg-[#00a2e8]/5 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )}
                           </div>
                         </div>
 
