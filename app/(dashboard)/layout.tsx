@@ -30,14 +30,16 @@ export default function DashboardLayout({
                     </header>
 
                     {/* Scrollable Page Content */}
-                    <main className="flex-1 w-full relative">
-                        <div className="max-w-7xl mx-auto px-0 pt-1.5 pb-0 sm:p-6 space-y-1.5 sm:space-y-6 sm:pb-16">
+                    <main className="flex-1 w-full flex flex-col">
+                        <div className="w-full px-0 pt-1.5 pb-0 sm:p-6 space-y-1.5 sm:space-y-6 sm:pb-8 flex-1">
                             {children}
-                        </div>
 
-                        {/* Bottom Right Update Timestamp */}
-                        <div className="absolute bottom-4 right-6 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50 z-10 hidden md:block">
-                            <LastUpdated />
+                            {/* Bottom Right Update Timestamp (Desktop flow) */}
+                            <div className="hidden md:flex justify-end pt-2 pb-4">
+                                <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50 inline-block">
+                                    <LastUpdated />
+                                </div>
+                            </div>
                         </div>
                     </main>
                 </div>
