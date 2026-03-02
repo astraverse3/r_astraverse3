@@ -17,7 +17,7 @@ export default async function Home() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 sm:gap-6 w-full">
+      <div className="flex flex-col gap-1.5 sm:gap-6 w-full">
         {/* Remove the wrapper for RealtimeStatus as it handles its own card containers now */}
         <RealtimeStatus
           availableStock={stats?.availableStockKg || 0}
@@ -34,11 +34,11 @@ export default async function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-1.5 lg:gap-3 items-stretch">
 
           {/* Left Column: Recent Logs List (Max 7) */}
-          <section className="bg-white rounded-none sm:rounded-[24px] shadow-sm border-y sm:border-x border-slate-100 pt-0 px-3 pb-3 sm:p-6 lg:h-full flex flex-col">
+          <section className="bg-white rounded-lg sm:rounded-[24px] shadow-sm border border-slate-100 mx-1.5 sm:mx-0 pt-0 px-3 pb-3 sm:p-6 lg:h-full flex flex-col">
             <div className="flex items-center justify-between mb-3 sm:mb-5 shrink-0 mt-3 sm:mt-0">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-slate-300 md:hidden"></div>
-                <h2 className="text-[12px] sm:text-base font-bold text-slate-800 font-sans">
+                <h2 className="text-[13px] sm:text-base font-bold text-slate-800 font-sans">
                   최근 도정 내역
                 </h2>
               </div>
@@ -82,24 +82,24 @@ export default async function Home() {
                       <div className="flex flex-col md:hidden w-full gap-1.5">
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-1.5 max-w-[70%]">
-                            <span className="font-bold text-slate-800 text-[11px] truncate">
-                              {varietySummary} <span className="font-normal text-slate-500 text-[10px]">({farmerSummary})</span>
+                            <span className="font-bold text-slate-800 text-[12px] truncate">
+                              {varietySummary} <span className="font-normal text-slate-500 text-[11px]">({farmerSummary})</span>
                             </span>
-                            <span className="px-1 py-0.5 rounded text-[9px] font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">{log.millingType}</span>
+                            <span className="px-1 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">{log.millingType}</span>
                           </div>
                           <div className="shrink-0 flex items-center gap-1.5">
                             {log.isClosed ? (
-                              <span className="text-[9px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap">완료</span>
+                              <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap">완료</span>
                             ) : (
-                              <span className="text-[9px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap">진행중</span>
+                              <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap">진행중</span>
                             )}
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-[10px] font-semibold text-slate-400 font-mono tracking-tight">{dateStr.replace(/-/g, '').slice(2)}</span>
+                          <span className="text-[11px] font-semibold text-slate-400 font-mono tracking-tight">{dateStr.replace(/-/g, '').slice(2)}</span>
 
-                          <div className="flex items-center gap-1.5 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-[11px]">
                             <span className="font-semibold text-slate-500">{log.totalInputKg.toLocaleString()}kg</span>
                             <ArrowRight className="w-3 h-3 text-slate-300" />
                             {log.isClosed ? (

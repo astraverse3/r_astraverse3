@@ -19,7 +19,7 @@ export function MobileHeader() {
     return (
         <header className="fixed top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 h-11 flex items-center justify-between z-40 lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-                <img src="/logo-full.png" alt="MILL LOG" className="h-[22px] w-auto object-contain" />
+                <img src="/logo-full.png" alt="MILL LOG" className="h-[26px] w-auto object-contain" />
             </Link>
 
             <div className="flex items-center gap-2">

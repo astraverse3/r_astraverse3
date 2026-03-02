@@ -105,7 +105,7 @@ export function RealtimeStatus({
     return (
         <div className="flex flex-col gap-3 w-full">
             {/* --- Mobile View (Consolidated Dense Card) --- */}
-            <div className="lg:hidden bg-white rounded-none border-y border-slate-200 shadow-sm overflow-hidden flex flex-col w-full">
+            <div className="lg:hidden bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full mx-1.5 self-stretch" style={{ width: 'calc(100% - 12px)' }}>
 
                 {/* 1. Inventory & Production (Side-by-side or compact stack) */}
                 <div className="flex flex-col border-b border-slate-100">
@@ -114,12 +114,12 @@ export function RealtimeStatus({
                         <div className="flex justify-between items-end mb-1.5">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-2 h-2 rounded-full bg-blue-400/80"></div>
-                                <h3 className="text-[12px] font-bold text-slate-700 tracking-tight">원곡 재고</h3>
-                                <span className="text-[10px] font-medium text-slate-400">({years.target.toString().slice(-2)}')</span>
+                                <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">원곡 재고</h3>
+                                <span className="text-[11px] font-medium text-slate-400">({years.target.toString().slice(-2)}')</span>
                             </div>
                             <div className="flex items-baseline gap-0.5">
-                                <span className="text-sm font-black text-slate-800 tracking-tighter">{animatedAvailable.toLocaleString()}</span>
-                                <span className="text-[10px] font-bold text-slate-400">kg</span>
+                                <span className="text-[15px] font-black text-slate-800 tracking-tighter">{animatedAvailable.toLocaleString()}</span>
+                                <span className="text-[11px] font-bold text-slate-400">kg</span>
                             </div>
                         </div>
                         {/* Ultra-thin Bar */}
@@ -136,12 +136,12 @@ export function RealtimeStatus({
                         <div className="flex justify-between items-end mb-1.5">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-2 h-2 rounded-full bg-green-500/70"></div>
-                                <h3 className="text-[12px] font-bold text-slate-700 tracking-tight">총 생산량</h3>
-                                <span className="text-[10px] font-medium text-slate-400">({years.target.toString().slice(-2)}')</span>
+                                <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">총 생산량</h3>
+                                <span className="text-[11px] font-medium text-slate-400">({years.target.toString().slice(-2)}')</span>
                             </div>
                             <div className="flex items-baseline gap-0.5">
-                                <span className="text-sm font-black text-slate-800 tracking-tighter">{animatedOutput.toLocaleString()}</span>
-                                <span className="text-[10px] font-bold text-slate-400">kg</span>
+                                <span className="text-[15px] font-black text-slate-800 tracking-tighter">{animatedOutput.toLocaleString()}</span>
+                                <span className="text-[11px] font-bold text-slate-400">kg</span>
                             </div>
                         </div>
                         {/* Ultra-thin segmented Bar */}
@@ -167,9 +167,9 @@ export function RealtimeStatus({
                     <div className="flex justify-between items-center mb-2.5">
                         <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-orange-400/80"></div>
-                            <h3 className="text-[12px] font-bold text-slate-700 tracking-tight">평균 수율</h3>
+                            <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">평균 수율</h3>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">기준 65%</span>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">기준 65%</span>
                     </div>
 
                     <div className="space-y-2">
@@ -199,10 +199,10 @@ export function RealtimeStatus({
                                     </div>
 
                                     <div className="flex items-baseline gap-0.5 w-[36px] justify-end shrink-0">
-                                        <span className={`text-[11px] font-black tracking-tight ${isOver ? 'text-slate-800' : 'text-slate-400'}`}>
+                                        <span className={`text-[12px] font-black tracking-tight ${isOver ? 'text-slate-800' : 'text-slate-400'}`}>
                                             {item.value > 0 ? displayValue : '-'}
                                         </span>
-                                        {item.value > 0 && <span className="text-[9px] font-bold text-slate-400">%</span>}
+                                        {item.value > 0 && <span className="text-[10px] font-bold text-slate-400">%</span>}
                                     </div>
                                 </div>
                             );
