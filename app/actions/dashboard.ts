@@ -50,7 +50,15 @@ export async function getDashboardStats() {
                 take: 10,
                 orderBy: { date: 'desc' },
                 include: {
-                    outputs: true,
+                    outputs: {
+                        select: {
+                            id: true,
+                            packageType: true,
+                            weightPerUnit: true,
+                            count: true,
+                            totalWeight: true
+                        }
+                    },
                     stocks: {
                         include: {
                             variety: true, // Fetch variety object
