@@ -17,12 +17,12 @@ export function MobileHeader() {
     const { name, image, department, position } = session?.user as any || {}
 
     return (
-        <header className="fixed top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 h-11 flex items-center justify-between z-40 lg:hidden">
+        <header className="fixed top-0 left-0 right-0 bg-white border-b border-slate-200 pl-4 h-11 flex items-center justify-between z-40 lg:hidden">
             <Link href="/" className="flex items-center gap-2">
                 <img src="/logo-full.png" alt="MILL LOG" className="h-[26px] w-auto object-contain" />
             </Link>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 pr-1.5">
                 {/* 1. Profile & Logout (항상 표시) */}
                 <DropdownMenu>
                     <DropdownMenuTrigger className="flex items-center justify-center focus:outline-none">
@@ -59,7 +59,7 @@ export function MobileHeader() {
 
                 {/* 2. Admin Settings (관리자 전용 혹은 안내 메시지) */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none">
+                    <DropdownMenuTrigger className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none">
                         <MoreVertical className="w-5 h-5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">

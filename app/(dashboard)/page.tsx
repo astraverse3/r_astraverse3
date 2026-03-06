@@ -31,7 +31,7 @@ export default async function Home() {
 
         {/* 2-Column Layout for Desktop (Logs & Inventory) */}
         {/* Adjusted to 7:3 ratio */}
-        <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-1.5 lg:gap-3 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-[7.5fr_2.5fr] gap-1.5 lg:gap-3 items-stretch">
 
           {/* Left Column: Recent Logs List (Max 7) */}
           <section className="bg-white rounded-lg sm:rounded-[24px] shadow-sm border border-slate-100 mx-1.5 sm:mx-0 pt-0 px-3 pb-3 sm:p-6 lg:h-full flex flex-col">
