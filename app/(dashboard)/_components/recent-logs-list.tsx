@@ -78,7 +78,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                                 <span className="font-bold text-[#00a2e8] ml-0.5">({(Math.round(yieldRate * 10) / 10).toFixed(1)}%)</span>
                                             </>
                                         ) : (
-                                            <span className="text-slate-300 font-medium">-</span>
+                                            <span className="text-slate-300 font-medium min-w-[50px] text-right pr-2">-</span>
                                         )}
                                     </div>
                                 </div>
