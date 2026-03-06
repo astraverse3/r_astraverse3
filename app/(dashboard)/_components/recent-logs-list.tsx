@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dialog';
+import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dialog';
+import { useSession } from 'next-auth/react';
+import { hasPermission } from '@/lib/permissions';
 
 interface RecentLogsListProps {
     logs: any[];
@@ -11,7 +14,10 @@ interface RecentLogsListProps {
 
 export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [selectedInputLog, setSelectedInputLog] = useState<any | null>(null);
-    const [selectedOutputLog, setSelectedOutputLog] = useState<any | null>(null);
+    const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
+    const { data: session } = useSession();
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'MILLING_MANAGE');
 
     return (
         <div className="w-full">
@@ -57,11 +63,11 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                         </span>
                                         <span className="px-1 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">{log.millingType}</span>
                                     </div>
-                                    <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => { e.stopPropagation(); if (log.isClosed) setSelectedOutputLog(log); }}>
+                                    <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}>
                                         {log.isClosed ? (
-                                            <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer hover:bg-[#8dc540]/20 transition-colors">완료</span>
+                                            <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer hover:bg-[#8dc540]/20 transition-colors border border-[#8dc540]/20">완료</span>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap">진행중</span>
+                                            <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer hover:bg-[#00a2e8]/20 transition-colors border border-[#00a2e8]/20 animate-pulse">포장</span>
                                         )}
                                     </div>
                                 </div>
@@ -115,11 +121,11 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                         )}
                                     </div>
                                 </div>
-                                <div className="hidden md:flex w-[13%] text-right px-2 justify-end" onClick={(e) => { e.stopPropagation(); if (log.isClosed) setSelectedOutputLog(log); }}>
+                                <div className="hidden md:flex w-[13%] text-right px-2 justify-end" onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}>
                                     {log.isClosed ? (
                                         <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#8dc540]/20 cursor-pointer hover:bg-[#8dc540]/20 transition-colors">완료</span>
                                     ) : (
-                                        <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20">진행중</span>
+                                        <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20 cursor-pointer hover:bg-[#00a2e8]/20 transition-colors animate-pulse">포장</span>
                                     )}
                                 </div>
                             </div>
@@ -133,59 +139,44 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                 )}
             </div>
 
-            {/* Input Details Dialog */}
-            <Dialog open={!!selectedInputLog} onOpenChange={(open) => !open && setSelectedInputLog(null)}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>투입 내역</DialogTitle>
-                    </DialogHeader>
-                    {selectedInputLog && (
-                        <div className="py-4 space-y-4">
-                            {selectedInputLog.stocks?.map((stockItem: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-slate-800">{stockItem.variety?.name}</span>
-                                        <span className="text-sm text-slate-500">{stockItem.farmer?.name} ({stockItem.farmer?.group?.name || '소속없음'})</span>
-                                    </div>
-                                    <span className="font-bold text-slate-700">{stockItem.weightKg.toLocaleString()} kg</span>
-                                </div>
-                            ))}
-                            <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-slate-200">
-                                <span className="font-bold text-slate-800">총 투입량</span>
-                                <span className="font-black text-blue-600 text-lg">{selectedInputLog.totalInputKg.toLocaleString()} kg</span>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            {/* Input Details Dialog (Standard) */}
+            {selectedInputLog && (
+                <MillingStockListDialog
+                    batchId={selectedInputLog.id}
+                    millingType={selectedInputLog.millingType}
+                    date={selectedInputLog.date}
+                    remarks={selectedInputLog.remarks}
+                    stocks={(selectedInputLog.stocks || []).map((s: any) => ({
+                        id: s.id,
+                        bagNo: s.bagNo,
+                        weightKg: s.weightKg,
+                        farmerName: s.farmer?.name || 'Unknown',
+                        variety: {
+                            name: s.variety?.name || 'Unknown',
+                            type: s.variety?.type || 'UNKNOWN'
+                        },
+                        certType: s.farmer?.group?.certType || 'Unknown'
+                    }))}
+                    varieties={[...new Set((selectedInputLog.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))].join(', ')}
+                    canDelete={!selectedInputLog.isClosed && canManage}
+                    open={!!selectedInputLog}
+                    onOpenChange={(open) => !open && setSelectedInputLog(null)}
+                />
+            )}
 
-            {/* Output Details Dialog */}
-            <Dialog open={!!selectedOutputLog} onOpenChange={(open) => !open && setSelectedOutputLog(null)}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>도정 생산 내역 (포장)</DialogTitle>
-                    </DialogHeader>
-                    {selectedOutputLog && (
-                        <div className="py-4 space-y-4">
-                            {selectedOutputLog.outputs?.map((out: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-slate-800">{out.packageUnitKg}kg 포장</span>
-                                        <span className="text-sm text-slate-500">{out.packageCount}포</span>
-                                    </div>
-                                    <span className="font-bold text-slate-700">{out.totalWeight.toLocaleString()} kg</span>
-                                </div>
-                            ))}
-                            <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-slate-200">
-                                <span className="font-bold text-slate-800">총 도정량</span>
-                                <span className="font-black text-[#7db037] text-lg">
-                                    {selectedOutputLog.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0).toLocaleString()} kg
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            {/* Output Details Dialog (Standard Packaging Dialog) */}
+            {packagingOpenLog && (
+                <AddPackagingDialog
+                    batchId={packagingOpenLog.id}
+                    millingType={packagingOpenLog.millingType}
+                    totalInputKg={packagingOpenLog.totalInputKg}
+                    isClosed={packagingOpenLog.isClosed}
+                    initialOutputs={packagingOpenLog.outputs || []}
+                    open={!!packagingOpenLog}
+                    onOpenChange={(open) => !open && setPackagingOpenLog(null)}
+                    trigger={<></>}
+                />
+            )}
         </div>
     );
 }
