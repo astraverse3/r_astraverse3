@@ -458,7 +458,7 @@ export function RealtimeStatus({
 
                     {/* 2. Total Production Card */}
                     <div className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col justify-start min-h-[120px]">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-start gap-12">
                             <div className="mb-0">
                                 <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
                                     총 도정 생산량
