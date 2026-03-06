@@ -54,7 +54,17 @@ export async function getDashboardStats() {
                     stocks: {
                         include: {
                             variety: true, // Fetch variety object
-                            farmer: { select: { name: true, group: { select: { name: true } } } } // Fetch farmer and group name
+                            farmer: {
+                                select: {
+                                    name: true,
+                                    group: {
+                                        select: {
+                                            name: true,
+                                            certType: true
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
