@@ -75,16 +75,29 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                 <div className="flex items-center justify-between w-full">
                                     <span className="text-[11px] font-semibold text-slate-400 font-mono tracking-tight">{dateStr.replace(/-/g, '').slice(2)}</span>
 
-                                    <div className="flex items-center gap-1.5 text-[11px]">
-                                        <span className="font-semibold text-slate-500">{log.totalInputKg.toLocaleString()}kg</span>
-                                        <ArrowRight className="w-3 h-3 text-slate-300" />
+                                    <div className="flex items-center text-[11px] shrink-0">
+                                        <div className="w-[55px] text-right font-semibold text-slate-500 shrink-0">
+                                            {log.totalInputKg.toLocaleString()}kg
+                                        </div>
+                                        <div className="w-[16px] flex justify-center shrink-0 mx-0.5">
+                                            <ArrowRight className="w-3 h-3 text-slate-300" />
+                                        </div>
                                         {log.isClosed ? (
                                             <>
-                                                <span className="font-black text-slate-800">{productionSum.toLocaleString()}kg</span>
-                                                <span className="font-bold text-[#00a2e8] ml-0.5">({(Math.round(yieldRate * 10) / 10).toFixed(1)}%)</span>
+                                                <div className="w-[55px] text-right font-black text-slate-800 shrink-0">
+                                                    {productionSum.toLocaleString()}kg
+                                                </div>
+                                                <div className="w-[42px] text-right font-bold text-[#00a2e8] shrink-0">
+                                                    ({(Math.round(yieldRate * 10) / 10).toFixed(1)}%)
+                                                </div>
                                             </>
                                         ) : (
-                                            <span className="text-slate-300 font-medium min-w-[50px] text-right pr-2">-</span>
+                                            <>
+                                                <div className="w-[55px] text-center text-slate-300 font-medium shrink-0">
+                                                    -
+                                                </div>
+                                                <div className="w-[42px] shrink-0"></div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
