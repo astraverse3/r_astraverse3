@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -119,7 +120,10 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             if (!open) resetForm()
         }}>
             <DialogTrigger asChild>
-                <Button className="bg-[#8dc540] hover:bg-[#7db037] text-white">입고 등록</Button>
+                <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white px-2 sm:px-3">
+                    <Plus className="sm:mr-1 h-4 w-4" />
+                    <span className="hidden sm:inline">입고 등록</span>
+                </Button>
             </DialogTrigger>
             <DialogContent
                 className="sm:max-w-[500px]"

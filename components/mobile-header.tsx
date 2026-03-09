@@ -60,7 +60,7 @@ export function MobileHeader() {
                 {/* 2. Admin Settings (관리자 전용 혹은 안내 메시지) */}
                 <DropdownMenu>
                     <DropdownMenuTrigger className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none">
-                        <MoreVertical className="w-5 h-5" />
+                        <Settings className="w-5 h-5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                         {isAdmin ? (

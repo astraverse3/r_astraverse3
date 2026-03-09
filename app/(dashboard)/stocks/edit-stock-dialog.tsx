@@ -145,40 +145,42 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                     </div>
                 )}
                 <form onSubmit={onSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="productionYear">생산년도</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="productionYear" className="text-[13px] whitespace-nowrap">생산년도</Label>
                             <Input
                                 id="productionYear"
                                 name="productionYear"
                                 type="number"
                                 defaultValue={stock.productionYear}
                                 required
+                                className="text-[13px]"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="incomingDate">입고일자</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="incomingDate" className="text-[13px] whitespace-nowrap">입고일자</Label>
                             <Input
                                 id="incomingDate"
                                 name="incomingDate"
                                 type="date"
                                 required
                                 defaultValue={new Date(stock.incomingDate).toISOString().split('T')[0]}
+                                className="text-[13px]"
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>생산자</Label>
+                    <div className="space-y-1.5">
+                        <Label className="text-[13px]">생산자</Label>
                         <Select value={selectedFarmerId} onValueChange={(val) => {
                             setSelectedFarmerId(val)
                         }}>
-                            <SelectTrigger>
+                            <SelectTrigger className="text-[13px]">
                                 <SelectValue placeholder="생산자 선택" />
                             </SelectTrigger>
                             <SelectContent>
                                 {farmers.map((f) => (
-                                    <SelectItem key={f.id} value={f.id.toString()}>
+                                    <SelectItem key={f.id} value={f.id.toString()} className="text-[13px]">
                                         {f.group
                                             ? `[${f.group.certType}] ${f.name} (${f.group.name})`
                                             : `[일반] ${f.name} (작목반 없음)`}
@@ -196,22 +198,17 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                 일반 재배 (작목반 미소속)
                             </p>
                         )}
-                        {selectedFarmer && !selectedFarmer.group && (
-                            <p className="text-xs text-slate-500 mt-1">
-                                일반 재배 (작목반 미소속)
-                            </p>
-                        )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>품종</Label>
+                    <div className="space-y-1.5">
+                        <Label className="text-[13px]">품종</Label>
                         <Select value={selectedVarietyId} onValueChange={setSelectedVarietyId}>
-                            <SelectTrigger>
+                            <SelectTrigger className="text-[13px]">
                                 <SelectValue placeholder="품종 선택" />
                             </SelectTrigger>
                             <SelectContent>
                                 {varieties.map((v) => (
-                                    <SelectItem key={v.id} value={v.id.toString()}>
+                                    <SelectItem key={v.id} value={v.id.toString()} className="text-[13px]">
                                         {v.name}
                                     </SelectItem>
                                 ))}
@@ -219,19 +216,20 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="bagNo">톤백번호</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="bagNo" className="text-[13px] whitespace-nowrap">톤백번호</Label>
                             <Input
                                 id="bagNo"
                                 name="bagNo"
                                 type="number"
                                 defaultValue={stock.bagNo}
                                 required
+                                className="text-[13px]"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="weightKg">중량(kg)</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="weightKg" className="text-[13px] whitespace-nowrap">중량(kg)</Label>
                             <Input
                                 id="weightKg"
                                 name="weightKg"
@@ -239,6 +237,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                 step="0.1"
                                 defaultValue={stock.weightKg}
                                 required
+                                className="text-[13px]"
                             />
                         </div>
                     </div>

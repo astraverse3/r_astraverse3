@@ -104,10 +104,14 @@ export function StockPageWrapper({
 
     // Derive Flat List of Stocks from Loaded Items for Selection Logic
     // Only includes items that have been loaded.
-    // Only includes items that have been loaded.
     const stocks = useMemo(() => {
         return Object.values(loadedItems).flat()
     }, [loadedItems])
+
+    // Calculate total item count across ALL initial groups (even unloaded ones)
+    const totalItemCount = useMemo(() => {
+        return initialGroups.reduce((acc, group) => acc + group.count, 0)
+    }, [initialGroups])
 
     // Create a Set of IDs for items currently in the cart
     const cartItemIds = useMemo(() => {
@@ -180,7 +184,7 @@ export function StockPageWrapper({
                 excelSlot={excelSlot}
                 addDialogSlot={addDialogSlot}
             >
-                <ActiveStockFilters totalCount={stocks.length} />
+                <ActiveStockFilters totalCount={totalItemCount} />
                 <StockListClient
                     initialGroups={initialGroups}
                     loadedItems={loadedItems}
