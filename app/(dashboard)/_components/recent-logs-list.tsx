@@ -87,7 +87,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                                 <div className="w-[55px] text-right font-black text-slate-800 shrink-0">
                                                     {productionSum.toLocaleString()}kg
                                                 </div>
-                                                <div className="w-[42px] text-right font-bold text-[#00a2e8] shrink-0">
+                                                <div className="w-[42px] text-right font-bold text-[#00a2e8] shrink-0 ml-1.5">
                                                     ({(Math.round(yieldRate * 10) / 10).toFixed(1)}%)
                                                 </div>
                                             </>
@@ -96,7 +96,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                                 <div className="w-[55px] text-center text-slate-300 font-medium shrink-0">
                                                     -
                                                 </div>
-                                                <div className="w-[42px] shrink-0"></div>
+                                                <div className="w-[42px] shrink-0 ml-1.5"></div>
                                             </>
                                         )}
                                     </div>
