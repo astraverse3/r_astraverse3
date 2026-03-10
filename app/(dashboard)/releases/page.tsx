@@ -37,8 +37,8 @@ export default async function ReleaseHistoryPage({
             <ReleasePageWrapper
                 logs={logs}
                 filters={filters}
-                filtersSlot={<ReleaseFilters />}
-                excelSlot={<ReleaseExcelButton filters={filters} />}
+                filtersSlot={<ReleaseFilters key="filters-slot" />}
+                excelSlot={<ReleaseExcelButton key="excel-slot" filters={filters} />}
             />
         </Suspense>
     )
