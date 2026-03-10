@@ -58,6 +58,16 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
+    // Normalize legacy milling type values to new unified options
+    const normalizeMillingType = (type: string) => {
+        const legacyMap: Record<string, string> = {
+            '칠분도미': '7분도미',
+            '7분도': '7분도미',
+            '5분도': '5분도미',
+        }
+        return legacyMap[type] || type
+    }
+
     // Inline editing state for date/remarks/millingType
     const [isEditingMeta, setIsEditingMeta] = useState(false)
     const [editDate, setEditDate] = useState(() => {
@@ -65,7 +75,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
         return d.toISOString().split('T')[0]
     })
     const [editRemarks, setEditRemarks] = useState(remarks || '')
-    const [editMillingType, setEditMillingType] = useState(millingType)
+    const [editMillingType, setEditMillingType] = useState(normalizeMillingType(millingType))
     const [isSavingMeta, setIsSavingMeta] = useState(false)
 
     const handleSaveMeta = async () => {
@@ -87,7 +97,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const handleCancelMeta = () => {
         setEditDate(new Date(date).toISOString().split('T')[0])
         setEditRemarks(remarks || '')
-        setEditMillingType(millingType)
+        setEditMillingType(normalizeMillingType(millingType))
         setIsEditingMeta(false)
     }
 
