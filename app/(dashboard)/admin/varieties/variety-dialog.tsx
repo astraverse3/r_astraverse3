@@ -165,26 +165,28 @@ export function VarietyDialog({ mode, variety }: Props) {
                             </label>
                         </div>
                     </div>
-                    <DialogFooter className="flex justify-between sm:justify-between gap-2">
-                        {mode === 'edit' && (
+                    <div className="flex items-center justify-between w-full pt-4 border-t border-slate-100 mt-2">
+                        {mode === 'edit' ? (
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleDelete}
                                 disabled={loading}
-                                className="mr-auto text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                             >
                                 <Trash2 className="w-4 h-4 mr-1.5" />
                                 삭제
                             </Button>
+                        ) : (
+                            <div />
                         )}
                         <div className="flex gap-2">
-                            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>취소</Button>
+                            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={loading}>취소</Button>
                             <Button type="submit" disabled={loading || !name.trim()} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
                                 {loading ? '처리 중...' : '저장'}
                             </Button>
                         </div>
-                    </DialogFooter>
+                    </div>
                 </form>
             </DialogContent>
         </Dialog>
