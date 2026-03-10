@@ -149,31 +149,29 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                 <div className="flex items-center px-2.5 pb-1.5 pt-0.5" style={{ paddingLeft: 'calc(0.625rem + 1rem + 0.5rem)' }}>
                     <span className="text-[12px] text-slate-500 truncate shrink-0 min-w-[3.5rem]">{farmersSummary}</span>
                     <span className="flex-1" />
-                    <div className="flex items-center gap-0.5 ml-auto shrink-0">
-                        <span className="text-[10px] text-slate-400 shrink-0 mr-0.5">
+                    <div className="flex items-center ml-auto shrink-0">
+                        <span className="text-[10px] text-slate-400 shrink-0 mr-1">
                             <span className="bg-slate-100 px-1 py-0.5 rounded font-bold text-slate-500">{tonbagCount}</span>백
                         </span>
-                        <span className="text-[12px] font-bold text-slate-700 tabular-nums w-[4.5rem] text-right inline-block">
+                        <span className="text-[12px] font-bold text-slate-700 tabular-nums text-right">
                             {log.totalInputKg.toLocaleString()}<span className="text-[9px] font-medium text-slate-400 ml-0.5">kg</span>
                         </span>
-                        <ArrowRight className="h-3 w-3 text-slate-300 shrink-0 mx-0.5" />
-                        <span className="w-[5.5rem] text-right inline-flex items-center justify-end gap-0.5">
-                            {totalRiceKg > 0 ? (
-                                <>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
-                                        className="text-[12px] font-bold text-[#00a2e8] tabular-nums underline underline-offset-2 decoration-[#00a2e8]/40 hover:decoration-[#00a2e8]"
-                                    >
-                                        {totalRiceKg.toLocaleString()}<span className="text-[9px] font-medium text-[#00a2e8]/60 ml-0.5 no-underline">kg</span>
-                                    </button>
-                                    <span className={`text-[10px] px-1 py-0 rounded-full font-bold ${yieldRate >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : yieldRate >= 60 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
-                                        {Math.round(yieldRate)}%
-                                    </span>
-                                </>
-                            ) : (
-                                <span className="text-[10px] text-slate-300">-</span>
-                            )}
-                        </span>
+                        <ArrowRight className="h-3 w-3 text-slate-300 shrink-0 mx-1" />
+                        {totalRiceKg > 0 ? (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
+                                    className="text-[12px] font-bold text-[#00a2e8] tabular-nums underline underline-offset-2 decoration-[#00a2e8]/40 hover:decoration-[#00a2e8]"
+                                >
+                                    {totalRiceKg.toLocaleString()}<span className="text-[9px] font-medium text-[#00a2e8]/60 ml-0.5 no-underline">kg</span>
+                                </button>
+                                <span className={`text-[10px] px-1 ml-1 py-0 rounded-full font-bold ${yieldRate >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : yieldRate >= 60 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
+                                    {Math.round(yieldRate)}%
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-[10px] text-slate-300">-</span>
+                        )}
                     </div>
                 </div>
 

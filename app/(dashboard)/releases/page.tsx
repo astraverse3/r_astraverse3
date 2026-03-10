@@ -1,9 +1,9 @@
 import { Suspense } from 'react'
 import { getReleaseLogs } from '@/app/actions/release'
-import { ReleaseHistoryList } from './release-history-list'
+import { ReleasePageWrapper } from './release-page-wrapper'
 import { ReleaseFilters } from './release-filters'
 import { ReleaseExcelButton } from './release-excel-button'
-import { subYears, startOfDay, endOfDay } from 'date-fns'
+import { startOfYear, endOfDay } from 'date-fns'
 
 export default async function ReleaseHistoryPage({
     searchParams,
@@ -12,10 +12,20 @@ export default async function ReleaseHistoryPage({
 }) {
     const resolvedParams = await searchParams
 
-    // Default filters: 1 year ago to today if not provided
+    // Default Year: Previous Year until Oct, Current Year from Nov (same as stock page)
+    const today = new Date()
+    const defaultYear = (today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1
+
+    const startDate = resolvedParams.startDate
+        ? new Date(resolvedParams.startDate as string)
+        : startOfYear(new Date(defaultYear, 0, 1))
+    const endDate = resolvedParams.endDate
+        ? endOfDay(new Date(resolvedParams.endDate as string))
+        : new Date()
+
     const filters = {
-        startDate: resolvedParams.startDate ? startOfDay(new Date(resolvedParams.startDate as string)) : subYears(new Date(), 1),
-        endDate: resolvedParams.endDate ? endOfDay(new Date(resolvedParams.endDate as string)) : new Date(),
+        startDate,
+        endDate,
         keyword: resolvedParams.keyword as string | undefined
     }
 
@@ -23,14 +33,13 @@ export default async function ReleaseHistoryPage({
     const logs = result.success && result.data ? result.data : []
 
     return (
-        <div className="grid grid-cols-1 gap-1 pb-24">
-            <Suspense fallback={<div>출고 내역을 불러오는 중...</div>}>
-                <ReleaseHistoryList
-                    initialLogs={logs}
-                    filtersSlot={<ReleaseFilters />}
-                    excelSlot={<ReleaseExcelButton filters={filters} />}
-                />
-            </Suspense>
-        </div>
+        <Suspense fallback={<div>출고 내역을 불러오는 중...</div>}>
+            <ReleasePageWrapper
+                logs={logs}
+                filters={filters}
+                filtersSlot={<ReleaseFilters />}
+                excelSlot={<ReleaseExcelButton filters={filters} />}
+            />
+        </Suspense>
     )
 }
