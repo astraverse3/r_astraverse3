@@ -49,12 +49,14 @@ export function ReleasePageWrapper({
             filtersSlot={filtersSlot}
             excelSlot={excelSlot}
         >
-            <ActiveReleaseFilters totalCount={logs.length} defaultStartDate={filters.startDate} defaultEndDate={filters.endDate} />
-            <ReleaseHistoryList
-                logs={logs}
-                selectedIds={selectedIds}
-                onSelectionChange={setSelectedIds}
-            />
+            <>
+                <ActiveReleaseFilters totalCount={logs.length} defaultStartDate={filters.startDate} defaultEndDate={filters.endDate} />
+                <ReleaseHistoryList
+                    logs={logs}
+                    selectedIds={selectedIds}
+                    onSelectionChange={setSelectedIds}
+                />
+            </>
         </ReleasePageClient>
     )
 }
