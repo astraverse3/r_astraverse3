@@ -2,6 +2,7 @@
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { MillingTableRow } from './milling-table-row'
+import { MobileMillingCard } from './mobile-milling-card'
 import {
     Table,
     TableBody,
@@ -37,47 +38,68 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
     }
 
     return (
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <Table>
-                <TableHeader>
-                    <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                        <TableHead className="w-[50px] py-3 px-3 text-center">
-                            <Checkbox
-                                checked={selectedIds.size === logs.length && logs.length > 0}
-                                onCheckedChange={handleSelectAll}
-                            />
-                        </TableHead>
-                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[90px]">날짜</TableHead>
-                        <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[140px]">품종(원료)</TableHead>
-                        <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[100px]">생산자</TableHead>
-                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">구분</TableHead>
-                        <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[70px]">톤백</TableHead>
-                        <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">투입</TableHead>
-                        <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">생산</TableHead>
-                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">수율</TableHead>
-                        <TableHead className="py-3 px-3 text-left text-sm font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
-                        <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">상태</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {logs.length > 0 ? (
-                        logs.map((log: any) => (
-                            <MillingTableRow
-                                key={log.id}
-                                log={log}
-                                selected={selectedIds.has(log.id)}
-                                onSelect={(checked) => handleSelectOne(log.id, checked)}
-                            />
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableHead colSpan={9} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 작업이 없습니다.'}
+        <>
+            {/* Mobile Card View */}
+            <section className="sm:hidden flex flex-col gap-2 px-1">
+                {logs.length > 0 ? (
+                    logs.map((log: any) => (
+                        <MobileMillingCard
+                            key={log.id}
+                            log={log}
+                            selected={selectedIds.has(log.id)}
+                            onSelect={(checked) => handleSelectOne(log.id, checked)}
+                        />
+                    ))
+                ) : (
+                    <div className="text-center text-sm text-slate-400 py-16">
+                        {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 작업이 없습니다.'}
+                    </div>
+                )}
+            </section>
+
+            {/* Desktop Table View */}
+            <section className="hidden sm:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                            <TableHead className="w-[50px] py-3 px-3 text-center">
+                                <Checkbox
+                                    checked={selectedIds.size === logs.length && logs.length > 0}
+                                    onCheckedChange={handleSelectAll}
+                                />
                             </TableHead>
+                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[90px]">날짜</TableHead>
+                            <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[140px]">품종(원료)</TableHead>
+                            <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[100px]">생산자</TableHead>
+                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">구분</TableHead>
+                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[70px]">톤백</TableHead>
+                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">투입</TableHead>
+                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">생산</TableHead>
+                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">수율</TableHead>
+                            <TableHead className="py-3 px-3 text-left text-sm font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
+                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">상태</TableHead>
                         </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </section>
+                    </TableHeader>
+                    <TableBody>
+                        {logs.length > 0 ? (
+                            logs.map((log: any) => (
+                                <MillingTableRow
+                                    key={log.id}
+                                    log={log}
+                                    selected={selectedIds.has(log.id)}
+                                    onSelect={(checked) => handleSelectOne(log.id, checked)}
+                                />
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableHead colSpan={9} className="h-32 text-center text-xs text-slate-400 font-medium">
+                                    {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 작업이 없습니다.'}
+                                </TableHead>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </section>
+        </>
     )
 }

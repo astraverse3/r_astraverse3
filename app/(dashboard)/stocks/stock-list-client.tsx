@@ -361,7 +361,7 @@ function GroupedStockMobileCards({
                     <div key={group.key} className="flex flex-col gap-2">
                         {/* Summary Mobile Card */}
                         <div
-                            className={`flex flex-col p-3 rounded-xl border \${isExpanded ? 'border-blue-300 bg-[#00a2e8]/[0.08] shadow-md' : 'border-slate-200 bg-[#00a2e8]/[0.04] shadow-sm'} transition-colors`}
+                            className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-blue-300 bg-[#00a2e8]/[0.08] shadow-md' : 'border-slate-200 bg-[#00a2e8]/[0.04] shadow-sm'} transition-colors`}
                             onClick={() => toggleGroup(group)}
                         >
                             {/* FIRST ROW */}
@@ -414,9 +414,10 @@ function GroupedStockMobileCards({
 
                         {/* Detailed Mobile Cards (Sub-cards) */}
                         {isExpanded && (
-                            <div className="flex flex-col gap-1.5 pl-3 border-l-2 border-blue-200 ml-2 mr-1 mb-2">
+                            <div className="flex flex-col gap-1.5 pl-3 border-l-4 border-blue-200 ml-4 mr-1 mb-2 relative">
+                                {/* Ensure the line container itself has no background that bleeds */}
                                 {isLoading && items.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-6 text-slate-400 bg-white/50 rounded-lg">
+                                    <div className="flex flex-col items-center justify-center py-6 text-slate-400 bg-white rounded-lg border border-slate-100 shadow-sm">
                                         <Loader2 className="h-5 w-5 animate-spin mb-2" />
                                         <span className="text-xs">데이터 로딩 중...</span>
                                     </div>
@@ -471,10 +472,10 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
 
     return (
         <div
-            className={`relative py-2 px-2.5 rounded-lg border \${selected ? 'border-[#00a2e8] bg-[#f0f9ff] ring-1 ring-[#00a2e8]/20' : isConsumed ? 'border-slate-100 bg-slate-50' : 'border-slate-100 bg-white'} \${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
+            className={`relative py-2 px-2.5 rounded-lg border ${selected ? 'border-[#00a2e8] bg-[#f0f9ff] ring-1 ring-[#00a2e8]/20' : isConsumed ? 'border-slate-200 bg-slate-50' : 'border-slate-200/80 bg-white'} ${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
             onClick={handleCardClick}
         >
-            <div className={`\${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
+            <div className={`${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
                 <div className="flex justify-between items-center mb-0.5 gap-1">
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                         {!hideCheckbox && (

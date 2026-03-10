@@ -137,20 +137,21 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     {/* 1. Context: Year & Cert Type */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="productionYear">생산년도</Label>
+                            <Label htmlFor="productionYear" className="text-[13px]">생산년도</Label>
                             <Input
                                 id="productionYear"
                                 name="productionYear"
                                 type="number"
                                 value={productionYear}
                                 onChange={(e) => setProductionYear(parseInt(e.target.value) || defaultYear)}
+                                className="text-[13px]"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>인증 구분</Label>
+                            <Label className="text-[13px]">인증 구분</Label>
                             <Select value={certType} onValueChange={setCertType}>
-                                <SelectTrigger>
+                                <SelectTrigger className="text-[13px]">
                                     <SelectValue placeholder="유기농" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -164,12 +165,12 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
                     {/* 2. Target: Farmer */}
                     <div className="space-y-2">
-                        <Label>생산자</Label>
+                        <Label className="text-[13px]">생산자</Label>
                         <Select
                             value={selectedFarmerId}
                             onValueChange={setSelectedFarmerId}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="text-[13px]">
                                 <SelectValue placeholder="생산자 선택" />
                             </SelectTrigger>
                             <SelectContent>
@@ -198,9 +199,9 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     {/* 3. Meta: Variety & Incoming Date */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="varietyId">품종</Label>
+                            <Label htmlFor="varietyId" className="text-[13px]">품종</Label>
                             <Select name="varietyId" required>
-                                <SelectTrigger>
+                                <SelectTrigger className="text-[13px]">
                                     <SelectValue placeholder="품종 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -213,24 +214,24 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="incomingDate">입고일자 (Lot 기준)</Label>
-                            <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} />
+                            <Label htmlFor="incomingDate" className="text-[13px]">입고일자 (Lot 기준)</Label>
+                            <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="text-[13px]" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="bagNo">톤백번호</Label>
-                            <Input id="bagNo" name="bagNo" type="number" placeholder="1234" required />
+                            <Label htmlFor="bagNo" className="text-[13px]">톤백번호</Label>
+                            <Input id="bagNo" name="bagNo" type="number" placeholder="1234" required className="text-[13px]" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="weightKg">중량(kg)</Label>
-                            <Input id="weightKg" name="weightKg" type="number" step="0.1" placeholder="800" required />
+                            <Label htmlFor="weightKg" className="text-[13px]">중량(kg)</Label>
+                            <Input id="weightKg" name="weightKg" type="number" step="0.1" placeholder="800" required className="text-[13px]" />
                         </div>
                     </div>
 
                     <div className="flex justify-end pt-4">
-                        <Button type="submit" disabled={isLoading} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
+                        <Button type="submit" disabled={isLoading} className="bg-[#00a2e8] hover:bg-[#008cc9] text-white text-[13px]">
                             {isLoading ? '저장 중...' : '저장'}
                         </Button>
                     </div>

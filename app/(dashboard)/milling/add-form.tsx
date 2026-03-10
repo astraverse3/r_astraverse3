@@ -127,8 +127,8 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                     {/* Milling Type Selector */}
                     <div>
                         <Label className="text-sm font-bold text-slate-800 mb-1.5 block">도정 구분</Label>
-                        <div className="flex gap-2">
-                            {['백미', '현미', '칠분도미', '기타'].map((type) => (
+                        <div className="grid grid-cols-3 gap-1.5">
+                            {['백미', '현미', '5분도미', '7분도미', '찹쌀', '기타'].map((type) => (
                                 <button
                                     key={type}
                                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-all ${millingType === type

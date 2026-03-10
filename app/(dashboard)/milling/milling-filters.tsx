@@ -46,7 +46,7 @@ export function MillingFilters({
     const [open, setOpen] = useState(false)
 
     // Filter States
-    const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
+    const [status, setStatus] = useState(searchParams.get('status') || 'open')
     const [variety, setVariety] = useState(searchParams.get('variety') || 'ALL')
     const [millingType, setMillingType] = useState(searchParams.get('millingType') || 'ALL')
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
@@ -65,7 +65,7 @@ export function MillingFilters({
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
-            setStatus(searchParams.get('status') || 'ALL')
+            setStatus(searchParams.get('status') || 'open')
             setVariety(searchParams.get('variety') || 'ALL')
             setMillingType(searchParams.get('millingType') || 'ALL')
             setKeyword(searchParams.get('keyword') || '')
@@ -139,7 +139,7 @@ export function MillingFilters({
                 <div className="grid gap-4 py-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <Label>기간 설정</Label>
+                            <Label className="text-[13px] font-medium">기간 설정</Label>
                             <div className="flex gap-1">
                                 <Button
                                     variant="outline"
@@ -221,7 +221,7 @@ export function MillingFilters({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>상태</Label>
+                            <Label className="text-[13px] font-medium">상태</Label>
                             <Select value={status} onValueChange={setStatus}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="전체" />
@@ -234,7 +234,7 @@ export function MillingFilters({
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>품종</Label>
+                            <Label className="text-[13px] font-medium">품종</Label>
                             <Select value={variety} onValueChange={setVariety}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="전체" />
@@ -253,7 +253,7 @@ export function MillingFilters({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>도정구분</Label>
+                            <Label className="text-[13px] font-medium">도정구분</Label>
                             <Select value={millingType} onValueChange={setMillingType}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="전체" />
@@ -262,14 +262,15 @@ export function MillingFilters({
                                     <SelectItem value="ALL">전체</SelectItem>
                                     <SelectItem value="백미">백미</SelectItem>
                                     <SelectItem value="현미">현미</SelectItem>
-                                    <SelectItem value="7분도">7분도</SelectItem>
-                                    <SelectItem value="5분도">5분도</SelectItem>
+                                    <SelectItem value="5분도미">5분도미</SelectItem>
+                                    <SelectItem value="7분도미">7분도미</SelectItem>
                                     <SelectItem value="찹쌀">찹쌀</SelectItem>
+                                    <SelectItem value="기타">기타</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>수율</Label>
+                            <Label className="text-[13px] font-medium">수율</Label>
                             <Select value={yieldRate} onValueChange={setYieldRate}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="전체" />
@@ -287,7 +288,7 @@ export function MillingFilters({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>생산자명 (텍스트 검색)</Label>
+                            <Label className="text-[13px] font-medium">생산자명 (텍스트 검색)</Label>
                             <Input
                                 placeholder="농가명 입력"
                                 value={farmerName}
@@ -295,10 +296,11 @@ export function MillingFilters({
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleApply()
                                 }}
+                                className="text-[13px]"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>비고 (텍스트 검색)</Label>
+                            <Label className="text-[13px] font-medium">비고 (텍스트 검색)</Label>
                             <Input
                                 placeholder="비고 입력"
                                 value={keyword}
@@ -306,6 +308,7 @@ export function MillingFilters({
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleApply()
                                 }}
+                                className="text-[13px]"
                             />
                         </div>
                     </div>

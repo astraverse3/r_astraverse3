@@ -68,20 +68,14 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
         if (!primaryStock) return '-';
 
         const varietyType = primaryStock.variety?.type;
-        const varietyName = primaryStock.variety?.name;
         const millingType = log.millingType;
 
-        if (varietyType === 'URUCHI') {
-            return millingType; // 백미 or 현미
-        } else if (varietyType === 'GLUTINOUS') {
+        if (varietyType === 'GLUTINOUS') {
             if (millingType === '백미') return '찹쌀';
             if (millingType === '현미') return '찰현미';
             return millingType;
-        } else if (varietyType === 'INDICA') {
-            return '인디카';
-        } else {
-            return varietyName || '-'; // Other -> Variety Name
         }
+        return millingType || '-';
     }, [log.stocks, log.millingType])
 
     // Row Click -> Open Input History (Stock List)

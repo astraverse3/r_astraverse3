@@ -58,13 +58,14 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
-    // Inline editing state for date/remarks
+    // Inline editing state for date/remarks/millingType
     const [isEditingMeta, setIsEditingMeta] = useState(false)
     const [editDate, setEditDate] = useState(() => {
         const d = new Date(date)
         return d.toISOString().split('T')[0]
     })
     const [editRemarks, setEditRemarks] = useState(remarks || '')
+    const [editMillingType, setEditMillingType] = useState(millingType)
     const [isSavingMeta, setIsSavingMeta] = useState(false)
 
     const handleSaveMeta = async () => {
@@ -72,6 +73,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
         const result = await updateMillingBatchMetadata(batchId, {
             date: new Date(editDate),
             remarks: editRemarks,
+            millingType: editMillingType,
         })
         setIsSavingMeta(false)
         if (result.success) {
@@ -85,6 +87,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const handleCancelMeta = () => {
         setEditDate(new Date(date).toISOString().split('T')[0])
         setEditRemarks(remarks || '')
+        setEditMillingType(millingType)
         setIsEditingMeta(false)
     }
 
@@ -146,15 +149,15 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                 </DialogTrigger>
             )}
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden bg-white">
-                <DialogHeader className="p-6 pb-2">
-                    <DialogTitle className="text-lg font-bold text-slate-900">
+                <DialogHeader className="p-4 sm:p-6 pb-2">
+                    <DialogTitle className="text-[15px] sm:text-lg font-bold text-slate-900">
                         투입 상세 내역
                     </DialogTitle>
-                    <p className="text-sm text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
+                    <p className="text-[13px] text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
                 </DialogHeader>
 
                 {/* 날짜 / 비고 수정 영역 */}
-                <div className="px-6 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="px-4 sm:px-6 py-3 border-b border-slate-100 bg-slate-50">
                     {isEditingMeta ? (
                         <div className="space-y-3">
                             <div className="flex gap-4 items-start">
@@ -164,7 +167,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                         type="date"
                                         value={editDate}
                                         onChange={e => setEditDate(e.target.value)}
-                                        className="h-8 w-[160px] text-sm"
+                                        className="h-8 w-[160px] text-[13px]"
                                     />
                                 </div>
                                 <div className="flex-1 space-y-1">
@@ -173,8 +176,28 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                         value={editRemarks}
                                         onChange={e => setEditRemarks(e.target.value)}
                                         placeholder="비고 내용 입력"
-                                        className="h-8 text-sm"
+                                        className="h-8 text-[13px]"
                                     />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500">도정구분</Label>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                    {['백미', '현미', '5분도미', '7분도미', '찹쌀', '기타'].map((type) => (
+                                        <Button
+                                            key={type}
+                                            type="button"
+                                            size="sm"
+                                            variant={editMillingType === type ? 'default' : 'outline'}
+                                            className={`h-7 px-2.5 text-[12px] ${editMillingType === type
+                                                ? 'bg-[#00a2e8] hover:bg-[#008cc9] text-white'
+                                                : 'text-slate-500 hover:text-[#00a2e8] hover:border-[#00a2e8]/30'
+                                                }`}
+                                            onClick={() => setEditMillingType(type)}
+                                        >
+                                            {type}
+                                        </Button>
+                                    ))}
                                 </div>
                             </div>
                             <div className="flex gap-2 justify-end">
@@ -189,12 +212,18 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                         </div>
                     ) : (
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-4 text-[13px]">
                                 <div>
                                     <span className="text-xs text-slate-400 mr-1">날짜</span>
                                     <span className="font-semibold text-slate-700">
                                         {format(new Date(date), 'yyyy-MM-dd')}
                                     </span>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-slate-400 mr-1">구분</span>
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[#00a2e8]/30 text-[#00a2e8] bg-[#00a2e8]/5 font-bold">
+                                        {editMillingType || millingType}
+                                    </Badge>
                                 </div>
                                 {(remarks || editRemarks) && (
                                     <div>
@@ -221,7 +250,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 custom-scrollbar">
                     <Table>
                         <TableHeader className="sticky top-0 bg-white z-10">
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -268,7 +297,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                     </Table>
                 </div>
 
-                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
                     <div>
                         {canDelete ? (
                             <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10 hover:border-[#00a2e8]/30" onClick={handleAddStock}>
@@ -276,13 +305,13 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                 톤백 추가/수정
                             </Button>
                         ) : (
-                            <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개 톤백</div>
+                            <div className="text-[13px] text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개 톤백</div>
                         )}
                     </div>
                     <div className="flex items-center gap-4">
-                        {canDelete && <div className="text-sm text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개</div>}
-                        <div className="text-slate-500">
-                            합계 <span className="text-2xl font-black text-slate-900 ml-1">{totalWeight.toLocaleString()} <span className="text-sm font-medium text-slate-500">kg</span></span>
+                        {canDelete && <div className="text-[13px] text-slate-500">총 <span className="font-bold text-slate-900">{stocks.length}</span>개</div>}
+                        <div className="text-[13px] text-slate-500">
+                            합계 <span className="text-xl sm:text-2xl font-black text-slate-900 ml-1">{totalWeight.toLocaleString()} <span className="text-[13px] font-medium text-slate-500">kg</span></span>
                         </div>
                     </div>
                 </div>

@@ -71,14 +71,14 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">출고일</Label>
+                        <Label className="text-right text-[13px]">출고일</Label>
                         <div className="col-span-3">
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant={"outline"}
                                         className={cn(
-                                            "w-full justify-start text-left font-normal",
+                                            "w-full justify-start text-left font-normal text-[13px]",
                                             !date && "text-muted-foreground"
                                         )}
                                     >
@@ -98,7 +98,7 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
                         </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="destination" className="text-right">
+                        <Label htmlFor="destination" className="text-right text-[13px]">
                             출고처
                         </Label>
                         <Input
@@ -106,11 +106,11 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
                             value={destination}
                             onChange={(e) => setDestination(e.target.value)}
                             placeholder="예: 탑라이스센터, 수매처 등"
-                            className="col-span-3"
+                            className="col-span-3 text-[13px]"
                         />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="purpose" className="text-right">
+                        <Label htmlFor="purpose" className="text-right text-[13px]">
                             비고/목적
                         </Label>
                         <Textarea
@@ -118,12 +118,13 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
                             value={purpose}
                             onChange={(e) => setPurpose(e.target.value)}
                             placeholder="예: 판매, 이관 등"
-                            className="col-span-3"
+                            className="col-span-3 text-[13px]"
                         />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}
+                        className="bg-[#00a2e8] hover:bg-[#008cc9] text-white text-[13px]">
                         {isSubmitting ? '처리 중...' : '출고하기'}
                     </Button>
                 </DialogFooter>

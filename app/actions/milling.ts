@@ -632,14 +632,18 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
     }
 }
 
-export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string }) {
+export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string, millingType?: string }) {
     try {
+        const updateData: any = {
+            date: data.date,
+            remarks: data.remarks.trim() || null,
+        }
+        if (data.millingType) {
+            updateData.millingType = data.millingType
+        }
         await prisma.millingBatch.update({
             where: { id: batchId },
-            data: {
-                date: data.date,
-                remarks: data.remarks.trim() || null,
-            }
+            data: updateData
         })
         revalidatePath('/milling')
         return { success: true }

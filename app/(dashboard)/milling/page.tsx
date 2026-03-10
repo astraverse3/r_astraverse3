@@ -19,7 +19,7 @@ export default async function MillingListPage({
     const endDate = typeof resolvedParams.endDate === 'string' ? new Date(resolvedParams.endDate) : today
 
     const filters: GetMillingLogsParams = {
-        status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
+        status: typeof resolvedParams.status === 'string' ? resolvedParams.status : 'open',
         variety: typeof resolvedParams.variety === 'string' ? resolvedParams.variety : undefined,
         millingType: typeof resolvedParams.millingType === 'string' ? resolvedParams.millingType : undefined,
         keyword: typeof resolvedParams.keyword === 'string' ? resolvedParams.keyword : undefined,

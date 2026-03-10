@@ -264,11 +264,11 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     <DialogTitle>포장 기록 관리</DialogTitle>
                     <div className="flex items-center gap-2 mt-1">
                         {millingType && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#00a2e8]/20 text-[#007ab3]">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#00a2e8]/20 text-[#007ab3]">
                                 {millingType}
                             </span>
                         )}
-                        <span className="text-sm font-bold text-slate-700">
+                        <span className="text-[13px] font-bold text-slate-700">
                             투입: {totalInputKg?.toLocaleString()}kg
                         </span>
                     </div>
@@ -277,15 +277,15 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     {/* Template buttons - only when editable */}
                     {!isClosed && canManage && (
                         <div className="space-y-2">
-                            <Label className="mb-2 block">규격 선택</Label>
+                            <Label className="mb-2 block text-[13px]">규격 선택</Label>
 
                             {/* Row 1 */}
                             <div className="grid grid-cols-5 gap-1.5 h-9">
-                                <Button variant="secondary" className="h-full px-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 0 })}>
+                                <Button variant="secondary" className="h-full px-1 text-[13px] border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '톤백', weight: 0 })}>
                                     톤백
                                 </Button>
                                 {[{ label: '20kg', weight: 20 }, { label: '10kg', weight: 10 }, { label: '8kg', weight: 8 }, { label: '5kg', weight: 5 }].map(t => (
-                                    <Button key={t.label} variant="secondary" className="h-full px-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
+                                    <Button key={t.label} variant="secondary" className="h-full px-1 text-[13px] hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
                                         {t.label}
                                     </Button>
                                 ))}
@@ -294,11 +294,11 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                             {/* Row 2 */}
                             <div className="grid grid-cols-5 gap-1.5 h-9">
                                 {[{ label: '4kg', weight: 4 }, { label: '3kg', weight: 3 }, { label: '1kg', weight: 1 }].map(t => (
-                                    <Button key={t.label} variant="secondary" className="h-full px-1 hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
+                                    <Button key={t.label} variant="secondary" className="h-full px-1 text-[13px] hover:bg-stone-200 transition-colors" onClick={() => addPackage(t)}>
                                         {t.label}
                                     </Button>
                                 ))}
-                                <Button variant="secondary" className="h-full px-1 border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
+                                <Button variant="secondary" className="h-full px-1 text-[13px] border-dashed border-stone-300 hover:bg-stone-200 transition-colors" onClick={() => addPackage({ label: '잔량', weight: 0 })}>
                                     잔량
                                 </Button>
 
@@ -337,22 +337,22 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     )}
 
                     <div className="space-y-3">
-                        <Label>생산(포장) 내역</Label>
+                        <Label className="text-[13px]">생산(포장) 내역</Label>
                         <div ref={scrollRef} className="space-y-2 min-h-[60px] max-h-[300px] overflow-y-auto custom-scrollbar">
                             {outputs.length === 0 && (
-                                <div className="text-center text-sm text-stone-400 py-6">포장 내역이 없습니다</div>
+                                <div className="text-center text-[13px] text-stone-400 py-6">포장 내역이 없습니다</div>
                             )}
                             {outputs.map((o, i) => (
                                 <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-1.5 sm:p-2.5 bg-white rounded-xl border border-stone-200">
                                     {/* Left: Label */}
-                                    <span className="font-bold text-xs sm:text-sm w-10 sm:w-12 shrink-0">{o.packageType}</span>
+                                    <span className="font-bold text-[12px] sm:text-[13px] w-10 sm:w-12 shrink-0">{o.packageType}</span>
 
                                     {/* Middle: Weight Info */}
                                     <div className="flex-1 flex items-center justify-center">
                                         {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                             isClosed ? (
                                                 <div className="flex items-center gap-1 sm:gap-1.5 opacity-60">
-                                                    <div className="h-8 w-14 sm:w-20 flex items-center justify-end pr-1 text-sm font-bold">
+                                                    <div className="h-8 w-14 sm:w-20 flex items-center justify-end pr-1 text-[13px] font-bold">
                                                         {o.weightPerUnit.toLocaleString()}
                                                     </div>
                                                     <span className="text-xs font-medium shrink-0">kg</span>
@@ -364,14 +364,14 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                         value={o.weightPerUnit}
                                                         onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                         onFocus={(e) => e.target.select()}
-                                                        className="h-8 w-14 sm:w-20 text-right pr-1 sm:pr-2 text-sm font-medium border-stone-200 rounded-lg shadow-none px-1"
+                                                        className="h-8 w-14 sm:w-20 text-right pr-1 sm:pr-2 text-[13px] font-medium border-stone-200 rounded-lg shadow-none px-1"
                                                     />
                                                     <span className="text-xs text-stone-400 font-medium shrink-0">kg</span>
                                                 </div>
                                             )
                                         ) : (
                                             <div className="flex items-center gap-1 sm:gap-1.5 opacity-40">
-                                                <div className="h-8 w-14 sm:w-20 flex items-center justify-end pr-1 text-sm font-bold">
+                                                <div className="h-8 w-14 sm:w-20 flex items-center justify-end pr-1 text-[13px] font-bold">
                                                     {(o.weightPerUnit * o.count).toLocaleString()}
                                                 </div>
                                                 <span className="text-xs font-medium shrink-0">kg</span>
@@ -382,7 +382,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                     {/* Right: Controls */}
                                     <div className="flex items-center shrink-0 ml-auto">
                                         {isClosed || !canManage ? (
-                                            <span className="text-sm font-mono text-stone-600 px-4">{o.count}개</span>
+                                            <span className="text-[13px] font-mono text-stone-600 px-4">{o.count}개</span>
                                         ) : (
                                             <div className="flex items-center gap-0.5 sm:gap-1">
                                                 <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
@@ -393,7 +393,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                                     value={o.count === 0 ? '' : o.count}
                                                     onChange={(e) => setCount(i, parseInt(e.target.value))}
                                                     onFocus={(e) => e.target.select()}
-                                                    className="w-10 sm:w-14 h-8 text-center text-sm font-bold bg-transparent border-stone-200 rounded-lg shadow-none font-mono px-0 sm:px-3"
+                                                    className="w-10 sm:w-14 h-8 text-center text-[13px] font-bold bg-transparent border-stone-200 rounded-lg shadow-none font-mono px-0 sm:px-3"
                                                 />
                                                 <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
                                                     <Plus className="h-4 w-4" />
@@ -414,7 +414,7 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                     {canManage && (
                         <div className="pt-4 border-t space-y-4">
                             <div className="flex justify-between items-center">
-                                <div className="text-sm font-medium">총 포장 중량: <span className="font-bold text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
+                                <div className="text-[13px] font-medium">총 포장 중량: <span className="font-bold text-[15px] sm:text-lg">{outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg</span></div>
                                 {isClosed ? (
                                     <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
                                         <Lock className="mr-1 h-3 w-3" /> 마감 해제
