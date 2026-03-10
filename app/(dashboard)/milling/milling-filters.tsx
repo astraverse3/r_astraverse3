@@ -46,7 +46,7 @@ export function MillingFilters({
     const [open, setOpen] = useState(false)
 
     // Filter States
-    const [status, setStatus] = useState(searchParams.get('status') || 'open')
+    const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
     const [variety, setVariety] = useState(searchParams.get('variety') || 'ALL')
     const [millingType, setMillingType] = useState(searchParams.get('millingType') || 'ALL')
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
@@ -122,9 +122,9 @@ export function MillingFilters({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className={`h-8 gap-1.5 ${activeFilterCount > 0 ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30' : 'text-slate-600'}`}>
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    검색
+                <Button variant="outline" size="sm" className={`h-8 gap-1.5 px-2 sm:px-3 ${activeFilterCount > 0 ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30' : 'text-slate-600'}`}>
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">검색</span>
                     {activeFilterCount > 0 && (
                         <Badge variant="secondary" className="h-5 px-1.5 bg-[#00a2e8]/20 text-[#008cc9] ml-0.5 rounded-full text-[10px]">
                             {activeFilterCount}
@@ -173,13 +173,13 @@ export function MillingFilters({
                                     <Button
                                         variant={"outline"}
                                         className={cn(
-                                            "justify-start text-left font-normal h-9 px-2 min-w-0",
+                                            "justify-start text-left font-normal h-9 px-2 min-w-0 text-[13px]",
                                             !dateRange.from && "text-muted-foreground"
                                         )}
                                     >
                                         <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0" />
                                         <span className="truncate">
-                                            {dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "시작일"}
+                                            {dateRange.from ? format(dateRange.from, "yy.MM.dd") : "시작일"}
                                         </span>
                                     </Button>
                                 </PopoverTrigger>
@@ -198,13 +198,13 @@ export function MillingFilters({
                                     <Button
                                         variant={"outline"}
                                         className={cn(
-                                            "justify-start text-left font-normal h-9 px-2 min-w-0",
+                                            "justify-start text-left font-normal h-9 px-2 min-w-0 text-[13px]",
                                             !dateRange.to && "text-muted-foreground"
                                         )}
                                     >
                                         <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0" />
                                         <span className="truncate">
-                                            {dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : "종료일"}
+                                            {dateRange.to ? format(dateRange.to, "yy.MM.dd") : "종료일"}
                                         </span>
                                     </Button>
                                 </PopoverTrigger>
@@ -223,7 +223,7 @@ export function MillingFilters({
                         <div className="space-y-2">
                             <Label className="text-[13px] font-medium">상태</Label>
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger>
+                                <SelectTrigger className="text-[13px]">
                                     <SelectValue placeholder="전체" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -313,9 +313,9 @@ export function MillingFilters({
                         </div>
                     </div>
                 </div>
-                <DialogFooter className="flex gap-2 sm:justify-between">
-                    <Button variant="ghost" onClick={handleReset} className="mr-auto text-slate-500">초기화</Button>
-                    <Button onClick={handleApply}>적용하기</Button>
+                <DialogFooter className="flex flex-row justify-between items-center sm:justify-between w-full mt-2">
+                    <Button variant="ghost" size="sm" onClick={handleReset} className="text-slate-500 hover:text-slate-700 px-2">초기화</Button>
+                    <Button size="sm" onClick={handleApply} className="bg-[#00a2e8] hover:bg-[#008cc9] px-6">적용하기</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -27,7 +27,7 @@ export function MillingPageWrapper({
                 filtersSlot={filtersSlot}
                 filters={filters}
             >
-                <ActiveMillingFilters totalCount={logs.length} />
+                <ActiveMillingFilters totalCount={logs.length} defaultStartDate={filters.startDate} defaultEndDate={filters.endDate} />
                 <MillingListClient
                     logs={logs}
                     filters={filters}

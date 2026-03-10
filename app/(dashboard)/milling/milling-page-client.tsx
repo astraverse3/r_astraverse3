@@ -28,24 +28,33 @@ export function MillingPageClient({
     const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
 
     return (
-        <div className="grid grid-cols-1 gap-1 pb-24 pt-1.5 sm:px-6 sm:pt-6 sm:pb-8 flex-1 flex flex-col">
+        <div className="grid grid-cols-1 gap-1 pb-24 px-1.5 sm:px-0">
             {/* Header */}
             <section className="flex flex-col gap-2 pt-2 px-1">
                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        {/* Delete button only on desktop (mobile uses floating bar) */}
+                    {/* Desktop: selected count */}
+                    <div className="hidden sm:flex items-center gap-2">
                         {canManage && selectedIds.size > 0 && (
                             <Button
                                 variant="destructive"
                                 size="sm"
                                 onClick={onShowDelete}
-                                className="hidden sm:flex"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 삭제 ({selectedIds.size})
                             </Button>
                         )}
                     </div>
+
+                    {/* Mobile: selected count */}
+                    <div className="sm:hidden">
+                        {selectedIds.size > 0 && (
+                            <span className="text-[13px] font-bold text-[#00a2e8]">
+                                {selectedIds.size}건 선택
+                            </span>
+                        )}
+                    </div>
+
                     <div className="flex items-center gap-2">
                         <MillingExcelButton filters={filters} />
                         {filtersSlot}

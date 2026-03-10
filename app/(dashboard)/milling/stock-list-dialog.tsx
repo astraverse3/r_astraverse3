@@ -221,40 +221,39 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-[13px]">
-                                <div>
-                                    <span className="text-xs text-slate-400 mr-1">날짜</span>
-                                    <span className="font-semibold text-slate-700">
-                                        {format(new Date(date), 'yyyy-MM-dd')}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-xs text-slate-400 mr-1">구분</span>
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[#00a2e8]/30 text-[#00a2e8] bg-[#00a2e8]/5 font-bold">
-                                        {editMillingType || millingType}
-                                    </Badge>
-                                </div>
-                                {(remarks || editRemarks) && (
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 text-[13px]">
                                     <div>
-                                        <span className="text-xs text-slate-400 mr-1">비고</span>
-                                        <span className="text-slate-700">{remarks || editRemarks}</span>
+                                        <span className="text-xs text-slate-400 mr-1">날짜</span>
+                                        <span className="font-semibold text-slate-700">
+                                            {format(new Date(date), 'yyyy-MM-dd')}
+                                        </span>
                                     </div>
-                                )}
-                                {!remarks && !editRemarks && (
-                                    <span className="text-xs text-slate-400">비고 없음</span>
+                                    <div>
+                                        <span className="text-xs text-slate-400 mr-1">구분</span>
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[#00a2e8]/30 text-[#00a2e8] bg-[#00a2e8]/5 font-bold">
+                                            {editMillingType || millingType}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                {canDelete && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 px-2 text-xs text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10 shrink-0"
+                                        onClick={() => setIsEditingMeta(true)}
+                                    >
+                                        <Pencil className="h-3 w-3 mr-1" />
+                                        수정
+                                    </Button>
                                 )}
                             </div>
-                            {canDelete && (
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 px-2 text-xs text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
-                                    onClick={() => setIsEditingMeta(true)}
-                                >
-                                    <Pencil className="h-3 w-3 mr-1" />
-                                    수정
-                                </Button>
+                            {(remarks || editRemarks) && (
+                                <div className="text-[12px] text-slate-500 line-clamp-2 pl-0.5">
+                                    <span className="text-xs text-slate-400 mr-1">비고</span>
+                                    {remarks || editRemarks}
+                                </div>
                             )}
                         </div>
                     )}
