@@ -85,9 +85,9 @@ export function VarietyDialog({ mode, variety }: Props) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
-                    <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white">
-                        <Plus className="w-4 h-4 mr-1.5" />
-                        품종 등록
+                    <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white px-2.5 sm:px-4">
+                        <Plus className="w-4 h-4 sm:mr-1.5" />
+                        <span className="hidden sm:inline">품종 등록</span>
                     </Button>
                 ) : (
                     <button

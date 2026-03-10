@@ -176,16 +176,17 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
         <Dialog open={open} onOpenChange={setOpen}>
             {!isControlled && (
                 <DialogTrigger asChild>
-                    <Button className="bg-[#8dc540] hover:bg-[#7db037] text-white">
-                        <Plus className="mr-2 h-4 w-4" /> 생산자 등록
+                    <Button className="bg-[#8dc540] hover:bg-[#7db037] text-white px-2.5 sm:px-4">
+                        <Plus className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">생산자 등록</span>
                     </Button>
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] p-4 w-[95vw] rounded-xl">
                 <DialogHeader>
                     <DialogTitle>{farmer ? '생산자 정보 수정' : '새 생산자 등록'}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={onSubmit} className="grid gap-4 py-4">
+                <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
 
                     <div className="space-y-4 border rounded-md p-4 bg-slate-50">
                         <div className="flex items-center justify-between">
@@ -219,21 +220,25 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                     </div>
                                 </div>
                                 <div className="grid gap-1.5">
-                                    <Label htmlFor="groupName" className="text-xs">작목반명</Label>
+                                    <Label htmlFor="groupName" className="text-xs">작목반명 (필수)</Label>
                                     <Input id="groupName" name="groupName" placeholder="예: 땅끝황토친환경" required />
                                 </div>
                                 <div className="grid gap-1.5">
-                                    <Label htmlFor="certNo" className="text-xs">인증번호 (일반은 생략)</Label>
-                                    <Input id="certNo" name="certNo" placeholder="입력 없으면 '일반'으로 저장됨" />
+                                    <Label htmlFor="certNo" className="text-xs">인증번호 (일반은 비워둠)</Label>
+                                    <Input id="certNo" name="certNo" placeholder="예: 무농약 13245" />
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid gap-2">
+                            <div className="grid gap-3 mt-2">
                                 {farmer && farmer.group ? (
                                     <>
                                         <input type="hidden" name="groupId" value={farmer.group.id} />
-                                        <div className="text-xs text-slate-500 mb-1">
-                                            <span className="font-mono">[{farmer.group.cropYear}]</span> [{farmer.group.code}] 인증번호: {farmer.group.certNo}
+                                        <div className="text-xs text-slate-500 mb-1 flex items-center justify-between">
+                                            <span>
+                                                <span className="font-mono bg-slate-200/50 px-1 py-0.5 rounded mr-1">[{farmer.group.cropYear}]</span>
+                                                <span className="font-bold">[{farmer.group.code}]</span>
+                                            </span>
+                                            <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[10px]">{farmer.group.certType} {farmer.group.certNo}</span>
                                         </div>
                                         <div className="grid gap-1.5">
                                             <Label htmlFor="editGroupName" className="text-xs">작목반명 (수정 가능)</Label>

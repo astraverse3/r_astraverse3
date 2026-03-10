@@ -74,7 +74,7 @@ export function MobileHeader() {
                                 <DropdownMenuItem asChild>
                                     <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
                                         <Tractor className="w-4 h-4 text-slate-500" />
-                                        <span>농가 관리</span>
+                                        <span>생산자 관리</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>

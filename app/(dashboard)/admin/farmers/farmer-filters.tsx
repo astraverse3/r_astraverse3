@@ -96,19 +96,36 @@ export function FarmerFilters() {
                     <DialogTitle>검색</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                        <Label>생산년도</Label>
-                        <Select value={cropYear} onValueChange={setCropYear}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="전체" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">전체</SelectItem>
-                                <SelectItem value="2024">2024년</SelectItem>
-                                <SelectItem value="2025">2025년</SelectItem>
-                                <SelectItem value="2026">2026년</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <Label>생산년도</Label>
+                            <Select value={cropYear} onValueChange={setCropYear}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="전체" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">전체</SelectItem>
+                                    <SelectItem value="2024">2024년</SelectItem>
+                                    <SelectItem value="2025">2025년</SelectItem>
+                                    <SelectItem value="2026">2026년</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>인증구분</Label>
+                            <Select value={certType} onValueChange={setCertType}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="전체" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">전체</SelectItem>
+                                    <SelectItem value="유기농">유기농</SelectItem>
+                                    <SelectItem value="무농약">무농약</SelectItem>
+                                    <SelectItem value="일반">일반</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -130,25 +147,10 @@ export function FarmerFilters() {
                             onKeyDown={handleKeyDown}
                         />
                     </div>
-
-                    <div className="space-y-2">
-                        <Label>인증구분</Label>
-                        <Select value={certType} onValueChange={setCertType}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="전체" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">전체</SelectItem>
-                                <SelectItem value="유기농">유기농</SelectItem>
-                                <SelectItem value="무농약">무농약</SelectItem>
-                                <SelectItem value="일반">일반</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
-                <DialogFooter className="flex gap-2 sm:justify-between">
-                    <Button variant="ghost" onClick={handleReset} className="mr-auto text-slate-500">초기화</Button>
-                    <Button onClick={handleApply}>적용하기</Button>
+                <DialogFooter className="flex-row sm:justify-between sm:gap-0 gap-2 mt-4 pt-4 border-t border-slate-100">
+                    <Button variant="ghost" onClick={handleReset} className="text-slate-500 hover:bg-slate-100 hover:text-slate-900 flex-1 sm:flex-none">초기화</Button>
+                    <Button onClick={handleApply} className="bg-[#8dc540] hover:bg-[#7db037] text-white flex-1 sm:flex-none">적용하기</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
