@@ -118,7 +118,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                     </div>
                     <div className="space-y-3">
                         <Label>곡종 구분</Label>
-                        <div className="flex gap-4">
+                        <div className="flex flex-wrap gap-x-4 gap-y-3">
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input
                                     type="radio"
