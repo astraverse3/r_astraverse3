@@ -57,73 +57,75 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
             {/* 모바일 카드 뷰 */}
             <div className="block lg:hidden space-y-3">
                 {users.map((user) => (
-                    <div key={user.id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-                        <div className="flex items-center gap-3">
+                    <div key={user.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                        {/* Row 1: Profile, Name, Role, Actions */}
+                        <div className="flex items-center px-3 py-2.5 gap-2.5">
                             {user.image ? (
-                                <img src={user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                <img src={user.image} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-500">
+                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 shrink-0">
                                     {user.name?.[0] || '?'}
                                 </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm text-slate-900 truncate">{user.name || '이름 없음'}</span>
-                                    <span className={`inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full ${user.role === 'ADMIN'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : 'bg-slate-100 text-slate-500'
+                            <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-[13px] text-slate-900 truncate">{user.name || '이름 없음'}</span>
+                                    <span className={`inline-flex px-1.5 py-0 text-[9px] font-bold rounded ${user.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
                                         }`}>
                                         {user.role}
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-400 truncate">{user.email || '이메일 없음'}</p>
+                                <span className="text-[11px] text-slate-400 truncate">{user.email || '이메일 없음'}</span>
+                            </div>
+
+                            <div className="flex items-center gap-0.5 ml-auto shrink-0">
+                                {user.id !== currentUserId && (
+                                    <button onClick={() => handleRoleToggle(user)} className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors">
+                                        {user.role === 'ADMIN' ? <ShieldOff className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
+                                    </button>
+                                )}
+                                <button onClick={() => setEditingUser(user)} className="p-1.5 text-slate-400 hover:text-[#00a2e8] transition-colors">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                {user.id !== currentUserId && (
+                                    <button onClick={() => setPermUser(user)} className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors">
+                                        <KeyRound className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                                {user.id !== currentUserId && (
+                                    <button onClick={() => handleDelete(user)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-xs text-slate-500">
-                            <div><span className="text-slate-400">부서:</span> {user.department || '-'}</div>
-                            <div><span className="text-slate-400">직책:</span> {user.position || '-'}</div>
-                            <div><span className="text-slate-400">연락처:</span> {user.phone || '-'}</div>
-                        </div>
-                        {user.role !== 'ADMIN' && (user.permissions?.length ?? 0) > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                                {(user.permissions || []).map(p => (
-                                    <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
-                                        {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
-                                    </span>
-                                ))}
+
+                        {/* Row 2: Details */}
+                        <div className="border-t border-slate-100 bg-slate-50/50 px-3 py-2">
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                                <div className="flex items-center justify-between bg-white rounded-md px-2 py-1 border border-slate-100">
+                                    <span className="text-[10px] font-bold text-slate-400">부서</span>
+                                    <span className="text-[11px] font-medium text-slate-700">{user.department || '-'}</span>
+                                </div>
+                                <div className="flex items-center justify-between bg-white rounded-md px-2 py-1 border border-slate-100">
+                                    <span className="text-[10px] font-bold text-slate-400">직책</span>
+                                    <span className="text-[11px] font-medium text-slate-700">{user.position || '-'}</span>
+                                </div>
+                                <div className="flex items-center justify-between col-span-2 bg-white rounded-md px-2 py-1 border border-slate-100">
+                                    <span className="text-[10px] font-bold text-slate-400">연락처</span>
+                                    <span className="text-[11px] font-medium text-slate-700">{user.phone || '-'}</span>
+                                </div>
                             </div>
-                        )}
-                        <div className="flex gap-2 pt-1 border-t border-slate-100">
-                            {user.id !== currentUserId && (
-                                <button
-                                    onClick={() => handleRoleToggle(user)}
-                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-                                >
-                                    {user.role === 'ADMIN' ? <ShieldOff className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
-                                    {user.role === 'ADMIN' ? '권한 해제' : '관리자 지정'}
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setEditingUser(user)}
-                                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-                            >
-                                <Pencil className="w-3.5 h-3.5" /> {user.id === currentUserId ? '내 정보 수정' : '수정'}
-                            </button>
-                            {user.id !== currentUserId && (
-                                <button
-                                    onClick={() => setPermUser(user)}
-                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
-                                >
-                                    <KeyRound className="w-3.5 h-3.5" /> 권한
-                                </button>
-                            )}
-                            {user.id !== currentUserId && (
-                                <button
-                                    onClick={() => handleDelete(user)}
-                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                                >
-                                    <Trash2 className="w-3.5 h-3.5" /> 삭제
-                                </button>
+
+                            {/* Row 3: Permissions */}
+                            {user.role !== 'ADMIN' && (user.permissions?.length ?? 0) > 0 && (
+                                <div className="mt-2 pt-2 border-t border-slate-200/60 flex flex-wrap gap-1">
+                                    {(user.permissions || []).map(p => (
+                                        <span key={p} className="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 rounded">
+                                            {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
+                                        </span>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
