@@ -1,9 +1,8 @@
-'use server'
-
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
 
 // 공지사항 권한 체크 헬퍼
 async function requireNoticeManage() {
@@ -43,8 +42,16 @@ export async function getActiveNotices() {
 export async function createNotice(data: { title: string; content: string; isActive: boolean }) {
     await requireNoticeManage()
     
-    await prisma.notice.create({
+    const notice = await prisma.notice.create({
         data
+    })
+
+    await recordAuditLog({
+        action: 'CREATE',
+        entity: 'Notice',
+        entityId: notice.id,
+        details: data,
+        description: `공지사항 등록: ${data.title}`
     })
     
     // 대시보드 및 관리자 페이지 캐시 날리기
@@ -58,9 +65,17 @@ export async function createNotice(data: { title: string; content: string; isAct
 export async function updateNotice(id: number, data: { title?: string; content?: string; isActive?: boolean }) {
     await requireNoticeManage()
     
-    await prisma.notice.update({
+    const notice = await prisma.notice.update({
         where: { id },
         data
+    })
+
+    await recordAuditLog({
+        action: 'UPDATE',
+        entity: 'Notice',
+        entityId: id,
+        details: data,
+        description: `공지사항 수정: ${notice.title}`
     })
     
     revalidatePath('/')
@@ -73,8 +88,15 @@ export async function updateNotice(id: number, data: { title?: string; content?:
 export async function deleteNotice(id: number) {
     await requireNoticeManage()
     
-    await prisma.notice.delete({
+    const deleted = await prisma.notice.delete({
         where: { id }
+    })
+
+    await recordAuditLog({
+        action: 'DELETE',
+        entity: 'Notice',
+        entityId: id,
+        description: `공지사항 삭제: ${deleted.title}`
     })
     
     revalidatePath('/')

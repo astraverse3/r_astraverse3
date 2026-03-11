@@ -1,7 +1,6 @@
-'use server'
-
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
 
 export async function createStockRelease(
     stockIds: number[],
@@ -53,6 +52,14 @@ export async function createStockRelease(
             return release
         })
 
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'StockRelease',
+            entityId: result.id,
+            details: { stockIds, date, destination, purpose },
+            description: `원곡 출고 등록: ${destination} (${stockIds.length}포대)`
+        })
+
         revalidatePath('/stocks')
         return { success: true, data: result }
     } catch (error) {
@@ -91,6 +98,12 @@ export async function cancelStockRelease(stockIds: number[]) {
             })
 
             return { count: stockIds.length }
+        })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'StockRelease',
+            description: `출고 취소 및 재고 복구: ${stockIds.length}개 항목`
         })
 
         revalidatePath('/stocks')
@@ -160,6 +173,14 @@ export async function updateStockRelease(
                 purpose: data.purpose?.trim()
             }
         })
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'StockRelease',
+            entityId: id,
+            details: data,
+            description: `출고 정보 수정: ${data.destination}`
+        })
+
         revalidatePath('/releases')
         return { success: true, data: result }
     } catch (error) {
@@ -185,6 +206,12 @@ export async function deleteStockReleases(ids: number[]) {
                 where: { id: { in: ids } }
             })
         })
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'StockRelease',
+            description: `출고 내역 삭제: ${ids.length}건 (재고 복구됨)`
+        })
+
         revalidatePath('/releases')
         revalidatePath('/stocks')
         return { success: true }

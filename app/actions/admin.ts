@@ -1,7 +1,6 @@
-'use server'
-
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
 
 // --- VARIETY ACTIONS (Unchanged) ---
 export type VarietyFormData = {
@@ -34,6 +33,15 @@ export async function createVariety(data: VarietyFormData) {
         const variety = await prisma.variety.create({
             data: { name, type: data.type }
         })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'Variety',
+            entityId: variety.id,
+            details: data,
+            description: `새 품종 등록: ${name}`
+        })
+
         revalidatePath('/admin/varieties')
         revalidatePath('/stocks')
         revalidatePath('/milling')
@@ -58,9 +66,15 @@ export async function updateVariety(id: number, data: VarietyFormData) {
             where: { id },
             data: { name, type: data.type }
         })
-        revalidatePath('/admin/varieties')
-        revalidatePath('/stocks')
-        // ... (previous code for updateVariety)
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'Variety',
+            entityId: id,
+            details: data,
+            description: `품종 정보 수정: ${name}`
+        })
+
         revalidatePath('/admin/varieties')
         revalidatePath('/stocks')
         return { success: true, data: variety }
@@ -72,9 +86,17 @@ export async function updateVariety(id: number, data: VarietyFormData) {
 
 export async function deleteVariety(id: number) {
     try {
-        await prisma.variety.delete({
+        const deleted = await prisma.variety.delete({
             where: { id }
         })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'Variety',
+            entityId: id,
+            description: `품종 삭제: ${deleted.name}`
+        })
+
         revalidatePath('/admin/varieties')
         revalidatePath('/stocks')
         return { success: true }
@@ -266,6 +288,15 @@ export async function createFarmer(data: FarmerFormData) {
                 groupId: data.groupId || null
             }
         })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'Farmer',
+            entityId: farmer.id,
+            details: data,
+            description: `새 생산자 등록: ${data.name}`
+        })
+
         revalidatePath('/admin/farmers')
         revalidatePath('/stocks')
         return { success: true, data: farmer }
@@ -303,6 +334,15 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
                 groupId: data.groupId || null
             }
         })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'Farmer',
+            entityId: id,
+            details: data,
+            description: `생산자 정보 수정: ${data.name}`
+        })
+
         revalidatePath('/admin/farmers')
         revalidatePath('/stocks')
         return { success: true, data: farmer }
@@ -321,9 +361,17 @@ export async function deleteFarmer(id: number) {
             return { success: false, error: '재고가 등록된 농가는 삭제할 수 없습니다.' }
         }
 
-        await prisma.farmer.delete({
+        const deleted = await prisma.farmer.delete({
             where: { id }
         })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'Farmer',
+            entityId: id,
+            description: `생산자 삭제: ${deleted.name}`
+        })
+
         revalidatePath('/admin/farmers')
         revalidatePath('/stocks')
         return { success: true }
@@ -456,6 +504,14 @@ export async function createFarmerWithGroup(
                 }
             })
 
+            await recordAuditLog({
+                action: 'CREATE',
+                entity: 'Farmer',
+                entityId: farmer.id,
+                details: { farmer: farmerData, group: groupData },
+                description: `새 작목반 및 생산자 동시 등록: ${fName} (${gName})`
+            })
+
             return { success: true, data: farmer }
         })
     } catch (error: any) {
@@ -488,6 +544,15 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
                 cropYear: data.cropYear || 2025
             }
         })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'ProducerGroup',
+            entityId: group.id,
+            details: data,
+            description: `새 작목반 등록: ${name}`
+        })
+
         return { success: true, data: group }
     } catch (error) {
         console.error('Failed to create group:', error)
@@ -523,6 +588,14 @@ export async function updateProducerGroup(id: number, data: Partial<ProducerGrou
         const group = await prisma.producerGroup.update({
             where: { id },
             data: updateData
+        })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'ProducerGroup',
+            entityId: id,
+            details: data,
+            description: `작목반 정보 수정: ${group.name}`
         })
 
         revalidatePath('/admin/farmers')

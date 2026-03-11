@@ -198,3 +198,24 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+// ------------------------------------------------------
+// 9. AuditLog (활동 로그/변경 이력 용)
+// ------------------------------------------------------
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      String?  // 작업자 ID (User.id)
+  userName    String?  // 작업자 이름 (탈퇴 대비용 기록)
+  userEmail   String?  // 작업자 이메일
+  
+  action      String   // 작업 종류: CREATE, UPDATE, DELETE, LOGIN 등
+  entity      String   // 작업 대상: Stock, MillingBatch, Farmer, User 등
+  entityId    String?  // 대상의 ID (레코드 식별자)
+  
+  details     Json?    // 구체적인 변경 내용 (이전값, 새값 등)
+  description String?  // 사람이 읽기 좋은 요약 설명
+  
+  ip          String?  // 접속 IP (선택 사항)
+  userAgent   String?  // 접속 기기 정보 (선택 사항)
+  
+  createdAt   DateTime @default(now())
+}

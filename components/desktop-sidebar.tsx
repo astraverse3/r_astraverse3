@@ -129,15 +129,26 @@ export function DesktopSidebar() {
                                     </Link>
                                 )}
                                 {hasPermission(user, 'SYSTEM_MANAGE') && (
-                                    <Link
-                                        href="/admin"
-                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${pathname === '/admin'
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        시스템 백업
-                                    </Link>
+                                    <>
+                                        <Link
+                                            href="/admin/logs"
+                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/logs')
+                                                ? 'text-blue-600 bg-blue-50'
+                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            활동 로그
+                                        </Link>
+                                        <Link
+                                            href="/admin"
+                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${pathname === '/admin'
+                                                ? 'text-blue-600 bg-blue-50'
+                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            시스템 백업
+                                        </Link>
+                                    </>
                                 )}
                             </div>
                         </div>

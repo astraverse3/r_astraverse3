@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
 import { getProductCode, generateLotNo } from '@/lib/lot-generation'
+import { recordAuditLog } from '@/lib/audit'
 
 // Updated to match new schema relations
 export type MillingBatchFormData = {
@@ -80,27 +81,33 @@ export async function startMillingBatch(data: MillingBatchFormData) {
                 // 3. Ensure kept stocks are linked (redundant but safe) needed? 
                 // Existing links persist. We just updated status of broken ones.
 
-                // Refetch updated batch
-                return await tx.millingBatch.findUnique({ where: { id: data.id } })
+                const updated = await tx.millingBatch.findUnique({ where: { id: data.id } })
+
+                await recordAuditLog({
+                    action: 'UPDATE',
+                    entity: 'MillingBatch',
+                    entityId: data.id,
+                    details: data,
+                    description: `도정 작업 정보 수정: ${data.id}번 작업 (${data.millingType})`
+                })
+
+                return updated
             } else {
                 // --- CREATE Logic (Original) ---
                 // 1. Validate stocks
                 const stocks = await tx.stock.findMany({
                     where: { id: { in: data.selectedStockIds } },
-                    include: { batch: true }
+                    include: { batch: { select: { isClosed: true } } }
                 })
 
                 if (stocks.length !== data.selectedStockIds.length) {
-                    throw new Error('Some stocks not found')
+                    throw new Error('일부 재고를 찾을 수 없습니다.')
                 }
 
                 const alreadyUsed = stocks.find(s => s.status !== 'AVAILABLE')
                 if (alreadyUsed) {
-                    throw new Error(`Stock ${alreadyUsed.bagNo} is already processed`)
+                    throw new Error(`포대 ${alreadyUsed.bagNo}번은 이미 도정 또는 출고된 상태입니다.`)
                 }
-
-                // Update user input total weight
-                const actualTotalInputKg = data.totalInputKg;
 
                 // 2. Create Batch
                 const newBatch = await tx.millingBatch.create({
@@ -108,12 +115,19 @@ export async function startMillingBatch(data: MillingBatchFormData) {
                         date: data.date,
                         remarks: data.remarks?.trim(),
                         millingType: data.millingType,
-                        totalInputKg: actualTotalInputKg,
-                        // Link stocks
+                        totalInputKg: data.totalInputKg,
                         stocks: {
                             connect: data.selectedStockIds.map(id => ({ id }))
                         }
                     }
+                })
+
+                await recordAuditLog({
+                    action: 'CREATE',
+                    entity: 'MillingBatch',
+                    entityId: newBatch.id,
+                    details: data,
+                    description: `새 도정 작업 시작: ${data.millingType} (원곡 ${data.totalInputKg}kg)`
                 })
 
                 // 3. Update Stocks status
@@ -328,6 +342,14 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
             }
         })
 
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'MillingOutputPackage',
+            entityId: output.id,
+            details: data,
+            description: `도정 생산품 등록: ${data.packageType} ${data.weightPerUnit}kg x ${data.count}`
+        })
+
         revalidatePath('/milling')
         return { success: true, data: output }
     } catch (error) {
@@ -398,9 +420,17 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
 
 export async function deletePackagingLog(outputId: number) {
     try {
-        await prisma.millingOutputPackage.delete({
+        const deleted = await prisma.millingOutputPackage.delete({
             where: { id: outputId }
         })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'MillingOutputPackage',
+            entityId: outputId,
+            description: `도정 생산품 삭제: ${deleted.packageType} ${deleted.weightPerUnit}kg x ${deleted.count}`
+        })
+
         revalidatePath('/milling')
         return { success: true }
     } catch (error) {
@@ -423,6 +453,14 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
             where: { id: batchId },
             data: { isClosed }
         })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'MillingBatch',
+            entityId: batchId,
+            description: `도정 작업 상태 변경: ${isClosed ? '마감' : '진행'}`
+        })
+
         revalidatePath('/milling')
         revalidatePath('/stocks')
         return { success: true }
@@ -463,6 +501,13 @@ export async function deleteMillingBatch(batchId: number) {
 
             return { success: true };
         });
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'MillingBatch',
+            entityId: batchId,
+            description: `도정 작업 삭제: ${batchId}번 작업 (원곡 상태로 복구됨)`
+        })
 
         revalidatePath('/milling')
         revalidatePath('/stocks')

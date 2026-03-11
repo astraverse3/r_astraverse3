@@ -1,7 +1,6 @@
-'use server'
-
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
 
 // Updated definition to match new schema relations
 import { generateLotNo } from '@/lib/lot-generation'
@@ -69,6 +68,15 @@ export async function createStock(data: StockFormData) {
                 lotNo // Save generated Lot No (or null)
             },
         })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'Stock',
+            entityId: stock.id,
+            details: data,
+            description: `원곡 입고: ${farmer.name} - ${variety.name} (${data.weightKg}kg)`
+        })
+
         revalidatePath('/stocks')
         return { success: true, data: stock }
     } catch (error) {
@@ -179,6 +187,14 @@ export async function updateStock(id: number, data: StockFormData) {
                 });
             }
 
+            await recordAuditLog({
+                action: 'UPDATE',
+                entity: 'Stock',
+                entityId: id,
+                details: { prev: currentStock, new: updatedStock },
+                description: `재고 정보 수정: ${id}번 데이터`
+            })
+
             return updatedStock;
         });
 
@@ -202,9 +218,18 @@ export async function deleteStock(id: number) {
             return { success: false, error: '도정 완료된 데이터는 삭제할 수 없습니다.' }
         }
 
-        await prisma.stock.delete({
+        const deleted = await prisma.stock.delete({
             where: { id },
+            include: { farmer: true, variety: true }
         })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'Stock',
+            entityId: id,
+            description: `재고 삭제: ${deleted.farmer.name} - ${deleted.variety.name} (${deleted.weightKg}kg)`
+        })
+
         revalidatePath('/stocks')
         revalidatePath('/milling')
         return { success: true }
