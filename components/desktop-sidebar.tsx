@@ -117,6 +117,17 @@ export function DesktopSidebar() {
                                         사용자 관리
                                     </Link>
                                 )}
+                                {hasPermission(user, 'NOTICE_MANAGE') && (
+                                    <Link
+                                        href="/admin/notices"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/notices')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        공지사항 관리
+                                    </Link>
+                                )}
                                 {hasPermission(user, 'SYSTEM_MANAGE') && (
                                     <Link
                                         href="/admin"

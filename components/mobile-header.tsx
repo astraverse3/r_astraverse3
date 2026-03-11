@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link"
-import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck } from "lucide-react"
+import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck, Megaphone } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import {
     DropdownMenu,
@@ -81,6 +81,12 @@ export function MobileHeader() {
                                     <Link href="/admin/varieties" className="flex items-center gap-2 cursor-pointer">
                                         <Wheat className="w-4 h-4 text-slate-500" />
                                         <span>품종 관리</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/admin/notices" className="flex items-center gap-2 cursor-pointer">
+                                        <Megaphone className="w-4 h-4 text-slate-500" />
+                                        <span>공지사항 관리</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />

@@ -13,6 +13,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     const [isMounted, setIsMounted] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstalling, setIsInstalling] = useState(false);
+    const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
     useEffect(() => {
         // 1. Detect device/mode
@@ -25,8 +26,11 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
             window.matchMedia('(display-mode: standalone)').matches ||
             (window.navigator as any).standalone === true;
 
+        const inApp = /kakao|naver|instagram|fb_iab|line|twitter/i.test(userAgent);
+
         setIsMobile(mobile);
         setIsStandalone(standalone);
+        setIsInAppBrowser(inApp);
 
         // Allow bypassing the guard with ?bypass=true query param
         if (typeof window !== 'undefined' && window.location.search.includes('bypass=true')) {
@@ -73,6 +77,80 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
     // Installed PWA -> render children
     if (isStandalone) return <>{children}</>;
+
+    // In-App Browser Guide
+    if (isInAppBrowser) {
+        return (
+            <div className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500 overflow-hidden">
+                <div className="max-w-sm w-full h-full flex flex-col items-center justify-center -mt-10">
+                    <div className="mb-8 relative">
+                        <div className="p-5 rounded-[32px] bg-red-50 shadow-inner border border-red-100">
+                            <Share className="w-12 h-12 text-red-500" />
+                        </div>
+                    </div>
+
+                    <h1 className="text-2xl font-black text-stone-900 mb-4 tracking-tighter leading-tight">
+                        현재 브라우저에서는<br />앱 설치가 불가능합니다
+                    </h1>
+
+                    <p className="text-stone-500 text-sm font-medium mb-10 leading-relaxed">
+                        카카오톡, 네이버, 인스타그램 등의 앱에서는<br />
+                        보안상 <strong className="text-stone-800">홈 화면에 추가</strong> 기능을 지원하지 않습니다.
+                    </p>
+
+                    <div className="w-full bg-stone-50 p-6 rounded-2xl border border-stone-100 mb-8 space-y-5 text-left shadow-sm">
+                        <div className="text-sm font-bold text-stone-800 pb-3 border-b border-stone-200 flex items-center gap-2">
+                            <span>💡</span> 이렇게 해결해보세요
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0 text-xs font-black mt-0.5">
+                                1
+                            </div>
+                            <div className="text-sm font-medium text-stone-600 leading-relaxed pt-0.5">
+                                화면 하단 또는 상단의 <span className="font-bold text-stone-900">[⋮] 메뉴</span> 혹은 <span className="font-bold text-stone-900">공유</span> 버튼을 누르세요.
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0 text-xs font-black mt-0.5">
+                                2
+                            </div>
+                            <div className="text-sm font-medium text-stone-600 leading-relaxed pt-0.5">
+                                <span className="font-bold text-stone-900 text-blue-600 tracking-tight">Safari로 열기</span> (iOS) 또는 <span className="font-bold text-stone-900 text-blue-600 tracking-tight">다른 브라우저로 열기</span> (Android)를 선택해주세요.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(window.location.href);
+                                alert("링크가 복사되었습니다.\nSafari 또는 Chrome 브라우저에서 붙여넣기 해주세요.");
+                            } else {
+                                // Fallback
+                                const el = document.createElement('textarea');
+                                el.value = window.location.href;
+                                document.body.appendChild(el);
+                                el.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(el);
+                                alert("링크가 복사되었습니다.\nSafari 또는 Chrome 브라우저에서 붙여넣기 해주세요.");
+                            }
+                        }}
+                        className="w-full bg-stone-900 text-white font-bold py-4 rounded-xl shadow-lg shadow-stone-900/20 flex items-center justify-center gap-2 hover:bg-stone-800 transition-all active:scale-[0.98]"
+                    >
+                        현재 주소 링크 복사하기
+                    </button>
+
+                    <button
+                        onClick={() => setIsInAppBrowser(false)}
+                        className="mt-6 text-sm font-bold text-stone-400 underline underline-offset-4 decoration-stone-300 hover:text-stone-600 transition-colors"
+                    >
+                        일단 웹으로 계속 볼게요
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // Not installed Mobile -> Show Guide
     const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) ||
@@ -151,11 +229,13 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
             {/* iOS Floating Helper */}
             {isIOS && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100000] animate-in slide-in-from-bottom-20 duration-1000 w-max">
-                    <div className="bg-stone-900 text-white px-6 py-3 rounded-full text-sm font-bold flex items-center gap-2 shadow-2xl">
-                        <Share className="w-4 h-4 text-blue-400" />
-                        <span className="text-blue-200">↓</span>
-                        <span>여기를 눌러주세요</span>
+                <div
+                    onClick={() => alert("현재 누르신 말풍선이 아니라, 스마트폰 화면 맨 아래에 있는 'Safari 브라우저의 실제 공유 버튼(네모 박스 위로 화살표 모양)'을 눌러주세요!")}
+                    className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100000] animate-in slide-in-from-bottom-20 duration-1000 w-max cursor-pointer"
+                >
+                    <div className="bg-stone-900 text-white px-5 py-3 rounded-full text-sm font-bold flex flex-col items-center gap-1 shadow-2xl animate-bounce border border-stone-700">
+                        <span>화면 맨 아래 공유 버튼을 누르세요</span>
+                        <div className="text-blue-400 text-lg font-black leading-none">↓</div>
                     </div>
                 </div>
             )}

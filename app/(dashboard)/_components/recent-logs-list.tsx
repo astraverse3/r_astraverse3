@@ -12,6 +12,20 @@ interface RecentLogsListProps {
     logs: any[];
 }
 
+const millingTypeColors: Record<string, { bg: string; text: string; border: string }> = {
+    '백미': { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-300' },
+    '현미': { bg: 'bg-amber-800/10', text: 'text-amber-800', border: 'border-amber-800/30' },
+    '찰현미': { bg: 'bg-amber-800/10', text: 'text-amber-800', border: 'border-amber-800/30' },
+    '7분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
+    '5분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
+    '찹쌀': { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-300' },
+    '기타': { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-300' },
+}
+
+function getMillingTypeStyle(type: string) {
+    return millingTypeColors[type] || millingTypeColors['기타']
+}
+
 export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [selectedInputLog, setSelectedInputLog] = useState<any | null>(null);
     const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
@@ -49,6 +63,14 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                         ? `${farmerNames[0]} 외 ${farmerNames.length - 1}명`
                         : farmerNames[0] || '알 수 없음';
 
+                    const primaryStock = log.stocks && log.stocks.length > 0 ? log.stocks[0] : null;
+                    let classification = log.millingType || '-';
+                    if (primaryStock && primaryStock.variety?.type === 'GLUTINOUS') {
+                        if (classification === '백미') classification = '찹쌀';
+                        else if (classification === '현미') classification = '찰현미';
+                    }
+                    const classStyle = getMillingTypeStyle(classification);
+
                     return (
                         <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 cursor-pointer ${index >= 7 ? 'hidden lg:flex' : ''}`}
                             onClick={() => setSelectedInputLog(log)}
@@ -61,7 +83,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                         <span className="font-bold text-slate-800 text-[12px] truncate">
                                             {varietySummary} <span className="font-normal text-slate-500 text-[11px]">({farmerSummary})</span>
                                         </span>
-                                        <span className="px-1 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">{log.millingType}</span>
+                                        <span className={`px-1 py-0.5 rounded text-[10px] font-bold whitespace-nowrap border ${classStyle.bg} ${classStyle.text} ${classStyle.border}`}>{classification}</span>
                                     </div>
                                     <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}>
                                         {log.isClosed ? (
@@ -108,7 +130,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                 <div className="w-[12%] font-semibold text-slate-500 flex items-center">{dateStr}</div>
                                 <div className="flex w-[22%] items-center gap-2 pr-2">
                                     <span className="font-bold text-slate-800 text-[13px] truncate">{varietySummary}</span>
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 whitespace-nowrap">{log.millingType}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap border ${classStyle.bg} ${classStyle.text} ${classStyle.border}`}>{classification}</span>
                                 </div>
                                 <div className="flex w-[14%] items-center pr-2">
                                     <span className="font-medium text-slate-700 text-[13px] truncate">{farmerSummary}</span>

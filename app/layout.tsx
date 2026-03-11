@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   title: "땅끝황토친환경 - 도정 일지",
   description: "영농조합법인 땅끝황토친환경 도정 관리 시스템",
   manifest: "/manifest.json",
+  icons: {
+    apple: [
+      { url: '/icon-192.png' },
+      { url: '/icon-512.png', sizes: '512x512' }
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

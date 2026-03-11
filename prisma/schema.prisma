@@ -148,12 +148,25 @@ model User {
   phone         String?   // 연락처
   
   role          String    @default("USER") // ADMIN, USER
-  permissions   String[]  @default([])      // 개별 권한 배열: STOCK_MANAGE, MILLING_MANAGE 등
+  permissions   String[]  @default([])      // 개별 권한 배열: STOCK_MANAGE, MILLING_MANAGE, NOTICE_MANAGE 등
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts      Account[]
   sessions      Session[]
+}
+
+// ------------------------------------------------------
+// 8. Notice (대시보드 공지사항 전광판/모달 용)
+// ------------------------------------------------------
+model Notice {
+  id        Int      @id @default(autoincrement())
+  title     String   // 공지 제목 (마키 배너에서 노출)
+  content   String   // 전체 공지 내용 (모달 팝업용)
+  isActive  Boolean  @default(true) // 활성화 상태 (true일 때만 표시)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // 카카오 계정 연결 정보

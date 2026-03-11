@@ -12,6 +12,7 @@ export const BUSINESS_PERMISSIONS = {
 export const ADMIN_PERMISSIONS = {
     USER_MANAGE: { code: 'USER_MANAGE', label: '사용자 관리', description: '사용자 목록, 권한 변경' },
     SYSTEM_MANAGE: { code: 'SYSTEM_MANAGE', label: '시스템 관리', description: '백업/복구' },
+    NOTICE_MANAGE: { code: 'NOTICE_MANAGE', label: '공지사항 관리', description: '대시보드 전광판 공지 등록/수정/삭제' },
 } as const
 
 // 전체 권한 목록

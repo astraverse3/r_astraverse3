@@ -5,8 +5,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getDashboardStats } from "@/app/actions/dashboard";
+import { getActiveNotices } from "@/app/actions/notice";
 import { RealtimeStatus } from "@/app/(dashboard)/_components/realtime-status";
 import { RecentLogsList } from "@/app/(dashboard)/_components/recent-logs-list";
+import { NoticeMarquee } from "@/app/(dashboard)/_components/notice-marquee";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,9 +18,21 @@ export default async function Home() {
   const currentYear = stats?.productionYear || new Date().getFullYear();
   const targetYear = stats?.targetYear || new Date().getFullYear();
 
+  // DB 연동 활성 공지사항 가져오기
+  const noticeResult = await getActiveNotices();
+  const activeNotices = noticeResult.success ? noticeResult.data : [];
+
   return (
     <>
-      <div className="flex flex-col gap-1.5 sm:gap-6 w-full">
+      {/* 
+        전체 레이아웃 여백: 슬라이드 카드 기준 적용 (모바일 gap-2 = 8px, PC lg:gap-3 = 12px)
+      */}
+      <div className="flex flex-col gap-2 lg:gap-3 w-full">
+        {/* Notice Marquee Dashboard Banner */}
+        {activeNotices.length > 0 && (
+          <NoticeMarquee notices={activeNotices} speed={1.2} />
+        )}
+
         {/* Remove the wrapper for RealtimeStatus as it handles its own card containers now */}
         <RealtimeStatus
           availableStock={stats?.availableStockKg || 0}
@@ -31,8 +45,8 @@ export default async function Home() {
         />
 
         {/* 2-Column Layout for Desktop (Logs & Inventory) */}
-        {/* Adjusted to 7:3 ratio */}
-        <div className="grid grid-cols-1 lg:grid-cols-[7.5fr_2.5fr] gap-1.5 lg:gap-3 items-stretch">
+        {/* Adjusted to 7.5:2.5 ratio */}
+        <div className="grid grid-cols-1 lg:grid-cols-[7.5fr_2.5fr] gap-2 lg:gap-3 items-stretch">
 
           {/* Left Column: Recent Logs List (Max 7) */}
           <section className="bg-white rounded-lg sm:rounded-[24px] shadow-sm border border-slate-100 mx-1.5 sm:mx-0 pt-0 px-3 pb-3 sm:p-6 lg:h-full flex flex-col">
