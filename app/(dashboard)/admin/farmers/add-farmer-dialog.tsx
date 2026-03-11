@@ -35,6 +35,7 @@ interface Farmer {
         id: number
         code: string
         name: string
+        certType: string | null
         certNo: string
         cropYear: number
     } | null
@@ -44,6 +45,7 @@ interface ProducerGroup {
     id: number
     code: string
     name: string
+    certType: string | null
     certNo: string
     cropYear: number
 }
