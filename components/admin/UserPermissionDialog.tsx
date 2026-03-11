@@ -87,9 +87,9 @@ export function UserPermissionDialog({ user, open, onClose }: UserPermissionDial
                                         disabled={isAdmin}
                                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                                     />
-                                    <div>
-                                        <span className="text-sm font-medium text-slate-800">{perm.label}</span>
-                                        <p className="text-[11px] text-slate-400">{perm.description}</p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                                        <span className="text-sm font-medium text-slate-800 shrink-0">{perm.label}</span>
+                                        <span className="text-[11px] text-slate-400">{perm.description}</span>
                                     </div>
                                 </label>
                             ))}
@@ -111,9 +111,9 @@ export function UserPermissionDialog({ user, open, onClose }: UserPermissionDial
                                         disabled={isAdmin}
                                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                                     />
-                                    <div>
-                                        <span className="text-sm font-medium text-slate-800">{perm.label}</span>
-                                        <p className="text-[11px] text-slate-400">{perm.description}</p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                                        <span className="text-sm font-medium text-slate-800 shrink-0">{perm.label}</span>
+                                        <span className="text-[11px] text-slate-400">{perm.description}</span>
                                     </div>
                                 </label>
                             ))}
