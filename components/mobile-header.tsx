@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck, Megaphone } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
+import { hasPermission } from "@/lib/permissions"
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,8 +15,10 @@ import {
 
 export function MobileHeader() {
     const { data: session } = useSession()
-    const isAdmin = session?.user?.role === 'ADMIN'
-    const { name, image, department, position } = session?.user as any || {}
+    // @ts-ignore
+    const user = session?.user as any
+    const isAdmin = user?.role === 'ADMIN'
+    const { name, image, department, position } = user || {}
 
     return (
         <header className="fixed top-0 left-0 right-0 bg-white border-b border-slate-200 pl-4 h-11 flex items-center justify-between z-40 lg:hidden">
@@ -65,30 +69,38 @@ export function MobileHeader() {
                     <DropdownMenuContent align="end" className="w-48">
                         {isAdmin ? (
                             <>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
-                                        <Users className="w-4 h-4 text-slate-500" />
-                                        <span>사용자 관리</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
-                                        <Tractor className="w-4 h-4 text-slate-500" />
-                                        <span>생산자 관리</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/varieties" className="flex items-center gap-2 cursor-pointer">
-                                        <Wheat className="w-4 h-4 text-slate-500" />
-                                        <span>품종 관리</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/notices" className="flex items-center gap-2 cursor-pointer">
-                                        <Megaphone className="w-4 h-4 text-slate-500" />
-                                        <span>공지사항 관리</span>
-                                    </Link>
-                                </DropdownMenuItem>
+                                {hasPermission(user, 'USER_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
+                                            <Users className="w-4 h-4 text-slate-500" />
+                                            <span>사용자 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                {hasPermission(user, 'FARMER_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
+                                            <Tractor className="w-4 h-4 text-slate-500" />
+                                            <span>생산자 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                {hasPermission(user, 'VARIETY_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/varieties" className="flex items-center gap-2 cursor-pointer">
+                                            <Wheat className="w-4 h-4 text-slate-500" />
+                                            <span>품종 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                {hasPermission(user, 'NOTICE_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/notices" className="flex items-center gap-2 cursor-pointer">
+                                            <Megaphone className="w-4 h-4 text-slate-500" />
+                                            <span>공지사항 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                             </>
                         ) : (

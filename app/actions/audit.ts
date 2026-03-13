@@ -60,16 +60,47 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
         const result = await getAuditLogs({ ...params, page: 1, pageSize: 5000 })
         if (!result.success || !result.data) throw new Error('Failed to fetch data')
 
+        const ENTITY_NAMES: Record<string, string> = {
+            'Stock': '벼 재고',
+            'MillingBatch': '도정 관리',
+            'Farmer': '생산자',
+            'Variety': '품종',
+            'User': '사용자',
+            'Notice': '공지사항',
+            'ProducerGroup': '작목반',
+            'Release': '출고 관리'
+        }
+
+        const formatDetailsForExcel = (details: any) => {
+            if (!details) return ''
+            try {
+                // 단순 객체일 경우 key: value 형태로 변환
+                if (typeof details === 'object') {
+                    return Object.entries(details)
+                        .map(([key, value]) => {
+                            if (typeof value === 'object' && value !== null) {
+                                return `${key}: ${JSON.stringify(value)}`
+                            }
+                            return `${key}: ${value}`
+                        })
+                        .join('\n')
+                }
+                return JSON.stringify(details)
+            } catch (e) {
+                return String(details)
+            }
+        }
+
         const rows = (result.data as any[]).map((log: any) => ({
             'ID': log.id,
             '일시': log.createdAt.toLocaleString('ko-KR'),
             '작업자': log.userName,
             '이메일': log.userEmail,
             '작업': log.action,
-            '대상': log.entity,
+            '대상': ENTITY_NAMES[log.entity] || log.entity,
             '대상ID': log.entityId,
             '설명': log.description,
-            '변경상세': log.details ? JSON.stringify(log.details) : '',
+            '변경상세': formatDetailsForExcel(log.details),
             'IP': log.ip
         }))
 
@@ -87,5 +118,54 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
     } catch (error) {
         console.error('Export logs failed:', error)
         return { success: false, error: '엑셀 내보내기에 실패했습니다.' }
+    }
+}
+
+// 현재 경로(메뉴)에 맞는 데이터의 가장 마지막 업데이트 시각 조회
+export async function getLatestUpdateForPath(pathname: string) {
+    try {
+        let entities: string[] | undefined = undefined;
+
+        if (pathname.startsWith('/stocks')) {
+            entities = ['Stock'];
+        } else if (pathname.startsWith('/milling')) {
+            entities = ['MillingBatch'];
+        } else if (pathname.startsWith('/release')) {
+            entities = ['Release'];
+        } else if (pathname.startsWith('/admin/users')) {
+            entities = ['User'];
+        } else if (pathname.startsWith('/admin/farmers')) {
+            entities = ['Farmer', 'ProducerGroup'];
+        } else if (pathname.startsWith('/admin/varieties')) {
+            entities = ['Variety'];
+        } else if (pathname.startsWith('/admin/notices')) {
+            entities = ['Notice'];
+        } else if (pathname.startsWith('/admin/logs')) {
+            entities = undefined; // 전체 변경 내역 중 최신
+        } else if (pathname === '/') {
+            entities = undefined; // 전체 대시보드 중 최신
+        } else {
+            entities = undefined; // 기타 경로는 전체 최신
+        }
+
+        const where: any = {};
+        if (entities) {
+            where.entity = { in: entities };
+        }
+
+        const latestLog = await prisma.auditLog.findFirst({
+            where,
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true }
+        });
+
+        if (latestLog) {
+            return { success: true, timestamp: latestLog.createdAt.toISOString() };
+        }
+        
+        return { success: true, timestamp: null };
+    } catch (error) {
+        console.error('Failed to get latest update context:', error);
+        return { success: false, error: '시간을 불러오는데 실패했습니다.' };
     }
 }

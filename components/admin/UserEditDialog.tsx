@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { updateUserInfo } from '@/app/actions/user'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { X } from 'lucide-react'
 
@@ -40,6 +41,7 @@ export function UserEditDialog({ user, open, onClose }: UserEditDialogProps) {
                 phone: phone || null,
             })
             if (result.success) {
+                triggerDataUpdate()
                 toast.success('사용자 정보가 수정되었습니다.')
                 onClose()
             }

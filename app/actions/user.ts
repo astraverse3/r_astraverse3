@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
 
 // ADMIN 권한 체크 헬퍼
 async function requireAdmin() {
@@ -56,6 +57,14 @@ export async function updateUserRole(userId: string, role: string) {
         data: { role },
     })
 
+    await recordAuditLog({
+        action: 'UPDATE',
+        entity: 'User',
+        entityId: userId,
+        details: { role },
+        description: `사용자 권한(Role) 변경: ${userId} -> ${role}`
+    })
+
     revalidatePath('/admin/users')
     return { success: true }
 }
@@ -78,6 +87,14 @@ export async function updateUserInfo(
         },
     })
 
+    await recordAuditLog({
+        action: 'UPDATE',
+        entity: 'User',
+        entityId: userId,
+        details: data,
+        description: `사용자 정보 수정: ${data.name || userId}`
+    })
+
     revalidatePath('/admin/users')
     return { success: true }
 }
@@ -92,9 +109,16 @@ export async function deleteUser(userId: string) {
         return { success: false, error: '본인 계정은 삭제할 수 없습니다.' }
     }
 
-    // Account, Session도 cascade로 삭제됨 (schema에 onDelete: Cascade 설정됨)
-    await prisma.user.delete({
+    const deletedUser = await prisma.user.delete({
         where: { id: userId },
+        select: { name: true, email: true }
+    })
+
+    await recordAuditLog({
+        action: 'DELETE',
+        entity: 'User',
+        entityId: userId,
+        description: `사용자 계정 삭제: ${deletedUser.name || deletedUser.email}`
     })
 
     revalidatePath('/admin/users')
@@ -108,6 +132,14 @@ export async function updateUserPermissions(userId: string, permissions: string[
     await prisma.user.update({
         where: { id: userId },
         data: { permissions },
+    })
+
+    await recordAuditLog({
+        action: 'UPDATE',
+        entity: 'User',
+        entityId: userId,
+        details: { permissions },
+        description: `사용자 세부 권한(Permissions) 변경: ${userId}`
     })
 
     revalidatePath('/admin/users')

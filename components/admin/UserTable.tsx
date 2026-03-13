@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { updateUserRole, deleteUser } from '@/app/actions/user'
 import { UserEditDialog } from './UserEditDialog'
 import { UserPermissionDialog } from './UserPermissionDialog'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { Shield, ShieldOff, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { ALL_PERMISSIONS } from '@/lib/permissions'
@@ -35,6 +36,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
 
         const result = await updateUserRole(user.id, newRole)
         if (result.success) {
+            triggerDataUpdate()
             toast.success(`${user.name}님의 역할이 ${newRole}로 변경되었습니다.`)
         } else {
             toast.error(result.error || '역할 변경에 실패했습니다.')
@@ -46,6 +48,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
 
         const result = await deleteUser(user.id)
         if (result.success) {
+            triggerDataUpdate()
             toast.success(`${user.name}님의 계정이 삭제되었습니다.`)
         } else {
             toast.error(result.error || '삭제에 실패했습니다.')
@@ -185,7 +188,9 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                 <td className="px-5 py-3.5 text-sm text-slate-600">{user.position || '-'}</td>
                                 <td className="px-5 py-3.5 text-sm text-slate-600">{user.phone || '-'}</td>
                                 <td className="px-5 py-3.5 text-xs text-slate-400">
-                                    {new Date(user.createdAt).toLocaleDateString('ko-KR')}
+                                    <span suppressHydrationWarning>
+                                        {new Date(user.createdAt).toLocaleDateString('ko-KR')}
+                                    </span>
                                 </td>
                                 <td className="px-5 py-3.5">
                                     <div className="flex items-center justify-center gap-1">

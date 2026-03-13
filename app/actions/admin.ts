@@ -131,7 +131,13 @@ export async function deleteVarieties(ids: number[]) {
             }
 
             try {
-                await prisma.variety.delete({ where: { id } })
+                const deletedVariety = await prisma.variety.delete({ where: { id } })
+                await recordAuditLog({
+                    action: 'DELETE',
+                    entity: 'Variety',
+                    entityId: id,
+                    description: `품종 다중 삭제: ${deletedVariety.name}`
+                })
                 results.success.push(id)
             } catch (error) {
                 results.failed.push({
@@ -406,7 +412,13 @@ export async function deleteFarmers(ids: number[]) {
             }
 
             try {
-                await prisma.farmer.delete({ where: { id } })
+                const deletedFarmer = await prisma.farmer.delete({ where: { id } })
+                await recordAuditLog({
+                    action: 'DELETE',
+                    entity: 'Farmer',
+                    entityId: id,
+                    description: `생산자 다중 삭제: ${deletedFarmer.name}`
+                })
                 results.success.push(id)
             } catch (error) {
                 results.failed.push({

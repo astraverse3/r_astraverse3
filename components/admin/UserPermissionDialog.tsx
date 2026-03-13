@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ALL_PERMISSIONS, BUSINESS_PERMISSIONS, ADMIN_PERMISSIONS, type PermissionCode } from '@/lib/permissions'
 import { updateUserPermissions } from '@/app/actions/user'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { X, Shield } from 'lucide-react'
@@ -37,6 +38,7 @@ export function UserPermissionDialog({ user, open, onClose }: UserPermissionDial
         try {
             const result = await updateUserPermissions(user.id, selected)
             if (result.success) {
+                triggerDataUpdate()
                 toast.success('권한이 저장되었습니다.')
                 onClose()
             } else {

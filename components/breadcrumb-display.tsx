@@ -12,6 +12,9 @@ const ROUTE_NAME_MAP: Record<string, string> = {
     'varieties': '품종 관리',
     'farmers': '생산자 관리',
     'users': '사용자 관리',
+    'notices': '공지사항 관리',
+    'logs': '활동 로그',
+    'backup': '시스템 백업',
 }
 
 export function BreadcrumbDisplay() {

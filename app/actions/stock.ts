@@ -271,7 +271,16 @@ export async function deleteStocks(ids: number[]) {
             }
 
             try {
-                await prisma.stock.delete({ where: { id } })
+                const deletedStock = await prisma.stock.delete({ 
+                    where: { id },
+                    include: { farmer: true, variety: true }
+                })
+                await recordAuditLog({
+                    action: 'DELETE',
+                    entity: 'Stock',
+                    entityId: id,
+                    description: `재고 다중 삭제: ${deletedStock.farmer.name} - ${deletedStock.variety.name} (${deletedStock.weightKg}kg)`
+                })
                 results.success.push(id)
             } catch (error) {
                 results.failed.push({

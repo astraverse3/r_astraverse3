@@ -14,6 +14,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { deleteVarieties } from '@/app/actions/admin'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 
 export function useBulkDeleteVarieties() {
@@ -34,6 +35,7 @@ export function useBulkDeleteVarieties() {
                 message += `\n\n삭제 실패 (${failed.length}개):\n${failed.map(f => f.reason).join('\n')}`
             }
             toast.success(message)
+            triggerDataUpdate()
             setSelectedIds(new Set())
         } else {
             toast.error(result.error || '삭제 실패')

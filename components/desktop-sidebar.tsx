@@ -54,7 +54,7 @@ export function DesktopSidebar() {
                             }`}
                     >
                         <ClipboardList className="w-4 h-4" />
-                        도정내역
+                        도정관리
                     </Link>
 
                     <Link
@@ -65,7 +65,7 @@ export function DesktopSidebar() {
                             }`}
                     >
                         <Truck className="w-4 h-4" />
-                        출고내역
+                        출고관리
                     </Link>
 
                     <Link
@@ -88,24 +88,28 @@ export function DesktopSidebar() {
                                 <span>관리자 설정</span>
                             </div>
                             <div className="pl-10 mt-1 space-y-1">
-                                <Link
-                                    href="/admin/varieties"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    품종 관리
-                                </Link>
-                                <Link
-                                    href="/admin/farmers"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    생산자 관리
-                                </Link>
+                                {hasPermission(user, 'VARIETY_MANAGE') && (
+                                    <Link
+                                        href="/admin/varieties"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        품종 관리
+                                    </Link>
+                                )}
+                                {hasPermission(user, 'FARMER_MANAGE') && (
+                                    <Link
+                                        href="/admin/farmers"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        생산자 관리
+                                    </Link>
+                                )}
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <Link
                                         href="/admin/users"
@@ -140,8 +144,8 @@ export function DesktopSidebar() {
                                             활동 로그
                                         </Link>
                                         <Link
-                                            href="/admin"
-                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${pathname === '/admin'
+                                            href="/admin/backup"
+                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/backup')
                                                 ? 'text-blue-600 bg-blue-50'
                                                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                                 }`}

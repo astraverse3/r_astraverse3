@@ -3,12 +3,14 @@
 import { Megaphone, X } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { NoticeViewDialog } from '@/components/admin/NoticeViewDialog';
 
 interface Notice {
     id: number;
     title: string;
     content: string;
     createdAt: Date;
+    author?: { name: string | null } | null;
 }
 
 interface NoticeMarqueeProps {
@@ -118,60 +120,14 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
             </div>
 
             {/* 공지사항 상세 팝업 (모달) */}
-            {isModalOpen && currentNotice && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4" onClick={() => setIsModalOpen(false)}>
-                    <div 
-                        className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative flex flex-col max-h-[90vh]"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <button 
-                            onClick={() => setIsModalOpen(false)} 
-                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors z-10"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-
-                        <div className="flex items-center gap-2 mb-4 pr-6 shrink-0">
-                            <Megaphone className="w-5 h-5 text-[#ea580c] shrink-0" />
-                            <h2 className="text-lg font-bold text-slate-900 break-words line-clamp-2">
-                                {currentNotice.title}
-                            </h2>
-                        </div>
-                        
-                        <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap overflow-y-auto mb-6 px-1 flex-1">
-                            {currentNotice.content}
-                        </div>
-                        
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 shrink-0">
-                            <span className="text-xs font-medium text-slate-400">
-                                {new Date(currentNotice.createdAt).toLocaleDateString('ko-KR')} 등록
-                            </span>
-                            
-                            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-                                {notices.length > 1 && (
-                                    <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                                        <button 
-                                            onClick={handlePrev}
-                                            className="px-2 py-1 text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm rounded transition-all"
-                                        >
-                                            이전
-                                        </button>
-                                        <span className="text-[11px] font-bold text-slate-400 px-1 sm:px-2 min-w-[2.5rem] sm:min-w-[3rem] text-center">
-                                            {currentIndex + 1} / {notices.length}
-                                        </span>
-                                        <button 
-                                            onClick={handleNext}
-                                            className="px-2 py-1 text-xs font-bold text-slate-600 hover:bg-white hover:shadow-sm rounded transition-all"
-                                        >
-                                            다음
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <NoticeViewDialog
+                notice={currentNotice ? {
+                    ...currentNotice,
+                    authorName: currentNotice.author?.name
+                } : null}
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </>
     );
 }

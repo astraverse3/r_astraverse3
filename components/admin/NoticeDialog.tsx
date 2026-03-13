@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createNotice, updateNotice } from '@/app/actions/notice'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { X, Megaphone } from 'lucide-react'
@@ -50,6 +51,7 @@ export function NoticeDialog({ notice, open, onClose }: NoticeDialogProps) {
             }
 
             if (result.success) {
+                triggerDataUpdate()
                 toast.success(notice ? '공지가 수정되었습니다.' : '공지가 등록되었습니다.')
                 onClose()
             } else {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
 import { deleteStock } from '@/app/actions/stock'
+import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 
 interface Props {
@@ -27,7 +28,9 @@ export function DeleteStockButton({ stockId, stockTitle, isConsumed }: Props) {
         const result = await deleteStock(stockId)
         setIsLoading(false)
 
-        if (!result.success) {
+        if (result.success) {
+            triggerDataUpdate()
+        } else {
             toast.error('삭제 실패: ' + result.error)
         }
     }

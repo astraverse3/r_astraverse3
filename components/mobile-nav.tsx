@@ -12,8 +12,8 @@ export function MobileNav() {
     const navItems = [
         { href: '/', icon: Compass, label: '홈' },
         { href: '/stocks', icon: Box, label: '재고' },
-        { href: '/milling', icon: Clipboard, label: '도정' },
-        { href: '/releases', icon: ArrowRightLeft, label: '출고' },
+        { href: '/milling', icon: Clipboard, label: '도정관리' },
+        { href: '/releases', icon: ArrowRightLeft, label: '출고관리' },
         { href: '/statistics', icon: Activity, label: '통계' },
     ];
 

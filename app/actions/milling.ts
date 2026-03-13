@@ -576,6 +576,15 @@ export async function deleteMillingBatches(ids: number[]) {
                         where: { id }
                     })
                 })
+                
+                // 삭제 성공 시 활동 로그 기록
+                await recordAuditLog({
+                    action: 'DELETE',
+                    entity: 'MillingBatch',
+                    entityId: id,
+                    description: `도정 작업 삭제: ${id}번 작업 (원곡 상태로 복구됨)`
+                })
+
                 results.success.push(id)
             } catch (error) {
                 const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')

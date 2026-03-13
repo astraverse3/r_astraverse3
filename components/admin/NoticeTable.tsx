@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { NoticeDialog } from './NoticeDialog'
+import { NoticeViewDialog } from './NoticeViewDialog'
 import { deleteNotice, updateNotice } from '@/app/actions/notice'
-import { Pencil, Trash2, Plus, Megaphone } from 'lucide-react'
+import { triggerDataUpdate } from '@/components/last-updated'
+import { Pencil, Trash2, Plus, Megaphone, User as UserIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 
@@ -14,10 +16,12 @@ interface Notice {
     isActive: boolean
     createdAt: Date
     updatedAt: Date
+    author?: { name: string | null } | null
 }
 
 export function NoticeTable({ notices }: { notices: Notice[] }) {
     const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
+    const [viewingNotice, setViewingNotice] = useState<Notice | null>(null)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
 
     const handleDelete = async (notice: Notice) => {
@@ -25,6 +29,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
 
         const result = await deleteNotice(notice.id)
         if (result.success) {
+            triggerDataUpdate()
             toast.success('공지가 삭제되었습니다.')
         } else {
             toast.error('삭제에 실패했습니다.')
@@ -34,6 +39,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
     const handleToggleActive = async (notice: Notice, currentActive: boolean) => {
         const result = await updateNotice(notice.id, { isActive: !currentActive })
         if (result.success) {
+            triggerDataUpdate()
             toast.success(currentActive ? '공지가 비활성화되었습니다.' : '공지가 활성화되었습니다.')
         } else {
             toast.error('상태 변경에 실패했습니다.')
@@ -89,7 +95,12 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                         </div>
 
                         {/* Title & Content */}
-                        <div className="px-3 py-3">
+                        <div className="px-3 py-3 cursor-pointer hover:bg-slate-50/50 transition-colors"
+                            onClick={() => setViewingNotice({
+                                ...notice,
+                                authorName: notice.author?.name
+                            } as any)}
+                        >
                             <div className="flex gap-2 items-start mb-1.5">
                                 {notice.isActive && <Megaphone className="w-4 h-4 text-[#ea580c] shrink-0 mt-[2px]" />}
                                 <h3 className={`font-bold text-sm ${notice.isActive ? 'text-slate-900' : 'text-slate-500'}`}>
@@ -117,6 +128,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                         <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             <th className="text-center px-4 py-3 w-20">상태</th>
                             <th className="text-left px-5 py-3 border-l border-slate-100">제목 및 내용</th>
+                            <th className="text-center px-5 py-3 w-32 border-l border-slate-100 text-slate-500">작성자</th>
                             <th className="text-center px-5 py-3 w-40 border-l border-slate-100">작성일</th>
                             <th className="text-center px-4 py-3 w-24 border-l border-slate-100">관리</th>
                         </tr>
@@ -135,17 +147,32 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                                         </span>
                                     </div>
                                 </td>
-                                <td className="px-5 py-3.5 border-l border-slate-100">
-                                    <div className="flex items-start gap-2 max-w-2xl">
+                                <td className="px-5 py-3.5 border-l border-slate-100 cursor-pointer group/cell hover:bg-slate-50/80 transition-colors"
+                                    onClick={() => setViewingNotice({
+                                        ...notice,
+                                        authorName: notice.author?.name
+                                    } as any)}
+                                >
+                                    <div className="flex items-start gap-2 max-w-xl">
                                         {notice.isActive && <Megaphone className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />}
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <p className={`font-bold text-sm ${notice.isActive ? 'text-slate-900' : 'text-slate-600'}`}>
+                                        <div className="flex flex-col gap-1 w-full overflow-hidden">
+                                            <p className={`font-bold text-sm ${notice.isActive ? 'text-slate-900' : 'text-slate-600'} group-hover/cell:text-[#00a2e8] transition-colors truncate`}>
                                                 {notice.title}
                                             </p>
                                             <p className="text-[13px] text-slate-500 truncate">
                                                 {notice.content}
                                             </p>
                                         </div>
+                                    </div>
+                                </td>
+                                <td className="px-5 py-3.5 border-l border-slate-100">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+                                            <UserIcon className="w-3 h-3 text-slate-400" />
+                                        </div>
+                                        <span className="text-[13px] font-bold text-slate-700 truncate max-w-[80px]">
+                                            {notice.author?.name || '-'}
+                                        </span>
                                     </div>
                                 </td>
                                 <td className="px-5 py-3.5 text-xs text-slate-400 text-center border-l border-slate-100 whitespace-nowrap">
@@ -188,6 +215,13 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                     setIsCreateOpen(false)
                     setEditingNotice(null)
                 }}
+            />
+
+            {/* 공지사항 상세 보기 대화상자 */}
+            <NoticeViewDialog
+                notice={viewingNotice}
+                open={!!viewingNotice}
+                onClose={() => setViewingNotice(null)}
             />
         </>
     )

@@ -24,7 +24,12 @@ export async function getNotices() {
     await requireNoticeManage()
     
     const notices = await prisma.notice.findMany({
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+            author: {
+                select: { name: true }
+            }
+        }
     })
     
     return notices
@@ -34,7 +39,12 @@ export async function getNotices() {
 export async function getActiveNotices() {
     const notices = await prisma.notice.findMany({
         where: { isActive: true },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+            author: {
+                select: { name: true }
+            }
+        }
     })
     
     return { success: true, data: notices }
@@ -42,10 +52,13 @@ export async function getActiveNotices() {
 
 // 3. 공지 생성
 export async function createNotice(data: { title: string; content: string; isActive: boolean }) {
-    await requireNoticeManage()
+    const session = await requireNoticeManage()
     
     const notice = await prisma.notice.create({
-        data
+        data: {
+            ...data,
+            authorId: (session.user as any).id
+        }
     })
 
     await recordAuditLog({
