@@ -88,28 +88,24 @@ export function DesktopSidebar() {
                                 <span>관리자 설정</span>
                             </div>
                             <div className="pl-10 mt-1 space-y-1">
-                                {hasPermission(user, 'VARIETY_MANAGE') && (
-                                    <Link
-                                        href="/admin/varieties"
-                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        품종 관리
-                                    </Link>
-                                )}
-                                {hasPermission(user, 'FARMER_MANAGE') && (
-                                    <Link
-                                        href="/admin/farmers"
-                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        생산자 관리
-                                    </Link>
-                                )}
+                                <Link
+                                    href="/admin/varieties"
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    품종 관리
+                                </Link>
+                                <Link
+                                    href="/admin/farmers"
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    생산자 관리
+                                </Link>
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <Link
                                         href="/admin/users"

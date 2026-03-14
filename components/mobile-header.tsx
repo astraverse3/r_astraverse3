@@ -67,29 +67,29 @@ export function MobileHeader() {
                         <Settings className="w-5 h-5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                        {isAdmin ? (
+                        {/* 모든 사용자에게 표시: 품종, 생산자 */}
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/varieties" className="flex items-center gap-2 cursor-pointer">
+                                <Wheat className="w-4 h-4 text-slate-500" />
+                                <span>품종 관리</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
+                                <Tractor className="w-4 h-4 text-slate-500" />
+                                <span>생산자 관리</span>
+                            </Link>
+                        </DropdownMenuItem>
+
+                        {/* 관리자 전용 메뉴 */}
+                        {isAdmin && (
                             <>
+                                <DropdownMenuSeparator />
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
                                             <Users className="w-4 h-4 text-slate-500" />
                                             <span>사용자 관리</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                )}
-                                {hasPermission(user, 'FARMER_MANAGE') && (
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
-                                            <Tractor className="w-4 h-4 text-slate-500" />
-                                            <span>생산자 관리</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                )}
-                                {hasPermission(user, 'VARIETY_MANAGE') && (
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/admin/varieties" className="flex items-center gap-2 cursor-pointer">
-                                            <Wheat className="w-4 h-4 text-slate-500" />
-                                            <span>품종 관리</span>
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
@@ -103,10 +103,6 @@ export function MobileHeader() {
                                 )}
                                 <DropdownMenuSeparator />
                             </>
-                        ) : (
-                            <div className="px-2 py-1.5 text-xs text-slate-500 text-center">
-                                일반 사용자<br />(설정 권한 없음)
-                            </div>
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>

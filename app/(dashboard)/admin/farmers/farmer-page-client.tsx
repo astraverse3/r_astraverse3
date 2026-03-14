@@ -75,6 +75,7 @@ export function FarmerPageClient({
                 selectedIds={selectedIds}
                 onSelectionChange={setSelectedIds}
                 onDeleteClick={showDeleteDialog}
+                canManage={canManage}
             />
 
             <DeleteDialog />

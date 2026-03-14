@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo, Fragment } from 'react'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -28,6 +30,10 @@ interface VarietyListClientProps {
 }
 
 export function VarietyListClient({ varieties, selectedIds, onSelectionChange }: VarietyListClientProps) {
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'VARIETY_MANAGE')
+
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
             onSelectionChange(new Set(varieties.map(v => v.id)))
@@ -53,16 +59,20 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="w-[40px] py-2 px-1 text-center">
-                                <Checkbox
-                                    checked={selectedIds.size === varieties.length && varieties.length > 0}
-                                    onCheckedChange={handleSelectAll}
-                                />
-                            </TableHead>
+                            {canManage && (
+                                <TableHead className="w-[40px] py-2 px-1 text-center">
+                                    <Checkbox
+                                        checked={selectedIds.size === varieties.length && varieties.length > 0}
+                                        onCheckedChange={handleSelectAll}
+                                    />
+                                </TableHead>
+                            )}
                             <TableHead className="w-[60px] text-center font-bold text-slate-500">No</TableHead>
                             <TableHead className="font-bold text-slate-500">품종명</TableHead>
                             <TableHead className="font-bold text-slate-500">곡종</TableHead>
-                            <TableHead className="w-[100px] text-center font-bold text-slate-500">수정</TableHead>
+                            {canManage && (
+                                <TableHead className="w-[100px] text-center font-bold text-slate-500">수정</TableHead>
+                            )}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -71,10 +81,11 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                                 varieties={varieties}
                                 selectedIds={selectedIds}
                                 onSelectOne={handleSelectOne}
+                                canManage={canManage}
                             />
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={5} className="h-32 text-center text-slate-400 font-medium">
+                                <TableHead colSpan={canManage ? 5 : 3} className="h-32 text-center text-slate-400 font-medium">
                                     등록된 품종이 없습니다.
                                 </TableHead>
                             </TableRow>
@@ -90,6 +101,7 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                         varieties={varieties}
                         selectedIds={selectedIds}
                         onSelectOne={handleSelectOne}
+                        canManage={canManage}
                     />
                 ) : (
                     <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400">
@@ -101,15 +113,12 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
     )
 }
 
-function MobileVarietyGroups({ varieties, selectedIds, onSelectOne }: {
+function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }: {
     varieties: Variety[],
     selectedIds: Set<number>,
-    onSelectOne: (id: number, checked: boolean) => void
+    onSelectOne: (id: number, checked: boolean) => void,
+    canManage: boolean
 }) {
-    const { data: session } = useSession()
-    // @ts-ignore
-    const canManage = hasPermission(session?.user, 'VARIETY_MANAGE')
-
     const groups = useMemo(() => {
         const grouped: Record<string, {
             key: string,
@@ -167,11 +176,13 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne }: {
                         {group.items.map(variety => (
                             <div key={variety.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50/50">
                                 <div className="flex items-center gap-3">
-                                    <Checkbox
-                                        checked={selectedIds.has(variety.id)}
-                                        onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
-                                        className="h-4 w-4"
-                                    />
+                                    {canManage && (
+                                        <Checkbox
+                                            checked={selectedIds.has(variety.id)}
+                                            onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
+                                            className="h-4 w-4"
+                                        />
+                                    )}
                                     <span className="font-medium text-[13px] text-slate-700">{variety.name}</span>
                                 </div>
                                 {canManage && (
@@ -186,15 +197,12 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne }: {
     )
 }
 
-function FlatVarietyRows({ varieties, selectedIds, onSelectOne }: {
+function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
     varieties: Variety[],
     selectedIds: Set<number>,
-    onSelectOne: (id: number, checked: boolean) => void
+    onSelectOne: (id: number, checked: boolean) => void,
+    canManage: boolean
 }) {
-    const { data: session } = useSession()
-    // @ts-ignore
-    const canManage = hasPermission(session?.user, 'VARIETY_MANAGE')
-
     // Sort varieties by type then name
     const sortedVarieties = useMemo(() => {
         const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'OTHER': 4 }
@@ -209,20 +217,24 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne }: {
         <>
             {sortedVarieties.map((variety, index) => (
                 <TableRow key={variety.id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0">
-                    <TableCell className="py-2 px-1 w-[40px] text-center">
-                        <Checkbox
-                            checked={selectedIds.has(variety.id)}
-                            onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
-                        />
-                    </TableCell>
+                    {canManage && (
+                        <TableCell className="py-2 px-1 w-[40px] text-center">
+                            <Checkbox
+                                checked={selectedIds.has(variety.id)}
+                                onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
+                            />
+                        </TableCell>
+                    )}
                     <TableCell className="text-center font-medium text-slate-600 text-xs">{index + 1}</TableCell>
                     <TableCell className="font-medium text-slate-800 text-sm">{variety.name}</TableCell>
                     <TableCell className="text-slate-500 text-xs">
                         {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : variety.type === 'INDICA' ? '인디카' : '기타'}
                     </TableCell>
-                    <TableCell className="text-center">
-                        {canManage && <VarietyDialog mode="edit" variety={variety} />}
-                    </TableCell>
+                    {canManage && (
+                        <TableCell className="text-center">
+                            <VarietyDialog mode="edit" variety={variety} />
+                        </TableCell>
+                    )}
                 </TableRow>
             ))}
         </>

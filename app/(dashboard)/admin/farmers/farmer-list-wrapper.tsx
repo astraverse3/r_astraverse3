@@ -39,19 +39,22 @@ interface FarmerListWrapperProps {
     selectedIds: Set<number>
     onSelectionChange: (ids: Set<number>) => void
     onDeleteClick: () => void
+    canManage?: boolean
 }
 
 export function FarmerListWrapper({
     farmers,
     selectedIds,
     onSelectionChange,
-    onDeleteClick
+    onDeleteClick,
+    canManage
 }: FarmerListWrapperProps) {
     return (
         <FarmerList
             farmers={farmers}
             selectedIds={selectedIds}
             onSelectionChange={onSelectionChange}
+            canManage={canManage}
         />
     )
 }

@@ -44,10 +44,11 @@ interface Farmer {
     } | null
 }
 
-export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
+export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage: canManageFromParent }: {
     farmers: Farmer[]
     selectedIds: Set<number>
     onSelectionChange: (ids: Set<number>) => void
+    canManage?: boolean
 }) {
     const [editingFarmer, setEditingFarmer] = useState<Farmer | null>(null)
 
@@ -78,12 +79,14 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50">
-                            <TableHead className="w-[40px]">
-                                <Checkbox
-                                    checked={selectedIds.size === farmers.length && farmers.length > 0}
-                                    onCheckedChange={handleSelectAll}
-                                />
-                            </TableHead>
+                            {canManageFromParent && (
+                                <TableHead className="w-[40px]">
+                                    <Checkbox
+                                        checked={selectedIds.size === farmers.length && farmers.length > 0}
+                                        onCheckedChange={handleSelectAll}
+                                    />
+                                </TableHead>
+                            )}
                             <TableHead>년도</TableHead>
                             <TableHead>작목반번호</TableHead>
                             <TableHead>작목반</TableHead>
@@ -92,7 +95,9 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange }: {
                             <TableHead>생산자명</TableHead>
                             <TableHead>품목</TableHead>
                             <TableHead>연락처</TableHead>
-                            <TableHead className="text-center">수정</TableHead>
+                            {canManageFromParent && (
+                                <TableHead className="text-center">수정</TableHead>
+                            )}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -218,11 +223,13 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
                                 <div key={farmer.id} className="p-3 hover:bg-slate-50 flex items-center justify-between group transition-colors">
                                     {/* Left side: Checkbox, [Number], Name, PhoneIcon */}
                                     <div className="flex items-center gap-2.5">
-                                        <Checkbox
-                                            checked={selectedIds.has(farmer.id)}
-                                            onCheckedChange={(checked) => onSelectOne(farmer.id, checked as boolean)}
-                                            className="h-4 w-4 shrink-0"
-                                        />
+                                        {canManage && (
+                                            <Checkbox
+                                                checked={selectedIds.has(farmer.id)}
+                                                onCheckedChange={(checked) => onSelectOne(farmer.id, checked as boolean)}
+                                                className="h-4 w-4 shrink-0"
+                                            />
+                                        )}
                                         <div className="flex items-center gap-1.5">
                                             <span className="text-[12px] font-mono text-slate-500 bg-slate-100 px-1 rounded">
                                                 {farmer.farmerNo ? `[${farmer.farmerNo}]` : '[-]'}
@@ -400,13 +407,15 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {/* Farmer Rows */}
                         {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
                             <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-[#00a2e8]/7' : 'bg-white'}`}>
-                                <TableCell>
-                                    <Checkbox
-                                        checked={selectedIds.has(farmer.id)}
-                                        onCheckedChange={(checked) => onSelectOne(farmer.id, checked as boolean)}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </TableCell>
+                                {canManage && (
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedIds.has(farmer.id)}
+                                            onCheckedChange={(checked) => onSelectOne(farmer.id, checked as boolean)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </TableCell>
+                                )}
                                 <TableCell className="font-mono text-center text-slate-500 text-xs">
                                     {farmer.group?.cropYear || '-'}
                                 </TableCell>
