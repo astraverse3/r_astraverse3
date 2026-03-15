@@ -74,7 +74,7 @@ export function VarietyPageClient({
 
             {/* Floating Action Bar (mobile) */}
             {canManage && selectedIds.size > 0 && (
-                <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:bottom-4 left-0 right-0 sm:left-auto sm:right-4 z-50 animate-in slide-in-from-bottom-4 duration-200 sm:w-auto flex justify-center sm:justify-end sm:hidden">
+                <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bottom-4 left-0 right-0 sm:left-auto sm:right-4 z-50 animate-in slide-in-from-bottom-4 duration-200 sm:w-auto flex justify-center sm:justify-end sm:hidden">
                     <div className="w-fit bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg px-3 py-2">
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] text-slate-500 font-medium shrink-0">{selectedIds.size}개 선택</span>
