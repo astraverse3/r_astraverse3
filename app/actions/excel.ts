@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
+import { recordAuditLog } from '@/lib/audit'
 
 // --- EXPORT LOGIC ---
 export async function exportFarmers() {
@@ -49,6 +50,12 @@ export async function exportFarmers() {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'ProducerGroups')
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
+
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'Farmer',
+            description: `생산자(작목반 포함) 목록 엑셀 내보내기 (${rows.length}건)`
+        })
 
         return { success: true, daa: buf, fileName: `producer_groups_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
@@ -217,6 +224,14 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
 
         revalidatePath('/admin/farmers')
         result.success = true // Operation completed (even if some rows failed, the act of processing finished)
+
+        await recordAuditLog({
+            action: 'IMPORT',
+            entity: 'Farmer', // 'ProducerGroup'도 관련됨
+            description: `생산자 데이터 엑셀 가져오기 완료 (총 ${result.counts.total}건 중 성공: ${result.counts.success}, 실패: ${result.counts.failed}, 건너뜀: ${result.counts.skipped})`,
+            details: result.counts
+        })
+
         return result
 
     } catch (error) {

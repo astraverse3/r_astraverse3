@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
+import { recordAuditLog } from '@/lib/audit'
 
 export type GetAuditLogsParams = {
     userId?: string
@@ -61,14 +62,17 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
         if (!result.success || !result.data) throw new Error('Failed to fetch data')
 
         const ENTITY_NAMES: Record<string, string> = {
-            'Stock': '벼 재고',
-            'MillingBatch': '도정 관리',
-            'Farmer': '생산자',
-            'Variety': '품종',
-            'User': '사용자',
-            'Notice': '공지사항',
-            'ProducerGroup': '작목반',
-            'Release': '출고 관리'
+            'Stock': '재고관리',
+            'MillingBatch': '도정관리',
+            'MillingOutputPackage': '도정관리',
+            'Farmer': '생산자 관리',
+            'Variety': '품종 관리',
+            'User': '사용자 관리',
+            'Notice': '공지사항 관리',
+            'ProducerGroup': '작목반 관리',
+            'Release': '출고관리',
+            'StockRelease': '출고관리',
+            'System': '시스템/기타'
         }
 
         const formatDetailsForExcel = (details: any) => {
@@ -110,6 +114,13 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
         
+        // 내보내기 기록 자체도 로그에 남김
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'System', // 시스템 권한 기반
+            description: `활동 로그 엑셀 내보내기 (${rows.length}건)`
+        })
+
         return { 
             success: true, 
             data: buf, 

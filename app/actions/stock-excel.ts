@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
 import { generateLotNo } from '@/lib/lot-generation'
+import { recordAuditLog } from '@/lib/audit'
 
 import { GetStocksParams } from './stock'
 
@@ -71,6 +72,12 @@ export async function exportStocks(params?: GetStocksParams) {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Stocks')
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
+
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'Stock', // 또는 'System'
+            description: `재고 목록 엑셀 내보내기 (${rows.length}건)`
+        })
 
         return { success: true, daa: buf, fileName: `stock_list_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
@@ -267,6 +274,14 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
 
         revalidatePath('/stocks')
         result.success = true
+
+        await recordAuditLog({
+            action: 'IMPORT',
+            entity: 'Stock', // 또는 'System'
+            description: `재고 데이터 엑셀 가져오기 완료 (총 ${result.counts.total}건 중 성공: ${result.counts.success}, 실패: ${result.counts.failed}, 건너뜀: ${result.counts.skipped})`,
+            details: result.counts
+        })
+
         return result
 
     } catch (error) {

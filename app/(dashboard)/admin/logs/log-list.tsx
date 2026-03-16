@@ -109,14 +109,17 @@ export function LogList() {
     }
 
     const ENTITY_NAMES: Record<string, string> = {
-        'Stock': '벼 재고',
-        'MillingBatch': '도정 관리',
-        'Farmer': '생산자',
-        'Variety': '품종',
-        'User': '사용자',
-        'Notice': '공지사항',
-        'ProducerGroup': '작목반',
-        'Release': '출고 관리'
+        'Stock': '재고관리',
+        'MillingBatch': '도정관리',
+        'MillingOutputPackage': '도정관리',
+        'Farmer': '생산자 관리',
+        'Variety': '품종 관리',
+        'User': '사용자 관리',
+        'Notice': '공지사항 관리',
+        'ProducerGroup': '작목반 관리',
+        'Release': '출고관리',
+        'StockRelease': '출고관리',
+        'System': '시스템/기타'
     }
 
     const getEntityName = (entity: string) => ENTITY_NAMES[entity] || entity
@@ -182,12 +185,14 @@ export function LogList() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">모든 대상</SelectItem>
-                            <SelectItem value="Stock">벼 재고</SelectItem>
-                            <SelectItem value="MillingBatch">도정 작업</SelectItem>
-                            <SelectItem value="Farmer">생산자</SelectItem>
-                            <SelectItem value="Variety">품종</SelectItem>
-                            <SelectItem value="User">사용자</SelectItem>
-                            <SelectItem value="Notice">공지사항</SelectItem>
+                            <SelectItem value="Stock">재고관리</SelectItem>
+                            <SelectItem value="MillingBatch">도정관리</SelectItem>
+                            <SelectItem value="Farmer">생산자 관리</SelectItem>
+                            <SelectItem value="Variety">품종 관리</SelectItem>
+                            <SelectItem value="User">사용자 관리</SelectItem>
+                            <SelectItem value="Notice">공지사항 관리</SelectItem>
+                            <SelectItem value="StockRelease">출고관리</SelectItem>
+                            <SelectItem value="System">시스템/기타</SelectItem>
                         </SelectContent>
                     </Select>
 

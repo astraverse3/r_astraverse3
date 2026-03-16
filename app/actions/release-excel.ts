@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
+import { recordAuditLog } from '@/lib/audit'
 
 export async function exportReleaseLogs(filters?: {
     startDate?: Date
@@ -99,6 +100,12 @@ export async function exportReleaseLogs(filters?: {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Release Logs')
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
+
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'StockRelease', // 또는 'Release'
+            description: `출고 내역 엑셀 내보내기 (${rows.length}건)`
+        })
 
         return { success: true, daa: buf, fileName: `release_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
