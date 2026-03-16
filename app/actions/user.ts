@@ -52,9 +52,10 @@ export async function updateUserRole(userId: string, role: string) {
         return { success: false, error: '유효하지 않은 역할입니다.' }
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { role },
+        select: { name: true, email: true }
     })
 
     await recordAuditLog({
@@ -62,7 +63,7 @@ export async function updateUserRole(userId: string, role: string) {
         entity: 'User',
         entityId: userId,
         details: { role },
-        description: `사용자 권한(Role) 변경: ${userId} -> ${role}`
+        description: `사용자 권한(Role) 변경: ${updatedUser.name || updatedUser.email || userId} -> ${role}`
     })
 
     revalidatePath('/admin/users')
@@ -129,9 +130,10 @@ export async function deleteUser(userId: string) {
 export async function updateUserPermissions(userId: string, permissions: string[]) {
     await requireAdmin()
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { permissions },
+        select: { name: true, email: true }
     })
 
     await recordAuditLog({
@@ -139,7 +141,7 @@ export async function updateUserPermissions(userId: string, permissions: string[
         entity: 'User',
         entityId: userId,
         details: { permissions },
-        description: `사용자 세부 권한(Permissions) 변경: ${userId}`
+        description: `사용자 세부 권한(Permissions) 변경: ${updatedUser.name || updatedUser.email || userId}`
     })
 
     revalidatePath('/admin/users')
