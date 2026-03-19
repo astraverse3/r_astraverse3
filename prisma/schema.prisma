@@ -78,6 +78,8 @@ model Stock {
   releaseId      Int?
   release        StockRelease?        @relation(fields: [releaseId], references: [id])
   
+  outputPackages MillingOutputPackage[]
+
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 }
@@ -125,6 +127,9 @@ model MillingOutputPackage {
   
   productCode   String?       // 제품코드 (예: 11)
   lotNo         String?       // 최종 로트번호 (예: 251119-11-15102443-371)
+  
+  stockId       Int?
+  stock         Stock?        @relation(fields: [stockId], references: [id])
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

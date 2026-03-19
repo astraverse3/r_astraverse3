@@ -231,6 +231,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 totalInputKg={log.totalInputKg}
                 isClosed={log.isClosed}
                 initialOutputs={log.outputs}
+                stocks={log.stocks}
                 open={packagingOpen}
                 onOpenChange={setPackagingOpen}
                 trigger={<></>}

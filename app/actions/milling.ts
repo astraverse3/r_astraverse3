@@ -22,6 +22,7 @@ export type MillingOutputInput = {
     weightPerUnit: number
     count: number
     totalWeight: number
+    stockId?: number
 }
 
 
@@ -312,21 +313,21 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         if (!batch) throw new Error('Batch not found')
 
         // --- LOT NUMBER GENERATION LOGIC ---
-        // 1. Date: Stock incoming date.
-        const primaryStock = batch.stocks[0];
-        if (!primaryStock) throw new Error('No stock linked to this batch');
+        // 1. Find matching stock or fallback to primary stock
+        const targetStock = batch.stocks.find(s => s.id === data.stockId) || batch.stocks[0];
+        if (!targetStock) throw new Error('No stock linked to this batch');
 
-        const productCode = getProductCode(primaryStock.variety.type, primaryStock.variety.name, batch.millingType);
+        const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
         // Use helper to generate Lot No consistent with Stock logic
         const lotNo = generateLotNo({
-            incomingDate: primaryStock.incomingDate,
-            varietyType: primaryStock.variety.type,
-            varietyName: primaryStock.variety.name,
+            incomingDate: targetStock.incomingDate,
+            varietyType: targetStock.variety.type,
+            varietyName: targetStock.variety.name,
             millingType: batch.millingType, // Use ACTUAL milling type
-            certNo: primaryStock.farmer.group?.certNo || '00',
-            farmerGroupCode: primaryStock.farmer.group?.code || '00',
-            farmerNo: primaryStock.farmer.farmerNo || '00'
+            certNo: targetStock.farmer.group?.certNo || '00',
+            farmerGroupCode: targetStock.farmer.group?.code || '00',
+            farmerNo: targetStock.farmer.farmerNo || '00'
         });
         // -----------------------------------
 
@@ -339,6 +340,7 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
                 totalWeight: data.totalWeight,
                 productCode, // Save derived code
                 lotNo,       // Save generated LOT
+                stockId: targetStock.id,
             }
         })
 
@@ -381,17 +383,18 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
 
             // 3. Create new outputs
             for (const output of outputs) {
-                const productCode = getProductCode(primaryStock.variety.type, primaryStock.variety.name, batch.millingType);
+                const targetStock = batch.stocks.find(s => s.id === output.stockId) || batch.stocks[0];
+                const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
                 // Generate Lot No
                 const lotNo = generateLotNo({
-                    incomingDate: primaryStock.incomingDate,
-                    varietyType: primaryStock.variety.type,
-                    varietyName: primaryStock.variety.name,
+                    incomingDate: targetStock.incomingDate,
+                    varietyType: targetStock.variety.type,
+                    varietyName: targetStock.variety.name,
                     millingType: batch.millingType, // Use ACTUAL milling type
-                    certNo: primaryStock.farmer.group?.certNo || '00',
-                    farmerGroupCode: primaryStock.farmer.group?.code || '00',
-                    farmerNo: primaryStock.farmer.farmerNo || '00'
+                    certNo: targetStock.farmer.group?.certNo || '00',
+                    farmerGroupCode: targetStock.farmer.group?.code || '00',
+                    farmerNo: targetStock.farmer.farmerNo || '00'
                 });
 
                 await tx.millingOutputPackage.create({
@@ -402,7 +405,8 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                         count: output.count,
                         totalWeight: output.totalWeight,
                         productCode,
-                        lotNo
+                        lotNo,
+                        stockId: targetStock.id
                     }
                 });
             }

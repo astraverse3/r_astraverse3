@@ -10,9 +10,12 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, deleteMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { generateLotNo } from '@/lib/lot-generation'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
@@ -25,6 +28,7 @@ interface Props {
     totalInputKg?: number
     isClosed?: boolean
     initialOutputs?: MillingOutputInput[]
+    stocks?: any[]
 }
 
 const PACKAGE_TEMPLATES = [
@@ -36,7 +40,7 @@ const PACKAGE_TEMPLATES = [
     { label: '1kg', weight: 1 },
 ]
 
-export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClosed, initialOutputs = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
+export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClosed, initialOutputs = [], stocks = [], open: controlledOpen, onOpenChange: setControlledOpen, trigger }: Props & { open?: boolean, onOpenChange?: (open: boolean) => void, trigger?: React.ReactNode }) {
     const router = useRouter()
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
@@ -149,20 +153,57 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
         }, 50)
     }
 
+    const getBestStockIdForNewPackage = (newTotalWeight: number) => {
+        if (!stocks || stocks.length === 0) return undefined;
+        // 단일 생산자면 무조건 그 사람
+        if (stocks.length === 1) return stocks[0].id;
+        
+        let bestStockId = stocks[0].id;
+        let minTotalError = Infinity;
+        
+        // 시뮬레이션: 이 새로운 중량을 각 생산자에게 주었을 때의 전체 오차 계산
+        for (const candidateStock of stocks) {
+            let currentTotalError = 0;
+            
+            for (const s of stocks) {
+                const expected = s.weightKg * 0.69;
+                let used = outputs.filter(o => o.stockId === s.id).reduce((sum, o) => sum + (o.totalWeight || 0), 0);
+                
+                if (s.id === candidateStock.id) {
+                    used += newTotalWeight;
+                }
+                
+                // 해당 생산자의 목표량 대비 실제 배정량 오차 (절댓값)
+                const error = Math.abs(expected - used);
+                currentTotalError += error;
+            }
+            
+            if (currentTotalError < minTotalError) {
+                minTotalError = currentTotalError;
+                bestStockId = candidateStock.id;
+            }
+        }
+        
+        return bestStockId;
+    }
+
     const addPackage = (template: { label: string, weight: number }) => {
+        const targetStockId = getBestStockIdForNewPackage(template.weight);
+
         if (template.label === '톤백') {
             setOutputs(prev => [...prev, {
                 packageType: template.label,
                 weightPerUnit: 0,
                 count: 1,
-                totalWeight: 0
+                totalWeight: 0,
+                stockId: targetStockId
             }])
             scrollToBottom()
             return
         }
 
         setOutputs(prev => {
-            const existingIndex = prev.findIndex(o => o.packageType === template.label && o.packageType !== '톤백' && o.packageType !== '잔량')
+            const existingIndex = prev.findIndex(o => o.packageType === template.label && o.packageType !== '톤백' && o.packageType !== '잔량' && o.stockId === targetStockId)
             if (existingIndex >= 0) {
                 const newOutputs = [...prev]
                 const o = newOutputs[existingIndex]
@@ -173,7 +214,8 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                 packageType: template.label,
                 weightPerUnit: template.weight,
                 count: 1,
-                totalWeight: template.weight
+                totalWeight: template.weight,
+                stockId: targetStockId
             }]
         })
     }
@@ -207,6 +249,10 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             }
             return o
         }))
+    }
+
+    const setStockId = (index: number, stockId: number) => {
+        setOutputs(prev => prev.map((o, i) => i === index ? { ...o, stockId } : o))
     }
 
     const removePackage = (index: number) => {
@@ -262,15 +308,57 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>포장 기록 관리</DialogTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                        {millingType && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#00a2e8]/20 text-[#007ab3]">
-                                {millingType}
+                    <div className="flex flex-col gap-2 mt-2">
+                        <div className="flex items-center gap-2">
+                            {millingType && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#00a2e8]/20 text-[#007ab3]">
+                                    {millingType}
+                                </span>
+                            )}
+                            <span className="text-[13px] font-bold text-slate-700">
+                                총 투입: {totalInputKg?.toLocaleString()}kg
                             </span>
+                        </div>
+                        
+                        {/* 텍스트 기반 기대 수율 및 로트번호 헤더 */}
+                        {stocks && stocks.length > 0 && (
+                            <div className="bg-stone-50 p-2.5 rounded-lg border border-stone-200 mt-2 space-y-2">
+                                {stocks.map((s, idx) => {
+                                    const expected = Math.round(s.weightKg * 0.69);
+                                    const used = outputs.filter(o => o.stockId === s.id).reduce((sum, o) => sum + (o.totalWeight || 0), 0);
+                                    const lotNoPreview = generateLotNo({
+                                        incomingDate: new Date(s.incomingDate || Date.now()),
+                                        varietyType: s.variety?.type || 'URUCHI',
+                                        varietyName: s.variety?.name || '일반쌀',
+                                        millingType: millingType || '백미',
+                                        certNo: s.farmer?.group?.certNo || '00',
+                                        farmerGroupCode: s.farmer?.group?.code || '00',
+                                        farmerNo: s.farmer?.farmerNo || '00'
+                                    });
+
+                                    return (
+                                        <div key={s.id} className="flex flex-col gap-1 text-[12px] text-stone-600 border-b border-stone-100 last:border-0 pb-1.5 last:pb-0">
+                                            <div className="flex items-center justify-between">
+                                                <div className="font-bold flex items-center gap-1.5 text-stone-700">
+                                                    <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold">{idx + 1}</span>
+                                                    {s.farmerName || s.farmer?.name || '알수없음'} ({s.variety?.name})
+                                                </div>
+                                                <div className="flex items-center gap-1 font-mono text-[11px] bg-white px-1.5 py-0.5 rounded border border-stone-200 text-stone-500" title="확정 로트번호">
+                                                    {lotNoPreview}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-2 pr-1">
+                                                <span>투입: {s.weightKg}kg</span>
+                                                <span className="text-stone-300">→</span>
+                                                <span>예상: <span className="font-bold text-[#00a2e8]">{expected}kg</span></span>
+                                                <span className="text-stone-300">|</span>
+                                                <span>사용: <span className={`font-bold ${used > expected ? 'text-rose-500' : 'text-stone-700'}`}>{used}kg</span></span>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         )}
-                        <span className="text-[13px] font-bold text-slate-700">
-                            투입: {totalInputKg?.toLocaleString()}kg
-                        </span>
                     </div>
                 </DialogHeader>
                 <div className="py-6 space-y-6">
@@ -343,12 +431,61 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                 <div className="text-center text-[13px] text-stone-400 py-6">포장 내역이 없습니다</div>
                             )}
                             {outputs.map((o, i) => (
-                                <div key={`${o.packageType}-${i}`} className="flex items-center justify-between p-1.5 sm:p-2.5 bg-white rounded-xl border border-stone-200">
-                                    {/* Left: Label */}
-                                    <span className="font-bold text-[12px] sm:text-[13px] w-10 sm:w-12 shrink-0">{o.packageType}</span>
+                                <div key={`${o.packageType}-${o.stockId}-${i}`} className="flex flex-col gap-2 p-2 bg-white rounded-xl border border-stone-200">
+                                    <div className="flex items-center justify-between">
+                                        {/* Left: Select Stock */}
+                                        <Select 
+                                            value={o.stockId?.toString() || (stocks && stocks.length > 0 ? stocks[0].id.toString() : '')} 
+                                            onValueChange={(val) => setStockId(i, parseInt(val))}
+                                            disabled={isClosed || !canManage}
+                                        >
+                                            <SelectTrigger className="w-[130px] h-8 text-[12px] font-bold bg-stone-50 border-stone-200 shadow-none px-2 rounded-lg">
+                                                <SelectValue placeholder="생산자 선택" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {stocks?.map(s => (
+                                                    <SelectItem key={s.id} value={s.id.toString()} className="text-[12px] font-medium font-sans">
+                                                        {s.farmerName || s.farmer?.name || '알수없음'}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
 
-                                    {/* Middle: Weight Info */}
-                                    <div className="flex-1 flex items-center justify-center">
+                                        {/* Right: Controls */}
+                                        <div className="flex items-center shrink-0">
+                                            {isClosed || !canManage ? (
+                                                <span className="text-[13px] font-mono font-bold text-stone-600 px-2">{o.count}개</span>
+                                            ) : (
+                                                <div className="flex items-center gap-0.5">
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
+                                                        <Minus className="h-4 w-4" />
+                                                    </Button>
+                                                    <Input
+                                                        type="number"
+                                                        value={o.count === 0 ? '' : o.count}
+                                                        onChange={(e) => setCount(i, parseInt(e.target.value))}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="w-10 h-8 text-center text-[13px] font-bold bg-transparent border-none shadow-none font-mono px-0"
+                                                    />
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                    <div className="w-px h-4 bg-stone-200 mx-1"></div>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Bottom: Package Info */}
+                                    <div className="flex items-center justify-between pl-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <Badge variant="secondary" className="bg-stone-100 text-stone-600 hover:bg-stone-100 px-1.5 py-0 rounded text-[11px]">{o.packageType}</Badge>
+                                        </div>
+
+                                        <div className="flex-1 flex items-center justify-end pr-2">
                                         {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                             isClosed ? (
                                                 <div className="flex items-center gap-1 sm:gap-1.5 opacity-60">
@@ -378,35 +515,9 @@ export function AddPackagingDialog({ batchId, millingType, totalInputKg, isClose
                                             </div>
                                         )}
                                     </div>
-
-                                    {/* Right: Controls */}
-                                    <div className="flex items-center shrink-0 ml-auto">
-                                        {isClosed || !canManage ? (
-                                            <span className="text-[13px] font-mono text-stone-600 px-4">{o.count}개</span>
-                                        ) : (
-                                            <div className="flex items-center gap-0.5 sm:gap-1">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
-                                                    <Minus className="h-4 w-4" />
-                                                </Button>
-                                                <Input
-                                                    type="number"
-                                                    value={o.count === 0 ? '' : o.count}
-                                                    onChange={(e) => setCount(i, parseInt(e.target.value))}
-                                                    onFocus={(e) => e.target.select()}
-                                                    className="w-10 sm:w-14 h-8 text-center text-[13px] font-bold bg-transparent border-stone-200 rounded-lg shadow-none font-mono px-0 sm:px-3"
-                                                />
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
-                                                    <Plus className="h-4 w-4" />
-                                                </Button>
-                                                <div className="w-px h-4 bg-stone-200 mx-0.5 sm:mx-1"></div>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
-                            ))}
+                            </div>
+                        ))}
                         </div>
                     </div>
 
