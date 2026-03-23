@@ -131,7 +131,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                     <div className="space-y-1">
                         <Label className="text-[13px]">도정 구분</Label>
                         <div className="grid grid-cols-3 gap-1.5">
-                            {['백미', '현미', '5분도미', '7분도미', '찹쌀', '기타'].map((type) => (
+                            {['백미', '현미', '오분도미', '칠분도미', '찹쌀', '기타'].map((type) => (
                                 <button
                                     key={type}
                                     type="button"

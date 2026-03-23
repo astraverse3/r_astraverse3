@@ -58,12 +58,15 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
 
-    // Normalize legacy milling type values to new unified options
+    // Normalize legacy milling type values
     const normalizeMillingType = (type: string) => {
         const legacyMap: Record<string, string> = {
-            '칠분도미': '7분도미',
-            '7분도': '7분도미',
-            '5분도': '5분도미',
+            '7분도미': '칠분도미',
+            '7분도':   '칠분도미',
+            '칠분도':  '칠분도미',
+            '5분도미': '오분도미',
+            '5분도':   '오분도미',
+            '오분도':  '오분도미',
         }
         return legacyMap[type] || type
     }
@@ -193,7 +196,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500">도정구분</Label>
                                 <div className="grid grid-cols-3 gap-1.5">
-                                    {['백미', '현미', '5분도미', '7분도미', '찹쌀', '기타'].map((type) => (
+                                    {['백미', '현미', '오분도미', '칠분도미', '찹쌀', '기타'].map((type) => (
                                         <Button
                                             key={type}
                                             type="button"

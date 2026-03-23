@@ -1,5 +1,17 @@
 
 /**
+ * 도정유형별 기대수율 반환.
+ * 향후 관리자 설정 페이지에서 DB 값으로 교체 예정.
+ */
+export function getYieldRate(millingType: string): number {
+    if (millingType.includes('현미'))   return 0.70
+    if (millingType.includes('인디카')) return 0.65
+    if (millingType === '칠분도미' || millingType === '오분도미') return 0.69
+    if (millingType.includes('백미'))   return 0.68
+    return 0.68 // 기타
+}
+
+/**
  * Helper to determine product code based on Variety Type and Milling Type.
  * This logic is shared between Milling and potential future Japgok management.
  */

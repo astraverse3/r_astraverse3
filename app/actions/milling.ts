@@ -383,7 +383,9 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
 
             // 3. Create new outputs
             for (const output of outputs) {
-                const targetStock = batch.stocks.find(s => s.id === output.stockId) || batch.stocks[0];
+                const targetStock = output.stockId
+                    ? (batch.stocks.find(s => s.id === output.stockId) ?? batch.stocks[0])
+                    : batch.stocks[0];
                 const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
                 // Generate Lot No

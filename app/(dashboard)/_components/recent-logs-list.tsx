@@ -16,8 +16,8 @@ const millingTypeColors: Record<string, { bg: string; text: string; border: stri
     '백미': { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-300' },
     '현미': { bg: 'bg-amber-800/10', text: 'text-amber-800', border: 'border-amber-800/30' },
     '찰현미': { bg: 'bg-amber-800/10', text: 'text-amber-800', border: 'border-amber-800/30' },
-    '7분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
-    '5분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
+    '칠분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
+    '오분도미': { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
     '찹쌀': { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-300' },
     '기타': { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-300' },
 }

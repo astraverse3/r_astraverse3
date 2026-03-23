@@ -262,8 +262,8 @@ export function MillingFilters({
                                     <SelectItem value="ALL">전체</SelectItem>
                                     <SelectItem value="백미">백미</SelectItem>
                                     <SelectItem value="현미">현미</SelectItem>
-                                    <SelectItem value="5분도미">5분도미</SelectItem>
-                                    <SelectItem value="7분도미">7분도미</SelectItem>
+                                    <SelectItem value="오분도미">오분도미</SelectItem>
+                                    <SelectItem value="칠분도미">칠분도미</SelectItem>
                                     <SelectItem value="찹쌀">찹쌀</SelectItem>
                                     <SelectItem value="기타">기타</SelectItem>
                                 </SelectContent>
