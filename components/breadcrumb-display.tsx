@@ -15,6 +15,7 @@ const ROUTE_NAME_MAP: Record<string, string> = {
     'notices': '공지사항 관리',
     'logs': '활동 로그',
     'backup': '시스템 백업',
+    'settings': '관리자 설정',
 }
 
 export function BreadcrumbDisplay() {

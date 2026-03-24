@@ -8,7 +8,9 @@ import {
     ClipboardList,
     Server,
     BarChart3,
-    Truck
+    Truck,
+    Leaf,
+    Users
 } from "lucide-react"
 import { hasPermission } from "@/lib/permissions"
 
@@ -82,30 +84,33 @@ export function DesktopSidebar() {
                         Management
                     </p>
                     <div className="space-y-1">
-                        <div className="group">
-                            <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${isActive('/admin') ? 'bg-slate-50 text-slate-900' : ''}`}>
+                        <Link
+                            href="/admin/varieties"
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/admin/varieties')
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <Leaf className="w-4 h-4" />
+                            품종 관리
+                        </Link>
+                        <Link
+                            href="/admin/farmers"
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/admin/farmers')
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <Users className="w-4 h-4" />
+                            생산자 관리
+                        </Link>
+
+                        <div className="group pt-1">
+                            <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers') ? 'bg-slate-50 text-slate-900' : ''}`}>
                                 <Server className="w-4 h-4" />
-                                <span>관리자 설정</span>
+                                <span>관리자 메뉴</span>
                             </div>
                             <div className="pl-10 mt-1 space-y-1">
-                                <Link
-                                    href="/admin/varieties"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/varieties')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    품종 관리
-                                </Link>
-                                <Link
-                                    href="/admin/farmers"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/farmers')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    생산자 관리
-                                </Link>
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <Link
                                         href="/admin/users"
@@ -150,6 +155,15 @@ export function DesktopSidebar() {
                                         </Link>
                                     </>
                                 )}
+                                <Link
+                                    href="/admin/settings"
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/settings')
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    관리자 설정
+                                </Link>
                             </div>
                         </div>
                     </div>

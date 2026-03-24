@@ -208,7 +208,18 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 // ------------------------------------------------------
-// 9. AuditLog (활동 로그/변경 이력 용)
+// 9. SystemConfig (시스템 설정값 - key/value 저장)
+// ------------------------------------------------------
+model SystemConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// 10. AuditLog (활동 로그/변경 이력 용)
 // ------------------------------------------------------
 model AuditLog {
   id          Int      @id @default(autoincrement())
