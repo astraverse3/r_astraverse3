@@ -3,7 +3,7 @@ import { getVarieties } from '@/app/actions/admin'
 import { MillingFilters } from './milling-filters'
 import { MillingPageWrapper } from './milling-page-wrapper'
 import { Suspense } from 'react'
-import { subDays } from 'date-fns'
+import { subMonths } from 'date-fns'
 
 export default async function MillingListPage({
     searchParams,
@@ -13,9 +13,9 @@ export default async function MillingListPage({
     const resolvedParams = await searchParams
 
     const today = new Date()
-    const oneWeekAgo = subDays(today, 7)
+    const oneMonthAgo = subMonths(today, 1)
 
-    const startDate = typeof resolvedParams.startDate === 'string' ? new Date(resolvedParams.startDate) : oneWeekAgo
+    const startDate = typeof resolvedParams.startDate === 'string' ? new Date(resolvedParams.startDate) : oneMonthAgo
     const endDate = typeof resolvedParams.endDate === 'string' ? new Date(resolvedParams.endDate) : today
 
     const filters: GetMillingLogsParams = {

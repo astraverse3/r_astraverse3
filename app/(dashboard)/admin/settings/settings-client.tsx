@@ -35,7 +35,7 @@ export function SettingsClient({ initialRates, millingTypes, defaultRates }: Pro
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {millingTypes.map((type) => (
                     <div key={type} className="flex items-center gap-4">
                         <span className="w-24 text-sm font-medium text-slate-700 shrink-0">{type}</span>
