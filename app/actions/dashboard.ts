@@ -56,19 +56,24 @@ export async function getDashboardStats() {
                             packageType: true,
                             weightPerUnit: true,
                             count: true,
-                            totalWeight: true
+                            totalWeight: true,
+                            stockId: true,
+                            lotNo: true
                         }
                     },
                     stocks: {
                         include: {
-                            variety: true, // Fetch variety object
+                            variety: true,
                             farmer: {
                                 select: {
                                     name: true,
+                                    farmerNo: true,
                                     group: {
                                         select: {
                                             name: true,
-                                            certType: true
+                                            certType: true,
+                                            certNo: true,
+                                            code: true
                                         }
                                     }
                                 }

@@ -7,6 +7,7 @@ import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dia
 import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dialog';
 import { useSession } from 'next-auth/react';
 import { hasPermission } from '@/lib/permissions';
+import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants';
 
 interface RecentLogsListProps {
     logs: any[];
@@ -26,6 +27,13 @@ function getMillingTypeStyle(type: string) {
     return millingTypeColors[type] || millingTypeColors['기타']
 }
 
+function getYieldColor(yieldRate: number, millingType: string): string {
+    if (yieldRate <= 60) return 'text-red-500'
+    const target = DEFAULT_YIELD_RATES[millingType] ?? 68
+    if (yieldRate >= target) return 'text-blue-500'
+    return 'text-slate-700'
+}
+
 export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [selectedInputLog, setSelectedInputLog] = useState<any | null>(null);
     const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
@@ -35,7 +43,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
 
     return (
         <div className="w-full">
-            {/* Table Header - Styled (Hidden on Mobile) */}
+            {/* Table Header */}
             <div className="hidden md:flex items-center justify-between text-[11px] font-bold text-slate-500 bg-slate-50/80 rounded-lg py-2.5 px-3 mb-1 uppercase tracking-wider">
                 <div className="w-[12%]">등록일자</div>
                 <div className="w-[22%]">품종 및 분류</div>
@@ -70,6 +78,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                         else if (classification === '현미') classification = '찰현미';
                     }
                     const classStyle = getMillingTypeStyle(classification);
+                    const yieldColor = getYieldColor(Math.round(yieldRate * 10) / 10, log.millingType);
 
                     return (
                         <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 cursor-pointer ${index >= 7 ? 'hidden lg:flex' : ''}`}
@@ -85,11 +94,11 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                         </span>
                                         <span className={`px-1 py-0.5 rounded text-[10px] font-bold whitespace-nowrap border ${classStyle.bg} ${classStyle.text} ${classStyle.border}`}>{classification}</span>
                                     </div>
-                                    <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}>
+                                    <div className="shrink-0 flex items-center gap-1.5">
                                         {log.isClosed ? (
-                                            <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer hover:bg-[#8dc540]/20 transition-colors border border-[#8dc540]/20">완료</span>
+                                            <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-[#8dc540]/20">완료</span>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer hover:bg-[#00a2e8]/20 transition-colors border border-[#00a2e8]/20 animate-pulse">포장</span>
+                                            <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-[#00a2e8]/20 animate-pulse">포장</span>
                                         )}
                                     </div>
                                 </div>
@@ -105,14 +114,17 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                             <ArrowRight className="w-3 h-3 text-slate-300" />
                                         </div>
                                         {log.isClosed ? (
-                                            <>
-                                                <div className="w-[55px] text-right font-black text-slate-800 shrink-0">
+                                            <div
+                                                className="flex items-center cursor-pointer"
+                                                onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}
+                                            >
+                                                <div className="w-[55px] text-right font-black text-slate-800 shrink-0 underline decoration-dotted underline-offset-2">
                                                     {productionSum.toLocaleString()}kg
                                                 </div>
-                                                <div className="w-[42px] text-right font-bold text-[#00a2e8] shrink-0 ml-1.5">
+                                                <div className={`w-[42px] text-right font-bold shrink-0 ml-1.5 ${yieldColor}`}>
                                                     ({(Math.round(yieldRate * 10) / 10).toFixed(1)}%)
                                                 </div>
-                                            </>
+                                            </div>
                                         ) : (
                                             <>
                                                 <div className="w-[55px] text-center text-slate-300 font-medium shrink-0">
@@ -138,29 +150,39 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                 <div className="w-[13%] font-semibold text-slate-600 block items-end text-right">
                                     <div>{log.totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-400 ml-0.5">kg</span></div>
                                 </div>
-                                <div className="w-[13%] font-black text-slate-800 block items-end text-right">
+                                {/* 생산량 — 클릭 시 포장내역 팝업 */}
+                                <div
+                                    className="w-[13%] font-black text-slate-800 block items-end text-right cursor-pointer"
+                                    onClick={(e) => { e.stopPropagation(); if (log.isClosed) setPackagingOpenLog(log); }}
+                                >
                                     <div>
                                         {log.isClosed ? (
-                                            <>{productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span></>
+                                            <span className="underline decoration-dotted underline-offset-2 hover:text-slate-600 transition-colors">
+                                                {productionSum.toLocaleString()} <span className="text-[11px] text-slate-400 font-bold ml-0.5">kg</span>
+                                            </span>
                                         ) : (
                                             <span className="text-slate-300">-</span>
                                         )}
                                     </div>
                                 </div>
-                                <div className="w-[13%] font-black text-slate-800 block items-end text-right">
+                                {/* 수율 */}
+                                <div className="w-[13%] font-black block items-end text-right">
                                     <div>
                                         {log.isClosed ? (
-                                            <span className="text-[#00a2e8] bg-[#00a2e8]/5 px-1.5 py-0.5 rounded-md">{(Math.round(yieldRate * 10) / 10).toFixed(1)}%</span>
+                                            <span className={`px-1.5 py-0.5 rounded-md ${yieldColor}`}>
+                                                {(Math.round(yieldRate * 10) / 10).toFixed(1)}%
+                                            </span>
                                         ) : (
                                             <span className="text-slate-300">-</span>
                                         )}
                                     </div>
                                 </div>
-                                <div className="hidden md:flex w-[13%] text-right px-2 justify-end" onClick={(e) => { e.stopPropagation(); setPackagingOpenLog(log); }}>
+                                {/* 상태 — 클릭 이벤트 없음 */}
+                                <div className="hidden md:flex w-[13%] text-right px-2 justify-end">
                                     {log.isClosed ? (
-                                        <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#8dc540]/20 cursor-pointer hover:bg-[#8dc540]/20 transition-colors">완료</span>
+                                        <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#8dc540]/20">완료</span>
                                     ) : (
-                                        <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20 cursor-pointer hover:bg-[#00a2e8]/20 transition-colors animate-pulse">포장</span>
+                                        <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20 animate-pulse">포장</span>
                                     )}
                                 </div>
                             </div>
@@ -174,7 +196,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                 )}
             </div>
 
-            {/* Input Details Dialog (Standard) */}
+            {/* 투입내역 팝업 */}
             {selectedInputLog && (
                 <MillingStockListDialog
                     batchId={selectedInputLog.id}
@@ -199,7 +221,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                 />
             )}
 
-            {/* Output Details Dialog (Standard Packaging Dialog) */}
+            {/* 포장내역 팝업 */}
             {packagingOpenLog && (
                 <AddPackagingDialog
                     batchId={packagingOpenLog.id}
@@ -207,6 +229,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                     totalInputKg={packagingOpenLog.totalInputKg}
                     isClosed={packagingOpenLog.isClosed}
                     initialOutputs={packagingOpenLog.outputs || []}
+                    stocks={packagingOpenLog.stocks || []}
                     open={!!packagingOpenLog}
                     onOpenChange={(open) => !open && setPackagingOpenLog(null)}
                     trigger={<></>}

@@ -13,7 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
-import { generateLotNo, getYieldRate } from '@/lib/lot-generation'
+import { generateLotNo } from '@/lib/lot-generation'
+import { getYieldRate } from '@/app/actions/settings'
+import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
@@ -99,7 +101,14 @@ export function AddPackagingDialog({
 
     const lotGroups = computeLotGroups(stocks, millingType)
     const isMultiGroup = lotGroups.length > 1
-    const yieldRate = getYieldRate(millingType)
+    // DB에서 수율 조회 (없으면 기본값으로 시작, 비동기로 교체)
+    const [yieldRate, setYieldRate] = useState<number>(
+        (DEFAULT_YIELD_RATES[millingType ?? ''] ?? 68) / 100
+    )
+    useEffect(() => {
+        if (!millingType) return
+        getYieldRate(millingType).then(rate => setYieldRate(rate / 100))
+    }, [millingType])
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen

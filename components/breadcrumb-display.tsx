@@ -8,6 +8,7 @@ const ROUTE_NAME_MAP: Record<string, string> = {
     'milling': '도정내역',
     'new': '작업 등록',
     'releases': '출고 관리',
+    'statistics': '통계',
     'admin': '관리자',
     'varieties': '품종 관리',
     'farmers': '생산자 관리',
@@ -16,6 +17,11 @@ const ROUTE_NAME_MAP: Record<string, string> = {
     'logs': '활동 로그',
     'backup': '시스템 백업',
     'settings': '관리자 설정',
+}
+
+// 전체 경로 기준 마지막 세그먼트 이름 오버라이드
+const PATH_TITLE_MAP: Record<string, string> = {
+    '/statistics/milling': '도정실적 분석',
 }
 
 export function BreadcrumbDisplay() {
@@ -33,13 +39,14 @@ export function BreadcrumbDisplay() {
     }
 
     const segments = pathname.split('/').filter(Boolean);
+    const pathTitle = PATH_TITLE_MAP[pathname];
 
     return (
         <div className="flex items-center gap-2">
             <span className="text-sm text-slate-500">도정관리시스템</span>
             {segments.map((segment, index) => {
                 const isLast = index === segments.length - 1;
-                const name = ROUTE_NAME_MAP[segment] || segment;
+                const name = (isLast && pathTitle) ? pathTitle : (ROUTE_NAME_MAP[segment] || segment);
 
                 return (
                     <Fragment key={segment}>

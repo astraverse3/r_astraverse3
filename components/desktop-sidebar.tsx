@@ -71,8 +71,11 @@ export function DesktopSidebar() {
                     </Link>
 
                     <Link
-                        href="#"
-                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                        href="/statistics/milling"
+                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/statistics')
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
                     >
                         <BarChart3 className="w-4 h-4" />
                         통계
