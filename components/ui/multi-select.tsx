@@ -68,7 +68,10 @@ export function MultiSelect({
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[180px] p-1" align="start">
-                <div className="max-h-[220px] overflow-y-auto">
+                <div
+                    className="max-h-[220px] overflow-y-auto overscroll-contain touch-pan-y"
+                    onTouchMove={e => e.stopPropagation()}
+                >
                 {options.map((option) => (
                     <div
                         key={option.value}
