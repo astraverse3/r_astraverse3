@@ -2,8 +2,34 @@
 
 ## 2026-03-25
 
-### 검색필터 멀티셀렉트 + 다중 생산자 검색 `feat`
+### 통계 도정실적 페이지 기능·UI 개선 `feat`
 **커밋:** (이번 커밋)
+
+**변경 파일:** `statistics/milling/milling-stats-client.tsx`, `actions/statistics.ts`, `components/statistics/MillingChart.tsx`, `components/statistics/MillingTable.tsx`, `components/statistics/SummaryCards.tsx`
+
+**필터 기능:**
+- 기간검색 탭에 생산자 텍스트 검색 추가 (쉼표로 다중 검색, Enter 지원)
+- 검색 버튼 클릭 시에만 그래프 반영 (기존 자동 fetch → 수동 검색 방식)
+- 검색 조건 칩 표기 — 기간(항상)/품종/도정구분/생산자 전부 칩으로 표시
+- 초기화 버튼 추가 (기간 1개월·백미 기본값으로 리셋)
+
+**그래프:**
+- 범례 투입량·생산량 아이콘 두께 통일
+- 좌측 Y축 단위 kg → t(톤) 변경, 툴팁도 t 단위 표시
+
+**요약 카드:** 각 카드에 색상별 그라데이션 배경 추가
+
+**상세 테이블:**
+- 생산자 컬럼 "XXX 외 N명" 요약 표시 (title로 전체 이름 확인 가능)
+- 투입목록 팝업 → `MillingStockListDialog` 재사용 (도정관리와 동일 화면)
+- 포장내역 팝업 → `AddPackagingDialog` 스타일 동일 적용 (로트 그룹 헤더 구조)
+- 로트번호 hover 시 생산자명 tooltip 표시
+- 수율 표시 → 도정관리 목록 동일 스타일 (70%↑ 파란 배지, 미만 회색)
+
+---
+
+### 검색필터 멀티셀렉트 + 다중 생산자 검색 `feat`
+**커밋:** `226b90a`
 
 **신규:** `components/ui/multi-select.tsx` (Popover + 체크박스 멀티셀렉트 공통 컴포넌트)
 

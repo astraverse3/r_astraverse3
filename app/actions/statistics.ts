@@ -21,9 +21,12 @@ export type ChartDataPoint = {
 }
 
 export type StockDetail = {
+  id: number
   bagNo: number
   farmerName: string
   varietyName: string
+  varietyType: string
+  certType: string
   weightKg: number
 }
 
@@ -34,6 +37,8 @@ export type OutputDetail = {
   totalWeight: number
   lotNo: string | null
   isConventional: boolean
+  farmerName: string | null
+  varietyName: string | null
 }
 
 export type TableRow = {
@@ -64,6 +69,7 @@ export type MillingStatsParams = {
   groupBy: GroupBy
   varieties?: string[]
   millingTypes?: string[]
+  farmers?: string[]
   cropYear?: number       // 설정 시 날짜 필터 대체
 }
 
@@ -94,7 +100,7 @@ function getTooltipLabel(bucketKey: string, groupBy: GroupBy): string {
 export async function getMillingStatistics(
   params: MillingStatsParams
 ): Promise<MillingStatisticsData> {
-  const { from, to, groupBy, varieties, millingTypes, cropYear } = params
+  const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
@@ -125,6 +131,16 @@ export async function getMillingStatistics(
       some: {
         ...(where.stocks?.some ?? {}),
         variety: { name: { in: varieties } },
+      },
+    }
+  }
+
+  if (farmers && farmers.length > 0) {
+    where.stocks = {
+      ...(where.stocks ?? {}),
+      some: {
+        ...(where.stocks?.some ?? {}),
+        farmer: { name: { in: farmers } },
       },
     }
   }
@@ -183,9 +199,12 @@ export async function getMillingStatistics(
     const varietyNames = [...new Set(batch.stocks.map(s => s.variety.name))].join(', ')
     const farmerNames = [...new Set(batch.stocks.map(s => s.farmer.name))].join(', ')
     const stockDetails: StockDetail[] = batch.stocks.map(s => ({
+      id: s.id,
       bagNo: s.bagNo,
       farmerName: s.farmer.name,
       varietyName: s.variety.name,
+      varietyType: s.variety.type,
+      certType: s.farmer.group?.certType ?? '-',
       weightKg: s.weightKg,
     }))
     const stockMap = new Map(batch.stocks.map(s => [s.id, s]))
@@ -199,6 +218,8 @@ export async function getMillingStatistics(
         totalWeight: o.totalWeight,
         lotNo: o.lotNo,
         isConventional,
+        farmerName: stock?.farmer?.name ?? null,
+        varietyName: stock?.variety?.name ?? null,
       }
     })
     return {

@@ -13,7 +13,7 @@ const cards = [
     key: 'totalInputKg' as const,
     label: '총 투입량',
     unit: 'kg',
-    color: '#00a2e8',
+    gradient: 'from-sky-100/70 to-white',
     dotStyle: { backgroundColor: '#00a2e8' },
     valueStyle: { color: '#00a2e8' },
     format: formatKg,
@@ -22,7 +22,7 @@ const cards = [
     key: 'totalOutputKg' as const,
     label: '총 생산량',
     unit: 'kg',
-    color: '#8dc540',
+    gradient: 'from-green-100/70 to-white',
     dotStyle: { backgroundColor: '#8dc540' },
     valueStyle: { color: '#7db037' },
     format: formatKg,
@@ -31,7 +31,7 @@ const cards = [
     key: 'avgYieldRate' as const,
     label: '평균 수율',
     unit: '%',
-    color: '#f89c1e',
+    gradient: 'from-amber-100/70 to-white',
     dotStyle: { backgroundColor: '#f89c1e' },
     valueStyle: { color: '#cc7b0c' },
     format: (v: number) => v.toFixed(1),
@@ -40,7 +40,7 @@ const cards = [
     key: 'millingCount' as const,
     label: '도정 건수',
     unit: '건',
-    color: '#94a3b8',
+    gradient: 'from-slate-100/80 to-white',
     dotStyle: { backgroundColor: '#94a3b8' },
     valueStyle: { color: '#475569' },
     format: (v: number) => v.toLocaleString('ko-KR'),
@@ -53,7 +53,7 @@ export function SummaryCards({ summary }: Props) {
       {cards.map(card => (
         <div
           key={card.key}
-          className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex-1 flex flex-col justify-center"
+          className={`bg-gradient-to-br ${card.gradient} rounded-2xl px-4 py-3 shadow-sm border border-slate-100 flex-1 flex flex-col justify-center`}
         >
           <div className="flex items-center gap-1.5 mb-2">
             <span className="w-2 h-2 rounded-full" style={card.dotStyle} />

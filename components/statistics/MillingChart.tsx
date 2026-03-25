@@ -12,13 +12,14 @@ import {
 } from 'recharts'
 import type { ChartDataPoint, GroupBy } from '@/app/actions/statistics'
 
-// 데이터 최대값 기준 nice ticks 계산 (0 포함 count개)
-function computeKgTicks(maxVal: number, count = 5): number[] {
-  if (maxVal <= 0) return Array.from({ length: count }, (_, i) => i * 25)
-  const rawStep = maxVal / (count - 1)
+// 최대 kg 기준으로 t 단위에서 보기 좋은 눈금 계산 (kg 값으로 반환)
+function computeTonTicks(maxKg: number, count = 5): number[] {
+  if (maxKg <= 0) return Array.from({ length: count }, (_, i) => i * 1000)
+  const maxTon = Math.max(maxKg / 1000, 0.1)
+  const rawStep = maxTon / (count - 1)
   const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)))
   const step = Math.ceil(rawStep / magnitude) * magnitude
-  return Array.from({ length: count }, (_, i) => i * step)
+  return Array.from({ length: count }, (_, i) => Math.round(i * step * 1000))
 }
 
 type Props = {
@@ -35,16 +36,10 @@ function OverlappingBar(props: any) {
   const { x, y, width, height, payload } = props
   if (!payload || height <= 0) return null
 
-  const r = 4  // border-radius
-  const inputW = width
-  const outputW = width  // 생산량 막대 폭 동일
-  const offsetX = 0
-
-  // 생산량 막대 높이 = 투입량 대비 비율로 계산
+  const r = 4
   const ratio = payload.inputKg > 0 ? payload.outputKg / payload.inputKg : 0
   const outputH = Math.max(height * ratio, 0)
   const outputY = y + height - outputH
-
   const gradId = `outGrad-${x}`
 
   return (
@@ -56,26 +51,10 @@ function OverlappingBar(props: any) {
         </linearGradient>
       </defs>
       {/* 배경: 투입량 (연한 파랑) */}
-      <rect
-        x={x}
-        y={y}
-        width={inputW}
-        height={height}
-        rx={r}
-        ry={r}
-        fill={COLOR_INPUT}
-      />
+      <rect x={x} y={y} width={width} height={height} rx={r} ry={r} fill={COLOR_INPUT} />
       {/* 전경: 생산량 (그라데이션) */}
       {outputH > 0 && (
-        <rect
-          x={x + offsetX}
-          y={outputY}
-          width={outputW}
-          height={outputH}
-          rx={r}
-          ry={r}
-          fill={`url(#${gradId})`}
-        />
+        <rect x={x} y={outputY} width={width} height={outputH} rx={r} ry={r} fill={`url(#${gradId})`} />
       )}
     </g>
   )
@@ -86,16 +65,18 @@ function CustomTooltip({ active, payload }: any) {
   const item = payload[0]?.payload as ChartDataPoint | undefined
   if (!item) return null
 
+  const fmt = (kg: number) => `${(kg / 1000).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t`
+
   return (
     <div className="bg-white border border-slate-100 rounded-xl shadow-lg p-3 text-sm min-w-[160px]">
       <p className="font-semibold text-slate-700 mb-2">{item.tooltipLabel}</p>
       <div className="flex justify-between gap-4 text-slate-600">
         <span style={{ color: COLOR_OUTPUT }}>투입량</span>
-        <span className="font-medium">{item.inputKg.toLocaleString('ko-KR', { maximumFractionDigits: 1 })} kg</span>
+        <span className="font-medium">{fmt(item.inputKg)}</span>
       </div>
       <div className="flex justify-between gap-4 text-slate-600">
         <span style={{ color: COLOR_OUTPUT }}>생산량</span>
-        <span className="font-medium">{item.outputKg.toLocaleString('ko-KR', { maximumFractionDigits: 1 })} kg</span>
+        <span className="font-medium">{fmt(item.outputKg)}</span>
       </div>
       <div className="flex justify-between gap-4 text-slate-600">
         <span style={{ color: COLOR_YIELD }}>수율</span>
@@ -111,10 +92,13 @@ const GROUP_BY_LABEL: Record<GroupBy, string> = {
   month: '월별',
 }
 
+// 범례 아이콘 — 두 막대 아이콘 동일 크기 (w-3 h-3)
+const LEGEND_BOX = 'w-3 h-3 rounded-sm inline-block'
+
 export function MillingChart({ data, groupBy }: Props) {
   const isEmpty = data.length === 0
   const maxKg = data.reduce((m, d) => Math.max(m, d.inputKg), 0)
-  const kgTicks = computeKgTicks(maxKg)
+  const tonTicks = computeTonTicks(maxKg)
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-full flex flex-col">
@@ -124,11 +108,11 @@ export function MillingChart({ data, groupBy }: Props) {
         </h3>
         <div className="flex items-center gap-3 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: COLOR_INPUT }} />
+            <span className={LEGEND_BOX} style={{ backgroundColor: COLOR_INPUT }} />
             투입량
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-3 rounded-sm inline-block" style={{ backgroundColor: COLOR_OUTPUT }} />
+            <span className={LEGEND_BOX} style={{ backgroundColor: COLOR_OUTPUT }} />
             생산량
           </span>
           <span className="flex items-center gap-1.5">
@@ -155,12 +139,12 @@ export function MillingChart({ data, groupBy }: Props) {
               <YAxis
                 yAxisId="kg"
                 orientation="left"
-                ticks={kgTicks}
-                domain={[0, kgTicks[kgTicks.length - 1]]}
+                ticks={tonTicks}
+                domain={[0, tonTicks[tonTicks.length - 1]]}
                 tick={{ fontSize: 12, fill: '#94A3B8' }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={v => v === 0 ? '0' : v.toLocaleString()}
+                tickFormatter={v => v === 0 ? '0' : `${(v / 1000).toFixed(v < 1000 ? 1 : 0)}t`}
               />
               <YAxis
                 yAxisId="rate"
@@ -174,8 +158,7 @@ export function MillingChart({ data, groupBy }: Props) {
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
 
-              {/* 왼쪽 Y축 기준 수평 그리드라인 */}
-              {kgTicks.map(v => (
+              {tonTicks.map(v => (
                 <ReferenceLine
                   key={v}
                   yAxisId="kg"
@@ -186,7 +169,6 @@ export function MillingChart({ data, groupBy }: Props) {
                 />
               ))}
 
-              {/* 투입량 기준 막대 — 커스텀 Shape으로 생산량도 함께 렌더링 */}
               <Bar
                 yAxisId="kg"
                 dataKey="inputKg"
@@ -195,7 +177,6 @@ export function MillingChart({ data, groupBy }: Props) {
                 maxBarSize={44}
               />
 
-              {/* 수율 라인 */}
               <Line
                 yAxisId="rate"
                 type="monotone"
