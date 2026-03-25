@@ -320,30 +320,27 @@ export type GetStocksParams = {
 export async function getStocks(params?: GetStocksParams) {
     try {
         const where: any = {}
+        const andConditions: any[] = []
 
         // 1. Filter Construction
-        if (params?.productionYear) {
-            where.productionYear = parseInt(params.productionYear)
-        }
-        if (params?.varietyId && params.varietyId !== 'ALL') {
-            where.varietyId = parseInt(params.varietyId)
-        }
 
-        // Filter by Farmer Name (Text Input)
-        if (params?.farmerName) {
-            where.farmer = {
-                name: { contains: params.farmerName } // Partial search
+        // productionYear: 콤마 구분 멀티값 지원
+        if (params?.productionYear) {
+            const years = params.productionYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+            if (years.length === 1) {
+                where.productionYear = years[0]
+            } else if (years.length > 1) {
+                where.productionYear = { in: years }
             }
         }
 
-        // Keep ID filter if specifically requested (though UI will use Name)
-        if (params?.farmerId && params.farmerId !== 'ALL') {
-            // If name filter exists, merge or reuse. Name filter is nested in 'farmer'.
-            // If we already added 'farmer' object for name search:
-            if (where.farmer) {
-                where.farmer.id = parseInt(params.farmerId)
-            } else {
-                where.farmerId = parseInt(params.farmerId)
+        // varietyId: 콤마 구분 멀티값 지원
+        if (params?.varietyId) {
+            const ids = params.varietyId.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+            if (ids.length === 1) {
+                where.varietyId = ids[0]
+            } else if (ids.length > 1) {
+                where.varietyId = { in: ids }
             }
         }
 
@@ -351,15 +348,33 @@ export async function getStocks(params?: GetStocksParams) {
             where.status = params.status
         }
 
-        // Filter by CertType via Farmer -> Group match
-        if (params?.certType && params.certType !== 'ALL') {
-            // Ensure where.farmer exists
-            if (!where.farmer) where.farmer = {}
+        // farmerId: 단일 ID 필터 (UI에서 사용 시)
+        if (params?.farmerId && params.farmerId !== 'ALL') {
+            where.farmerId = parseInt(params.farmerId)
+        }
 
-            // Nested filtering: farmer -> group -> certType
-            where.farmer.group = {
-                certType: params.certType
+        // farmerName: 콤마 구분 다중 생산자 검색 (OR 조건)
+        if (params?.farmerName) {
+            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            if (names.length === 1) {
+                andConditions.push({ farmer: { name: { contains: names[0] } } })
+            } else if (names.length > 1) {
+                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
             }
+        }
+
+        // certType: 콤마 구분 멀티값 지원 (OR 조건)
+        if (params?.certType) {
+            const certList = params.certType.split(',').map(s => s.trim()).filter(Boolean)
+            if (certList.length === 1) {
+                andConditions.push({ farmer: { group: { certType: certList[0] } } })
+            } else if (certList.length > 1) {
+                andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
+            }
+        }
+
+        if (andConditions.length > 0) {
+            where.AND = andConditions
         }
 
         // 2. Sort Construction
@@ -405,19 +420,47 @@ export type StockGroup = {
 export async function getStockGroups(params?: GetStocksParams) {
     try {
         const where: any = {}
+        const andConditions: any[] = []
 
-        // 1. Filter Construction (Reuse logic)
-        if (params?.productionYear) where.productionYear = parseInt(params.productionYear)
-        if (params?.varietyId && params.varietyId !== 'ALL') where.varietyId = parseInt(params.varietyId)
-        if (params?.farmerName) where.farmer = { name: { contains: params.farmerName } }
-        if (params?.farmerId && params.farmerId !== 'ALL') {
-            if (where.farmer) where.farmer.id = parseInt(params.farmerId)
-            else where.farmerId = parseInt(params.farmerId)
+        // 1. Filter Construction (멀티값 지원)
+        if (params?.productionYear) {
+            const years = params.productionYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+            if (years.length === 1) {
+                where.productionYear = years[0]
+            } else if (years.length > 1) {
+                where.productionYear = { in: years }
+            }
+        }
+        if (params?.varietyId) {
+            const ids = params.varietyId.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+            if (ids.length === 1) {
+                where.varietyId = ids[0]
+            } else if (ids.length > 1) {
+                where.varietyId = { in: ids }
+            }
         }
         if (params?.status && params.status !== 'ALL') where.status = params.status
-        if (params?.certType && params.certType !== 'ALL') {
-            if (!where.farmer) where.farmer = {}
-            where.farmer.group = { certType: params.certType }
+        if (params?.farmerId && params.farmerId !== 'ALL') {
+            where.farmerId = parseInt(params.farmerId)
+        }
+        if (params?.farmerName) {
+            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            if (names.length === 1) {
+                andConditions.push({ farmer: { name: { contains: names[0] } } })
+            } else if (names.length > 1) {
+                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+            }
+        }
+        if (params?.certType) {
+            const certList = params.certType.split(',').map(s => s.trim()).filter(Boolean)
+            if (certList.length === 1) {
+                andConditions.push({ farmer: { group: { certType: certList[0] } } })
+            } else if (certList.length > 1) {
+                andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
+            }
+        }
+        if (andConditions.length > 0) {
+            where.AND = andConditions
         }
 
         // Fetch all matching stocks (Lightweight select for grouping)
@@ -498,190 +541,46 @@ export async function getStocksByGroup(
     params?: GetStocksParams
 ) {
     try {
-        const where: any = {}
+        const andConditions: any[] = []
 
-        // 1. Base Filters (Must match getStockGroups to ensure consistency)
-        if (params?.productionYear) where.productionYear = parseInt(params.productionYear)
-        // Group specific overrides
-        where.productionYear = groupKey.year
+        // 그룹 키 기반 고정 필터 (년도, 품종, 인증)
+        andConditions.push({ productionYear: groupKey.year })
+        andConditions.push({ variety: { name: groupKey.variety } })
 
-        if (params?.varietyId && params.varietyId !== 'ALL') where.varietyId = parseInt(params.varietyId)
-        // Group specific overrides (Find variety by name is tricky if names aren't unique, but assuming they are for display)
-        where.variety = { name: groupKey.variety }
-
-        if (params?.farmerName) {
-            // If variety filter was used, we need to merge
-            where.farmer = { name: { contains: params.farmerName } }
-        }
-
-        // Group specific overrides for CertType
-        if (!where.farmer) where.farmer = {}
         if (groupKey.certType === '일반') {
-            // Handle '일반' logic: Either no group or group.certType == '일반'
-            // This is tricky in Prisma "OR" with relations. 
-            // Ideally we find farmers who match this cert type.
-            // Simpler: Just filter by the params logic + checking the resulting rows? 
-            // No, must filter in DB.
-            // If '일반', it means (farmer.group IS MORE OR farmer.group.certType == '일반')
-            // Let's use the explicit filter if possible.
-            // Actually, the previous grouping logic treated `stock.farmer?.group?.certType || '일반'`.
-            // So if group is null -> '일반'. If group.certType is '일반' -> '일반'.
-            where.OR = [
-                { farmer: { group: null } },
-                { farmer: { group: { certType: '일반' } } }
-            ]
-            // IMPORTANT: merge with existing farmer name filter if present
-            if (params?.farmerName) {
-                // complex OR with AND... 
-                // Let's rely on the fact that the group Key is derived.
-                // Ideally we just pass the exact filters that generated the group.
-            }
+            // '일반' = 그룹 없거나(groupId null) certType이 '일반'인 경우
+            andConditions.push({
+                OR: [
+                    { farmer: { groupId: null } },
+                    { farmer: { group: { certType: '일반' } } }
+                ]
+            })
         } else {
-            where.farmer = {
-                ...where.farmer, // keep name filter
-                group: { certType: groupKey.certType }
-            }
+            andConditions.push({ farmer: { group: { certType: groupKey.certType } } })
         }
 
-        // What if we just Re-Use getStocks but append the Group constraints?
-        // It's cleaner.
-
-        const baseWhere: any = {}
-        // Copy-paste filter logic from getStocks is risky. 
-        // Let's refine the Group Specific Where.
-
-        // RE-IMPLEMENTING JUST THE GROUP FILTERS + Global Status Filter
-        // We DO NOT filter by BagNo or Weight here, just the Grouping Keys and Global Filters.
-
-        // productionYear
-        baseWhere.productionYear = groupKey.year
-
-        // variety
-        baseWhere.variety = { name: groupKey.variety }
-
-        // certType
-        if (groupKey.certType === '일반') {
-            baseWhere.OR = [
-                { farmer: { group: isNaN } }, // Prisma doesn't support IS NULL like this exactly for relations sometimes?
-                // Actually:
-                { farmer: { groupId: null } },
-                { farmer: { group: { certType: '일반' } } }
-            ]
-        } else {
-            baseWhere.farmer = { group: { certType: groupKey.certType } }
-        }
-
-        // Merge Global Filters (Status, Farmer Name search)
+        // 전역 필터: 상태
         if (params?.status && params.status !== 'ALL') {
-            baseWhere.status = params.status
+            andConditions.push({ status: params.status })
         }
+
+        // 전역 필터: 생산자명 콤마 검색
         if (params?.farmerName) {
-            // Merge into farmer filter
-            if (baseWhere.farmer) {
-                baseWhere.farmer.name = { contains: params.farmerName }
-            } else {
-                // If we have OR logic for Cert, we can't easily add AND farmer.name.
-                // Prisma requires AND: [ { OR: ... }, { farmer: { name: ... } } ]
-                // It's getting complex. 
-
-                // ALTERNATIVE STRATEGY:
-                // Fetch ALL stocks for this group definition (Year, Variety, Cert), 
-                // AND apply the Status filter.
-                // Then filter by Farmer Name in memory if needed? No, DB is better.
-
-                // Let's use the AND structure for safety.
-                const certFilter = groupKey.certType === '일반'
-                    ? { OR: [{ farmer: { groupId: null } }, { farmer: { group: { certType: '일반' } } }] }
-                    : { farmer: { group: { certType: groupKey.certType } } }
-
-                const finalWhere = {
-                    AND: [
-                        { productionYear: groupKey.year },
-                        { variety: { name: groupKey.variety } },
-                        certFilter,
-                        params?.status && params.status !== 'ALL' ? { status: params.status } : {},
-                        params?.farmerName ? { farmer: { name: { contains: params.farmerName } } } : {}
-                    ]
-                }
-
-                // 2. Sort Construction (Copy from getStocks)
-                let orderBy: any = { createdAt: 'desc' }
-                if (params?.sort === 'oldest') orderBy = { createdAt: 'asc' }
-                else if (params?.sort === 'weight_desc') orderBy = { weightKg: 'desc' }
-                else if (params?.sort === 'weight_asc') orderBy = { weightKg: 'asc' }
-
-                // Same include as getStocks
-                const stocks = await prisma.stock.findMany({
-                    where: finalWhere,
-                    orderBy,
-                    include: {
-                        variety: true,
-                        farmer: { include: { group: true } }
-                    }
-                })
-                return { success: true, data: stocks }
+            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            if (names.length === 1) {
+                andConditions.push({ farmer: { name: { contains: names[0] } } })
+            } else if (names.length > 1) {
+                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
             }
         }
-
-        // Simple case (No Farmer Name filter complication)
-        // ... (Repeating validation logic inside if is messy)
-
-        // Let's just use the AND approach always.
-        const certFilter = groupKey.certType === '일반'
-            ? { OR: [{ farmer: { groupId: null } }, { farmer: { group: { certType: '일반' } } }] }
-            : { farmer: { group: { certType: groupKey.certType } } }
-
-        const finalWhere = {
-            AND: [
-                { productionYear: groupKey.year },
-                { variety: { name: groupKey.variety } },
-                certFilter,
-                params?.status && params.status !== 'ALL' ? { status: params.status } : {},
-                params?.farmerName ? { farmer: { name: { contains: params.farmerName } } } : {}
-            ]
-        }
-
-        let orderBy: any = { createdAt: 'desc' }
-        if (params?.sort === 'oldest') orderBy = { createdAt: 'asc' }
-        else if (params?.sort === 'weight_desc') orderBy = { weightKg: 'desc' }
-        else if (params?.sort === 'weight_asc') orderBy = { weightKg: 'asc' }
 
         const stocks = await prisma.stock.findMany({
-            where: finalWhere,
-            orderBy,
+            where: { AND: andConditions },
+            orderBy: [{ farmer: { name: 'asc' } }, { bagNo: 'asc' }],
             include: {
                 variety: true,
                 farmer: { include: { group: true } }
             }
-        })
-
-        // Fallback Client-side sort for 'Farmer Name' & 'Bag No' 
-        // (Since we can't easily orderBy related field + local field in one prisma call consistently? 
-        // Actually we can: orderBy: [{ farmer: { name: 'asc' } }, { bagNo: 'asc' }]
-        // But the current implementation does it in JS. Let's replicate or improve.
-        // Current JS: Farmer Name (Asc) -> Bag No (Asc)
-        // Let's do it in JS to match client exact behavior, or Prisma? 
-        // Prisma is better.
-        // But `orderBy` variable above overrides it.
-        // The `orderBy` above is for the *Global Sort* dropdown (Newest, Weight, etc).
-        // The Group Inner Sort (Farmer Name -> Bag No) is FIXED in the UI currently regardless of Global Sort?
-        // Checking existing code: `group.items.sort(...)` lines 164-169.
-        // Yes, the UI enforces Farmer -> BagNo sort WITHIN the group, ignoring the Global Sort?
-        // WAIT. `getStocks` handles Global Sort. `GroupedStockRows` handles Inner Sort.
-        // If Global Sort is "Newest", the API returns sorted list.
-        // BUT the JS grouping logic `Object.values(grouped)` -> `items.push`.
-        // THEN `group.items.sort` OVERWRITES the order!
-        // So the Global Sort parameter effectively DOES NOTHING for the order of items INSIDE a group currently.
-        // It presumably only affects WHICH items are fetched if there was pagination, or maybe the group order?
-        // No, group order is also fixed.
-        // So currently Global Sort might be broken or irrelevant in the Group View?
-        // Let's preserve the existing JS sort logic: Farmer Name Asc -> Bag No Asc.
-
-        stocks.sort((a, b) => {
-            const farmerA = a.farmer?.name || ''
-            const farmerB = b.farmer?.name || ''
-            if (farmerA !== farmerB) return farmerA.localeCompare(farmerB, 'ko')
-            return a.bagNo - b.bagNo
         })
 
         return { success: true, data: stocks }

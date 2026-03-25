@@ -14,14 +14,20 @@ import {
     DialogTrigger,
     DialogFooter
 } from '@/components/ui/dialog'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal } from 'lucide-react'
+
+const CERT_OPTIONS = [
+    { label: '유기농', value: '유기농' },
+    { label: '무농약', value: '무농약' },
+    { label: '일반', value: '일반' },
+]
+
+const YEAR_OPTIONS = [
+    { label: '2026년', value: '2026' },
+    { label: '2025년', value: '2025' },
+    { label: '2024년', value: '2024' },
+]
 
 export function FarmerFilters() {
     const router = useRouter()
@@ -29,17 +35,20 @@ export function FarmerFilters() {
 
     const [open, setOpen] = useState(false)
 
+    const parseMulti = (param: string | null) =>
+        param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
+
     // Filter States
     const [groupName, setGroupName] = useState(searchParams.get('groupName') || '')
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
-    const [certType, setCertType] = useState(searchParams.get('certType') || 'ALL')
-    const [cropYear, setCropYear] = useState(searchParams.get('cropYear') || 'ALL')
+    const [certTypes, setCertTypes] = useState<string[]>(() => parseMulti(searchParams.get('certType')))
+    const [cropYears, setCropYears] = useState<string[]>(() => parseMulti(searchParams.get('cropYear')))
 
     const activeFilterCount = [
-        groupName !== '',
-        farmerName !== '',
-        certType !== 'ALL',
-        cropYear !== 'ALL'
+        groupName.trim() !== '',
+        farmerName.trim() !== '',
+        certTypes.length > 0,
+        cropYears.length > 0
     ].filter(Boolean).length
 
     // Sync from URL when opening
@@ -47,17 +56,17 @@ export function FarmerFilters() {
         if (open) {
             setGroupName(searchParams.get('groupName') || '')
             setFarmerName(searchParams.get('farmerName') || '')
-            setCertType(searchParams.get('certType') || 'ALL')
-            setCropYear(searchParams.get('cropYear') || 'ALL')
+            setCertTypes(parseMulti(searchParams.get('certType')))
+            setCropYears(parseMulti(searchParams.get('cropYear')))
         }
     }, [open, searchParams])
 
     const handleApply = () => {
         const params = new URLSearchParams()
-        if (groupName) params.set('groupName', groupName)
-        if (farmerName) params.set('farmerName', farmerName)
-        if (certType && certType !== 'ALL') params.set('certType', certType)
-        if (cropYear && cropYear !== 'ALL') params.set('cropYear', cropYear)
+        if (groupName.trim()) params.set('groupName', groupName.trim())
+        if (farmerName.trim()) params.set('farmerName', farmerName.trim())
+        if (certTypes.length > 0) params.set('certType', certTypes.join(','))
+        if (cropYears.length > 0) params.set('cropYear', cropYears.join(','))
 
         router.push(`/admin/farmers?${params.toString()}`)
         setOpen(false)
@@ -66,8 +75,8 @@ export function FarmerFilters() {
     const handleReset = () => {
         setGroupName('')
         setFarmerName('')
-        setCertType('ALL')
-        setCropYear('ALL')
+        setCertTypes([])
+        setCropYears([])
         router.push('/admin/farmers')
         setOpen(false)
     }
@@ -99,32 +108,22 @@ export function FarmerFilters() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                             <Label>생산년도</Label>
-                            <Select value={cropYear} onValueChange={setCropYear}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="전체" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">전체</SelectItem>
-                                    <SelectItem value="2024">2024년</SelectItem>
-                                    <SelectItem value="2025">2025년</SelectItem>
-                                    <SelectItem value="2026">2026년</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <MultiSelect
+                                options={YEAR_OPTIONS}
+                                value={cropYears}
+                                onValueChange={setCropYears}
+                                placeholder="전체"
+                            />
                         </div>
 
                         <div className="space-y-2">
                             <Label>인증구분</Label>
-                            <Select value={certType} onValueChange={setCertType}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="전체" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">전체</SelectItem>
-                                    <SelectItem value="유기농">유기농</SelectItem>
-                                    <SelectItem value="무농약">무농약</SelectItem>
-                                    <SelectItem value="일반">일반</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <MultiSelect
+                                options={CERT_OPTIONS}
+                                value={certTypes}
+                                onValueChange={setCertTypes}
+                                placeholder="전체"
+                            />
                         </div>
                     </div>
 
@@ -141,7 +140,7 @@ export function FarmerFilters() {
                     <div className="space-y-2">
                         <Label>생산자명</Label>
                         <Input
-                            placeholder="이름 검색"
+                            placeholder="예: 홍길동, 김철수"
                             value={farmerName}
                             onChange={(e) => setFarmerName(e.target.value)}
                             onKeyDown={handleKeyDown}

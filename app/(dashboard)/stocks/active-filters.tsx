@@ -10,18 +10,21 @@ interface ActiveStockFiltersProps {
 export function ActiveStockFilters({ totalCount }: ActiveStockFiltersProps) {
     const searchParams = useSearchParams()
 
-    const year = searchParams.get('productionYear')
-    const variety = searchParams.get('variety') || ''
+    const yearParam = searchParams.get('productionYear') || ''
+    const varietyParam = searchParams.get('varietyId') || ''
     const farmer = searchParams.get('farmerName') || ''
-    const cert = searchParams.get('certType')
+    const certParam = searchParams.get('certType') || ''
     const status = searchParams.get('status')
     const sort = searchParams.get('sort') || 'newest'
 
+    const years = yearParam ? yearParam.split(',').map(s => s.trim()).filter(Boolean) : []
+    const certs = certParam ? certParam.split(',').map(s => s.trim()).filter(Boolean) : []
+
     const activeFilterCount = [
-        year && year !== 'ALL',
-        variety !== 'ALL' && variety !== '',
+        years.length > 0,
+        varietyParam !== '',
         farmer !== '',
-        cert && cert !== 'ALL',
+        certs.length > 0,
         status && status !== 'ALL'
     ].filter(Boolean).length
 
@@ -32,12 +35,24 @@ export function ActiveStockFilters({ totalCount }: ActiveStockFiltersProps) {
             <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
                 검색결과 {totalCount}건
             </span>
-            <div className="flex gap-2">
-                {year && year !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{year}년</Badge>}
-                {variety && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{variety}</Badge>}
-                {farmer && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{farmer}</Badge>}
-                {cert && cert !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{cert}</Badge>}
-                {status && status !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{status === 'AVAILABLE' ? '보관중' : '소진됨'}</Badge>}
+            <div className="flex gap-2 flex-wrap justify-end">
+                {years.map(y => (
+                    <Badge key={y} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{y}년</Badge>
+                ))}
+                {varietyParam && (
+                    <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{varietyParam}</Badge>
+                )}
+                {farmer && (
+                    <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{farmer}</Badge>
+                )}
+                {certs.map(c => (
+                    <Badge key={c} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{c}</Badge>
+                ))}
+                {status && status !== 'ALL' && (
+                    <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">
+                        {status === 'AVAILABLE' ? '보관중' : '소진됨'}
+                    </Badge>
+                )}
             </div>
         </div>
     )

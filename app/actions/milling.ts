@@ -184,37 +184,48 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
             }
         }
 
-        // Milling Type filter
+        // Milling Type filter: 콤마 구분 멀티값 지원
         if (params?.millingType) {
-            where.millingType = params.millingType
+            const types = params.millingType.split(',').map(s => s.trim()).filter(Boolean)
+            if (types.length === 1) {
+                where.millingType = types[0]
+            } else if (types.length > 1) {
+                where.millingType = { in: types }
+            }
         }
 
         const andConditions: any[] = []
 
-        // Variety filter (check stocks)
+        // Variety filter: 콤마 구분 멀티값 지원 (OR 조건)
         if (params?.variety) {
-            andConditions.push({
-                stocks: {
-                    some: {
-                        variety: {
-                            name: { contains: params.variety }
-                        }
-                    }
-                }
-            })
+            const varieties = params.variety.split(',').map(s => s.trim()).filter(Boolean)
+            if (varieties.length === 1) {
+                andConditions.push({
+                    stocks: { some: { variety: { name: { contains: varieties[0] } } } }
+                })
+            } else if (varieties.length > 1) {
+                andConditions.push({
+                    OR: varieties.map(v => ({
+                        stocks: { some: { variety: { name: { contains: v } } } }
+                    }))
+                })
+            }
         }
 
-        // Farmer Name filter (check stocks)
+        // Farmer Name filter: 콤마 구분 다중 생산자 검색 (OR 조건)
         if (params?.farmerName) {
-            andConditions.push({
-                stocks: {
-                    some: {
-                        farmer: {
-                            name: { contains: params.farmerName }
-                        }
-                    }
-                }
-            })
+            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            if (names.length === 1) {
+                andConditions.push({
+                    stocks: { some: { farmer: { name: { contains: names[0] } } } }
+                })
+            } else if (names.length > 1) {
+                andConditions.push({
+                    OR: names.map(n => ({
+                        stocks: { some: { farmer: { name: { contains: n } } } }
+                    }))
+                })
+            }
         }
 
         // Keyword filter

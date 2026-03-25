@@ -21,7 +21,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal, Calendar as CalendarIcon } from 'lucide-react'
+
+const MILLING_TYPE_OPTIONS = [
+    { label: '백미', value: '백미' },
+    { label: '현미', value: '현미' },
+    { label: '오분도미', value: '오분도미' },
+    { label: '칠분도미', value: '칠분도미' },
+    { label: '찹쌀', value: '찹쌀' },
+    { label: '기타', value: '기타' },
+]
 import { format, subYears, subMonths } from 'date-fns'
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -45,10 +55,13 @@ export function MillingFilters({
 
     const [open, setOpen] = useState(false)
 
+    const parseMulti = (param: string | null) =>
+        param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
+
     // Filter States
     const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
-    const [variety, setVariety] = useState(searchParams.get('variety') || 'ALL')
-    const [millingType, setMillingType] = useState(searchParams.get('millingType') || 'ALL')
+    const [varietyValues, setVarietyValues] = useState<string[]>(() => parseMulti(searchParams.get('variety')))
+    const [millingTypes, setMillingTypes] = useState<string[]>(() => parseMulti(searchParams.get('millingType')))
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || '')
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [yieldRate, setYieldRate] = useState(searchParams.get('yieldRate') || 'ALL')
@@ -66,8 +79,8 @@ export function MillingFilters({
     useEffect(() => {
         if (open) {
             setStatus(searchParams.get('status') || 'open')
-            setVariety(searchParams.get('variety') || 'ALL')
-            setMillingType(searchParams.get('millingType') || 'ALL')
+            setVarietyValues(parseMulti(searchParams.get('variety')))
+            setMillingTypes(parseMulti(searchParams.get('millingType')))
             setKeyword(searchParams.get('keyword') || '')
             setFarmerName(searchParams.get('farmerName') || '')
             setYieldRate(searchParams.get('yieldRate') || 'ALL')
@@ -83,10 +96,10 @@ export function MillingFilters({
 
     const activeFilterCount = [
         status !== 'ALL',
-        variety !== 'ALL',
-        millingType !== 'ALL',
-        keyword !== '',
-        farmerName !== '',
+        varietyValues.length > 0,
+        millingTypes.length > 0,
+        keyword.trim() !== '',
+        farmerName.trim() !== '',
         yieldRate !== 'ALL',
         dateRange.from || dateRange.to
     ].filter(Boolean).length
@@ -95,10 +108,10 @@ export function MillingFilters({
         const params = new URLSearchParams()
 
         if (status && status !== 'ALL') params.set('status', status)
-        if (variety && variety !== 'ALL') params.set('variety', variety)
-        if (millingType && millingType !== 'ALL') params.set('millingType', millingType)
-        if (keyword) params.set('keyword', keyword)
-        if (farmerName) params.set('farmerName', farmerName)
+        if (varietyValues.length > 0) params.set('variety', varietyValues.join(','))
+        if (millingTypes.length > 0) params.set('millingType', millingTypes.join(','))
+        if (keyword.trim()) params.set('keyword', keyword.trim())
+        if (farmerName.trim()) params.set('farmerName', farmerName.trim())
         if (yieldRate && yieldRate !== 'ALL') params.set('yieldRate', yieldRate)
         if (dateRange.from) params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'))
         if (dateRange.to) params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'))
@@ -109,8 +122,8 @@ export function MillingFilters({
 
     const handleReset = () => {
         setStatus('ALL')
-        setVariety('ALL')
-        setMillingType('ALL')
+        setVarietyValues([])
+        setMillingTypes([])
         setKeyword('')
         setFarmerName('')
         setYieldRate('ALL')
@@ -118,6 +131,8 @@ export function MillingFilters({
         router.push(`/milling`)
         setOpen(false)
     }
+
+    const varietyOptions = varieties.map(v => ({ label: v.name, value: v.name }))
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -235,39 +250,24 @@ export function MillingFilters({
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[13px] font-medium">품종</Label>
-                            <Select value={variety} onValueChange={setVariety}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="전체" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">전체</SelectItem>
-                                    {varieties.map((v) => (
-                                        <SelectItem key={v.id} value={v.name}>
-                                            {v.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <MultiSelect
+                                options={varietyOptions}
+                                value={varietyValues}
+                                onValueChange={setVarietyValues}
+                                placeholder="전체"
+                            />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label className="text-[13px] font-medium">도정구분</Label>
-                            <Select value={millingType} onValueChange={setMillingType}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="전체" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">전체</SelectItem>
-                                    <SelectItem value="백미">백미</SelectItem>
-                                    <SelectItem value="현미">현미</SelectItem>
-                                    <SelectItem value="오분도미">오분도미</SelectItem>
-                                    <SelectItem value="칠분도미">칠분도미</SelectItem>
-                                    <SelectItem value="찹쌀">찹쌀</SelectItem>
-                                    <SelectItem value="기타">기타</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <MultiSelect
+                                options={MILLING_TYPE_OPTIONS}
+                                value={millingTypes}
+                                onValueChange={setMillingTypes}
+                                placeholder="전체"
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[13px] font-medium">수율</Label>
@@ -288,9 +288,9 @@ export function MillingFilters({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-[13px] font-medium">생산자명 (텍스트 검색)</Label>
+                            <Label className="text-[13px] font-medium">생산자명</Label>
                             <Input
-                                placeholder="농가명 입력"
+                                placeholder="예: 홍길동, 김철수"
                                 value={farmerName}
                                 onChange={e => setFarmerName(e.target.value)}
                                 onKeyDown={(e) => {

@@ -168,7 +168,7 @@ export type GetFarmersParams = {
     groupName?: string
     farmerName?: string
     certType?: string
-    cropYear?: number
+    cropYear?: string
     sortBy?: 'name' | 'group'
 }
 
@@ -179,25 +179,37 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         if (params?.groupName) {
             where.group = {
                 ...where.group,
-                name: { contains: params.groupName }
+                name: { contains: params.groupName.trim() }
             }
         }
 
+        // farmerName: 콤마 구분 다중 생산자 검색 (OR 조건)
         if (params?.farmerName) {
-            where.name = { contains: params.farmerName }
-        }
-
-        if (params?.certType && params.certType !== 'ALL') {
-            where.group = {
-                ...where.group,
-                certType: params.certType
+            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            if (names.length === 1) {
+                where.name = { contains: names[0] }
+            } else if (names.length > 1) {
+                where.OR = names.map(n => ({ name: { contains: n } }))
             }
         }
 
+        // certType: 콤마 구분 멀티값 지원
+        if (params?.certType) {
+            const certList = params.certType.split(',').map(s => s.trim()).filter(Boolean)
+            if (certList.length === 1) {
+                where.group = { ...where.group, certType: certList[0] }
+            } else if (certList.length > 1) {
+                where.group = { ...where.group, certType: { in: certList } }
+            }
+        }
+
+        // cropYear: 콤마 구분 멀티값 지원
         if (params?.cropYear) {
-            where.group = {
-                ...where.group, // Merge with existing group filter if any
-                cropYear: params.cropYear
+            const years = params.cropYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+            if (years.length === 1) {
+                where.group = { ...where.group, cropYear: years[0] }
+            } else if (years.length > 1) {
+                where.group = { ...where.group, cropYear: { in: years } }
             }
         }
 

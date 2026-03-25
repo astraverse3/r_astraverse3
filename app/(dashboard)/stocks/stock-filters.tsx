@@ -22,7 +22,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal } from 'lucide-react'
+
+const CERT_OPTIONS = [
+    { label: '유기농', value: '유기농' },
+    { label: '무농약', value: '무농약' },
+    { label: '일반', value: '일반' },
+]
+
+const YEAR_OPTIONS = [
+    { label: '2026년', value: '2026' },
+    { label: '2025년', value: '2025' },
+    { label: '2024년', value: '2024' },
+    { label: '2023년', value: '2023' },
+]
 
 export function StockFilters({ varieties, farmers }: { varieties: { id: number; name: string }[], farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[] }) {
     const router = useRouter()
@@ -36,38 +50,43 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const today = new Date()
     const defaultYear = ((today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1).toString()
 
+    const parseMulti = (param: string | null) =>
+        param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
+
     // Filter States
-    const [year, setYear] = useState(searchParams.get('productionYear') || defaultYear)
-    const [variety, setVariety] = useState(searchParams.get('varietyId') || 'ALL')
+    const [years, setYears] = useState<string[]>(() => {
+        const param = searchParams.get('productionYear')
+        return param ? parseMulti(param) : [defaultYear]
+    })
+    const [varieties2, setVarieties2] = useState<string[]>(() => parseMulti(searchParams.get('varietyId')))
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
-    const [cert, setCert] = useState(searchParams.get('certType') || 'ALL')
+    const [certs, setCerts] = useState<string[]>(() => parseMulti(searchParams.get('certType')))
     const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
 
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
-            setYear(searchParams.get('productionYear') || defaultYear)
-            setVariety(searchParams.get('varietyId') || 'ALL')
+            const yearParam = searchParams.get('productionYear')
+            setYears(yearParam ? parseMulti(yearParam) : [defaultYear])
+            setVarieties2(parseMulti(searchParams.get('varietyId')))
             setFarmerName(searchParams.get('farmerName') || '')
-            setCert(searchParams.get('certType') || 'ALL')
+            setCerts(parseMulti(searchParams.get('certType')))
             setStatus(searchParams.get('status') || 'ALL')
         }
     }, [open, searchParams, defaultYear])
 
     const activeFilterCount = [
-        year !== 'ALL',
-        variety !== 'ALL',
-        farmerName !== '',
-        cert !== 'ALL',
+        years.length > 0,
+        varieties2.length > 0,
+        farmerName.trim() !== '',
+        certs.length > 0,
         status !== 'ALL'
     ].filter(Boolean).length
 
     // Auto-open on mobile if no filters are applied (Search First strategy)
     useEffect(() => {
         if (!hasAttemptedAutoOpen && typeof window !== 'undefined') {
-            // Check if it's mobile (sm or smaller, usually < 768px for md breakpoint)
             const isMobile = window.innerWidth < 768
-            // Check if there are no meaningful search params (ignore just having defaultYear)
             const hasNoFilters = Array.from(searchParams.entries()).filter(([key, val]) => {
                 if (key === 'productionYear' && val === defaultYear) return false
                 return true
@@ -83,10 +102,10 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const handleApply = () => {
         const params = new URLSearchParams()
 
-        if (year && year !== 'ALL') params.set('productionYear', year)
-        if (variety && variety !== 'ALL') params.set('varietyId', variety)
-        if (farmerName) params.set('farmerName', farmerName)
-        if (cert && cert !== 'ALL') params.set('certType', cert)
+        if (years.length > 0) params.set('productionYear', years.join(','))
+        if (varieties2.length > 0) params.set('varietyId', varieties2.join(','))
+        if (farmerName.trim()) params.set('farmerName', farmerName.trim())
+        if (certs.length > 0) params.set('certType', certs.join(','))
         if (status && status !== 'ALL') params.set('status', status)
 
         startTransition(() => {
@@ -96,10 +115,10 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     }
 
     const handleReset = () => {
-        setYear(defaultYear)
-        setVariety('ALL')
+        setYears([defaultYear])
+        setVarieties2([])
         setFarmerName('')
-        setCert('ALL')
+        setCerts([])
         setStatus('ALL')
 
         startTransition(() => {
@@ -107,6 +126,8 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         })
         setOpen(false)
     }
+
+    const varietyOptions = varieties.map(v => ({ label: v.name, value: v.id.toString() }))
 
     return (
         <>
@@ -138,17 +159,12 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>생산연도</Label>
-                                <Select value={year} onValueChange={setYear}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="전체" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">전체</SelectItem>
-                                        {[2026, 2025, 2024, 2023].map(y => (
-                                            <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <MultiSelect
+                                    options={YEAR_OPTIONS}
+                                    value={years}
+                                    onValueChange={setYears}
+                                    placeholder="전체"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>상태</Label>
@@ -168,33 +184,21 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>품종</Label>
-                                <Select value={variety} onValueChange={setVariety}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="전체" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">전체</SelectItem>
-                                        {varieties.map((v) => (
-                                            <SelectItem key={v.id} value={v.id.toString()}>
-                                                {v.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <MultiSelect
+                                    options={varietyOptions}
+                                    value={varieties2}
+                                    onValueChange={setVarieties2}
+                                    placeholder="전체"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>인증구분</Label>
-                                <Select value={cert} onValueChange={setCert}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="전체" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">전체</SelectItem>
-                                        <SelectItem value="유기농">유기농</SelectItem>
-                                        <SelectItem value="무농약">무농약</SelectItem>
-                                        <SelectItem value="일반">일반</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <MultiSelect
+                                    options={CERT_OPTIONS}
+                                    value={certs}
+                                    onValueChange={setCerts}
+                                    placeholder="전체"
+                                />
                             </div>
                         </div>
 
@@ -203,7 +207,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                             <Input
                                 id="farmerNameSearch"
                                 name="farmerNameSearch"
-                                placeholder="생산자명 검색"
+                                placeholder="예: 홍길동, 김철수"
                                 value={farmerName}
                                 onChange={(e) => setFarmerName(e.target.value)}
                                 onKeyDown={(e) => {

@@ -2,6 +2,24 @@
 
 ## 2026-03-25
 
+### 검색필터 멀티셀렉트 + 다중 생산자 검색 `feat`
+**커밋:** (이번 커밋)
+
+**신규:** `components/ui/multi-select.tsx` (Popover + 체크박스 멀티셀렉트 공통 컴포넌트)
+
+**재고:** 년도·인증·품종 멀티셀렉트 전환
+**도정:** 품종·도정구분 멀티셀렉트 전환
+**생산자관리:** 인증·년도 멀티셀렉트 전환
+**공통:** 생산자 텍스트 필드에서 쉼표(,)로 여러 생산자 동시 검색, 모든 텍스트 입력 앞뒤 공백 trim
+
+**버그 수정:**
+- `getStocksByGroup` 라인 608 `isNaN` 함수를 Prisma 필터값으로 전달하던 버그 → 그룹 클릭 시 하위목록 미표시 원인
+- `getStockGroups` 멀티값 `parseInt('2025,2026')` 파싱 오류 → 검색결과 0건 원인
+
+**변경 파일:** `components/ui/multi-select.tsx`, `stocks/stock-filters.tsx`, `stocks/active-filters.tsx`, `milling/milling-filters.tsx`, `milling/active-milling-filters.tsx`, `admin/farmers/farmer-filters.tsx`, `admin/farmers/page.tsx`, `actions/stock.ts`, `actions/milling.ts`, `actions/admin.ts`
+
+---
+
 ### 포장 다이얼로그 단일 생산자 헤더 표시 `feat`
 **커밋:** `bdd4c74`
 
