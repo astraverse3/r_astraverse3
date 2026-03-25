@@ -54,25 +54,31 @@ const PACKAGE_TEMPLATES = [
 function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
     const map = new Map<string, LotGroup>()
     for (const stock of stocks) {
-        const lotNo = generateLotNo({
-            incomingDate: new Date(stock.incomingDate || Date.now()),
-            varietyType: stock.variety?.type || 'URUCHI',
-            varietyName: stock.variety?.name || '일반쌀',
-            millingType,
-            certNo: stock.farmer?.group?.certNo || '00',
-            farmerGroupCode: stock.farmer?.group?.code || '00',
-            farmerNo: stock.farmer?.farmerNo || '00',
-        })
-        if (!map.has(lotNo)) {
-            map.set(lotNo, {
-                lotNo,
+        const isConventional = stock.farmer?.group?.certType === '일반'
+        const farmerNo = stock.farmer?.farmerNo || '00'
+        // 관행: farmerNo로 개별 그룹핑, 그 외: 로트번호로 그룹핑
+        const groupKey = isConventional
+            ? `관행-${farmerNo}`
+            : generateLotNo({
+                incomingDate: new Date(stock.incomingDate || Date.now()),
+                varietyType: stock.variety?.type || 'URUCHI',
+                varietyName: stock.variety?.name || '일반쌀',
+                millingType,
+                certNo: stock.farmer?.group?.certNo || '00',
+                farmerGroupCode: stock.farmer?.group?.code || '00',
+                farmerNo,
+            })
+        const displayLotNo = isConventional ? '관행' : groupKey
+        if (!map.has(groupKey)) {
+            map.set(groupKey, {
+                lotNo: displayLotNo,
                 representativeStockId: stock.id,
                 farmerName: stock.farmerName || stock.farmer?.name || '알수없음',
                 varietyName: stock.variety?.name || '',
                 totalInputKg: 0,
             })
         }
-        map.get(lotNo)!.totalInputKg += stock.weightKg
+        map.get(groupKey)!.totalInputKg += stock.weightKg
     }
     return Array.from(map.values())
 }

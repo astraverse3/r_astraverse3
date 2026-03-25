@@ -320,11 +320,13 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
         // Use helper to generate Lot No consistent with Stock logic
-        const lotNo = generateLotNo({
+        // 관행(일반) 농가는 로트번호 없음
+        const isConventional = targetStock.farmer.group?.certType === '일반';
+        const lotNo = isConventional ? null : generateLotNo({
             incomingDate: targetStock.incomingDate,
             varietyType: targetStock.variety.type,
             varietyName: targetStock.variety.name,
-            millingType: batch.millingType, // Use ACTUAL milling type
+            millingType: batch.millingType,
             certNo: targetStock.farmer.group?.certNo || '00',
             farmerGroupCode: targetStock.farmer.group?.code || '00',
             farmerNo: targetStock.farmer.farmerNo || '00'
@@ -388,12 +390,13 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     : batch.stocks[0];
                 const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
-                // Generate Lot No
-                const lotNo = generateLotNo({
+                // 관행(일반) 농가는 로트번호 없음
+                const isConventional = targetStock.farmer.group?.certType === '일반';
+                const lotNo = isConventional ? null : generateLotNo({
                     incomingDate: targetStock.incomingDate,
                     varietyType: targetStock.variety.type,
                     varietyName: targetStock.variety.name,
-                    millingType: batch.millingType, // Use ACTUAL milling type
+                    millingType: batch.millingType,
                     certNo: targetStock.farmer.group?.certNo || '00',
                     farmerGroupCode: targetStock.farmer.group?.code || '00',
                     farmerNo: targetStock.farmer.farmerNo || '00'

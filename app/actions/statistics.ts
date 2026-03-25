@@ -33,6 +33,7 @@ export type OutputDetail = {
   count: number
   totalWeight: number
   lotNo: string | null
+  isConventional: boolean
 }
 
 export type TableRow = {
@@ -132,7 +133,7 @@ export async function getMillingStatistics(
     where,
     include: {
       outputs: true,
-      stocks: { include: { variety: true, farmer: true } },
+      stocks: { include: { variety: true, farmer: { include: { group: true } } } },
     },
     orderBy: { date: 'asc' },
   })
@@ -187,13 +188,19 @@ export async function getMillingStatistics(
       varietyName: s.variety.name,
       weightKg: s.weightKg,
     }))
-    const outputDetails: OutputDetail[] = batch.outputs.map(o => ({
-      packageType: o.packageType,
-      weightPerUnit: o.weightPerUnit,
-      count: o.count,
-      totalWeight: o.totalWeight,
-      lotNo: o.lotNo,
-    }))
+    const stockMap = new Map(batch.stocks.map(s => [s.id, s]))
+    const outputDetails: OutputDetail[] = batch.outputs.map(o => {
+      const stock = o.stockId ? stockMap.get(o.stockId) : batch.stocks[0]
+      const isConventional = stock?.farmer?.group?.certType === '일반'
+      return {
+        packageType: o.packageType,
+        weightPerUnit: o.weightPerUnit,
+        count: o.count,
+        totalWeight: o.totalWeight,
+        lotNo: o.lotNo,
+        isConventional,
+      }
+    })
     return {
       id: batch.id,
       date: format(new Date(batch.date), 'yyyy-MM-dd'),

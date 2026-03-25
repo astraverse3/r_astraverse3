@@ -118,10 +118,13 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                     '총 투입량(kg)': batch.totalInputKg,
                     '총 생산량(kg)': batch.isClosed ? productionSum : '-',
                     '수율': formattedYield,
+                    '로트번호': '-',
                     '비고': batch.remarks || ''
                 })
             } else {
                 for (const stock of batch.stocks) {
+                    const isConventional = stock.farmer.group?.certType === '일반'
+                    const lotDisplay = isConventional ? '관행' : (stock.lotNo || '-')
                     rows.push({
                         '도정일자': dateStr,
                         '진행상태': statusStr,
@@ -134,6 +137,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                         '총 투입량(kg)': batch.totalInputKg,
                         '총 생산량(kg)': batch.isClosed ? productionSum : '-',
                         '수율': formattedYield,
+                        '로트번호': lotDisplay,
                         '비고': batch.remarks || ''
                     })
                 }
@@ -142,7 +146,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
         let worksheet
         if (rows.length === 0) {
-            worksheet = XLSX.utils.aoa_to_sheet([['도정일자', '진행상태', '품종', '도정분류', '생산자명', '작목반', '톤백번호', '톤백무게(kg)', '총 투입량(kg)', '총 생산량(kg)', '수율', '비고']])
+            worksheet = XLSX.utils.aoa_to_sheet([['도정일자', '진행상태', '품종', '도정분류', '생산자명', '작목반', '톤백번호', '톤백무게(kg)', '총 투입량(kg)', '총 생산량(kg)', '수율', '로트번호', '비고']])
         } else {
             worksheet = XLSX.utils.json_to_sheet(rows)
 
@@ -159,6 +163,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                 { wch: 12 }, // 총투입량
                 { wch: 12 }, // 총생산량
                 { wch: 10 }, // 수율
+                { wch: 22 }, // 로트번호
                 { wch: 30 }, // 비고
             ];
             worksheet['!cols'] = wscols;

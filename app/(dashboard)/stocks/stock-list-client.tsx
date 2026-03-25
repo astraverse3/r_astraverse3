@@ -493,7 +493,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                             {stock.farmer.name}
                         </span>
                         <span className="text-[11px] font-mono text-slate-400 leading-tight truncate min-w-0">
-                            ({stock.lotNo || '-'})
+                            ({stock.farmer.group?.certType === '일반' ? '관행' : (stock.lotNo || '-')})
                         </span>
                     </div>
 

@@ -108,7 +108,9 @@ function OutputPopup({ row, onClose }: { row: TableRow; onClose: () => void }) {
                   <td className="px-4 py-2.5 text-right text-emerald-600 font-medium">
                     {o.totalWeight.toLocaleString('ko-KR', { maximumFractionDigits: 1 })}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-400 text-xs font-mono">{o.lotNo ?? '-'}</td>
+                  <td className="px-4 py-2.5 text-xs font-mono">
+                    {o.isConventional ? <span className="text-slate-400">관행</span> : (o.lotNo ?? '-')}
+                  </td>
                 </tr>
               ))}
             </tbody>
