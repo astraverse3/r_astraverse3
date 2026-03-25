@@ -46,13 +46,16 @@ export function MillingStatsClient({
 }: Props) {
   const [data, setData] = useState(initialData)
   const [mainTab, setMainTab] = useState<MainTab>('period')
-  const [quickPeriod, setQuickPeriod] = useState<QuickPeriod>('1m')
+  const [quickPeriod, setQuickPeriod] = useState<QuickPeriod>('cropYear')
   const [cropYear, setCropYear] = useState(currentCropYear)
   const [from, setFrom] = useState(() => {
-    const r = resolveQuickPeriod('1m')
+    const r = resolveQuickPeriod('cropYear', currentCropYear)
     return format(r.from, 'yyyy-MM-dd')
   })
-  const [to, setTo] = useState(() => format(new Date(), 'yyyy-MM-dd'))
+  const [to, setTo] = useState(() => {
+    const r = resolveQuickPeriod('cropYear', currentCropYear)
+    return format(r.to, 'yyyy-MM-dd')
+  })
   const [showCustomDate, setShowCustomDate] = useState(false)
   const [selectedVarieties, setSelectedVarieties] = useState<string[]>([])
   const [selectedMillingTypes, setSelectedMillingTypes] = useState<string[]>(['백미'])
