@@ -2,8 +2,39 @@
 
 ## 2026-03-25
 
+### 통계 기본 기간 연산(cropYear) 기준으로 변경 `feat`
+**커밋:** `2e2270f`
+
+- 통계 페이지 기본 기간을 1개월에서 현재 연산 기준으로 변경
+- `page.tsx` 초기 fetch + `milling-stats-client.tsx` quickPeriod 기본값 `cropYear`로
+
+**변경 파일:** `statistics/milling/page.tsx`, `statistics/milling/milling-stats-client.tsx`
+
+---
+
+### 활동로그 도정작업 상태변경 상세내역 추가 `feat`
+**커밋:** `8d51266`
+
+- `updateMillingBatchStatus` 호출 시 변경 전 배치 정보 조회 후 `details`에 포함
+- 활동로그 UI에서 상세내역 버튼(FileText) 표시 가능해짐
+- 기록 항목: 변경전/후 상태, 도정일, 도정구분, 투입량, 비고
+
+**변경 파일:** `app/actions/milling.ts`
+
+---
+
+### 모바일 멀티셀렉트 터치 스크롤 수정 `fix`
+**커밋:** `43425b1`
+
+- Popover 내부 스크롤 컨테이너에 `touch-pan-y`, `overscroll-contain`, `onTouchMove stopPropagation` 추가
+- iOS 모바일에서 터치 이벤트가 부모로 전파되어 스크롤 안 되던 문제 해결
+
+**변경 파일:** `components/ui/multi-select.tsx`
+
+---
+
 ### 통계 도정실적 페이지 기능·UI 개선 `feat`
-**커밋:** (이번 커밋)
+**커밋:** `94c5f72`
 
 **변경 파일:** `statistics/milling/milling-stats-client.tsx`, `actions/statistics.ts`, `components/statistics/MillingChart.tsx`, `components/statistics/MillingTable.tsx`, `components/statistics/SummaryCards.tsx`
 
