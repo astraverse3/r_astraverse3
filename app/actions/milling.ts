@@ -469,6 +469,11 @@ export async function reopenMillingBatch(batchId: number) {
 
 export async function updateMillingBatchStatus(batchId: number, isClosed: boolean) {
     try {
+        const batch = await prisma.millingBatch.findUnique({
+            where: { id: batchId },
+            select: { id: true, date: true, millingType: true, totalInputKg: true, isClosed: true, remarks: true }
+        })
+
         await prisma.millingBatch.update({
             where: { id: batchId },
             data: { isClosed }
@@ -478,6 +483,14 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
             action: 'UPDATE',
             entity: 'MillingBatch',
             entityId: batchId,
+            details: {
+                변경전: batch?.isClosed ? '마감' : '진행중',
+                변경후: isClosed ? '마감' : '진행중',
+                도정일: batch?.date ? batch.date.toISOString().split('T')[0] : null,
+                도정구분: batch?.millingType,
+                투입량: batch?.totalInputKg ? `${batch.totalInputKg}kg` : null,
+                비고: batch?.remarks || null,
+            },
             description: `도정 작업 상태 변경: ${isClosed ? '마감' : '진행'}`
         })
 
