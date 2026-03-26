@@ -1,5 +1,42 @@
 # 작업일지
 
+## 2026-03-26
+
+### 통계 차트 개선 + 도정 투입내역 삭제 버그 수정 `feat/fix`
+**커밋:** (이번 커밋)
+
+**변경 파일:**
+- `components/statistics/MillingChart.tsx` — 막대폭 동적 조절(포인트 수 기반), X축 월별 레이블 단축(`2025-04` → `2504`)
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx` — 기간별 탭 품종 기본값 하이아미·서농22·천지향1세·새청무 적용
+- `app/(dashboard)/statistics/milling/page.tsx` — 서버 초기 fetch에 동일 품종 기본값 추가
+- `app/actions/milling.ts` — `removeStockFromMilling` 수정: stock 삭제 후 남은 stocks 합산해 `totalInputKg` 업데이트 (목록 투입량 미반영 버그 수정)
+
+**주요 동작:**
+- 막대폭: `480 / 포인트수` 기준, 최소 12px ~ 최대 56px 동적 계산
+- 월별 X축: `yyyy-MM` → `YYMM` (day/week는 기존 유지)
+- 기간별 품종 기본값: 페이지 로드 시 + 초기화 시 동일하게 적용
+- 투입내역 삭제 시 `millingBatch.totalInputKg` 자동 재계산 → 목록 정합성 확보
+
+---
+
+## 2026-03-25 (세션2 — 미커밋)
+
+### 통계 품종별/도정구분별 차트 구현 + 수율 보간 `feat` ⚠️ 미커밋
+
+**변경 파일:**
+- `app/actions/statistics.ts` — `MultiSeriesChartData` 타입, `getMillingStatsByVariety`, `getMillingStatsByMillingType` 추가. `generateAllBucketKeys()`로 빈 버킷 포함 전체 기간 생성, `hasData` 플래그 반환
+- `components/statistics/MultiSeriesChart.tsx` — 신규. 5색 팔레트, 시리즈별 겹침막대+수율 라인, 막대폭 자동조절
+- `components/statistics/MillingChart.tsx` — 보간 처리(좌우 평균), 실선/점선 이중 라인, Y축 수율 55-75로 변경
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx` — 검색 바 공통화, 품종별/도정구분별 탭 연결, 기본값(서농22호·천지향1세·하이아미 / 백미·찹쌀·현미), 품종 최대 5개 제한
+
+**주요 동작:**
+- 품종별/도정구분별 탭 전환 시 기본값 자동 적용 후 fetch
+- 데이터 없는 기간 포인트: 좌우 값 평균으로 보간, 점선(4-4 dash)으로 표시
+- 수율 Y축: 55/60/65/70/75 (진폭 확대)
+- 품종별 생산량: 동일 배치 내 투입 비율로 안분
+
+---
+
 ## 2026-03-25
 
 ### 통계 기본 기간 연산(cropYear) 기준으로 변경 `feat`

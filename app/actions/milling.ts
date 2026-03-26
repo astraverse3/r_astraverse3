@@ -294,6 +294,18 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
                     batchId: null
                 }
             });
+
+            // 남은 stocks 합산해서 totalInputKg 업데이트
+            const remaining = await tx.stock.findMany({
+                where: { batchId },
+                select: { weightKg: true }
+            })
+            const newTotalKg = remaining.reduce((sum, s) => sum + s.weightKg, 0)
+            await tx.millingBatch.update({
+                where: { id: batchId },
+                data: { totalInputKg: newTotalKg }
+            })
+
             return { success: true };
         });
         revalidatePath('/milling')

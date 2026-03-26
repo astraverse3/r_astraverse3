@@ -18,7 +18,7 @@ export default async function MillingStatisticsPage() {
   const groupBy = resolveGroupBy(cropYearFrom, cropYearTo)
 
   const [initialData, varietyOptions, millingTypeOptions] = await Promise.all([
-    getMillingStatistics({ from: cropYearFrom, to: cropYearTo, groupBy, millingTypes: ['백미'] }),
+    getMillingStatistics({ from: cropYearFrom, to: cropYearTo, groupBy, millingTypes: ['백미'], varieties: ['하이아미', '서농22', '천지향1세', '새청무'] }),
     getVarietyOptions(),
     getMillingTypeOptions(),
   ])
