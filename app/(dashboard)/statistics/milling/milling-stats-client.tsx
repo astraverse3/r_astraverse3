@@ -138,12 +138,14 @@ export function MillingStatsClient({
   function fetchVariety(overrides?: {
     from?: string; to?: string
     varieties?: string[]; millingTypes?: string[]
+    farmers?: string[]
     cropYear?: number
   }) {
-    const resolvedFrom  = overrides?.from         ?? from
-    const resolvedTo    = overrides?.to           ?? to
-    const resolvedVars  = overrides?.varieties    ?? selectedVarieties
-    const resolvedTypes = overrides?.millingTypes ?? selectedMillingTypes
+    const resolvedFrom    = overrides?.from         ?? from
+    const resolvedTo      = overrides?.to           ?? to
+    const resolvedVars    = overrides?.varieties    ?? selectedVarieties
+    const resolvedTypes   = overrides?.millingTypes ?? selectedMillingTypes
+    const resolvedFarmers = overrides?.farmers      ?? appliedFarmers
     const resolvedGroupBy = resolveGroupBy(new Date(resolvedFrom), new Date(resolvedTo))
 
     startTransition(async () => {
@@ -153,6 +155,7 @@ export function MillingStatsClient({
         groupBy: resolvedGroupBy,
         varieties: resolvedVars.length ? resolvedVars : DEFAULT_VARIETIES,
         millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
+        farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
         cropYear: overrides?.cropYear,
       })
       setVarietyChartData(result)
@@ -162,12 +165,14 @@ export function MillingStatsClient({
   function fetchMillingType(overrides?: {
     from?: string; to?: string
     varieties?: string[]; millingTypes?: string[]
+    farmers?: string[]
     cropYear?: number
   }) {
-    const resolvedFrom  = overrides?.from         ?? from
-    const resolvedTo    = overrides?.to           ?? to
-    const resolvedVars  = overrides?.varieties    ?? selectedVarieties
-    const resolvedTypes = overrides?.millingTypes ?? selectedMillingTypes
+    const resolvedFrom    = overrides?.from         ?? from
+    const resolvedTo      = overrides?.to           ?? to
+    const resolvedVars    = overrides?.varieties    ?? selectedVarieties
+    const resolvedTypes   = overrides?.millingTypes ?? selectedMillingTypes
+    const resolvedFarmers = overrides?.farmers      ?? appliedFarmers
     const resolvedGroupBy = resolveGroupBy(new Date(resolvedFrom), new Date(resolvedTo))
 
     startTransition(async () => {
@@ -177,6 +182,7 @@ export function MillingStatsClient({
         groupBy: resolvedGroupBy,
         millingTypes: resolvedTypes.length ? resolvedTypes : millingTypeOptions,
         varieties: resolvedVars.length ? resolvedVars : undefined,
+        farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
         cropYear: overrides?.cropYear,
       })
       setMillingTypeChartData(result)

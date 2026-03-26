@@ -290,9 +290,10 @@ export async function getMillingStatsByVariety(params: {
   groupBy: GroupBy
   varieties: string[]
   millingTypes?: string[]
+  farmers?: string[]
   cropYear?: number
 }): Promise<MultiSeriesChartData> {
-  const { from, to, groupBy, varieties, millingTypes, cropYear } = params
+  const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
@@ -315,6 +316,16 @@ export async function getMillingStatsByVariety(params: {
       ...(where.stocks?.some ?? {}),
       variety: { name: { in: varieties } },
     },
+  }
+
+  if (farmers && farmers.length > 0) {
+    where.stocks = {
+      ...(where.stocks ?? {}),
+      some: {
+        ...(where.stocks?.some ?? {}),
+        farmer: { name: { in: farmers } },
+      },
+    }
   }
 
   const batches = await prisma.millingBatch.findMany({
@@ -392,9 +403,10 @@ export async function getMillingStatsByMillingType(params: {
   groupBy: GroupBy
   millingTypes: string[]
   varieties?: string[]
+  farmers?: string[]
   cropYear?: number
 }): Promise<MultiSeriesChartData> {
-  const { from, to, groupBy, millingTypes, varieties, cropYear } = params
+  const { from, to, groupBy, millingTypes, varieties, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
@@ -416,6 +428,16 @@ export async function getMillingStatsByMillingType(params: {
       some: {
         ...(where.stocks?.some ?? {}),
         variety: { name: { in: varieties } },
+      },
+    }
+  }
+
+  if (farmers && farmers.length > 0) {
+    where.stocks = {
+      ...(where.stocks ?? {}),
+      some: {
+        ...(where.stocks?.some ?? {}),
+        farmer: { name: { in: farmers } },
       },
     }
   }
