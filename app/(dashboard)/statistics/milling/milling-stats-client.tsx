@@ -149,16 +149,28 @@ export function MillingStatsClient({
     const resolvedGroupBy = resolveGroupBy(new Date(resolvedFrom), new Date(resolvedTo))
 
     startTransition(async () => {
-      const result = await getMillingStatsByVariety({
-        from: new Date(resolvedFrom),
-        to: new Date(resolvedTo),
-        groupBy: resolvedGroupBy,
-        varieties: resolvedVars.length ? resolvedVars : DEFAULT_VARIETIES,
-        millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
-        farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-        cropYear: overrides?.cropYear,
-      })
-      setVarietyChartData(result)
+      const [chart, stats] = await Promise.all([
+        getMillingStatsByVariety({
+          from: new Date(resolvedFrom),
+          to: new Date(resolvedTo),
+          groupBy: resolvedGroupBy,
+          varieties: resolvedVars.length ? resolvedVars : DEFAULT_VARIETIES,
+          millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
+          farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
+          cropYear: overrides?.cropYear,
+        }),
+        getMillingStatistics({
+          from: new Date(resolvedFrom),
+          to: new Date(resolvedTo),
+          groupBy: resolvedGroupBy,
+          varieties: resolvedVars.length ? resolvedVars : undefined,
+          millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
+          farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
+          cropYear: overrides?.cropYear,
+        }),
+      ])
+      setVarietyChartData(chart)
+      setData(stats)
     })
   }
 
@@ -176,16 +188,28 @@ export function MillingStatsClient({
     const resolvedGroupBy = resolveGroupBy(new Date(resolvedFrom), new Date(resolvedTo))
 
     startTransition(async () => {
-      const result = await getMillingStatsByMillingType({
-        from: new Date(resolvedFrom),
-        to: new Date(resolvedTo),
-        groupBy: resolvedGroupBy,
-        millingTypes: resolvedTypes.length ? resolvedTypes : millingTypeOptions,
-        varieties: resolvedVars.length ? resolvedVars : undefined,
-        farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-        cropYear: overrides?.cropYear,
-      })
-      setMillingTypeChartData(result)
+      const [chart, stats] = await Promise.all([
+        getMillingStatsByMillingType({
+          from: new Date(resolvedFrom),
+          to: new Date(resolvedTo),
+          groupBy: resolvedGroupBy,
+          millingTypes: resolvedTypes.length ? resolvedTypes : millingTypeOptions,
+          varieties: resolvedVars.length ? resolvedVars : undefined,
+          farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
+          cropYear: overrides?.cropYear,
+        }),
+        getMillingStatistics({
+          from: new Date(resolvedFrom),
+          to: new Date(resolvedTo),
+          groupBy: resolvedGroupBy,
+          millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
+          varieties: resolvedVars.length ? resolvedVars : undefined,
+          farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
+          cropYear: overrides?.cropYear,
+        }),
+      ])
+      setMillingTypeChartData(chart)
+      setData(stats)
     })
   }
 
