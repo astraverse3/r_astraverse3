@@ -2,6 +2,46 @@
 
 ## 2026-03-26
 
+### 수율분석 통계 개선 (도정구분별 탭 완성 + 생산자 필터 버그 수정) `feat/fix` — `170b7d1`
+
+**커밋 목록:**
+- `1da03fb` — fix: fetchCurrent overrides 타입에 groupBy 추가 (빌드 에러)
+- `b24de31` — feat: 도정구분별 통계 페이지 신규 추가 (이후 탭으로 통합)
+- `ee04a3d` — fix: 사이드바 통계 서브메뉴 → 수율분석 단일 링크로 정리
+- `bccceee` — feat: 수율분석 도정구분별 탭 기본값 업데이트
+- `d27f765` — fix: 품종별/도정구분별 탭 생산자 필터 미전달 버그 수정
+- `4650ad1` — fix: 탭 전환 시 생산자 검색 필터 초기화
+- `170b7d1` — fix: 탭 필터 변경 시 테이블·요약카드 미동기 버그 수정
+
+**변경 파일:**
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx` — 도정구분별 탭 기본값(품종 6개·도정구분 전체), 탭 전환 시 생산자 초기화, fetchVariety/fetchMillingType에 farmers 연결 + 테이블 동기화
+- `app/actions/statistics.ts` — getMillingStatsByVariety·getMillingStatsByMillingType에 farmers 파라미터 추가
+- `components/desktop-sidebar.tsx` — 통계 서브메뉴 → 수율분석 단일 항목
+- `components/breadcrumb-display.tsx` — 수율분석 경로명 반영
+
+**주요 동작:**
+- 도정구분별 탭: 품종 기본 6개(백옥찰·서농22호·천지향1세·천지향5세·새청무·하이아미), 도정구분 DB 전체 선택
+- 생산자 검색 필터가 3개 탭 모두 정상 동작
+- 탭 전환 시 생산자 검색어·칩 자동 초기화
+- 품종별/도정구분별 탭에서 필터 변경 시 차트 + 테이블 + 요약카드 동시 업데이트
+
+---
+
+### 도정구분별 통계 페이지 신규 추가 `feat` — `b24de31`
+**변경 파일:**
+- `app/(dashboard)/statistics/millingtype/page.tsx` — 신규 서버 컴포넌트 (6개월 기본, 전체 도정구분 조회)
+- `app/(dashboard)/statistics/millingtype/millingtype-stats-client.tsx` — 신규 클라이언트 컴포넌트 (필터 + MultiSeriesChart + SummaryCards)
+- `components/desktop-sidebar.tsx` — 통계 메뉴를 서브링크 2개로 분리 (도정실적 분석 / 도정구분별 분석)
+- `components/breadcrumb-display.tsx` — millingtype 경로 브레드크럼 추가
+
+**주요 동작:**
+- `/statistics/millingtype` 신규 페이지 생성
+- 기간 기본: 6개월 / 품종 기본: 백옥찰·서농22호·천지향1세·천지향5세·새청무·하이아미
+- 도정구분 전체 선택 (DB distinct 조회 기반, 동적)
+- 품종/도정구분 토글 → 즉시 fetch, 드롭다운에 전체선택·전체해제 버튼
+
+---
+
 ### 통계 UX 개선 (기간버튼 즉시fetch · 기본기간 6개월 · 품종별 차트 개선) `feat`
 **커밋:** (이번)
 
