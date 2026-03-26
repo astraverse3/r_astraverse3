@@ -205,19 +205,24 @@ export function MillingStatsClient({
   // ── 탭 전환 ───────────────────────────────────────
   function handleTabChange(tab: MainTab) {
     setMainTab(tab)
+    setFarmerInput('')
+    setAppliedFarmers([])
 
     if (tab === 'variety') {
       // 품종 기본값 적용 후 fetch
       const vars = selectedVarieties.length > 0 ? selectedVarieties : DEFAULT_VARIETIES
       if (selectedVarieties.length === 0) setSelectedVarieties(DEFAULT_VARIETIES)
-      fetchVariety({ varieties: vars })
+      fetchVariety({ varieties: vars, farmers: [] })
     } else if (tab === 'millingType') {
       // 도정구분 전체 + 품종 6개 기본값 적용 후 fetch
       const allTypes = millingTypeOptions
       const vars = DEFAULT_MILLINGTYPE_VARIETIES.filter(v => varietyOptions.includes(v))
       setSelectedMillingTypes(allTypes)
       setSelectedVarieties(vars)
-      fetchMillingType({ millingTypes: allTypes, varieties: vars })
+      fetchMillingType({ millingTypes: allTypes, varieties: vars, farmers: [] })
+    } else {
+      // period 탭 전환 시 초기화 후 fetch
+      fetchPeriod({ farmers: [] })
     }
   }
 
