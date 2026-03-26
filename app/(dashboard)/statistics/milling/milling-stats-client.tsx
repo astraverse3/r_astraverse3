@@ -47,9 +47,9 @@ const QUICK_PERIODS: { key: QuickPeriod; label: string }[] = [
   { key: 'custom',   label: '' },
 ]
 
-const DEFAULT_PERIOD_VARIETIES = ['하이아미', '서농22호', '천지향1세', '새청무']
-const DEFAULT_VARIETIES        = ['서농22호', '천지향1세', '하이아미']
-const DEFAULT_MILLING_TYPES    = ['백미', '찹쌀', '현미']
+const DEFAULT_PERIOD_VARIETIES    = ['하이아미', '서농22호', '천지향1세', '새청무']
+const DEFAULT_VARIETIES           = ['서농22호', '천지향1세', '하이아미']
+const DEFAULT_MILLINGTYPE_VARIETIES = ['백옥찰', '서농22호', '천지향1세', '천지향5세', '새청무', '하이아미']
 const MAX_VARIETY_SELECT       = 5
 
 // ── 빈 멀티시리즈 데이터 ──────────────────────────
@@ -175,7 +175,7 @@ export function MillingStatsClient({
         from: new Date(resolvedFrom),
         to: new Date(resolvedTo),
         groupBy: resolvedGroupBy,
-        millingTypes: resolvedTypes.length ? resolvedTypes : DEFAULT_MILLING_TYPES,
+        millingTypes: resolvedTypes.length ? resolvedTypes : millingTypeOptions,
         varieties: resolvedVars.length ? resolvedVars : undefined,
         cropYear: overrides?.cropYear,
       })
@@ -206,10 +206,12 @@ export function MillingStatsClient({
       if (selectedVarieties.length === 0) setSelectedVarieties(DEFAULT_VARIETIES)
       fetchVariety({ varieties: vars })
     } else if (tab === 'millingType') {
-      // 도정구분 기본값 적용 후 fetch
-      const types = selectedMillingTypes.length > 0 ? selectedMillingTypes : DEFAULT_MILLING_TYPES
-      if (selectedMillingTypes.length === 0) setSelectedMillingTypes(DEFAULT_MILLING_TYPES)
-      fetchMillingType({ millingTypes: types })
+      // 도정구분 전체 + 품종 6개 기본값 적용 후 fetch
+      const allTypes = millingTypeOptions
+      const vars = DEFAULT_MILLINGTYPE_VARIETIES.filter(v => varietyOptions.includes(v))
+      setSelectedMillingTypes(allTypes)
+      setSelectedVarieties(vars)
+      fetchMillingType({ millingTypes: allTypes, varieties: vars })
     }
   }
 
@@ -241,8 +243,11 @@ export function MillingStatsClient({
       setSelectedVarieties(DEFAULT_VARIETIES)
       fetchVariety({ from: newFrom, to: newTo, varieties: DEFAULT_VARIETIES, millingTypes: [] })
     } else {
-      setSelectedMillingTypes(DEFAULT_MILLING_TYPES)
-      fetchMillingType({ from: newFrom, to: newTo, millingTypes: DEFAULT_MILLING_TYPES, varieties: [] })
+      const allTypes = millingTypeOptions
+      const vars = DEFAULT_MILLINGTYPE_VARIETIES.filter(v => varietyOptions.includes(v))
+      setSelectedMillingTypes(allTypes)
+      setSelectedVarieties(vars)
+      fetchMillingType({ from: newFrom, to: newTo, millingTypes: allTypes, varieties: vars })
     }
   }
 
