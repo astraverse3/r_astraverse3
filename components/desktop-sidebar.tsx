@@ -83,16 +83,7 @@ export function DesktopSidebar() {
                                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                     }`}
                             >
-                                도정실적 분석
-                            </Link>
-                            <Link
-                                href="/statistics/millingtype"
-                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/millingtype')
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                    }`}
-                            >
-                                도정구분별 분석
+                                수율분석
                             </Link>
                         </div>
                     </div>
