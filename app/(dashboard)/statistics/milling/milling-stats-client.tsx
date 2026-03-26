@@ -47,7 +47,7 @@ const QUICK_PERIODS: { key: QuickPeriod; label: string }[] = [
   { key: 'custom',   label: '' },
 ]
 
-const DEFAULT_PERIOD_VARIETIES = ['하이아미', '서농22', '천지향1세', '새청무']
+const DEFAULT_PERIOD_VARIETIES = ['하이아미', '서농22호', '천지향1세', '새청무']
 const DEFAULT_VARIETIES        = ['서농22호', '천지향1세', '하이아미']
 const DEFAULT_MILLING_TYPES    = ['백미', '찹쌀', '현미']
 const MAX_VARIETY_SELECT       = 5
@@ -69,14 +69,14 @@ export function MillingStatsClient({
   const [millingTypeChartData, setMillingTypeChartData] = useState<MultiSeriesChartData>(() => emptyMultiSeries(initialData.groupBy))
 
   const [mainTab, setMainTab]             = useState<MainTab>('period')
-  const [quickPeriod, setQuickPeriod]     = useState<QuickPeriod>('cropYear')
+  const [quickPeriod, setQuickPeriod]     = useState<QuickPeriod>('6m')
   const [cropYear, setCropYear]           = useState(currentCropYear)
   const [from, setFrom] = useState(() => {
-    const r = resolveQuickPeriod('cropYear', currentCropYear)
+    const r = resolveQuickPeriod('6m')
     return format(r.from, 'yyyy-MM-dd')
   })
   const [to, setTo] = useState(() => {
-    const r = resolveQuickPeriod('cropYear', currentCropYear)
+    const r = resolveQuickPeriod('6m')
     return format(r.to, 'yyyy-MM-dd')
   })
   const [showCustomDate, setShowCustomDate]         = useState(false)
@@ -221,10 +221,10 @@ export function MillingStatsClient({
 
   // ── 초기화 ────────────────────────────────────────
   function handleReset() {
-    const r = resolveQuickPeriod('1m')
+    const r = resolveQuickPeriod('6m')
     const newFrom = format(r.from, 'yyyy-MM-dd')
     const newTo   = format(r.to,   'yyyy-MM-dd')
-    setQuickPeriod('1m')
+    setQuickPeriod('6m')
     setFrom(newFrom)
     setTo(newTo)
     setCropYear(currentCropYear)
@@ -257,6 +257,12 @@ export function MillingStatsClient({
     setFrom(format(r.from, 'yyyy-MM-dd'))
     setTo(format(r.to, 'yyyy-MM-dd'))
     setShowCustomDate(false)
+    fetchCurrent(mainTab, {
+      from: format(r.from, 'yyyy-MM-dd'),
+      to: format(r.to, 'yyyy-MM-dd'),
+      groupBy: r.groupBy,
+      cropYear: key === 'cropYear' ? cropYear : undefined,
+    })
   }
 
   // ── 연산 변경 ─────────────────────────────────────
@@ -266,6 +272,11 @@ export function MillingStatsClient({
       const r = resolveQuickPeriod('cropYear', year)
       setFrom(format(r.from, 'yyyy-MM-dd'))
       setTo(format(r.to, 'yyyy-MM-dd'))
+      fetchCurrent(mainTab, {
+        from: format(r.from, 'yyyy-MM-dd'),
+        to: format(r.to, 'yyyy-MM-dd'),
+        cropYear: year,
+      })
     }
   }
 

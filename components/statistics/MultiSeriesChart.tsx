@@ -154,6 +154,14 @@ function CustomTooltip({ active, payload, seriesNames }: any) {
   )
 }
 
+function formatXTick(value: string, groupBy: GroupBy): string {
+  if (groupBy === 'month') {
+    const [year, month] = value.split('-')
+    return `${year.slice(2)}${month}`
+  }
+  return value
+}
+
 const GROUP_BY_LABEL: Record<GroupBy, string> = {
   day:   '일별',
   week:  '주별',
@@ -229,6 +237,7 @@ export function MultiSeriesChart({ data, title }: Props) {
                 tick={{ fontSize: 12, fill: '#94A3B8' }}
                 axisLine={false}
                 tickLine={false}
+                tickFormatter={v => formatXTick(v, groupBy)}
               />
               <YAxis
                 yAxisId="kg"
@@ -249,6 +258,7 @@ export function MultiSeriesChart({ data, title }: Props) {
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => `${v}%`}
+                allowDataOverflow
               />
               <Tooltip
                 content={<CustomTooltip seriesNames={seriesNames} />}
@@ -277,15 +287,32 @@ export function MultiSeriesChart({ data, title }: Props) {
                     name={name}
                     shape={makeOverlappingBar(color.input, color.output, name)}
                     maxBarSize={maxBarSize}
+                    background={(props: any) => {
+                      const hasData = (props.payload?.[`${name}_input`] ?? 0) > 0
+                      if (hasData) return <g />
+                      return (
+                        <rect
+                          x={props.x + 1}
+                          y={props.y}
+                          width={Math.max(0, props.width - 2)}
+                          height={props.height}
+                          rx={3}
+                          fill="none"
+                          stroke={color.output}
+                          strokeWidth={1}
+                          strokeDasharray="4 3"
+                          strokeOpacity={0.25}
+                        />
+                      )
+                    }}
                   />
                 )
               })}
 
-              {/* 시리즈별 수율 라인 (실선 + 점선) */}
+              {/* 시리즈별 수율 실선 */}
               {seriesNames.map((name, i) => {
                 const color = PALETTE[i % PALETTE.length]
-                return [
-                  // 실선: 실제 데이터 구간
+                return (
                   <Line
                     key={`${name}_realLine`}
                     yAxisId="rate"
@@ -298,8 +325,14 @@ export function MultiSeriesChart({ data, title }: Props) {
                     activeDot={{ r: 5 }}
                     connectNulls={false}
                     legendType="none"
-                  />,
-                  // 점선: 보간 구간
+                  />
+                )
+              })}
+
+              {/* 시리즈별 수율 점선(보간) */}
+              {seriesNames.map((name, i) => {
+                const color = PALETTE[i % PALETTE.length]
+                return (
                   <Line
                     key={`${name}_interpLine`}
                     yAxisId="rate"
@@ -313,8 +346,8 @@ export function MultiSeriesChart({ data, title }: Props) {
                     activeDot={false}
                     connectNulls={false}
                     legendType="none"
-                  />,
-                ]
+                  />
+                )
               })}
             </ComposedChart>
           </ResponsiveContainer>

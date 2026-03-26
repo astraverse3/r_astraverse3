@@ -3,22 +3,20 @@ import {
   getVarietyOptions,
   getMillingTypeOptions,
 } from '@/app/actions/statistics'
-import { resolveGroupBy } from '@/lib/statistics-utils'
+import { resolveGroupBy, resolveQuickPeriod } from '@/lib/statistics-utils'
 import { MillingStatsClient } from './milling-stats-client'
 
 export default async function MillingStatisticsPage() {
   const today = new Date()
 
   const currentCropYear = today.getMonth() >= 9
-    ? today.getFullYear()       // 10월 이후면 올해 연산
-    : today.getFullYear() - 1   // 그 전이면 작년 연산
+    ? today.getFullYear()
+    : today.getFullYear() - 1
 
-  const cropYearFrom = new Date(`${currentCropYear}-01-01`)
-  const cropYearTo = new Date(`${currentCropYear + 1}-03-31`)
-  const groupBy = resolveGroupBy(cropYearFrom, cropYearTo)
+  const { from: initFrom, to: initTo, groupBy } = resolveQuickPeriod('6m')
 
   const [initialData, varietyOptions, millingTypeOptions] = await Promise.all([
-    getMillingStatistics({ from: cropYearFrom, to: cropYearTo, groupBy, millingTypes: ['백미'], varieties: ['하이아미', '서농22', '천지향1세', '새청무'] }),
+    getMillingStatistics({ from: initFrom, to: initTo, groupBy, millingTypes: ['백미'], varieties: ['하이아미', '서농22호', '천지향1세', '새청무'] }),
     getVarietyOptions(),
     getMillingTypeOptions(),
   ])

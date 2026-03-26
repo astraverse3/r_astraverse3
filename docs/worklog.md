@@ -2,8 +2,24 @@
 
 ## 2026-03-26
 
+### 통계 UX 개선 (기간버튼 즉시fetch · 기본기간 6개월 · 품종별 차트 개선) `feat`
+**커밋:** (이번)
+
+**변경 파일:**
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx` — 기간 버튼 클릭 시 즉시 fetch, 기본 기간 6개월, 기본 품종 서농22→서농22호 수정, 초기화 기준 6개월
+- `app/(dashboard)/statistics/milling/page.tsx` — 서버 초기 fetch 6개월 기준으로 변경
+- `components/statistics/MultiSeriesChart.tsx` — X축 월별 레이블 단축(2511), Y축 allowDataOverflow 추가(55~75 정상 표시), 빈값 유령막대(점선 outline), 빈값 있는 시리즈에 ghost bar 추가
+
+**주요 동작:**
+- 빠른기간 버튼(연산/1년/6개월 등) 클릭 → 검색 버튼 없이 즉시 fetch
+- 기본 기간 6개월로 변경 (연산 기준 → 실데이터 구간 중심)
+- 품종별 차트 Y축 수율 55%~75% 정상 범위 표시
+- 빈값 구간에 점선 outline ghost bar → 시리즈 구분 가능
+
+---
+
 ### 통계 차트 개선 + 도정 투입내역 삭제 버그 수정 `feat/fix`
-**커밋:** (이번 커밋)
+**커밋:** `7de3dda`
 
 **변경 파일:**
 - `components/statistics/MillingChart.tsx` — 막대폭 동적 조절(포인트 수 기반), X축 월별 레이블 단축(`2025-04` → `2504`)
@@ -19,9 +35,10 @@
 
 ---
 
-## 2026-03-25 (세션2 — 미커밋)
+## 2026-03-25 (세션2)
 
-### 통계 품종별/도정구분별 차트 구현 + 수율 보간 `feat` ⚠️ 미커밋
+### 통계 품종별/도정구분별 차트 구현 + 수율 보간 `feat`
+**커밋:** `7de3dda` (2026-03-26 커밋에 포함)
 
 **변경 파일:**
 - `app/actions/statistics.ts` — `MultiSeriesChartData` 타입, `getMillingStatsByVariety`, `getMillingStatsByMillingType` 추가. `generateAllBucketKeys()`로 빈 버킷 포함 전체 기간 생성, `hasData` 플래그 반환
