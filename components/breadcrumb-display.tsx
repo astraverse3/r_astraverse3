@@ -21,7 +21,8 @@ const ROUTE_NAME_MAP: Record<string, string> = {
 
 // 전체 경로 기준 마지막 세그먼트 이름 오버라이드
 const PATH_TITLE_MAP: Record<string, string> = {
-    '/statistics/milling': '도정실적 분석',
+    '/statistics/milling':      '도정실적 분석',
+    '/statistics/millingtype':  '도정구분별 분석',
 }
 
 export function BreadcrumbDisplay() {

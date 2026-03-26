@@ -70,16 +70,32 @@ export function DesktopSidebar() {
                         출고관리
                     </Link>
 
-                    <Link
-                        href="/statistics/milling"
-                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/statistics')
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }`}
-                    >
-                        <BarChart3 className="w-4 h-4" />
-                        통계
-                    </Link>
+                    <div className="pt-1">
+                        <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg ${isActive('/statistics') ? 'text-blue-600' : 'text-slate-600'}`}>
+                            <BarChart3 className="w-4 h-4" />
+                            통계
+                        </div>
+                        <div className="pl-10 mt-1 space-y-1">
+                            <Link
+                                href="/statistics/milling"
+                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/milling')
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                    }`}
+                            >
+                                도정실적 분석
+                            </Link>
+                            <Link
+                                href="/statistics/millingtype"
+                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/millingtype')
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                    }`}
+                            >
+                                도정구분별 분석
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-slate-100">
