@@ -189,6 +189,7 @@ export function MillingStatsClient({
     varieties?: string[]; millingTypes?: string[]
     farmers?: string[]
     cropYear?: number
+    groupBy?: GroupBy
   }) {
     if (tab === 'period')      fetchPeriod(overrides)
     else if (tab === 'variety') fetchVariety(overrides)
