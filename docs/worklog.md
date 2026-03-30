@@ -1,5 +1,48 @@
 # 작업일지
 
+## 2026-03-30
+
+### 모바일 네비게이션 바 전면 재설계 `feat`
+
+**변경 파일:**
+- `components/mobile-header.tsx` — `relative` 클래스 제거로 헤더 여백 버그 수정, 그라데이션 라인 색상 slate 계열로 변경
+- `components/mobile-nav.tsx` — 전면 재설계
+  - 통계 메뉴 서브메뉴 추가 (hover 시 팝업, 수율분석/도정구분별)
+  - SVG Goo Filter 적용 (feGaussianBlur + feColorMatrix) — 물방울 liquid 이동 효과
+  - Leading/Trailing 두 원으로 액체처럼 늘어나는 blob 애니메이션
+  - 낙관적 active 상태 (클릭 즉시 애니메이션, 페이지 로딩과 분리)
+  - 비활성: 아이콘 + 텍스트(두 글자) 표시 / 활성: 파란 원 + 흰 아이콘, 텍스트 숨김
+  - 최종 디자인: 흰 배경, slate-300 테두리, rounded-full, 파란 blob
+- `app/(dashboard)/layout.tsx` — MobileNav variant prop 임시 비교 후 단일 컴포넌트로 복원
+
+**주요 동작:**
+- 메뉴 이동 시 파란 원이 liquid 물방울처럼 자연스럽게 이동
+- 통계 탭 hover/클릭 시 서브메뉴 팝업 (수율분석, 도정구분별)
+- 메뉴 레이블 두 글자 통일 (홈·재고·도정·출고·통계)
+
+---
+
+### 모바일 헤더·네비 그라데이션 라인 적용 + 통계 모바일 UI 계획서 작성 `feat/docs`
+
+**변경 파일:**
+- `components/mobile-header.tsx` — border-b 제거, 하단 2px 그라데이션 라인 추가 (`#6366f1→#3b82f6→#06b6d4` 반복), 헤더 하단 인디고 glow shadow
+- `components/mobile-nav.tsx` — nav에 `relative` 추가, 상단 2px 그라데이션 라인 추가 (투명→인디고→시안→인디고→투명)
+- `docs/plan-stats-mobile.md` — 수율분석 모바일 UI 구현 7단계 계획서 신규 작성
+- `docs/plan-statistics.md` — 개발 상태 체크리스트 추가 (완료 5단계 표시)
+- `docs/plan-packaging-redesign.md` — 모든 체크리스트 완료 표시
+- `public/preview/option-a.html` — 다크 크롬 시안 (헤더 #1e293b)
+- `public/preview/option-b.html` — 블루 헤더 시안 (헤더 gradient blue)
+- `public/preview/option-c.html` — 레이어드 그레이 시안
+- `public/preview/option-stitch.html` — Google Stitch 시안2 HTML
+- `public/preview/option-gradient.html` — G1/G2/G3 그라데이션 방식 비교 시안
+
+**주요 동작:**
+- 모바일 헤더 하단, 하단 네비 상단에 인디고-블루-시안 그라데이션 라인으로 컨텐츠 영역과 시각적 구분
+- G2 방식 채택: 흰 헤더 유지 + 2px 그라데이션 라인 (로고 흰 배경 PNG와 어울림)
+- 통계 모바일 UI 계획서 작성 (SummaryCards 그리드, 차트 레이아웃, 필터 반응형, 테이블 스크롤)
+
+---
+
 ## 2026-03-26
 
 ### 수율분석 통계 개선 (도정구분별 탭 완성 + 생산자 필터 버그 수정) `feat/fix` — `170b7d1`
@@ -219,8 +262,39 @@
 
 ## 2026-03-23
 
+### 포장 입력 재설계 — lotNo 기반 생산자별 섹션 분리 `refactor`
+**커밋:** `9defc62`
+
+**변경 파일:**
+- `app/(dashboard)/milling/add-packaging-dialog.tsx` — `computeLotGroups`로 lotNo 기준 섹션 분리, 자동배분 제거, 섹션별 독립 버튼
+- `lib/lot-generation.ts` — `getYieldRate()` 추가 (백미 68% / 현미 70% / 인디카 65% / 분도미 69%)
+- `app/actions/milling.ts` — `updatePackagingLogs` fallback 로직 명시적 정리
+- 도정유형 명칭 통일: `7분도미` → `칠분도미`, `5분도미` → `오분도미` (소스코드 전체 6개 파일)
+- `scripts/migrate-milling-type.ts` — DB 도정유형 명칭 통일 마이그레이션 스크립트
+
+**주요 동작:**
+- 다중 생산자 배치 시 lotNo별 섹션으로 분리 표시
+- 각 섹션에 독립 규격 버튼 → 버튼 클릭 시 해당 생산자 섹션에만 추가
+- 예상 생산량 = 투입량 × 수율(도정유형별)
+
+---
+
+### 모바일 포장내역 팝업 버그 수정 `fix`
+**커밋:** `6a96ef0`, `d9908dc`
+
+- `stocks prop` 누락으로 포장내역 팝업이 열리지 않던 버그 수정
+- 모바일에서 포장 다이얼로그 저장 버튼이 잘리던 레이아웃 버그 수정
+
+---
+
 ### 사이드바 메뉴 개편 및 관리자 설정 페이지 추가 `feat`
 **커밋:** `1073aae`
+
+- 품종/생산자 관리를 사이드바 상단 독립 메뉴로 승격
+- 관리자 설정(`admin/settings`) 페이지 신규 — 도정유형별 수율 기준값 DB 관리
+- `SystemConfig` Prisma 모델 추가, `getYieldRates` / `setYieldRate` Server Action
+
+---
 
 ### 도정내역 기본 조회기간 1주→1달, 수율 설정화면 2열 레이아웃 `fix`
 **커밋:** `47cf836`
