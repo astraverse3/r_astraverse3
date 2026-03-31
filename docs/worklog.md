@@ -1,5 +1,44 @@
 # 작업일지
 
+## 2026-03-31
+
+### 수율분석 페이지 모바일 팝업 필터 UI 완성 `fix`
+
+**커밋:** `60a0b2e` (팝업 레이아웃 최종), `e8449de`, `f9334c0`, `a3128ac` 외 다수
+
+**변경 파일:**
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx`
+  - 모바일 필터를 바텀시트 팝업으로 전환 (PC 인라인 필터는 유지)
+  - 팝업 위치: `fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)]` — 네비바 위
+  - 팝업 높이: `max-h-[calc(100dvh-52px-3.5rem-env(safe-area-inset-bottom)-16px)]` — 헤더·네비 침범 방지
+  - 스크롤 영역: `flex-1 min-h-0 overflow-y-auto` — 콘텐츠 크기에 맞게
+  - 팝업 기간 섹션: 달력 아이콘 제거, '25년산' 표기, 날짜 2열 grid 입력
+  - 팝업 내 필터 변경 시 fetch 지연 (`showFilter` 체크)
+  - 하단 버튼: 초기화 + 검색 우측 정렬
+  - 선택 칩: 종류별 이어붙이기 (품종: A* B*, 기간: ...) 한 줄 나열
+- `components/statistics/SummaryCards.tsx` — 모바일 2×2 그리드, 레이블·값 한 줄 컴팩트
+- `components/statistics/MillingChart.tsx` — 모바일 isMobile 반응형 (YAxis 숨김, 폰트/dot 축소, h-[260px] 명시)
+- `components/statistics/MultiSeriesChart.tsx` — 동일한 isMobile 패턴 적용
+
+**주요 수정 사항:**
+- `top` + `bottom` 동시 고정 → 패널 강제 확장 버그: `top` 제거 + `max-h` calc로 해결
+- 차트 안 보임: `min-h`로는 ResponsiveContainer 동작 안 함 → 부모에 `h-[260px]` 명시로 해결
+
+---
+
+### 수율분석 페이지 모바일 UI 반응형 적용 `feat`
+
+**커밋:** `e88fa05`
+
+**변경 파일:**
+- `components/statistics/SummaryCards.tsx` — 모바일 2×2 그리드 (`grid-cols-2 md:flex md:flex-col`)
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx`
+  - 빠른기간 버튼 행을 `overflow-x-auto` 가로 스크롤로 전환
+  - 필터 바를 3행 구조로 재설계 (기간 / 드롭다운 / 생산자+버튼)
+  - 차트+카드 레이아웃: 모바일 `flex-col-reverse`(카드 위→차트 아래), PC `md:flex-row`
+
+---
+
 ## 2026-03-30
 
 ### 모바일 네비게이션 바 전면 재설계 `feat`

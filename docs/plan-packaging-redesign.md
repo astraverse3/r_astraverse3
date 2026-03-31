@@ -1,6 +1,7 @@
 # 포장 입력 재설계 계획서
 
 > 작성일: 2026-03-23
+> 완료일: 2026-03-30 (전 항목 완료 확인)
 > 대상 파일: `add-packaging-dialog.tsx`, `app/actions/milling.ts`
 
 ---
@@ -213,17 +214,17 @@ WHERE "millingType" IN ('5분도미', '5분도', '오분도');
 
 ## 8. 작업 순서
 
-- [ ] 1. DB 마이그레이션 실행 (칠분도미/오분도미 통일)
-- [ ] 2. 소스코드 명칭 통일 (위 파일 일괄 변경)
-- [ ] 3. `lib/lot-generation.ts`에 `getYieldRate()` 추가
-- [ ] 4. `add-packaging-dialog.tsx` — `computeLotGroups`, `addToGroup` 구현
-- [ ] 5. 다이얼로그 렌더링 — LotGroup 섹션 구조로 변경
-- [ ] 6. `milling.ts` — fallback 정리
-- [ ] 7. 빌드 확인
+- [x] 1. DB 마이그레이션 실행 (칠분도미/오분도미 통일)
+- [x] 2. 소스코드 명칭 통일 (위 파일 일괄 변경)
+- [x] 3. `lib/lot-generation.ts`에 `getYieldRate()` 추가
+- [x] 4. `add-packaging-dialog.tsx` — `computeLotGroups`, `addToGroup` 구현
+- [x] 5. 다이얼로그 렌더링 — LotGroup 섹션 구조로 변경
+- [x] 6. `milling.ts` — fallback 정리
+- [x] 7. 빌드 확인
 
 ---
 
-## 9. 향후 과제 (이번 작업 범위 외)
+## 9. 향후 과제 ✅ 완료
 
-- 관리자 설정 페이지: 도정유형별 기대수율 DB 관리
-- 수율 함수를 DB 설정값으로 교체
+- [x] 관리자 설정 페이지: 도정유형별 기대수율 DB 관리 (`app/(dashboard)/admin/settings/page.tsx`)
+- [x] 수율 함수를 DB 설정값으로 교체 (`app/actions/settings.ts` — `getYieldRates`, `setYieldRate`)
