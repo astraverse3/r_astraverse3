@@ -378,8 +378,12 @@ export function MillingStatsClient({
 
   function getMobilePeriodLabel(): string {
     if (quickPeriod === 'cropYear') return `'${String(cropYear).slice(2)}년산`
-    if (quickPeriod === 'custom') return `${from.slice(5)}~${to.slice(5)}`
+    if (quickPeriod === 'custom') return '직접입력'
     return QUICK_PERIODS.find(p => p.key === quickPeriod)?.label ?? quickPeriod
+  }
+
+  function getMobilePeriodSub(): string {
+    return `${from.slice(5).replace('-', '/')} ~ ${to.slice(5).replace('-', '/')}`
   }
 
   // ── 활성 필터 카운트 (모바일 뱃지용) ─────────────
@@ -713,8 +717,9 @@ export function MillingStatsClient({
 
         {/* 모바일: 항상 표시 선택값 칩 */}
         <div className="md:hidden px-4 py-2 flex flex-wrap gap-1.5 min-h-[2.5rem]">
-          <span className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-            {getMobilePeriodLabel()}
+          <span className="inline-flex flex-col items-center px-2.5 py-1 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-medium leading-tight">
+            <span className="font-bold text-xs">{getMobilePeriodLabel()}</span>
+            <span className="text-slate-400">{getMobilePeriodSub()}</span>
           </span>
           {selectedVarieties.map(v => (
             <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
@@ -752,7 +757,7 @@ export function MillingStatsClient({
             onClick={() => setShowFilter(false)}
           />
           {/* 패널: 모바일 바텀시트 / PC 중앙 모달 */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[85dvh] sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:rounded-2xl sm:max-h-[80dvh]">
+          <div className="fixed bottom-0 left-3 right-3 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[85dvh] sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:rounded-2xl sm:max-h-[80dvh]">
 
             {/* 헤더 */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
