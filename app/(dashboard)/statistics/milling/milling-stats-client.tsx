@@ -781,7 +781,7 @@ export function MillingStatsClient({
                     <button
                       key={p.key}
                       onClick={() => handleQuickPeriod(p.key)}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap ${
                         quickPeriod === p.key
                           ? 'bg-blue-500 text-white'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -849,7 +849,7 @@ export function MillingStatsClient({
                         key={v}
                         onClick={() => !isDisabled && toggleVariety(v)}
                         disabled={isDisabled}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
                           isDisabled
                             ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
                             : isSelected
@@ -872,7 +872,7 @@ export function MillingStatsClient({
                     <button
                       key={t}
                       onClick={() => toggleMillingType(t)}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
                         selectedMillingTypes.includes(t)
                           ? 'bg-purple-500 text-white'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
