@@ -709,7 +709,7 @@ export function MillingStatsClient({
           </span>
           {/* 품종: 레이블 + 개별 값 */}
           {selectedVarieties.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
               <span className="font-semibold">품종:</span>
               {selectedVarieties.map((v, i) => (
                 <span key={v} className="inline-flex items-center gap-0.5">
@@ -724,7 +724,7 @@ export function MillingStatsClient({
           )}
           {/* 도정: 레이블 + 개별 값 */}
           {selectedMillingTypes.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
               <span className="font-semibold">도정:</span>
               {selectedMillingTypes.map((t, i) => (
                 <span key={t} className="inline-flex items-center gap-0.5">
@@ -739,7 +739,7 @@ export function MillingStatsClient({
           )}
           {/* 생산자: 레이블 + 개별 값 */}
           {appliedFarmers.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
               <span className="font-semibold">생산자:</span>
               {appliedFarmers.map((name, i) => (
                 <span key={name} className="inline-flex items-center gap-0.5">
