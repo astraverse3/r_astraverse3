@@ -756,7 +756,7 @@ export function MillingStatsClient({
             onClick={() => setShowFilter(false)}
           />
           {/* 패널: 모바일 바텀시트 / PC 중앙 모달 */}
-          <div className="fixed top-[52px] bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
+          <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-52px-3.5rem-env(safe-area-inset-bottom)-16px)] overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
 
             {/* 헤더 */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
