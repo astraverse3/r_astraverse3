@@ -49,7 +49,7 @@ const cards = [
 
 export function SummaryCards({ summary }: Props) {
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="grid grid-cols-2 gap-3 md:flex md:flex-col md:h-full">
       {cards.map(card => (
         <div
           key={card.key}

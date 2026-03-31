@@ -406,222 +406,226 @@ export function MillingStatsClient({
         </div>
 
         {/* 검색 조건 행 — 모든 탭 공통 */}
-        <div className="px-4 py-3 flex flex-wrap items-center gap-2">
+        <div className="px-4 py-3 flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-2">
 
-          {/* 빠른기간 칩 */}
-          <div className="flex items-center gap-1">
-            {QUICK_PERIODS.map(p => {
-              if (p.key === 'custom') {
+          {/* 행 1: 빠른기간 버튼 (모바일 가로스크롤) */}
+          <div className="overflow-x-auto md:overflow-visible shrink-0">
+            <div className="flex items-center gap-1 flex-nowrap">
+              {QUICK_PERIODS.map(p => {
+                if (p.key === 'custom') {
+                  return (
+                    <button
+                      key="custom"
+                      onClick={() => handleQuickPeriod('custom')}
+                      title="날짜 직접 입력"
+                      className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                        quickPeriod === 'custom'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                    </button>
+                  )
+                }
                 return (
                   <button
-                    key="custom"
-                    onClick={() => handleQuickPeriod('custom')}
-                    title="날짜 직접 입력"
-                    className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
-                      quickPeriod === 'custom'
+                    key={p.key}
+                    onClick={() => handleQuickPeriod(p.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                      quickPeriod === p.key
                         ? 'bg-blue-500 text-white'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    <Calendar className="w-3.5 h-3.5" />
+                    {p.key === 'cropYear' ? `${cropYear}년산` : p.label}
                   </button>
                 )
-              }
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => handleQuickPeriod(p.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    quickPeriod === p.key
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  {p.key === 'cropYear' ? `${cropYear}년산` : p.label}
-                </button>
-              )
-            })}
+              })}
+
+              {/* 연산 년도 선택 */}
+              {quickPeriod === 'cropYear' && (
+                <div className="flex items-center gap-1 border-l border-slate-100 pl-2">
+                  {cropYearOptions.map(y => (
+                    <button
+                      key={y}
+                      onClick={() => handleCropYear(y)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                        cropYear === y
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-slate-400 hover:bg-slate-50'
+                      }`}
+                    >
+                      {y}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 날짜 직접 입력 */}
+              {showCustomDate && (
+                <div className="flex items-center gap-2 border-l border-slate-100 pl-3">
+                  <input
+                    type="date"
+                    value={from}
+                    onChange={e => handleCustomDate(e.target.value, to)}
+                    className="bg-slate-100 border-0 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                  <span className="text-slate-300 text-xs">~</span>
+                  <input
+                    type="date"
+                    value={to}
+                    onChange={e => handleCustomDate(from, e.target.value)}
+                    className="bg-slate-100 border-0 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* 연산 년도 선택 */}
-          {quickPeriod === 'cropYear' && (
-            <div className="flex items-center gap-1 border-l border-slate-100 pl-2">
-              {cropYearOptions.map(y => (
-                <button
-                  key={y}
-                  onClick={() => handleCropYear(y)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    cropYear === y
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  {y}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* PC 구분선 */}
+          <div className="hidden md:block h-5 w-px bg-slate-100 mx-1" />
 
-          {/* 날짜 직접 입력 */}
-          {showCustomDate && (
-            <div className="flex items-center gap-2 border-l border-slate-100 pl-3">
-              <input
-                type="date"
-                value={from}
-                onChange={e => handleCustomDate(e.target.value, to)}
-                className="bg-slate-100 border-0 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
-              <span className="text-slate-300 text-xs">~</span>
-              <input
-                type="date"
-                value={to}
-                onChange={e => handleCustomDate(from, e.target.value)}
-                className="bg-slate-100 border-0 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-          )}
+          {/* 행 2: 품종/도정구분 드롭다운 */}
+          <div className="flex items-center gap-2">
 
-          {/* 구분선 */}
-          <div className="h-5 w-px bg-slate-100 mx-1" />
-
-          {/* 품종 드롭다운 */}
-          <div className="relative" ref={varietyRef}>
-            <button
-              onClick={() => { setShowVarietyDrop(v => !v); setShowTypeDrop(false) }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                selectedVarieties.length > 0
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              품종 {selectedVarieties.length > 0 && (
-                <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                  {selectedVarieties.length}
-                </span>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </button>
-            {showVarietyDrop && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[160px]">
-                {mainTab === 'variety' && (
-                  <p className="px-4 pt-1.5 pb-1 text-[10px] text-slate-400">
-                    최대 {MAX_VARIETY_SELECT}개 선택
-                  </p>
+            {/* 품종 드롭다운 */}
+            <div className="relative" ref={varietyRef}>
+              <button
+                onClick={() => { setShowVarietyDrop(v => !v); setShowTypeDrop(false) }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  selectedVarieties.length > 0
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                품종 {selectedVarieties.length > 0 && (
+                  <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                    {selectedVarieties.length}
+                  </span>
                 )}
-                {varietyOptions.map(v => {
-                  const isSelected = selectedVarieties.includes(v)
-                  const isDisabled = mainTab === 'variety' && !isSelected && selectedVarieties.length >= MAX_VARIETY_SELECT
-                  return (
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {showVarietyDrop && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[160px]">
+                  {mainTab === 'variety' && (
+                    <p className="px-4 pt-1.5 pb-1 text-[10px] text-slate-400">
+                      최대 {MAX_VARIETY_SELECT}개 선택
+                    </p>
+                  )}
+                  {varietyOptions.map(v => {
+                    const isSelected = selectedVarieties.includes(v)
+                    const isDisabled = mainTab === 'variety' && !isSelected && selectedVarieties.length >= MAX_VARIETY_SELECT
+                    return (
+                      <button
+                        key={v}
+                        onClick={() => !isDisabled && toggleVariety(v)}
+                        disabled={isDisabled}
+                        className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 ${
+                          isDisabled
+                            ? 'text-slate-300 cursor-not-allowed'
+                            : isSelected
+                              ? 'text-blue-600 font-semibold hover:bg-slate-50'
+                              : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                          isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <span className="text-white text-[8px]">✓</span>}
+                        </span>
+                        {v}
+                      </button>
+                    )
+                  })}
+                  {selectedVarieties.length > 0 && (
                     <button
-                      key={v}
-                      onClick={() => !isDisabled && toggleVariety(v)}
-                      disabled={isDisabled}
-                      className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 ${
-                        isDisabled
-                          ? 'text-slate-300 cursor-not-allowed'
-                          : isSelected
-                            ? 'text-blue-600 font-semibold hover:bg-slate-50'
-                            : 'text-slate-600 hover:bg-slate-50'
+                      onClick={() => setSelectedVarieties([])}
+                      className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
+                    >
+                      전체 해제
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 도정구분 드롭다운 */}
+            <div className="relative" ref={typeRef}>
+              <button
+                onClick={() => { setShowTypeDrop(t => !t); setShowVarietyDrop(false) }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  selectedMillingTypes.length > 0
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                도정구분 {selectedMillingTypes.length > 0 && (
+                  <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                    {selectedMillingTypes.length}
+                  </span>
+                )}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {showTypeDrop && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[140px]">
+                  {millingTypeOptions.map(t => (
+                    <button
+                      key={t}
+                      onClick={() => toggleMillingType(t)}
+                      className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center gap-2 ${
+                        selectedMillingTypes.includes(t) ? 'text-blue-600 font-semibold' : 'text-slate-600'
                       }`}
                     >
                       <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
+                        selectedMillingTypes.includes(t) ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
                       }`}>
-                        {isSelected && <span className="text-white text-[8px]">✓</span>}
+                        {selectedMillingTypes.includes(t) && <span className="text-white text-[8px]">✓</span>}
                       </span>
-                      {v}
+                      {t}
                     </button>
-                  )
-                })}
-                {selectedVarieties.length > 0 && (
-                  <button
-                    onClick={() => setSelectedVarieties([])}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
-                  >
-                    전체 해제
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* 도정구분 드롭다운 */}
-          <div className="relative" ref={typeRef}>
-            <button
-              onClick={() => { setShowTypeDrop(t => !t); setShowVarietyDrop(false) }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                selectedMillingTypes.length > 0
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              도정구분 {selectedMillingTypes.length > 0 && (
-                <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                  {selectedMillingTypes.length}
-                </span>
+                  ))}
+                  {selectedMillingTypes.length > 0 && (
+                    <button
+                      onClick={() => setSelectedMillingTypes([])}
+                      className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
+                    >
+                      전체 해제
+                    </button>
+                  )}
+                </div>
               )}
-              <ChevronDown className="w-3 h-3" />
-            </button>
-            {showTypeDrop && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[140px]">
-                {millingTypeOptions.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => toggleMillingType(t)}
-                    className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center gap-2 ${
-                      selectedMillingTypes.includes(t) ? 'text-blue-600 font-semibold' : 'text-slate-600'
-                    }`}
-                  >
-                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                      selectedMillingTypes.includes(t) ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
-                    }`}>
-                      {selectedMillingTypes.includes(t) && <span className="text-white text-[8px]">✓</span>}
-                    </span>
-                    {t}
-                  </button>
-                ))}
-                {selectedMillingTypes.length > 0 && (
-                  <button
-                    onClick={() => setSelectedMillingTypes([])}
-                    className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
-                  >
-                    전체 해제
-                  </button>
-                )}
-              </div>
-            )}
+            </div>
           </div>
 
-          {/* 구분선 */}
-          <div className="h-5 w-px bg-slate-100 mx-1" />
+          {/* PC 구분선 */}
+          <div className="hidden md:block h-5 w-px bg-slate-100 mx-1" />
 
-          {/* 생산자 검색 */}
-          <div className="flex items-center gap-1.5">
+          {/* 행 3: 생산자 검색 + 버튼 */}
+          <div className="flex items-center gap-1.5 md:flex-none">
             <input
               type="text"
               value={farmerInput}
               onChange={e => setFarmerInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
               placeholder="생산자명 (쉼표로 구분)"
-              className="bg-slate-100 border-0 rounded-lg px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 w-44"
+              className="bg-slate-100 border-0 rounded-lg px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 flex-1 md:w-44 md:flex-none"
             />
-          </div>
-
-          {/* 검색 / 초기화 버튼 */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button
-              onClick={handleReset}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors"
-            >
-              초기화
-            </button>
-            <button
-              onClick={handleSearch}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 active:bg-blue-700 transition-colors"
-            >
-              <Search className="w-3.5 h-3.5" />
-              검색
-            </button>
+            <div className="flex items-center gap-1.5 ml-auto md:ml-0">
+              <button
+                onClick={handleReset}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors"
+              >
+                초기화
+              </button>
+              <button
+                onClick={handleSearch}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 active:bg-blue-700 transition-colors"
+              >
+                <Search className="w-3.5 h-3.5" />
+                검색
+              </button>
+            </div>
           </div>
         </div>
 
@@ -666,7 +670,7 @@ export function MillingStatsClient({
       </div>
 
       {/* ── 차트 + 요약 카드 ── */}
-      <div className="flex gap-4 items-stretch">
+      <div className="flex flex-col-reverse gap-4 md:flex-row md:items-stretch">
         <div className="flex-1 min-w-0">
           {mainTab === 'period' && (
             <MillingChart data={data.chartData} groupBy={data.groupBy} />
@@ -678,7 +682,7 @@ export function MillingStatsClient({
             <MultiSeriesChart data={millingTypeChartData} title="도정구분별" />
           )}
         </div>
-        <div className="w-48 shrink-0">
+        <div className="md:w-48 md:shrink-0">
           <SummaryCards summary={data.summary} />
         </div>
       </div>
