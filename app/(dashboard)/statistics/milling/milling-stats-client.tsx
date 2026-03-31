@@ -899,19 +899,19 @@ export function MillingStatsClient({
             </div>
 
             {/* 하단 버튼 */}
-            <div className="px-5 py-4 border-t border-slate-100 flex gap-2 shrink-0">
+            <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
               <button
                 onClick={() => { handleReset(); setShowFilter(false) }}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors"
               >
                 초기화
               </button>
               <button
                 onClick={() => { handleSearch(); setShowFilter(false) }}
-                className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
               >
                 <Search className="w-4 h-4" />
-                검색 적용
+                검색
               </button>
             </div>
           </div>
