@@ -301,6 +301,8 @@ export function MillingStatsClient({
     setFrom(format(r.from, 'yyyy-MM-dd'))
     setTo(format(r.to, 'yyyy-MM-dd'))
     setShowCustomDate(false)
+    // 모바일 팝업 열려있을 때는 검색버튼 클릭 시 fetch
+    if (showFilter) return
     fetchCurrent(mainTab, {
       from: format(r.from, 'yyyy-MM-dd'),
       to: format(r.to, 'yyyy-MM-dd'),
@@ -316,6 +318,8 @@ export function MillingStatsClient({
       const r = resolveQuickPeriod('cropYear', year)
       setFrom(format(r.from, 'yyyy-MM-dd'))
       setTo(format(r.to, 'yyyy-MM-dd'))
+      // 모바일 팝업 열려있을 때는 검색버튼 클릭 시 fetch
+      if (showFilter) return
       fetchCurrent(mainTab, {
         from: format(r.from, 'yyyy-MM-dd'),
         to: format(r.to, 'yyyy-MM-dd'),
@@ -369,6 +373,12 @@ export function MillingStatsClient({
   function getPeriodLabel(): string {
     if (quickPeriod === 'cropYear') return `${cropYear}년산`
     if (quickPeriod === 'custom') return `${from} ~ ${to}`
+    return QUICK_PERIODS.find(p => p.key === quickPeriod)?.label ?? quickPeriod
+  }
+
+  function getMobilePeriodLabel(): string {
+    if (quickPeriod === 'cropYear') return `'${String(cropYear).slice(2)}년산`
+    if (quickPeriod === 'custom') return `${from.slice(5)}~${to.slice(5)}`
     return QUICK_PERIODS.find(p => p.key === quickPeriod)?.label ?? quickPeriod
   }
 
@@ -703,8 +713,8 @@ export function MillingStatsClient({
 
         {/* 모바일: 항상 표시 선택값 칩 */}
         <div className="md:hidden px-4 py-2 flex flex-wrap gap-1.5 min-h-[2.5rem]">
-          <span className="inline-flex items-center px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-            기간: {getPeriodLabel()}
+          <span className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+            {getMobilePeriodLabel()}
           </span>
           {selectedVarieties.map(v => (
             <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
