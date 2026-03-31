@@ -770,7 +770,7 @@ export function MillingStatsClient({
             </div>
 
             {/* 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+            <div className="overflow-y-auto px-5 py-3 flex flex-col gap-4">
 
               {/* 기간 */}
               <div>
