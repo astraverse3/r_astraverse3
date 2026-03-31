@@ -917,8 +917,9 @@ export function MillingStatsClient({
       )}
 
       {/* ── 차트 + 요약 카드 ── */}
-      <div className="flex flex-col-reverse gap-4 md:flex-row md:items-stretch">
-        <div className="min-h-[260px] md:flex-1 md:min-w-0 md:min-h-0">
+      <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
+        {/* 차트 */}
+        <div className="h-[260px] md:h-auto md:flex-1 md:min-w-0">
           {mainTab === 'period' && (
             <MillingChart data={data.chartData} groupBy={data.groupBy} />
           )}
@@ -929,6 +930,7 @@ export function MillingStatsClient({
             <MultiSeriesChart data={millingTypeChartData} title="도정구분별" />
           )}
         </div>
+        {/* 카드: 모바일 차트 아래 / PC 오른쪽 */}
         <div className="md:w-48 md:shrink-0">
           <SummaryCards summary={data.summary} />
         </div>
