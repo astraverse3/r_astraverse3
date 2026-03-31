@@ -389,7 +389,7 @@ export function MillingStatsClient({
 
   // ── 렌더 ─────────────────────────────────────────
   return (
-    <div className="w-full flex flex-col gap-4 px-1.5 sm:px-0">
+    <div className="w-full flex flex-col gap-2 px-1.5 sm:px-0 sm:gap-4">
 
       {/* ── 탭 + 필터 ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
@@ -917,7 +917,7 @@ export function MillingStatsClient({
       )}
 
       {/* ── 차트 + 요약 카드 ── */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
+      <div className="flex flex-col gap-2 md:flex-row md:gap-4 md:items-stretch">
         {/* 차트 */}
         <div className="h-[260px] md:h-auto md:flex-1 md:min-w-0">
           {mainTab === 'period' && (
