@@ -702,52 +702,34 @@ export function MillingStatsClient({
         </div>
 
         {/* 모바일: 항상 표시 선택값 칩 */}
-        <div className="md:hidden px-4 py-2 min-h-[2.5rem] leading-loose">
-          <span className="inline-flex items-center px-2.5 py-1 mr-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+        <div className="md:hidden px-4 py-2 flex flex-wrap gap-1.5 min-h-[2.5rem]">
+          <span className="inline-flex items-center px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
             기간: {getPeriodLabel()}
           </span>
-          {selectedVarieties.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-              <span className="font-semibold">품종:</span>
-              {selectedVarieties.map((v, i) => (
-                <span key={v} className="inline-flex items-center gap-0.5">
-                  {i > 0 && <span className="text-blue-300">·</span>}
-                  {v}
-                  <button onClick={() => removeVarietyChip(v)} className="text-blue-400 hover:text-blue-700 transition-colors ml-0.5">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+          {selectedVarieties.map(v => (
+            <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+              {v}
+              <button onClick={() => removeVarietyChip(v)} className="text-blue-400 hover:text-blue-700 transition-colors">
+                <X className="w-3 h-3" />
+              </button>
             </span>
-          )}
-          {selectedMillingTypes.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
-              <span className="font-semibold">도정:</span>
-              {selectedMillingTypes.map((t, i) => (
-                <span key={t} className="inline-flex items-center gap-0.5">
-                  {i > 0 && <span className="text-purple-300">·</span>}
-                  {t}
-                  <button onClick={() => removeMillingTypeChip(t)} className="text-purple-400 hover:text-purple-700 transition-colors ml-0.5">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+          ))}
+          {selectedMillingTypes.map(t => (
+            <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
+              {t}
+              <button onClick={() => removeMillingTypeChip(t)} className="text-purple-400 hover:text-purple-700 transition-colors">
+                <X className="w-3 h-3" />
+              </button>
             </span>
-          )}
-          {appliedFarmers.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
-              <span className="font-semibold">생산자:</span>
-              {appliedFarmers.map((name, i) => (
-                <span key={name} className="inline-flex items-center gap-0.5">
-                  {i > 0 && <span className="text-emerald-300">·</span>}
-                  {name}
-                  <button onClick={() => removeFarmerChip(name)} className="text-emerald-400 hover:text-emerald-700 transition-colors ml-0.5">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+          ))}
+          {appliedFarmers.map(name => (
+            <span key={name} className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+              {name}
+              <button onClick={() => removeFarmerChip(name)} className="text-emerald-400 hover:text-emerald-700 transition-colors">
+                <X className="w-3 h-3" />
+              </button>
             </span>
-          )}
+          ))}
         </div>
       </div>
 
