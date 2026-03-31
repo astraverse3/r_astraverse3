@@ -918,7 +918,7 @@ export function MillingStatsClient({
 
       {/* ── 차트 + 요약 카드 ── */}
       <div className="flex flex-col-reverse gap-4 md:flex-row md:items-stretch">
-        <div className="flex-1 min-w-0">
+        <div className="min-h-[260px] md:flex-1 md:min-w-0 md:min-h-0">
           {mainTab === 'period' && (
             <MillingChart data={data.chartData} groupBy={data.groupBy} />
           )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   ComposedChart,
   Bar,
@@ -177,6 +178,16 @@ type Props = {
 }
 
 export function MultiSeriesChart({ data, title }: Props) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
   const { periods, seriesNames, groupBy } = data
   const isEmpty = periods.length === 0
 
@@ -205,18 +216,21 @@ export function MultiSeriesChart({ data, title }: Props) {
   const tonTicks   = computeTonTicks(maxKg)
   const maxBarSize = getMaxBarSize(seriesNames.length)
 
+  const margin     = isMobile ? { top: 4, right: 4, left: 0, bottom: 0 } : { top: 5, right: 16, left: 0, bottom: 5 }
+  const tickFontSz = isMobile ? 10 : 12
+
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-full flex flex-col">
-      <div className="flex items-start justify-between mb-4 shrink-0 gap-2 flex-wrap">
-        <h3 className="text-sm font-semibold text-slate-700">
+    <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-slate-100 h-full flex flex-col">
+      <div className="flex items-start justify-between mb-2 md:mb-4 shrink-0 gap-2 flex-wrap">
+        <h3 className="text-xs md:text-sm font-semibold text-slate-700">
           {GROUP_BY_LABEL[groupBy]} {title} 투입/생산량 및 수율
         </h3>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] md:text-xs md:gap-x-3 text-slate-400">
           {seriesNames.map((name, i) => {
             const color = PALETTE[i % PALETTE.length]
             return (
-              <span key={name} className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color.output }} />
+              <span key={name} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-sm inline-block" style={{ backgroundColor: color.output }} />
                 {name}
               </span>
             )
@@ -231,35 +245,48 @@ export function MultiSeriesChart({ data, title }: Props) {
       ) : (
         <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
+            <ComposedChart data={chartData} margin={margin}>
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 12, fill: '#94A3B8' }}
+                tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => formatXTick(v, groupBy)}
+                interval="preserveStartEnd"
               />
               <YAxis
                 yAxisId="kg"
                 orientation="left"
                 ticks={tonTicks}
                 domain={[0, tonTicks[tonTicks.length - 1]]}
-                tick={{ fontSize: 12, fill: '#94A3B8' }}
+                tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
                 axisLine={false}
                 tickLine={false}
+                width={isMobile ? 28 : 40}
                 tickFormatter={v => v === 0 ? '0' : `${(v / 1000).toFixed(v < 1000 ? 1 : 0)}t`}
               />
-              <YAxis
-                yAxisId="rate"
-                orientation="right"
-                domain={YIELD_DOMAIN}
-                ticks={YIELD_TICKS}
-                tick={{ fontSize: 12, fill: '#94A3B8' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={v => `${v}%`}
-                allowDataOverflow
-              />
+              {!isMobile && (
+                <YAxis
+                  yAxisId="rate"
+                  orientation="right"
+                  domain={YIELD_DOMAIN}
+                  ticks={YIELD_TICKS}
+                  tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={v => `${v}%`}
+                  allowDataOverflow
+                />
+              )}
+              {isMobile && (
+                <YAxis
+                  yAxisId="rate"
+                  orientation="right"
+                  domain={YIELD_DOMAIN}
+                  ticks={YIELD_TICKS}
+                  hide
+                />
+              )}
               <Tooltip
                 content={<CustomTooltip seriesNames={seriesNames} />}
                 cursor={{ fill: 'rgba(0,0,0,0.04)' }}
@@ -321,8 +348,8 @@ export function MultiSeriesChart({ data, title }: Props) {
                     name={`${name} 수율`}
                     stroke={color.yield}
                     strokeWidth={2}
-                    dot={{ r: 3, fill: color.yield, strokeWidth: 0 }}
-                    activeDot={{ r: 5 }}
+                    dot={{ r: isMobile ? 2 : 3, fill: color.yield, strokeWidth: 0 }}
+                    activeDot={{ r: isMobile ? 4 : 5 }}
                     connectNulls={false}
                     legendType="none"
                   />
