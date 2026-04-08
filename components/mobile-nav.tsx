@@ -1,12 +1,13 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Box, Clipboard, Compass, Activity, ArrowRightLeft, BarChart2, Layers } from 'lucide-react';
+import { Box, Clipboard, Compass, Activity, ArrowRightLeft, BarChart2, Layers, Package } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const statsSubItems = [
     { href: '/statistics/milling', label: '수율 분석', icon: BarChart2 },
-    { href: '/statistics/millingtype', label: '도정구분별', icon: Layers },
+    { href: '/statistics/release', label: '출고분석', icon: Layers },
+    { href: '/statistics/stock', label: '재고분석', icon: Package },
 ];
 
 const navItems = [
