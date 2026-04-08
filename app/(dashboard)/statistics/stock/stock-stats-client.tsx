@@ -152,17 +152,32 @@ function StockSummaryCards({ summary }: { summary: StockStatisticsData['summary'
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-2 md:w-48 md:shrink-0 md:h-[416px]">
+    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:w-48 md:shrink-0">
       {cards.map(card => (
-        <div key={card.label} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden md:flex-1 md:min-h-0">
+        <div key={card.label} className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-slate-100 overflow-hidden md:flex-1 md:min-h-0">
+          {/* 공통: 상단 컬러 띠 */}
           <div className="h-[3px]" style={{ backgroundColor: card.accent }} />
-          <div className="px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
+          {/* 모바일: 컴팩트 가로 레이아웃 */}
+          <div className="md:hidden px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
             <p className="text-xs font-medium text-slate-400 shrink-0">{card.label}</p>
             <div className="flex items-baseline gap-0.5 min-w-0">
               <span className="text-sm font-bold tabular-nums truncate" style={{ color: card.valueColor }}>
                 {card.value}
               </span>
               <span className="text-xs font-medium text-slate-400 shrink-0">{card.unit}</span>
+            </div>
+          </div>
+          {/* PC: 상하 레이아웃 */}
+          <div className="hidden md:flex md:flex-col md:justify-center md:h-full md:px-4 md:py-3">
+            <div className="flex items-center gap-1 mb-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: card.accent }} />
+              <span className="text-xs font-bold text-slate-500">{card.label}</span>
+            </div>
+            <div className="flex items-baseline justify-end gap-1">
+              <span className="text-2xl font-bold leading-none" style={{ color: card.valueColor }}>
+                {card.value}
+              </span>
+              <span className="text-xs font-semibold text-slate-500">{card.unit}</span>
             </div>
           </div>
         </div>
@@ -203,7 +218,7 @@ function CertBadge({ certType }: { certType: string }) {
 function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="text-xs" style={{ minWidth: '560px' }}>
+      <table className="w-full text-xs" style={{ minWidth: '560px' }}>
         <thead>
           <tr className="border-b border-slate-200 bg-slate-50">
             <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">생산자명</th>
@@ -245,7 +260,7 @@ function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
 function GroupTable({ rows }: { rows: GroupStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="text-xs" style={{ minWidth: '620px' }}>
+      <table className="w-full text-xs" style={{ minWidth: '620px' }}>
         <thead>
           <tr className="border-b border-slate-200 bg-slate-50">
             <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">작목반명</th>
@@ -291,7 +306,7 @@ function GroupTable({ rows }: { rows: GroupStockRow[] }) {
 function VarietyTable({ rows }: { rows: VarietyStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="text-xs" style={{ minWidth: '480px' }}>
+      <table className="w-full text-xs" style={{ minWidth: '480px' }}>
         <thead>
           <tr className="border-b border-slate-200 bg-slate-50">
             <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">품종명</th>
@@ -947,7 +962,7 @@ export function StockStatsClient({
       <div className="flex flex-col md:flex-row gap-2 md:gap-3 md:items-stretch">
 
         {/* 차트 (최대 10개 스크롤 영역) */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col md:h-[416px]">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
               {activeTab === 'farmer'  && `생산자별 상위 ${Math.min(farmerChartItems.length, MAX_CHART_ITEMS)}개`}

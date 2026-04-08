@@ -49,20 +49,35 @@ const cards = [
 
 export function SummaryCards({ summary }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-2 md:h-full">
+    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:h-full">
       {cards.map(card => (
         <div
           key={card.key}
-          className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 md:min-h-0"
+          className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex-1 md:min-h-0"
         >
+          {/* 공통: 상단 컬러 띠 */}
           <div className="h-[3px]" style={card.dotStyle} />
-          <div className="px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
+          {/* 모바일: 컴팩트 가로 레이아웃 */}
+          <div className="md:hidden px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
             <p className="text-xs font-medium text-slate-400 shrink-0">{card.label}</p>
             <div className="flex items-baseline gap-0.5 min-w-0">
               <span className="text-sm font-bold tabular-nums truncate" style={card.valueStyle}>
                 {card.format(summary[card.key] as number)}
               </span>
               <span className="text-xs font-medium text-slate-400 shrink-0">{card.unit}</span>
+            </div>
+          </div>
+          {/* PC: 상하 레이아웃 */}
+          <div className="hidden md:flex md:flex-col md:justify-center md:h-full md:px-4 md:py-3">
+            <div className="flex items-center gap-1 mb-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={card.dotStyle} />
+              <span className="text-xs font-bold text-slate-500">{card.label}</span>
+            </div>
+            <div className="flex items-baseline justify-end gap-1">
+              <span className="text-2xl font-bold leading-none" style={card.valueStyle}>
+                {card.format(summary[card.key] as number)}
+              </span>
+              <span className="text-xs font-semibold text-slate-500">{card.unit}</span>
             </div>
           </div>
         </div>
