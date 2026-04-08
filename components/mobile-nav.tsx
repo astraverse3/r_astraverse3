@@ -5,9 +5,9 @@ import { Box, Clipboard, Compass, Activity, ArrowRightLeft, BarChart2, Layers, P
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const statsSubItems = [
-    { href: '/statistics/milling', label: '수율 분석', icon: BarChart2 },
-    { href: '/statistics/release', label: '출고분석', icon: Layers },
-    { href: '/statistics/stock', label: '재고분석', icon: Package },
+    { href: '/statistics/milling', label: '수율분석', icon: BarChart2 },
+    { href: '/statistics/stock',   label: '재고분석', icon: Package },
+    { href: '/statistics/output',  label: '출고분석', icon: Layers },
 ];
 
 const navItems = [

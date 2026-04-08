@@ -94,6 +94,15 @@ export function DesktopSidebar() {
                             >
                                 재고분석
                             </Link>
+                            <Link
+                                href="/statistics/output"
+                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/output')
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                    }`}
+                            >
+                                출고분석
+                            </Link>
                         </div>
                     </div>
                 </div>
