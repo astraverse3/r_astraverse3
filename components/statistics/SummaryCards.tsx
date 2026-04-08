@@ -49,26 +49,21 @@ const cards = [
 
 export function SummaryCards({ summary }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:h-full">
+    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-2 md:h-full">
       {cards.map(card => (
         <div
           key={card.key}
-          className={`bg-gradient-to-br ${card.gradient} rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3 shadow-sm border border-slate-100 flex-1 flex items-center justify-between md:flex-col md:items-stretch md:justify-center`}
+          className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 md:min-h-0"
         >
-          {/* 모바일: 레이블 왼쪽, 값 오른쪽 한 줄 / PC: 기존 상하 배치 */}
-          <div className="flex items-center gap-1 md:mb-2">
-            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full shrink-0" style={card.dotStyle} />
-            <span className="text-xs font-bold text-slate-500">
-              {card.label}
-            </span>
-          </div>
-          <div className="flex items-baseline gap-0.5 md:justify-end md:gap-1">
-            <span className="text-base font-bold leading-none md:text-2xl" style={card.valueStyle}>
-              {card.format(summary[card.key] as number)}
-            </span>
-            <span className="text-[10px] font-semibold text-slate-400 md:text-xs md:text-slate-500">
-              {card.unit}
-            </span>
+          <div className="h-[3px]" style={card.dotStyle} />
+          <div className="px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
+            <p className="text-xs font-medium text-slate-400 shrink-0">{card.label}</p>
+            <div className="flex items-baseline gap-0.5 min-w-0">
+              <span className="text-sm font-bold tabular-nums truncate" style={card.valueStyle}>
+                {card.format(summary[card.key] as number)}
+              </span>
+              <span className="text-xs font-medium text-slate-400 shrink-0">{card.unit}</span>
+            </div>
           </div>
         </div>
       ))}

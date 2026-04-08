@@ -1,5 +1,119 @@
 # 작업일지
 
+## 2026-04-08
+
+### 재고분석 모바일 UI 개선 (바텀시트 팝업·차트·테이블) `feat`
+
+**변경 파일:**
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx`
+  - 탭 바 우측: 모바일 전용 필터 버튼 추가 (`md:hidden`, 활성 필터 수 배지 포함)
+  - PC 인라인 필터 바 `hidden md:block` 래퍼로 감싸기
+  - 모바일 칩 영역 `md:hidden` 추가 (연산년산 + 활성 필터 칩 항상 표시)
+  - 바텀시트 팝업 구현: 연산/인증구분/작목반/품종(체크박스 리스트)/생산자 섹션
+  - 작목반·품종 팝업 필터: 버튼 그룹 → 스크롤 체크박스 리스트 (`max-h-[90px]`)
+  - 차트: `barSize=14` 고정, 최대 10개 스크롤 영역(`maxHeight: 10×34px`)
+  - 작목반별 차트: `truncateLabels` prop으로 4자 후 `…` 처리, 클릭 시 전체 표시
+  - 테이블 3개: `text-sm` → `text-xs`, 모든 셀 `whitespace-nowrap`, `minWidth` 지정
+  - 테이블 컨테이너 `mb-2` 추가 (하단 메뉴바 여백)
+  - 모바일 칩 삭제: `removeChipCertType` / `removeChipGroup` / `removeChipVariety` / `removeChipFarmer` 핸들러 추가 → 즉시 fetch
+- `components/statistics/StockChart.tsx`
+  - `barSize=14` 고정 추가 (barCategoryGap 변경 시 막대 두께 불변)
+  - `truncateLabels` prop 추가: true면 커스텀 TruncatedTick, false면 기본 recharts tick
+  - `yAxisWidth`: truncate 시 68px 고정 / 일반 시 이름 길이 기준
+  - `margin right` 60 → 48px
+- `components/statistics/SummaryCards.tsx`
+  - 카드 레이아웃: 라벨 + 값+단위 한 줄 배치 (컴팩트, `text-2xl` → `text-sm`)
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx` `StockSummaryCards`
+  - 동일한 컴팩트 레이아웃 적용
+
+---
+
+## 2026-04-07
+
+### 재고분석 차트·서머리카드·레이아웃 개편 `feat`
+
+**변경 파일:**
+- `app/actions/stock-statistics.ts`
+  - `processRate` → `stockRate` 필드명 변경
+  - 계산식 변경: 처리율(consumed+released/total) → 재고율(available/total)
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx`
+  - 서머리카드 4번째: "생산자 수" → "재고율"
+  - 카드 레이아웃: 모바일 2×2 / PC 우측 수직(md:w-48, h-[416px])
+  - 테이블 "처리율" → "재고율" (전체 탭), 재고율 색상 반전(낮을수록 초록)
+  - 인증 뱃지 색상 구분: 유기농(초록), 무농약(파랑), 일반(회색)
+  - 차트 데이터 포인트 10 → 20개, "기타" 집계 제거
+  - 레이아웃: 차트(좌, flex-1) + 서머리카드(우) flex row
+  - 차트 컨테이너 고정 높이 416px + 내부 스크롤
+- `components/statistics/StockChart.tsx`
+  - Y축 너비 계산: ×13 max 200 → ×10 max 150 (한글 기준 최적화)
+- `components/statistics/SummaryCards.tsx`
+  - 수율분석 서머리카드 디자인 재고분석 스타일로 통일 (그라디언트→흰 배경+컬러 탑바)
+
+---
+
+### 재고분석 페이지 필터·UI 개선 `feat`
+
+**변경 파일:**
+- `app/actions/stock-statistics.ts`
+  - `StockFilters`에 `varietyIds`, `farmerNames` 추가
+  - `getStockVarietyOptions` Server Action 추가
+  - `GroupStockRow`, `VarietyStockRow`에 `releasedKg` 필드 추가 및 집계 반영
+  - 생산자 수 카드: 미처리 생산자 수 → 검색 조건 내 전체 생산자 수(`farmerMap.size`)
+- `app/(dashboard)/statistics/stock/page.tsx`
+  - `getStockVarietyOptions` 초기 fetch 추가
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx`
+  - 탭 순서 변경: 품종별 → 작목반별 → 생산자별 (기본 탭: 품종별)
+  - 품종 멀티셀렉트 드롭다운 필터 추가
+  - 생산자 텍스트 검색 필터 추가 (쉼표 구분, trim 처리)
+  - 초기화/검색 버튼 추가 (검색 버튼 클릭 시에만 조회)
+  - 테이블 헤더 행 `bg-slate-50` 배경으로 데이터 행과 구분
+  - 작목반·품종 테이블에 직접출고(kg) 열 추가
+  - 차트 x축 가이드라인 추가 (`CartesianGrid`)
+  - 최대 차트 표시 개수 15 → 10개
+- `components/statistics/StockChart.tsx`
+  - `CartesianGrid horizontal={false}` 추가 (x축 수직 가이드라인)
+- `app/(dashboard)/milling/stock-list-dialog.tsx`
+  - 컬럼 헤더 "농가명" → "생산자명"
+- `app/actions/admin.ts`, `app/actions/excel.ts`, `app/actions/milling.ts`
+  - UI 표시 용어 "농가" → "생산자" 전면 통일
+
+---
+
+## 2026-04-05
+
+### 재고분석 통계 페이지 PC UI 구축 `feat`
+
+**변경 파일:**
+- `app/actions/stock-statistics.ts` (NEW)
+  - `getStockStatistics`, `getStockProductionYears`, `getStockGroupOptions` Server Action
+  - 농가별/작목반별/품종별 집계, 요약 카드 데이터 (Prisma include + JS Map 패턴)
+- `app/(dashboard)/statistics/stock/page.tsx` (NEW)
+  - 서버 컴포넌트, Promise.all로 초기 데이터 + 필터 옵션 동시 fetch
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx` (NEW)
+  - 필터(연산·작목반), 요약 카드 4개, 탭 3개(농가별/작목반별/품종별)
+  - useTransition + Server Action으로 리필터링
+- `components/statistics/StockChart.tsx` (NEW)
+  - Recharts `BarChart layout="vertical"` 가로 스택 막대 차트
+  - 도정완료(초록) / 직접출고(보라) / 미처리(주황) 스택
+- `components/desktop-sidebar.tsx`
+  - 통계 서브메뉴에 재고분석(`/statistics/stock`) 항목 추가
+
+---
+
+## 2026-04-03
+
+### 수율분석 포장내역 팝업 소계 위치 수정 + 스크롤 잘림 수정 `fix`
+
+**변경 파일:**
+- `components/statistics/MillingTable.tsx`
+  - 포장내역 팝업 그룹 헤더에 있던 소계를 아이템 목록 하단으로 이동
+  - 그룹이 여러 개일 때만 각 그룹 하단에 소계 행 표시
+- `app/(dashboard)/layout.tsx`
+  - 모바일 하단 padding `pb-[calc(3.5rem+env(safe-area-inset-bottom))]` → `+1rem` 추가
+  - 마지막 스크롤 시 nav바에 가리는 문제 해결
+
+---
+
 ## 2026-03-31
 
 ### 수율분석 페이지 모바일 팝업 필터 UI 완성 `fix`

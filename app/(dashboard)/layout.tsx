@@ -21,7 +21,7 @@ export default function DashboardLayout({
                 <DesktopSidebar />
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col min-h-screen bg-transparent lg:pl-64 pt-[44px] pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0">
+                <div className="flex-1 flex flex-col min-h-screen bg-transparent lg:pl-64 pt-[44px] pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] lg:pt-0 lg:pb-0">
 
                     {/* Desktop Header (Hidden on Mobile) */}
                     <header className="hidden lg:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6 z-40">

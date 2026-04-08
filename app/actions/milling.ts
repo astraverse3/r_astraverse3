@@ -343,7 +343,7 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
         // Use helper to generate Lot No consistent with Stock logic
-        // 관행(일반) 농가는 로트번호 없음
+        // 관행(일반) 생산자는 로트번호 없음
         const isConventional = targetStock.farmer.group?.certType === '일반';
         const lotNo = isConventional ? null : generateLotNo({
             incomingDate: targetStock.incomingDate,
@@ -413,7 +413,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     : batch.stocks[0];
                 const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
 
-                // 관행(일반) 농가는 로트번호 없음
+                // 관행(일반) 생산자는 로트번호 없음
                 const isConventional = targetStock.farmer.group?.certType === '일반';
                 const lotNo = isConventional ? null : generateLotNo({
                     incomingDate: targetStock.incomingDate,

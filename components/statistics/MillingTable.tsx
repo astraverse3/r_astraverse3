@@ -89,13 +89,6 @@ function PackagingPopup({ row, onClose }: { row: TableRow; onClose: () => void }
                         {group.lotNo}
                       </span>
                     ) : null}
-                    {isMultiGroup && (
-                      <div className="flex-1 flex justify-end">
-                        <span className="text-[11px] font-bold text-stone-600">
-                          {groupTotal.toLocaleString()} kg
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -123,6 +116,13 @@ function PackagingPopup({ row, onClose }: { row: TableRow; onClose: () => void }
                       </div>
                     </div>
                   ))}
+                  {/* 소계 (그룹이 여러 개일 때만) */}
+                  {isMultiGroup && (
+                    <div className="flex justify-end items-center gap-1.5 px-3 py-1.5 bg-stone-50/70">
+                      <span className="text-[11px] text-stone-400">소계</span>
+                      <span className="text-[12px] font-bold text-stone-600">{groupTotal.toLocaleString()} kg</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )

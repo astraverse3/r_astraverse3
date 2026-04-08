@@ -292,7 +292,7 @@ export async function createFarmer(data: FarmerFormData) {
             });
 
             if (existing) {
-                return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
+                return { success: false, error: `해당 작목반에 이미 생산자번호 ${farmerNo}가 존재합니다.` }
             }
         }
 
@@ -340,7 +340,7 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
                 }
             });
             if (existing) {
-                return { success: false, error: `해당 작목반에 이미 농가번호 ${farmerNo}가 존재합니다.` }
+                return { success: false, error: `해당 작목반에 이미 생산자번호 ${farmerNo}가 존재합니다.` }
             }
         }
 
@@ -378,7 +378,7 @@ export async function deleteFarmer(id: number) {
             where: { farmerId: id }
         })
         if (used) {
-            return { success: false, error: '재고가 등록된 농가는 삭제할 수 없습니다.' }
+            return { success: false, error: '재고가 등록된 생산자는 삭제할 수 없습니다.' }
         }
 
         const deleted = await prisma.farmer.delete({
@@ -515,7 +515,7 @@ export async function createFarmerWithGroup(
                 })
 
                 if (existingFarmer) {
-                    throw new Error(`해당 작목반(${group.name})에 이미 농가번호 ${fNo}가 존재합니다.`)
+                    throw new Error(`해당 작목반(${group.name})에 이미 생산자번호 ${fNo}가 존재합니다.`)
                 }
             }
 

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-high": "#ddeaf3",
+              "surface-dim": "#cadde9",
+              "secondary": "#5d5f65",
+              "on-secondary-fixed": "#3e3f45",
+              "tertiary-container": "#d8d3f4",
+              "tertiary": "#5f5c78",
+              "primary-fixed-dim": "#c6d3ff",
+              "surface-tint": "#0056d2",
+              "secondary-container": "#e2e2e9",
+              "on-tertiary-container": "#4a4863",
+              "secondary-dim": "#515359",
+              "surface-bright": "#f6fafe",
+              "surface-container-low": "#eef4fa",
+              "on-secondary-container": "#505157",
+              "inverse-on-surface": "#999da1",
+              "on-primary": "#f8f7ff",
+              "inverse-surface": "#0a0f12",
+              "primary": "#0056d2",
+              "error-container": "#fe8983",
+              "on-tertiary-fixed-variant": "#54516d",
+              "secondary-fixed-dim": "#d4d4db",
+              "surface-container-highest": "#d5e5ef",
+              "on-primary-container": "#004ab7",
+              "outline-variant": "#a4b4be",
+              "on-secondary": "#f9f8ff",
+              "on-primary-fixed-variant": "#0053cc",
+              "secondary-fixed": "#e2e2e9",
+              "background": "#f6fafe",
+              "tertiary-fixed": "#d8d3f4",
+              "inverse-primary": "#5b8cff",
+              "primary-fixed": "#dae2ff",
+              "primary-container": "#dae2ff",
+              "surface-container": "#e5eff7",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#6e7d86",
+              "primary-dim": "#004bb9",
+              "on-error-container": "#752121",
+              "on-error": "#fff7f6",
+              "tertiary-fixed-dim": "#cac6e6",
+              "on-background": "#26343d",
+              "error-dim": "#4e0309",
+              "on-tertiary": "#fcf7ff",
+              "surface-variant": "#d5e5ef",
+              "on-surface-variant": "#52616a",
+              "on-secondary-fixed-variant": "#5a5b61",
+              "error": "#9f403d",
+              "on-tertiary-fixed": "#37354f",
+              "on-primary-fixed": "#003991",
+              "tertiary-dim": "#53506b",
+              "on-surface": "#26343d",
+              "surface": "#f6fafe"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full h-[44px] z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-4 w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400" data-icon="agriculture">agriculture</span>
+<h1 class="text-slate-900 dark:text-slate-50 font-extrabold tracking-tighter font-manrope font-bold text-lg tracking-tight">MILL LOG</h1>
+</div>
+<button class="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 duration-200 p-1 rounded-full">
+<span class="material-symbols-outlined text-slate-500" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-[60px] px-4 space-y-4">
+<!-- Filter Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm">
+<div class="flex space-x-1 bg-surface-container-low p-1 rounded-xl mb-4">
+<button class="flex-1 py-1.5 text-sm font-bold bg-white text-primary rounded-lg shadow-sm">기간별</button>
+<button class="flex-1 py-1.5 text-sm font-medium text-on-surface-variant hover:bg-surface-bright transition-colors rounded-lg">품종별</button>
+<button class="flex-1 py-1.5 text-sm font-medium text-on-surface-variant hover:bg-surface-bright transition-colors rounded-lg">도정구분별</button>
+</div>
+<div class="overflow-x-auto no-scrollbar flex space-x-2 mb-4">
+<span class="px-3 py-1.5 bg-surface-container-low text-xs font-semibold rounded-full text-on-surface-variant whitespace-nowrap">연산</span>
+<span class="px-3 py-1.5 bg-surface-container-low text-xs font-semibold rounded-full text-on-surface-variant whitespace-nowrap">1년</span>
+<span class="px-3 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-full whitespace-nowrap flex items-center gap-1">6개월 <span class="text-[10px]">★</span></span>
+<span class="px-3 py-1.5 bg-surface-container-low text-xs font-semibold rounded-full text-on-surface-variant whitespace-nowrap">3개월</span>
+<span class="px-3 py-1.5 bg-surface-container-low text-xs font-semibold rounded-full text-on-surface-variant whitespace-nowrap">1개월</span>
+</div>
+<div class="flex gap-2">
+<div class="flex-1 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-1 focus:ring-primary" placeholder="검색어 입력" type="text"/>
+</div>
+<button class="px-3 py-2 bg-surface-container-low rounded-xl flex items-center gap-1 text-sm font-medium">
+                    품종 <span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+<button class="px-3 py-2 bg-surface-container-low rounded-xl flex items-center gap-1 text-sm font-medium">
+                    구분 <span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</section>
+<!-- Summary Statistics Grid -->
+<section class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm relative pt-1">
+<div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+<div class="p-4">
+<p class="text-xs text-on-surface-variant font-medium mb-1">투입량</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold text-on-surface tracking-tight">124,500</span>
+<span class="text-[10px] text-on-surface-variant">kg</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm relative pt-1">
+<div class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+<div class="p-4">
+<p class="text-xs text-on-surface-variant font-medium mb-1">생산량</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold text-on-surface tracking-tight">112,050</span>
+<span class="text-[10px] text-on-surface-variant">kg</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm relative pt-1">
+<div class="absolute top-0 left-0 right-0 h-1 bg-amber-400"></div>
+<div class="p-4">
+<p class="text-xs text-on-surface-variant font-medium mb-1">평균 수율</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold text-on-surface tracking-tight">90.2</span>
+<span class="text-[10px] text-on-surface-variant">%</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm relative pt-1">
+<div class="absolute top-0 left-0 right-0 h-1 bg-slate-400"></div>
+<div class="p-4">
+<p class="text-xs text-on-surface-variant font-medium mb-1">도정 건수</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-bold text-on-surface tracking-tight">42</span>
+<span class="text-[10px] text-on-surface-variant">건</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Monthly Analysis Chart (Bento Card) -->
+<section class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-bold text-on-surface">월별 도정 분석</h3>
+<span class="text-xs text-on-surface-variant font-medium">단위: 톤(t)</span>
+</div>
+<div class="h-48 flex items-end justify-between px-2 gap-3">
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative" style="height: 40%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">10월</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative" style="height: 65%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">11월</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative" style="height: 55%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">12월</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/80 rounded-t-lg relative" style="height: 85%;">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold">24.5</div>
+</div>
+<span class="text-[10px] font-bold text-primary">01월</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative" style="height: 70%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">02월</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative" style="height: 45%;"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">03월</span>
+</div>
+</div>
+</section>
+<!-- Detailed Table List -->
+<section class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden mb-8">
+<div class="px-5 py-4 border-b border-surface-container-low flex justify-between items-center">
+<h3 class="font-bold text-on-surface">도정 기록 상세</h3>
+<button class="text-xs text-primary font-bold">전체보기</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-wider">
+<tr>
+<th class="px-5 py-3">날짜</th>
+<th class="px-5 py-3">품종/등급</th>
+<th class="px-5 py-3 text-right">투입(kg)</th>
+<th class="px-5 py-3 text-right">생산(kg)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-5 py-4 text-xs font-medium text-on-surface-variant">01.24</td>
+<td class="px-5 py-4">
+<div class="font-bold text-on-surface">추청 / 1등급</div>
+<div class="text-[10px] text-on-surface-variant">일반도정</div>
+</td>
+<td class="px-5 py-4 text-right font-medium">2,500</td>
+<td class="px-5 py-4 text-right font-bold text-primary">2,250</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-5 py-4 text-xs font-medium text-on-surface-variant">01.22</td>
+<td class="px-5 py-4">
+<div class="font-bold text-on-surface">오대 / 특등급</div>
+<div class="text-[10px] text-on-surface-variant">임가공</div>
+</td>
+<td class="px-5 py-4 text-right font-medium">1,800</td>
+<td class="px-5 py-4 text-right font-bold text-primary">1,620</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-5 py-4 text-xs font-medium text-on-surface-variant">01.20</td>
+<td class="px-5 py-4">
+<div class="font-bold text-on-surface">삼광 / 1등급</div>
+<div class="text-[10px] text-on-surface-variant">일반도정</div>
+</td>
+<td class="px-5 py-4 text-right font-medium">3,000</td>
+<td class="px-5 py-4 text-right font-bold text-primary">2,710</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center px-2 py-2">
+<div class="bg-white dark:bg-slate-900 shadow-2xl shadow-slate-900/20 w-[92%] rounded-2xl flex justify-around items-center py-2 px-1">
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-3 py-2 hover:text-slate-900 dark:hover:text-slate-100 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-manrope text-[11px] font-semibold">홈</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-3 py-2 hover:text-slate-900 dark:hover:text-slate-100 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="inventory_2">inventory_2</span>
+<span class="font-manrope text-[11px] font-semibold">재고</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-3 py-2 hover:text-slate-900 dark:hover:text-slate-100 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-manrope text-[11px] font-semibold">도정관리</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-3 py-2 hover:text-slate-900 dark:hover:text-slate-100 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="local_shipping">local_shipping</span>
+<span class="font-manrope text-[11px] font-semibold">출고관리</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-xl px-3 py-2 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="leaderboard">leaderboard</span>
+<span class="font-manrope text-[11px] font-semibold">통계</span>
+</button>
+</div>
+</nav>
+</body></html>

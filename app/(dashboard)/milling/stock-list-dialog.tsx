@@ -267,7 +267,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                         <TableHeader className="sticky top-0 bg-white z-10">
                             <TableRow className="bg-slate-50 hover:bg-slate-50">
                                 <TableHead className="w-[60px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
-                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">농가명</TableHead>
+                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">생산자명</TableHead>
                                 <TableHead className="w-[80px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
                                 <TableHead className="px-1 text-center text-xs font-bold text-slate-500">인증</TableHead>
                                 <TableHead className="text-right px-2 text-xs font-bold text-slate-500">중량</TableHead>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>그라데이션 시안 비교</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    /* ── 공통 레이아웃 ── */
+    .label-bar { padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; }
+    .phone { max-width: 390px; margin: 0 auto; height: 780px; position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: 32px; box-shadow: 0 24px 64px rgba(0,0,0,0.35); }
+    .section-title { padding: 28px 20px 12px; text-align: center; font-size: 14px; font-weight: 700; color: #475569; letter-spacing: 0.04em; }
+    .content-area { flex: 1; overflow-y: auto; }
+    .content-area::-webkit-scrollbar { display: none; }
+
+    /* ── 헤더 공통 ── */
+    .header { position: absolute; top: 0; left: 0; right: 0; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; z-index: 10; }
+    .logo { font-size: 15px; font-weight: 800; letter-spacing: 0.06em; }
+    .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+
+    /* ── 하단 네비 공통 ── */
+    .bottom-nav { position: absolute; bottom: 12px; left: 12px; right: 12px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: space-around; z-index: 10; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+    .nav-icon { font-size: 18px; line-height: 1; }
+    .nav-label { font-size: 9px; font-weight: 600; }
+    .nav-active-pill { background: rgba(59,130,246,0.2); border-radius: 10px; padding: 3px 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+
+    /* ── 컨텐츠 카드 ── */
+    .card { background: white; margin: 0 10px 8px; border-radius: 14px; padding: 12px 14px; }
+    .card-title { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+    .tabs { display: flex; border-bottom: 1px solid #f1f5f9; margin: -12px -14px 10px; }
+    .tab { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 600; text-align: center; border-bottom: 2px solid transparent; color: #94a3b8; }
+    .tab.active { color: #3b82f6; border-color: #3b82f6; }
+    .chips { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; }
+    .chip { flex-shrink: 0; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+    .chip.active { background: #3b82f6; color: white; }
+    .chip.inactive { background: #f1f5f9; color: #64748b; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 10px 8px; }
+    .summary-card { background: white; border-radius: 12px; padding: 10px 12px; }
+    .summary-label { font-size: 10px; font-weight: 700; color: #64748b; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .summary-value { text-align: right; font-size: 19px; font-weight: 700; }
+    .summary-unit { font-size: 10px; font-weight: 600; color: #94a3b8; }
+    .bars { display: flex; align-items: flex-end; gap: 5px; height: 72px; justify-content: space-around; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .bar-wrap { width: 20px; position: relative; border-radius: 3px 3px 0 0; }
+    .bar-inner { position: absolute; bottom: 0; width: 100%; border-radius: 3px 3px 0 0; }
+    .bar-label { font-size: 8px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     G1: 페이지 배경 그라데이션 + 반투명 헤더
+     ══════════════════════════════════════════ -->
+<p class="section-title">G1 — 페이지 배경 그라데이션 + 반투명 헤더<br><span style="font-size:11px;font-weight:400;color:#94a3b8;">헤더가 투명→배경 그라데이션이 비침 / 로고 자연스러움</span></p>
+
+<div class="label-bar" style="background:#0f172a;color:#60a5fa;max-width:390px;margin:0 auto;">G1 — 배경 그라데이션</div>
+<div class="phone" style="max-width:390px;">
+
+  <!-- 배경 그라데이션 (어두운 위 → 밝은 아래) -->
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,#0f172a 0px,#1e293b 52px,#334155 100px,#64748b 160px,#94a3b8 200px,#f1f5f9 260px,#f1f5f9 100%);z-index:0;"></div>
+
+  <!-- 헤더: 반투명 + backdrop-blur -->
+  <header class="header" style="background:rgba(255,255,255,0.12);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.15);">
+    <!-- 로고: 실제로는 PNG지만, 텍스트로 표현 -->
+    <div style="background:white;border-radius:6px;padding:3px 8px;">
+      <span class="logo" style="color:#0f172a;">MILL LOG</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <div class="avatar" style="background:rgba(255,255,255,0.2);color:white;">김</div>
+    </div>
+  </header>
+
+  <!-- 컨텐츠 -->
+  <div class="content-area" style="padding-top:60px;padding-bottom:88px;position:relative;z-index:1;">
+    <div class="card" style="margin-top:4px;">
+      <div class="tabs">
+        <div class="tab active">기간별</div>
+        <div class="tab">품종별</div>
+        <div class="tab">도정구분별</div>
+      </div>
+      <div class="chips">
+        <span class="chip inactive">연산</span>
+        <span class="chip inactive">1년</span>
+        <span class="chip active">6개월</span>
+        <span class="chip inactive">3개월</span>
+        <span class="chip inactive">1개월</span>
+        <span class="chip inactive">1주</span>
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">품종 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">도정구분 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#3b82f6;color:white;font-size:11px;font-weight:600;border:none;">검색</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#00a2e8;"></span>총 투입량</div><div class="summary-value" style="color:#00a2e8;">1,250<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#8dc540;"></span>총 생산량</div><div class="summary-value" style="color:#7db037;">850<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#f89c1e;"></span>평균 수율</div><div class="summary-value" style="color:#cc7b0c;">68.0<span class="summary-unit"> %</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#94a3b8;"></span>도정 건수</div><div class="summary-value" style="color:#475569;">12<span class="summary-unit"> 건</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">월별 도정 분석</div>
+      <div class="bars">
+        <div class="bar-group"><div class="bar-wrap" style="height:50px;background:#bfdbfe;"><div class="bar-inner" style="height:34px;background:#3b82f6;"></div></div><span class="bar-label">10월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:65px;background:#bfdbfe;"><div class="bar-inner" style="height:44px;background:#3b82f6;"></div></div><span class="bar-label">11월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:72px;background:#bbf7d0;"><div class="bar-inner" style="height:50px;background:#22c55e;"></div></div><span class="bar-label">12월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:55px;background:#bfdbfe;"><div class="bar-inner" style="height:38px;background:#3b82f6;"></div></div><span class="bar-label">1월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:40px;background:#bfdbfe;"><div class="bar-inner" style="height:28px;background:#3b82f6;"></div></div><span class="bar-label">2월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:30px;background:#bfdbfe;"><div class="bar-inner" style="height:20px;background:#3b82f6;"></div></div><span class="bar-label">3월</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 네비: 다크 반투명 -->
+  <nav class="bottom-nav" style="background:rgba(15,23,42,0.85);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);">
+    <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label" style="color:#475569;">홈</span></div>
+    <div class="nav-item"><span class="nav-icon">📦</span><span class="nav-label" style="color:#475569;">재고</span></div>
+    <div class="nav-item"><span class="nav-icon">📋</span><span class="nav-label" style="color:#475569;">도정관리</span></div>
+    <div class="nav-item"><span class="nav-icon">🔄</span><span class="nav-label" style="color:#475569;">출고관리</span></div>
+    <div class="nav-item">
+      <div class="nav-active-pill">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label" style="color:#60a5fa;">통계</span>
+      </div>
+    </div>
+  </nav>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     G2: 헤더 흰색 + 헤더 하단 그라데이션 테두리
+     ══════════════════════════════════════════ -->
+<p class="section-title" style="margin-top:40px;">G2 — 흰 헤더 + 컬러 그라데이션 하단선<br><span style="font-size:11px;font-weight:400;color:#94a3b8;">로고 그대로 / 헤더 하단에 컬러 그라데이션 테두리로 구분</span></p>
+
+<div class="label-bar" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;max-width:390px;margin:0 auto;">G2 — 그라데이션 하단 테두리</div>
+<div class="phone" style="background:#f1f5f9;">
+
+  <!-- 헤더: 흰색 + 그라데이션 하단 테두리 -->
+  <header class="header" style="background:white;box-shadow:0 1px 0 0 transparent,0 4px 16px rgba(99,102,241,0.12);border-bottom:2px solid transparent;background-clip:padding-box;position:relative;">
+    <div style="position:absolute;bottom:-2px;left:0;right:0;height:2px;background:linear-gradient(90deg,#6366f1,#3b82f6,#06b6d4,#3b82f6,#6366f1);"></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <!-- 로고 PNG 시뮬레이션: 흰 배경 그대로 -->
+      <img src="/logo-full.png" alt="MILL LOG" style="height:22px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <div style="display:none;background:#0f172a;border-radius:5px;padding:2px 8px;"><span style="color:white;font-size:14px;font-weight:800;">MILL LOG</span></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <div class="avatar" style="background:#e2e8f0;color:#475569;">김</div>
+    </div>
+  </header>
+
+  <div class="content-area" style="padding-top:60px;padding-bottom:88px;">
+    <div class="card" style="margin-top:4px;">
+      <div class="tabs">
+        <div class="tab active">기간별</div>
+        <div class="tab">품종별</div>
+        <div class="tab">도정구분별</div>
+      </div>
+      <div class="chips">
+        <span class="chip inactive">연산</span><span class="chip inactive">1년</span><span class="chip active">6개월</span><span class="chip inactive">3개월</span><span class="chip inactive">1개월</span><span class="chip inactive">1주</span>
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">품종 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">도정구분 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#3b82f6;color:white;font-size:11px;font-weight:600;border:none;">검색</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#00a2e8;"></span>총 투입량</div><div class="summary-value" style="color:#00a2e8;">1,250<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#8dc540;"></span>총 생산량</div><div class="summary-value" style="color:#7db037;">850<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#f89c1e;"></span>평균 수율</div><div class="summary-value" style="color:#cc7b0c;">68.0<span class="summary-unit"> %</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#94a3b8;"></span>도정 건수</div><div class="summary-value" style="color:#475569;">12<span class="summary-unit"> 건</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">월별 도정 분석</div>
+      <div class="bars">
+        <div class="bar-group"><div class="bar-wrap" style="height:50px;background:#bfdbfe;"><div class="bar-inner" style="height:34px;background:#3b82f6;"></div></div><span class="bar-label">10월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:65px;background:#bfdbfe;"><div class="bar-inner" style="height:44px;background:#3b82f6;"></div></div><span class="bar-label">11월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:72px;background:#bbf7d0;"><div class="bar-inner" style="height:50px;background:#22c55e;"></div></div><span class="bar-label">12월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:55px;background:#bfdbfe;"><div class="bar-inner" style="height:38px;background:#3b82f6;"></div></div><span class="bar-label">1월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:40px;background:#bfdbfe;"><div class="bar-inner" style="height:28px;background:#3b82f6;"></div></div><span class="bar-label">2월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:30px;background:#bfdbfe;"><div class="bar-inner" style="height:20px;background:#3b82f6;"></div></div><span class="bar-label">3월</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 네비: 흰 플로팅 + 상단 그라데이션 라인 -->
+  <nav class="bottom-nav" style="background:white;box-shadow:0 -2px 0 0 transparent,0 -8px 24px rgba(99,102,241,0.12);position:relative;border:1px solid #e2e8f0;">
+    <div style="position:absolute;top:-2px;left:12px;right:12px;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#3b82f6,#06b6d4,#3b82f6,#6366f1,transparent);border-radius:1px;"></div>
+    <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label" style="color:#94a3b8;">홈</span></div>
+    <div class="nav-item"><span class="nav-icon">📦</span><span class="nav-label" style="color:#94a3b8;">재고</span></div>
+    <div class="nav-item"><span class="nav-icon">📋</span><span class="nav-label" style="color:#94a3b8;">도정관리</span></div>
+    <div class="nav-item"><span class="nav-icon">🔄</span><span class="nav-label" style="color:#94a3b8;">출고관리</span></div>
+    <div class="nav-item">
+      <div class="nav-active-pill">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label" style="color:#3b82f6;">통계</span>
+      </div>
+    </div>
+  </nav>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     G3: 컨텐츠 상단 다크→투명 그라데이션
+     ══════════════════════════════════════════ -->
+<p class="section-title" style="margin-top:40px;">G3 — 흰 헤더 + 컨텐츠 상단 다크 그라데이션<br><span style="font-size:11px;font-weight:400;color:#94a3b8;">헤더 아래 짧은 다크 띠가 자연스럽게 페이드아웃</span></p>
+
+<div class="label-bar" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;max-width:390px;margin:0 auto;">G3 — 컨텐츠 상단 그라데이션</div>
+<div class="phone" style="background:#f1f5f9;">
+
+  <!-- 헤더: 흰색 + 그림자 -->
+  <header class="header" style="background:white;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <img src="/logo-full.png" alt="MILL LOG" style="height:22px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <div style="display:none;background:#0f172a;border-radius:5px;padding:2px 8px;"><span style="color:white;font-size:14px;font-weight:800;">MILL LOG</span></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <div class="avatar" style="background:#e2e8f0;color:#475569;">김</div>
+    </div>
+  </header>
+
+  <!-- 컨텐츠 상단에 다크 그라데이션 오버레이 -->
+  <div style="position:absolute;top:52px;left:0;right:0;height:70px;background:linear-gradient(180deg,#1e293b 0%,rgba(30,41,59,0.6) 40%,transparent 100%);z-index:5;pointer-events:none;"></div>
+
+  <div class="content-area" style="padding-top:60px;padding-bottom:88px;position:relative;z-index:1;">
+    <div class="card" style="margin-top:4px;">
+      <div class="tabs">
+        <div class="tab active">기간별</div>
+        <div class="tab">품종별</div>
+        <div class="tab">도정구분별</div>
+      </div>
+      <div class="chips">
+        <span class="chip inactive">연산</span><span class="chip inactive">1년</span><span class="chip active">6개월</span><span class="chip inactive">3개월</span><span class="chip inactive">1개월</span><span class="chip inactive">1주</span>
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">품종 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:600;border:none;">도정구분 ▾</button>
+        <button style="flex:1;padding:5px;border-radius:7px;background:#3b82f6;color:white;font-size:11px;font-weight:600;border:none;">검색</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#00a2e8;"></span>총 투입량</div><div class="summary-value" style="color:#00a2e8;">1,250<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#8dc540;"></span>총 생산량</div><div class="summary-value" style="color:#7db037;">850<span class="summary-unit"> kg</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#f89c1e;"></span>평균 수율</div><div class="summary-value" style="color:#cc7b0c;">68.0<span class="summary-unit"> %</span></div></div>
+      <div class="summary-card"><div class="summary-label"><span class="dot" style="background:#94a3b8;"></span>도정 건수</div><div class="summary-value" style="color:#475569;">12<span class="summary-unit"> 건</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">월별 도정 분석</div>
+      <div class="bars">
+        <div class="bar-group"><div class="bar-wrap" style="height:50px;background:#bfdbfe;"><div class="bar-inner" style="height:34px;background:#3b82f6;"></div></div><span class="bar-label">10월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:65px;background:#bfdbfe;"><div class="bar-inner" style="height:44px;background:#3b82f6;"></div></div><span class="bar-label">11월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:72px;background:#bbf7d0;"><div class="bar-inner" style="height:50px;background:#22c55e;"></div></div><span class="bar-label">12월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:55px;background:#bfdbfe;"><div class="bar-inner" style="height:38px;background:#3b82f6;"></div></div><span class="bar-label">1월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:40px;background:#bfdbfe;"><div class="bar-inner" style="height:28px;background:#3b82f6;"></div></div><span class="bar-label">2월</span></div>
+        <div class="bar-group"><div class="bar-wrap" style="height:30px;background:#bfdbfe;"><div class="bar-inner" style="height:20px;background:#3b82f6;"></div></div><span class="bar-label">3월</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 네비: 다크 플로팅 -->
+  <nav class="bottom-nav" style="background:#1e293b;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+    <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label" style="color:#475569;">홈</span></div>
+    <div class="nav-item"><span class="nav-icon">📦</span><span class="nav-label" style="color:#475569;">재고</span></div>
+    <div class="nav-item"><span class="nav-icon">📋</span><span class="nav-label" style="color:#475569;">도정관리</span></div>
+    <div class="nav-item"><span class="nav-icon">🔄</span><span class="nav-label" style="color:#475569;">출고관리</span></div>
+    <div class="nav-item">
+      <div class="nav-active-pill" style="background:rgba(59,130,246,0.25);">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label" style="color:#60a5fa;">통계</span>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<div style="height:40px;"></div>
+</body>
+</html>

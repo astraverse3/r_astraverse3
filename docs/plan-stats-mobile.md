@@ -120,10 +120,10 @@ pc:     세로 4개 (기존)
 
 ## 작업 순서
 
-- [ ] 1. `SummaryCards.tsx` — 2×2 그리드 적용
-- [ ] 2. `milling-stats-client.tsx` — 차트+카드 레이아웃 반응형
-- [ ] 3. `milling-stats-client.tsx` — 빠른기간 버튼 가로스크롤
-- [ ] 4. `milling-stats-client.tsx` — 품종/도정구분/생산자 필터 행 반응형
-- [ ] 5. `milling-stats-client.tsx` — 날짜 직접입력 반응형
-- [ ] 6. `MillingTable.tsx` — 가로 스크롤 래퍼
-- [ ] 7. 빌드 확인
+- [x] 1. `SummaryCards.tsx` — 2×2 그리드 적용 (2026-03-31)
+- [x] 2. `milling-stats-client.tsx` — 차트+카드 레이아웃 반응형 (2026-03-31)
+- [x] 3. `milling-stats-client.tsx` — 빠른기간 버튼 가로스크롤 (2026-03-31)
+- [x] 4. `milling-stats-client.tsx` — 바텀시트 팝업 필터로 전환 (2026-03-31)
+- [x] 5. `milling-stats-client.tsx` — 날짜 직접입력 팝업 내 반응형 (2026-03-31)
+- [x] 6. `MillingTable.tsx` — 가로 스크롤 래퍼 (2026-03-31)
+- [x] 7. `MillingChart.tsx` / `MultiSeriesChart.tsx` — isMobile 반응형 (dot 축소, h 명시) (2026-03-31)

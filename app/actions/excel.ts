@@ -40,8 +40,8 @@ export async function exportFarmers() {
             '작목반번호': farmer.group?.code || '',
             '작목반명': farmer.group?.name || '',
             '인증번호': farmer.group?.certNo || '',
-            '농가번호': farmer.farmerNo || '',
-            '농가명': farmer.name,
+            '생산자번호': farmer.farmerNo || '',
+            '생산자명': farmer.name,
             '취급품목': farmer.items || ''
         }))
 
@@ -127,8 +127,8 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
                 if (!groupCode) missingFields.push('작목반번호')
                 if (!groupName) missingFields.push('작목반명')
                 if (!certNo) missingFields.push('인증번호')
-                if (!farmerNo) missingFields.push('농가번호')
-                if (!farmerName) missingFields.push('농가명')
+                if (!farmerNo) missingFields.push('생산자번호')
+                if (!farmerName) missingFields.push('생산자명')
 
                 if (missingFields.length > 0) {
                     result.counts.skipped++

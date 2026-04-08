@@ -23,6 +23,7 @@ const ROUTE_NAME_MAP: Record<string, string> = {
 const PATH_TITLE_MAP: Record<string, string> = {
     '/statistics/milling':      '수율분석',
     '/statistics/millingtype':  '도정구분별 분석',
+    '/statistics/stock':        '재고분석',
 }
 
 export function BreadcrumbDisplay() {
