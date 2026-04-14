@@ -6,14 +6,12 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development', // Disable PWA in dev
 });
 
-// Report-Only CSP: 위반 시 차단하지 않고 브라우저 콘솔에만 로그.
-// 문제 없음이 확인되면 Content-Security-Policy로 전환.
-const cspReportOnly = [
+const cspPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "img-src 'self' data: blob: https: http://k.kakaocdn.net http://*.kakaocdn.net",
+  "font-src 'self' data: https://cdn.jsdelivr.net",
   "connect-src 'self' https:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -21,7 +19,7 @@ const cspReportOnly = [
 ].join('; ')
 
 const securityHeaders = [
-  { key: 'Content-Security-Policy-Report-Only', value: cspReportOnly },
+  { key: 'Content-Security-Policy', value: cspPolicy },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
