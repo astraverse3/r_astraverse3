@@ -1,19 +1,9 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-
-// ADMIN 권한 체크 헬퍼
-async function requireAdmin() {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) throw new Error('Unauthorized')
-    // @ts-ignore
-    if (session.user.role !== 'ADMIN') throw new Error('Forbidden: Admin only')
-    return session
-}
+import { requireAdmin } from '@/lib/auth-guard'
 
 // 전체 사용자 목록 조회
 export async function getUsers() {

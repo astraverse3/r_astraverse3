@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
+import { requireAdmin, requireSession } from '@/lib/auth-guard'
 
 export type GetAuditLogsParams = {
     userId?: string
@@ -15,6 +16,7 @@ export type GetAuditLogsParams = {
 }
 
 export async function getAuditLogs(params?: GetAuditLogsParams) {
+    await requireAdmin()
     try {
         const { userId, action, entity, startDate, endDate, page = 1, pageSize = 50 } = params || {}
         
@@ -56,6 +58,7 @@ export async function getAuditLogs(params?: GetAuditLogsParams) {
 }
 
 export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' | 'pageSize'>) {
+    await requireAdmin()
     try {
         // Fetch ALL matching logs for export
         const result = await getAuditLogs({ ...params, page: 1, pageSize: 5000 })
@@ -134,6 +137,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
 
 // 현재 경로(메뉴)에 맞는 데이터의 가장 마지막 업데이트 시각 조회
 export async function getLatestUpdateForPath(pathname: string) {
+    await requireSession()
     try {
         let entities: string[] | undefined = undefined;
 

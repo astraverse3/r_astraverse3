@@ -4,9 +4,12 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
+import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { validateExcelUpload } from '@/lib/file-validation'
 
 // --- EXPORT LOGIC ---
 export async function exportFarmers() {
+    await requireSession()
     try {
         const farmers = await prisma.farmer.findMany({
             include: {
@@ -67,6 +70,7 @@ export async function exportFarmers() {
 
 // --- IMPORT LOGIC ---
 export async function importFarmers(formData: FormData): Promise<import('@/lib/excel-utils').ExcelImportResult> {
+    await requireAdmin()
     const result: import('@/lib/excel-utils').ExcelImportResult = {
         success: false, // Will be set to true if process completes without catastrophic failure
         counts: { total: 0, success: 0, skipped: 0, failed: 0 },
@@ -78,6 +82,13 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
 
         if (!file) {
             result.errors.push({ row: 0, reason: '파일이 없습니다.' })
+            return result
+        }
+
+        try {
+            validateExcelUpload(file)
+        } catch (e: any) {
+            result.errors.push({ row: 0, reason: e.message || '파일 검증 실패' })
             return result
         }
 

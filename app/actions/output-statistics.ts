@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export async function getOutputVarietyOptions(
   from: Date,
   to: Date,
 ): Promise<VarietyOption[]> {
+  await requireSession()
   const varieties = await prisma.variety.findMany({
     where: {
       stocks: {
@@ -84,6 +86,7 @@ export async function getOutputVarietyOptions(
 export async function getOutputStatistics(
   filters: OutputFilters,
 ): Promise<OutputStatisticsData> {
+  await requireSession()
   const varietyFilter = filters.varietyIds?.length
     ? { stocks: { some: { varietyId: { in: filters.varietyIds } } } }
     : {}

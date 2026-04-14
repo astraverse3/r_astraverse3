@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,7 @@ export type VarietyOption = {
 // ── 연산(productionYear) 목록 ─────────────────────────────────────────────
 
 export async function getStockProductionYears(): Promise<number[]> {
+  await requireSession()
   const rows = await prisma.stock.findMany({
     select: { productionYear: true },
     distinct: ['productionYear'],
@@ -85,6 +87,7 @@ export async function getStockProductionYears(): Promise<number[]> {
 // ── 작목반 목록 ───────────────────────────────────────────────────────────
 
 export async function getStockGroupOptions(productionYear: number, certTypes?: string[]): Promise<GroupOption[]> {
+  await requireSession()
   // 해당 연산에 재고가 있는 생산자의 작목반만 반환
   const farmerIds = await prisma.stock.findMany({
     where: { productionYear },
@@ -111,6 +114,7 @@ export async function getStockVarietyOptions(
   groupIds?: number[],
   certTypes?: string[],
 ): Promise<VarietyOption[]> {
+  await requireSession()
   const where: Record<string, unknown> = { productionYear }
   const farmerFilter: Record<string, unknown> = {}
   if (groupIds?.length) farmerFilter.groupId = { in: groupIds }
@@ -132,6 +136,7 @@ export async function getStockVarietyOptions(
 export async function getStockStatistics(
   filters: StockFilters,
 ): Promise<StockStatisticsData> {
+  await requireSession()
   const where: Record<string, unknown> = {
     productionYear: filters.productionYear,
   }

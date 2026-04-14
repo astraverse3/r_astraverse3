@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { format, startOfWeek } from 'date-fns'
+import { requireSession } from '@/lib/auth-guard'
 
 export type GroupBy = 'day' | 'week' | 'month'
 
@@ -150,6 +151,7 @@ function generateAllBucketKeys(from: Date, to: Date, groupBy: GroupBy): string[]
 export async function getMillingStatistics(
   params: MillingStatsParams
 ): Promise<MillingStatisticsData> {
+  await requireSession()
   const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
@@ -293,6 +295,7 @@ export async function getMillingStatsByVariety(params: {
   farmers?: string[]
   cropYear?: number
 }): Promise<MultiSeriesChartData> {
+  await requireSession()
   const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
@@ -406,6 +409,7 @@ export async function getMillingStatsByMillingType(params: {
   farmers?: string[]
   cropYear?: number
 }): Promise<MultiSeriesChartData> {
+  await requireSession()
   const { from, to, groupBy, millingTypes, varieties, farmers, cropYear } = params
 
   const toEndOfDay = new Date(to)
@@ -501,11 +505,13 @@ export async function getMillingStatsByMillingType(params: {
 // ── 필터 옵션 ───────────────────────────────────────────
 
 export async function getVarietyOptions(): Promise<string[]> {
+  await requireSession()
   const varieties = await prisma.variety.findMany({ orderBy: { name: 'asc' } })
   return varieties.map(v => v.name)
 }
 
 export async function getMillingTypeOptions(): Promise<string[]> {
+  await requireSession()
   const batches = await prisma.millingBatch.findMany({
     distinct: ['millingType'],
     select: { millingType: true },

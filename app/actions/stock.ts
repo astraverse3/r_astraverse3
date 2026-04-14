@@ -3,6 +3,8 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
+import { requireSession } from '@/lib/auth-guard'
+import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 
 // Updated definition to match new schema relations
 import { generateLotNo } from '@/lib/lot-generation'
@@ -16,6 +18,7 @@ export type StockFormData = {
 }
 
 export async function createStock(data: StockFormData) {
+    await requireSession()
     try {
         // 1. Fetch related info for Lot Generation
         const farmer = await prisma.farmer.findUnique({
@@ -88,6 +91,7 @@ export async function createStock(data: StockFormData) {
 }
 
 export async function updateStock(id: number, data: StockFormData) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Get current stock info
@@ -205,11 +209,12 @@ export async function updateStock(id: number, data: StockFormData) {
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to update stock:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to update stock' }
+        return { success: false, error: sanitizeErrorMessage(error, '재고 수정에 실패했습니다.') }
     }
 }
 
 export async function deleteStock(id: number) {
+    await requireSession()
     try {
         const stock = await prisma.stock.findUnique({
             where: { id },
@@ -242,6 +247,7 @@ export async function deleteStock(id: number) {
 }
 
 export async function deleteStocks(ids: number[]) {
+    await requireSession()
     try {
         const results = {
             success: [] as number[],
@@ -318,6 +324,7 @@ export type GetStocksParams = {
 }
 
 export async function getStocks(params?: GetStocksParams) {
+    await requireSession()
     try {
         const where: any = {}
         const andConditions: any[] = []
@@ -418,6 +425,7 @@ export type StockGroup = {
 }
 
 export async function getStockGroups(params?: GetStocksParams) {
+    await requireSession()
     try {
         const where: any = {}
         const andConditions: any[] = []
@@ -540,6 +548,7 @@ export async function getStocksByGroup(
     groupKey: { year: number, variety: string, certType: string },
     params?: GetStocksParams
 ) {
+    await requireSession()
     try {
         const andConditions: any[] = []
 

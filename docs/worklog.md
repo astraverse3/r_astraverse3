@@ -1,5 +1,63 @@
 # 작업일지
 
+## 2026-04-14
+
+### 보안 이슈 일괄 수정 (긴급 4건 + 단기 4건) `security`
+
+**계획/보고서:**
+- `docs/plan-security-fix.md` (신규)
+- `docs/report-security-fix-2026-04-14.md` (신규)
+
+**신규 파일:**
+- `lib/auth-guard.ts` — `requireSession`/`requireAdmin`/`requirePermission` 공용 헬퍼
+- `lib/file-validation.ts` — 엑셀 업로드 MIME/확장자/크기(10MB) 검증
+- `lib/error-sanitize.ts` — Prisma/경로/스택 등 민감 정보 필터
+
+**수정 파일:**
+- `app/actions/*.ts` × 16 — 모든 Server Action에 인증 가드 적용 (읽기=session, 쓰기/관리=admin)
+- `proxy.ts` — `/admin/*` ADMIN 권한 체크 추가 (Next 16의 middleware.ts)
+- `auth.ts` — `debug: true` → `NODE_ENV==='development'` 조건부
+- `next.config.ts` — CSP(Report-Only) + X-Frame-Options/HSTS/Referrer-Policy/Permissions-Policy 등 보안 헤더 6종
+- `app/actions/excel.ts`, `stock-excel.ts` — import에 파일 검증 + ADMIN 강화
+- `app/actions/backup.ts` — 세션만 체크 → ADMIN 강화, 에러 메시지 일반화
+
+**주요 결정:**
+- Next.js 16부터 `middleware.ts` → `proxy.ts`로 이름 변경된 것 확인 (분석 보고서 오해 정정)
+- admin.ts 읽기 함수(varieties/farmers/groups)는 드롭다운용이라 session만, 쓰기는 admin
+- CSP는 Report-Only로 시작 (Next.js inline script 호환 검증 후 enforcing 전환 예정)
+- 에러 일반화는 무조건 덮어쓰기가 아니라 `sanitizeErrorMessage`로 민감 패턴만 필터
+
+**빌드 검증:** `npm run build` 통과
+
+**후속 조치 필요:**
+- `NEXTAUTH_SECRET` 교체 (사용자 직접, `openssl rand -base64 32`)
+- CSP 위반 모니터링 후 enforcing 전환
+
+---
+
+## 2026-04-09
+
+### Claude Forge 자산 정리 (글로벌 ~/.claude) `chore`
+
+**변경 파일 (글로벌, milling-log 코드 영향 없음):**
+- `~/.claude/claude-forge/` — 폴더 통째 삭제
+- `~/.claude/agents/` — 11개 → 3개 (planner·code-reviewer·security-reviewer만 유지)
+- `~/.claude/commands/` — 40개 → 1개 (`/plan`만 유지)
+- `~/.claude/skills/` — 폴더 통째 삭제 (16개)
+- `~/.claude/hooks/` — 폴더 통째 삭제 (16개 + hooks.json)
+- `~/.claude/settings.json` — `hooks` 섹션 비움 (`{}`)
+- `~/.claude/CLAUDE.md` — "Claude Forge Rules" → "코딩 원칙", 에이전트 목록 11개 → 3개 정리
+
+**프로젝트 파일 추가:**
+- `docs/plan-forge-cleanup.md` (신규)
+- `docs/report-forge-cleanup-2026-04-09.md` (신규)
+
+**백업 위치:** `~/.claude/backups/forge-cleanup-2026-04-09/`
+
+**MCP:** stitch 1개만 등록돼 있고 사용 중이라 손 안 댐.
+
+---
+
 ## 2026-04-08
 
 ### 재고분석 모바일 UI 개선 (바텀시트 팝업·차트·테이블) `feat`

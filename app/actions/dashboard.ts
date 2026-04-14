@@ -1,8 +1,10 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function getDashboardStats() {
+    await requireSession()
     try {
         // 0. Calculate Latest Production Year from Stocks
         const latestStock = await prisma.stock.findFirst({

@@ -3,8 +3,10 @@
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { GetMillingLogsParams } from './milling'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
+    await requireSession()
     try {
         const where: any = {}
 

@@ -4,9 +4,8 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { promisify } from 'util'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const execAsync = promisify(exec)
 
@@ -29,8 +28,7 @@ export interface BackupFile {
 
 export async function getBackups(): Promise<{ success: boolean; data?: BackupFile[]; error?: string }> {
     try {
-        const session = await getServerSession(authOptions)
-        if (!session) return { success: false, error: 'Unauthorized' }
+        await requireAdmin()
 
         const files = fs.readdirSync(BACKUP_DIR)
             .filter(file => file.endsWith('.sql'))
@@ -54,8 +52,7 @@ export async function getBackups(): Promise<{ success: boolean; data?: BackupFil
 
 export async function createBackup(): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-        const session = await getServerSession(authOptions)
-        if (!session) return { success: false, error: 'Unauthorized' }
+        await requireAdmin()
 
         const dbUrl = process.env.DATABASE_URL
         if (!dbUrl) return { success: false, error: 'DATABASE_URL not configured' }
@@ -84,14 +81,13 @@ export async function createBackup(): Promise<{ success: boolean; message?: stri
         return { success: true, message: `Backup created: ${filename}` }
     } catch (error: any) {
         console.error('Backup failed:', error)
-        return { success: false, error: `Backup failed: ${error.message}` }
+        return { success: false, error: '백업 작업에 실패했습니다.' }
     }
 }
 
 export async function restoreBackup(filename: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-        const session = await getServerSession(authOptions)
-        if (!session) return { success: false, error: 'Unauthorized' }
+        await requireAdmin()
 
         const dbUrl = process.env.DATABASE_URL
         if (!dbUrl) return { success: false, error: 'DATABASE_URL not configured' }
@@ -133,6 +129,6 @@ export async function restoreBackup(filename: string): Promise<{ success: boolea
         return { success: true, message: `Database restored from ${filename}` }
     } catch (error: any) {
         console.error('Restore failed:', error)
-        return { success: false, error: `Restore failed: ${error.message}` }
+        return { success: false, error: '복원 작업에 실패했습니다.' }
     }
 }

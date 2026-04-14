@@ -6,11 +6,14 @@ import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
 import { generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
+import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { validateExcelUpload } from '@/lib/file-validation'
 
 import { GetStocksParams } from './stock'
 
 // --- EXPORT LOGIC ---
 export async function exportStocks(params?: GetStocksParams) {
+    await requireSession()
     try {
         const whereClause: any = {}
 
@@ -89,6 +92,7 @@ export async function exportStocks(params?: GetStocksParams) {
 
 // --- IMPORT LOGIC ---
 export async function importStocks(formData: FormData, options: { dryRun?: boolean } = {}): Promise<ExcelImportResult> {
+    await requireAdmin()
     const dryRun = options.dryRun || false
     const result: ExcelImportResult = {
         success: false,
@@ -100,6 +104,13 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
         const file = formData.get('file') as File
         if (!file) {
             result.errors.push({ row: 0, reason: '파일이 없습니다.' })
+            return result
+        }
+
+        try {
+            validateExcelUpload(file)
+        } catch (e: any) {
+            result.errors.push({ row: 0, reason: e.message || '파일 검증 실패' })
             return result
         }
 

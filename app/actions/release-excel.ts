@@ -3,12 +3,14 @@
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function exportReleaseLogs(filters?: {
     startDate?: Date
     endDate?: Date
     keyword?: string
 }) {
+    await requireSession()
     try {
         const where: any = {}
 

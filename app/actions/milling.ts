@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getProductCode, generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
+import { requireSession } from '@/lib/auth-guard'
+import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 
 // Updated to match new schema relations
 export type MillingBatchFormData = {
@@ -30,6 +32,7 @@ export type MillingOutputInput = {
 
 
 export async function startMillingBatch(data: MillingBatchFormData) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 0. Update Mode Check
@@ -149,7 +152,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to start/update milling batch:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to process batch' }
+        return { success: false, error: sanitizeErrorMessage(error, '도정 작업 처리에 실패했습니다.') }
     }
 }
 
@@ -165,6 +168,7 @@ export type GetMillingLogsParams = {
 }
 
 export async function getMillingLogs(params?: GetMillingLogsParams) {
+    await requireSession()
     try {
         const where: any = {}
 
@@ -280,6 +284,7 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
 
 // Helper: Remove stock from batch
 export async function removeStockFromMilling(batchId: number, stockId: number) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             const batch = await tx.millingBatch.findUnique({ where: { id: batchId }, include: { stocks: true } });
@@ -317,6 +322,7 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
 }
 
 export async function addPackagingLog(batchId: number, data: MillingOutputInput) {
+    await requireSession()
     try {
         // Fetch Batch and related Stock info for LOT NUMBER GENERATION
         const batch = await prisma.millingBatch.findUnique({
@@ -381,12 +387,13 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
         return { success: true, data: output }
     } catch (error) {
         console.error('Failed to add packaging log:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to add packaging log' }
+        return { success: false, error: sanitizeErrorMessage(error, '포장 기록 추가에 실패했습니다.') }
     }
 }
 
 // Update multiple packaging logs (Replace all for batch)
 export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Fetch Batch and Stock info for LOT generation
@@ -445,12 +452,12 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
         return result
     } catch (error) {
         console.error('Failed to update packaging logs:', error)
-        const message = error instanceof Error ? error.message : 'Failed to update logs'
-        return { success: false, error: message }
+        return { success: false, error: sanitizeErrorMessage(error, '포장 기록 수정에 실패했습니다.') }
     }
 }
 
 export async function deletePackagingLog(outputId: number) {
+    await requireSession()
     try {
         const deleted = await prisma.millingOutputPackage.delete({
             where: { id: outputId }
@@ -480,6 +487,7 @@ export async function reopenMillingBatch(batchId: number) {
 }
 
 export async function updateMillingBatchStatus(batchId: number, isClosed: boolean) {
+    await requireSession()
     try {
         const batch = await prisma.millingBatch.findUnique({
             where: { id: batchId },
@@ -516,6 +524,7 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
 }
 
 export async function deleteMillingBatch(batchId: number) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Check if safe to delete
@@ -559,11 +568,12 @@ export async function deleteMillingBatch(batchId: number) {
         return result
     } catch (error) {
         console.error('Failed to delete batch:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Failed to delete batch' }
+        return { success: false, error: sanitizeErrorMessage(error, '도정 작업 삭제에 실패했습니다.') }
     }
 }
 
 export async function deleteMillingBatches(ids: number[]) {
+    await requireSession()
     try {
         const results = {
             success: [] as number[],
@@ -655,6 +665,7 @@ export async function deleteMillingBatches(ids: number[]) {
 
 
 export async function updateMillingBatchStocks(batchId: number, stockIds: number[]) {
+    await requireSession()
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Batch
@@ -732,6 +743,7 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
 }
 
 export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string, millingType?: string }) {
+    await requireSession()
     try {
         const updateData: any = {
             date: data.date,
