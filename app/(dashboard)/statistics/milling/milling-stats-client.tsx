@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { format } from 'date-fns'
-import { Calendar, RefreshCw, ChevronDown, Search, X, SlidersHorizontal } from 'lucide-react'
+import { Calendar, RefreshCw, Search, X, SlidersHorizontal } from 'lucide-react'
 import { SummaryCards } from '@/components/statistics/SummaryCards'
 import { MillingChart } from '@/components/statistics/MillingChart'
 import { MultiSeriesChart } from '@/components/statistics/MultiSeriesChart'
 import { MillingTable } from '@/components/statistics/MillingTable'
+import { MultiSelectDropdown, type MultiSelectOption } from '@/components/statistics/MultiSelectDropdown'
 import {
   getMillingStatistics,
   getMillingStatsByVariety,
@@ -19,9 +20,16 @@ import type {
   GroupBy,
 } from '@/app/actions/statistics'
 import { resolveQuickPeriod, resolveGroupBy } from '@/lib/statistics-utils'
-
-// ── 타입 ──────────────────────────────────────────
-type MainTab = 'period' | 'variety' | 'millingType'
+import {
+  MAIN_TABS,
+  QUICK_PERIODS,
+  DEFAULT_PERIOD_VARIETIES,
+  DEFAULT_VARIETIES,
+  DEFAULT_MILLINGTYPE_VARIETIES,
+  MAX_VARIETY_SELECT,
+  type MainTab,
+} from './_parts/constants'
+import { MillingFilterSheet } from './_parts/milling-filter-sheet'
 
 type Props = {
   initialData: MillingStatisticsData
@@ -29,28 +37,6 @@ type Props = {
   millingTypeOptions: string[]
   currentCropYear: number
 }
-
-// ── 상수 ──────────────────────────────────────────
-const MAIN_TABS: { key: MainTab; label: string }[] = [
-  { key: 'period',      label: '기간별' },
-  { key: 'variety',     label: '품종별' },
-  { key: 'millingType', label: '도정구분별' },
-]
-
-const QUICK_PERIODS: { key: QuickPeriod; label: string }[] = [
-  { key: 'cropYear', label: '연산' },
-  { key: '1y',       label: '1년' },
-  { key: '6m',       label: '6개월' },
-  { key: '3m',       label: '3개월' },
-  { key: '1m',       label: '1개월' },
-  { key: '1w',       label: '1주' },
-  { key: 'custom',   label: '' },
-]
-
-const DEFAULT_PERIOD_VARIETIES    = ['하이아미', '서농22호', '천지향1세', '새청무']
-const DEFAULT_VARIETIES           = ['서농22호', '천지향1세', '하이아미']
-const DEFAULT_MILLINGTYPE_VARIETIES = ['백옥찰', '서농22호', '천지향1세', '천지향5세', '새청무', '하이아미']
-const MAX_VARIETY_SELECT       = 5
 
 // ── 빈 멀티시리즈 데이터 ──────────────────────────
 function emptyMultiSeries(groupBy: GroupBy): MultiSeriesChartData {
@@ -82,10 +68,6 @@ export function MillingStatsClient({
   const [showCustomDate, setShowCustomDate]         = useState(false)
   const [selectedVarieties, setSelectedVarieties]   = useState<string[]>(DEFAULT_PERIOD_VARIETIES)
   const [selectedMillingTypes, setSelectedMillingTypes] = useState<string[]>(['백미'])
-  const [showVarietyDrop, setShowVarietyDrop]       = useState(false)
-  const [showTypeDrop, setShowTypeDrop]             = useState(false)
-  const varietyRef = useRef<HTMLDivElement>(null)
-  const typeRef    = useRef<HTMLDivElement>(null)
 
   // 생산자 검색
   const [farmerInput, setFarmerInput]       = useState('')
@@ -94,20 +76,17 @@ export function MillingStatsClient({
   // 필터 팝업 (모바일 전용)
   const [showFilter, setShowFilter] = useState(false)
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (varietyRef.current && !varietyRef.current.contains(e.target as Node)) {
-        setShowVarietyDrop(false)
-      }
-      if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
-        setShowTypeDrop(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const [isPending, startTransition] = useTransition()
+
+  // ── 드롭다운 옵션 변환 (MultiSelectDropdown 형식) ─
+  const varietyDropdownOptions = useMemo<MultiSelectOption<string>[]>(
+    () => varietyOptions.map(v => ({ id: v, label: v })),
+    [varietyOptions]
+  )
+  const millingTypeDropdownOptions = useMemo<MultiSelectOption<string>[]>(
+    () => millingTypeOptions.map(t => ({ id: t, label: t })),
+    [millingTypeOptions]
+  )
 
   // ── 데이터 fetch ─────────────────────────────────
   function fetchPeriod(overrides?: {
@@ -230,26 +209,31 @@ export function MillingStatsClient({
   }
 
   // ── 탭 전환 ───────────────────────────────────────
+  // 탭 전환 시 품종·도정구분·생산자 필터는 각 탭 기본값으로 강제 리셋 (기간 필터는 유지)
   function handleTabChange(tab: MainTab) {
     setMainTab(tab)
     setFarmerInput('')
     setAppliedFarmers([])
 
-    if (tab === 'variety') {
-      // 품종 기본값 적용 후 fetch
-      const vars = selectedVarieties.length > 0 ? selectedVarieties : DEFAULT_VARIETIES
-      if (selectedVarieties.length === 0) setSelectedVarieties(DEFAULT_VARIETIES)
-      fetchVariety({ varieties: vars, farmers: [] })
-    } else if (tab === 'millingType') {
-      // 도정구분 전체 + 품종 6개 기본값 적용 후 fetch
+    if (tab === 'period') {
+      // 기간별: 품종 5개 + 도정구분 백미
+      const vars = DEFAULT_PERIOD_VARIETIES.filter(v => varietyOptions.includes(v))
+      setSelectedVarieties(vars)
+      setSelectedMillingTypes(['백미'])
+      fetchPeriod({ varieties: vars, millingTypes: ['백미'], farmers: [] })
+    } else if (tab === 'variety') {
+      // 품종별: 품종 5개 + 도정구분 백미
+      const vars = DEFAULT_VARIETIES.filter(v => varietyOptions.includes(v))
+      setSelectedVarieties(vars)
+      setSelectedMillingTypes(['백미'])
+      fetchVariety({ varieties: vars, millingTypes: ['백미'], farmers: [] })
+    } else {
+      // 도정구분별: 품종 6개 + 도정구분 전체
       const allTypes = millingTypeOptions
       const vars = DEFAULT_MILLINGTYPE_VARIETIES.filter(v => varietyOptions.includes(v))
       setSelectedMillingTypes(allTypes)
       setSelectedVarieties(vars)
       fetchMillingType({ millingTypes: allTypes, varieties: vars, farmers: [] })
-    } else {
-      // period 탭 전환 시 초기화 후 fetch
-      fetchPeriod({ farmers: [] })
     }
   }
 
@@ -525,112 +509,25 @@ export function MillingStatsClient({
             <div className="h-5 w-px bg-slate-100 mx-1" />
 
             {/* 품종 드롭다운 */}
-            <div className="relative" ref={varietyRef}>
-              <button
-                onClick={() => { setShowVarietyDrop(v => !v); setShowTypeDrop(false) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  selectedVarieties.length > 0
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                품종 {selectedVarieties.length > 0 && (
-                  <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                    {selectedVarieties.length}
-                  </span>
-                )}
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {showVarietyDrop && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[160px]">
-                  {mainTab === 'variety' && (
-                    <p className="px-4 pt-1.5 pb-1 text-[10px] text-slate-400">
-                      최대 {MAX_VARIETY_SELECT}개 선택
-                    </p>
-                  )}
-                  {varietyOptions.map(v => {
-                    const isSelected = selectedVarieties.includes(v)
-                    const isDisabled = mainTab === 'variety' && !isSelected && selectedVarieties.length >= MAX_VARIETY_SELECT
-                    return (
-                      <button
-                        key={v}
-                        onClick={() => !isDisabled && toggleVariety(v)}
-                        disabled={isDisabled}
-                        className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 ${
-                          isDisabled
-                            ? 'text-slate-300 cursor-not-allowed'
-                            : isSelected
-                              ? 'text-blue-600 font-semibold hover:bg-slate-50'
-                              : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
-                        }`}>
-                          {isSelected && <span className="text-white text-[8px]">✓</span>}
-                        </span>
-                        {v}
-                      </button>
-                    )
-                  })}
-                  {selectedVarieties.length > 0 && (
-                    <button
-                      onClick={() => setSelectedVarieties([])}
-                      className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
-                    >
-                      전체 해제
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <MultiSelectDropdown
+              options={varietyDropdownOptions}
+              selected={selectedVarieties}
+              onToggle={toggleVariety}
+              onClearAll={() => setSelectedVarieties([])}
+              placeholder="품종"
+              maxSelect={mainTab === 'variety' ? MAX_VARIETY_SELECT : undefined}
+              maxSelectHint={mainTab === 'variety' ? `최대 ${MAX_VARIETY_SELECT}개 선택` : undefined}
+            />
 
             {/* 도정구분 드롭다운 */}
-            <div className="relative" ref={typeRef}>
-              <button
-                onClick={() => { setShowTypeDrop(t => !t); setShowVarietyDrop(false) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  selectedMillingTypes.length > 0
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                도정구분 {selectedMillingTypes.length > 0 && (
-                  <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                    {selectedMillingTypes.length}
-                  </span>
-                )}
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {showTypeDrop && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20 min-w-[140px]">
-                  {millingTypeOptions.map(t => (
-                    <button
-                      key={t}
-                      onClick={() => toggleMillingType(t)}
-                      className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center gap-2 ${
-                        selectedMillingTypes.includes(t) ? 'text-blue-600 font-semibold' : 'text-slate-600'
-                      }`}
-                    >
-                      <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
-                        selectedMillingTypes.includes(t) ? 'bg-blue-500 border-blue-500' : 'border-slate-300'
-                      }`}>
-                        {selectedMillingTypes.includes(t) && <span className="text-white text-[8px]">✓</span>}
-                      </span>
-                      {t}
-                    </button>
-                  ))}
-                  {selectedMillingTypes.length > 0 && (
-                    <button
-                      onClick={() => setSelectedMillingTypes([])}
-                      className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:bg-slate-50 border-t border-slate-50 mt-1"
-                    >
-                      전체 해제
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <MultiSelectDropdown
+              options={millingTypeDropdownOptions}
+              selected={selectedMillingTypes}
+              onToggle={toggleMillingType}
+              onClearAll={() => setSelectedMillingTypes([])}
+              placeholder="도정구분"
+              minWidth={140}
+            />
 
             {/* 구분선 */}
             <div className="h-5 w-px bg-slate-100 mx-1" />
@@ -747,176 +644,33 @@ export function MillingStatsClient({
         </div>
       </div>
 
-      {/* ── 필터 팝업 ── */}
-      {showFilter && (
-        <>
-          {/* 배경 오버레이 */}
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={() => setShowFilter(false)}
-          />
-          {/* 패널: 모바일 바텀시트 / PC 중앙 모달 */}
-          <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-52px-3.5rem-env(safe-area-inset-bottom)-16px)] overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
-
-            {/* 헤더 */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-              <h3 className="text-sm font-bold text-slate-800">검색 조건</h3>
-              <button
-                onClick={() => setShowFilter(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-
-            {/* 스크롤 영역 */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3 flex flex-col gap-4">
-
-              {/* 기간 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">기간</p>
-                {/* 빠른기간 버튼 (custom 제외) */}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {QUICK_PERIODS.filter(p => p.key !== 'custom').map(p => (
-                    <button
-                      key={p.key}
-                      onClick={() => handleQuickPeriod(p.key)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors whitespace-nowrap ${
-                        quickPeriod === p.key
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {p.key === 'cropYear' ? `'${String(cropYear).slice(2)}년산` : p.label}
-                    </button>
-                  ))}
-                </div>
-                {/* 연산 년도 선택 */}
-                {quickPeriod === 'cropYear' && (
-                  <div className="flex items-center gap-1 mb-3">
-                    {cropYearOptions.map(y => (
-                      <button
-                        key={y}
-                        onClick={() => handleCropYear(y)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                          cropYear === y
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-slate-400 hover:bg-slate-50'
-                        }`}
-                      >
-                        {y}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* 날짜 직접 입력 — 항상 2열 표시 */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-slate-400">시작일</span>
-                    <input
-                      type="date"
-                      value={from}
-                      onChange={e => { handleCustomDate(e.target.value, to); setQuickPeriod('custom') }}
-                      className="bg-slate-100 border-0 rounded-lg px-2.5 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-slate-400">종료일</span>
-                    <input
-                      type="date"
-                      value={to}
-                      onChange={e => { handleCustomDate(from, e.target.value); setQuickPeriod('custom') }}
-                      className="bg-slate-100 border-0 rounded-lg px-2.5 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* 품종 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                  품종
-                  {mainTab === 'variety' && (
-                    <span className="ml-1 font-normal normal-case text-slate-400">(최대 {MAX_VARIETY_SELECT}개)</span>
-                  )}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {varietyOptions.map(v => {
-                    const isSelected = selectedVarieties.includes(v)
-                    const isDisabled = mainTab === 'variety' && !isSelected && selectedVarieties.length >= MAX_VARIETY_SELECT
-                    return (
-                      <button
-                        key={v}
-                        onClick={() => !isDisabled && toggleVariety(v)}
-                        disabled={isDisabled}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                          isDisabled
-                            ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-                            : isSelected
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* 도정구분 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">도정구분</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {millingTypeOptions.map(t => (
-                    <button
-                      key={t}
-                      onClick={() => toggleMillingType(t)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                        selectedMillingTypes.includes(t)
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 생산자 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">생산자</p>
-                <input
-                  type="text"
-                  value={farmerInput}
-                  onChange={e => setFarmerInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { handleSearch(); setShowFilter(false) } }}
-                  placeholder="생산자명 (쉼표로 구분)"
-                  className="w-full bg-slate-100 border-0 rounded-lg px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
-            </div>
-
-            {/* 하단 버튼 */}
-            <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2 shrink-0">
-              <button
-                onClick={() => { handleReset(); setShowFilter(false) }}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors"
-              >
-                초기화
-              </button>
-              <button
-                onClick={() => { handleSearch(); setShowFilter(false) }}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
-              >
-                <Search className="w-4 h-4" />
-                검색
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* ── 필터 팝업 (모바일) ── */}
+      <MillingFilterSheet
+        show={showFilter}
+        onClose={() => setShowFilter(false)}
+        mainTab={mainTab}
+        quickPeriod={quickPeriod}
+        cropYear={cropYear}
+        cropYearOptions={cropYearOptions}
+        from={from}
+        to={to}
+        onQuickPeriod={handleQuickPeriod}
+        onCropYear={handleCropYear}
+        onCustomDateChange={(newFrom, newTo) => {
+          handleCustomDate(newFrom, newTo)
+          setQuickPeriod('custom')
+        }}
+        varietyOptions={varietyOptions}
+        selectedVarieties={selectedVarieties}
+        onToggleVariety={toggleVariety}
+        millingTypeOptions={millingTypeOptions}
+        selectedMillingTypes={selectedMillingTypes}
+        onToggleMillingType={toggleMillingType}
+        farmerInput={farmerInput}
+        onFarmerInputChange={setFarmerInput}
+        onReset={() => { handleReset(); setShowFilter(false) }}
+        onSearch={() => { handleSearch(); setShowFilter(false) }}
+      />
 
       {/* ── 차트 + 요약 카드 ── */}
       <div className="flex flex-col gap-2 md:flex-row md:gap-4 md:items-stretch">

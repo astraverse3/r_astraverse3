@@ -3,26 +3,26 @@
 import { useState, useTransition, useMemo } from 'react'
 import { ChevronDown, RotateCcw, Search, X, SlidersHorizontal, RefreshCw } from 'lucide-react'
 import { StockChart } from '@/components/statistics/StockChart'
-import type { StockChartItem } from '@/components/statistics/StockChart'
+import { MultiSelectDropdown, type MultiSelectOption } from '@/components/statistics/MultiSelectDropdown'
 import {
   getStockStatistics,
   getStockGroupOptions,
   getStockVarietyOptions,
 } from '@/app/actions/stock-statistics'
-
-const CERT_TYPE_OPTIONS = ['유기농', '무농약', '일반'] as const
 import type {
   StockStatisticsData,
-  FarmerStockRow,
-  GroupStockRow,
-  VarietyStockRow,
   GroupOption,
   VarietyOption,
 } from '@/app/actions/stock-statistics'
-
-// ── 타입 ──────────────────────────────────────────────────────────────────
-
-type StockTab = 'farmer' | 'group' | 'variety'
+import {
+  type StockTab,
+  CERT_TYPE_OPTIONS,
+  MAX_CHART_ITEMS,
+  toChartItems,
+} from './_parts/utils'
+import { StockSummaryCards } from './_parts/stock-summary-cards'
+import { ChartLegend, FarmerTable, GroupTable, VarietyTable } from './_parts/stock-tables'
+import { StockFilterSheet } from './_parts/stock-filter-sheet'
 
 type Props = {
   initialData: StockStatisticsData
@@ -30,336 +30,6 @@ type Props = {
   groupOptions: GroupOption[]
   varietyOptions: VarietyOption[]
   initYear: number
-}
-
-// ── 유틸 ──────────────────────────────────────────────────────────────────
-
-function formatKg(v: number) {
-  return v.toLocaleString('ko-KR', { maximumFractionDigits: 1 })
-}
-
-const MAX_CHART_ITEMS = 20
-
-function toChartItems(
-  rows: { name: string; consumed: number; available: number; released: number; total: number }[],
-): StockChartItem[] {
-  // 기타 집계 없이 상위 MAX_CHART_ITEMS개만 표시 (기타가 너무 커서 왜곡되는 문제 방지)
-  return rows.slice(0, MAX_CHART_ITEMS).map(r => ({
-    name: r.name,
-    consumed: r.consumed,
-    available: r.available,
-    released: r.released,
-    total: r.total,
-  }))
-}
-
-// ── 멀티셀렉트 드롭다운 ───────────────────────────────────────────────────
-
-type MultiOption<T extends string | number> = { id: T; name: string }
-
-function MultiSelectDropdown<T extends string | number>({
-  options,
-  selected,
-  onToggle,
-  placeholder,
-  colorClass,
-}: {
-  options: MultiOption<T>[]
-  selected: T[]
-  onToggle: (id: T) => void
-  placeholder: string
-  colorClass: string
-}) {
-  const [open, setOpen] = useState(false)
-  const isActive = selected.length > 0
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1 pl-3 pr-2 py-1.5 text-xs font-semibold rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer whitespace-nowrap ${
-          isActive ? colorClass : 'bg-slate-100 text-slate-700'
-        }`}
-      >
-        {isActive ? `${placeholder} (${selected.length})` : placeholder}
-        <ChevronDown className="w-3 h-3 ml-0.5" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-lg border border-slate-100 py-1 w-max min-w-[140px] max-h-[240px] overflow-y-auto">
-            {options.length === 0 && (
-              <p className="px-3 py-2 text-xs text-slate-400">항목 없음</p>
-            )}
-            {options.map(opt => (
-              <label
-                key={opt.id}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-700 whitespace-nowrap"
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.includes(opt.id)}
-                  onChange={() => onToggle(opt.id)}
-                  className="w-3.5 h-3.5 rounded accent-blue-500"
-                />
-                {opt.name}
-              </label>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-// ── 요약 카드 ─────────────────────────────────────────────────────────────
-
-function StockSummaryCards({ summary }: { summary: StockStatisticsData['summary'] }) {
-  const stockRate = summary.totalKg > 0
-    ? Math.round((summary.availableKg / summary.totalKg) * 1000) / 10
-    : 0
-
-  const cards = [
-    {
-      label: '총 입고량',
-      value: formatKg(summary.totalKg),
-      unit: 'kg',
-      accent: '#00a2e8',
-      valueColor: '#00a2e8',
-    },
-    {
-      label: '도정완료',
-      value: formatKg(summary.consumedKg),
-      unit: 'kg',
-      accent: '#8dc540',
-      valueColor: '#7db037',
-    },
-    {
-      label: '미처리 재고',
-      value: formatKg(summary.availableKg),
-      unit: 'kg',
-      accent: '#f89c1e',
-      valueColor: '#cc7b0c',
-    },
-    {
-      label: '재고율',
-      value: stockRate.toFixed(1),
-      unit: '%',
-      accent: '#94a3b8',
-      valueColor: '#475569',
-    },
-  ]
-
-  return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:w-48 md:shrink-0">
-      {cards.map(card => (
-        <div key={card.label} className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-slate-100 overflow-hidden md:flex-1 md:min-h-0">
-          {/* 공통: 상단 컬러 띠 */}
-          <div className="h-[3px]" style={{ backgroundColor: card.accent }} />
-          {/* 모바일: 컴팩트 가로 레이아웃 */}
-          <div className="md:hidden px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
-            <p className="text-xs font-medium text-slate-400 shrink-0">{card.label}</p>
-            <div className="flex items-baseline gap-0.5 min-w-0">
-              <span className="text-sm font-bold tabular-nums truncate" style={{ color: card.valueColor }}>
-                {card.value}
-              </span>
-              <span className="text-xs font-medium text-slate-400 shrink-0">{card.unit}</span>
-            </div>
-          </div>
-          {/* PC: 상하 레이아웃 */}
-          <div className="hidden md:flex md:flex-col md:justify-center md:h-full md:px-4 md:py-3">
-            <div className="flex items-center gap-1 mb-2">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: card.accent }} />
-              <span className="text-xs font-bold text-slate-500">{card.label}</span>
-            </div>
-            <div className="flex items-baseline justify-end gap-1">
-              <span className="text-2xl font-bold leading-none" style={{ color: card.valueColor }}>
-                {card.value}
-              </span>
-              <span className="text-xs font-semibold text-slate-500">{card.unit}</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── 재고율 뱃지 ───────────────────────────────────────────────────────────
-
-function StockRateBadge({ rate }: { rate: number }) {
-  // 재고율이 낮을수록 좋음 (처리 완료)
-  const color =
-    rate <= 20 ? '#7db037' :
-    rate <= 50 ? '#cc7b0c' :
-    '#ef4444'
-  return (
-    <span className="text-xs font-semibold" style={{ color }}>
-      {rate.toFixed(1)}%
-    </span>
-  )
-}
-
-// ── 인증 뱃지 ─────────────────────────────────────────────────────────────
-
-function CertBadge({ certType }: { certType: string }) {
-  const style =
-    certType === '유기농' ? 'bg-green-100 text-green-700' :
-    certType === '무농약' ? 'bg-blue-100 text-blue-700' :
-    'bg-slate-100 text-slate-500'
-  return (
-    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${style}`}>{certType}</span>
-  )
-}
-
-// ── 테이블: 생산자별 ──────────────────────────────────────────────────────
-
-function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '560px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">생산자명</th>
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">작목반</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.farmerId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.farmerName}</td>
-              <td className="py-2.5 px-3 text-slate-500 text-xs whitespace-nowrap">{r.groupName}</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={7} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-// ── 테이블: 작목반별 ──────────────────────────────────────────────────────
-
-function GroupTable({ rows }: { rows: GroupStockRow[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '620px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">작목반명</th>
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">인증</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">생산자수</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.groupId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.groupName}</td>
-              <td className="py-2.5 px-3 whitespace-nowrap">
-                <CertBadge certType={r.certType} />
-              </td>
-              <td className="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">{r.farmerCount}명</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={8} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-// ── 테이블: 품종별 ────────────────────────────────────────────────────────
-
-function VarietyTable({ rows }: { rows: VarietyStockRow[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '480px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">품종명</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.varietyId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.varietyName}</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-// ── 차트 범례 ─────────────────────────────────────────────────────────────
-
-function ChartLegend() {
-  return (
-    <div className="flex items-center gap-4 text-xs text-slate-500">
-      <span className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: '#8dc540' }} />
-        도정완료
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: '#8b5cf6' }} />
-        직접출고
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: '#f89c1e' }} />
-        미처리
-      </span>
-    </div>
-  )
 }
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────
@@ -382,6 +52,20 @@ export function StockStatsClient({
   const [activeTab, setActiveTab]                   = useState<StockTab>('variety')
   const [showFilter, setShowFilter]                 = useState(false)
   const [isPending, startTransition]                = useTransition()
+
+  // ── 드롭다운 옵션 변환 (MultiSelectDropdown 형식) ─────────────────────
+  const certDropdownOptions = useMemo<MultiSelectOption<string>[]>(
+    () => CERT_TYPE_OPTIONS.map(c => ({ id: c, label: c })),
+    [],
+  )
+  const groupDropdownOptions = useMemo<MultiSelectOption<number>[]>(
+    () => groupOptions.map(g => ({ id: g.id, label: g.name })),
+    [groupOptions],
+  )
+  const varietyDropdownOptions = useMemo<MultiSelectOption<number>[]>(
+    () => varietyOptions.map(v => ({ id: v.id, label: v.name })),
+    [varietyOptions],
+  )
 
   // 연산 변경 시 옵션만 새로 로드 (데이터 조회는 검색 버튼으로)
   function handleYearChange(newYear: number) {
@@ -548,6 +232,34 @@ export function StockStatsClient({
     })
   }
 
+  // 탭 전환 시 필터 리셋 (연산은 유지, 필터가 비어있으면 fetch 스킵)
+  function handleTabChange(newTab: StockTab) {
+    setActiveTab(newTab)
+
+    const hasFilters =
+      selectedCertTypes.length > 0 ||
+      selectedGroupIds.length > 0 ||
+      selectedVarietyIds.length > 0 ||
+      farmerNameInput.trim().length > 0
+
+    if (!hasFilters) return
+
+    setSelectedCertTypes([])
+    setSelectedGroupIds([])
+    setSelectedVarietyIds([])
+    setFarmerNameInput('')
+    startTransition(async () => {
+      const [newData, newGroups, newVarieties] = await Promise.all([
+        getStockStatistics({ productionYear: year }),
+        getStockGroupOptions(year),
+        getStockVarietyOptions(year),
+      ])
+      setData(newData)
+      setGroupOptions(newGroups)
+      setVarietyOptions(newVarieties)
+    })
+  }
+
   // 차트 데이터 변환 (data가 바뀔 때만 재계산)
   const farmerChartItems = useMemo(() => toChartItems(
     data.byFarmer.map(r => ({
@@ -617,7 +329,7 @@ export function StockStatsClient({
           {TABS.map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`px-5 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600'
@@ -665,30 +377,36 @@ export function StockStatsClient({
             </div>
 
             {/* 인증구분 멀티셀렉트 */}
-            <MultiSelectDropdown<string>
-              options={CERT_TYPE_OPTIONS.map(c => ({ id: c, name: c }))}
+            <MultiSelectDropdown
+              options={certDropdownOptions}
               selected={selectedCertTypes}
               onToggle={handleCertTypeToggle}
               placeholder="인증구분"
-              colorClass="bg-teal-50 text-teal-700"
+              activeClass="bg-teal-50 text-teal-700"
+              emptyLabel="(전체)"
+              minWidth={140}
             />
 
             {/* 작목반 멀티셀렉트 */}
-            <MultiSelectDropdown<number>
-              options={groupOptions}
+            <MultiSelectDropdown
+              options={groupDropdownOptions}
               selected={selectedGroupIds}
               onToggle={handleGroupToggle}
               placeholder="작목반"
-              colorClass="bg-blue-50 text-blue-600"
+              activeClass="bg-blue-50 text-blue-600"
+              emptyLabel="(전체)"
+              minWidth={140}
             />
 
             {/* 품종 멀티셀렉트 */}
             <MultiSelectDropdown
-              options={varietyOptions}
+              options={varietyDropdownOptions}
               selected={selectedVarietyIds}
               onToggle={handleVarietyToggle}
               placeholder="품종"
-              colorClass="bg-green-50 text-green-700"
+              activeClass="bg-green-50 text-green-700"
+              emptyLabel="(전체)"
+              minWidth={140}
             />
 
             {/* 생산자 텍스트 검색 */}
@@ -812,151 +530,25 @@ export function StockStatsClient({
       </div>
 
       {/* ── 필터 팝업 (모바일) ── */}
-      {showFilter && (
-        <>
-          <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowFilter(false)} />
-          <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-52px-3.5rem-env(safe-area-inset-bottom)-16px)] overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
-
-            {/* 헤더 */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
-              <h3 className="text-sm font-bold text-slate-800">검색 조건</h3>
-              <button onClick={() => setShowFilter(false)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-                <X className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-
-            {/* 스크롤 영역 */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-2.5 flex flex-col gap-3">
-
-              {/* 연산 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">연산</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {productionYears.map(y => (
-                    <button
-                      key={y}
-                      onClick={() => handleYearChange(y)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                        year === y ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {y}년산
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 인증구분 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">인증구분</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {CERT_TYPE_OPTIONS.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => handleCertTypeToggle(c)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                        selectedCertTypes.includes(c) ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 작목반 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                  작목반
-                  {selectedGroupIds.length > 0 && (
-                    <span className="ml-1.5 font-normal normal-case text-blue-500">{selectedGroupIds.length}개 선택</span>
-                  )}
-                </p>
-                {groupOptions.length === 0 ? (
-                  <p className="text-xs text-slate-400">항목 없음</p>
-                ) : (
-                  <div className="max-h-[90px] overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
-                    {groupOptions.map(g => (
-                      <label
-                        key={g.id}
-                        className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-50 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedGroupIds.includes(g.id)}
-                          onChange={() => handleGroupToggle(g.id)}
-                          className="w-3.5 h-3.5 rounded accent-blue-500 shrink-0"
-                        />
-                        <span className="text-xs text-slate-700">{g.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 품종 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                  품종
-                  {selectedVarietyIds.length > 0 && (
-                    <span className="ml-1.5 font-normal normal-case text-green-600">{selectedVarietyIds.length}개 선택</span>
-                  )}
-                </p>
-                {varietyOptions.length === 0 ? (
-                  <p className="text-xs text-slate-400">항목 없음</p>
-                ) : (
-                  <div className="max-h-[90px] overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
-                    {varietyOptions.map(v => (
-                      <label
-                        key={v.id}
-                        className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-50 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedVarietyIds.includes(v.id)}
-                          onChange={() => handleVarietyToggle(v.id)}
-                          className="w-3.5 h-3.5 rounded accent-green-500 shrink-0"
-                        />
-                        <span className="text-xs text-slate-700">{v.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 생산자 */}
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">생산자</p>
-                <input
-                  type="text"
-                  value={farmerNameInput}
-                  onChange={e => setFarmerNameInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { handleSearch(); setShowFilter(false) } }}
-                  placeholder="생산자명 (쉼표로 구분)"
-                  className="w-full bg-slate-100 border-0 rounded-lg px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
-            </div>
-
-            {/* 하단 버튼 */}
-            <div className="px-4 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0">
-              <button
-                onClick={() => { handleReset(); setShowFilter(false) }}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition-colors"
-              >
-                초기화
-              </button>
-              <button
-                onClick={() => { handleSearch(); setShowFilter(false) }}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
-              >
-                <Search className="w-4 h-4" />
-                검색
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <StockFilterSheet
+        show={showFilter}
+        onClose={() => setShowFilter(false)}
+        productionYears={productionYears}
+        year={year}
+        onYearChange={handleYearChange}
+        selectedCertTypes={selectedCertTypes}
+        onCertTypeToggle={handleCertTypeToggle}
+        groupOptions={groupOptions}
+        selectedGroupIds={selectedGroupIds}
+        onGroupToggle={handleGroupToggle}
+        varietyOptions={varietyOptions}
+        selectedVarietyIds={selectedVarietyIds}
+        onVarietyToggle={handleVarietyToggle}
+        farmerNameInput={farmerNameInput}
+        onFarmerNameChange={setFarmerNameInput}
+        onReset={() => { handleReset(); setShowFilter(false) }}
+        onSearch={() => { handleSearch(); setShowFilter(false) }}
+      />
 
       {/* ── 차트 + 서머리 카드 (PC: 가로, 모바일: 세로) ── */}
       <div className="flex flex-col md:flex-row gap-2 md:gap-3 md:items-stretch">

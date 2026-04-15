@@ -1,5 +1,69 @@
 # 작업일지
 
+## 2026-04-15
+
+### 통계 페이지 필터 기본값 정비 & 재고분석 '(전체)' 라벨 `fix` `ux`
+
+**후속 조치 — 리팩토링 이후 검증 과정에서 발견된 UX 이슈**
+
+**수율분석 (milling):**
+- `DEFAULT_PERIOD_VARIETIES` 4개 → 5개 (천지향5세 추가)
+- `DEFAULT_VARIETIES` 3개 → 5개 (백옥찰/서농22호/천지향1세/새청무/하이아미, 천지향5세만 제외)
+- `handleTabChange` 변경: 탭 전환 시 이전 필터 이월 금지, 각 탭 기본값으로 품종·도정구분·생산자 **강제 리셋** (기간 필터는 유지)
+  - 기간별: 품종 5개 + 도정구분 `['백미']`
+  - 품종별: 품종 5개 + 도정구분 `['백미']`
+  - 도정구분별: 품종 6개 + 도정구분 전체
+- 기존 이슈: 도정구분별(6개) → 품종별로 전환 시 `selectedVarieties`가 유지되어 5개 max 제한과 충돌 → 이제 해소
+
+**재고분석 (stock):**
+- 공유 `MultiSelectDropdown`에 `emptyLabel` prop 신설
+  - 선택 없을 때 `"품종"` → `"품종 (전체)"` 처럼 placeholder 뒤에 옵션 라벨 표시
+- stock의 인증/작목반/품종 드롭다운 3개에 `emptyLabel="(전체)"` 적용
+- 이유: 빈 필터 = 전체 조회의 동작을 UI에 명시해 혼동 해소
+- milling은 기존 동작 유지 (빈 상태의 의미가 다름)
+- `handleTabChange` 신설: 탭(생산자/작목반/품종) 전환 시 인증/작목반/품종/생산자 필터 리셋 + 재조회 (연산은 유지). 필터가 이미 비어있으면 fetch 스킵
+
+**변경 파일:**
+- `app/(dashboard)/statistics/milling/_parts/constants.ts`
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx`
+- `components/statistics/MultiSelectDropdown.tsx`
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx`
+
+**검증:** `tsc --noEmit` 통과
+
+---
+
+### 통계 페이지 정리 & 리팩토링 (800줄 제한 해소) `refactor`
+
+**계획/보고서:**
+- `docs/plan-stats-cleanup.md` (신규)
+- `docs/report-stats-cleanup-2026-04-15.md` (신규)
+
+**신규 파일:**
+- `components/statistics/MultiSelectDropdown.tsx` (121줄) — 제네릭 공유 멀티셀렉트, `maxSelect`/`onClearAll`/`activeClass` prop 지원
+- `app/(dashboard)/statistics/stock/_parts/utils.ts` — formatKg, toChartItems, CERT_TYPE_OPTIONS, StockTab
+- `app/(dashboard)/statistics/stock/_parts/stock-tables.tsx` (182줄) — FarmerTable, GroupTable, VarietyTable, ChartLegend, 뱃지
+- `app/(dashboard)/statistics/stock/_parts/stock-summary-cards.tsx` (73줄)
+- `app/(dashboard)/statistics/stock/_parts/stock-filter-sheet.tsx` (199줄) — 모바일 바텀시트
+- `app/(dashboard)/statistics/milling/_parts/constants.ts` — 상수 + MainTab 타입
+- `app/(dashboard)/statistics/milling/_parts/milling-filter-sheet.tsx` (230줄) — 모바일 바텀시트
+
+**수정 파일:**
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx` — **999 → 560줄** (-439)
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx` — **945 → 694줄** (-251)
+- `README.md` — Next.js 보일러플레이트 → 프로젝트 소개/스택/셋업/원칙
+- `docs/plan-statistics.md` (이전 작업 참고용, 변경 없음)
+
+**주요 결정:**
+- 출고 페이지 month/destination 탭은 사용자 의도적 disabled — 건드리지 않음 (메모리 저장)
+- MultiSelectDropdown 통일 디자인: 네이티브 체크박스 + activeClass prop 주입 + 컴포넌트 내장 외부 클릭 닫기
+- `_parts/` 서브폴더 컨벤션 (`_` 프리픽스로 라우트 제외)
+- 상태/핸들러/메인 렌더는 메인에 유지, 재사용성 없는 부속만 분리
+
+**검증:** `tsc --noEmit` 통과, `npm run build` 통과 (38.3s, 19페이지)
+
+---
+
 ## 2026-04-14
 
 ### 보안 이슈 일괄 수정 (긴급 4건 + 단기 4건) `security`
