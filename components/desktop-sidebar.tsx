@@ -12,7 +12,7 @@ import {
     Leaf,
     Users
 } from "lucide-react"
-import { hasPermission } from "@/lib/permissions"
+import { hasPermission, hasAnyPermission } from "@/lib/permissions"
 
 export function DesktopSidebar() {
     const pathname = usePathname();
@@ -133,6 +133,7 @@ export function DesktopSidebar() {
                             생산자 관리
                         </Link>
 
+                        {hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
                         <div className="group pt-1">
                             <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers') ? 'bg-slate-50 text-slate-900' : ''}`}>
                                 <Server className="w-4 h-4" />
@@ -183,17 +184,20 @@ export function DesktopSidebar() {
                                         </Link>
                                     </>
                                 )}
-                                <Link
-                                    href="/admin/settings"
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/settings')
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    관리자 설정
-                                </Link>
+                                {user?.role === 'ADMIN' && (
+                                    <Link
+                                        href="/admin/settings"
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/settings')
+                                            ? 'text-blue-600 bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        관리자 설정
+                                    </Link>
+                                )}
                             </div>
                         </div>
+                        )}
                     </div>
                 </div>
 

@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 
 // --- VARIETY ACTIONS (Unchanged) ---
@@ -26,7 +26,7 @@ export async function getVarieties() {
 }
 
 export async function createVariety(data: VarietyFormData) {
-    await requireAdmin()
+    await requirePermission('VARIETY_MANAGE')
     try {
         const name = data.name.trim()
         const existing = await prisma.variety.findUnique({
@@ -59,7 +59,7 @@ export async function createVariety(data: VarietyFormData) {
 }
 
 export async function updateVariety(id: number, data: VarietyFormData) {
-    await requireAdmin()
+    await requirePermission('VARIETY_MANAGE')
     try {
         const name = data.name.trim()
         const existing = await prisma.variety.findUnique({
@@ -92,7 +92,7 @@ export async function updateVariety(id: number, data: VarietyFormData) {
 }
 
 export async function deleteVariety(id: number) {
-    await requireAdmin()
+    await requirePermission('VARIETY_MANAGE')
     try {
         const deleted = await prisma.variety.delete({
             where: { id }
@@ -115,7 +115,7 @@ export async function deleteVariety(id: number) {
 }
 
 export async function deleteVarieties(ids: number[]) {
-    await requireAdmin()
+    await requirePermission('VARIETY_MANAGE')
     try {
         const results = {
             success: [] as number[],
@@ -286,7 +286,7 @@ export type FarmerFormData = {
 }
 
 export async function createFarmer(data: FarmerFormData) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const farmerNo = data.farmerNo?.trim() || null
 
@@ -337,7 +337,7 @@ export async function createFarmer(data: FarmerFormData) {
 }
 
 export async function updateFarmer(id: number, data: FarmerFormData) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const farmerNo = data.farmerNo?.trim() || null
 
@@ -384,7 +384,7 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
 }
 
 export async function deleteFarmer(id: number) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const used = await prisma.stock.findFirst({
             where: { farmerId: id }
@@ -414,7 +414,7 @@ export async function deleteFarmer(id: number) {
 }
 
 export async function deleteFarmers(ids: number[]) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const results = {
             success: [] as number[],
@@ -479,7 +479,7 @@ export async function createFarmerWithGroup(
     farmerData: Omit<FarmerFormData, 'groupId'>,
     groupData: ProducerGroupFormData
 ) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         return await prisma.$transaction(async (tx) => {
             // Trim Data
@@ -564,7 +564,7 @@ export async function createFarmerWithGroup(
 }
 
 export async function createProducerGroup(data: ProducerGroupFormData) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const code = data.code.trim()
         const name = data.name.trim()
@@ -602,7 +602,7 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
 }
 
 export async function updateProducerGroup(id: number, data: Partial<ProducerGroupFormData>) {
-    await requireAdmin()
+    await requirePermission('FARMER_MANAGE')
     try {
         const updateData: any = {}
 

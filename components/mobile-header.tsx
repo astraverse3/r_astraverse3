@@ -1,9 +1,9 @@
 'use client';
 
 import Link from "next/link"
-import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck, Megaphone } from "lucide-react"
+import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck, Megaphone, History } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
-import { hasPermission } from "@/lib/permissions"
+import { hasPermission, hasAnyPermission } from "@/lib/permissions"
 
 import {
     DropdownMenu,
@@ -17,7 +17,6 @@ export function MobileHeader() {
     const { data: session } = useSession()
     // @ts-ignore
     const user = session?.user as any
-    const isAdmin = user?.role === 'ADMIN'
     const { name, image, department, position } = user || {}
 
     return (
@@ -81,8 +80,8 @@ export function MobileHeader() {
                             </Link>
                         </DropdownMenuItem>
 
-                        {/* 관리자 전용 메뉴 */}
-                        {isAdmin && (
+                        {/* 관리자 메뉴 (USER_MANAGE / NOTICE_MANAGE / SYSTEM_MANAGE 중 하나 또는 ADMIN일 때만 노출) */}
+                        {hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
                             <>
                                 <DropdownMenuSeparator />
                                 {hasPermission(user, 'USER_MANAGE') && (
@@ -98,6 +97,14 @@ export function MobileHeader() {
                                         <Link href="/admin/notices" className="flex items-center gap-2 cursor-pointer">
                                             <Megaphone className="w-4 h-4 text-slate-500" />
                                             <span>공지사항 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
+                                {hasPermission(user, 'SYSTEM_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/logs" className="flex items-center gap-2 cursor-pointer">
+                                            <History className="w-4 h-4 text-slate-500" />
+                                            <span>활동 로그</span>
                                         </Link>
                                     </DropdownMenuItem>
                                 )}

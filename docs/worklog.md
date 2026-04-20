@@ -1,5 +1,54 @@
 # 작업일지
 
+## 2026-04-20
+
+### 어드민 메뉴 접근 권한 수정 `fix` `security`
+
+**배경 & 버그**: 배포 환경에서 `VARIETY_MANAGE` / `FARMER_MANAGE` 권한 보유자가 품종관리(`/admin/varieties`) · 생산자관리(`/admin/farmers`) 메뉴에 진입 불가. 원인은 `proxy.ts`의 블랭킷 `/admin/*` ADMIN-only 가드가 업무 권한 구조("페이지 조회는 누구나, 수정만 권한자")를 깨뜨린 것. 추가로 파일명이 `proxy.ts`라 Next.js 표준 자동 로드 대상에서 벗어남.
+
+**수정 내용**:
+- `proxy.ts` 삭제 → `middleware.ts` 신규 생성 (표준 이름)
+- 블랭킷 가드를 **경로별 권한 매핑 테이블**로 교체: `/admin/varieties` → `VARIETY_MANAGE`, `/admin/farmers` → `FARMER_MANAGE`, `/admin/users` → `USER_MANAGE`, `/admin/notices` → `NOTICE_MANAGE`, `/admin/logs` · `/admin/backup` → `SYSTEM_MANAGE`, `/admin/settings` → ADMIN 전용. ADMIN은 모든 경로 통과
+- `app/actions/admin.ts`의 11개 액션(Variety/Farmer/ProducerGroup CRUD) `requireAdmin()` → `requirePermission('VARIETY_MANAGE' | 'FARMER_MANAGE')` 교체
+- `app/actions/excel.ts`의 `importFarmers` 동일 교체
+- 미사용 `requireAdmin` import 정리
+
+**검증**: `npx tsc --noEmit` 통과 (에러 없음). 실제 동작 테스트는 배포 후 사용자 계정별 시나리오로 필요.
+
+**후속 제안**: 사이드바 관리자 메뉴를 권한 기반으로 조건부 노출할지 별도 UX 이슈로 검토 필요 (권한 없는 사용자에게 메뉴가 보였다가 클릭하면 홈으로 튕기는 현상 존재).
+
+**문서**:
+- `docs/plan-admin-access-fix.md`
+- `docs/report-admin-access-fix-2026-04-20.md`
+
+**변경 파일**:
+- `middleware.ts` (신규)
+- `proxy.ts` (삭제)
+- `app/actions/admin.ts`
+- `app/actions/excel.ts`
+
+### 사이드바 "관리자 메뉴" 조건부 노출 `ux` `fix`
+
+관리 권한이 없는 사용자(업무 권한만 있거나 로그인만 한 사용자)에게 PC 사이드바·모바일 헤더의 "관리자 메뉴" 섹션이 그대로 보이던 문제 해소. 클릭 시 미들웨어에서 홈으로 튕기는 UX 불일치 제거.
+
+**변경 내용**:
+- PC 사이드바의 "관리자 메뉴" 드롭다운 전체를 `hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE'])` 조건으로 감쌈 (ADMIN 자동 통과)
+- 모바일 헤더의 `{isAdmin && ...}` 블록도 동일 조건으로 교체
+- PC 사이드바의 "관리자 설정" 링크는 조건 없이 렌더되던 상태를 `user?.role === 'ADMIN'`으로 제한 (관리 권한자 중 non-ADMIN에게 죽은 메뉴로 보이던 문제)
+
+**검증**: `npx tsc --noEmit` 통과.
+
+**변경 파일**:
+- `components/desktop-sidebar.tsx`
+- `components/mobile-header.tsx`
+
+### 모바일 헤더에 활동 로그 메뉴 추가 `ux`
+
+SYSTEM_MANAGE 권한자가 모바일에서도 활동 로그 페이지에 접근할 수 있도록 모바일 헤더 설정 드롭다운에 "활동 로그" 항목 추가(`History` 아이콘). 시스템 백업은 모바일 기기에 백업 파일을 저장하는 UX가 부적절하여 PC 전용 유지로 의도적 제외.
+
+**변경 파일**:
+- `components/mobile-header.tsx`
+
 ## 2026-04-16
 
 ### Claude Forge 정리 문서 커밋 `docs`
