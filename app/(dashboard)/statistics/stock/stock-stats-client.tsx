@@ -23,6 +23,7 @@ import {
 import { StockSummaryCards } from './_parts/stock-summary-cards'
 import { ChartLegend, FarmerTable, GroupTable, VarietyTable } from './_parts/stock-tables'
 import { StockFilterSheet } from './_parts/stock-filter-sheet'
+import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
 
 type Props = {
   initialData: StockStatisticsData
@@ -341,6 +342,47 @@ export function StockStatsClient({
           ))}
           <div className="ml-auto flex items-center gap-1 pr-2">
             {isPending && <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />}
+            <StatsExcelButton
+              getRows={() => {
+                if (activeTab === 'farmer') {
+                  return data.byFarmer.map(r => ({
+                    '생산자': r.farmerName,
+                    '작목반': r.groupName,
+                    '총 입고량(kg)': r.totalKg,
+                    '도정 소진(kg)': r.consumedKg,
+                    '출고(kg)': r.releasedKg,
+                    '보관 중(kg)': r.availableKg,
+                    '재고율(%)': r.stockRate,
+                  }))
+                }
+                if (activeTab === 'group') {
+                  return data.byGroup.map(r => ({
+                    '작목반': r.groupName,
+                    '인증구분': r.certType,
+                    '생산자수': r.farmerCount,
+                    '총 입고량(kg)': r.totalKg,
+                    '도정 소진(kg)': r.consumedKg,
+                    '출고(kg)': r.releasedKg,
+                    '보관 중(kg)': r.availableKg,
+                    '재고율(%)': r.stockRate,
+                  }))
+                }
+                return data.byVariety.map(r => ({
+                  '품종': r.varietyName,
+                  '총 입고량(kg)': r.totalKg,
+                  '도정 소진(kg)': r.consumedKg,
+                  '출고(kg)': r.releasedKg,
+                  '보관 중(kg)': r.availableKg,
+                  '재고율(%)': r.stockRate,
+                }))
+              }}
+              sheetName={
+                activeTab === 'farmer' ? '생산자별'
+                  : activeTab === 'group' ? '작목반별'
+                  : '품종별'
+              }
+              fileNamePrefix={`재고분석_${year}_${activeTab}`}
+            />
             <button
               onClick={() => setShowFilter(true)}
               className={`md:hidden flex items-center gap-1.5 h-8 px-2 rounded-lg border text-xs font-semibold transition-colors ${

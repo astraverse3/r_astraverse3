@@ -15,33 +15,51 @@ import { GetStocksParams } from './stock'
 export async function exportStocks(params?: GetStocksParams) {
     await requireSession()
     try {
-        const whereClause: any = {}
+        const where: any = {}
+        const andConditions: any[] = []
 
         if (params) {
-            if (params.productionYear) whereClause.productionYear = parseInt(params.productionYear)
-            if (params.varietyId) whereClause.varietyId = parseInt(params.varietyId)
-            if (params.farmerId) whereClause.farmerId = parseInt(params.farmerId)
-            if (params.status && params.status !== 'ALL') whereClause.status = params.status
+            if (params.productionYear) {
+                const years = params.productionYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+                if (years.length === 1) where.productionYear = years[0]
+                else if (years.length > 1) where.productionYear = { in: years }
+            }
 
-            if (params.certType) {
-                if (params.certType === 'NONE') {
-                    // Filter farmers who do NOT have a group
-                    whereClause.farmer = { groupId: null }
-                } else {
-                    whereClause.farmer = { group: { certType: params.certType } }
-                }
+            if (params.varietyId) {
+                const ids = params.varietyId.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+                if (ids.length === 1) where.varietyId = ids[0]
+                else if (ids.length > 1) where.varietyId = { in: ids }
+            }
+
+            if (params.status && params.status !== 'ALL') where.status = params.status
+
+            if (params.farmerId && params.farmerId !== 'ALL') {
+                where.farmerId = parseInt(params.farmerId)
             }
 
             if (params.farmerName) {
-                whereClause.farmer = {
-                    ...whereClause.farmer, // Preserve existing farmer conditions (like groupId)
-                    name: { contains: params.farmerName }
+                const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+                if (names.length === 1) {
+                    andConditions.push({ farmer: { name: { contains: names[0] } } })
+                } else if (names.length > 1) {
+                    andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+                }
+            }
+
+            if (params.certType) {
+                const certList = params.certType.split(',').map(s => s.trim()).filter(Boolean)
+                if (certList.length === 1) {
+                    andConditions.push({ farmer: { group: { certType: certList[0] } } })
+                } else if (certList.length > 1) {
+                    andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
                 }
             }
         }
 
+        if (andConditions.length > 0) where.AND = andConditions
+
         const stocks = await prisma.stock.findMany({
-            where: whereClause,
+            where,
             include: {
                 farmer: { include: { group: true } },
                 variety: true
@@ -49,24 +67,28 @@ export async function exportStocks(params?: GetStocksParams) {
             orderBy: { id: 'desc' }
         })
 
+        // 업로드 템플릿 필수 필드: 입고일자 / 생산년도 / 생산자명 / 품종 / 톤백번호 / 중량(kg)
+        // 나머지는 헤더에 "(선택)" 표기
         const rows = stocks.map(stock => ({
             '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
             '생산년도': stock.productionYear,
             '생산자명': stock.farmer.name,
-            '작목반명': stock.farmer.group?.name || '', // Group Name
+            '작목반명(선택)': stock.farmer.group?.name || '',
             '품종': stock.variety.name,
             '톤백번호': stock.bagNo,
             '중량(kg)': stock.weightKg,
-            '인증구분': stock.farmer.group?.certType || '일반',
-            '인증번호': stock.farmer.group?.certNo || '',
-            // Additional info for reference, but not required for import (or ignored if re-imported)
-            '상태': stock.status === 'AVAILABLE' ? '보관중' : '소진됨'
+            '인증구분(선택)': stock.farmer.group?.certType || '일반',
+            '인증번호(선택)': stock.farmer.group?.certNo || '',
+            '상태(선택)': stock.status === 'AVAILABLE' ? '보관중' : '소진됨'
         }))
 
-        // If no data, provide at least the headers (json_to_sheet handles empty array by default? No, need to force headers)
         let worksheet
         if (rows.length === 0) {
-            worksheet = XLSX.utils.aoa_to_sheet([['입고일자', '생산년도', '생산자명', '작목반명', '품종', '톤백번호', '중량(kg)', '인증구분', '인증번호', '상태']])
+            worksheet = XLSX.utils.aoa_to_sheet([[
+                '입고일자', '생산년도', '생산자명', '작목반명(선택)',
+                '품종', '톤백번호', '중량(kg)',
+                '인증구분(선택)', '인증번호(선택)', '상태(선택)'
+            ]])
         } else {
             worksheet = XLSX.utils.json_to_sheet(rows)
         }
@@ -78,11 +100,11 @@ export async function exportStocks(params?: GetStocksParams) {
 
         await recordAuditLog({
             action: 'EXPORT',
-            entity: 'Stock', // 또는 'System'
+            entity: 'Stock',
             description: `재고 목록 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, daa: buf, fileName: `stock_list_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `stock_list_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
         console.error('Export failed:', error)
@@ -142,14 +164,19 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
             for (const row of allRows) {
                 rowIndex++
 
-                // Extract Fields
-                const dateStr = row['입고일자'] ? String(row['입고일자']) : undefined // Need to handle Excel date format carefully
-                const productionYear = row['생산년도'] ? parseInt(String(row['생산년도'])) : undefined
-                const farmerName = row['생산자명'] ? String(row['생산자명']).trim() : undefined
-                const groupName = row['작목반명'] ? String(row['작목반명']).trim() : undefined // Group Name
-                const varietyName = row['품종'] ? String(row['품종']).trim() : undefined
-                const bagNo = row['톤백번호'] ? parseInt(String(row['톤백번호'])) : undefined
-                const weightKg = row['중량(kg)'] ? parseFloat(String(row['중량(kg)'])) : (row['중량'] ? parseFloat(String(row['중량'])) : undefined)
+                // Extract Fields — 다운로드 템플릿의 "(선택)" 접미사가 붙은 헤더도 함께 수용
+                const pick = (...keys: string[]) => {
+                    for (const k of keys) if (row[k] !== undefined && row[k] !== '') return row[k]
+                    return undefined
+                }
+                const dateStr = pick('입고일자') ? String(pick('입고일자')) : undefined
+                const productionYear = pick('생산년도') ? parseInt(String(pick('생산년도'))) : undefined
+                const farmerName = pick('생산자명') ? String(pick('생산자명')).trim() : undefined
+                const groupName = pick('작목반명', '작목반명(선택)') ? String(pick('작목반명', '작목반명(선택)')).trim() : undefined
+                const varietyName = pick('품종') ? String(pick('품종')).trim() : undefined
+                const bagNo = pick('톤백번호') ? parseInt(String(pick('톤백번호'))) : undefined
+                const weightKgRaw = pick('중량(kg)', '중량')
+                const weightKg = weightKgRaw ? parseFloat(String(weightKgRaw)) : undefined
 
                 // 1. Specific Validation
                 const missingFields = []

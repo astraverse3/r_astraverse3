@@ -1,5 +1,38 @@
 # 작업일지
 
+## 2026-04-21
+
+### 재고관리 필터·엑셀 수정 + 통계 엑셀 다운로드 추가 `fix` `feat`
+
+**배경**: 사용자 리뷰에서 지적된 4건 일괄 처리. ①재고 필터 드롭다운 휠 스크롤 ②품종 필터 전체 해제 버튼 ③재고 엑셀 다중 품종 버그 ④통계 목록 엑셀 다운로드 기능.
+
+**수정 내용**:
+- 공용 드롭다운 2종에 `onWheel.stopPropagation` 추가 (PC 휠 동작), `MultiSelect`에 "전체 해제" 버튼 조건부 노출
+- `exportStocks` 다중값 버그 수정: `parseInt(params.varietyId)` → `getStocks`와 동일한 콤마 분리 + `in/OR` 처리. `productionYear/varietyId/certType/farmerName` 모두 다중 선택 반영
+- `daa` → `data` 오타 교정 (서버 액션 리턴값 + 클라이언트 호출부)
+- 엑셀 다운로드 헤더에 업로드 기준 선택 필드 `(선택)` 접미사 부여 (`작목반명/인증구분/인증번호/상태`). `importStocks`에 `pick()` 헬퍼로 양쪽 헤더명 수용 → 재업로드 호환
+- 통계 공통 `exportStatsRows` 서버 액션 + `StatsExcelButton` 공통 컴포넌트 신설
+- 재고분석/수율분석/출고분석 3개 페이지 탭 바에 엑셀 버튼 배치. 클라이언트가 보유한 탭별 rows를 한글 헤더로 매핑해 서버로 전달, 서버는 xlsx 변환 + 감사 로그만 수행
+
+**제외**: 도정구분별(`millingtype`) 페이지는 차트만 있고 테이블이 없어 사용자 요청 범위 밖으로 판단, 엑셀 버튼 추가하지 않음.
+
+**검증**: `npx tsc --noEmit` 통과. UI 테스트는 배포 후 필요.
+
+**문서**:
+- `docs/plan-stock-filter-fixes.md`
+- `docs/report-stock-filter-fixes-2026-04-21.md`
+
+**변경 파일** (9개):
+- `components/ui/multi-select.tsx`
+- `components/statistics/MultiSelectDropdown.tsx`
+- `components/statistics/StatsExcelButton.tsx` (신규)
+- `app/actions/stock-excel.ts`
+- `app/actions/stats-excel.ts` (신규)
+- `app/(dashboard)/stocks/stock-excel-buttons.tsx`
+- `app/(dashboard)/statistics/stock/stock-stats-client.tsx`
+- `app/(dashboard)/statistics/milling/milling-stats-client.tsx`
+- `app/(dashboard)/statistics/output/output-stats-client.tsx`
+
 ## 2026-04-20
 
 ### 어드민 메뉴 접근 권한 수정 `fix` `security`

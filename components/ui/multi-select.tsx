@@ -71,6 +71,7 @@ export function MultiSelect({
                 <div
                     className="max-h-[220px] overflow-y-auto overscroll-contain touch-pan-y"
                     onTouchMove={e => e.stopPropagation()}
+                    onWheel={e => e.stopPropagation()}
                 >
                 {options.map((option) => (
                     <div
@@ -89,6 +90,15 @@ export function MultiSelect({
                         <span>{option.label}</span>
                     </div>
                 ))}
+                {value.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => onValueChange([])}
+                        className="w-full text-left px-2 py-1.5 mt-1 border-t border-slate-100 text-xs text-slate-400 hover:bg-accent rounded-sm"
+                    >
+                        전체 해제
+                    </button>
+                )}
                 </div>
             </PopoverContent>
         </Popover>

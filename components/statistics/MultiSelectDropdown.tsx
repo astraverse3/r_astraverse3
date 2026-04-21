@@ -71,8 +71,10 @@ export function MultiSelectDropdown<T extends string | number>({
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-100 py-1 max-h-[280px] overflow-y-auto"
+          className="absolute top-full left-0 mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-100 py-1 max-h-[280px] overflow-y-auto overscroll-contain"
           style={{ minWidth }}
+          onWheel={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
         >
           {maxSelect !== undefined && maxSelectHint && (
             <p className="px-3 pt-1.5 pb-1 text-[10px] text-slate-400">

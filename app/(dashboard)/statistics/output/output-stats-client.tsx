@@ -13,6 +13,7 @@ import type {
   OutputStatisticsData,
   VarietyOption,
 } from '@/app/actions/output-statistics'
+import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,36 @@ export function OutputStatsClient({ initialData, varietyOptions }: Props) {
           ))}
           <div className="ml-auto flex items-center gap-1 pr-2">
             {isPending && <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />}
+            <StatsExcelButton
+              getRows={() => {
+                if (activeTab === 'month') {
+                  return data.byMonth.map(r => ({
+                    '월': r.month,
+                    '생산량(kg)': r.productionKg,
+                    '출고량(kg)': r.releaseKg,
+                  }))
+                }
+                if (activeTab === 'destination') {
+                  return data.byDestination.map(r => ({
+                    '출고처': r.destination,
+                    '출고량(kg)': r.releaseKg,
+                    '출고 건수': r.releaseCount,
+                  }))
+                }
+                return data.byPackageType.map(r => ({
+                  '포장규격': r.packageType,
+                  '수량': r.count,
+                  '총중량(kg)': r.totalWeight,
+                  '비율(%)': r.percentage,
+                }))
+              }}
+              sheetName={
+                activeTab === 'month' ? '월별'
+                  : activeTab === 'destination' ? '출고처별'
+                  : '규격별'
+              }
+              fileNamePrefix={`출고분석_${activeTab}`}
+            />
             {/* 모바일 필터 버튼 */}
             <button
               onClick={() => setShowFilter(true)}

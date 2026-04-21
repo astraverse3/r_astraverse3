@@ -30,6 +30,7 @@ import {
   type MainTab,
 } from './_parts/constants'
 import { MillingFilterSheet } from './_parts/milling-filter-sheet'
+import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
 
 type Props = {
   initialData: MillingStatisticsData
@@ -409,6 +410,20 @@ export function MillingStatsClient({
           ))}
           <div className="ml-auto flex items-center gap-1 pr-2">
             {isPending && <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />}
+            <StatsExcelButton
+              getRows={() => data.tableData.map(r => ({
+                '날짜': r.date,
+                '도정종류': r.millingType,
+                '품종': r.varieties,
+                '생산자': r.farmers,
+                '투입량(kg)': r.inputKg,
+                '생산량(kg)': r.outputKg,
+                '수율(%)': r.yieldRate,
+                '비고': r.remarks ?? '',
+              }))}
+              sheetName="수율분석"
+              fileNamePrefix={`수율분석_${mainTab}`}
+            />
             {/* 모바일 전용 필터 버튼 */}
             <button
               onClick={() => setShowFilter(true)}
