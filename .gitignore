@@ -50,3 +50,6 @@ next-env.d.ts
 /backups/
 .vercel
 .env*.local
+
+# Claude Code auto memory (개인 컨텍스트 — 팀 저장소에 공유하지 않음)
+memory/
