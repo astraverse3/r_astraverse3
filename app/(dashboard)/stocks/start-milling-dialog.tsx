@@ -79,17 +79,14 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
         if (result && !result.success) {
             toast.error((isEditing ? '작업 수정 실패: ' : '작업 시작 실패: ') + result.error)
         } else {
-            onOpenChange(false)
-            onSuccess()
-            triggerDataUpdate()
-
             if (isEditing) {
                 toast.success('작업이 수정되었습니다.')
                 clearCart()
-                router.push('/milling')
-            } else {
-                router.push('/milling')
             }
+            router.push('/milling')
+            onOpenChange(false)
+            onSuccess()
+            triggerDataUpdate()
         }
     }
 
