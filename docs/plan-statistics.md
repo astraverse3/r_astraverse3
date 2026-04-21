@@ -129,7 +129,6 @@ type MillingStatsParams = {
 
 ### 테이블
 - 농가별 입고량 / 처리량 / 잔량
-- 장기 미처리 재고 경고 (입고 후 N일 이상 AVAILABLE인 항목 강조)
 
 ---
 
