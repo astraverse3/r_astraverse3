@@ -1,7 +1,7 @@
 'use client';
 
 import { Megaphone, X } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { NoticeViewDialog } from '@/components/admin/NoticeViewDialog';
 
@@ -16,6 +16,49 @@ interface Notice {
 interface NoticeMarqueeProps {
     notices: Notice[];
     speed?: number; // 애니메이션 속도 조절용 가중치 (기본값 1)
+}
+
+// 3일 이내면 NEW 뱃지 표시
+const NEW_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+
+function formatMonthDay(date: Date | string) {
+    const d = new Date(date);
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${mm}-${dd}`;
+}
+
+function NoticeTicker({ notices }: { notices: Notice[] }) {
+    const now = Date.now();
+    return (
+        <>
+            {notices.map((n, i) => {
+                const isNewest = i === 0;
+                const isNew = isNewest && (now - new Date(n.createdAt).getTime() < NEW_THRESHOLD_MS);
+                return (
+                    <Fragment key={n.id}>
+                        {i > 0 && (
+                            <span className="mx-2 text-[#fdba74]" aria-hidden="true">•</span>
+                        )}
+                        {isNew && (
+                            <span className="inline-flex items-center bg-red-500 text-white text-[9px] font-black px-1 py-[1px] rounded mr-1 tracking-wider align-middle">
+                                NEW
+                            </span>
+                        )}
+                        <span className={`font-mono mr-1 ${isNewest ? 'text-[#c2410c]/80' : 'text-[#f97316]/60'}`}>
+                            [{formatMonthDay(n.createdAt)}]
+                        </span>
+                        <span className={isNewest
+                            ? 'font-bold text-[#c2410c]'
+                            : 'font-medium text-[#fb923c]'
+                        }>
+                            {n.title}
+                        </span>
+                    </Fragment>
+                );
+            })}
+        </>
+    );
 }
 
 export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
@@ -45,12 +88,9 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
 
     if (!isVisible) return null;
 
-    // 공지들을 하나의 긴 문장으로 잇기
-    const joinedNotice = notices.map(n => n.title).join(' 　•　 ');
-    
-    // speed 값에 따라 애니메이션 시간 동적 계산 (예: 짧은 글씨면 15초, 길면 더 길게)
-    // 기본적으로 글자 수에 비례해서 무한 스크롤 속도를 일정하게 유지합니다.
-    const duration = Math.max(15, (joinedNotice.length * 0.2) / speed);
+    // 애니메이션 시간 계산용 총 글자 수 (날짜 prefix/구분자/NEW 뱃지 대략 포함)
+    const totalLength = notices.reduce((acc, n) => acc + n.title.length + 12, 0);
+    const duration = Math.max(15, (totalLength * 0.2) / speed);
 
     const handleNoticeClick = () => {
         if (notices.length > 0) {
@@ -91,13 +131,13 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
                             style={isOverflowing ? { animation: `marquee ${duration}s linear infinite` } : {}}
                         >
                             {/* 텍스트 내용 */}
-                            <span ref={textRef} className="text-[12px] sm:text-[12.5px] font-semibold text-[#c2410c] px-1 pb-[1px] whitespace-nowrap shrink-0">
-                                {joinedNotice}
+                            <span ref={textRef} className="text-[12px] sm:text-[12.5px] px-1 pb-[1px] whitespace-nowrap shrink-0">
+                                <NoticeTicker notices={notices} />
                             </span>
                             {/* 배열의 끝에서 공백 없이 이어지게 하기 위해 내용 복제본 (넘칠 때만) */}
                             {isOverflowing && (
-                               <span className="text-[12.5px] font-semibold text-[#c2410c] px-4 pb-[1px] whitespace-nowrap shrink-0" aria-hidden="true">
-                                   {joinedNotice}
+                               <span className="text-[12.5px] px-4 pb-[1px] whitespace-nowrap shrink-0" aria-hidden="true">
+                                   <NoticeTicker notices={notices} />
                                </span>
                             )}
                         </div>
