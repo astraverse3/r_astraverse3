@@ -76,9 +76,29 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
 
     useEffect(() => {
         // 텍스트가 컨테이너 범위를 넘어가는지(넘치는지) 체크해서, 넘칠 때만 마키를 적용
-        if (textRef.current && containerRef.current) {
-            setIsOverflowing(textRef.current.scrollWidth > containerRef.current.clientWidth);
+        const textEl = textRef.current;
+        const containerEl = containerRef.current;
+        if (!textEl || !containerEl) return;
+
+        const check = () => {
+            setIsOverflowing(textEl.scrollWidth > containerEl.clientWidth);
+        };
+
+        check();
+
+        // 컨테이너/텍스트 크기 변경(리사이즈, 레이아웃 후속 변화) 시 재계산
+        const ro = new ResizeObserver(check);
+        ro.observe(textEl);
+        ro.observe(containerEl);
+
+        // 커스텀 폰트 로드가 끝나 글자 너비가 확정된 이후에도 재계산
+        if (typeof document !== 'undefined' && 'fonts' in document) {
+            document.fonts.ready.then(check).catch(() => { });
         }
+
+        return () => {
+            ro.disconnect();
+        };
     }, [notices, isMounted]);
 
     // 서버 사이드 렌더링(또는 Hydration) 중에는 빈 공간만 예약 (깜빡임 방지)

@@ -2,6 +2,20 @@
 
 ## 2026-04-21
 
+### 공지사항 마키 애니메이션 미동작 수정 `fix`
+
+**배경**: 대시보드 공지 마키 배너가 흐르지 않고 정지된 상태로 보이는 문제 제보. 원인은 overflow 판정 타이밍 — `isOverflowing` 체크가 mount 직후 한 번만 `scrollWidth`를 재는 구조라, 폰트가 아직 로드되지 않았거나 레이아웃이 확정되기 전에 측정되면 실제 넘치는 상황인데도 `false`로 고정돼 애니메이션 스타일이 적용되지 않았음.
+
+**수정 내용**:
+- `ResizeObserver`로 텍스트 span과 컨테이너 div 크기 변화를 감지해 overflow 여부를 반응형으로 재계산
+- `document.fonts.ready` 이후에도 한 번 더 재계산해 웹폰트 로드 완료 시점의 너비 변화를 반영
+- cleanup에서 observer disconnect 처리
+
+**검증**: `npx tsc --noEmit` 통과.
+
+**변경 파일**:
+- `app/(dashboard)/_components/notice-marquee.tsx`
+
 ### 공지사항 마키 최신 공지 시각 구분 `feat` `ux`
 
 **배경**: 마키 배너가 모든 공지를 동일한 폰트·색상으로 흘려서 최신 공지인지 과거 공지인지 구분이 안 됐음.
