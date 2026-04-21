@@ -2,6 +2,22 @@
 
 ## 2026-04-21
 
+### 재고 검색결과 품종 칩이 ID로 표시되던 버그 `fix` `ux`
+
+재고목록 상단 "검색결과 N건" 영역의 품종 칩이 URL 쿼리의 `varietyId` 값(숫자 ID 콤마 문자열)을 그대로 출력하고 있었음. 여러 품종을 선택해도 한 Badge에 "1,4,5"처럼 묶여서 표시됨.
+
+**수정 내용**:
+- `ActiveStockFilters`에 `varieties: { id, name }[]` prop 추가
+- `varietyId` 파라미터를 콤마 분리 → ID→이름 매핑 → 품종별 개별 Badge 렌더
+- 매핑 실패 시 fallback으로 ID 자체를 표시 (방어)
+- `stock-page-wrapper.tsx`에서 기존에 보유한 `varieties` 배열을 그대로 주입
+
+**검증**: `npx tsc --noEmit` 통과.
+
+**변경 파일**:
+- `app/(dashboard)/stocks/active-filters.tsx`
+- `app/(dashboard)/stocks/stock-page-wrapper.tsx`
+
 ### 재고관리 필터·엑셀 수정 + 통계 엑셀 다운로드 추가 `fix` `feat`
 
 **배경**: 사용자 리뷰에서 지적된 4건 일괄 처리. ①재고 필터 드롭다운 휠 스크롤 ②품종 필터 전체 해제 버튼 ③재고 엑셀 다중 품종 버그 ④통계 목록 엑셀 다운로드 기능.

@@ -184,7 +184,7 @@ export function StockPageWrapper({
                 excelSlot={excelSlot}
                 addDialogSlot={addDialogSlot}
             >
-                <ActiveStockFilters totalCount={totalItemCount} />
+                <ActiveStockFilters totalCount={totalItemCount} varieties={varieties} />
                 <StockListClient
                     initialGroups={initialGroups}
                     loadedItems={loadedItems}

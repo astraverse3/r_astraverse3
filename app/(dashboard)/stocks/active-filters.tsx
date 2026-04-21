@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge'
 
 interface ActiveStockFiltersProps {
     totalCount: number
+    varieties: { id: number; name: string }[]
 }
 
-export function ActiveStockFilters({ totalCount }: ActiveStockFiltersProps) {
+export function ActiveStockFilters({ totalCount, varieties }: ActiveStockFiltersProps) {
     const searchParams = useSearchParams()
 
     const yearParam = searchParams.get('productionYear') || ''
@@ -20,9 +21,13 @@ export function ActiveStockFilters({ totalCount }: ActiveStockFiltersProps) {
     const years = yearParam ? yearParam.split(',').map(s => s.trim()).filter(Boolean) : []
     const certs = certParam ? certParam.split(',').map(s => s.trim()).filter(Boolean) : []
 
+    const varietyIds = varietyParam ? varietyParam.split(',').map(s => s.trim()).filter(Boolean) : []
+    const varietyNameMap = new Map(varieties.map(v => [v.id.toString(), v.name]))
+    const varietyLabels = varietyIds.map(id => varietyNameMap.get(id) ?? id)
+
     const activeFilterCount = [
         years.length > 0,
-        varietyParam !== '',
+        varietyIds.length > 0,
         farmer !== '',
         certs.length > 0,
         status && status !== 'ALL'
@@ -39,9 +44,9 @@ export function ActiveStockFilters({ totalCount }: ActiveStockFiltersProps) {
                 {years.map(y => (
                     <Badge key={y} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{y}년</Badge>
                 ))}
-                {varietyParam && (
-                    <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{varietyParam}</Badge>
-                )}
+                {varietyLabels.map((label, i) => (
+                    <Badge key={`${varietyIds[i]}-${label}`} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{label}</Badge>
+                ))}
                 {farmer && (
                     <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{farmer}</Badge>
                 )}
