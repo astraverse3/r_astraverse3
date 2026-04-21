@@ -203,11 +203,11 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="farmerNameSearch">생산자</Label>
+                            <Label htmlFor="farmerNameSearch">생산자 / 농가명</Label>
                             <Input
                                 id="farmerNameSearch"
                                 name="farmerNameSearch"
-                                placeholder="예: 홍길동, 김철수"
+                                placeholder="예: 홍길동, 김영희(농가명)"
                                 value={farmerName}
                                 onChange={(e) => setFarmerName(e.target.value)}
                                 onKeyDown={(e) => {

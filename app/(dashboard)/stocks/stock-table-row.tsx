@@ -42,6 +42,8 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     // Helper to get nested values safely
     const varietyName = stock.variety?.name || 'Unknown'
     const farmerName = stock.farmer?.name || 'Unknown'
+    const actualFarmer = stock.actualFarmer as string | null | undefined
+    const farmerDisplay = actualFarmer ? `${farmerName}(${actualFarmer})` : farmerName
     const certType = stock.farmer?.group?.certType || '일반'
 
     const handleDelete = async () => {
@@ -88,8 +90,8 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
 
                 {/* 3. Farmer */}
                 <TableCell className="py-2 px-1 text-center text-xs text-slate-600">
-                    <div className="truncate max-w-[60px] mx-auto" title={farmerName}>
-                        {farmerName}
+                    <div className="truncate max-w-[120px] mx-auto" title={farmerDisplay}>
+                        {farmerDisplay}
                     </div>
                 </TableCell>
 

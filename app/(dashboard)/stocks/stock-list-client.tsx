@@ -74,7 +74,7 @@ export function StockListClient({
                             </TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[90px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">생산자</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[120px]">생산자</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[110px]">Lot No</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[50px]">톤백</TableHead>
@@ -489,10 +489,10 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                                 />
                             </div>
                         )}
-                        <span className="font-bold text-[13px] text-slate-800 leading-tight shrink-0">
-                            {stock.farmer.name}
+                        <span className="font-bold text-[13px] text-slate-800 leading-tight truncate min-w-0">
+                            {stock.farmer.name}{stock.actualFarmer ? ` (${stock.actualFarmer})` : ''}
                         </span>
-                        <span className="text-[11px] font-mono text-slate-400 leading-tight truncate min-w-0">
+                        <span className="text-[11px] font-mono text-slate-400 leading-tight truncate shrink-0">
                             ({stock.farmer.group?.certType === '일반' ? '관행' : (stock.lotNo || '-')})
                         </span>
                     </div>

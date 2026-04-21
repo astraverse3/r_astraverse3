@@ -15,6 +15,7 @@ export type StockFormData = {
     varietyId: number  // ID of the Variety
     weightKg: number
     incomingDate: Date
+    actualFarmer?: string // 실제 농가명 (선택)
 }
 
 export async function createStock(data: StockFormData) {
@@ -69,6 +70,7 @@ export async function createStock(data: StockFormData) {
                 incomingDate: data.incomingDate,
                 farmerId: data.farmerId,
                 varietyId: data.varietyId,
+                actualFarmer: data.actualFarmer?.trim() || null,
                 status: 'AVAILABLE',
                 lotNo // Save generated Lot No (or null)
             },
@@ -172,6 +174,7 @@ export async function updateStock(id: number, data: StockFormData) {
                 incomingDate: data.incomingDate,
                 farmerId: data.farmerId,
                 varietyId: data.varietyId,
+                actualFarmer: data.actualFarmer?.trim() || null,
             }
 
             if (newLotNo !== undefined) {
@@ -360,13 +363,19 @@ export async function getStocks(params?: GetStocksParams) {
             where.farmerId = parseInt(params.farmerId)
         }
 
-        // farmerName: 콤마 구분 다중 생산자 검색 (OR 조건)
+        // farmerName: 콤마 구분 다중 검색 (생산자명 OR 농가명, 각 이름별 OR 조건)
         if (params?.farmerName) {
             const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            const nameOr = (n: string) => ({
+                OR: [
+                    { farmer: { name: { contains: n } } },
+                    { actualFarmer: { contains: n } }
+                ]
+            })
             if (names.length === 1) {
-                andConditions.push({ farmer: { name: { contains: names[0] } } })
+                andConditions.push(nameOr(names[0]))
             } else if (names.length > 1) {
-                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+                andConditions.push({ OR: names.map(nameOr) })
             }
         }
 
@@ -453,10 +462,16 @@ export async function getStockGroups(params?: GetStocksParams) {
         }
         if (params?.farmerName) {
             const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            const nameOr = (n: string) => ({
+                OR: [
+                    { farmer: { name: { contains: n } } },
+                    { actualFarmer: { contains: n } }
+                ]
+            })
             if (names.length === 1) {
-                andConditions.push({ farmer: { name: { contains: names[0] } } })
+                andConditions.push(nameOr(names[0]))
             } else if (names.length > 1) {
-                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+                andConditions.push({ OR: names.map(nameOr) })
             }
         }
         if (params?.certType) {
@@ -573,13 +588,19 @@ export async function getStocksByGroup(
             andConditions.push({ status: params.status })
         }
 
-        // 전역 필터: 생산자명 콤마 검색
+        // 전역 필터: 생산자명 OR 농가명 콤마 검색
         if (params?.farmerName) {
             const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+            const nameOr = (n: string) => ({
+                OR: [
+                    { farmer: { name: { contains: n } } },
+                    { actualFarmer: { contains: n } }
+                ]
+            })
             if (names.length === 1) {
-                andConditions.push({ farmer: { name: { contains: names[0] } } })
+                andConditions.push(nameOr(names[0]))
             } else if (names.length > 1) {
-                andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+                andConditions.push({ OR: names.map(nameOr) })
             }
         }
 

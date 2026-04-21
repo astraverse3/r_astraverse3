@@ -2,6 +2,38 @@
 
 ## 2026-04-21
 
+### 재고에 농가명(actualFarmer) 필드 추가 `feat`
+
+**배경**: 인증은 공식 생산자 명의로 되어있지만 실제로는 배우자 등 다른 가족이 농사짓는 경우가 있음. 톤백에도 실제 농가명이 적히는 경우가 있어 검색까지 필요.
+
+**수정 내용**:
+- `Stock` 모델에 `actualFarmer String?` 컬럼 추가 + 마이그레이션 파일 생성
+- `StockFormData` 타입 확장, `createStock`/`updateStock`에서 저장 (trim 후 빈 값 null 처리)
+- `getStocks`/`getStockGroups`/`getStocksByGroup`/`exportStocks`의 `farmerName` 검색을 **생산자명 OR 농가명** OR 조건으로 확장 (콤마 멀티값 유지)
+- 등록/수정 다이얼로그에 "농가명 (선택)" 입력란 추가 (생산자 셀렉트 오른쪽 2-column)
+- PC 테이블/모바일 카드에 `생산자(농가명)` 형태로 병기 (값 없으면 생산자명만)
+- PC 테이블 생산자 컬럼 너비 60px → 120px 확장
+- 검색 필터 라벨 "생산자 / 농가명"으로 변경, placeholder 안내 수정
+- 엑셀 Export에 "농가명(선택)" 컬럼 추가 (생산자명 옆), Import에서도 `농가명`/`농가명(선택)` 헤더 수용
+- `package.json` build 스크립트에 `prisma migrate deploy` 선행 추가 → Vercel 배포 시 production DB 자동 마이그레이션
+
+**검증**: Neon DB에 `actualFarmer` 컬럼 추가 확인 (`information_schema.columns` 조회). 브라우저 동작 확인은 사용자 환경에서 수행.
+
+**변경 파일**:
+- `prisma/schema.prisma`
+- `prisma/migrations/20260421000000_add_stock_actual_farmer/migration.sql` (신규)
+- `app/actions/stock.ts`
+- `app/actions/stock-excel.ts`
+- `app/(dashboard)/stocks/page.tsx`
+- `app/(dashboard)/stocks/add-stock-dialog.tsx`
+- `app/(dashboard)/stocks/edit-stock-dialog.tsx`
+- `app/(dashboard)/stocks/stock-table-row.tsx`
+- `app/(dashboard)/stocks/stock-list-client.tsx`
+- `app/(dashboard)/stocks/stock-filters.tsx`
+- `package.json`
+- `docs/plan-stock-farmhouse.md` (계획서)
+- `docs/report-stock-farmhouse-2026-04-21.md` (결과보고서)
+
 ### 재고 검색결과 품종 칩이 ID로 표시되던 버그 `fix` `ux`
 
 재고목록 상단 "검색결과 N건" 영역의 품종 칩이 URL 쿼리의 `varietyId` 값(숫자 ID 콤마 문자열)을 그대로 출력하고 있었음. 여러 품종을 선택해도 한 Badge에 "1,4,5"처럼 묶여서 표시됨.

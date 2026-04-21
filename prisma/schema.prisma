@@ -62,7 +62,8 @@ model Stock {
   
   farmerId       Int
   farmer         Farmer               @relation(fields: [farmerId], references: [id])
-  
+  actualFarmer   String?              // 실제 농사짓는 농가명 (참고용 자유 텍스트)
+
   varietyId      Int
   variety        Variety              @relation(fields: [varietyId], references: [id])
   

@@ -39,10 +39,16 @@ export async function exportStocks(params?: GetStocksParams) {
 
             if (params.farmerName) {
                 const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
+                const nameOr = (n: string) => ({
+                    OR: [
+                        { farmer: { name: { contains: n } } },
+                        { actualFarmer: { contains: n } }
+                    ]
+                })
                 if (names.length === 1) {
-                    andConditions.push({ farmer: { name: { contains: names[0] } } })
+                    andConditions.push(nameOr(names[0]))
                 } else if (names.length > 1) {
-                    andConditions.push({ OR: names.map(n => ({ farmer: { name: { contains: n } } })) })
+                    andConditions.push({ OR: names.map(nameOr) })
                 }
             }
 
@@ -73,6 +79,7 @@ export async function exportStocks(params?: GetStocksParams) {
             '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
             '생산년도': stock.productionYear,
             '생산자명': stock.farmer.name,
+            '농가명(선택)': stock.actualFarmer || '',
             '작목반명(선택)': stock.farmer.group?.name || '',
             '품종': stock.variety.name,
             '톤백번호': stock.bagNo,
@@ -85,7 +92,7 @@ export async function exportStocks(params?: GetStocksParams) {
         let worksheet
         if (rows.length === 0) {
             worksheet = XLSX.utils.aoa_to_sheet([[
-                '입고일자', '생산년도', '생산자명', '작목반명(선택)',
+                '입고일자', '생산년도', '생산자명', '농가명(선택)', '작목반명(선택)',
                 '품종', '톤백번호', '중량(kg)',
                 '인증구분(선택)', '인증번호(선택)', '상태(선택)'
             ]])
@@ -172,6 +179,8 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                 const dateStr = pick('입고일자') ? String(pick('입고일자')) : undefined
                 const productionYear = pick('생산년도') ? parseInt(String(pick('생산년도'))) : undefined
                 const farmerName = pick('생산자명') ? String(pick('생산자명')).trim() : undefined
+                const actualFarmerRaw = pick('농가명', '농가명(선택)')
+                const actualFarmer = actualFarmerRaw ? String(actualFarmerRaw).trim() : undefined
                 const groupName = pick('작목반명', '작목반명(선택)') ? String(pick('작목반명', '작목반명(선택)')).trim() : undefined
                 const varietyName = pick('품종') ? String(pick('품종')).trim() : undefined
                 const bagNo = pick('톤백번호') ? parseInt(String(pick('톤백번호'))) : undefined
@@ -290,6 +299,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                                 incomingDate: incomingDate!,
                                 farmerId: farmer.id,
                                 varietyId: variety!.id,
+                                actualFarmer: actualFarmer || null,
                                 status: 'AVAILABLE',
                                 lotNo
                             }

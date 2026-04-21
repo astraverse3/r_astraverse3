@@ -88,6 +88,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
             incomingDate: new Date(formData.get('incomingDate') as string),
             farmerId: parseInt(selectedFarmerId),
             varietyId: parseInt(selectedVarietyId),
+            actualFarmer: (formData.get('actualFarmer') as string) || undefined,
         }
 
         const result = await updateStock(stock.id, data)
@@ -171,23 +172,37 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label className="text-[13px]">생산자</Label>
-                        <Select value={selectedFarmerId} onValueChange={(val) => {
-                            setSelectedFarmerId(val)
-                        }}>
-                            <SelectTrigger className="text-[13px]">
-                                <SelectValue placeholder="생산자 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {farmers.map((f) => (
-                                    <SelectItem key={f.id} value={f.id.toString()} className="text-[13px]">
-                                        {f.group
-                                            ? `[${f.group.certType}] ${f.name} (${f.group.name})`
-                                            : `[일반] ${f.name} (작목반 없음)`}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-[13px]">생산자</Label>
+                                <Select value={selectedFarmerId} onValueChange={(val) => {
+                                    setSelectedFarmerId(val)
+                                }}>
+                                    <SelectTrigger className="text-[13px]">
+                                        <SelectValue placeholder="생산자 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {farmers.map((f) => (
+                                            <SelectItem key={f.id} value={f.id.toString()} className="text-[13px]">
+                                                {f.group
+                                                    ? `[${f.group.certType}] ${f.name} (${f.group.name})`
+                                                    : `[일반] ${f.name} (작목반 없음)`}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="actualFarmer" className="text-[13px] whitespace-nowrap">농가명 (선택)</Label>
+                                <Input
+                                    id="actualFarmer"
+                                    name="actualFarmer"
+                                    placeholder="실제 농사짓는 분"
+                                    defaultValue={stock.actualFarmer ?? ''}
+                                    className="text-[13px]"
+                                />
+                            </div>
+                        </div>
                         {selectedFarmer && selectedFarmer.group && (
                             <p className="text-xs text-slate-500 mt-1">
                                 인증번호: {selectedFarmer.group.certNo} ({selectedFarmer.group.certType})

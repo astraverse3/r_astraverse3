@@ -95,6 +95,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             // IDs
             farmerId: parseInt(selectedFarmerId),
             varietyId: parseInt(formData.get('varietyId') as string),
+            actualFarmer: (formData.get('actualFarmer') as string) || undefined,
         }
 
         const result = await createStock(data)
@@ -163,26 +164,39 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                     </div>
 
-                    {/* 2. Target: Farmer */}
+                    {/* 2. Target: Farmer + Actual Farmer */}
                     <div className="space-y-2">
-                        <Label className="text-[13px]">생산자</Label>
-                        <Select
-                            value={selectedFarmerId}
-                            onValueChange={setSelectedFarmerId}
-                        >
-                            <SelectTrigger className="text-[13px]">
-                                <SelectValue placeholder="생산자 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {filteredFarmers.map((f) => (
-                                    <SelectItem key={f.id} value={f.id.toString()}>
-                                        {f.group
-                                            ? `${f.name} (${f.group.name})`
-                                            : `${f.name} (작목반 없음)`}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[13px]">생산자</Label>
+                                <Select
+                                    value={selectedFarmerId}
+                                    onValueChange={setSelectedFarmerId}
+                                >
+                                    <SelectTrigger className="text-[13px]">
+                                        <SelectValue placeholder="생산자 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {filteredFarmers.map((f) => (
+                                            <SelectItem key={f.id} value={f.id.toString()}>
+                                                {f.group
+                                                    ? `${f.name} (${f.group.name})`
+                                                    : `${f.name} (작목반 없음)`}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="actualFarmer" className="text-[13px]">농가명 (선택)</Label>
+                                <Input
+                                    id="actualFarmer"
+                                    name="actualFarmer"
+                                    placeholder="실제 농사짓는 분"
+                                    className="text-[13px]"
+                                />
+                            </div>
+                        </div>
                         {selectedFarmer && (
                             <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 mt-1 border border-slate-100">
                                 {selectedFarmer.group ? (
