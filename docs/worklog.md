@@ -2,6 +2,27 @@
 
 ## 2026-04-21
 
+### 공지사항 팝업에 전체 목록 뷰 추가 `feat`
+
+**배경**: 일반 사용자가 마키 팝업에서 공지 한 건만 볼 수 있고 과거 공지나 다른 공지로 이동할 수 없었음. 별도 목록 페이지 대신 기존 팝업 안에서 목록/상세를 토글하는 방식으로 구현.
+
+**수정 내용**:
+- `NoticeViewDialog`에 `notices?` prop과 `mode: detail | list` 내부 상태 도입
+- 상세 뷰 푸터에 "전체 목록" 버튼 추가 (notices 전달된 경우에만 노출)
+- 목록 뷰: 카드형 버튼 목록 (제목/내용 미리보기/작성자/등록일), 현재 선택 공지 주황 하이라이트
+- 목록에서 항목 클릭 → 해당 공지 상세로 전환, "상세로" 버튼으로 복귀
+- 팝업 재오픈 시 상세 모드 + 마키에서 전달한 공지로 초기화
+- `notice-marquee.tsx`에서 전체 활성 공지 배열을 팝업에 전달 (author.name → authorName 매핑)
+- 관리자 `/admin/notices`의 NoticeTable은 notices를 전달하지 않아 버튼 미노출 (기존 동작 유지)
+
+**검증**: `npx tsc --noEmit` 통과.
+
+**변경 파일**:
+- `components/admin/NoticeViewDialog.tsx`
+- `app/(dashboard)/_components/notice-marquee.tsx`
+- `docs/plan-notice-list.md` (계획서)
+- `docs/report-notice-list-2026-04-21.md` (결과보고서)
+
 ### 재고에 농가명(actualFarmer) 필드 추가 `feat`
 
 **배경**: 인증은 공식 생산자 명의로 되어있지만 실제로는 배우자 등 다른 가족이 농사짓는 경우가 있음. 톤백에도 실제 농가명이 적히는 경우가 있어 검색까지 필요.

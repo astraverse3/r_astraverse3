@@ -125,6 +125,13 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
                     ...currentNotice,
                     authorName: currentNotice.author?.name
                 } : null}
+                notices={notices.map(n => ({
+                    id: n.id,
+                    title: n.title,
+                    content: n.content,
+                    createdAt: n.createdAt,
+                    authorName: n.author?.name ?? null
+                }))}
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />
