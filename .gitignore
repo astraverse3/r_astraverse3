@@ -53,3 +53,6 @@ next-env.d.ts
 
 # Claude Code auto memory (개인 컨텍스트 — 팀 저장소에 공유하지 않음)
 memory/
+
+# Claude Design 핸드오프 번들 (일회성 참고자료 — 구현 완료 후 삭제)
+/docs/handoff-*/

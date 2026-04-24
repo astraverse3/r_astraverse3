@@ -44,6 +44,10 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Custom shadows — handoff.md §1.5 */
+  --shadow-mobile-nav: 0 4px 24px rgba(0, 0, 0, 0.10);
+  --shadow-mobile-header: 0 4px 16px rgba(99, 102, 241, 0.06);
 }
 
 :root {
@@ -83,8 +87,8 @@
   --border: #e2e8f0;
   /* Slate-200 */
   --input: #e2e8f0;
-  --ring: #3b82f6;
-  /* Blue-500 */
+  --ring: #2563eb;
+  /* Blue-600 — primary와 통일 (handoff.md §1.1) */
 
   --sidebar-bg: #0f172a;
   /* Slate-900 */
@@ -96,16 +100,40 @@
 
 .dark {
   --background: #020617;
+  /* Slate-950 */
   --foreground: #f8fafc;
+  /* Slate-50 */
 
   --card: #0f172a;
+  /* Slate-900 */
   --card-foreground: #e2e8f0;
+  /* Slate-200 */
+
+  --popover: #0f172a;
+  --popover-foreground: #e2e8f0;
 
   --primary: #3b82f6;
+  /* Blue-500 — 다크에서는 한 톤 밝게 (번들 §1.1) */
   --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  /* Slate-800 */
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  /* Slate-400 */
+
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
   --border: #1e293b;
   --input: #1e293b;
+  --ring: #3b82f6;
+  /* Blue-500 — primary와 통일 */
 
   --sidebar-bg: #020617;
   --sidebar-fg: #cbd5e1;

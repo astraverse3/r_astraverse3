@@ -1,5 +1,63 @@
 # 작업일지
 
+## 2026-04-24
+
+### 잡곡 재고관리 — 디자인 시스템 이관 사전 단계 (B안) `feat` `design-system`
+
+**배경**: 2026-04-24 Claude Design 핸드오프 번들 수령(`docs/handoff-잡곡재고관리/`). 잡곡 기능 본 구현 전에 디자인 인프라(전역 토큰·헤더 브레드크럼·Set C 듀오톤 아이콘)를 선제 정비하는 B안(점진적 이관) 착수.
+
+**변경 내용**:
+- **#0 전역 토큰 동기화** (`app/globals.css`)
+  - `--ring`을 `#3b82f6`(Blue-500) → `#2563eb`(Blue-600)로 primary와 통일
+  - 모바일 네비/헤더용 커스텀 shadow 토큰 2종 추가 (`--shadow-mobile-nav`, `--shadow-mobile-header`)
+  - `.dark` 스코프 누락 토큰 보완 (popover·secondary·muted·muted-foreground·accent·accent-foreground·destructive·ring)
+- **#0.5 헤더 1줄 브레드크럼 전역 교체** (`components/breadcrumb-display.tsx`, `app/(dashboard)/layout.tsx`)
+  - path 기반 `PAGE_CONFIG` 매핑(정확 매치 → 긴 prefix 매치)
+  - URL query `?tab=` 서브컨텍스트 파싱 (rice→벼, misc→잡곡, release→출고)
+  - 아이콘 + 타이틀 + 서브컨텍스트 + 설명 레이아웃, 좁은 화면에서 설명 우선 truncate
+  - 헤더 높이 `h-14` → `h-12`
+- **#0.7 Set C 듀오톤 아이콘 5종 컴포넌트화** (`components/icons/duotone.tsx`)
+  - RawStockIcon / MillingIcon / PackageIcon / SalesIcon / StatsIcon
+  - `active` prop으로 내부 fill 토글 (활성 시 듀오톤 효과)
+  - 브레드크럼의 핵심 5 메뉴 lucide 아이콘을 듀오톤 버전으로 교체
+- **`.gitignore`**: Claude Design 핸드오프 번들 폴더(`docs/handoff-*/`) 제외 추가
+- **`docs/plan-잡곡재고관리.md`**: B안 이관 정책 섹션 신설, 작업 단계 #0/#0.5/#0.7 삽입, 변경 파일·위험 요소 보강
+
+**검증**: 각 단계마다 `npx tsc --noEmit` 통과, 브라우저 시각 확인 완료(헤더 톤·듀오톤 아이콘 렌더링 정상).
+
+**후속**: 작업 단계 #1(Prisma 스키마 확장 + 마이그레이션)로 이어짐. 사이드바·모바일 네비의 Set C 전면 적용은 #9 단계.
+
+**변경 파일**:
+- `.gitignore`
+- `app/globals.css`
+- `app/(dashboard)/layout.tsx`
+- `components/breadcrumb-display.tsx`
+- `components/icons/duotone.tsx` (신규)
+- `docs/plan-잡곡재고관리.md` (신규)
+
+## 2026-04-23
+
+### Stitch MCP → Claude Design 마이그레이션 `chore` `tooling`
+
+**배경**: Anthropic이 2026-04-17에 Claude Design (Opus 4.7 기반) 출시. 기존 Stitch MCP 대비 코드베이스 직접 인식, "Send to Claude Code" 원클릭 핸드오프, Pro/Max 플랜 포함 무료 등 이점이 커서 전환 결정.
+
+**변경 내용**:
+- `~/.claude.json`에서 `mcpServers.stitch` 제거 (`mcpServers: {}`)
+- `~/.claude/settings.json`의 `permissions.allow`에서 `mcp__stitch__*` 8개 제거
+- 양쪽 모두 `.bak-20260423` 백업 보관
+- `docs/plan-claude-design-migration.md`, `docs/claude-design-workflow.md`, `docs/report-claude-design-migration-2026-04-23.md` 신규 작성
+
+**검증**: 두 JSON 파일 `JSON.parse` 통과, `mcpServers` 및 `allow` 배열 정상 확인.
+
+**후속**: Stitch에 박혀있던 Google API 키는 노출 이력 있으므로 Google Cloud 콘솔에서 재발급 권고. VSCode Claude Code 재시작 후 `mcp__stitch__*` 툴 사라지는지 확인 필요.
+
+**변경 파일**:
+- `C:\Users\nbcue\.claude.json`
+- `C:\Users\nbcue\.claude\settings.json`
+- `docs/plan-claude-design-migration.md` (신규)
+- `docs/claude-design-workflow.md` (신규)
+- `docs/report-claude-design-migration-2026-04-23.md` (신규)
+
 ## 2026-04-21
 
 ### 공지사항 마키 애니메이션 미동작 수정 `fix`
