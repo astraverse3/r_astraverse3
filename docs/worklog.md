@@ -1,5 +1,18 @@
 # 작업일지
 
+## 2026-04-28
+
+### Claude Design 마이그레이션 산출물 커밋 `docs`
+
+**배경**: 2026-04-23에 수행된 Stitch MCP → Claude Design 마이그레이션의 워크플로우/계획서/결과보고서 3개 파일이 untracked로 남아 있던 걸 잡곡 재고관리 #1 단계 착수 전에 별도 `docs:` 커밋으로 정리.
+
+**파일 추가**:
+- `docs/claude-design-workflow.md`
+- `docs/plan-claude-design-migration.md`
+- `docs/report-claude-design-migration-2026-04-23.md`
+
+**제외**: `docs/잡곡대장 (25년산).xlsx`는 잡곡 재고관리 #11(엑셀 Seed) 단계에서 import 스크립트와 함께 커밋 예정이라 untracked 유지.
+
 ## 2026-04-24
 
 ### 잡곡 재고관리 — 디자인 시스템 이관 사전 단계 (B안) `feat` `design-system`
