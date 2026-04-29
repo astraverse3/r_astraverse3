@@ -1,5 +1,17 @@
 # 작업일지
 
+## 2026-04-29
+
+### 잡곡 재고관리 #1 사전조사 산출물 커밋 `docs`
+
+**배경**: 2026-04-28 진행한 잡곡 재고관리 #1(스키마 확장) 사전조사 산출물 2종이 untracked로 남아 있던 걸 #1 본 작업 착수 전에 정리.
+
+**파일 추가**:
+- `docs/research-잡곡스키마-호출부.md` — `prisma.stock`/`millingOutputPackage`/`variety` 호출부 위험 등급(🔴/🟡/🟢)별 전수조사. `category: 'RICE'` 기본 필터 주입이 필요한 10곳 식별
+- `docs/research-판매관리-참고사항.md` — `StockRelease` ↔ 계획서 표기(`ReleaseLog`) 정리, 통계 쿼리에서 `batch=null` 매입품 자동 제외 이슈, 라우트 이관 영향 범위
+
+**커밋**: `988ea19`
+
 ## 2026-04-28
 
 ### Claude Design 마이그레이션 산출물 커밋 `docs`
