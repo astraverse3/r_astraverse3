@@ -9,131 +9,172 @@ datasource db {
 
 // 1. ProducerGroup (작목반 관리) - 인증정보는 여기서 관리
 model ProducerGroup {
-  id             Int       @id @default(autoincrement())
-  code           String    // 작목반번호 (e.g., '1')
-  name           String    // 작목반명
-  
-  certType       String    // 인증 종류 (유기농, 무농약, 일반)
-  certNo         String    // 인증 번호 (15102443 등)
-  
-  cropYear       Int       // 생산년도 (2024, 2025...)
-  
-  farmers        Farmer[]
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id   Int    @id @default(autoincrement())
+  code String // 작목반번호 (e.g., '1')
+  name String // 작목반명
+
+  certType String // 인증 종류 (유기농, 무농약, 일반)
+  certNo   String // 인증 번호 (15102443 등)
+
+  cropYear Int // 생산년도 (2024, 2025...)
+
+  farmers Farmer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([code, cropYear]) // 같은 년도 내에서는 코드가 유일해야 함
 }
 
 // 2. Farmer (생산자/농가 관리)
 model Farmer {
-  id             Int            @id @default(autoincrement())
-  name           String         // 농가명
-  farmerNo       String?        // 농가번호 (e.g., '1')
-  items          String?        // 취급품목
-  phone          String?        // 연락처 (선택)
-  
-  groupId        Int?
-  group          ProducerGroup? @relation(fields: [groupId], references: [id])
-  
-  stocks         Stock[]
-  
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id       Int     @id @default(autoincrement())
+  name     String // 농가명
+  farmerNo String? // 농가번호 (e.g., '1')
+  items    String? // 취급품목
+  phone    String? // 연락처 (선택)
+
+  groupId Int?
+  group   ProducerGroup? @relation(fields: [groupId], references: [id])
+
+  stocks Stock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([groupId, farmerNo]) // 그룹 내 농가번호는 유니크해야 함
 }
 
 // 3. Variety (품종 관리)
 model Variety {
-  id             Int       @id @default(autoincrement())
-  name           String    @unique // 품종명
-  type           String    // 곡종 구분 (URUCHI, GLUTINOUS, BLACK 등)
+  id             Int                    @id @default(autoincrement())
+  name           String                 @unique // 품종명
+  type           String // 곡종 구분 (URUCHI, GLUTINOUS, BLACK 등)
+  category       StockCategory          @default(RICE) // 벼/잡곡 구분
   stocks         Stock[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  outputPackages MillingOutputPackage[] // 잡곡 매입(PURCHASED) 시 직접 참조
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 }
 
-// 4. Stock (벼 재고)
+// 4. Stock (원물 재고: 벼 + 잡곡 위탁도정/농가도정)
 model Stock {
-  id             Int                  @id @default(autoincrement())
-  bagNo          Int                  // 톤백 번호
-  
-  farmerId       Int
-  farmer         Farmer               @relation(fields: [farmerId], references: [id])
-  actualFarmer   String?              // 실제 농사짓는 농가명 (참고용 자유 텍스트)
+  id    Int @id @default(autoincrement())
+  bagNo Int // 톤백 번호
 
-  varietyId      Int
-  variety        Variety              @relation(fields: [varietyId], references: [id])
-  
-  incomingDate   DateTime             @default(now()) // 입고일 (로트 생성 기준)
-  productionYear Int                  @default(2024)  // 생산년도
-  weightKg       Float                // 입고 중량
-  status         String               // AVAILABLE / CONSUMED / RELEASED
-  lotNo          String?              // Pre-assigned Lot Number (Default: White Rice basis)
-  
-  batchId        Int?
-  batch          MillingBatch?        @relation(fields: [batchId], references: [id])
+  // 카테고리 / 잡곡 입고 유형
+  category      StockCategory @default(RICE) // RICE | MISC_GRAIN
+  sourceType    SourceType? // 잡곡일 때만: CONSIGNMENT(위탁도정) | FARMER_MILLED(농가도정)
+  rawWeightKg   Float? // 위탁도정 잡곡의 원물중량 (수율 계산용)
+  millingVendor String? // 위탁 도정업체명
 
-  releaseId      Int?
-  release        StockRelease?        @relation(fields: [releaseId], references: [id])
-  
+  farmerId     Int
+  farmer       Farmer  @relation(fields: [farmerId], references: [id])
+  actualFarmer String? // 실제 농사짓는 농가명 (참고용 자유 텍스트)
+
+  varietyId Int
+  variety   Variety @relation(fields: [varietyId], references: [id])
+
+  incomingDate   DateTime @default(now()) // 입고일 (로트 생성 기준)
+  productionYear Int      @default(2024) // 생산년도
+  weightKg       Float // 입고 중량
+  status         String // AVAILABLE / CONSUMED / RELEASED
+  lotNo          String? // Pre-assigned Lot Number (Default: White Rice basis)
+
+  batchId Int?
+  batch   MillingBatch? @relation(fields: [batchId], references: [id])
+
+  releaseId Int?
+  release   StockRelease? @relation(fields: [releaseId], references: [id])
+
   outputPackages MillingOutputPackage[]
 
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // 4.5 StockRelease (재고 직접 출고/판매 기록)
 model StockRelease {
   id          Int      @id @default(autoincrement())
   date        DateTime // 출고일 (사용자 입력)
-  destination String   // 출고처
-  purpose     String?  // 출고목적/비고
+  destination String // 출고처
+  purpose     String? // 출고목적/비고
 
-  stocks      Stock[]
+  stocks Stock[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // 5. MillingBatch (도정 작업 메인)
 model MillingBatch {
-  id             Int                    @id @default(autoincrement())
-  date           DateTime               @default(now())
-  
-  millingType    String                 @default("백미")
-  remarks        String?
-  totalInputKg   Float                  
-  
-  stocks         Stock[]                // 투입된 벼 리스트
-  outputs        MillingOutputPackage[] // 생산된 포장 리스트
-  
-  isClosed       Boolean                @default(false)
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  id   Int      @id @default(autoincrement())
+  date DateTime @default(now())
+
+  millingType  String  @default("백미")
+  remarks      String?
+  totalInputKg Float
+
+  stocks  Stock[] // 투입된 벼 리스트
+  outputs MillingOutputPackage[] // 생산된 포장 리스트
+
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// 6. MillingOutputPackage (포장 상세 - 로트번호 생성 위치)
+// 6. MillingOutputPackage (포장 상세 - 도정산/매입 통합)
+//    - source=MILLED: batch + stock 기반 (벼·잡곡 도정산 공통)
+//    - source=PURCHASED: 잡곡 외부매입 — batch/stock 미경유, varietyId로 직접 참조
+//    CHECK 제약 2개는 마이그레이션 raw SQL에서 추가 (pkg_milled_has_source, pkg_purchased_required_fields)
 model MillingOutputPackage {
-  id            Int           @id @default(autoincrement())
-  batchId       Int
-  batch         MillingBatch  @relation(fields: [batchId], references: [id])
-  
-  packageType   String        // '20kg', '10kg', '5kg', 'Tonbag'
-  weightPerUnit Float         
-  count         Int           
-  totalWeight   Float         
-  
-  productCode   String?       // 제품코드 (예: 11)
-  lotNo         String?       // 최종 로트번호 (예: 251119-11-15102443-371)
-  
-  stockId       Int?
-  stock         Stock?        @relation(fields: [stockId], references: [id])
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id Int @id @default(autoincrement())
+
+  // 출처 구분
+  source   ProductSource @default(MILLED) // MILLED | PURCHASED
+  category StockCategory @default(RICE) // RICE | MISC_GRAIN
+
+  // MILLED 전용 (PURCHASED일 때 null)
+  batchId Int?
+  batch   MillingBatch? @relation(fields: [batchId], references: [id])
+  stockId Int?
+  stock   Stock?        @relation(fields: [stockId], references: [id])
+
+  // PURCHASED 전용 (MILLED일 때 null)
+  varietyId      Int?
+  variety        Variety?  @relation(fields: [varietyId], references: [id])
+  purchaseVendor String? // 매입처명
+  incomingDate   DateTime? // 매입일
+
+  // 포장 정보 (공통)
+  packageType   String // '20kg', '10kg', '5kg', '2kg', '1kg', '800g', '500g', '420g', 'Tonbag'
+  weightPerUnit Float
+  count         Int
+  totalWeight   Float
+
+  productCode String? // 제품코드 (예: 11)
+  lotNo       String? // PURCHASED는 항상 null
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// 6.5 enum 정의
+// ------------------------------------------------------
+enum StockCategory {
+  RICE
+  MISC_GRAIN
+}
+
+enum SourceType {
+  CONSIGNMENT // 위탁도정 — 원물을 외부 도정업체에 위탁해 입고
+  FARMER_MILLED // 농가도정 — 농가가 직접 도정해 완제품 납품
+}
+
+enum ProductSource {
+  MILLED
+  PURCHASED
 }
 
 // ------------------------------------------------------
@@ -143,37 +184,37 @@ model MillingOutputPackage {
 // 사용자 기본 정보 (카카오에서 제공받는 정보 + 우리 앱 전용 정보)
 model User {
   id            String    @id @default(cuid())
-  name          String?   // 카카오 닉네임
+  name          String? // 카카오 닉네임
   email         String?   @unique // 카카오 이메일
   emailVerified DateTime?
-  image         String?   // 카카오 프로필 이미지 URL
-  
-  // 커스텀 칼럼 추가 ✨
-  department    String?   // 부서
-  position      String?   // 직책
-  phone         String?   // 연락처
-  
-  role          String    @default("USER") // ADMIN, USER
-  permissions   String[]  @default([])      // 개별 권한 배열: STOCK_MANAGE, MILLING_MANAGE, NOTICE_MANAGE 등
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  image         String? // 카카오 프로필 이미지 URL
 
-  notices       Notice[]
-  accounts      Account[]
-  sessions      Session[]
+  // 커스텀 칼럼 추가 ✨
+  department String? // 부서
+  position   String? // 직책
+  phone      String? // 연락처
+
+  role        String   @default("USER") // ADMIN, USER
+  permissions String[] @default([]) // 개별 권한 배열: STOCK_MANAGE, MILLING_MANAGE, NOTICE_MANAGE 등
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  notices  Notice[]
+  accounts Account[]
+  sessions Session[]
 }
 
 // ------------------------------------------------------
 // 8. Notice (대시보드 공지사항 전광판/모달 용)
 // ------------------------------------------------------
 model Notice {
-  id        Int      @id @default(autoincrement())
-  title     String   // 공지 제목 (마키 배너에서 노출)
-  content   String   // 전체 공지 내용 (모달 팝업용)
-  isActive  Boolean  @default(true) // 활성화 상태 (true일 때만 표시)
-  
-  authorId  String?
-  author    User?    @relation(fields: [authorId], references: [id])
+  id       Int     @id @default(autoincrement())
+  title    String // 공지 제목 (마키 배너에서 노출)
+  content  String // 전체 공지 내용 (모달 팝업용)
+  isActive Boolean @default(true) // 활성화 상태 (true일 때만 표시)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -184,8 +225,8 @@ model Account {
   id                       String  @id @default(cuid())
   userId                   String
   type                     String
-  provider                 String  // "kakao"
-  providerAccountId        String  
+  provider                 String // "kakao"
+  providerAccountId        String
   refresh_token            String? @db.Text
   access_token             String? @db.Text
   expires_at               Int?
@@ -208,6 +249,7 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 // ------------------------------------------------------
 // 9. SystemConfig (시스템 설정값 - key/value 저장)
 // ------------------------------------------------------
@@ -223,20 +265,20 @@ model SystemConfig {
 // 10. AuditLog (활동 로그/변경 이력 용)
 // ------------------------------------------------------
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  userId      String?  // 작업자 ID (User.id)
-  userName    String?  // 작업자 이름 (탈퇴 대비용 기록)
-  userEmail   String?  // 작업자 이메일
-  
-  action      String   // 작업 종류: CREATE, UPDATE, DELETE, LOGIN 등
-  entity      String   // 작업 대상: Stock, MillingBatch, Farmer, User 등
-  entityId    String?  // 대상의 ID (레코드 식별자)
-  
-  details     Json?    // 구체적인 변경 내용 (이전값, 새값 등)
-  description String?  // 사람이 읽기 좋은 요약 설명
-  
-  ip          String?  // 접속 IP (선택 사항)
-  userAgent   String?  // 접속 기기 정보 (선택 사항)
-  
-  createdAt   DateTime @default(now())
+  id        Int     @id @default(autoincrement())
+  userId    String? // 작업자 ID (User.id)
+  userName  String? // 작업자 이름 (탈퇴 대비용 기록)
+  userEmail String? // 작업자 이메일
+
+  action   String // 작업 종류: CREATE, UPDATE, DELETE, LOGIN 등
+  entity   String // 작업 대상: Stock, MillingBatch, Farmer, User 등
+  entityId String? // 대상의 ID (레코드 식별자)
+
+  details     Json? // 구체적인 변경 내용 (이전값, 새값 등)
+  description String? // 사람이 읽기 좋은 요약 설명
+
+  ip        String? // 접속 IP (선택 사항)
+  userAgent String? // 접속 기기 정보 (선택 사항)
+
+  createdAt DateTime @default(now())
 }

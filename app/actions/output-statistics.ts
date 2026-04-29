@@ -92,6 +92,8 @@ export async function getOutputStatistics(
     : {}
 
   // 생산 데이터
+  // 잡곡 매입(source=PURCHASED, batch=null)은 `where: { batch: { ... } }`로 자동 제외됨.
+  // 판매관리 단계에서 OR 분기로 매입품 포함 재설계 예정 (research-판매관리-참고사항.md §2.1)
   const packages = await prisma.millingOutputPackage.findMany({
     where: {
       batch: {
@@ -157,7 +159,8 @@ export async function getOutputStatistics(
     return monthMap.get(key)!
   }
   for (const p of packages) {
-    ensureMonth(toMonthKey(p.batch.date)).productionKg += p.totalWeight
+    // where 절에서 batch null을 이미 걸러냈으므로 non-null 단언
+    ensureMonth(toMonthKey(p.batch!.date)).productionKg += p.totalWeight
   }
   for (const r of releases) {
     const kg = r.stocks.reduce((s, st) => s + st.weightKg, 0)

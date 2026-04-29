@@ -23,7 +23,8 @@ async function main() {
   let failedCount = 0
 
   for (const pkg of packages) {
-    if (pkg.batch.stocks.length > 0) {
+    // 일회성 스크립트 — 본 시점 데이터는 모두 source=MILLED라 batch가 항상 존재
+    if (pkg.batch && pkg.batch.stocks.length > 0) {
       // Assign the first stock's ID to this package
       const primaryStock = pkg.batch.stocks[0]
       try {

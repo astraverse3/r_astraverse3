@@ -2,6 +2,32 @@
 
 ## 2026-04-29
 
+### 잡곡 재고관리 #1 — Prisma 스키마 + RICE 필터 호출부 안전화 `feat` `schema`
+
+**배경**: 잡곡 입고/포장/판매 통합 인프라 1단계로, 데이터 모델만 먼저 확장. 호출부를 명시적으로 RICE-only로 좁혀 #5 잡곡 액션이 추가됐을 때 기존 벼 화면에 잡곡이 섞여 보이는 사고를 사전 차단.
+
+**스키마 변경** (`prisma/schema.prisma` + `prisma/migrations/20260429000000_add_misc_grain_support/`):
+- enum 3개 신설: `StockCategory{RICE,MISC_GRAIN}`, `SourceType{CONSIGNMENT,FARMER_MILLED}`, `ProductSource{MILLED,PURCHASED}`
+- `Stock` 확장: `category`(RICE 기본), `sourceType`, `rawWeightKg`, `millingVendor`
+- `Variety` 확장: `category`(RICE 기본)
+- `MillingOutputPackage` 확장: `source`/`category` + 매입 전용 `varietyId`(FK 신설)/`purchaseVendor`/`incomingDate`. `batchId` NOT NULL → NULL 허용
+- CHECK 제약 2개 raw SQL: `pkg_milled_has_source`, `pkg_purchased_required_fields`
+
+**호출부 수정** (`app/actions/{stock,stock-excel,stock-statistics,dashboard,output-statistics}.ts`):
+- 11곳에 `category: 'RICE'` 기본 필터 주입 (사전조사 §1.HIGH/MEDIUM 기준)
+- dashboard `millingOutputPackage.aggregate`에 `source: 'MILLED'` 명시
+- nullable batch 변경 후속: `output-statistics.ts:160` non-null 단언 + 주석, `scripts/migrate-stock-id.ts` 가드 추가
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- `npx prisma migrate deploy` Neon prod 적용 성공
+- 일회성 검증 스크립트로 backfill 확인: Stock RICE=2064, Variety RICE=23, Package MILLED=343, NULL category 0건
+- CHECK 제약 2개 위반 시 차단 확인 (PURCHASED 필수 필드 누락 / MILLED인데 batch+stock null)
+
+**충돌 처리**: 사전조사와 계획서 사이에서 매입 필드명(`purchaseFrom` vs `purchaseVendor`), CHECK 조건(AND vs OR)이 어긋났는데 단일 진실 원천(계획서) 우선 적용.
+
+**결과보고서**: [docs/report-잡곡재고관리-#1-2026-04-29.md](report-잡곡재고관리-#1-2026-04-29.md)
+
 ### 잡곡 재고관리 #1 사전조사 산출물 커밋 `docs`
 
 **배경**: 2026-04-28 진행한 잡곡 재고관리 #1(스키마 확장) 사전조사 산출물 2종이 untracked로 남아 있던 걸 #1 본 작업 착수 전에 정리.

@@ -15,7 +15,8 @@ import { GetStocksParams } from './stock'
 export async function exportStocks(params?: GetStocksParams) {
     await requireSession()
     try {
-        const where: any = {}
+        // 벼 재고 엑셀 내보내기 (잡곡은 별도 액션 — 이번 단계 범위 밖)
+        const where: any = { category: 'RICE' }
         const andConditions: any[] = []
 
         if (params) {
@@ -260,8 +261,10 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                     }
 
                     // 4. Duplicate Check: (Year + Farmer + Variety + BagNo)
+                    // 벼 전용 import — category='RICE' 풀에서만 중복 비교
                     const existingStock = await tx.stock.findFirst({
                         where: {
+                            category: 'RICE',
                             productionYear: productionYear!,
                             farmerId: farmer.id,
                             varietyId: variety!.id,
@@ -293,6 +296,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                     if (!dryRun) {
                         await tx.stock.create({
                             data: {
+                                category: 'RICE',
                                 productionYear: productionYear!,
                                 bagNo: bagNo!,
                                 weightKg: weightKg!,

@@ -76,7 +76,9 @@ export type VarietyOption = {
 
 export async function getStockProductionYears(): Promise<number[]> {
   await requireSession()
+  // 벼 통계 페이지 전용 — 잡곡 연산 목록은 향후 분리
   const rows = await prisma.stock.findMany({
+    where: { category: 'RICE' },
     select: { productionYear: true },
     distinct: ['productionYear'],
     orderBy: { productionYear: 'desc' },
@@ -88,9 +90,9 @@ export async function getStockProductionYears(): Promise<number[]> {
 
 export async function getStockGroupOptions(productionYear: number, certTypes?: string[]): Promise<GroupOption[]> {
   await requireSession()
-  // 해당 연산에 재고가 있는 생산자의 작목반만 반환
+  // 해당 연산에 벼 재고가 있는 생산자의 작목반만 반환
   const farmerIds = await prisma.stock.findMany({
-    where: { productionYear },
+    where: { category: 'RICE', productionYear },
     select: { farmerId: true },
     distinct: ['farmerId'],
   })
@@ -115,7 +117,7 @@ export async function getStockVarietyOptions(
   certTypes?: string[],
 ): Promise<VarietyOption[]> {
   await requireSession()
-  const where: Record<string, unknown> = { productionYear }
+  const where: Record<string, unknown> = { category: 'RICE', productionYear }
   const farmerFilter: Record<string, unknown> = {}
   if (groupIds?.length) farmerFilter.groupId = { in: groupIds }
   if (certTypes?.length) farmerFilter.group = { certType: { in: certTypes } }
@@ -138,6 +140,7 @@ export async function getStockStatistics(
 ): Promise<StockStatisticsData> {
   await requireSession()
   const where: Record<string, unknown> = {
+    category: 'RICE',
     productionYear: filters.productionYear,
   }
   const farmerFilter: Record<string, unknown> = {}

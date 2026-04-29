@@ -6,18 +6,20 @@ import { requireSession } from '@/lib/auth-guard'
 export async function getDashboardStats() {
     await requireSession()
     try {
-        // 0. Calculate Latest Production Year from Stocks
+        // 0. Calculate Latest Production Year from Stocks (벼 기준)
         const latestStock = await prisma.stock.findFirst({
+            where: { category: 'RICE' },
             orderBy: { productionYear: 'desc' },
             select: { productionYear: true }
         });
         const latestYear = latestStock?.productionYear || new Date().getFullYear();
 
-        // Batch 1: Key Aggregates (Lightweight)
+        // Batch 1: Key Aggregates (Lightweight) — 대시보드는 벼 기준
         const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight] = await Promise.all([
             // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
                 where: {
+                    category: 'RICE',
                     status: 'AVAILABLE',
                     productionYear: latestYear
                 },
@@ -26,11 +28,13 @@ export async function getDashboardStats() {
             // 2. Count of milling batches
             prisma.millingBatch.count(),
             // 3. Total output production weight (KG) - Filtered by closed and latestYear
+            //    source=MILLED 명시(잡곡 매입품 제외 보장)
             prisma.millingOutputPackage.aggregate({
                 where: {
+                    source: 'MILLED',
                     batch: {
                         isClosed: true,
-                        stocks: { some: { productionYear: latestYear } }
+                        stocks: { some: { category: 'RICE', productionYear: latestYear } }
                     }
                 },
                 _sum: { totalWeight: true }
@@ -39,7 +43,7 @@ export async function getDashboardStats() {
             prisma.millingBatch.aggregate({
                 where: {
                     isClosed: true,
-                    stocks: { some: { productionYear: latestYear } }
+                    stocks: { some: { category: 'RICE', productionYear: latestYear } }
                 },
                 _sum: { totalInputKg: true }
             })
@@ -88,18 +92,19 @@ export async function getDashboardStats() {
             prisma.stock.groupBy({
                 by: ['varietyId', 'status'],
                 where: {
+                    category: 'RICE',
                     productionYear: latestYear
                 },
                 _sum: { weightKg: true }
             }),
-            // 8. Latest Updates
-            prisma.stock.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
+            // 8. Latest Updates (벼 기준)
+            prisma.stock.findFirst({ where: { category: 'RICE' }, orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             prisma.millingBatch.findFirst({ orderBy: { updatedAt: 'desc' }, select: { updatedAt: true } }),
             // 9. All closed milling batches for variety yield and output breakdown
             prisma.millingBatch.findMany({
                 where: {
                     isClosed: true,
-                    stocks: { some: { productionYear: latestYear } }
+                    stocks: { some: { category: 'RICE', productionYear: latestYear } }
                 },
                 select: {
                     millingType: true,
