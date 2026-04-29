@@ -2,6 +2,16 @@
 
 ## 2026-04-29
 
+### prisma seed 정리 — stale `seed.js` 제거 + `seed.ts`로 통일 `chore`
+
+**배경**: 잡곡 #2 작업 중 `prisma/seed.js`가 현 schema에 없는 `farmer.certifications.create` 관계를 사용하는 stale 파일이라는 게 드러남. `package.json`이 그 broken 파일을 가리키고 있어 `npx prisma db seed` 호출 시 실패하는 상태였음. (`seed.ts`는 정상)
+
+**변경**:
+- `prisma/seed.js` 삭제 (historical artifact)
+- `package.json` `prisma.seed`: `node prisma/seed.js` → `npx tsx prisma/seed.ts`
+
+**참고**: tsx는 devDependency 미추가 (`npx`로 즉석 실행), 신규 의존성 도입 없음.
+
 ### 잡곡 재고관리 #2 — 잡곡 품종 시드 `feat` `seed`
 
 **배경**: #1 스키마 확장 완료 후, 잡곡 입고/포장 화면이 실제로 사용할 품종 마스터를 등록. 계획서 §품종 시드 정책에 따라 기존 RICE 품종은 절대 손대지 않고 잡곡 15종만 신규.
