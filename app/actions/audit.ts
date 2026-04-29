@@ -141,7 +141,7 @@ export async function getLatestUpdateForPath(pathname: string) {
     try {
         let entities: string[] | undefined = undefined;
 
-        if (pathname.startsWith('/stocks')) {
+        if (pathname.startsWith('/raw-stocks')) {
             entities = ['Stock'];
         } else if (pathname.startsWith('/milling')) {
             entities = ['MillingBatch'];

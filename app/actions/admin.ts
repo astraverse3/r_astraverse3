@@ -49,7 +49,7 @@ export async function createVariety(data: VarietyFormData) {
         })
 
         revalidatePath('/admin/varieties')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         revalidatePath('/milling')
         return { success: true, data: variety }
     } catch (error) {
@@ -83,7 +83,7 @@ export async function updateVariety(id: number, data: VarietyFormData) {
         })
 
         revalidatePath('/admin/varieties')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: variety }
     } catch (error) {
         console.error('Failed to update variety:', error)
@@ -106,7 +106,7 @@ export async function deleteVariety(id: number) {
         })
 
         revalidatePath('/admin/varieties')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
         console.error('Failed to delete variety:', error)
@@ -155,7 +155,7 @@ export async function deleteVarieties(ids: number[]) {
         }
 
         revalidatePath('/admin/varieties')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
 
         return {
             success: true,
@@ -328,7 +328,7 @@ export async function createFarmer(data: FarmerFormData) {
         })
 
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: farmer }
     } catch (error) {
         console.error('Failed to create farmer:', error)
@@ -375,7 +375,7 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
         })
 
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: farmer }
     } catch (error) {
         console.error('Failed to update farmer:', error)
@@ -405,7 +405,7 @@ export async function deleteFarmer(id: number) {
         })
 
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
         console.error('Failed to delete farmer:', error)
@@ -454,7 +454,7 @@ export async function deleteFarmers(ids: number[]) {
         }
 
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
 
         return {
             success: true,
@@ -559,7 +559,7 @@ export async function createFarmerWithGroup(
         return { success: false, error: sanitizeErrorMessage(error, '작목반 생산자 등록에 실패했습니다.') }
     } finally {
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
     }
 }
 
@@ -641,7 +641,7 @@ export async function updateProducerGroup(id: number, data: Partial<ProducerGrou
         })
 
         revalidatePath('/admin/farmers')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: group }
     } catch (error) {
         console.error('Failed to update group:', error)

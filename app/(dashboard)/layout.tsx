@@ -3,7 +3,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import { DesktopSidebar } from "@/components/desktop-sidebar"
 import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
 import { HeaderUserProfile } from "@/components/header/header-user-profile"
-import { MillingCartProvider } from "./stocks/milling-cart-context"
+import { MillingCartProvider } from "./raw-stocks/milling-cart-context"
 import { LastUpdated } from "@/components/last-updated"
 
 export default function DashboardLayout({

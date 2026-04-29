@@ -38,8 +38,8 @@ export function DesktopSidebar() {
                     <p className="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
 
                     <Link
-                        href="/stocks"
-                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/stocks')
+                        href="/raw-stocks"
+                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/raw-stocks')
                             ? 'bg-blue-50 text-blue-600'
                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                             }`}

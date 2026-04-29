@@ -36,6 +36,12 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      { source: '/stocks', destination: '/raw-stocks', permanent: true },
+      { source: '/stocks/:path*', destination: '/raw-stocks/:path*', permanent: true },
+    ]
+  },
 };
 
 export default withPWA(nextConfig);

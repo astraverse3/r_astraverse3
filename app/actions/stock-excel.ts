@@ -324,7 +324,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
             timeout: 60000 // Increase timeout for potentially large uploads
         })
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         result.success = true
 
         await recordAuditLog({

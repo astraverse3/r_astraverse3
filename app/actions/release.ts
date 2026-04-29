@@ -65,7 +65,7 @@ export async function createStockRelease(
             description: `원곡 출고 등록: ${destination} (${stockIds.length}포대)`
         })
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to create stock release:', error)
@@ -112,7 +112,7 @@ export async function cancelStockRelease(stockIds: number[]) {
             description: `출고 취소 및 재고 복구: ${stockIds.length}개 항목`
         })
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to cancel stock release:', error)
@@ -222,7 +222,7 @@ export async function deleteStockReleases(ids: number[]) {
         })
 
         revalidatePath('/releases')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
         console.error('Failed to delete stock releases:', error)
@@ -268,7 +268,7 @@ export async function removeStockFromRelease(stockId: number) {
             }
         })
         revalidatePath('/releases')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
         console.error('Failed to remove stock from release:', error)

@@ -148,7 +148,7 @@ export async function startMillingBatch(data: MillingBatchFormData) {
         })
 
         revalidatePath('/milling')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to start/update milling batch:', error)
@@ -515,7 +515,7 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
         })
 
         revalidatePath('/milling')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
         console.error('Failed to update status:', error)
@@ -564,7 +564,7 @@ export async function deleteMillingBatch(batchId: number) {
         })
 
         revalidatePath('/milling')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return result
     } catch (error) {
         console.error('Failed to delete batch:', error)
@@ -651,7 +651,7 @@ export async function deleteMillingBatches(ids: number[]) {
         }
 
         revalidatePath('/milling')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
 
         return {
             success: true,
@@ -734,7 +734,7 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
         })
 
         revalidatePath('/milling')
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to update milling batch stocks:', error)

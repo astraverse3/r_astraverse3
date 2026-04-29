@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Trash2, Plus, Pencil, Check, X } from 'lucide-react'
 import { removeStockFromMilling, updateMillingBatchMetadata } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
-import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/stocks/milling-cart-context'
+import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/raw-stocks/milling-cart-context'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
@@ -133,7 +133,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
             remarks || '',
             millingType
         )
-        router.push('/stocks')
+        router.push('/raw-stocks')
     }
 
     const handleDelete = async (stockId: number) => {

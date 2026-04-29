@@ -37,11 +37,6 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
         title: '원물재고',
         description: '벼·잡곡 원물 입고 및 도정 전 재고를 관리합니다.',
     },
-    '/stocks': {
-        icon: RawStockIcon,
-        title: '원물재고',
-        description: '벼·잡곡 원물 입고 및 도정 전 재고를 관리합니다.',
-    },
 
     '/milling': {
         icon: MillingIcon,

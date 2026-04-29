@@ -87,7 +87,7 @@ export async function createStock(data: StockFormData) {
             description: `원곡 입고: ${farmer.name} - ${variety.name} (${data.weightKg}kg)`
         })
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         return { success: true, data: stock }
     } catch (error) {
         console.error('Failed to create stock:', error)
@@ -211,7 +211,7 @@ export async function updateStock(id: number, data: StockFormData) {
             return updatedStock;
         });
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         revalidatePath('/milling')
         return { success: true, data: result }
     } catch (error) {
@@ -244,7 +244,7 @@ export async function deleteStock(id: number) {
             description: `재고 삭제: ${deleted.farmer.name} - ${deleted.variety.name} (${deleted.weightKg}kg)`
         })
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         revalidatePath('/milling')
         return { success: true }
     } catch (error) {
@@ -303,7 +303,7 @@ export async function deleteStocks(ids: number[]) {
             }
         }
 
-        revalidatePath('/stocks')
+        revalidatePath('/raw-stocks')
         revalidatePath('/milling')
 
         return {
@@ -333,7 +333,7 @@ export type GetStocksParams = {
 export async function getStocks(params?: GetStocksParams) {
     await requireSession()
     try {
-        // 벼 전용 페이지(`/stocks`, `/raw-stocks` 벼 탭)에서만 호출됨.
+        // 벼 전용 페이지(`/raw-stocks` 벼 탭)에서만 호출됨.
         // 잡곡 목록은 별도 액션(`misc-stock.ts`)에서 category='MISC_GRAIN'으로 조회.
         const where: any = { category: 'RICE' }
         const andConditions: any[] = []

@@ -2,6 +2,27 @@
 
 ## 2026-04-29
 
+### 잡곡 재고관리 #4 — `/stocks` → `/raw-stocks` 라우팅 이동 `feat`
+
+**배경**: 잡곡 인프라 본 구현 전, 원물재고 라우트를 미래 의미(벼/잡곡 통합 원물재고)에 맞게 이동. 페이지 내부 동작·UI는 그대로(잡곡 탭은 #5에서).
+
+**변경**:
+- `git mv` 디렉터리 rename: `app/(dashboard)/stocks/` → `app/(dashboard)/raw-stocks/` (15 파일)
+- import 경로 갱신 3곳 (`layout.tsx`, `milling-cart-sheet.tsx`, `milling/stock-list-dialog.tsx`) — `layout.tsx`는 사전조사에서 놓친 상대경로 `./stocks/...`를 tsc 단계에서 발견·보강
+- `revalidatePath('/stocks')` → `/raw-stocks` 25곳 일괄 치환 (admin 11, milling 5, release 4, stock 4, stock-excel 1)
+- 네비게이션 4곳: `desktop-sidebar` href+isActive, `mobile-nav` href+라벨 "재고"→"원물"(계획서 §107 정합), `milling/stock-list-dialog` `router.push`, `breadcrumb-display` `/stocks` 중복 매핑 제거
+- `audit.ts:144` `pathname.startsWith('/raw-stocks')` 단순 치환 (옵션 A — 308 redirect로 `/stocks` 호출은 도달 불가능)
+- `next.config.ts` `redirects()` 추가 — `/stocks`·`/stocks/:path*` → `/raw-stocks*` 308 영구 리다이렉트
+- `stock.ts:336` 주석 단순화 (`벼 전용 페이지(\`/raw-stocks\` 벼 탭)에서만 호출됨`)
+
+**검증**:
+- `npx tsc --noEmit` 통과 (.next stale typegen 정리 후)
+- `revalidatePath('/stocks')` / 디렉터리 import 잔존 0건
+- 브라우저 스모크 9 시나리오는 사용자 검수 (보고서 §3.2)
+
+**계획서**: [docs/plan-잡곡재고관리-#4.md](plan-잡곡재고관리-#4.md)
+**결과보고서**: [docs/report-잡곡재고관리-#4-2026-04-29.md](report-잡곡재고관리-#4-2026-04-29.md)
+
 ### 잡곡 재고관리 #3 — 포장단위 정책 확정 (코드 변경 0건) `docs`
 
 **배경**: #3은 당초 "벼 포장에 800g/500g/420g 추가 + 잡곡 공용"이었는데, 사전조사·정책 검토 과정에서 벼는 g 단위가 거의 안 쓰여 현행 유지가 적절하고 잡곡은 톤백·잔량이 없는 별도 옵션 셋이라 **공용 상수 도입 자체가 부적합**으로 결론. #3은 정책 확정으로 축소.
