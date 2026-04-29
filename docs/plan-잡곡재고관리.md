@@ -154,7 +154,7 @@ model MillingOutputPackage {
   incomingDate    DateTime?     // 매입일
 
   // 포장 정보 (공통)
-  packageType     String        // '20kg', '10kg', '5kg', '2kg', '1kg', '800g', '500g', '420g', 'Tonbag'
+  packageType     String        // 벼: '20kg'~'1kg', '톤백', '잔량' / 잡곡: '10kg', '5kg', '1kg', '800g', '500g', '420g' (+ '기타' 직접입력 공용)
   weightPerUnit   Float
   count           Int
   totalWeight     Float
@@ -246,7 +246,7 @@ model Variety {
 
 #### 잡곡 포장 다이얼로그 (`[+ 포장하기]`)
 - 원물재고(AVAILABLE 상태 MISC_GRAIN Stock) 로트 선택
-- 포장단위: 20kg, 10kg, 5kg, 2kg, 1kg, 800g, 500g, 420g, 톤백, 잔량
+- 포장단위(잡곡 전용 셋, 7칸 그리드): 10kg, 5kg, 1kg, 800g, 500g, 420g + 기타 직접입력. **톤백·잔량 없음**(잡곡은 해당 케이스 미사용 — 필요 시 "기타"로 처리)
 - 개수·총중량 입력
 - 저장 시:
   - `MillingOutputPackage` 신규 레코드 (source=MILLED, stockId, varietyId, category=MISC_GRAIN, lotNo=원물 로트)
@@ -304,7 +304,7 @@ model Variety {
 - `components/desktop-sidebar.tsx` — 메뉴 개편
 - `components/mobile-nav.tsx` — 하단 탭 개편, 상단 헤더 로고 홈 링크
 - `app/(dashboard)/admin/varieties/` — 품종 등록 시 category 선택
-- `app/(dashboard)/milling/add-packaging-dialog.tsx` — g 단위 옵션 추가 (공용 적용)
+- `app/(dashboard)/milling/add-packaging-dialog.tsx` — **변경 없음** (벼 다이얼로그 현행 유지). 잡곡 포장 다이얼로그(#7)에서 잡곡 전용 `PACKAGE_TEMPLATES_MISC` 인라인 정의
 - `app/(dashboard)/stocks/*` → `app/(dashboard)/raw-stocks/` 로 이동 (벼 기존 코드)
 
 ### 6. 기존 엑셀 Seed (일회성)
@@ -365,7 +365,7 @@ model Variety {
    - `active?: boolean` prop으로 내부 fill 토글
 1. **스키마 확장 + 마이그레이션** — Stock/Variety/MillingOutputPackage 확장, enum 3종, **CHECK 제약조건 2개**(pkg_milled_has_source, pkg_purchased_required_fields)
 2. **Seed 데이터** — 잡곡 품종만 등록 (중복 체크, 기존 데이터 보호)
-3. **포장단위 g 옵션 추가** — 기존 벼 포장 화면에 먼저 반영(공용)
+3. **포장단위 정책 확정** — 벼 현행 유지(`톤백/20/10/8/5/4/3/1kg/잔량 + 기타`), 잡곡은 `10/5/1kg + 800g/500g/420g + 기타` (톤백·잔량 없음). 옵션 셋이 다르므로 공용 상수 도입 폐기 — 잡곡 PACKAGE_TEMPLATES는 #7 잡곡 포장 다이얼로그에서 인라인 정의. **코드 변경 0건, 정책 문서화로 종결**. 사전조사: [docs/research-잡곡재고관리-#3.md](research-잡곡재고관리-#3.md)
 4. **기존 `/stocks` → `/raw-stocks` 라우팅 이동** + 벼 탭 유지 (벼 탭 내부 디자인은 범위 밖, 이동만)
 5. **잡곡 입고 등록** — 2가지 sourceType 토글 다이얼로그(위탁도정/농가도정) + 잡곡 원물재고 탭
    - 번들 스펙: F안 탭, shadcn `Dialog`, 폼 패턴 (`handoff.md §4.1`, `§4.6`)
@@ -402,7 +402,7 @@ model Variety {
 - **기존 `MillingOutputPackage` 호출부 전수조사 필요**: `batchId` nullable 변경 + `source`/`category` 기본 필터 누락 시 잡곡 매입품이 벼 목록에 섞일 수 있음
 - **`category` 필터 누락**: 모든 `getStocks`/`getPackages` 호출부에 카테고리 기본값 주입 확인
 - **CHECK 제약조건 위반**: 기존 `MillingOutputPackage` 데이터는 모두 `source=MILLED`(default)이고 `batchId` 값이 있으므로 통과. 신규 매입 저장 시 필수 필드 검증을 **Server Action 레벨에서도 zod 검증** 병행 필요 (DB 제약 위반 시 유저 피드백 어려움)
-- **포장단위 g 추가**: 통계·엑셀 내 하드코딩된 포장단위 라벨 전수조사 (`20kg|10kg|5kg|1kg|톤백|잔량` 검색)
+- ~~**포장단위 g 추가**: 통계·엑셀 내 하드코딩된 포장단위 라벨 전수조사~~ (해소 완료 — #3 정책 변경으로 벼 다이얼로그는 변경 없음. 통계·표시 라인은 자유 텍스트 fallback으로 잡곡 g 옵션도 자동 수용 — 사전조사 §3 검증)
 - **기존 `/stocks` URL 이동**: 북마크·외부 링크 깨짐 → `/stocks` → `/raw-stocks` 리다이렉트 필요
 - **기존 `/releases` URL 이동**: 북마크·외부 링크 깨짐 → `/releases` → `/sales` 리다이렉트 필요. 모바일 홈 최근활동/공지 내 `/releases` 하드코딩 링크 전수 검색
 - **마이그레이션 자동화**: Vercel `prisma migrate deploy` 경로 동작 사전 확인 (CHECK 제약 raw SQL 포함)
