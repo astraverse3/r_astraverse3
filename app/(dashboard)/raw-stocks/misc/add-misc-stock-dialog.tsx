@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +19,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { createMiscStock, type MiscStockFormData } from '@/app/actions/misc-stock'
+import {
+    createMiscStock,
+    updateMiscStock,
+    type MiscStockFormData,
+} from '@/app/actions/misc-stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 
@@ -41,11 +45,30 @@ interface Variety {
     name: string
 }
 
+// 수정 모드 prefill용 — list-client에서 행 액션으로 전달
+export interface MiscStockEditTarget {
+    id: number
+    productionYear: number
+    weightKg: number
+    rawWeightKg: number | null
+    incomingDate: Date | string
+    actualFarmer: string | null
+    sourceType: 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION' | null
+    millingVendor: string | null
+    farmerId: number
+    varietyId: number
+    farmer: { group: { certType: string; cropYear: number } | null }
+}
+
 interface Props {
     farmers: Farmer[]
     varieties: Variety[]
     millingVendors: string[]
     sproutingVendors: string[]
+    /** 수정 모드용 — 외부에서 controlled 사용 시 같이 전달 */
+    editTarget?: MiscStockEditTarget | null
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
 type SourceType = 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION'
@@ -59,8 +82,24 @@ const SOURCE_OPTIONS: { value: SourceType; label: string }[] = [
 // 생산년도 후보 (filters와 일관)
 const YEAR_OPTIONS = [2026, 2025, 2024, 2023]
 
-export function AddMiscStockDialog({ farmers, varieties, millingVendors, sproutingVendors }: Props) {
-    const [open, setOpen] = useState(false)
+export function AddMiscStockDialog({
+    farmers,
+    varieties,
+    millingVendors,
+    sproutingVendors,
+    editTarget,
+    open: controlledOpen,
+    onOpenChange: setControlledOpen,
+}: Props) {
+    const isControlled = controlledOpen !== undefined
+    const [internalOpen, setInternalOpen] = useState(false)
+    const open = isControlled ? !!controlledOpen : internalOpen
+    const setOpen = (next: boolean) => {
+        if (isControlled) setControlledOpen?.(next)
+        else setInternalOpen(next)
+    }
+
+    const isEdit = !!editTarget
     const [isLoading, setIsLoading] = useState(false)
 
     const today = new Date()
@@ -74,6 +113,27 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
     const [rawWeightStr, setRawWeightStr] = useState<string>('')
     const [weightStr, setWeightStr] = useState<string>('')
     const [vendor, setVendor] = useState<string>('')
+    const [incomingDateStr, setIncomingDateStr] = useState<string>(
+        () => new Date().toISOString().split('T')[0],
+    )
+    const [actualFarmerStr, setActualFarmerStr] = useState<string>('')
+
+    // editTarget prefill — 다이얼로그가 열릴 때마다 적용
+    useEffect(() => {
+        if (open && editTarget) {
+            setProductionYear(editTarget.productionYear)
+            setCertType(editTarget.farmer.group?.certType ?? '일반')
+            setSelectedFarmerId(editTarget.farmerId.toString())
+            setVarietyId(editTarget.varietyId.toString())
+            setSourceType((editTarget.sourceType ?? 'CONSIGNMENT') as SourceType)
+            setRawWeightStr(editTarget.rawWeightKg != null ? String(editTarget.rawWeightKg) : '')
+            setWeightStr(String(editTarget.weightKg))
+            setVendor(editTarget.millingVendor ?? '')
+            const d = typeof editTarget.incomingDate === 'string' ? new Date(editTarget.incomingDate) : editTarget.incomingDate
+            setIncomingDateStr(d.toISOString().split('T')[0])
+            setActualFarmerStr(editTarget.actualFarmer ?? '')
+        }
+    }, [open, editTarget])
 
     const filteredFarmers = useMemo(() => {
         return farmers.filter(f => {
@@ -120,6 +180,8 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
         setVendor('')
         setProductionYear(defaultYear)
         setCertType('유기농')
+        setIncomingDateStr(new Date().toISOString().split('T')[0])
+        setActualFarmerStr('')
     }
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -134,10 +196,9 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
             return
         }
 
-        const formData = new FormData(event.currentTarget)
-        const weightKg = parseFloat(formData.get('weightKg') as string)
-        const incomingDate = new Date(formData.get('incomingDate') as string)
-        const actualFarmer = (formData.get('actualFarmer') as string) || undefined
+        const weightKg = parseFloat(weightStr)
+        const incomingDate = new Date(incomingDateStr)
+        const actualFarmer = actualFarmerStr.trim() || undefined
 
         if (!Number.isFinite(weightKg) || weightKg <= 0) {
             toast.warning('입고중량을 정확히 입력해주세요.')
@@ -146,8 +207,8 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
 
         let payload: MiscStockFormData
         if (isConsignment || isGermination) {
-            const rawWeightKg = parseFloat(formData.get('rawWeightKg') as string)
-            const vendorVal = (formData.get('vendor') as string)?.trim() || ''
+            const rawWeightKg = parseFloat(rawWeightStr)
+            const vendorVal = vendor.trim()
             if (!Number.isFinite(rawWeightKg) || rawWeightKg <= 0) {
                 toast.warning(`${rawLabel.replace('(kg)', '')}을 정확히 입력해주세요.`)
                 return
@@ -180,16 +241,18 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
         }
 
         setIsLoading(true)
-        const result = await createMiscStock(payload)
+        const result = isEdit && editTarget
+            ? await updateMiscStock(editTarget.id, payload)
+            : await createMiscStock(payload)
         setIsLoading(false)
 
         if (result.success) {
-            toast.success('잡곡 입고가 등록되었습니다.')
+            toast.success(isEdit ? '잡곡 입고가 수정되었습니다.' : '잡곡 입고가 등록되었습니다.')
             triggerDataUpdate()
             setOpen(false)
-            resetForm()
+            if (!isEdit) resetForm()
         } else {
-            toast.error(result.error || '잡곡 입고 등록에 실패했습니다.')
+            toast.error(result.error || (isEdit ? '잡곡 입고 수정에 실패했습니다.' : '잡곡 입고 등록에 실패했습니다.'))
         }
     }
 
@@ -198,22 +261,24 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
             open={open}
             onOpenChange={(o) => {
                 setOpen(o)
-                if (!o) resetForm()
+                if (!o && !isEdit) resetForm()
             }}
         >
-            <DialogTrigger asChild>
-                <Button size="sm" className="h-8 px-3 font-semibold">
-                    <Plus className="sm:mr-1 h-4 w-4" />
-                    <span className="hidden sm:inline">잡곡 입고</span>
-                </Button>
-            </DialogTrigger>
+            {!isControlled && (
+                <DialogTrigger asChild>
+                    <Button size="sm" className="h-8 px-3 font-semibold">
+                        <Plus className="sm:mr-1 h-4 w-4" />
+                        <span className="hidden sm:inline">잡곡 입고</span>
+                    </Button>
+                </DialogTrigger>
+            )}
             <DialogContent
                 className="sm:max-w-[500px]"
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
             >
                 <DialogHeader>
-                    <DialogTitle>잡곡 입고 등록</DialogTitle>
+                    <DialogTitle>{isEdit ? '잡곡 입고 수정' : '잡곡 입고 등록'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     {/* 0. 입고 유형 라디오 */}
@@ -301,6 +366,8 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                                     name="actualFarmer"
                                     placeholder="실제 농사짓는 분"
                                     className="text-[13px]"
+                                    value={actualFarmerStr}
+                                    onChange={(e) => setActualFarmerStr(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -335,7 +402,8 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                                 name="incomingDate"
                                 type="date"
                                 required
-                                defaultValue={new Date().toISOString().split('T')[0]}
+                                value={incomingDateStr}
+                                onChange={(e) => setIncomingDateStr(e.target.value)}
                                 className="text-[13px]"
                             />
                         </div>

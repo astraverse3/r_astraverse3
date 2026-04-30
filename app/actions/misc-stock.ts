@@ -165,6 +165,132 @@ export async function createMiscStock(input: MiscStockFormData) {
 }
 
 // -----------------------------
+// UPDATE — 잡곡 입고 수정
+// -----------------------------
+export async function updateMiscStock(id: number, input: MiscStockFormData) {
+    await requireSession()
+    try {
+        const data = MiscStockFormSchema.parse(input)
+
+        const variety = await prisma.variety.findUnique({
+            where: { id: data.varietyId },
+            select: { id: true, name: true, category: true, type: true },
+        })
+        if (!variety) throw new Error('품종을 찾을 수 없습니다.')
+        if (variety.category !== 'MISC_GRAIN') {
+            throw new Error(`잡곡 품종이 아닙니다: ${variety.name}`)
+        }
+
+        const current = await prisma.stock.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                category: true,
+                status: true,
+                bagNo: true,
+                productionYear: true,
+                farmerId: true,
+                varietyId: true,
+                incomingDate: true,
+            },
+        })
+        if (!current) throw new Error('재고를 찾을 수 없습니다.')
+        if (current.category !== 'MISC_GRAIN') {
+            throw new Error('잡곡 재고가 아닙니다.')
+        }
+        if (current.status !== 'AVAILABLE') {
+            throw new Error('보관중 상태가 아닌 잡곡 재고는 수정할 수 없습니다.')
+        }
+
+        const hasVendorAndRaw = data.sourceType === 'CONSIGNMENT' || data.sourceType === 'GERMINATION'
+
+        // 로트 영향 필드 변경 시 재생성
+        const lotShouldRegen =
+            data.incomingDate.getTime() !== current.incomingDate.getTime()
+            || data.farmerId !== current.farmerId
+            || data.varietyId !== current.varietyId
+
+        const newLotNo = lotShouldRegen
+            ? await deriveLotNo(data.incomingDate, data.farmerId, data.varietyId)
+            : undefined
+
+        const updated = await prisma.stock.update({
+            where: { id },
+            data: {
+                sourceType: data.sourceType,
+                rawWeightKg: hasVendorAndRaw ? data.rawWeightKg : null,
+                millingVendor: hasVendorAndRaw ? data.millingVendor.trim() : null,
+                productionYear: data.productionYear,
+                weightKg: data.weightKg,
+                incomingDate: data.incomingDate,
+                farmerId: data.farmerId,
+                varietyId: data.varietyId,
+                actualFarmer: data.actualFarmer?.trim() || null,
+                ...(newLotNo !== undefined && { lotNo: newLotNo }),
+                // bagNo는 자동 부여된 값을 그대로 유지 (수정 시 재할당 안 함)
+            },
+        })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'Stock',
+            entityId: id,
+            details: { input: data },
+            description: `잡곡 입고 수정: ${variety.name} (${data.weightKg}kg)`,
+        })
+
+        revalidatePath('/raw-stocks')
+        return { success: true, data: updated }
+    } catch (error) {
+        console.error('Failed to update misc stock:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '잡곡 입고 수정에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
+// DELETE — 잡곡 입고 삭제 (CONSUMED 또는 포장 연결 시 거절)
+// -----------------------------
+export async function deleteMiscStock(id: number) {
+    await requireSession()
+    try {
+        const current = await prisma.stock.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                category: true,
+                status: true,
+                _count: { select: { outputPackages: true } },
+            },
+        })
+        if (!current) throw new Error('재고를 찾을 수 없습니다.')
+        if (current.category !== 'MISC_GRAIN') {
+            throw new Error('잡곡 재고가 아닙니다.')
+        }
+        if (current.status === 'CONSUMED' || current._count.outputPackages > 0) {
+            throw new Error('이미 포장된 잡곡 재고는 삭제할 수 없습니다.')
+        }
+
+        const deleted = await prisma.stock.delete({
+            where: { id },
+            include: { variety: true, farmer: true },
+        })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'Stock',
+            entityId: id,
+            description: `잡곡 입고 삭제: ${deleted.farmer.name} - ${deleted.variety.name} (${deleted.weightKg}kg)`,
+        })
+
+        revalidatePath('/raw-stocks')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to delete misc stock:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '잡곡 입고 삭제에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
 // READ 파라미터
 // -----------------------------
 export type GetMiscStocksParams = {

@@ -2,6 +2,14 @@
 
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { MoreVertical, Edit, Trash2 } from 'lucide-react'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface MiscStock {
     id: number
@@ -46,9 +54,13 @@ export const CERT_BADGE_CLASS: Record<string, string> = {
 
 interface Props {
     stock: MiscStock
+    canManage?: boolean
+    onEdit?: () => void
+    onDelete?: () => void
 }
 
-export function MiscStockTableRow({ stock }: Props) {
+export function MiscStockTableRow({ stock, canManage = false, onEdit, onDelete }: Props) {
+    const isConsumed = stock.status === 'CONSUMED'
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
     const showRaw = stock.sourceType === 'CONSIGNMENT' || stock.sourceType === 'GERMINATION'
@@ -104,8 +116,33 @@ export function MiscStockTableRow({ stock }: Props) {
                     variant={isAvailable ? 'outline' : 'secondary'}
                     className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
                 >
-                    {isAvailable ? '보관중' : stock.status === 'CONSUMED' ? '소진됨' : stock.status}
+                    {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
                 </Badge>
+            </TableCell>
+            <TableCell className="text-center w-[40px]">
+                {canManage && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[120px]">
+                            <DropdownMenuItem onClick={onEdit} disabled={isConsumed} className="gap-2 cursor-pointer">
+                                <Edit className="h-4 w-4 text-slate-500" />
+                                <span>수정</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={onDelete}
+                                disabled={isConsumed}
+                                className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                <span>삭제</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </TableCell>
         </TableRow>
     )
@@ -113,11 +150,15 @@ export function MiscStockTableRow({ stock }: Props) {
 
 interface MobileCardProps {
     stock: MiscStock
+    canManage?: boolean
+    onEdit?: () => void
+    onDelete?: () => void
 }
 
-export function MiscStockMobileCard({ stock }: MobileCardProps) {
+export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete }: MobileCardProps) {
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
+    const isConsumed = stock.status === 'CONSUMED'
     const showRaw = stock.sourceType === 'CONSIGNMENT' || stock.sourceType === 'GERMINATION'
     const showYield = stock.sourceType === 'CONSIGNMENT'
     const certType = stock.farmer.group?.certType
@@ -141,12 +182,37 @@ export function MiscStockMobileCard({ stock }: MobileCardProps) {
                         </span>
                     )}
                 </div>
-                <Badge
-                    variant={isAvailable ? 'outline' : 'secondary'}
-                    className={`text-[10px] h-5 px-1.5 rounded-sm shrink-0 ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
-                >
-                    {isAvailable ? '보관중' : stock.status === 'CONSUMED' ? '소진됨' : stock.status}
-                </Badge>
+                <div className="flex items-center gap-0.5 shrink-0">
+                    <Badge
+                        variant={isAvailable ? 'outline' : 'secondary'}
+                        className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
+                    >
+                        {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
+                    </Badge>
+                    {canManage && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600">
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[120px]">
+                                <DropdownMenuItem onClick={onEdit} disabled={isConsumed} className="gap-2 cursor-pointer">
+                                    <Edit className="h-4 w-4 text-slate-500" />
+                                    <span>수정</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={onDelete}
+                                    disabled={isConsumed}
+                                    className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span>삭제</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <div className="flex items-center gap-1.5 min-w-0">

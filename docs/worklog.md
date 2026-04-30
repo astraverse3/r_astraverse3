@@ -2,6 +2,33 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5e — 잡곡 입고 수정·삭제 `feat`
+
+**배경**: #5 본 흐름 마무리. 잡곡 입고 수정/삭제 액션 + 행 더보기 메뉴 + edit 다이얼로그 활성화.
+
+**변경**:
+- `misc-stock.ts`:
+  - `updateMiscStock(id, input)` 추가 — zod 검증, MISC_GRAIN 카테고리 + AVAILABLE 상태 체크, 로트 영향 필드 변경 시 재생성, bagNo 유지, audit log
+  - `deleteMiscStock(id)` 추가 — CONSUMED 또는 outputPackages 연결 시 거절, audit log
+- `add-misc-stock-dialog.tsx`:
+  - `editTarget` prop + controlled `open`/`onOpenChange` 지원
+  - 마운트 시 prefill (sourceType, 인증, 생산자, 품종, 입고일, 중량, 도정업체)
+  - form input들을 controlled state로 전환 (incomingDate, actualFarmer)
+  - 헤더 타이틀 분기 ("등록"/"수정"), `updateMiscStock` 분기 호출
+- `misc-stock-table-row.tsx` (PC + 모바일):
+  - `canManage`/`onEdit`/`onDelete` prop 추가
+  - 더보기 메뉴 (`MoreVertical` → 수정/삭제), CONSUMED는 disabled
+- `misc-stock-list-client.tsx`:
+  - `useSession`/`hasPermission` 권한 체크
+  - `editTarget` state + controlled edit dialog 렌더
+  - delete 핸들러: confirm + `deleteMiscStock` + 캐시에서 해당 ID 제거
+  - PC 헤더에 액션 헤드 추가, colSpan 12 → 13
+- `misc-stock-panel.tsx`: list-client에 farmers/varieties/vendors 전달
+
+**검증**: `npx tsc --noEmit` 통과
+
+**다음**: 잡곡 #5 본 작업 완료. 후속은 #6(제품재고)~#13.
+
 ### 잡곡 후속 — 품종관리에 "잡곡" 곡종 옵션 추가 `feat`
 
 **배경**: 사용자가 찰보리 품종 등록 시도 → 곡종 라디오에 잡곡 없음 발견. 백로그 §4·§5 항목 동시 처리.

@@ -67,7 +67,14 @@ export function MiscStockPanel({
             </section>
 
             <ActiveMiscFilters totalCount={totalCount} varieties={varieties} />
-            <MiscStockListClient initialGroups={initialGroups} filters={filters} />
+            <MiscStockListClient
+                initialGroups={initialGroups}
+                filters={filters}
+                farmers={farmers}
+                varieties={varieties}
+                millingVendors={millingVendors}
+                sproutingVendors={sproutingVendors}
+            />
         </div>
     )
 }

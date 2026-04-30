@@ -10,25 +10,92 @@ import {
     TableRow,
     TableCell,
 } from '@/components/ui/table'
+import { useSession } from 'next-auth/react'
+import { hasPermission } from '@/lib/permissions'
+import { toast } from 'sonner'
 import {
     getMiscStocksByGroup,
+    deleteMiscStock,
     type MiscStockGroup,
     type GetMiscStocksParams,
 } from '@/app/actions/misc-stock'
 import { MiscStockTableRow, MiscStockMobileCard, CERT_BADGE_CLASS } from './misc-stock-table-row'
+import { AddMiscStockDialog, type MiscStockEditTarget } from './add-misc-stock-dialog'
+import { triggerDataUpdate } from '@/components/last-updated'
+
+interface Farmer {
+    id: number
+    name: string
+    farmerNo: string | null
+    group: { id: number; name: string; certType: string; certNo: string; cropYear: number } | null
+}
 
 interface Props {
     initialGroups: MiscStockGroup[]
     filters: GetMiscStocksParams
+    farmers: Farmer[]
+    varieties: { id: number; name: string }[]
+    millingVendors: string[]
+    sproutingVendors: string[]
 }
 
-export function MiscStockListClient({ initialGroups, filters }: Props) {
+export function MiscStockListClient({
+    initialGroups,
+    filters,
+    farmers,
+    varieties,
+    millingVendors,
+    sproutingVendors,
+}: Props) {
     const [loadedItems, setLoadedItems] = useState<Record<string, any[]>>({})
     const [loadingGroups, setLoadingGroups] = useState<Set<string>>(new Set())
     // 단일 건 그룹은 기본 펼친 상태로 시작
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
         () => new Set(initialGroups.filter(g => g.count === 1).map(g => g.key)),
     )
+
+    const [editTarget, setEditTarget] = useState<MiscStockEditTarget | null>(null)
+    const [editOpen, setEditOpen] = useState(false)
+
+    const { data: session } = useSession()
+    // @ts-ignore
+    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
+
+    const handleEdit = (stock: any) => {
+        setEditTarget({
+            id: stock.id,
+            productionYear: stock.productionYear,
+            weightKg: stock.weightKg,
+            rawWeightKg: stock.rawWeightKg ?? null,
+            incomingDate: stock.incomingDate,
+            actualFarmer: stock.actualFarmer ?? null,
+            sourceType: stock.sourceType ?? null,
+            millingVendor: stock.millingVendor ?? null,
+            farmerId: stock.farmerId ?? stock.farmer?.id,
+            varietyId: stock.varietyId ?? stock.variety?.id,
+            farmer: { group: stock.farmer?.group ? { certType: stock.farmer.group.certType, cropYear: stock.farmer.group.cropYear } : null },
+        })
+        setEditOpen(true)
+    }
+
+    const handleDelete = async (stock: any) => {
+        if (!confirm(`이 잡곡 입고를 삭제하시겠습니까?\n${stock.variety.name} / ${stock.farmer.name} / ${stock.weightKg}kg`)) return
+        const result = await deleteMiscStock(stock.id)
+        if (result.success) {
+            toast.success('삭제되었습니다.')
+            triggerDataUpdate()
+            // 같은 그룹 캐시 클리어 → 다음 펼침 시 재조회
+            setLoadedItems(prev => {
+                const next = { ...prev }
+                Object.keys(next).forEach(key => {
+                    next[key] = next[key].filter((s: any) => s.id !== stock.id)
+                })
+                return next
+            })
+        } else {
+            toast.error(result.error || '삭제에 실패했습니다.')
+        }
+    }
 
     const fetchGroupItems = async (group: MiscStockGroup) => {
         if (loadedItems[group.key] || loadingGroups.has(group.key)) return
@@ -107,6 +174,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">입고(kg)</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">수율</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">상태</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -156,16 +224,23 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                                 </TableCell>
                                                 <TableCell></TableCell>
                                                 <TableCell></TableCell>
+                                                <TableCell></TableCell>
                                             </TableRow>
                                         )}
 
                                         {/* Detail Rows — 단일 건 그룹은 무조건 표시, 다중은 isExpanded일 때만 */}
                                         {(!isMulti || isExpanded) && items.map((stock: any) => (
-                                            <MiscStockTableRow key={stock.id} stock={stock} />
+                                            <MiscStockTableRow
+                                                key={stock.id}
+                                                stock={stock}
+                                                canManage={canManage}
+                                                onEdit={() => handleEdit(stock)}
+                                                onDelete={() => handleDelete(stock)}
+                                            />
                                         ))}
                                         {(!isMulti || isExpanded) && isLoading && items.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={12} className="h-24 text-center">
+                                                <TableCell colSpan={13} className="h-24 text-center">
                                                     <div className="flex items-center justify-center gap-2 text-slate-500">
                                                         <Loader2 className="h-4 w-4 animate-spin" />
                                                         <span>데이터 불러오는 중...</span>
@@ -178,7 +253,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                             })
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={12} className="py-16">
+                                <TableCell colSpan={13} className="py-16">
                                     <EmptyState filtered={filterCount > 0} />
                                 </TableCell>
                             </TableRow>
@@ -207,7 +282,13 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                         </div>
                                     )}
                                     {items.map((stock: any) => (
-                                        <MiscStockMobileCard key={stock.id} stock={stock} />
+                                        <MiscStockMobileCard
+                                            key={stock.id}
+                                            stock={stock}
+                                            canManage={canManage}
+                                            onEdit={() => handleEdit(stock)}
+                                            onDelete={() => handleDelete(stock)}
+                                        />
                                     ))}
                                 </div>
                             )
@@ -275,6 +356,22 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                     </div>
                 )}
             </div>
+
+            {/* Edit Dialog (controlled) — 행 액션 메뉴에서 트리거 */}
+            {editTarget && (
+                <AddMiscStockDialog
+                    farmers={farmers}
+                    varieties={varieties}
+                    millingVendors={millingVendors}
+                    sproutingVendors={sproutingVendors}
+                    editTarget={editTarget}
+                    open={editOpen}
+                    onOpenChange={(o) => {
+                        setEditOpen(o)
+                        if (!o) setEditTarget(null)
+                    }}
+                />
+            )}
         </section>
     )
 }
