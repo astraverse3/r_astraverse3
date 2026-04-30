@@ -424,6 +424,23 @@ export async function getMillingVendors() {
 }
 
 // -----------------------------
+// 헬퍼 쿼리: 잡곡 품종 목록 (category=MISC_GRAIN)
+// -----------------------------
+export async function getMiscVarieties() {
+    await requireSession()
+    try {
+        const varieties = await prisma.variety.findMany({
+            where: { category: 'MISC_GRAIN' },
+            orderBy: { name: 'asc' },
+        })
+        return { success: true, data: varieties }
+    } catch (error) {
+        console.error('Failed to get misc varieties:', error)
+        return { success: false, error: '잡곡 품종 목록 조회에 실패했습니다.' }
+    }
+}
+
+// -----------------------------
 // 헬퍼 쿼리: 잡곡 다이얼로그용 농가 목록 (producesMiscGrain=true)
 // -----------------------------
 export async function getMiscFarmers() {

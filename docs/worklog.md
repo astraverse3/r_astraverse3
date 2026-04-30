@@ -2,6 +2,28 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5c — 잡곡 입고 등록 다이얼로그 `feat`
+
+**배경**: #5b placeholder 위에 잡곡 입고 등록 기능을 결합. 본 단계는 등록만 — 목록/필터는 #5d, 수정/삭제는 #5e.
+
+**변경**:
+- `app/actions/misc-stock.ts`: `getMiscVarieties()` 추가 (`category=MISC_GRAIN`만)
+- `app/(dashboard)/raw-stocks/misc/add-misc-stock-dialog.tsx` 신규
+  - 위탁/농가 세그먼트 토글 (sourceType)
+  - 공통 필드: 생산년도, 인증, 생산자(인증·년도 필터), 농가명(선택), 품종, 입고일, 일련번호(bagNo), 입고중량
+  - 위탁 전용: 원물중량, 위탁 도정업체(`<datalist>` 자동완성)
+  - 위탁 시 수율 미리보기(`weightKg / rawWeightKg * 100`)
+  - 해당 인증·년도에 잡곡 농가가 없으면 안내 메시지 노출
+  - 저장 → `createMiscStock` → toast + 다이얼로그 닫기 + form 리셋
+- `app/(dashboard)/raw-stocks/misc/misc-stock-panel.tsx` 신규 — 헤더 [+ 잡곡 입고] 버튼 + 본문 placeholder. 권한(`STOCK_MANAGE`) 가드 포함
+- `page.tsx`: `MiscStockPlaceholder` → `MiscStockPanelLoader`(server)로 교체. `getMiscFarmers / getMiscVarieties / getMillingVendors`를 `Promise.all`로 prefetch 후 panel에 prop 전달
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 브라우저 검수 필요: 위탁/농가 토글, 수율 미리보기, 도정업체 자동완성, 인증 변경 시 농가 목록 갱신, 저장 후 toast/닫힘, 권한 없는 사용자에게 버튼 미노출
+
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5c
+
 ### 잡곡 재고관리 #5b — 탭 인프라 (벼/잡곡) `feat`
 
 **배경**: `/raw-stocks` 페이지를 벼/잡곡 2탭 구조로 재편. 잡곡 탭 콘텐츠는 placeholder로 두고, 다음 단계에서 다이얼로그·목록을 결합.

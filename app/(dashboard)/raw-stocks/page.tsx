@@ -1,10 +1,12 @@
 import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
 import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
+import { getMiscVarieties, getMiscFarmers, getMillingVendors } from '@/app/actions/misc-stock'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockFilters } from './stock-filters'
 import { StockExcelButtons } from './stock-excel-buttons'
 import { StockPageWrapper } from './stock-page-wrapper'
 import { RawStocksTabs, type RawStockTab } from './raw-stocks-tabs'
+import { MiscStockPanel } from './misc/misc-stock-panel'
 import { Suspense } from 'react'
 
 export interface Stock {
@@ -47,7 +49,7 @@ export default async function StocksPage({
                     <RawStocksTabs activeTab={tab} />
                 </div>
                 {tab === 'misc' ? (
-                    <MiscStockPlaceholder />
+                    <MiscStockPanelLoader />
                 ) : (
                     <RiceStockPanel resolvedParams={resolvedParams} />
                 )}
@@ -102,11 +104,16 @@ async function RiceStockPanel({
     )
 }
 
-function MiscStockPlaceholder() {
-    return (
-        <div className="rounded-md border bg-white p-12 text-center">
-            <p className="text-slate-500 text-sm">잡곡 원물재고 화면은 곧 추가됩니다.</p>
-            <p className="text-slate-400 text-xs mt-2">#5c 입고 다이얼로그 · #5d 목록·필터 구현 예정</p>
-        </div>
-    )
+async function MiscStockPanelLoader() {
+    const [farmersRes, varietiesRes, vendorsRes] = await Promise.all([
+        getMiscFarmers(),
+        getMiscVarieties(),
+        getMillingVendors(),
+    ])
+
+    const farmers = (farmersRes.success && farmersRes.data ? farmersRes.data : []) as any[]
+    const varieties = (varietiesRes.success && varietiesRes.data ? varietiesRes.data : []) as { id: number; name: string }[]
+    const vendors = (vendorsRes.success && vendorsRes.data ? vendorsRes.data : []) as string[]
+
+    return <MiscStockPanel farmers={farmers} varieties={varieties} vendors={vendors} />
 }
