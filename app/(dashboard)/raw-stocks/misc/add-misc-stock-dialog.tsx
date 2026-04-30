@@ -85,8 +85,6 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
         })
     }, [farmers, productionYear, certType])
 
-    const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
-
     // sourceType별 라벨/자동완성 후보
     const isConsignment = sourceType === 'CONSIGNMENT'
     const isGermination = sourceType === 'GERMINATION'
@@ -306,18 +304,6 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                                 />
                             </div>
                         </div>
-                        {selectedFarmer && (
-                            <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 mt-1 border border-slate-100">
-                                {selectedFarmer.group ? (
-                                    <>
-                                        <span className="font-bold text-slate-800">{selectedFarmer.group.certType}</span>
-                                        {' | 인증번호: '}{selectedFarmer.group.certNo}{' | '}{selectedFarmer.group.name}
-                                    </>
-                                ) : (
-                                    <>일반 재배 (작목반 미소속)</>
-                                )}
-                            </div>
-                        )}
                         {filteredFarmers.length === 0 && (
                             <div className="bg-amber-50 p-2 rounded text-xs text-amber-700 border border-amber-100">
                                 선택한 인증·년도 조합에 잡곡 생산자로 등록된 농가가 없어요. 생산자 관리에서 "잡곡도 생산"을 체크해주세요.
