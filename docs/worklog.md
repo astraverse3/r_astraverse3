@@ -2,6 +2,24 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5b — 탭 인프라 (벼/잡곡) `feat`
+
+**배경**: `/raw-stocks` 페이지를 벼/잡곡 2탭 구조로 재편. 잡곡 탭 콘텐츠는 placeholder로 두고, 다음 단계에서 다이얼로그·목록을 결합.
+
+**변경**:
+- `raw-stocks-tabs.tsx` 신규 (Client) — URL 쿼리(`?tab=misc`) 동기화, 탭 전환 시 도메인-특화 필터 모두 리셋(벼/잡곡 필터 의미 달라 잘못된 상태 노출 방지)
+- `page.tsx` 재구성:
+  - `searchParams.tab`으로 분기 (`'misc'` / 기본 `'rice'`)
+  - 벼 탭: 기존 `StockPageWrapper` 그대로 — 기존 동작·UI 변경 없음
+  - 잡곡 탭: `MiscStockPlaceholder` (인라인) — "곧 추가됩니다" 안내 카드. #5c~#5d에서 본 wrapper로 교체
+- 탭은 모든 탭 공통으로 페이지 최상단에 노출 (헤더 액션과 별도 줄)
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 브라우저 검수: `/raw-stocks` 진입 → 벼 탭 기본 활성, 기존 동작 회귀 X / 잡곡 탭 클릭 → URL `?tab=misc`, placeholder 표시 / 벼 탭 복귀 시 필터 리셋 확인
+
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5b
+
 ### 잡곡 재고관리 #5a — 잡곡 Server Actions + zod `feat`
 
 **배경**: #5 본 작업 진입. UI 빌드 전에 잡곡 원물재고 액션을 먼저 구현. UI/페이지는 다음 단계(#5b~)에서 결합.
