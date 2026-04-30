@@ -2,6 +2,21 @@
 
 ## 2026-04-30
 
+### 잡곡 후속 — 품종관리에 "잡곡" 곡종 옵션 추가 `feat`
+
+**배경**: 사용자가 찰보리 품종 등록 시도 → 곡종 라디오에 잡곡 없음 발견. 백로그 §4·§5 항목 동시 처리.
+
+**변경**:
+- `app/actions/admin.ts`: `deriveVarietyCategory(type)` 헬퍼 — `type='MISC_GRAIN'`이면 자동 `category='MISC_GRAIN'`. createVariety/updateVariety에 적용
+- `variety-dialog.tsx`: "잡곡" 라디오 추가 (기타 앞), DialogDescription "벼 품종" → "품종"
+- `variety-list-client.tsx`: type 라벨 매핑에 `MISC_GRAIN → '잡곡'` 추가 (그룹화 + 평면 표시 두 군데), 정렬 순서 `URUCHI=1 / GLUTINOUS=2 / INDICA=3 / MISC_GRAIN=4 / OTHER=5` (기타 앞에 잡곡)
+
+**검증**: `npx tsc --noEmit` 통과
+
+**백로그 처리**:
+- §4 처리 완료 표기
+- §5 처리 완료 표기
+
 ### 잡곡 재고관리 #5 디자인 정리 (2차) — 핸드오프 누락 항목 보강 `style`
 
 **배경**: 1차 정리(F안 탭, 색상 토큰화) 후 핸드오프 전체 재점검. 6개 누락 항목 일괄 적용.

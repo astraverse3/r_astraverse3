@@ -102,7 +102,7 @@ export function VarietyDialog({ mode, variety }: Props) {
                 <DialogHeader>
                     <DialogTitle>{mode === 'create' ? '품종 등록' : '품종 수정'}</DialogTitle>
                     <DialogDescription>
-                        {mode === 'create' ? '새로운 벼 품종을 등록합니다.' : '등록된 품종 정보를 수정합니다.'}
+                        {mode === 'create' ? '새로운 품종을 등록합니다.' : '등록된 품종 정보를 수정합니다.'}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -151,6 +151,17 @@ export function VarietyDialog({ mode, variety }: Props) {
                                     className="accent-[#00a2e8] w-4 h-4"
                                 />
                                 <span>인디카</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="MISC_GRAIN"
+                                    checked={type === 'MISC_GRAIN'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-[#00a2e8] w-4 h-4"
+                                />
+                                <span>잡곡</span>
                             </label>
                             <label className="flex items-center space-x-2 cursor-pointer">
                                 <input

@@ -6,10 +6,15 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 
-// --- VARIETY ACTIONS (Unchanged) ---
+// --- VARIETY ACTIONS ---
 export type VarietyFormData = {
     name: string
     type: string
+}
+
+// type='MISC_GRAIN'이면 category=MISC_GRAIN, 그 외(URUCHI/GLUTINOUS/INDICA/OTHER 등)는 RICE
+function deriveVarietyCategory(type: string): 'RICE' | 'MISC_GRAIN' {
+    return type === 'MISC_GRAIN' ? 'MISC_GRAIN' : 'RICE'
 }
 
 export async function getVarieties() {
@@ -37,7 +42,7 @@ export async function createVariety(data: VarietyFormData) {
         }
 
         const variety = await prisma.variety.create({
-            data: { name, type: data.type }
+            data: { name, type: data.type, category: deriveVarietyCategory(data.type) }
         })
 
         await recordAuditLog({
@@ -71,7 +76,7 @@ export async function updateVariety(id: number, data: VarietyFormData) {
 
         const variety = await prisma.variety.update({
             where: { id },
-            data: { name, type: data.type }
+            data: { name, type: data.type, category: deriveVarietyCategory(data.type) }
         })
 
         await recordAuditLog({

@@ -133,7 +133,8 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
             if (!grouped[key]) {
                 const label = variety.type === 'URUCHI' ? '메벼' :
                     variety.type === 'GLUTINOUS' ? '찰벼' :
-                        variety.type === 'INDICA' ? '인디카' : '기타'
+                        variety.type === 'INDICA' ? '인디카' :
+                            variety.type === 'MISC_GRAIN' ? '잡곡' : '기타'
                 grouped[key] = {
                     key,
                     type: variety.type,
@@ -151,8 +152,8 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
             group.items.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
         })
 
-        // Sort groups by type
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'OTHER': 4 }
+        // Sort groups by type — 잡곡은 기타 앞
+        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5 }
 
         return Object.values(grouped).sort((a, b) => {
             return (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
@@ -203,9 +204,9 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
     onSelectOne: (id: number, checked: boolean) => void,
     canManage: boolean
 }) {
-    // Sort varieties by type then name
+    // Sort varieties by type then name — 잡곡은 기타 앞
     const sortedVarieties = useMemo(() => {
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'OTHER': 4 }
+        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5 }
         return [...varieties].sort((a, b) => {
             const typeDiff = (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
             if (typeDiff !== 0) return typeDiff
@@ -228,7 +229,11 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
                     <TableCell className="text-center font-medium text-slate-600 text-xs">{index + 1}</TableCell>
                     <TableCell className="font-medium text-slate-800 text-sm">{variety.name}</TableCell>
                     <TableCell className="text-slate-500 text-xs">
-                        {variety.type === 'URUCHI' ? '메벼' : variety.type === 'GLUTINOUS' ? '찰벼' : variety.type === 'INDICA' ? '인디카' : '기타'}
+                        {variety.type === 'URUCHI' ? '메벼'
+                            : variety.type === 'GLUTINOUS' ? '찰벼'
+                                : variety.type === 'INDICA' ? '인디카'
+                                    : variety.type === 'MISC_GRAIN' ? '잡곡'
+                                        : '기타'}
                     </TableCell>
                     {canManage && (
                         <TableCell className="text-center">
