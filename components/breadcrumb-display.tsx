@@ -92,6 +92,12 @@ const TAB_LABEL_MAP: Record<string, string> = {
     release: '출고',
 }
 
+// path별 기본 탭 — URL에 ?tab= 쿼리가 없을 때 추론할 값.
+// 예) /raw-stocks 직접 진입 시 자동으로 '벼'를 서브컨텍스트로 표시.
+const PATH_DEFAULT_TAB: Record<string, string> = {
+    '/raw-stocks': 'rice',
+}
+
 function resolveConfig(pathname: string): BreadcrumbConfig | null {
     if (PAGE_CONFIG[pathname]) return PAGE_CONFIG[pathname]
     const match = Object.keys(PAGE_CONFIG)
@@ -115,7 +121,7 @@ export function BreadcrumbDisplay() {
     }
 
     const Icon = config.icon
-    const tab = searchParams.get('tab')
+    const tab = searchParams.get('tab') || PATH_DEFAULT_TAB[pathname] || null
     const subContext = tab ? TAB_LABEL_MAP[tab] : null
 
     return (
