@@ -97,6 +97,13 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
     const vendorListId = isGermination ? 'sprouting-vendors' : 'milling-vendors'
     const vendorPlaceholder = isGermination ? '예: 발아랩' : '예: 한국미곡'
 
+    // 입고중량 의미 안내 (sourceType별 분기)
+    const weightHint = isConsignment
+        ? '위탁업체에서 도정 후 생산된 중량'
+        : isGermination
+            ? '발아업체에서 발아 후 입고된 발아현미 중량'
+            : '농가에서 도정 후 납품된 중량'
+
     // 수율 미리보기 — 도정위탁만 (발아위탁은 수율 관리 안함)
     const yieldPreview = useMemo(() => {
         if (!isConsignment) return null
@@ -350,7 +357,7 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                     <div className="space-y-2">
                         <Label htmlFor="weightKg" className="text-[13px]">
                             입고중량(kg)
-                            <span className="ml-2 text-[11px] font-normal text-slate-400">일련번호는 자동 부여됩니다</span>
+                            <span className="ml-2 text-[11px] font-normal text-slate-400">{weightHint}</span>
                         </Label>
                         <Input
                             id="weightKg"
