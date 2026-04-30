@@ -44,16 +44,22 @@ interface Variety {
 interface Props {
     farmers: Farmer[]
     varieties: Variety[]
-    vendors: string[]
+    millingVendors: string[]
+    sproutingVendors: string[]
 }
 
-type SourceType = 'CONSIGNMENT' | 'FARMER_MILLED'
+type SourceType = 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION'
 
-export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
+const SOURCE_OPTIONS: { value: SourceType; label: string }[] = [
+    { value: 'CONSIGNMENT', label: '도정위탁' },
+    { value: 'FARMER_MILLED', label: '농가도정' },
+    { value: 'GERMINATION', label: '발아위탁' },
+]
+
+export function AddMiscStockDialog({ farmers, varieties, millingVendors, sproutingVendors }: Props) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
-    // 11월 이후면 올해, 그 외 작년 (벼 패턴 동일)
     const today = new Date()
     const defaultYear = today.getMonth() + 1 >= 11 ? today.getFullYear() : today.getFullYear() - 1
 
@@ -64,30 +70,38 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
     const [sourceType, setSourceType] = useState<SourceType>('CONSIGNMENT')
     const [rawWeightStr, setRawWeightStr] = useState<string>('')
     const [weightStr, setWeightStr] = useState<string>('')
-    const [millingVendor, setMillingVendor] = useState<string>('')
+    const [vendor, setVendor] = useState<string>('')
 
-    // 인증유형 + 생산년도로 농가 필터 (벼 다이얼로그 동일 규칙)
     const filteredFarmers = useMemo(() => {
         return farmers.filter(f => {
             if (f.group) {
                 if (f.group.cropYear !== productionYear) return false
                 return f.group.certType === certType
             }
-            // group 없는 농가는 '일반'으로 분류
             return certType === '일반'
         })
     }, [farmers, productionYear, certType])
 
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
 
-    // 수율 미리보기 (위탁만)
+    // sourceType별 라벨/자동완성 후보
+    const isConsignment = sourceType === 'CONSIGNMENT'
+    const isGermination = sourceType === 'GERMINATION'
+    const isFarmer = sourceType === 'FARMER_MILLED'
+
+    const rawLabel = isGermination ? '현미중량(kg)' : '원물중량(kg)'
+    const vendorLabel = isGermination ? '발아업체' : '도정업체'
+    const vendorListId = isGermination ? 'sprouting-vendors' : 'milling-vendors'
+    const vendorPlaceholder = isGermination ? '예: 발아랩' : '예: 한국미곡'
+
+    // 수율 미리보기 — 도정위탁만 (발아위탁은 수율 관리 안함)
     const yieldPreview = useMemo(() => {
-        if (sourceType !== 'CONSIGNMENT') return null
+        if (!isConsignment) return null
         const raw = parseFloat(rawWeightStr)
         const w = parseFloat(weightStr)
         if (!raw || !w || raw <= 0) return null
         return ((w / raw) * 100).toFixed(1)
-    }, [sourceType, rawWeightStr, weightStr])
+    }, [isConsignment, rawWeightStr, weightStr])
 
     function resetForm() {
         setSelectedFarmerId('')
@@ -95,7 +109,7 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
         setSourceType('CONSIGNMENT')
         setRawWeightStr('')
         setWeightStr('')
-        setMillingVendor('')
+        setVendor('')
         setProductionYear(defaultYear)
         setCertType('유기농')
     }
@@ -124,19 +138,19 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
         }
 
         let payload: MiscStockFormData
-        if (sourceType === 'CONSIGNMENT') {
+        if (isConsignment || isGermination) {
             const rawWeightKg = parseFloat(formData.get('rawWeightKg') as string)
-            const vendor = (formData.get('millingVendor') as string)?.trim() || ''
+            const vendorVal = (formData.get('vendor') as string)?.trim() || ''
             if (!Number.isFinite(rawWeightKg) || rawWeightKg <= 0) {
-                toast.warning('원물중량을 정확히 입력해주세요.')
+                toast.warning(`${rawLabel.replace('(kg)', '')}을 정확히 입력해주세요.`)
                 return
             }
-            if (!vendor) {
-                toast.warning('위탁 도정업체명을 입력해주세요.')
+            if (!vendorVal) {
+                toast.warning(`${vendorLabel}을 입력해주세요.`)
                 return
             }
             payload = {
-                sourceType: 'CONSIGNMENT',
+                sourceType,
                 productionYear,
                 bagNo,
                 weightKg,
@@ -145,7 +159,7 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
                 varietyId: parseInt(varietyId),
                 actualFarmer,
                 rawWeightKg,
-                millingVendor: vendor,
+                millingVendor: vendorVal,
             }
         } else {
             payload = {
@@ -197,30 +211,29 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
                     <DialogTitle>잡곡 입고 등록</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
-                    {/* 0. 입고 유형 토글 */}
-                    <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
-                        <button
-                            type="button"
-                            onClick={() => setSourceType('CONSIGNMENT')}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                sourceType === 'CONSIGNMENT'
-                                    ? 'bg-white text-slate-900 shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            위탁도정
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setSourceType('FARMER_MILLED')}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                sourceType === 'FARMER_MILLED'
-                                    ? 'bg-white text-slate-900 shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            농가도정
-                        </button>
+                    {/* 0. 입고 유형 라디오 */}
+                    <div className="space-y-2">
+                        <Label className="text-[13px]">입고 유형</Label>
+                        <div className="flex flex-wrap gap-3">
+                            {SOURCE_OPTIONS.map(opt => (
+                                <label
+                                    key={opt.value}
+                                    className={`inline-flex items-center gap-1.5 cursor-pointer text-sm select-none ${
+                                        sourceType === opt.value ? 'text-slate-900 font-medium' : 'text-slate-600'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="sourceType"
+                                        value={opt.value}
+                                        checked={sourceType === opt.value}
+                                        onChange={() => setSourceType(opt.value)}
+                                        className="h-4 w-4 text-[#00a2e8] focus:ring-[#00a2e8]"
+                                    />
+                                    {opt.label}
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     {/* 1. Context: Year & Cert */}
@@ -351,40 +364,45 @@ export function AddMiscStockDialog({ farmers, varieties, vendors }: Props) {
                         </div>
                     </div>
 
-                    {/* 5. 위탁 전용 — 원물중량 + 도정업체 */}
-                    {sourceType === 'CONSIGNMENT' && (
+                    {/* 5. 위탁/발아 전용 — 원료중량 + 위탁업체 */}
+                    {(isConsignment || isGermination) && (
                         <div className="grid grid-cols-2 gap-4 rounded-md border border-slate-200 bg-slate-50/60 p-3">
                             <div className="space-y-2">
-                                <Label htmlFor="rawWeightKg" className="text-[13px]">원물중량(kg)</Label>
+                                <Label htmlFor="rawWeightKg" className="text-[13px]">{rawLabel}</Label>
                                 <Input
                                     id="rawWeightKg"
                                     name="rawWeightKg"
                                     type="number"
                                     step="0.1"
-                                    placeholder="800"
+                                    placeholder={isGermination ? '500' : '800'}
                                     required
                                     className="text-[13px]"
                                     value={rawWeightStr}
                                     onChange={(e) => setRawWeightStr(e.target.value)}
                                 />
-                                {yieldPreview && (
+                                {isConsignment && yieldPreview && (
                                     <p className="text-[11px] text-slate-500">수율 {yieldPreview}%</p>
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="millingVendor" className="text-[13px]">위탁 도정업체</Label>
+                                <Label htmlFor="vendor" className="text-[13px]">{vendorLabel}</Label>
                                 <Input
-                                    id="millingVendor"
-                                    name="millingVendor"
-                                    list="milling-vendors"
-                                    placeholder="예: 한국미곡"
+                                    id="vendor"
+                                    name="vendor"
+                                    list={vendorListId}
+                                    placeholder={vendorPlaceholder}
                                     required
-                                    value={millingVendor}
-                                    onChange={(e) => setMillingVendor(e.target.value)}
+                                    value={vendor}
+                                    onChange={(e) => setVendor(e.target.value)}
                                     className="text-[13px]"
                                 />
                                 <datalist id="milling-vendors">
-                                    {vendors.map(v => (
+                                    {millingVendors.map(v => (
+                                        <option key={v} value={v} />
+                                    ))}
+                                </datalist>
+                                <datalist id="sprouting-vendors">
+                                    {sproutingVendors.map(v => (
                                         <option key={v} value={v} />
                                     ))}
                                 </datalist>

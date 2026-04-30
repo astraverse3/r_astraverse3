@@ -2,6 +2,30 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5c 후속 — 발아위탁 sourceType 추가 + UI 라디오 전환 `feat`
+
+**배경**: 사용자 도메인 검토 결과 입고 유형이 2가지가 아닌 3가지(도정위탁/농가도정/발아위탁). 발아위탁은 도정한 현미를 발아전문업체에 위탁해 발아현미로 입고하는 흐름. 컬럼 정책은 A안(`rawWeightKg`/`millingVendor`를 sourceType별로 일반화 — 도정위탁=원물중량/도정업체, 발아위탁=현미중량/발아업체).
+
+**변경**:
+- `prisma/schema.prisma` SourceType enum에 `GERMINATION` 추가 (`CONSIGNMENT`는 한글 라벨만 "도정위탁"으로 변경, 영문 enum 유지 — 기존 데이터 영향 없음)
+- 마이그레이션 `20260430120000_add_germination_source_type` 생성·적용 (`ALTER TYPE ... ADD VALUE 'GERMINATION'`)
+- `app/actions/misc-stock.ts`:
+  - zod discriminated union에 `germinationSchema` 추가 (`rawWeightKg` 양수, `millingVendor` 1자 이상)
+  - `createMiscStock`: `hasVendorAndRaw = CONSIGNMENT || GERMINATION`로 통합 분기, audit description은 sourceType별 라벨
+  - `getSproutingVendors()` 신규 — sourceType=GERMINATION distinct
+- `add-misc-stock-dialog.tsx`:
+  - 토글 → 라디오 3개 (도정위탁 / 농가도정 / 발아위탁)
+  - 라벨/필드 sourceType별 분기:
+    - 도정위탁: 원물중량(kg) + 도정업체 (datalist=`milling-vendors`)
+    - 농가도정: 두 필드 숨김
+    - 발아위탁: 현미중량(kg) + 발아업체 (datalist=`sprouting-vendors`)
+  - 수율 미리보기는 **도정위탁만** 노출 (발아위탁은 수율 관리 안 함 — 사용자 결정)
+  - vendors prop을 `millingVendors`/`sproutingVendors` 두 개로 분리
+- `misc-stock-panel.tsx` / `page.tsx`: prop 4개로 확장, `getSproutingVendors` prefetch를 Promise.all에 추가
+- `docs/plan-잡곡재고관리.md`: 한글 라벨 "위탁도정" → "도정위탁" 일괄, enum 라인 갱신
+
+**검증**: `npx tsc --noEmit` 통과. dev 서버 재시작 후 라디오·라벨·수율·자동완성 분리 검수 필요.
+
 ### 잡곡 재고관리 #5c — 잡곡 입고 등록 다이얼로그 `feat`
 
 **배경**: #5b placeholder 위에 잡곡 입고 등록 기능을 결합. 본 단계는 등록만 — 목록/필터는 #5d, 수정/삭제는 #5e.

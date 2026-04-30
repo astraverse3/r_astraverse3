@@ -25,14 +25,15 @@ interface Variety {
 interface Props {
     farmers: Farmer[]
     varieties: Variety[]
-    vendors: string[]
+    millingVendors: string[]
+    sproutingVendors: string[]
 }
 
 /**
  * 잡곡 탭 패널 (#5c 단계 — 헤더 액션 + 다이얼로그만, 본문은 placeholder)
  * #5d에서 본문을 목록 컴포넌트로 교체할 때 이 파일을 확장한다.
  */
-export function MiscStockPanel({ farmers, varieties, vendors }: Props) {
+export function MiscStockPanel({ farmers, varieties, millingVendors, sproutingVendors }: Props) {
     const { data: session } = useSession()
     // @ts-ignore
     const canStock = hasPermission(session?.user, 'STOCK_MANAGE')
@@ -43,7 +44,12 @@ export function MiscStockPanel({ farmers, varieties, vendors }: Props) {
             <section className="flex flex-col gap-2 px-1">
                 <div className="flex items-center justify-end gap-2">
                     {canStock && (
-                        <AddMiscStockDialog farmers={farmers} varieties={varieties} vendors={vendors} />
+                        <AddMiscStockDialog
+                            farmers={farmers}
+                            varieties={varieties}
+                            millingVendors={millingVendors}
+                            sproutingVendors={sproutingVendors}
+                        />
                     )}
                 </div>
             </section>

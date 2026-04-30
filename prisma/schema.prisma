@@ -171,8 +171,9 @@ enum StockCategory {
 }
 
 enum SourceType {
-  CONSIGNMENT // 위탁도정 — 원물을 외부 도정업체에 위탁해 입고
+  CONSIGNMENT // 도정위탁 — 원물을 외부 도정업체에 위탁해 입고
   FARMER_MILLED // 농가도정 — 농가가 직접 도정해 완제품 납품
+  GERMINATION // 발아위탁 — 도정한 현미를 발아전문업체에 위탁해 발아현미로 입고
 }
 
 enum ProductSource {

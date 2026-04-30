@@ -30,20 +30,28 @@ const baseSchema = z.object({
 })
 
 const consignmentSchema = baseSchema.extend({
-    sourceType: z.literal('CONSIGNMENT'),
+    sourceType: z.literal('CONSIGNMENT'), // 도정위탁
     rawWeightKg: z.number().positive(),
     millingVendor: z.string().min(1).max(100),
 })
 
 const farmerMilledSchema = baseSchema.extend({
-    sourceType: z.literal('FARMER_MILLED'),
+    sourceType: z.literal('FARMER_MILLED'), // 농가도정
     rawWeightKg: z.null().optional(),
     millingVendor: z.null().optional(),
 })
 
-export const MiscStockFormSchema = z.discriminatedUnion('sourceType', [
+const germinationSchema = baseSchema.extend({
+    sourceType: z.literal('GERMINATION'), // 발아위탁 — rawWeightKg=현미중량, millingVendor=발아업체
+    rawWeightKg: z.number().positive(),
+    millingVendor: z.string().min(1).max(100),
+})
+
+// 'use server' 파일은 async 함수만 export 가능 — 스키마 자체는 모듈 내부에서만 사용
+const MiscStockFormSchema = z.discriminatedUnion('sourceType', [
     consignmentSchema,
     farmerMilledSchema,
+    germinationSchema,
 ])
 
 export type MiscStockFormData = z.infer<typeof MiscStockFormSchema>
@@ -114,12 +122,16 @@ export async function createMiscStock(input: MiscStockFormData) {
 
         const lotNo = await deriveLotNo(data.incomingDate, data.farmerId, data.varietyId)
 
+        // 위탁(CONSIGNMENT)·발아(GERMINATION) 모두 rawWeightKg/millingVendor 저장.
+        // 의미는 sourceType별로 다름: 위탁은 원물중량/도정업체, 발아는 현미중량/발아업체.
+        const hasVendorAndRaw = data.sourceType === 'CONSIGNMENT' || data.sourceType === 'GERMINATION'
+
         const stock = await prisma.stock.create({
             data: {
                 category: 'MISC_GRAIN',
                 sourceType: data.sourceType,
-                rawWeightKg: data.sourceType === 'CONSIGNMENT' ? data.rawWeightKg : null,
-                millingVendor: data.sourceType === 'CONSIGNMENT' ? data.millingVendor.trim() : null,
+                rawWeightKg: hasVendorAndRaw ? data.rawWeightKg : null,
+                millingVendor: hasVendorAndRaw ? data.millingVendor.trim() : null,
                 productionYear: data.productionYear,
                 bagNo: data.bagNo,
                 weightKg: data.weightKg,
@@ -132,12 +144,17 @@ export async function createMiscStock(input: MiscStockFormData) {
             },
         })
 
+        const sourceLabel =
+            data.sourceType === 'CONSIGNMENT' ? '도정위탁'
+                : data.sourceType === 'GERMINATION' ? '발아위탁'
+                    : '농가도정'
+
         await recordAuditLog({
             action: 'CREATE',
             entity: 'Stock',
             entityId: stock.id,
             details: data,
-            description: `잡곡 입고(${data.sourceType === 'CONSIGNMENT' ? '위탁도정' : '농가도정'}): ${variety.name} (${data.weightKg}kg)`,
+            description: `잡곡 입고(${sourceLabel}): ${variety.name} (${data.weightKg}kg)`,
         })
 
         revalidatePath('/raw-stocks')
@@ -398,7 +415,7 @@ export async function getMiscStocksByGroup(
 }
 
 // -----------------------------
-// 헬퍼 쿼리: 위탁 도정업체 자동완성용
+// 헬퍼 쿼리: 도정업체 자동완성 (sourceType=CONSIGNMENT)
 // -----------------------------
 export async function getMillingVendors() {
     await requireSession()
@@ -420,6 +437,32 @@ export async function getMillingVendors() {
     } catch (error) {
         console.error('Failed to get milling vendors:', error)
         return { success: false, error: '도정업체 목록 조회에 실패했습니다.' }
+    }
+}
+
+// -----------------------------
+// 헬퍼 쿼리: 발아업체 자동완성 (sourceType=GERMINATION)
+// -----------------------------
+export async function getSproutingVendors() {
+    await requireSession()
+    try {
+        const rows = await prisma.stock.findMany({
+            where: {
+                category: 'MISC_GRAIN',
+                sourceType: 'GERMINATION',
+                millingVendor: { not: null },
+            },
+            distinct: ['millingVendor'],
+            select: { millingVendor: true },
+            orderBy: { millingVendor: 'asc' },
+        })
+        const vendors = rows
+            .map(r => r.millingVendor)
+            .filter((v): v is string => !!v)
+        return { success: true, data: vendors }
+    } catch (error) {
+        console.error('Failed to get sprouting vendors:', error)
+        return { success: false, error: '발아업체 목록 조회에 실패했습니다.' }
     }
 }
 

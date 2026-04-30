@@ -1,6 +1,6 @@
 import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
 import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
-import { getMiscVarieties, getMiscFarmers, getMillingVendors } from '@/app/actions/misc-stock'
+import { getMiscVarieties, getMiscFarmers, getMillingVendors, getSproutingVendors } from '@/app/actions/misc-stock'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockFilters } from './stock-filters'
 import { StockExcelButtons } from './stock-excel-buttons'
@@ -105,15 +105,24 @@ async function RiceStockPanel({
 }
 
 async function MiscStockPanelLoader() {
-    const [farmersRes, varietiesRes, vendorsRes] = await Promise.all([
+    const [farmersRes, varietiesRes, millingVendorsRes, sproutingVendorsRes] = await Promise.all([
         getMiscFarmers(),
         getMiscVarieties(),
         getMillingVendors(),
+        getSproutingVendors(),
     ])
 
     const farmers = (farmersRes.success && farmersRes.data ? farmersRes.data : []) as any[]
     const varieties = (varietiesRes.success && varietiesRes.data ? varietiesRes.data : []) as { id: number; name: string }[]
-    const vendors = (vendorsRes.success && vendorsRes.data ? vendorsRes.data : []) as string[]
+    const millingVendors = (millingVendorsRes.success && millingVendorsRes.data ? millingVendorsRes.data : []) as string[]
+    const sproutingVendors = (sproutingVendorsRes.success && sproutingVendorsRes.data ? sproutingVendorsRes.data : []) as string[]
 
-    return <MiscStockPanel farmers={farmers} varieties={varieties} vendors={vendors} />
+    return (
+        <MiscStockPanel
+            farmers={farmers}
+            varieties={varieties}
+            millingVendors={millingVendors}
+            sproutingVendors={sproutingVendors}
+        />
+    )
 }
