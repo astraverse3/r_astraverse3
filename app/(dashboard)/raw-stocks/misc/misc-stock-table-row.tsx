@@ -20,7 +20,7 @@ interface MiscStock {
 }
 
 const SOURCE_BADGE: Record<string, { label: string; className: string }> = {
-    CONSIGNMENT: { label: '도정위탁', className: 'border-[#00a2e8]/40 text-[#008cc9] bg-[#00a2e8]/10' },
+    CONSIGNMENT: { label: '도정위탁', className: 'border-primary/30 text-primary bg-primary/10' },
     FARMER_MILLED: { label: '농가도정', className: 'border-emerald-200 text-emerald-700 bg-emerald-50' },
     GERMINATION: { label: '발아위탁', className: 'border-violet-200 text-violet-700 bg-violet-50' },
 }
@@ -75,7 +75,7 @@ export function MiscStockTableRow({ stock }: Props) {
             <TableCell className="text-right text-xs text-slate-500">
                 {showRaw ? stock.rawWeightKg?.toLocaleString() : '-'}
             </TableCell>
-            <TableCell className="text-right text-xs font-medium text-[#008cc9]">
+            <TableCell className="text-right text-xs font-medium text-primary">
                 {stock.weightKg.toLocaleString()}
             </TableCell>
             <TableCell className="text-right text-xs text-slate-500">
@@ -84,7 +84,7 @@ export function MiscStockTableRow({ stock }: Props) {
             <TableCell className="text-center text-xs">
                 <Badge
                     variant={isAvailable ? 'outline' : 'secondary'}
-                    className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-[#00a2e8]/40 text-[#008cc9] bg-[#00a2e8]/10' : ''}`}
+                    className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
                 >
                     {isAvailable ? '보관중' : stock.status === 'CONSUMED' ? '소진됨' : stock.status}
                 </Badge>
@@ -119,7 +119,7 @@ export function MiscStockMobileCard({ stock }: MobileCardProps) {
                 </div>
                 <Badge
                     variant={isAvailable ? 'outline' : 'secondary'}
-                    className={`text-[10px] h-5 px-1.5 rounded-sm shrink-0 ${isAvailable ? 'border-[#00a2e8]/40 text-[#008cc9] bg-[#00a2e8]/10' : ''}`}
+                    className={`text-[10px] h-5 px-1.5 rounded-sm shrink-0 ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
                 >
                     {isAvailable ? '보관중' : stock.status === 'CONSUMED' ? '소진됨' : stock.status}
                 </Badge>

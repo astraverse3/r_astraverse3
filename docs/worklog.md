@@ -2,6 +2,35 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5 디자인 정리 — 핸드오프 번들 스펙 정렬 `style`
+
+**배경**: #5b~#5d 작업 시 핸드오프 번들 스펙(F안 탭, §3.4 헤더 액션, §4.2 그룹 펼침)을 누락. globals.css 토큰은 이미 핸드오프 기준(#2563eb)이라 잡곡 코드만 토큰 사용으로 정렬하면 자동 적용됨. B안(통합 정리) 채택.
+
+**변경**:
+- `raw-stocks-tabs.tsx` 전면 재작성 — segmented control → **F안** (text-slate-400 ↔ text-slate-900, 폰트 크기 +1px, 활성 시 아래 2.5px 슬라이드 바)
+- `add-misc-stock-dialog.tsx`:
+  - 트리거 버튼 `bg-[#8dc540]` → 기본 default Button (auto primary)
+  - 라디오 input 색상 `text-[#00a2e8]` → `text-primary focus:ring-ring`
+  - 저장 버튼 임의 hex → 기본 default Button
+- `misc-stock-filters.tsx`:
+  - 검색 트리거 §3.4 패턴 적용 (`bg-blue-50 border-blue-200 text-primary` + 카운트 배지 white/blue-200/text-primary)
+  - 로딩 spinner / 적용 버튼 임의 hex → primary 토큰
+- `misc-stock-list-client.tsx`:
+  - 데스크톱 그룹 헤더 amber → §4.2 `bg-slate-50 hover:bg-slate-100`
+  - 모바일 그룹 카드 amber → slate
+  - 펼침 카드 left border `border-l-4 border-amber-200` → `border-l-2 border-primary/40`
+  - 합계kg 색상 `text-[#008cc9]` → `text-primary`
+- `misc-stock-table-row.tsx`:
+  - 도정위탁 sourceType 뱃지 색상 → `border-primary/30 text-primary bg-primary/10`
+  - 입고중량/상태 뱃지 임의 hex → primary 토큰
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- `app/(dashboard)/raw-stocks/misc/`에 임의 hex 잔존 0건 (grep 확인)
+- 의미 색(농가도정=emerald, 발아위탁=violet, 안내 박스=amber)은 의도적으로 유지
+
+**남은 #5 작업**: #5e 수정/삭제
+
 ### 잡곡 재고관리 #5d — 잡곡 원물재고 목록·필터·그룹 `feat`
 
 **배경**: #5b placeholder body를 본격 목록으로 교체. 벼 패턴 차용하되 잡곡 도메인에 맞게 단순화 (체크박스 선택·도정·장바구니·출고 모두 제거).

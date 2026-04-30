@@ -197,7 +197,7 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
             }}
         >
             <DialogTrigger asChild>
-                <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white px-2 sm:px-3">
+                <Button size="sm" className="h-8 px-3 font-semibold">
                     <Plus className="sm:mr-1 h-4 w-4" />
                     <span className="hidden sm:inline">잡곡 입고</span>
                 </Button>
@@ -228,7 +228,7 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                                         value={opt.value}
                                         checked={sourceType === opt.value}
                                         onChange={() => setSourceType(opt.value)}
-                                        className="h-4 w-4 text-[#00a2e8] focus:ring-[#00a2e8]"
+                                        className="h-4 w-4 text-primary focus:ring-ring"
                                     />
                                     {opt.label}
                                 </label>
@@ -411,11 +411,7 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                     )}
 
                     <div className="flex justify-end pt-2">
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            className="bg-[#00a2e8] hover:bg-[#008cc9] text-white text-[13px]"
-                        >
+                        <Button type="submit" disabled={isLoading} className="text-[13px]">
                             {isLoading ? '저장 중...' : '저장'}
                         </Button>
                     </div>

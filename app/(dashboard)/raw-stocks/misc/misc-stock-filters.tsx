@@ -130,20 +130,28 @@ export function MiscStockFilters({ varieties }: Props) {
             {isPending && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/50 backdrop-blur-sm">
                     <div className="flex flex-col items-center gap-3 bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
-                        <Loader2 className="w-10 h-10 text-[#00a2e8] animate-spin" />
+                        <Loader2 className="w-10 h-10 text-primary animate-spin" />
                         <p className="text-slate-600 font-medium">데이터를 불러오는 중입니다...</p>
                     </div>
                 </div>
             )}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className={`h-8 gap-1.5 px-2 sm:px-3 ${activeFilterCount > 0 ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30' : 'text-slate-600'}`}>
-                        <SlidersHorizontal className="h-4 w-4" />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className={
+                            activeFilterCount > 0
+                                ? 'h-8 pl-3 pr-2 gap-1.5 bg-blue-50 border-blue-200 text-primary font-semibold hover:bg-blue-100 hover:text-primary'
+                                : 'h-8 gap-1.5 px-2 sm:px-3 text-slate-600'
+                        }
+                    >
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">검색</span>
                         {activeFilterCount > 0 && (
-                            <Badge variant="secondary" className="h-5 px-1.5 bg-[#00a2e8]/20 text-[#008cc9] ml-0.5 rounded-full text-[10px]">
+                            <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-white border border-blue-200 text-[10px] font-bold text-primary">
                                 {activeFilterCount}
-                            </Badge>
+                            </span>
                         )}
                     </Button>
                 </DialogTrigger>
@@ -225,7 +233,7 @@ export function MiscStockFilters({ varieties }: Props) {
                         <Button variant="ghost" size="sm" onClick={handleReset} disabled={isPending} className="text-slate-500 hover:text-slate-700 px-2">
                             초기화
                         </Button>
-                        <Button size="sm" onClick={handleApply} disabled={isPending} className="bg-[#00a2e8] hover:bg-[#008cc9] px-6">
+                        <Button size="sm" onClick={handleApply} disabled={isPending} className="px-6">
                             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : '적용하기'}
                         </Button>
                     </DialogFooter>

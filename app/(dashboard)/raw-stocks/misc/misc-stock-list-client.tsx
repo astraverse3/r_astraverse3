@@ -95,9 +95,9 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
 
                                 return (
                                     <Fragment key={group.key}>
-                                        {/* Summary Row */}
+                                        {/* Summary Row — handoff §4.2 */}
                                         <TableRow
-                                            className="bg-amber-50/40 hover:bg-amber-50/80 cursor-pointer border-y border-amber-200/40 font-bold text-slate-800 shadow-sm h-12"
+                                            className="bg-slate-50 hover:bg-slate-100 cursor-pointer border-y border-slate-200 font-bold text-slate-800 h-12"
                                             onClick={() => toggleGroup(group)}
                                         >
                                             <TableCell className="text-center">
@@ -123,7 +123,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                             <TableCell></TableCell>
                                             <TableCell className="text-right text-sm">{group.count}개</TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right text-sm text-[#008cc9]">
+                                            <TableCell className="text-right text-sm text-primary">
                                                 {group.totalWeight.toLocaleString()}
                                             </TableCell>
                                             <TableCell></TableCell>
@@ -169,7 +169,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                         return (
                             <div key={group.key} className="flex flex-col gap-2">
                                 <div
-                                    className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-amber-300 bg-amber-50/80 shadow-md' : 'border-amber-200/60 bg-amber-50/40 shadow-sm'} transition-colors`}
+                                    className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-slate-300 bg-slate-100 shadow-md' : 'border-slate-200 bg-slate-50 shadow-sm'} transition-colors`}
                                     onClick={() => toggleGroup(group)}
                                 >
                                     <div className="flex items-center justify-between mb-1.5 gap-2">
@@ -199,7 +199,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                             <div className="text-[11px] text-slate-500 whitespace-nowrap">
                                                 {group.count}건
                                             </div>
-                                            <div className="text-[17px] font-black text-[#008cc9] tracking-tight leading-none whitespace-nowrap">
+                                            <div className="text-[17px] font-black text-primary tracking-tight leading-none whitespace-nowrap">
                                                 {group.totalWeight.toLocaleString()}<span className="text-[11px] font-bold ml-0.5 opacity-70">kg</span>
                                             </div>
                                         </div>
@@ -207,7 +207,7 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                 </div>
 
                                 {isExpanded && (
-                                    <div className="flex flex-col gap-1.5 pl-3 border-l-4 border-amber-200 ml-4 mr-1 mb-2 relative">
+                                    <div className="flex flex-col gap-1.5 pl-3 border-l-2 border-primary/40 ml-4 mr-1 mb-2 relative">
                                         {isLoading && items.length === 0 && (
                                             <div className="flex flex-col items-center justify-center py-6 text-slate-400 bg-white rounded-lg border border-slate-100 shadow-sm">
                                                 <Loader2 className="h-5 w-5 animate-spin mb-2" />
