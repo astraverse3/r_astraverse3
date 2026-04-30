@@ -20,9 +20,13 @@
 - `app/actions/admin.ts` `GetFarmersParams.producesMiscGrain?: boolean` + where 조건
 - `page.tsx`에서 `searchParams.producesMiscGrain === '1'` 파싱
 
+**변경 (3차 — 엑셀 import/export)**:
+- `exportFarmers`: 행 매핑에 `'잡곡생산'` 컬럼 추가 (`'Y'` 또는 빈 문자열). 위치는 `생산자명` 다음, `취급품목` 앞
+- `importFarmers`: `'잡곡생산' / '잡곡 생산' / '잡곡'` 헤더 허용, `Y/O/TRUE/1/예/체크` truthy 매칭. 빈/없음은 `false`. create/update 모두 반영
+
 **검증**:
 - `npx tsc --noEmit` 통과 (에러 0)
-- 브라우저 1차 검수 완료(PC), 2차 통합본은 커밋 후 검수 예정
+- 브라우저 1차 검수 완료(PC), 2~3차 통합본은 커밋 후 검수 예정
 
 **계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5-pre
 **보고서**: [docs/report-잡곡재고관리-#5-pre-2026-04-30.md](report-잡곡재고관리-#5-pre-2026-04-30.md)

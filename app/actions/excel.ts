@@ -45,6 +45,7 @@ export async function exportFarmers() {
             '인증번호': farmer.group?.certNo || '',
             '생산자번호': farmer.farmerNo || '',
             '생산자명': farmer.name,
+            '잡곡생산': farmer.producesMiscGrain ? 'Y' : '',
             '취급품목': farmer.items || ''
         }))
 
@@ -129,6 +130,11 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
                 const farmerName = row['생산자명'] ? String(row['생산자명']) : (row['농가명'] ? String(row['농가명']) : undefined)
                 const items = row['취급품목'] ? String(row['취급품목']) : undefined
 
+                // 잡곡생산 여부: '잡곡생산' / '잡곡 생산' / '잡곡' 헤더 허용. 'Y'·'O'·'TRUE'·'1'·'예'·'체크' 모두 truthy
+                const miscRaw = row['잡곡생산'] ?? row['잡곡 생산'] ?? row['잡곡']
+                const miscStr = miscRaw !== undefined && miscRaw !== null ? String(miscRaw).trim().toUpperCase() : ''
+                const producesMiscGrain = ['Y', 'O', 'TRUE', '1', '예', '체크'].includes(miscStr)
+
                 // Parse Year from Excel, default to current year if missing
                 let targetYear = row['생산년도'] ? parseInt(String(row['생산년도'])) : currentYear
                 if (isNaN(targetYear)) targetYear = currentYear
@@ -204,7 +210,8 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
                                 groupId: group.id,
                                 farmerNo: farmerNo!,
                                 name: farmerName!,
-                                items: items
+                                items: items,
+                                producesMiscGrain
                             }
                         })
                     } else {
@@ -213,7 +220,8 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
                             where: { id: existingFarmer.id },
                             data: {
                                 name: farmerName,
-                                items: items
+                                items: items,
+                                producesMiscGrain
                             }
                         })
                     }
