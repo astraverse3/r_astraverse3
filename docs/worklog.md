@@ -2,6 +2,29 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5a — 잡곡 Server Actions + zod `feat`
+
+**배경**: #5 본 작업 진입. UI 빌드 전에 잡곡 원물재고 액션을 먼저 구현. UI/페이지는 다음 단계(#5b~)에서 결합.
+
+**변경**:
+- `app/actions/misc-stock.ts` 신규 (단일 파일 ~390줄)
+- 액션 6종:
+  - `createMiscStock(input)` — zod discriminated union(`sourceType`)으로 위탁/농가 분기 검증, 품종 MISC_GRAIN 확인, 중복 체크, 로트 생성, audit log
+  - `getMiscStocks(params)` — 평면 조회 (카테고리/년도/품종/생산자/sourceType/인증/상태 필터 + 정렬)
+  - `getMiscStockGroups(params)` — 그룹 키 `(년도, 품종, 인증유형)` 벼와 동일
+  - `getMiscStocksByGroup(groupKey, params)` — 그룹 펼침
+  - `getMillingVendors()` — 위탁 도정업체 distinct (자동완성용)
+  - `getMiscFarmers()` — `producesMiscGrain=true` 농가만 (잡곡 다이얼로그 전용)
+- 로트번호: 벼 동일 규칙 — 작목반 미소속/일반 인증은 null. millingType은 '백미' 고정 (`getProductCode`가 잡곡 품종명으로 21~215 산출)
+- 위탁(CONSIGNMENT) 시 `rawWeightKg` + `millingVendor` 저장. 농가(FARMER_MILLED)는 두 필드 null
+- 중복 체크 풀: `(category=MISC_GRAIN, productionYear, farmerId, varietyId, bagNo)` — 벼 풀과 분리
+
+**검증**:
+- `npx tsc --noEmit` 통과 (에러 0)
+- 액션 호출 회귀는 #5c 다이얼로그 결합 후 브라우저 검증
+
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5a
+
 ### 잡곡 재고관리 #5-pre — Farmer 모델 확장 + admin 체크박스 `feat`
 
 **배경**: 잡곡 입고 다이얼로그 생산자 풀 결정 — "잡곡 생산자는 대부분 기존 벼 생산자 중 일부"라는 도메인 특성상, 별도 테이블 분리는 비효율, 모든 농가 노출도 비효율. 절충안으로 `Farmer.producesMiscGrain` 플래그 도입.
