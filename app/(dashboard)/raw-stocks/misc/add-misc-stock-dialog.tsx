@@ -56,6 +56,9 @@ const SOURCE_OPTIONS: { value: SourceType; label: string }[] = [
     { value: 'GERMINATION', label: '발아위탁' },
 ]
 
+// 생산년도 후보 (filters와 일관)
+const YEAR_OPTIONS = [2026, 2025, 2024, 2023]
+
 export function AddMiscStockDialog({ farmers, varieties, millingVendors, sproutingVendors }: Props) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -127,7 +130,6 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
         }
 
         const formData = new FormData(event.currentTarget)
-        const bagNo = parseInt(formData.get('bagNo') as string, 10)
         const weightKg = parseFloat(formData.get('weightKg') as string)
         const incomingDate = new Date(formData.get('incomingDate') as string)
         const actualFarmer = (formData.get('actualFarmer') as string) || undefined
@@ -152,7 +154,6 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
             payload = {
                 sourceType,
                 productionYear,
-                bagNo,
                 weightKg,
                 incomingDate,
                 farmerId: parseInt(selectedFarmerId),
@@ -165,7 +166,6 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
             payload = {
                 sourceType: 'FARMER_MILLED',
                 productionYear,
-                bagNo,
                 weightKg,
                 incomingDate,
                 farmerId: parseInt(selectedFarmerId),
@@ -239,16 +239,20 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                     {/* 1. Context: Year & Cert */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="productionYear" className="text-[13px]">생산년도</Label>
-                            <Input
-                                id="productionYear"
-                                name="productionYear"
-                                type="number"
-                                value={productionYear}
-                                onChange={(e) => setProductionYear(parseInt(e.target.value) || defaultYear)}
-                                className="text-[13px]"
-                                required
-                            />
+                            <Label className="text-[13px]">생산년도</Label>
+                            <Select
+                                value={productionYear.toString()}
+                                onValueChange={(v) => setProductionYear(parseInt(v))}
+                            >
+                                <SelectTrigger className="text-[13px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {YEAR_OPTIONS.map(y => (
+                                        <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[13px]">인증 구분</Label>
@@ -342,26 +346,23 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                         </div>
                     </div>
 
-                    {/* 4. 일련번호 + 입고중량 */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="bagNo" className="text-[13px]">일련번호</Label>
-                            <Input id="bagNo" name="bagNo" type="number" placeholder="1" required className="text-[13px]" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="weightKg" className="text-[13px]">입고중량(kg)</Label>
-                            <Input
-                                id="weightKg"
-                                name="weightKg"
-                                type="number"
-                                step="0.1"
-                                placeholder="540"
-                                required
-                                className="text-[13px]"
-                                value={weightStr}
-                                onChange={(e) => setWeightStr(e.target.value)}
-                            />
-                        </div>
+                    {/* 4. 입고중량 (일련번호는 server에서 자동 부여) */}
+                    <div className="space-y-2">
+                        <Label htmlFor="weightKg" className="text-[13px]">
+                            입고중량(kg)
+                            <span className="ml-2 text-[11px] font-normal text-slate-400">일련번호는 자동 부여됩니다</span>
+                        </Label>
+                        <Input
+                            id="weightKg"
+                            name="weightKg"
+                            type="number"
+                            step="0.1"
+                            placeholder="540"
+                            required
+                            className="text-[13px]"
+                            value={weightStr}
+                            onChange={(e) => setWeightStr(e.target.value)}
+                        />
                     </div>
 
                     {/* 5. 위탁/발아 전용 — 원료중량 + 위탁업체 */}

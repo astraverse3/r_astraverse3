@@ -19,9 +19,9 @@ import { generateLotNo } from '@/lib/lot-generation'
 // zod 스키마 — 잡곡 입고 폼
 // -----------------------------
 
+// bagNo는 server에서 자동 할당 (input에 포함하지 않음)
 const baseSchema = z.object({
     productionYear: z.number().int().min(2000).max(2100),
-    bagNo: z.number().int().positive(),
     weightKg: z.number().positive(),
     incomingDate: z.date(),
     farmerId: z.number().int().positive(),
@@ -103,45 +103,44 @@ export async function createMiscStock(input: MiscStockFormData) {
             throw new Error(`잡곡 품종이 아닙니다: ${variety.name}`)
         }
 
-        // 중복 체크 — 잡곡 풀에서 (year + farmer + variety + bagNo)
-        const existing = await prisma.stock.findFirst({
-            where: {
-                category: 'MISC_GRAIN',
-                productionYear: data.productionYear,
-                farmerId: data.farmerId,
-                varietyId: data.varietyId,
-                bagNo: data.bagNo,
-            },
-            include: { farmer: true },
-        })
-        if (existing) {
-            throw new Error(
-                `이미 등록된 일련번호입니다. (생산자: ${existing.farmer.name}, 품종: ${variety.name}, 번호: ${data.bagNo})`,
-            )
-        }
-
         const lotNo = await deriveLotNo(data.incomingDate, data.farmerId, data.varietyId)
 
         // 위탁(CONSIGNMENT)·발아(GERMINATION) 모두 rawWeightKg/millingVendor 저장.
         // 의미는 sourceType별로 다름: 위탁은 원물중량/도정업체, 발아는 현미중량/발아업체.
         const hasVendorAndRaw = data.sourceType === 'CONSIGNMENT' || data.sourceType === 'GERMINATION'
 
-        const stock = await prisma.stock.create({
-            data: {
-                category: 'MISC_GRAIN',
-                sourceType: data.sourceType,
-                rawWeightKg: hasVendorAndRaw ? data.rawWeightKg : null,
-                millingVendor: hasVendorAndRaw ? data.millingVendor.trim() : null,
-                productionYear: data.productionYear,
-                bagNo: data.bagNo,
-                weightKg: data.weightKg,
-                incomingDate: data.incomingDate,
-                farmerId: data.farmerId,
-                varietyId: data.varietyId,
-                actualFarmer: data.actualFarmer?.trim() || null,
-                status: 'AVAILABLE',
-                lotNo,
-            },
+        // 일련번호(bagNo)는 server에서 자동 할당 — (year, farmer, variety, MISC_GRAIN) 조합 max+1.
+        // race-safe: 트랜잭션 안에서 max 조회 + create
+        const stock = await prisma.$transaction(async (tx) => {
+            const lastBag = await tx.stock.findFirst({
+                where: {
+                    category: 'MISC_GRAIN',
+                    productionYear: data.productionYear,
+                    farmerId: data.farmerId,
+                    varietyId: data.varietyId,
+                },
+                orderBy: { bagNo: 'desc' },
+                select: { bagNo: true },
+            })
+            const nextBagNo = (lastBag?.bagNo ?? 0) + 1
+
+            return await tx.stock.create({
+                data: {
+                    category: 'MISC_GRAIN',
+                    sourceType: data.sourceType,
+                    rawWeightKg: hasVendorAndRaw ? data.rawWeightKg : null,
+                    millingVendor: hasVendorAndRaw ? data.millingVendor.trim() : null,
+                    productionYear: data.productionYear,
+                    bagNo: nextBagNo,
+                    weightKg: data.weightKg,
+                    incomingDate: data.incomingDate,
+                    farmerId: data.farmerId,
+                    varietyId: data.varietyId,
+                    actualFarmer: data.actualFarmer?.trim() || null,
+                    status: 'AVAILABLE',
+                    lotNo,
+                },
+            })
         })
 
         const sourceLabel =
