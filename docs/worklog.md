@@ -2,6 +2,27 @@
 
 ## 2026-04-30
 
+### 잡곡 재고관리 #5d — 잡곡 원물재고 목록·필터·그룹 `feat`
+
+**배경**: #5b placeholder body를 본격 목록으로 교체. 벼 패턴 차용하되 잡곡 도메인에 맞게 단순화 (체크박스 선택·도정·장바구니·출고 모두 제거).
+
+**변경**:
+- `misc/misc-stock-filters.tsx` 신규 — 생산연도·품종·생산자명·인증·**입고유형**·상태 멀티 필터. tab=misc 유지하며 `/raw-stocks?tab=misc&...` 라우팅
+- `misc/misc-stock-table-row.tsx` 신규 — 데스크톱 행 + 모바일 카드 export 두 컴포넌트
+  - sourceType 뱃지 색상: 도정위탁=청, 농가도정=초록, 발아위탁=보라
+  - 원료중량(rawWeightKg) 표시: 도정위탁=원물, 발아위탁=현미, 농가도정=숨김
+  - 수율은 도정위탁만 (`weightKg / rawWeightKg`)
+- `misc/misc-stock-list-client.tsx` 신규 — 그룹 lazy load, 펼침 시 `getMiscStocksByGroup` 호출. 데스크톱은 12컬럼 테이블, 모바일은 카드 패턴
+- `misc/active-misc-filters.tsx` 신규 — 활성 필터 칩 + 검색결과 N건 카운터
+- `misc/misc-stock-panel.tsx`: placeholder body 제거, 헤더에 `<MiscStockFilters />` 추가, `<ActiveMiscFilters />` + `<MiscStockListClient />` 결합
+- `page.tsx` `MiscStockPanelLoader`: `GetMiscStocksParams` 추출 + `getMiscStockGroups` 5번째 prefetch 추가
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 브라우저 검수: 필터·그룹 펼침·sourceType 뱃지·원료/수율 표시·모바일 카드. 잡곡 데이터 없으면 빈 상태 메시지 정상
+
+**다음**: #5e 수정·삭제 (행 액션 메뉴, edit 모드 다이얼로그 활성화)
+
 ### 잡곡 재고관리 #5c 후속 — 발아위탁 sourceType 추가 + UI 라디오 전환 `feat`
 
 **배경**: 사용자 도메인 검토 결과 입고 유형이 2가지가 아닌 3가지(도정위탁/농가도정/발아위탁). 발아위탁은 도정한 현미를 발아전문업체에 위탁해 발아현미로 입고하는 흐름. 컬럼 정책은 A안(`rawWeightKg`/`millingVendor`를 sourceType별로 일반화 — 도정위탁=원물중량/도정업체, 발아위탁=현미중량/발아업체).

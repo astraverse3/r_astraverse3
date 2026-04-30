@@ -1,6 +1,13 @@
 import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
 import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
-import { getMiscVarieties, getMiscFarmers, getMillingVendors, getSproutingVendors } from '@/app/actions/misc-stock'
+import {
+    getMiscVarieties,
+    getMiscFarmers,
+    getMillingVendors,
+    getSproutingVendors,
+    getMiscStockGroups,
+    type GetMiscStocksParams,
+} from '@/app/actions/misc-stock'
 import { AddStockDialog } from './add-stock-dialog'
 import { StockFilters } from './stock-filters'
 import { StockExcelButtons } from './stock-excel-buttons'
@@ -49,7 +56,7 @@ export default async function StocksPage({
                     <RawStocksTabs activeTab={tab} />
                 </div>
                 {tab === 'misc' ? (
-                    <MiscStockPanelLoader />
+                    <MiscStockPanelLoader resolvedParams={resolvedParams} />
                 ) : (
                     <RiceStockPanel resolvedParams={resolvedParams} />
                 )}
@@ -104,18 +111,34 @@ async function RiceStockPanel({
     )
 }
 
-async function MiscStockPanelLoader() {
-    const [farmersRes, varietiesRes, millingVendorsRes, sproutingVendorsRes] = await Promise.all([
+async function MiscStockPanelLoader({
+    resolvedParams,
+}: {
+    resolvedParams: { [key: string]: string | string[] | undefined }
+}) {
+    const filters: GetMiscStocksParams = {
+        productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
+        varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
+        farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
+        certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+        sourceType: typeof resolvedParams.sourceType === 'string' ? resolvedParams.sourceType : undefined,
+        status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
+        sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
+    }
+
+    const [farmersRes, varietiesRes, millingVendorsRes, sproutingVendorsRes, groupsRes] = await Promise.all([
         getMiscFarmers(),
         getMiscVarieties(),
         getMillingVendors(),
         getSproutingVendors(),
+        getMiscStockGroups(filters),
     ])
 
     const farmers = (farmersRes.success && farmersRes.data ? farmersRes.data : []) as any[]
     const varieties = (varietiesRes.success && varietiesRes.data ? varietiesRes.data : []) as { id: number; name: string }[]
     const millingVendors = (millingVendorsRes.success && millingVendorsRes.data ? millingVendorsRes.data : []) as string[]
     const sproutingVendors = (sproutingVendorsRes.success && sproutingVendorsRes.data ? sproutingVendorsRes.data : []) as string[]
+    const initialGroups = (groupsRes.success && groupsRes.data ? groupsRes.data : []) as any[]
 
     return (
         <MiscStockPanel
@@ -123,6 +146,8 @@ async function MiscStockPanelLoader() {
             varieties={varieties}
             millingVendors={millingVendors}
             sproutingVendors={sproutingVendors}
+            initialGroups={initialGroups}
+            filters={filters}
         />
     )
 }
