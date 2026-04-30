@@ -75,8 +75,8 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                             <TableHead className="w-[40px] py-2 px-1 text-center"></TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[120px]">생산자</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px] hidden md:table-cell">인증</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[140px]">생산자</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px] hidden md:table-cell">입고일</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[110px]">Lot No</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">유형</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[50px]">번호</TableHead>
