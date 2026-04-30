@@ -288,7 +288,9 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                                     <SelectContent>
                                         {filteredFarmers.map(f => (
                                             <SelectItem key={f.id} value={f.id.toString()}>
-                                                {f.group ? `${f.name} (${f.group.name})` : `${f.name} (작목반 없음)`}
+                                                {f.group
+                                                    ? `${f.name} · ${f.group.name} (${f.group.certNo})`
+                                                    : `${f.name} (작목반 없음)`}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
