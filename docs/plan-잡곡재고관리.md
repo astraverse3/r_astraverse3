@@ -382,6 +382,12 @@ model Variety {
    - `/releases` → `/sales` 영구 리다이렉트 추가
    - 벼·잡곡 탭은 "준비중" 안내 컴포넌트로 Placeholder
    - 통계 하위 라벨 `"출고분석"` → `"판매분석"`으로 변경 (URL `/statistics/output`은 유지, 내부 페이지 제목도 같이 변경)
+9.5. **권한 체계 정리** — 신규 기능에 맞춘 권한 키 재정의
+   - 잡곡 원물(`MISC_STOCK_MANAGE`?) / 제품재고(`PACKAGE_MANAGE`) / 매입(`PURCHASE_MANAGE`?) / 판매(`SALES_MANAGE`) 권한 분리·통합 정책 결정
+   - `lib/permissions.ts` 권한 키 마스터 업데이트
+   - `/admin/users` 권한 편집 UI에 신규 키 노출
+   - 사이드바/모바일 네비/페이지 가드(`hasPermission`) 일괄 점검
+   - 자세한 내용: [docs/리팩토링-백로그.md §12](리팩토링-백로그.md)
 10. **엑셀 Import/Export** — category별 컬럼 스펙
 11. **기존 엑셀 Seed 스크립트 실행** — 25년산 대장 데이터 입력
 12. **브라우저 수동 테스트** — 위탁도정/농가도정 입고 → 포장 → 제품재고 확인, 매입 등록 → 제품재고 확인

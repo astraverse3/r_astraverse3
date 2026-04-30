@@ -34,6 +34,9 @@ model Farmer {
   items    String? // 취급품목
   phone    String? // 연락처 (선택)
 
+  // 잡곡 입고 다이얼로그의 생산자 드롭다운에 노출 여부 (벼 다이얼로그는 무시)
+  producesMiscGrain Boolean @default(false)
+
   groupId Int?
   group   ProducerGroup? @relation(fields: [groupId], references: [id])
 

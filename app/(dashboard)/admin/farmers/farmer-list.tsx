@@ -34,6 +34,7 @@ interface Farmer {
     items: string | null
     phone: string | null
     groupId: number | null
+    producesMiscGrain?: boolean
     group: {
         id: number
         code: string
@@ -93,7 +94,8 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
                             <TableHead>인증번호</TableHead>
                             <TableHead>생산자번호</TableHead>
                             <TableHead>생산자명</TableHead>
-                            <TableHead>품목</TableHead>
+                            <TableHead>곡종</TableHead>
+                            <TableHead>비고</TableHead>
                             <TableHead>연락처</TableHead>
                             {canManageFromParent && (
                                 <TableHead className="text-center">수정</TableHead>
@@ -103,7 +105,7 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
                     <TableBody>
                         {farmers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                                <TableCell colSpan={11} className="text-center py-8 text-slate-500">
                                     등록된 생산자가 없습니다.
                                 </TableCell>
                             </TableRow>
@@ -239,7 +241,7 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
                                             </span>
 
                                             {/* Phone Icon */}
-                                            {farmer.phone ? (
+                                            {farmer.phone && (
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <button className="ml-1 text-[#00a2e8] hover:text-[#008cc9] bg-[#00a2e8]/10 hover:bg-[#00a2e8]/20 rounded-full p-1" title="연락처">
@@ -253,40 +255,34 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
                                                         </a>
                                                     </PopoverContent>
                                                 </Popover>
-                                            ) : (
-                                                <div className="ml-1 text-slate-300 bg-slate-50 rounded-full p-1 cursor-not-allowed" title="연락처 없음">
-                                                    <Phone className="h-3 w-3" />
-                                                </div>
                                             )}
+
+                                            {/* 곡종 표시 (전화 다음) */}
+                                            <span className={`ml-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md border ${farmer.producesMiscGrain ? 'text-amber-700 border-amber-200 bg-amber-50' : 'text-emerald-700 border-emerald-200 bg-emerald-50'}`}>
+                                                {farmer.producesMiscGrain ? '벼,잡곡' : '벼'}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    {/* Right side: Items details, Edit button */}
+                                    {/* Right side: 비고 (items), Edit button */}
                                     <div className="flex items-center gap-2">
-                                        {farmer.items ? (
+                                        {farmer.items && (
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <button
                                                         className="text-[10px] font-medium px-2 py-0.5 rounded-full border text-violet-600 border-violet-200 bg-violet-50 hover:bg-violet-100 transition-colors"
-                                                        title="품목 보기"
+                                                        title="비고 보기"
                                                     >
-                                                        품목
+                                                        비고
                                                     </button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-[180px] p-3 text-sm">
-                                                    <p className="font-bold mb-1.5 text-xs text-slate-500">생산 품목</p>
+                                                    <p className="font-bold mb-1.5 text-xs text-slate-500">비고</p>
                                                     <p className="text-slate-700 leading-relaxed text-xs break-keep">
                                                         {farmer.items}
                                                     </p>
                                                 </PopoverContent>
                                             </Popover>
-                                        ) : (
-                                            <div
-                                                className="text-[10px] font-medium px-2 py-0.5 rounded-full border text-slate-300 border-slate-200 bg-slate-50 cursor-not-allowed"
-                                                title="품목 없음"
-                                            >
-                                                품목
-                                            </div>
                                         )}
 
                                         {canManage && (
@@ -400,7 +396,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                         </span>
                                     </div>
                                 </TableCell>
-                                <TableCell colSpan={3}></TableCell>
+                                <TableCell colSpan={4}></TableCell>
                             </TableRow>
                         )}
 
@@ -432,8 +428,32 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                 </TableCell>
                                 <TableCell className="font-mono text-center text-sm font-bold text-slate-700">{farmer.farmerNo}</TableCell>
                                 <TableCell className="font-bold text-slate-900">{farmer.name}</TableCell>
-                                <TableCell className="text-slate-600 text-sm">{farmer.items || '-'}</TableCell>
-                                <TableCell className="text-slate-600 text-sm">{farmer.phone || '-'}</TableCell>
+                                <TableCell className="text-xs">
+                                    <span className={`inline-flex items-center font-medium px-1.5 py-0.5 rounded-md border ${farmer.producesMiscGrain ? 'text-amber-700 border-amber-200 bg-amber-50' : 'text-emerald-700 border-emerald-200 bg-emerald-50'}`}>
+                                        {farmer.producesMiscGrain ? '벼,잡곡' : '벼'}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                    {farmer.items ? (
+                                        <span
+                                            className="inline-flex items-center font-medium px-2 py-0.5 rounded-full border text-violet-600 border-violet-200 bg-violet-50 max-w-[160px] truncate cursor-help"
+                                            title={farmer.items}
+                                        >
+                                            {farmer.items}
+                                        </span>
+                                    ) : null}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                    {farmer.phone ? (
+                                        <a
+                                            href={`tel:${farmer.phone}`}
+                                            className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full border text-[#00a2e8] border-[#00a2e8]/30 bg-[#00a2e8]/10 hover:bg-[#00a2e8]/20"
+                                            title={farmer.phone}
+                                        >
+                                            <Phone className="h-3 w-3" />{farmer.phone}
+                                        </a>
+                                    ) : null}
+                                </TableCell>
                                 <TableCell className="text-center">
                                     {canManage && (
                                         <Button

@@ -1,5 +1,32 @@
 # 작업일지
 
+## 2026-04-30
+
+### 잡곡 재고관리 #5-pre — Farmer 모델 확장 + admin 체크박스 `feat`
+
+**배경**: 잡곡 입고 다이얼로그 생산자 풀 결정 — "잡곡 생산자는 대부분 기존 벼 생산자 중 일부"라는 도메인 특성상, 별도 테이블 분리는 비효율, 모든 농가 노출도 비효율. 절충안으로 `Farmer.producesMiscGrain` 플래그 도입.
+
+**변경 (1차 — 다이얼로그 + 액션)**:
+- `prisma/schema.prisma` Farmer에 `producesMiscGrain Boolean @default(false)` 추가
+- 마이그레이션 `20260430000000_add_produces_misc_grain_to_farmer` 생성·적용 (non-interactive 환경 회피 위해 SQL 파일 직접 작성 후 `migrate deploy`)
+- `app/actions/admin.ts`: `FarmerFormData`에 `producesMiscGrain?` 추가, `createFarmer` / `updateFarmer` / `createFarmerWithGroup` 모두 새 필드 처리
+- `app/(dashboard)/admin/farmers/add-farmer-dialog.tsx`: 체크박스 신규 (연락처 아래, 저장 버튼 위), 수정 시 기존 값 prefill, 등록·수정 모두 액션에 전달
+
+**변경 (2차 — 표시/필터 통합)**:
+- B안 채택: `producesRice` 필드 X, 모든 농가 기본 "벼"로 가정
+- PC 테이블: "품목" → "곡종"(벼/벼,잡곡 뱃지) + 새 "비고" 컬럼(items 뱃지, max-w 160px truncate + native title hover) + 연락처 뱃지(전화 아이콘 + tel: 링크)
+- 모바일 카드: 좌측 곡종 라벨 추가, 우측 "품목" 배지 → "비고", 빈 phone/items 회색 placeholder 제거
+- `farmer-filters.tsx`에 "잡곡 생산자만" 체크박스 추가 (URL `producesMiscGrain=1`)
+- `app/actions/admin.ts` `GetFarmersParams.producesMiscGrain?: boolean` + where 조건
+- `page.tsx`에서 `searchParams.producesMiscGrain === '1'` 파싱
+
+**검증**:
+- `npx tsc --noEmit` 통과 (에러 0)
+- 브라우저 1차 검수 완료(PC), 2차 통합본은 커밋 후 검수 예정
+
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5-pre
+**보고서**: [docs/report-잡곡재고관리-#5-pre-2026-04-30.md](report-잡곡재고관리-#5-pre-2026-04-30.md)
+
 ## 2026-04-29
 
 ### 잡곡 재고관리 #4 — `/stocks` → `/raw-stocks` 라우팅 이동 `feat`

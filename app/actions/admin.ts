@@ -176,6 +176,7 @@ export type GetFarmersParams = {
     farmerName?: string
     certType?: string
     cropYear?: string
+    producesMiscGrain?: boolean
     sortBy?: 'name' | 'group'
 }
 
@@ -219,6 +220,11 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
             } else if (years.length > 1) {
                 where.group = { ...where.group, cropYear: { in: years } }
             }
+        }
+
+        // producesMiscGrain: 잡곡 생산자만 필터
+        if (params?.producesMiscGrain) {
+            where.producesMiscGrain = true
         }
 
         const farmers = await prisma.farmer.findMany({
@@ -283,6 +289,7 @@ export type FarmerFormData = {
     items?: string
     phone?: string
     groupId?: number
+    producesMiscGrain?: boolean
 }
 
 export async function createFarmer(data: FarmerFormData) {
@@ -315,7 +322,8 @@ export async function createFarmer(data: FarmerFormData) {
                 farmerNo: farmerNo,
                 items: data.items?.trim(),
                 phone: data.phone?.trim(),
-                groupId: data.groupId || null
+                groupId: data.groupId || null,
+                producesMiscGrain: data.producesMiscGrain ?? false
             }
         })
 
@@ -362,7 +370,8 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
                 farmerNo: farmerNo,
                 items: data.items?.trim(),
                 phone: data.phone?.trim(),
-                groupId: data.groupId || null
+                groupId: data.groupId || null,
+                ...(data.producesMiscGrain !== undefined && { producesMiscGrain: data.producesMiscGrain })
             }
         })
 
@@ -490,6 +499,7 @@ export async function createFarmerWithGroup(
             const fNo = farmerData.farmerNo?.trim() || null
             const fItems = farmerData.items?.trim()
             const fPhone = farmerData.phone?.trim()
+            const fProducesMiscGrain = farmerData.producesMiscGrain ?? false
 
             // 1. Find or Create Group
             let group = await tx.producerGroup.findUnique({
@@ -540,7 +550,8 @@ export async function createFarmerWithGroup(
                     farmerNo: fNo,
                     items: fItems,
                     phone: fPhone,
-                    groupId: group.id
+                    groupId: group.id,
+                    producesMiscGrain: fProducesMiscGrain
                 }
             })
 

@@ -43,12 +43,14 @@ export function FarmerFilters() {
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [certTypes, setCertTypes] = useState<string[]>(() => parseMulti(searchParams.get('certType')))
     const [cropYears, setCropYears] = useState<string[]>(() => parseMulti(searchParams.get('cropYear')))
+    const [miscGrainOnly, setMiscGrainOnly] = useState(searchParams.get('producesMiscGrain') === '1')
 
     const activeFilterCount = [
         groupName.trim() !== '',
         farmerName.trim() !== '',
         certTypes.length > 0,
-        cropYears.length > 0
+        cropYears.length > 0,
+        miscGrainOnly
     ].filter(Boolean).length
 
     // Sync from URL when opening
@@ -58,6 +60,7 @@ export function FarmerFilters() {
             setFarmerName(searchParams.get('farmerName') || '')
             setCertTypes(parseMulti(searchParams.get('certType')))
             setCropYears(parseMulti(searchParams.get('cropYear')))
+            setMiscGrainOnly(searchParams.get('producesMiscGrain') === '1')
         }
     }, [open, searchParams])
 
@@ -67,6 +70,7 @@ export function FarmerFilters() {
         if (farmerName.trim()) params.set('farmerName', farmerName.trim())
         if (certTypes.length > 0) params.set('certType', certTypes.join(','))
         if (cropYears.length > 0) params.set('cropYear', cropYears.join(','))
+        if (miscGrainOnly) params.set('producesMiscGrain', '1')
 
         router.push(`/admin/farmers?${params.toString()}`)
         setOpen(false)
@@ -77,6 +81,7 @@ export function FarmerFilters() {
         setFarmerName('')
         setCertTypes([])
         setCropYears([])
+        setMiscGrainOnly(false)
         router.push('/admin/farmers')
         setOpen(false)
     }
@@ -145,6 +150,19 @@ export function FarmerFilters() {
                             onChange={(e) => setFarmerName(e.target.value)}
                             onKeyDown={handleKeyDown}
                         />
+                    </div>
+
+                    <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5">
+                        <input
+                            type="checkbox"
+                            id="miscGrainOnly"
+                            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            checked={miscGrainOnly}
+                            onChange={(e) => setMiscGrainOnly(e.target.checked)}
+                        />
+                        <Label htmlFor="miscGrainOnly" className="cursor-pointer text-sm font-normal text-slate-700">
+                            잡곡 생산자만
+                        </Label>
                     </div>
                 </div>
                 <DialogFooter className="flex-row sm:justify-between sm:gap-0 gap-2 mt-4 pt-4 border-t border-slate-100">

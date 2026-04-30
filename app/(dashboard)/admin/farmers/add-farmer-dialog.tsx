@@ -31,6 +31,7 @@ interface Farmer {
     items: string | null
     phone: string | null
     groupId: number | null
+    producesMiscGrain?: boolean
     group: {
         id: number
         code: string
@@ -62,6 +63,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     const [groups, setGroups] = useState<ProducerGroup[]>([])
     const [isNewGroup, setIsNewGroup] = useState(false)
     const [editedGroupName, setEditedGroupName] = useState<string>('')
+    const [producesMiscGrain, setProducesMiscGrain] = useState<boolean>(farmer?.producesMiscGrain ?? false)
 
     // Helper for default crop year
     const getDefaultCropYear = () => {
@@ -84,8 +86,12 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
             // Reset state when opening
             if (!farmer) {
                 setIsNewGroup(false)
-            } else if (farmer.group) {
-                setEditedGroupName(farmer.group.name)
+                setProducesMiscGrain(false)
+            } else {
+                if (farmer.group) {
+                    setEditedGroupName(farmer.group.name)
+                }
+                setProducesMiscGrain(farmer.producesMiscGrain ?? false)
             }
         }
     }, [open, farmer])
@@ -131,7 +137,8 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     name: farmerName,
                     farmerNo,
                     items,
-                    phone
+                    phone,
+                    producesMiscGrain
                 }, groupData)
 
             } else {
@@ -147,6 +154,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     name: farmerName,
                     items,
                     phone,
+                    producesMiscGrain,
                 }
 
                 if (farmer) {
@@ -290,6 +298,19 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     <div className="grid gap-2">
                         <Label htmlFor="phone">연락처</Label>
                         <Input id="phone" name="phone" defaultValue={farmer?.phone || ''} placeholder="010-1234-5678" />
+                    </div>
+
+                    <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5">
+                        <input
+                            type="checkbox"
+                            id="producesMiscGrain"
+                            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            checked={producesMiscGrain}
+                            onChange={(e) => setProducesMiscGrain(e.target.checked)}
+                        />
+                        <Label htmlFor="producesMiscGrain" className="cursor-pointer text-sm font-normal text-slate-700">
+                            잡곡도 생산
+                        </Label>
                     </div>
 
                     <div className="flex justify-end pt-2">
