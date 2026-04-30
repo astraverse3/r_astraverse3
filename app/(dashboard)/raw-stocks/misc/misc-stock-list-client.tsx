@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Fragment } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { ChevronRight, Loader2, Inbox } from 'lucide-react'
 import {
     Table,
@@ -10,13 +10,12 @@ import {
     TableRow,
     TableCell,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import {
     getMiscStocksByGroup,
     type MiscStockGroup,
     type GetMiscStocksParams,
 } from '@/app/actions/misc-stock'
-import { MiscStockTableRow, MiscStockMobileCard } from './misc-stock-table-row'
+import { MiscStockTableRow, MiscStockMobileCard, CERT_BADGE_CLASS } from './misc-stock-table-row'
 
 interface Props {
     initialGroups: MiscStockGroup[]
@@ -26,7 +25,10 @@ interface Props {
 export function MiscStockListClient({ initialGroups, filters }: Props) {
     const [loadedItems, setLoadedItems] = useState<Record<string, any[]>>({})
     const [loadingGroups, setLoadingGroups] = useState<Set<string>>(new Set())
-    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+    // 단일 건 그룹은 기본 펼친 상태로 시작
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+        () => new Set(initialGroups.filter(g => g.count === 1).map(g => g.key)),
+    )
 
     const fetchGroupItems = async (group: MiscStockGroup) => {
         if (loadedItems[group.key] || loadingGroups.has(group.key)) return
@@ -49,7 +51,28 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
         }
     }
 
+    // 단일 건 그룹은 자동으로 펼치고 lazy load 트리거 (필터 변경 시에도 동작)
+    useEffect(() => {
+        const singletons = initialGroups.filter(g => g.count === 1)
+        if (singletons.length === 0) return
+        setExpandedGroups(prev => {
+            let changed = false
+            const next = new Set(prev)
+            singletons.forEach(g => {
+                if (!next.has(g.key)) {
+                    next.add(g.key)
+                    changed = true
+                }
+            })
+            return changed ? next : prev
+        })
+        singletons.forEach(g => fetchGroupItems(g))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialGroups])
+
     const toggleGroup = (group: MiscStockGroup) => {
+        // 단일 건 그룹은 그룹 헤더가 안 보여 토글 기회 없음 — 안전장치로만 무시
+        if (group.count <= 1) return
         const next = new Set(expandedGroups)
         if (next.has(group.key)) {
             next.delete(group.key)
@@ -92,49 +115,55 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                 const isExpanded = expandedGroups.has(group.key)
                                 const isLoading = loadingGroups.has(group.key)
                                 const items = loadedItems[group.key] || []
+                                const isMulti = group.count > 1
 
                                 return (
                                     <Fragment key={group.key}>
-                                        {/* Summary Row — handoff §4.2 */}
-                                        <TableRow
-                                            className="bg-slate-50 hover:bg-slate-100 cursor-pointer border-y border-slate-200 font-bold text-slate-800 h-12"
-                                            onClick={() => toggleGroup(group)}
-                                        >
-                                            <TableCell className="text-center">
-                                                {isLoading ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-slate-400" />
-                                                ) : (
-                                                    <ChevronRight
-                                                        className={`w-3.5 h-3.5 mx-auto text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                                                    />
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-center text-sm tabular-nums hidden sm:table-cell">{group.year}</TableCell>
-                                            <TableCell className="text-center text-sm">{group.variety}</TableCell>
-                                            <TableCell className="text-center text-sm text-slate-600 tabular-nums">
-                                                {group.farmerSetSize}명
-                                            </TableCell>
-                                            <TableCell className="text-center text-sm font-medium hidden md:table-cell">
-                                                <Badge variant="outline" className="font-normal">
-                                                    {group.certType}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right text-sm tabular-nums">{group.count}개</TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right text-sm text-primary tabular-nums">
-                                                {group.totalWeight.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                        </TableRow>
+                                        {/* Summary Row — handoff §4.2 (단일 건은 헤더 안 보임) */}
+                                        {isMulti && (
+                                            <TableRow
+                                                className="bg-slate-50 hover:bg-slate-100 cursor-pointer border-y border-slate-200 font-bold text-slate-800 h-12"
+                                                onClick={() => toggleGroup(group)}
+                                            >
+                                                <TableCell className="text-center">
+                                                    {isLoading ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin mx-auto text-slate-400" />
+                                                    ) : (
+                                                        <ChevronRight
+                                                            className={`w-3.5 h-3.5 mx-auto text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                                        />
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm tabular-nums hidden sm:table-cell">{group.year}</TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    <span className="inline-flex items-center gap-1.5 justify-center">
+                                                        <span>{group.variety}</span>
+                                                        <span className={`inline-flex items-center font-medium px-1.5 py-0 rounded-md border text-[10px] ${CERT_BADGE_CLASS[group.certType] ?? CERT_BADGE_CLASS['일반']}`}>
+                                                            {group.certType}
+                                                        </span>
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm text-slate-600 tabular-nums">
+                                                    {group.farmerSetSize}명
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell"></TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell className="text-right text-sm tabular-nums">{group.count}개</TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell className="text-right text-sm text-primary tabular-nums">
+                                                    {group.totalWeight.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell></TableCell>
+                                            </TableRow>
+                                        )}
 
-                                        {/* Detail Rows */}
-                                        {isExpanded && items.map((stock: any) => (
+                                        {/* Detail Rows — 단일 건 그룹은 무조건 표시, 다중은 isExpanded일 때만 */}
+                                        {(!isMulti || isExpanded) && items.map((stock: any) => (
                                             <MiscStockTableRow key={stock.id} stock={stock} />
                                         ))}
-                                        {isExpanded && isLoading && items.length === 0 && (
+                                        {(!isMulti || isExpanded) && isLoading && items.length === 0 && (
                                             <TableRow>
                                                 <TableCell colSpan={12} className="h-24 text-center">
                                                     <div className="flex items-center justify-center gap-2 text-slate-500">
@@ -165,6 +194,24 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                         const isExpanded = expandedGroups.has(group.key)
                         const isLoading = loadingGroups.has(group.key)
                         const items = loadedItems[group.key] || []
+                        const isMulti = group.count > 1
+
+                        // 단일 건 그룹은 헤더 카드 없이 상세 카드만 표시 (border 없음)
+                        if (!isMulti) {
+                            return (
+                                <div key={group.key} className="flex flex-col gap-1.5">
+                                    {isLoading && items.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-6 text-slate-400 bg-white rounded-lg border border-slate-100 shadow-sm">
+                                            <Loader2 className="h-5 w-5 animate-spin mb-2" />
+                                            <span className="text-xs">데이터 로딩 중...</span>
+                                        </div>
+                                    )}
+                                    {items.map((stock: any) => (
+                                        <MiscStockMobileCard key={stock.id} stock={stock} />
+                                    ))}
+                                </div>
+                            )
+                        }
 
                         return (
                             <div key={group.key} className="flex flex-col gap-2">
@@ -178,9 +225,9 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                             <span className="text-[11px] text-slate-500 font-medium bg-white border border-slate-200 px-1 py-0.5 rounded shadow-sm leading-none whitespace-nowrap">
                                                 {group.year}년
                                             </span>
-                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-200 text-emerald-600 bg-emerald-50 whitespace-nowrap leading-none rounded-sm">
+                                            <span className={`inline-flex items-center font-medium px-1.5 py-0 rounded text-[10px] border whitespace-nowrap leading-none ${CERT_BADGE_CLASS[group.certType] ?? CERT_BADGE_CLASS['일반']}`}>
                                                 {group.certType}
-                                            </Badge>
+                                            </span>
                                         </div>
                                         {isLoading ? (
                                             <Loader2 className="h-4 w-4 animate-spin text-slate-400 shrink-0" />

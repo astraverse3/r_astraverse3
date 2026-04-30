@@ -38,7 +38,7 @@ function formatYMD(d: Date | string): string {
     return `${yy}.${mm}.${dd}`
 }
 
-const CERT_BADGE_CLASS: Record<string, string> = {
+export const CERT_BADGE_CLASS: Record<string, string> = {
     유기농: 'border-emerald-200 text-emerald-700 bg-emerald-50',
     무농약: 'border-sky-200 text-sky-700 bg-sky-50',
     일반: 'border-slate-200 text-slate-600 bg-slate-50',
