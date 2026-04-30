@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, Fragment } from 'react'
-import { ChevronRight, ChevronDown, Loader2 } from 'lucide-react'
+import { ChevronRight, Loader2, Inbox } from 'lucide-react'
 import {
     Table,
     TableBody,
@@ -102,16 +102,16 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                         >
                                             <TableCell className="text-center">
                                                 {isLoading ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-slate-500" />
-                                                ) : isExpanded ? (
-                                                    <ChevronDown className="h-4 w-4 mx-auto text-slate-500" />
+                                                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-slate-400" />
                                                 ) : (
-                                                    <ChevronRight className="h-4 w-4 mx-auto text-slate-500" />
+                                                    <ChevronRight
+                                                        className={`w-3.5 h-3.5 mx-auto text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                                    />
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-center text-sm hidden sm:table-cell">{group.year}</TableCell>
+                                            <TableCell className="text-center text-sm tabular-nums hidden sm:table-cell">{group.year}</TableCell>
                                             <TableCell className="text-center text-sm">{group.variety}</TableCell>
-                                            <TableCell className="text-center text-sm text-slate-600">
+                                            <TableCell className="text-center text-sm text-slate-600 tabular-nums">
                                                 {group.farmerSetSize}명
                                             </TableCell>
                                             <TableCell className="text-center text-sm font-medium hidden md:table-cell">
@@ -121,9 +121,9 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right text-sm">{group.count}개</TableCell>
+                                            <TableCell className="text-right text-sm tabular-nums">{group.count}개</TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right text-sm text-primary">
+                                            <TableCell className="text-right text-sm text-primary tabular-nums">
                                                 {group.totalWeight.toLocaleString()}
                                             </TableCell>
                                             <TableCell></TableCell>
@@ -149,8 +149,8 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                             })
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={12} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                    {filterCount > 0 ? '검색 결과가 없습니다.' : '등록된 잡곡 재고가 없습니다.'}
+                                <TableCell colSpan={12} className="py-16">
+                                    <EmptyState filtered={filterCount > 0} />
                                 </TableCell>
                             </TableRow>
                         )}
@@ -183,23 +183,23 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                                             </Badge>
                                         </div>
                                         {isLoading ? (
-                                            <Loader2 className="h-4 w-4 animate-spin text-slate-500 shrink-0" />
-                                        ) : isExpanded ? (
-                                            <ChevronDown className="text-slate-400 h-5 w-5 shrink-0" />
+                                            <Loader2 className="h-4 w-4 animate-spin text-slate-400 shrink-0" />
                                         ) : (
-                                            <ChevronRight className="text-slate-400 h-5 w-5 shrink-0" />
+                                            <ChevronRight
+                                                className={`text-slate-400 h-5 w-5 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                            />
                                         )}
                                     </div>
 
                                     <div className="flex items-end justify-between mt-1">
                                         <div className="text-[12px] text-slate-600 font-medium whitespace-nowrap">
-                                            생산자 <span className="font-bold text-slate-800">{group.farmerSetSize}명</span>
+                                            생산자 <span className="font-bold text-slate-800 tabular-nums">{group.farmerSetSize}명</span>
                                         </div>
                                         <div className="flex items-baseline gap-2.5 text-right w-full justify-end">
-                                            <div className="text-[11px] text-slate-500 whitespace-nowrap">
+                                            <div className="text-[11px] text-slate-500 whitespace-nowrap tabular-nums">
                                                 {group.count}건
                                             </div>
-                                            <div className="text-[17px] font-black text-primary tracking-tight leading-none whitespace-nowrap">
+                                            <div className="text-[17px] font-black text-primary tracking-tight leading-none whitespace-nowrap tabular-nums">
                                                 {group.totalWeight.toLocaleString()}<span className="text-[11px] font-bold ml-0.5 opacity-70">kg</span>
                                             </div>
                                         </div>
@@ -223,11 +223,25 @@ export function MiscStockListClient({ initialGroups, filters }: Props) {
                         )
                     })
                 ) : (
-                    <div className="text-center text-sm text-slate-400 py-10 bg-white rounded-xl border border-slate-200">
-                        {filterCount > 0 ? '검색 결과가 없습니다.' : '등록된 잡곡 재고가 없습니다.'}
+                    <div className="bg-white rounded-xl border border-slate-200">
+                        <EmptyState filtered={filterCount > 0} />
                     </div>
                 )}
             </div>
         </section>
+    )
+}
+
+// §5.3 빈 상태 + §7 친근체 카피
+function EmptyState({ filtered }: { filtered: boolean }) {
+    return (
+        <div className="py-12 flex flex-col items-center gap-3 text-center">
+            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <Inbox className="w-5 h-5 text-slate-400" />
+            </div>
+            <p className="text-sm text-slate-600">
+                {filtered ? '조건에 맞는 결과가 없어요. 필터를 바꿔보세요.' : '아직 등록된 잡곡 재고가 없어요.'}
+            </p>
+        </div>
     )
 }

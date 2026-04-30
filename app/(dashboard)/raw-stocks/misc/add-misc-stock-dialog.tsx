@@ -307,7 +307,7 @@ export function AddMiscStockDialog({ farmers, varieties, millingVendors, sprouti
                         )}
                         {filteredFarmers.length === 0 && (
                             <div className="bg-amber-50 p-2 rounded text-xs text-amber-700 border border-amber-100">
-                                선택한 인증·년도 조합에 잡곡 생산자로 등록된 농가가 없습니다. 생산자 관리에서 "잡곡도 생산"을 체크해주세요.
+                                선택한 인증·년도 조합에 잡곡 생산자로 등록된 농가가 없어요. 생산자 관리에서 "잡곡도 생산"을 체크해주세요.
                             </div>
                         )}
                     </div>

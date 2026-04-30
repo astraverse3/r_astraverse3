@@ -41,8 +41,9 @@ export function MiscStockTableRow({ stock }: Props) {
     // 수율은 도정위탁만 의미 있음 (발아위탁은 사용자 결정으로 미관리)
     const showYield = stock.sourceType === 'CONSIGNMENT'
 
+    // §4.2 펼친 상세 행 — 옅은 배경 + 좌측 primary border (그룹 active 강조)
     return (
-        <TableRow className="bg-white hover:bg-slate-50">
+        <TableRow className="bg-slate-50/60 hover:bg-slate-100/60 border-l-2 border-primary/40">
             <TableCell className="text-center text-xs text-slate-400">—</TableCell>
             <TableCell className="text-center text-xs hidden sm:table-cell">{stock.productionYear}</TableCell>
             <TableCell className="text-center text-xs">{stock.variety.name}</TableCell>
@@ -71,14 +72,14 @@ export function MiscStockTableRow({ stock }: Props) {
                     </span>
                 )}
             </TableCell>
-            <TableCell className="text-right text-xs font-mono">{stock.bagNo}</TableCell>
-            <TableCell className="text-right text-xs text-slate-500">
+            <TableCell className="text-right text-xs font-mono tabular-nums">{stock.bagNo}</TableCell>
+            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
                 {showRaw ? stock.rawWeightKg?.toLocaleString() : '-'}
             </TableCell>
-            <TableCell className="text-right text-xs font-medium text-primary">
+            <TableCell className="text-right text-xs font-medium text-primary tabular-nums">
                 {stock.weightKg.toLocaleString()}
             </TableCell>
-            <TableCell className="text-right text-xs text-slate-500">
+            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
                 {showYield ? calcYield(stock.rawWeightKg, stock.weightKg) : '-'}
             </TableCell>
             <TableCell className="text-center text-xs">
@@ -125,8 +126,17 @@ export function MiscStockMobileCard({ stock }: MobileCardProps) {
                 </Badge>
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span className="font-mono">#{stock.bagNo} · {stock.lotNo || '로트없음'}</span>
-                <span className="font-black text-[14px] text-slate-800 tracking-tight leading-none">
+                <div className="flex items-center gap-1.5">
+                    <span className="font-mono tabular-nums">#{stock.bagNo}</span>
+                    {stock.lotNo ? (
+                        <span className="inline-flex items-center font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px]">
+                            {stock.lotNo}
+                        </span>
+                    ) : (
+                        <span className="text-[10px] text-slate-400">로트없음</span>
+                    )}
+                </div>
+                <span className="font-black text-[14px] text-slate-800 tracking-tight leading-none tabular-nums">
                     {stock.weightKg.toLocaleString()}
                     <span className="text-[10px] font-bold ml-0.5 opacity-60">kg</span>
                 </span>
@@ -136,11 +146,11 @@ export function MiscStockMobileCard({ stock }: MobileCardProps) {
                     {showRaw && stock.rawWeightKg && (
                         <span>
                             {stock.sourceType === 'GERMINATION' ? '현미' : '원물'}{' '}
-                            <span className="font-medium text-slate-700">{stock.rawWeightKg.toLocaleString()}kg</span>
+                            <span className="font-medium text-slate-700 tabular-nums">{stock.rawWeightKg.toLocaleString()}kg</span>
                         </span>
                     )}
                     {showYield && (
-                        <span>수율 <span className="font-medium text-slate-700">{calcYield(stock.rawWeightKg, stock.weightKg)}</span></span>
+                        <span>수율 <span className="font-medium text-slate-700 tabular-nums">{calcYield(stock.rawWeightKg, stock.weightKg)}</span></span>
                     )}
                 </div>
             )}
