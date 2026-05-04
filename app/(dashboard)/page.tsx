@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Clock,
+  Package,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getDashboardStats } from "@/app/actions/dashboard";
@@ -32,6 +33,20 @@ export default async function Home() {
         {activeNotices.length > 0 && (
           <NoticeMarquee notices={activeNotices} speed={1.2} />
         )}
+
+        {/* TEMP: 제품재고 임시 진입점 — #9 사이드바·네비 개편 시 제거 */}
+        <Link
+          href="/packages"
+          className="mx-1.5 sm:mx-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Package className="w-4 h-4 text-primary shrink-0" strokeWidth={1.8} />
+            <span className="text-sm font-semibold text-slate-900 truncate">제품재고 페이지로 이동</span>
+            <span className="text-xs text-slate-500 truncate hidden sm:inline">— 사이드바 개편 전 임시 링크</span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+        </Link>
+
 
         {/* Remove the wrapper for RealtimeStatus as it handles its own card containers now */}
         <RealtimeStatus

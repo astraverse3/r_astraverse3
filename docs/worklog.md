@@ -2,6 +2,26 @@
 
 ## 2026-05-04
 
+### 잡곡 재고관리 #6a — `/packages` 라우트 + 액션 셸 `feat`
+
+**배경**: #6 제품재고 페이지 신설 착수. 4커밋(#6a~d)으로 분할. #6a는 데이터 액션 + 라우트 셸(빈 패널)까지.
+
+**변경**:
+- `app/actions/packages.ts` 신규 — `getPackages({ category, varietyId, productionYear, source?, sort? })` 통합 조회. MILLED/PURCHASED 분기 include, 서버 사이드 품종 그룹핑(`varietyId` 기준 1행=single, 2행+=group). 정렬 옵션 `latest|oldest|weight_desc`. `getPurchaseVendors()` distinct (#8 자동완성용)
+- `app/(dashboard)/packages/page.tsx` 신규 — 서버 컴포넌트, `?tab=rice|misc` 분기, RicePanelLoader/MiscPanelLoader
+- `app/(dashboard)/packages/packages-tabs.tsx` 신규 — F안 탭 (raw-stocks-tabs 패턴, 탭 전환 시 필터 리셋)
+- `app/(dashboard)/packages/rice-package-panel.tsx`, `misc-package-panel.tsx` 신규 — 빈 셸 + 검색결과 카운트. 잡곡은 [+ 포장]/[+ 매입] 비활성 버튼 + "준비중" title (#7·#8 활성)
+- `app/(dashboard)/page.tsx` 수정 — 노티스 마키 아래에 임시 진입점 카드 ("제품재고 페이지로 이동", `Package` 아이콘). #9 사이드바 개편 시 제거
+- `docs/plan-잡곡재고관리-#6.md` 신규 — 단계별 계획서, §8 확정 사항 4건
+
+**확정 사항** (사용자 답변):
+- 메뉴 진입점: 사이드바·네비는 #9 일괄 정리, 임시로 홈에 카드만
+- 벼 탭 [+] 버튼: 숨김
+- 정렬: 최신/오래된/중량순 — #6c에서 윤곽 보고 결정
+- 4커밋 분할 진행
+
+**검증**: `npx tsc --noEmit` 통과(EXIT=0). 브라우저: 홈 임시 카드 클릭 → `/packages` 진입, 벼 탭 JSON 덤프 정상 그룹핑, 잡곡 탭 빈 상태 + 비활성 버튼 사용자 확인 완료.
+
 ### 잡곡 재고관리 #5 결과보고서 `docs`
 
 **배경**: #5-pre / #5a~#5e 본 흐름 + 후속 디자인·UX 정리 완료. DoD 마지막 항목인 종합 결과보고서 작성.
