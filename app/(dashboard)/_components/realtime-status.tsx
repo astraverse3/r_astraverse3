@@ -175,12 +175,12 @@ function MobileCardCarousel({
     // Render a single card by index (0, 1, 2)
     const renderCard = (cardIndex: number, keyPrefix: string) => {
         if (cardIndex === 0) {
-            // Card 1: 원곡 재고
+            // Card 1: 벼 원곡 재고
             return (
                 <div key={`${keyPrefix}-0`} className={cardBaseClass} style={{ width: `${cardWidthPercent}%`, minWidth: `${cardWidthPercent}%` }}>
                     <div>
                         <h3 className="text-[13px] font-bold text-slate-500 mb-1 font-sans tracking-wide">
-                            원곡 재고
+                            벼 원곡 재고
                             <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
                         </h3>
                         <div className="flex items-baseline gap-x-1 flex-nowrap mt-1">
@@ -430,11 +430,11 @@ export function RealtimeStatus({
             <div className="hidden lg:grid lg:grid-cols-[7.5fr_2.5fr] gap-3">
                 {/* Left section: Stock & Production sharing the 7fr space */}
                 <div className="grid grid-cols-2 gap-3 min-w-0">
-                    {/* 1. Grain Inventory Card */}
+                    {/* 1. Grain Inventory Card — 벼 한정 (잡곡 카드는 통계/대시보드 후속 단계) */}
                     <div className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col justify-start min-h-[120px]">
                         <div className="mb-0">
                             <h3 className="text-sm font-bold text-slate-500 mb-2 font-sans uppercase tracking-wider">
-                                원곡 재고
+                                벼 원곡 재고
                                 <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1.5 tracking-tight">({years.target}년산)</span>
                             </h3>
                             <div className="flex items-baseline gap-x-1.5 flex-nowrap">
