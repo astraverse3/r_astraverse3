@@ -391,7 +391,9 @@ export async function getMiscStocks(params?: GetMiscStocksParams) {
 }
 
 // -----------------------------
-// READ — 그룹 집계 (벼와 동일 키: 년도+품종+인증)
+// 그룹 메타 타입 (클라이언트 그룹핑 결과)
+// 잡곡은 데이터 규모가 작아 일괄 fetch + 클라이언트 그룹핑(생산자 패턴) 채택.
+// 서버 그룹핑/펼침 액션(getMiscStockGroups/getMiscStocksByGroup)은 제거됨.
 // -----------------------------
 export type MiscStockGroup = {
     key: string
@@ -402,141 +404,6 @@ export type MiscStockGroup = {
     count: number
     farmerSetSize: number
     items: any[]
-}
-
-export async function getMiscStockGroups(params?: GetMiscStocksParams) {
-    await requireSession()
-    try {
-        const where = buildMiscWhere(params)
-
-        const stocks = await prisma.stock.findMany({
-            where,
-            select: {
-                id: true,
-                productionYear: true,
-                weightKg: true,
-                variety: { select: { name: true } },
-                farmer: {
-                    select: {
-                        id: true,
-                        group: { select: { certType: true } },
-                    },
-                },
-            },
-        })
-
-        const grouped: Record<string, MiscStockGroup> = {}
-
-        stocks.forEach((stock: any) => {
-            const certType = stock.farmer?.group?.certType || '일반'
-            const key = `${stock.productionYear}-${stock.variety?.name}-${certType}`
-
-            if (!grouped[key]) {
-                grouped[key] = {
-                    key,
-                    year: stock.productionYear,
-                    variety: stock.variety?.name || 'Unknown',
-                    certType,
-                    totalWeight: 0,
-                    count: 0,
-                    farmerSetSize: 0,
-                    items: [],
-                }
-                ;(grouped[key] as any)._farmerIds = new Set()
-            }
-
-            grouped[key].totalWeight += stock.weightKg
-            grouped[key].count += 1
-            if (stock.farmer?.id) {
-                ;(grouped[key] as any)._farmerIds.add(stock.farmer.id)
-            }
-        })
-
-        const result = Object.values(grouped).map((g: any) => {
-            g.farmerSetSize = g._farmerIds.size
-            delete g._farmerIds
-            return g as MiscStockGroup
-        })
-
-        result.sort((a, b) => {
-            if (a.year !== b.year) return b.year - a.year
-            const aIsGeneral = a.certType === '일반'
-            const bIsGeneral = b.certType === '일반'
-            if (aIsGeneral && !bIsGeneral) return 1
-            if (!aIsGeneral && bIsGeneral) return -1
-            if (a.variety !== b.variety) return a.variety.localeCompare(b.variety, 'ko')
-            return a.certType.localeCompare(b.certType, 'ko')
-        })
-
-        return { success: true, data: result }
-    } catch (error) {
-        console.error('Failed to get misc stock groups:', error)
-        return { success: false, error: '잡곡 그룹 조회에 실패했습니다.' }
-    }
-}
-
-// -----------------------------
-// READ — 그룹 펼침 (특정 그룹의 항목)
-// -----------------------------
-export async function getMiscStocksByGroup(
-    groupKey: { year: number; variety: string; certType: string },
-    params?: GetMiscStocksParams,
-) {
-    await requireSession()
-    try {
-        const andConditions: any[] = [
-            { category: 'MISC_GRAIN' },
-            { productionYear: groupKey.year },
-            { variety: { name: groupKey.variety } },
-        ]
-
-        if (groupKey.certType === '일반') {
-            andConditions.push({
-                OR: [
-                    { farmer: { groupId: null } },
-                    { farmer: { group: { certType: '일반' } } },
-                ],
-            })
-        } else {
-            andConditions.push({ farmer: { group: { certType: groupKey.certType } } })
-        }
-
-        if (params?.status && params.status !== 'ALL') {
-            andConditions.push({ status: params.status })
-        }
-
-        if (params?.sourceType) {
-            const types = params.sourceType.split(',').map(s => s.trim()).filter(Boolean)
-            if (types.length === 1) andConditions.push({ sourceType: types[0] })
-            else if (types.length > 1) andConditions.push({ sourceType: { in: types } })
-        }
-
-        if (params?.farmerName) {
-            const names = params.farmerName.split(',').map(s => s.trim()).filter(Boolean)
-            const nameOr = (n: string) => ({
-                OR: [
-                    { farmer: { name: { contains: n } } },
-                    { actualFarmer: { contains: n } },
-                ],
-            })
-            if (names.length === 1) andConditions.push(nameOr(names[0]))
-            else if (names.length > 1) andConditions.push({ OR: names.map(nameOr) })
-        }
-
-        const stocks = await prisma.stock.findMany({
-            where: { AND: andConditions },
-            orderBy: [{ farmer: { name: 'asc' } }, { bagNo: 'asc' }],
-            include: {
-                variety: true,
-                farmer: { include: { group: true } },
-            },
-        })
-
-        return { success: true, data: stocks }
-    } catch (error) {
-        console.error('Failed to get misc stocks by group:', error)
-        return { success: false, error: '잡곡 그룹 항목 조회에 실패했습니다.' }
-    }
 }
 
 // -----------------------------

@@ -5,7 +5,7 @@ import {
     getMiscFarmers,
     getMillingVendors,
     getSproutingVendors,
-    getMiscStockGroups,
+    getMiscStocks,
     type GetMiscStocksParams,
 } from '@/app/actions/misc-stock'
 import { AddStockDialog } from './add-stock-dialog'
@@ -126,19 +126,19 @@ async function MiscStockPanelLoader({
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
     }
 
-    const [farmersRes, varietiesRes, millingVendorsRes, sproutingVendorsRes, groupsRes] = await Promise.all([
+    const [farmersRes, varietiesRes, millingVendorsRes, sproutingVendorsRes, stocksRes] = await Promise.all([
         getMiscFarmers(),
         getMiscVarieties(),
         getMillingVendors(),
         getSproutingVendors(),
-        getMiscStockGroups(filters),
+        getMiscStocks(filters),
     ])
 
     const farmers = (farmersRes.success && farmersRes.data ? farmersRes.data : []) as any[]
     const varieties = (varietiesRes.success && varietiesRes.data ? varietiesRes.data : []) as { id: number; name: string }[]
     const millingVendors = (millingVendorsRes.success && millingVendorsRes.data ? millingVendorsRes.data : []) as string[]
     const sproutingVendors = (sproutingVendorsRes.success && sproutingVendorsRes.data ? sproutingVendorsRes.data : []) as string[]
-    const initialGroups = (groupsRes.success && groupsRes.data ? groupsRes.data : []) as any[]
+    const initialStocks = (stocksRes.success && stocksRes.data ? stocksRes.data : []) as any[]
 
     return (
         <MiscStockPanel
@@ -146,7 +146,7 @@ async function MiscStockPanelLoader({
             varieties={varieties}
             millingVendors={millingVendors}
             sproutingVendors={sproutingVendors}
-            initialGroups={initialGroups}
+            initialStocks={initialStocks}
             filters={filters}
         />
     )

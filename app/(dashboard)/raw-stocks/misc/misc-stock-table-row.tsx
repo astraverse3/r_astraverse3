@@ -55,11 +55,12 @@ export const CERT_BADGE_CLASS: Record<string, string> = {
 interface Props {
     stock: MiscStock
     canManage?: boolean
+    inExpandedGroup?: boolean
     onEdit?: () => void
     onDelete?: () => void
 }
 
-export function MiscStockTableRow({ stock, canManage = false, onEdit, onDelete }: Props) {
+export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = false, onEdit, onDelete }: Props) {
     const isConsumed = stock.status === 'CONSUMED'
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
@@ -69,9 +70,10 @@ export function MiscStockTableRow({ stock, canManage = false, onEdit, onDelete }
 
     const certType = stock.farmer.group?.certType
 
-    // §4.2 펼친 상세 행 — 옅은 배경 + 좌측 primary border (그룹 active 강조)
+    // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-50/60 (같은 톤 묶음).
+    // 단일 건(낱개 행, §4.2.4)은 흰 배경.
     return (
-        <TableRow className="bg-slate-50/60 hover:bg-slate-100/60 border-l-2 border-primary/40">
+        <TableRow className={inExpandedGroup ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'bg-white hover:bg-slate-50'}>
             <TableCell className="text-center text-xs text-slate-400">—</TableCell>
             <TableCell className="text-center text-xs tabular-nums hidden sm:table-cell">{stock.productionYear}</TableCell>
             <TableCell className="text-center text-xs">{stock.variety.name}</TableCell>

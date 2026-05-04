@@ -1,5 +1,32 @@
 # 작업일지
 
+## 2026-05-04
+
+### 잡곡 목록 — 일괄 fetch (B안) + §4.2.6 디자인 적용 `refactor`
+
+**배경**: 사용자 검증 — 잡곡 목록이 "각 행마다 불러오는 중"으로 느림. 원인은 단일 건 그룹 자동 펼침 useEffect가 그룹 N개마다 별도 라운드트립을 일으킨 것. 잡곡 데이터 규모가 작아 생산자 패턴(일괄 fetch)으로 전환. 동시에 Claude Design 핸드오프 §4.2 5/4 개편(primary 액센트 사용 X) 적용.
+
+**B안 — 일괄 fetch 전환**:
+- `misc-stock.ts`: `getMiscStockGroups`, `getMiscStocksByGroup` 제거(~140줄 감소). `MiscStockGroup` 타입은 클라이언트 그룹핑용으로 export 유지. `getMiscStocks`만 사용 (include: variety + farmer.group)
+- `page.tsx`: `getMiscStockGroups(filters)` → `getMiscStocks(filters)` 호출 변경, prop `initialGroups` → `initialStocks`
+- `misc-stock-panel.tsx`: prop 이름 변경, totalCount = `initialStocks.length`
+- `misc-stock-list-client.tsx`: `loadedItems`/`loadingGroups` state + `fetchGroupItems` + 단일 건 자동 펼침 useEffect 모두 제거. `useMemo`로 클라이언트 그룹핑 (서버 로직 이식, 정렬 포함). `hiddenIds` state로 삭제 즉시 반영. 단일 건은 `isMulti=false`로 항상 펼침 처리
+
+**§4.2.6 디자인 적용**:
+- 펼친 그룹 헤더 + 서브행 모두 `bg-slate-50/60` 톤으로 통일 → 한 묶음 시각화
+- `border-l-2 border-primary/40` 좌측 primary 라인 모두 제거 (PC 헤더·서브, 모바일 헤더 카드·펼침 본문)
+- 모바일 펼침 본문 컨테이너 `bg-slate-50/70` 묶음 (§4.2.7)
+- 단일 건 그룹 서브행은 `bg-white` (낱개 행 §4.2.4)
+- 인증 뱃지: 그룹 헤더 품종 셀 → 생산자 셀(`N명` 뒤)로 이동, 서브행 정렬 일치
+- `MiscStockTableRow`에 `inExpandedGroup?: boolean` prop 추가
+
+**효과**:
+- 첫 진입 라운드트립: 1번 + 단일 건 N번 자동 → **항상 1번**
+- 다중 그룹 펼침: 1번 추가 fetch → **0번 (즉시)**
+- list-client ~60줄 감소, 액션 ~140줄 감소
+
+**검증**: `npx tsc --noEmit` 통과 (에러 0). 브라우저 검수는 사용자 확인 필요.
+
 ## 2026-04-30
 
 ### 잡곡 재고관리 #5e — 잡곡 입고 수정·삭제 `feat`

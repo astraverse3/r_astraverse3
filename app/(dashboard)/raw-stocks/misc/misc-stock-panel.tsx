@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
-import type { MiscStockGroup, GetMiscStocksParams } from '@/app/actions/misc-stock'
+import type { GetMiscStocksParams } from '@/app/actions/misc-stock'
 import { AddMiscStockDialog } from './add-misc-stock-dialog'
 import { MiscStockFilters } from './misc-stock-filters'
 import { MiscStockListClient } from './misc-stock-list-client'
@@ -31,7 +31,7 @@ interface Props {
     varieties: Variety[]
     millingVendors: string[]
     sproutingVendors: string[]
-    initialGroups: MiscStockGroup[]
+    initialStocks: any[]
     filters: GetMiscStocksParams
 }
 
@@ -40,14 +40,14 @@ export function MiscStockPanel({
     varieties,
     millingVendors,
     sproutingVendors,
-    initialGroups,
+    initialStocks,
     filters,
 }: Props) {
     const { data: session } = useSession()
     // @ts-ignore
     const canStock = hasPermission(session?.user, 'STOCK_MANAGE')
 
-    const totalCount = initialGroups.reduce((acc, g) => acc + g.count, 0)
+    const totalCount = initialStocks.length
 
     return (
         <div className="grid grid-cols-1 gap-2">
@@ -68,7 +68,7 @@ export function MiscStockPanel({
 
             <ActiveMiscFilters totalCount={totalCount} varieties={varieties} />
             <MiscStockListClient
-                initialGroups={initialGroups}
+                initialStocks={initialStocks}
                 filters={filters}
                 farmers={farmers}
                 varieties={varieties}
