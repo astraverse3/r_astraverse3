@@ -2,6 +2,18 @@
 
 ## 2026-05-04
 
+### 최근 업데이트 표시에 날짜 추가 `feat`
+
+**배경**: 페이지 하단 "최근 업데이트"가 시간(`HH:mm:ss`)만 표시. 어느 날짜 업데이트인지 알 수 없는 문제.
+
+**변경**:
+- `components/last-updated.tsx`: `toLocaleTimeString('ko-KR', ...)` → `toLocaleString('sv-SE', ...)` (sv-SE locale은 ISO `YYYY-MM-DD HH:mm:ss` 형식으로 떨어짐)
+- year/month/day 옵션 추가, Asia/Seoul timeZone 유지
+
+**출력 예**: `최근 업데이트: 11:23:45` → `최근 업데이트: 2026-05-04 11:23:45`
+
+**검증**: `npx tsc --noEmit` 통과.
+
 ### 잡곡 목록 — 일괄 fetch (B안) + §4.2.6 디자인 적용 `refactor`
 
 **배경**: 사용자 검증 — 잡곡 목록이 "각 행마다 불러오는 중"으로 느림. 원인은 단일 건 그룹 자동 펼침 useEffect가 그룹 N개마다 별도 라운드트립을 일으킨 것. 잡곡 데이터 규모가 작아 생산자 패턴(일괄 fetch)으로 전환. 동시에 Claude Design 핸드오프 §4.2 5/4 개편(primary 액센트 사용 X) 적용.

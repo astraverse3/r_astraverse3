@@ -15,8 +15,12 @@ export function LastUpdated() {
         const result = await getLatestUpdateForPath(pathname);
         if (result.success && result.timestamp) {
             const date = new Date(result.timestamp);
-            setLastUpdated(date.toLocaleTimeString('ko-KR', {
+            // sv-SE는 ISO 형식(YYYY-MM-DD HH:mm:ss)으로 떨어져서 그대로 사용
+            setLastUpdated(date.toLocaleString('sv-SE', {
                 timeZone: 'Asia/Seoul',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
