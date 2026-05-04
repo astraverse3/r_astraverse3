@@ -2,6 +2,32 @@
 
 ## 2026-05-04
 
+### 잡곡 재고관리 #6b — 품종 그룹 펼침 테이블 + 모바일 카드 `feat`
+
+**배경**: #6a의 빈 셸을 핸드오프 §4.2(품종 그룹 펼침 테이블)·§4.3(모바일 2줄 카드) 스펙으로 채움. 사용자 검수에서 추가 피드백 3건 즉시 반영.
+
+**신규 파일**:
+- `app/(dashboard)/packages/package-row.tsx` — `PackageColumnHeader` / `PackageGroupRow`(헤더+서브) / `PackageSingleRow`. 7열 그리드 공유, 매입 행은 LOT 자리에 amber `매입` 칩
+- `app/(dashboard)/packages/mobile-package-card.tsx` — `MobilePackageSingleCard` / `MobilePackageGroupCard`. 모든 줄을 `grid grid-cols-[auto_1fr_auto]` 통일로 컬럼 정렬
+- `app/(dashboard)/packages/package-list-client.tsx` — 펼침 상태 (`Set<varietyId>`) + 데스크톱 테이블/모바일 리스트 분기
+
+**수정**:
+- `rice-package-panel.tsx` / `misc-package-panel.tsx`: JSON 덤프 → `PackageListClient`. 잡곡은 빈 상태 메시지/힌트 주입
+- `app/actions/packages.ts`:
+  - `PackageRow.weightPerUnit` 추가 (FIFO 정렬 키)
+  - **그룹 rows 내부는 항상 FIFO** `(weightPerUnit asc, date asc)` — 사용자 sort와 무관
+  - 상위 items 정렬용 `repDate(item)` 헬퍼 (latest=max, oldest=min)
+  - **기본 정렬: `latest` → `weight_desc`** (페이지 진입 시 큰 재고가 위)
+  - **[임시] 1달 cutoff 필터** — `source=MILLED`만 `createdAt >= 오늘 - 1개월`. 판매처리 미구현 상태에서 노출 데이터 축소용. 백로그 §13에 정식 제거 시점 기록
+
+**사용자 검수 피드백 즉시 반영**:
+- 데스크톱 서브행 첫 셀 "— 규격" 텍스트 제거 (두 번째 셀 규격과 중복) → 들여쓰기 + dash만
+- 모바일 카드 줄별 컬럼 정렬 통일
+- 그룹 내부 정렬 FIFO + 기본 정렬 `weight_desc` (사용자 의견 반영)
+- 1달 cutoff 도입(초기 2달 → 데이터 안 줄어서 1달로 단축)
+
+**검증**: `npx tsc --noEmit` 통과. 브라우저 검수 사용자 OK.
+
 ### 잡곡 재고관리 #6a — `/packages` 라우트 + 액션 셸 `feat`
 
 **배경**: #6 제품재고 페이지 신설 착수. 4커밋(#6a~d)으로 분할. #6a는 데이터 액션 + 라우트 셸(빈 패널)까지.

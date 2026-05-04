@@ -12,7 +12,7 @@ const SORT_VALUES: PackageSort[] = ['latest', 'oldest', 'weight_desc']
 function parseSort(raw: unknown): PackageSort {
     return typeof raw === 'string' && (SORT_VALUES as string[]).includes(raw)
         ? (raw as PackageSort)
-        : 'latest'
+        : 'weight_desc'
 }
 
 export default async function PackagesPage({

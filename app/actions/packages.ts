@@ -24,6 +24,7 @@ export type PackageRow = {
     varietyId: number
     variety: string
     spec: string // packageType ('5kg', '1kg', '500g', '톤백', …)
+    weightPerUnit: number // kg 단위. 그룹 내부 정렬(FIFO) 키
     qty: number // count
     producer: string // MILLED: farmer.name (+ "외 N명") / PURCHASED: purchaseVendor
     lot: string | null
@@ -84,11 +85,25 @@ export async function getPackages(
     params: GetPackagesParams,
 ): Promise<{ success: true; data: PackageItem[] } | { success: false; error: string }> {
     try {
-        const { category, varietyId, productionYear, source, sort = 'latest' } = params
+        const { category, varietyId, productionYear, source, sort = 'weight_desc' } = params
 
         // -- where 조립 --
         const where: any = { category }
         if (source) where.source = source
+
+        // [임시] 판매처리 기능 미구현 상태 — 1달 이전 도정산(MILLED)은 사실상 판매된 재고이므로 노출 제외.
+        // 매입(PURCHASED)은 적어 그대로 유지. 판매처리 도입(#9 이후) 시 이 블록 제거.
+        const cutoff = new Date()
+        cutoff.setMonth(cutoff.getMonth() - 1)
+        where.AND = [
+            ...(where.AND ?? []),
+            {
+                OR: [
+                    { source: 'PURCHASED' },
+                    { AND: [{ source: 'MILLED' }, { createdAt: { gte: cutoff } }] },
+                ],
+            },
+        ]
 
         if (varietyId) {
             const vid = parseInt(varietyId, 10)
@@ -170,6 +185,7 @@ export async function getPackages(
                 varietyId,
                 variety: varietyName,
                 spec: r.packageType,
+                weightPerUnit: r.weightPerUnit,
                 qty: r.count,
                 producer,
                 lot: r.lotNo,
@@ -193,27 +209,42 @@ export async function getPackages(
             if (list.length === 1) {
                 items.push({ type: 'single', ...list[0] })
             } else {
-                const total = list.reduce((s, r) => s + r.sub, 0)
+                // FIFO: 같은 규격끼리 묶이도록 weightPerUnit asc, 같은 규격 내에선 오래된 순(date asc)
+                // 사용자 sort 옵션은 상위 items 정렬에만 적용. 그룹 내부는 항상 FIFO 유지.
+                const sortedRows = [...list].sort(
+                    (a, b) =>
+                        a.weightPerUnit - b.weightPerUnit ||
+                        a.date.localeCompare(b.date),
+                )
+                const total = sortedRows.reduce((s, r) => s + r.sub, 0)
                 items.push({
                     type: 'group',
                     varietyId: vid,
-                    variety: list[0].variety,
+                    variety: sortedRows[0].variety,
                     total,
-                    rows: list,
+                    rows: sortedRows,
                 })
             }
         }
 
         // -- 그룹/낱개 정렬 (sort 옵션 반영) --
+        // 그룹의 대표 날짜는 sort 방향에 따라 max(latest) 또는 min(oldest)으로 산출.
+        // 그룹 rows 자체 순서는 FIFO로 고정이라 rows[0]이 항상 최신은 아님.
+        const repDate = (it: PackageItem): string => {
+            if (it.type === 'single') return it.date
+            if (sort === 'oldest') {
+                return it.rows.reduce((m, r) => (r.date < m ? r.date : m), '9999-99-99')
+            }
+            return it.rows.reduce((m, r) => (r.date > m ? r.date : m), '0000-00-00')
+        }
         items.sort((a, b) => {
             if (sort === 'weight_desc') {
                 const aw = a.type === 'group' ? a.total : a.sub
                 const bw = b.type === 'group' ? b.total : b.sub
                 return bw - aw
             }
-            // latest: 그룹은 가장 최신 행, 낱개는 자기 date 기준
-            const ad = a.type === 'group' ? a.rows[0].date : a.date
-            const bd = b.type === 'group' ? b.rows[0].date : b.date
+            const ad = repDate(a)
+            const bd = repDate(b)
             return sort === 'oldest' ? ad.localeCompare(bd) : bd.localeCompare(ad)
         })
 
