@@ -8,18 +8,22 @@ import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '
  * 같은 7열 그리드를 공유해 그룹·낱개 정렬이 어긋나지 않게 함.
  */
 
+// 컬럼 비율: 품종 / 규격 / 개수 / 생산자 / 로트 / 날짜 / 합계
+//  - 품종은 짧은 이름이 많아 1.1 → 1 로 축소
+//  - 규격(잔량/20kg/톤백 등)도 짧아 0.7 → 0.55 로 축소 → 품종과의 여백 감소
+//  - 생산자 1 → 1.1 로 확대 → 개수 셀 pr-6과 맞물려 시각적 간격 충분
 export const PKG_GRID =
-    'grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]'
+    'grid grid-cols-[1fr_0.55fr_0.6fr_1.1fr_1.2fr_0.9fr_0.9fr]'
 
 // -- 컬럼 헤더 (§4.2.3) --
 export function PackageColumnHeader() {
     return (
         <div className={`${PKG_GRID} text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-slate-50/60 border-b border-slate-200`}>
             <span>품종</span>
-            <span>규격</span>
-            <span>개수</span>
-            <span>생산자</span>
-            <span>로트</span>
+            <span className="text-right pr-2">규격</span>
+            <span className="text-right pr-12">개수</span>
+            <span className="text-center">생산자</span>
+            <span className="text-center">로트번호</span>
             <span>날짜</span>
             <span className="text-right">합계</span>
         </div>
@@ -52,10 +56,10 @@ export function PackageSingleRow({ item }: { item: PackageSingle }) {
                 <span className="w-3.5 inline-block shrink-0" />
                 <span className="truncate">{item.variety}</span>
             </span>
-            <span>{item.spec}</span>
-            <span className="tabular-nums">{item.qty.toLocaleString()}포</span>
-            <span className="text-slate-600 truncate">{item.producer}</span>
-            <span className="flex items-center">
+            <span className="text-right pr-2">{item.spec}</span>
+            <span className="tabular-nums text-right pr-12">{item.qty.toLocaleString()}개</span>
+            <span className="text-slate-600 truncate text-center">{item.producer}</span>
+            <span className="flex items-center justify-center">
                 {item.lot ? (
                     <LotChip lot={item.lot} />
                 ) : item.source === 'PURCHASED' ? (
@@ -79,10 +83,10 @@ function PackageSubRow({ row }: { row: PackageRowData }) {
             <span className="flex items-center pl-5">
                 <span className="w-2 h-px bg-slate-300 shrink-0" />
             </span>
-            <span className="font-medium text-slate-700">{row.spec}</span>
-            <span className="tabular-nums">{row.qty.toLocaleString()}포</span>
-            <span className="text-slate-600 truncate">{row.producer}</span>
-            <span className="flex items-center">
+            <span className="font-medium text-slate-700 text-right pr-2">{row.spec}</span>
+            <span className="tabular-nums text-right pr-12">{row.qty.toLocaleString()}개</span>
+            <span className="text-slate-600 truncate text-center">{row.producer}</span>
+            <span className="flex items-center justify-center">
                 {row.lot ? (
                     <LotChip lot={row.lot} />
                 ) : row.source === 'PURCHASED' ? (
@@ -124,10 +128,10 @@ export function PackageGroupRow({
                     />
                     <span className="truncate">{item.variety}</span>
                 </span>
-                <span className="text-slate-400 text-[11.5px]">{item.rows.length}종 규격</span>
-                <span className="tabular-nums text-slate-400 text-[11.5px]">{totalQty.toLocaleString()}포</span>
-                <span className="text-slate-300">—</span>
-                <span className="text-slate-300">—</span>
+                <span className="text-slate-400 text-[11.5px] text-right pr-2">{item.rows.length}종 규격</span>
+                <span className="tabular-nums text-slate-400 text-[11.5px] text-right pr-12">{totalQty.toLocaleString()}개</span>
+                <span className="text-slate-300 text-center">—</span>
+                <span className="text-slate-300 text-center">—</span>
                 <span className="text-slate-300">—</span>
                 <span className="tabular-nums font-bold text-slate-900 text-right">
                     {item.total.toLocaleString()}kg

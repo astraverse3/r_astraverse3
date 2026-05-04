@@ -2,6 +2,39 @@
 
 ## 2026-05-04
 
+### 잡곡 재고관리 #6c — 검색 다이얼로그 + 적용 필터 칩 + 정렬 옵션 `feat`
+
+**배경**: #6b 셸 위에 핸드오프 §3.4(헤더 액션)·§4.6(검색 다이얼로그) 적용. 사용자 검수 피드백 다수 즉시 반영(컬럼 정렬·간격·"외 N명" 모순 등).
+
+**신규 파일**:
+- `app/(dashboard)/packages/package-search-dialog.tsx` — 핸드오프 §4.6. 생산연도/품종(multi) + 정렬(select) + 출처(잡곡만 multi). 검색 버튼은 §3.4 신스펙대로 **항상 blue-50** + 활성 필터 카운트 배지
+- `app/(dashboard)/packages/active-package-filters.tsx` — 검색결과 N건 + 적용 필터 칩 (Badge variant outline)
+
+**수정**:
+- `app/actions/packages.ts`:
+  - `varietyId` / `productionYear` / `source` 파라미터 모두 **콤마 구분 multi-value** 지원 (`{ in: [...] }` 절 사용)
+  - producer 로직 정정: 포장은 stock에 1:1 매핑이고 lot도 그 1농가 기준이라 "외 N명" 표시는 **모순** → 단일 농가 이름만 표시. 사용처 사라진 `formatProducerForBatch` 헬퍼 제거 + `batch.stocks` Prisma include 정리
+- `rice-package-panel.tsx` / `misc-package-panel.tsx`: 검색 다이얼로그 + 적용 필터 칩 통합. 잡곡은 [+ 매입 등록]은 `bg-primary` (핸드오프 §3.4 추가 버튼 spec), [+ 포장하기]는 outline 보조
+- `page.tsx`: `getVarieties` / `getMiscVarieties` 동시 fetch (Promise.all) 후 패널에 prop 주입
+- `package-row.tsx`: 다단계 디자인 튜닝
+  - 단위 "포" → "개"
+  - 개수 컬럼 우측 정렬 + `pr-12` (생산자와 시각적 간격)
+  - 규격 컬럼 우측 정렬 (개수와 인접 표시)
+  - 생산자 / 로트 컬럼 가운데 정렬, 라벨 "로트" → "**로트번호**"
+  - 그리드 비율 `[1fr_0.55fr_0.6fr_1.1fr_1.2fr_0.9fr_0.9fr]` (품종/규격 폭 축소, 생산자 폭 확대)
+  - 서브행 첫 셀 "— 규격" 텍스트 라벨 제거 (들여쓰기 + dash만)
+- `mobile-package-card.tsx`:
+  - 단위 "포" → "개"
+  - 그룹 헤더: 메타데이터(`N종·N개`)를 합계kg 옆에 묶음 (가운데 컬럼 빈 spacer로 단일 카드와 정렬 일치)
+  - 모든 줄을 `grid grid-cols-[auto_1fr_auto]`로 통일 (#6b에서 작업)
+- `package-search-dialog.tsx`:
+  - useState/useEffect 정리: 빈 초기값 + URL 변경 시 항상 sync (SSR/CSR hydration 안전)
+  - 품종 select 폭 축소 — grid-cols-2로 출처와 짝지움 (벼는 우측 빈 자리)
+
+**정렬 옵션**: 재고량 많은순(기본) / 최신순 / 오래된순
+
+**검증**: `npx tsc --noEmit` 통과. 사용자 브라우저 검수 완료(데스크톱 + 모바일).
+
 ### 잡곡 재고관리 #6b — 품종 그룹 펼침 테이블 + 모바일 카드 `feat`
 
 **배경**: #6a의 빈 셸을 핸드오프 §4.2(품종 그룹 펼침 테이블)·§4.3(모바일 2줄 카드) 스펙으로 채움. 사용자 검수에서 추가 피드백 3건 즉시 반영.

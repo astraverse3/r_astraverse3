@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 
 import { getPackages, type GetPackagesParams, type PackageItem, type PackageSort } from '@/app/actions/packages'
+import { getVarieties } from '@/app/actions/admin'
+import { getMiscVarieties } from '@/app/actions/misc-stock'
 import { PackagesTabs, type PackageTab } from './packages-tabs'
 import { RicePackagePanel } from './rice-package-panel'
 import { MiscPackagePanel } from './misc-package-panel'
@@ -14,6 +16,9 @@ function parseSort(raw: unknown): PackageSort {
         ? (raw as PackageSort)
         : 'weight_desc'
 }
+
+const pickStr = (v: string | string[] | undefined): string | undefined =>
+    typeof v === 'string' ? v : undefined
 
 export default async function PackagesPage({
     searchParams,
@@ -46,15 +51,20 @@ async function RicePanelLoader({
 }) {
     const filters: GetPackagesParams = {
         category: 'RICE',
-        varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
-        productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
+        varietyId: pickStr(resolvedParams.varietyId),
+        productionYear: pickStr(resolvedParams.productionYear),
+        source: pickStr(resolvedParams.source),
         sort: parseSort(resolvedParams.sort),
     }
 
-    const result = await getPackages(filters)
-    const items: PackageItem[] = result.success ? result.data : []
+    const [packagesResult, varietiesResult] = await Promise.all([
+        getPackages(filters),
+        getVarieties(),
+    ])
+    const items: PackageItem[] = packagesResult.success ? packagesResult.data : []
+    const varieties = (varietiesResult.success && varietiesResult.data ? varietiesResult.data : []) as { id: number; name: string }[]
 
-    return <RicePackagePanel items={items} />
+    return <RicePackagePanel items={items} varieties={varieties} />
 }
 
 async function MiscPanelLoader({
@@ -64,13 +74,18 @@ async function MiscPanelLoader({
 }) {
     const filters: GetPackagesParams = {
         category: 'MISC_GRAIN',
-        varietyId: typeof resolvedParams.varietyId === 'string' ? resolvedParams.varietyId : undefined,
-        productionYear: typeof resolvedParams.productionYear === 'string' ? resolvedParams.productionYear : undefined,
+        varietyId: pickStr(resolvedParams.varietyId),
+        productionYear: pickStr(resolvedParams.productionYear),
+        source: pickStr(resolvedParams.source),
         sort: parseSort(resolvedParams.sort),
     }
 
-    const result = await getPackages(filters)
-    const items: PackageItem[] = result.success ? result.data : []
+    const [packagesResult, varietiesResult] = await Promise.all([
+        getPackages(filters),
+        getMiscVarieties(),
+    ])
+    const items: PackageItem[] = packagesResult.success ? packagesResult.data : []
+    const varieties = (varietiesResult.success && varietiesResult.data ? varietiesResult.data : []) as { id: number; name: string }[]
 
-    return <MiscPackagePanel items={items} />
+    return <MiscPackagePanel items={items} varieties={varieties} />
 }

@@ -51,9 +51,12 @@ export type PackageSort = 'latest' | 'oldest' | 'weight_desc'
 
 export interface GetPackagesParams {
     category: PackageCategory
+    /** 콤마 구분 다중값 가능 (예: "1,2,3") */
     varietyId?: string
+    /** 콤마 구분 다중값 가능 (예: "2025,2024") */
     productionYear?: string
-    source?: PackageSource
+    /** 콤마 구분 다중값 가능 (예: "MILLED,PURCHASED") */
+    source?: string
     sort?: PackageSort
 }
 
@@ -68,15 +71,6 @@ const toIsoDate = (d: Date): string => {
     return `${y}-${m}-${day}`
 }
 
-const formatProducerForBatch = (
-    primary: { name: string } | null,
-    batchStocksCount: number,
-): string => {
-    if (!primary) return '—'
-    if (batchStocksCount > 1) return `${primary.name} 외 ${batchStocksCount - 1}명`
-    return primary.name
-}
-
 // -----------------------------
 // 메인 조회
 // -----------------------------
@@ -87,9 +81,15 @@ export async function getPackages(
     try {
         const { category, varietyId, productionYear, source, sort = 'weight_desc' } = params
 
+        const splitMulti = (s: string | undefined): string[] =>
+            s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
+
         // -- where 조립 --
         const where: any = { category }
-        if (source) where.source = source
+
+        const sourceList = splitMulti(source).filter((s): s is PackageSource => s === 'MILLED' || s === 'PURCHASED')
+        if (sourceList.length === 1) where.source = sourceList[0]
+        else if (sourceList.length > 1) where.source = { in: sourceList }
 
         // [임시] 판매처리 기능 미구현 상태 — 1달 이전 도정산(MILLED)은 사실상 판매된 재고이므로 노출 제외.
         // 매입(PURCHASED)은 적어 그대로 유지. 판매처리 도입(#9 이후) 시 이 블록 제거.
@@ -105,31 +105,35 @@ export async function getPackages(
             },
         ]
 
-        if (varietyId) {
-            const vid = parseInt(varietyId, 10)
-            if (!Number.isNaN(vid)) {
-                // MILLED는 stock.varietyId, PURCHASED는 자기 varietyId — OR로 둘 다 수용
-                where.OR = [
-                    { varietyId: vid },
-                    { stock: { varietyId: vid } },
-                ]
-            }
+        const varietyIdList = splitMulti(varietyId)
+            .map(v => parseInt(v, 10))
+            .filter(n => !Number.isNaN(n))
+        if (varietyIdList.length > 0) {
+            where.AND = [
+                ...(where.AND ?? []),
+                {
+                    OR: [
+                        { varietyId: { in: varietyIdList } },
+                        { stock: { varietyId: { in: varietyIdList } } },
+                    ],
+                },
+            ]
         }
 
-        if (productionYear) {
-            const py = parseInt(productionYear, 10)
-            if (!Number.isNaN(py)) {
-                where.AND = [
-                    ...(where.AND ?? []),
-                    {
-                        OR: [
-                            { stock: { productionYear: py } },
-                            // PURCHASED는 productionYear 개념 없음 → incomingDate 연도 비교
-                            { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
-                        ],
-                    },
-                ]
-            }
+        const yearList = splitMulti(productionYear)
+            .map(y => parseInt(y, 10))
+            .filter(n => !Number.isNaN(n))
+        if (yearList.length > 0) {
+            where.AND = [
+                ...(where.AND ?? []),
+                {
+                    OR: yearList.flatMap(py => [
+                        { stock: { productionYear: py } },
+                        // PURCHASED는 productionYear 개념 없음 → incomingDate 연도 비교
+                        { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
+                    ]),
+                },
+            ]
         }
 
         // 정렬은 1차 DB orderBy. weight_desc는 행 단위 정렬이라 group total 정렬은 후처리.
@@ -150,7 +154,6 @@ export async function getPackages(
                         farmer: { select: { name: true } },
                     },
                 },
-                batch: { include: { stocks: { select: { id: true } } } },
             },
             orderBy,
         })
@@ -164,15 +167,13 @@ export async function getPackages(
                 r.variety?.name ?? r.stock?.variety.name ?? '—'
 
             // producer 추출
-            let producer: string
-            if (r.source === 'PURCHASED') {
-                producer = r.purchaseVendor ?? '—'
-            } else {
-                producer = formatProducerForBatch(
-                    r.stock?.farmer ?? null,
-                    r.batch?.stocks.length ?? 1,
-                )
-            }
+            //  - PURCHASED: 매입처
+            //  - MILLED: 포장은 stock 단위로 1:1 매핑이라 1명의 농가만 (lot도 그 농가 기준 생성).
+            //    다농장 배치라도 각 포장은 어느 한 stock에 묶여 있음 — "외 N명" 표시는 부정확
+            const producer: string =
+                r.source === 'PURCHASED'
+                    ? r.purchaseVendor ?? '—'
+                    : r.stock?.farmer.name ?? '—'
 
             // 표시용 날짜: PURCHASED는 incomingDate, MILLED는 createdAt
             const date =

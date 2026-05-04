@@ -41,7 +41,7 @@ function RowDetail({ row }: { row: PackageRowData }) {
         <div className="flex flex-col gap-1 px-3 py-2 bg-white border border-slate-200/80 rounded-md">
             <div className={`${ROW_GRID} text-[12.5px]`}>
                 <span className="font-bold text-slate-900 shrink-0">
-                    {row.spec} × <span className="tabular-nums">{row.qty}</span>포
+                    {row.spec} × <span className="tabular-nums">{row.qty}</span>개
                 </span>
                 <span className="text-slate-600 truncate min-w-0">{row.producer}</span>
                 <span className="font-bold text-slate-900 tabular-nums">
@@ -74,7 +74,7 @@ export function MobilePackageSingleCard({ item }: { item: PackageSingle }) {
             {/* 본문 1: 규격×수량 / 생산자 / (빈) */}
             <div className={`${ROW_GRID} text-[12px] text-slate-700`}>
                 <span className="shrink-0">
-                    {item.spec} × <span className="tabular-nums">{item.qty}</span>포
+                    {item.spec} × <span className="tabular-nums">{item.qty}</span>개
                 </span>
                 <span className="text-slate-600 truncate min-w-0">{item.producer}</span>
                 <span />
@@ -120,11 +120,15 @@ export function MobilePackageGroupCard({
                         {item.variety}
                     </span>
                 </span>
-                <span className="text-[11.5px] text-slate-500 tabular-nums truncate text-right min-w-0">
-                    {item.rows.length}종 · {totalQty.toLocaleString()}포
-                </span>
-                <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
-                    {item.total.toLocaleString()}kg
+                {/* 가운데는 비워 single 카드와 컬럼 정렬 일치. 메타데이터는 합계 옆으로 */}
+                <span />
+                <span className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11.5px] text-slate-500 tabular-nums">
+                        {item.rows.length}종 · {totalQty.toLocaleString()}개
+                    </span>
+                    <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
+                        {item.total.toLocaleString()}kg
+                    </span>
                 </span>
             </button>
 
