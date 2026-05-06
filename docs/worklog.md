@@ -2,6 +2,46 @@
 
 ## 2026-05-06
 
+### 잡곡 재고관리 #7c — 잡곡 포장 수정·삭제 + 행 액션 메뉴 `feat`
+
+**배경**: #7b로 등록까지는 가능해진 잡곡 포장의 정정 흐름 추가. "포장 자체가 없었던 것으로 되돌림" — 수정 시 stock 한도 재검증, 삭제 시 stock 잔량/status 복원.
+
+**Server Action** (`app/actions/packages.ts`):
+- `getMiscPackageEditContext(id)` — 수정 다이얼로그 prefill용. stockWeightKg + otherSum 산출
+- `updateMiscPackage(id, input)` — zod + 트랜잭션. 같은 stock 다른 포장 합 + 새 totalWeight ≤ stock.weightKg 검증 → update → status 재평가(0이면 CONSUMED, 양수면 AVAILABLE 복원). 동시성 가드는 status 분기 둘 다 조건부 updateMany
+- `deleteMiscPackage(id)` — 트랜잭션. delete → MILLED는 `status='CONSUMED' → 'AVAILABLE'` 조건부 복원. PURCHASED는 단순 delete (stock 참조 없음)
+- 본 #7c는 MILLED만 활성. PURCHASED 수정 폼은 #8 매입 다이얼로그와 함께
+
+**수정 다이얼로그** (`edit-misc-package-dialog.tsx` 신규):
+- open 시 `getMiscPackageEditContext` lazy fetch + prefill ("불러오는 중…" 표시)
+- 포장단위 7칸 그리드 + 기타 직접입력 (등록 다이얼로그와 동일 셋)
+- 한도 미리보기 박스: `원물 NN kg − 다른 포장 MM kg = 한도 LL kg`. 초과 시 빨간색 + 저장 비활성
+
+**행 액션 메뉴** (`package-row.tsx` / `mobile-package-card.tsx`):
+- 그리드에 8번째 액션 컬럼(36px 고정) 추가. `PKG_GRID` 업데이트
+- `PackageRowActions { onEdit, onDelete }` 콜백 prop 흐름: panel → list-client → row → `RowActionMenu`
+- 콜백 없으면 메뉴 자체 안 그림 → **벼 탭 자동 비활성** (도정관리 정책 유지)
+- PURCHASED는 메뉴 항목 `disabled` + 툴팁 "매입 행 수정/삭제는 #8에서"
+- 그룹 헤더 메뉴는 빈 셀(그룹 단위 액션은 의미 X), 펼친 서브행에만 노출
+- 모바일 카드: 우측 상단 합계 옆에 `MoreVertical` 미니 버튼
+
+**잡곡 패널** (`misc-package-panel.tsx`):
+- `handleEditRow(row)` → `EditMiscPackageDialog` 마운트
+- `handleDeleteRow(row)` → `confirm` 다이얼로그 → 액션 호출 → router.refresh()
+- MILLED 외(`PURCHASED`)는 가드 조건으로 함수 자체 early return
+
+**관련 메모 (백로그·plan)**:
+- 백로그 §14 신설: 비판매 차감 처리(증정/분실/파손). 본 #7 범위 외 — **#9 판매처리와 통합 설계** (PackageMovement 같은 일반화 모델 추천). 사용자 결정 (2026-05-06)
+- 백로그 §15 신설: 페이지별 추가 액션 버튼 색상 통일성 검토 — 디자인 시스템 단위 후속
+- plan-#7.md §부록: 본 단계 범위 제외 항목 (차감 처리) 명시
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 신규 lint 오류 0건 (기존 any/`@ts-ignore`, react-hooks/set-state-in-effect 잔존만)
+- 브라우저 검증: 수정/삭제 동작, status 복원, 벼 탭 메뉴 비표시, PURCHASED disabled 모두 사용자 확인 완료
+
+---
+
 ### 잡곡 재고관리 #7b — 잡곡 포장 다이얼로그 본구현 `feat`
 
 **배경**: #7a에서 자리만 두었던 포장 트리거를 본 다이얼로그로 활성화. 양쪽 진입점(원물재고 행 / 제품재고 헤더) 공유.

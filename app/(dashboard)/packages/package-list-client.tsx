@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { Inbox } from 'lucide-react'
-import type { PackageItem } from '@/app/actions/packages'
+import type { PackageItem, PackageRow as PackageRowData } from '@/app/actions/packages'
 import {
     PackageColumnHeader,
     PackageGroupRow,
     PackageSingleRow,
+    type PackageRowActions,
 } from './package-row'
 import {
     MobilePackageGroupCard,
@@ -17,6 +18,9 @@ interface Props {
     items: PackageItem[]
     emptyMessage?: string
     emptyHint?: string
+    /** 행 액션 콜백 — 미전달 시 메뉴 안 보임 (벼 탭은 미전달, 잡곡 탭은 전달) */
+    onEditRow?: (row: PackageRowData) => void
+    onDeleteRow?: (row: PackageRowData) => void
 }
 
 /**
@@ -24,8 +28,10 @@ interface Props {
  *  - 그룹 펼침 상태는 varietyId 기준 Set으로 관리
  *  - 빈 상태 메시지/힌트는 props로 주입 (벼/잡곡 패널이 컨텍스트 다르게 줌)
  */
-export function PackageListClient({ items, emptyMessage, emptyHint }: Props) {
+export function PackageListClient({ items, emptyMessage, emptyHint, onEditRow, onDeleteRow }: Props) {
     const [openGroups, setOpenGroups] = useState<Set<number>>(new Set())
+    const actions: PackageRowActions | undefined =
+        onEditRow || onDeleteRow ? { onEdit: onEditRow, onDelete: onDeleteRow } : undefined
 
     const toggle = (varietyId: number) => {
         setOpenGroups(prev => {
@@ -61,11 +67,13 @@ export function PackageListClient({ items, emptyMessage, emptyHint }: Props) {
                             item={item}
                             isOpen={openGroups.has(item.varietyId)}
                             onToggle={() => toggle(item.varietyId)}
+                            actions={actions}
                         />
                     ) : (
                         <MobilePackageSingleCard
                             key={`s-${item.id}`}
                             item={item}
+                            actions={actions}
                         />
                     ),
                 )}
@@ -82,9 +90,10 @@ export function PackageListClient({ items, emptyMessage, emptyHint }: Props) {
                                 item={item}
                                 isOpen={openGroups.has(item.varietyId)}
                                 onToggle={() => toggle(item.varietyId)}
+                                actions={actions}
                             />
                         ) : (
-                            <PackageSingleRow key={`s-${item.id}`} item={item} />
+                            <PackageSingleRow key={`s-${item.id}`} item={item} actions={actions} />
                         ),
                     )}
                 </div>

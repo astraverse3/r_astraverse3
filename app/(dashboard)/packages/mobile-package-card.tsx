@@ -1,7 +1,15 @@
 'use client'
 
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '@/app/actions/packages'
+import type { PackageRowActions } from './package-row'
 
 /**
  * 모바일 품종 카드 — 핸드오프 §4.3 + §4.2.7.
@@ -35,8 +43,41 @@ function LotOrSourceCell({ lot, source }: { lot: string | null; source: PackageR
     return <span className="text-[10px] text-slate-300">—</span>
 }
 
+// 모바일 행 액션 메뉴 — 콜백/source 분기. PURCHASED는 #8과 함께.
+function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
+    if (!actions || (!actions.onEdit && !actions.onDelete)) return null
+    const purchased = row.source === 'PURCHASED'
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 text-slate-400 hover:text-slate-600 shrink-0">
+                    <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[120px]">
+                <DropdownMenuItem
+                    onClick={() => actions.onEdit?.(row)}
+                    disabled={purchased || !actions.onEdit}
+                    className="gap-2 cursor-pointer"
+                >
+                    <Pencil className="h-4 w-4 text-slate-500" />
+                    <span>수정</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() => actions.onDelete?.(row)}
+                    disabled={purchased || !actions.onDelete}
+                    className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                >
+                    <Trash2 className="h-4 w-4" />
+                    <span>삭제</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
 // 펼친 그룹의 한 서브 카드 (§4.2.7) — 2줄, 3-col grid
-function RowDetail({ row }: { row: PackageRowData }) {
+function RowDetail({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
     return (
         <div className="flex flex-col gap-1 px-3 py-2 bg-white border border-slate-200/80 rounded-md">
             <div className={`${ROW_GRID} text-[12.5px]`}>
@@ -44,8 +85,11 @@ function RowDetail({ row }: { row: PackageRowData }) {
                     {row.spec} × <span className="tabular-nums">{row.qty}</span>개
                 </span>
                 <span className="text-slate-600 truncate min-w-0">{row.producer}</span>
-                <span className="font-bold text-slate-900 tabular-nums">
-                    {row.sub.toLocaleString()}kg
+                <span className="flex items-center gap-1 justify-end">
+                    <span className="font-bold text-slate-900 tabular-nums">
+                        {row.sub.toLocaleString()}kg
+                    </span>
+                    <RowActionMenu row={row} actions={actions} />
                 </span>
             </div>
             <div className={ROW_GRID}>
@@ -57,18 +101,22 @@ function RowDetail({ row }: { row: PackageRowData }) {
     )
 }
 
-// 낱개 카드 (§4.2.4) — 헤더(품종+합계) 1줄 + 본문 2줄을 모두 같은 3-col grid로 정렬
-export function MobilePackageSingleCard({ item }: { item: PackageSingle }) {
+// 낱개 카드 — 헤더(품종+합계) 1줄 + 본문 2줄을 모두 같은 3-col grid로 정렬
+export function MobilePackageSingleCard({ item, actions }: { item: PackageSingle; actions?: PackageRowActions }) {
+    const row: PackageRowData = item
     return (
         <div className="flex flex-col gap-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg">
-            {/* 헤더: 품종 + 합계 (좌/중/우 grid에서 좌·우만 사용) */}
+            {/* 헤더: 품종 + 합계+메뉴 */}
             <div className={ROW_GRID}>
                 <span className="text-[13px] font-bold text-slate-900 truncate">
                     {item.variety}
                 </span>
                 <span />
-                <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
-                    {item.sub.toLocaleString()}kg
+                <span className="flex items-center gap-1 justify-end">
+                    <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
+                        {item.sub.toLocaleString()}kg
+                    </span>
+                    <RowActionMenu row={row} actions={actions} />
                 </span>
             </div>
             {/* 본문 1: 규격×수량 / 생산자 / (빈) */}
@@ -94,10 +142,12 @@ export function MobilePackageGroupCard({
     item,
     isOpen,
     onToggle,
+    actions,
 }: {
     item: PackageGroup
     isOpen: boolean
     onToggle: () => void
+    actions?: PackageRowActions
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
 
@@ -135,7 +185,7 @@ export function MobilePackageGroupCard({
             {isOpen && (
                 <div className="flex flex-col gap-1.5 px-2 pb-2">
                     {item.rows.map(row => (
-                        <RowDetail key={row.id} row={row} />
+                        <RowDetail key={row.id} row={row} actions={actions} />
                     ))}
                 </div>
             )}

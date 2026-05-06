@@ -1,18 +1,33 @@
 'use client'
 
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '@/app/actions/packages'
 
 /**
- * 그룹 헤더 + 펼침 서브행 / 낱개 행 — 핸드오프 §4.2.3~§4.2.6 스펙.
- * 같은 7열 그리드를 공유해 그룹·낱개 정렬이 어긋나지 않게 함.
+ * 그룹 헤더 + 펼침 서브행 / 낱개 행.
+ * 같은 그리드를 공유해 그룹·낱개 정렬이 어긋나지 않게 함.
  */
 
-// 컬럼 비율: 품종 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자
+// 컬럼 비율: 품종 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자 / 액션
 //  - 사용자 결정 순서 (핸드오프 §4.2.3 대비 순서·라벨 재정의)
-//  - 잡곡/벼 모두 품종·생산자 데이터가 짧아 좌측 두 셀 압축, lot에 폭 부여
+//  - 액션 셀(36px 고정): 콜백 prop이 있을 때만 메뉴 노출 (벼 탭은 콜백 미전달 → 빈 셀)
 export const PKG_GRID =
-    'grid grid-cols-[0.7fr_0.85fr_1.5fr_0.55fr_0.6fr_0.9fr_0.85fr]'
+    'grid grid-cols-[0.7fr_0.85fr_1.5fr_0.55fr_0.6fr_0.9fr_0.85fr_36px]'
+
+// 행 액션 콜백 — 콜백 흐름: panel → list-client → row.
+// 콜백 없으면 메뉴 안 보임 (벼 탭).
+// PURCHASED 행은 #8 매입 다이얼로그와 함께 처리 → 본 #7c는 source='MILLED'만 활성
+export interface PackageRowActions {
+    onEdit?: (row: PackageRowData) => void
+    onDelete?: (row: PackageRowData) => void
+}
 
 // -- 컬럼 헤더 (정렬은 데이터 셀과 동일) --
 export function PackageColumnHeader() {
@@ -25,7 +40,51 @@ export function PackageColumnHeader() {
             <span className="text-right pr-12">개수</span>
             <span className="text-right">총량</span>
             <span className="text-right">포장일자</span>
+            <span></span>
         </div>
+    )
+}
+
+// 행 액션 메뉴 — 콜백/source 분기. 콜백 없으면 빈 셀 반환.
+function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
+    if (!actions || (!actions.onEdit && !actions.onDelete)) {
+        return <span />
+    }
+    // PURCHASED는 #8과 함께 처리 — 본 #7c는 MILLED만 활성. PURCHASED는 비활성 표시.
+    const purchased = row.source === 'PURCHASED'
+    return (
+        <span className="flex items-center justify-center">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                        title={purchased ? '매입 행 수정/삭제는 #8에서 활성화' : undefined}
+                    >
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[120px]">
+                    <DropdownMenuItem
+                        onClick={() => actions.onEdit?.(row)}
+                        disabled={purchased || !actions.onEdit}
+                        className="gap-2 cursor-pointer"
+                    >
+                        <Pencil className="h-4 w-4 text-slate-500" />
+                        <span>수정</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={() => actions.onDelete?.(row)}
+                        disabled={purchased || !actions.onDelete}
+                        className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                        <span>삭제</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </span>
     )
 }
 
@@ -48,8 +107,10 @@ function LotChip({ lot }: { lot: string }) {
 }
 
 // -- 낱개 행 --
-// 셀 순서: 품종 / 생산자 / 로트 / 규격 / 개수 / 총량 / 포장일자
-export function PackageSingleRow({ item }: { item: PackageSingle }) {
+// 셀 순서: 품종 / 생산자 / 로트 / 규격 / 개수 / 총량 / 포장일자 / 액션
+export function PackageSingleRow({ item, actions }: { item: PackageSingle; actions?: PackageRowActions }) {
+    // PackageSingle은 PackageRow + { type: 'single' } 형태 — 액션 메뉴엔 row 형식만 필요
+    const row: PackageRowData = item
     return (
         <div className={`${PKG_GRID} text-[12.5px] text-slate-700 px-4 py-2.5 items-center hover:bg-slate-50/70`}>
             <span className="font-semibold text-slate-900 flex items-center gap-2 truncate">
@@ -72,12 +133,13 @@ export function PackageSingleRow({ item }: { item: PackageSingle }) {
                 {item.sub.toLocaleString()}kg
             </span>
             <span className="text-slate-500 tabular-nums text-right">{item.date}</span>
+            <RowActionMenu row={row} actions={actions} />
         </div>
     )
 }
 
 // -- 서브행 (group 펼침 시) --
-function PackageSubRow({ row }: { row: PackageRowData }) {
+function PackageSubRow({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
     return (
         <div className={`${PKG_GRID} text-[12.5px] text-slate-600 px-4 py-2 items-center border-t border-slate-200/60`}>
             <span className="flex items-center pl-5">
@@ -99,6 +161,7 @@ function PackageSubRow({ row }: { row: PackageRowData }) {
                 {row.sub.toLocaleString()}kg
             </span>
             <span className="text-slate-500 tabular-nums text-right">{row.date}</span>
+            <RowActionMenu row={row} actions={actions} />
         </div>
     )
 }
@@ -108,10 +171,12 @@ export function PackageGroupRow({
     item,
     isOpen,
     onToggle,
+    actions,
 }: {
     item: PackageGroup
     isOpen: boolean
     onToggle: () => void
+    actions?: PackageRowActions
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
 
@@ -136,10 +201,11 @@ export function PackageGroupRow({
                     {item.total.toLocaleString()}kg
                 </span>
                 <span className="text-slate-300 text-right">—</span>
+                <span></span>
             </button>
 
             {isOpen &&
-                item.rows.map(row => <PackageSubRow key={row.id} row={row} />)}
+                item.rows.map(row => <PackageSubRow key={row.id} row={row} actions={actions} />)}
         </div>
     )
 }

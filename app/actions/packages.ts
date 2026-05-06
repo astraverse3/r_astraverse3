@@ -425,6 +425,245 @@ export async function createMiscPackage(
 }
 
 // -----------------------------
+// 잡곡 포장 — 수정 컨텍스트 조회 (다이얼로그 prefill용, #7c)
+// -----------------------------
+
+export interface MiscPackageEditContext {
+    id: number
+    variety: string
+    producer: string
+    packageType: string
+    weightPerUnit: number
+    count: number
+    /** 원물 stock 총중량 */
+    stockWeightKg: number
+    /** 같은 stock의 다른 포장 합 (자기 제외) — 본 행 수정 한도 = stockWeightKg - otherSum */
+    otherSum: number
+}
+
+export async function getMiscPackageEditContext(
+    id: number,
+): Promise<{ success: true; data: MiscPackageEditContext } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const pkg = await prisma.millingOutputPackage.findUnique({
+            where: { id },
+            include: {
+                stock: {
+                    include: {
+                        variety: { select: { name: true } },
+                        farmer: { select: { name: true } },
+                        outputPackages: { select: { id: true, totalWeight: true } },
+                    },
+                },
+            },
+        })
+        if (!pkg) return { success: false, error: '포장을 찾을 수 없습니다.' }
+        if (pkg.category !== 'MISC_GRAIN') return { success: false, error: '잡곡 포장이 아닙니다.' }
+        if (pkg.source !== 'MILLED' || !pkg.stock) {
+            return { success: false, error: '도정산 포장만 본 화면에서 수정할 수 있습니다.' }
+        }
+        const otherSum = pkg.stock.outputPackages
+            .filter(p => p.id !== id)
+            .reduce((s, p) => s + p.totalWeight, 0)
+        return {
+            success: true,
+            data: {
+                id: pkg.id,
+                variety: pkg.stock.variety.name,
+                producer: pkg.stock.farmer.name,
+                packageType: pkg.packageType,
+                weightPerUnit: pkg.weightPerUnit,
+                count: pkg.count,
+                stockWeightKg: pkg.stock.weightKg,
+                otherSum,
+            },
+        }
+    } catch (error) {
+        console.error('[getMiscPackageEditContext] failed:', error)
+        return { success: false, error: '컨텍스트 조회에 실패했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 포장 — 수정 (#7c)
+// -----------------------------
+
+const UpdateMiscPackageSchema = z.object({
+    packageType: z.string().min(1).max(20),
+    weightPerUnit: z.number().positive(),
+    count: z.number().int().positive(),
+})
+
+export type UpdateMiscPackageInput = z.infer<typeof UpdateMiscPackageSchema>
+
+/**
+ * 잡곡 포장 수정 (MILLED 전용 — PURCHASED는 #8 매입 다이얼로그와 함께).
+ *  - 변경 가능 필드: packageType, weightPerUnit, count (totalWeight = wpu × count 자동 산출)
+ *  - 트랜잭션: 같은 stock 내 다른 포장 합 + 새 totalWeight ≤ stock.weightKg 검증 → update → status 재평가
+ *  - 동시성: status 분기는 둘 다 조건부 updateMany (이전 status에 따라 매칭되는 케이스만 갱신)
+ */
+export async function updateMiscPackage(
+    id: number,
+    input: UpdateMiscPackageInput,
+): Promise<{ success: true } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const data = UpdateMiscPackageSchema.parse(input)
+        const newTotalWeight = +(data.weightPerUnit * data.count).toFixed(3)
+
+        await prisma.$transaction(async (tx) => {
+            const pkg = await tx.millingOutputPackage.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    source: true,
+                    category: true,
+                    stockId: true,
+                    totalWeight: true,
+                },
+            })
+            if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
+            if (pkg.category !== 'MISC_GRAIN') throw new Error('잡곡 포장이 아닙니다.')
+            if (pkg.source !== 'MILLED') throw new Error('도정산 포장만 본 화면에서 수정할 수 있습니다.')
+            if (pkg.stockId == null) throw new Error('연결된 원물재고가 없습니다.')
+
+            const stock = await tx.stock.findUnique({
+                where: { id: pkg.stockId },
+                include: {
+                    variety: { select: { name: true } },
+                    outputPackages: { select: { id: true, totalWeight: true } },
+                },
+            })
+            if (!stock) throw new Error('원물재고를 찾을 수 없습니다.')
+
+            // 본 행 제외한 다른 포장 합
+            const otherSum = stock.outputPackages
+                .filter(p => p.id !== id)
+                .reduce((s, p) => s + p.totalWeight, 0)
+            const limit = stock.weightKg - otherSum
+            if (newTotalWeight - limit > EPSILON_KG) {
+                throw new Error(`수정 가능 한도(${limit.toFixed(2)}kg)를 초과했습니다.`)
+            }
+
+            await tx.millingOutputPackage.update({
+                where: { id },
+                data: {
+                    packageType: data.packageType,
+                    weightPerUnit: data.weightPerUnit,
+                    count: data.count,
+                    totalWeight: newTotalWeight,
+                },
+            })
+
+            // status 재평가: 새 잔량 = stock.weightKg - (otherSum + newTotalWeight)
+            const newRemaining = limit - newTotalWeight
+            if (newRemaining <= EPSILON_KG) {
+                await tx.stock.updateMany({
+                    where: { id: stock.id, status: 'AVAILABLE' },
+                    data: { status: 'CONSUMED' },
+                })
+            } else {
+                // 잔량 양수면 AVAILABLE로 복원 (이전 CONSUMED였더라도)
+                await tx.stock.updateMany({
+                    where: { id: stock.id, status: 'CONSUMED' },
+                    data: { status: 'AVAILABLE' },
+                })
+            }
+
+            return { varietyName: stock.variety.name }
+        })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'MillingOutputPackage',
+            entityId: id,
+            details: { ...data, totalWeight: newTotalWeight },
+            description: `잡곡 포장 수정: ${data.packageType} × ${data.count}개 (${newTotalWeight}kg)`,
+        })
+
+        revalidatePath('/raw-stocks')
+        revalidatePath('/packages')
+        revalidatePath('/')
+
+        return { success: true }
+    } catch (error) {
+        console.error('[updateMiscPackage] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '포장 수정에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
+// 잡곡 포장 — 삭제 (#7c)
+// -----------------------------
+
+/**
+ * 잡곡 포장 삭제 — 정정 용도.
+ *  - "포장이 없었던 것으로 되돌림" — MILLED는 stock 잔량 복구 + status 재평가
+ *  - 비판매 차감(증정/분실/파손)은 본 함수와 의미 다름 → 백로그 §14 (#9 판매처리와 통합 설계)
+ *  - PURCHASED는 stock 참조 없어 단순 delete (단, 본 #7c는 MILLED만 — PURCHASED는 #8과 함께)
+ */
+export async function deleteMiscPackage(
+    id: number,
+): Promise<{ success: true } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const audit = await prisma.$transaction(async (tx) => {
+            const pkg = await tx.millingOutputPackage.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    source: true,
+                    category: true,
+                    stockId: true,
+                    packageType: true,
+                    count: true,
+                    totalWeight: true,
+                    stock: { select: { variety: { select: { name: true } } } },
+                },
+            })
+            if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
+            if (pkg.category !== 'MISC_GRAIN') throw new Error('잡곡 포장이 아닙니다.')
+
+            await tx.millingOutputPackage.delete({ where: { id } })
+
+            // MILLED만 stock status 재평가 (PURCHASED는 stock 참조 없음)
+            if (pkg.source === 'MILLED' && pkg.stockId != null) {
+                // 삭제 후 잔량 양수면 AVAILABLE 복원 (이전 CONSUMED였을 가능성)
+                await tx.stock.updateMany({
+                    where: { id: pkg.stockId, status: 'CONSUMED' },
+                    data: { status: 'AVAILABLE' },
+                })
+            }
+
+            return {
+                varietyName: pkg.stock?.variety.name ?? '-',
+                packageType: pkg.packageType,
+                count: pkg.count,
+                totalWeight: pkg.totalWeight,
+            }
+        })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'MillingOutputPackage',
+            entityId: id,
+            details: audit,
+            description: `잡곡 포장 삭제: ${audit.varietyName} ${audit.packageType} × ${audit.count}개 (${audit.totalWeight}kg)`,
+        })
+
+        revalidatePath('/raw-stocks')
+        revalidatePath('/packages')
+        revalidatePath('/')
+
+        return { success: true }
+    } catch (error) {
+        console.error('[deleteMiscPackage] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '포장 삭제에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
 // 매입처 distinct (잡곡 매입 다이얼로그 자동완성용 — #8에서 사용)
 // -----------------------------
 
