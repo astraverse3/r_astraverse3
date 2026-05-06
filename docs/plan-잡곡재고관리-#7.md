@@ -181,6 +181,15 @@ const PACKAGE_TEMPLATES_MISC = [
 
 ## 5. 단계별 작업 (커밋 단위)
 
+### 진행 현황 (2026-05-06)
+- ✅ #7a (`3390363`)
+- ✅ 제품재고 컬럼 정리 (`c12dcae`) — 본 #7 흐름에서 별도 style 커밋
+- ✅ #7b (`56db3aa`)
+- ✅ #7c (`afd39da`)
+- 🟡 #7d — 잔여 항목 (아래 §#7d 참조)
+
+---
+
 ### #7a — 컬럼 정리 + 재고 노출 + 액션 셸
 - `getMiscStocks` 반환에 `remainingKg` 포함, 그룹에 `remainingTotal` 포함
 - 원물재고 잡곡 컬럼 정리:
@@ -206,12 +215,23 @@ const PACKAGE_TEMPLATES_MISC = [
 - **검증**: CONSUMED 된 stock의 포장 1건 삭제 → status AVAILABLE 복원. 수정으로 totalWeight 늘려 stock 한계 초과 시 차단
 
 ### #7d — 권한·동시성·UX 마무리
-- `STOCK_MANAGE` 가드 (3 액션·UI)
-- 동시성 — 트랜잭션 내부 재검증
-- 모바일 다이얼로그 fit 점검
-- revalidatePath: `/raw-stocks` + `/packages` + `/`
-- audit log (생성·수정·삭제 모두)
-- **검증**: 동시 충돌 시 후행 실패. 권한 없는 사용자는 메뉴 비노출
+
+**현재까지 진행 (#7a~c에서 자연스럽게 처리된 부분)**
+- ✅ 동시성 — 트랜잭션 내부 재검증 + status 조건부 update (createMisc/update/delete 모두)
+- ✅ revalidatePath 3개 경로 — `/raw-stocks`, `/packages`, `/`
+- ✅ audit log — 생성·수정·삭제 모두
+
+**잔여 항목 (다음 세션 재개 지점)**
+- 🟡 모바일 다이얼로그 fit 검수
+  - `misc-package-dialog.tsx` (등록), `edit-misc-package-dialog.tsx` (수정) 두 다이얼로그
+  - 모바일 viewport에서 stock 카드 목록 max-h, 키보드 가림, 포장단위 그리드 2열 정상 동작 확인
+  - **참고**: 백로그 §16에 벼 포장 다이얼로그 모바일 짤림 이슈 있음 — 같은 패턴 검토 필요할 수도
+- 🟡 권한 정책 결정 — `STOCK_MANAGE` 단독 vs `PACKAGE_MANAGE` 분리
+  - 현재 `requireSession`만 적용(잡곡 misc-stock 액션과 일관성). 명시 권한 가드는 미적용
+  - 결정: **#9.5 권한 체계 정리 단계에서 일괄 처리** — 본 #7d 단독으로 권한 분리만 하면 다른 신규 화면(매입·판매)과 정책 일관성 깨질 수 있음
+  - 본 #7d는 권한 정책 **확정 메모만** 본 plan에 추가 → 실제 가드 코드는 #9.5에서
+
+**검증**: 모바일 다이얼로그 사용 시 잘림·깜빡임 없음, 키보드 입력 시 인풋이 가려지지 않음
 
 ---
 
