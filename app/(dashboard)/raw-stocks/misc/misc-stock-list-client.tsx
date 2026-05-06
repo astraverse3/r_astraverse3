@@ -82,6 +82,7 @@ export function MiscStockListClient({
                     variety,
                     certType,
                     totalWeight: 0,
+                    remainingTotal: 0,
                     count: 0,
                     farmerSetSize: 0,
                     items: [],
@@ -89,6 +90,7 @@ export function MiscStockListClient({
                 } as any
             }
             grouped[key].totalWeight += stock.weightKg
+            grouped[key].remainingTotal += stock.remainingKg ?? stock.weightKg
             grouped[key].count += 1
             grouped[key].items.push(stock)
             if (stock.farmer?.id) grouped[key]._farmerIds.add(stock.farmer.id)
@@ -139,6 +141,11 @@ export function MiscStockListClient({
         }
     }
 
+    // #7a: 다이얼로그 자리만. #7b에서 misc-package-dialog 마운트로 교체.
+    const handlePackage = () => {
+        toast.info('포장 다이얼로그는 #7b에서 활성화돼요.')
+    }
+
     const toggleGroup = (key: string) => {
         setExpandedGroups(prev => {
             const next = new Set(prev)
@@ -165,12 +172,12 @@ export function MiscStockListClient({
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">품종</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[140px]">생산자</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px] hidden md:table-cell">입고일</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[110px]">Lot No</TableHead>
+                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">Lot</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">유형</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[50px]">번호</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">원료(kg)</TableHead>
                             <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">입고(kg)</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[60px]">수율</TableHead>
+                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">재고(kg)</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">상태</TableHead>
                             <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]"></TableHead>
                         </TableRow>
@@ -216,10 +223,12 @@ export function MiscStockListClient({
                                                 <TableCell></TableCell>
                                                 <TableCell className="text-right text-sm tabular-nums">{group.count}개</TableCell>
                                                 <TableCell></TableCell>
-                                                <TableCell className="text-right text-sm text-primary tabular-nums">
+                                                <TableCell className="text-right text-sm text-slate-500 tabular-nums">
                                                     {group.totalWeight.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell></TableCell>
+                                                <TableCell className="text-right text-sm text-primary font-semibold tabular-nums">
+                                                    {Math.round(group.remainingTotal).toLocaleString()}
+                                                </TableCell>
                                                 <TableCell></TableCell>
                                                 <TableCell></TableCell>
                                             </TableRow>
@@ -235,6 +244,7 @@ export function MiscStockListClient({
                                                 inExpandedGroup={isMulti}
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
+                                                onPackage={handlePackage}
                                             />
                                         ))}
                                     </Fragment>
@@ -269,6 +279,7 @@ export function MiscStockListClient({
                                             canManage={canManage}
                                             onEdit={() => handleEdit(stock)}
                                             onDelete={() => handleDelete(stock)}
+                                            onPackage={() => handlePackage(stock)}
                                         />
                                     ))}
                                 </div>
@@ -317,7 +328,14 @@ export function MiscStockListClient({
                                 {isExpanded && (
                                     <div className="flex flex-col gap-1.5 p-2 mx-1 mb-2 rounded-lg bg-slate-50/70">
                                         {group.items.map((stock: any) => (
-                                            <MiscStockMobileCard key={stock.id} stock={stock} />
+                                            <MiscStockMobileCard
+                                                key={stock.id}
+                                                stock={stock}
+                                                canManage={canManage}
+                                                onEdit={() => handleEdit(stock)}
+                                                onDelete={() => handleDelete(stock)}
+                                                onPackage={handlePackage}
+                                            />
                                         ))}
                                     </div>
                                 )}

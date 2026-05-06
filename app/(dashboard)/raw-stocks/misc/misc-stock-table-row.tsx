@@ -17,6 +17,7 @@ interface MiscStock {
     bagNo: number
     weightKg: number
     rawWeightKg: number | null
+    remainingKg?: number
     sourceType: 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION' | null
     millingVendor: string | null
     status: string
@@ -25,6 +26,12 @@ interface MiscStock {
     actualFarmer: string | null
     variety: { name: string }
     farmer: { name: string; group: { certType: string } | null }
+}
+
+// Lot 뱃지 표시: 길면 끝 4자리 + ...prefix, 짧으면 그대로
+function shortLot(lot: string): string {
+    if (lot.length <= 6) return lot
+    return `…${lot.slice(-4)}`
 }
 
 const SOURCE_BADGE: Record<string, { label: string; className: string }> = {
@@ -58,15 +65,21 @@ interface Props {
     inExpandedGroup?: boolean
     onEdit?: () => void
     onDelete?: () => void
+    onPackage?: () => void
 }
 
-export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = false, onEdit, onDelete }: Props) {
+export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = false, onEdit, onDelete, onPackage }: Props) {
     const isConsumed = stock.status === 'CONSUMED'
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
     const showRaw = stock.sourceType === 'CONSIGNMENT' || stock.sourceType === 'GERMINATION'
     // 수율은 도정위탁만 의미 있음 (발아위탁은 사용자 결정으로 미관리)
     const showYield = stock.sourceType === 'CONSIGNMENT'
+    const yieldText = showYield ? calcYield(stock.rawWeightKg, stock.weightKg) : null
+
+    const remainingKg = stock.remainingKg ?? stock.weightKg
+    const isDepleted = remainingKg <= 0.001
+    const canPackage = isAvailable && !isDepleted
 
     const certType = stock.farmer.group?.certType
 
@@ -93,8 +106,17 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
             <TableCell className="text-center text-xs text-slate-500 tabular-nums hidden md:table-cell">
                 {formatYMD(stock.incomingDate)}
             </TableCell>
-            <TableCell className="text-center text-[11px] font-mono text-slate-500">
-                {stock.lotNo || '-'}
+            <TableCell className="text-center">
+                {stock.lotNo ? (
+                    <span
+                        className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums cursor-help"
+                        title={stock.lotNo}
+                    >
+                        {shortLot(stock.lotNo)}
+                    </span>
+                ) : (
+                    <span className="text-[11px] text-slate-400">-</span>
+                )}
             </TableCell>
             <TableCell className="text-center text-xs">
                 {sourceConf && (
@@ -104,22 +126,36 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
                 )}
             </TableCell>
             <TableCell className="text-right text-xs font-mono tabular-nums">{stock.bagNo}</TableCell>
-            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
+            <TableCell
+                className={`text-right text-xs text-slate-500 tabular-nums ${showRaw && yieldText ? 'underline decoration-dotted decoration-slate-300 underline-offset-2 cursor-help' : ''}`}
+                title={showRaw && yieldText ? `수율 ${yieldText}` : undefined}
+            >
                 {showRaw ? stock.rawWeightKg?.toLocaleString() : '-'}
             </TableCell>
-            <TableCell className="text-right text-xs font-medium text-primary tabular-nums">
+            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
                 {stock.weightKg.toLocaleString()}
             </TableCell>
-            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
-                {showYield ? calcYield(stock.rawWeightKg, stock.weightKg) : '-'}
+            <TableCell className={`text-right text-xs tabular-nums ${isDepleted ? 'text-slate-400' : 'text-primary font-semibold'}`}>
+                {Math.round(remainingKg).toLocaleString()}
             </TableCell>
             <TableCell className="text-center text-xs">
-                <Badge
-                    variant={isAvailable ? 'outline' : 'secondary'}
-                    className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
-                >
-                    {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
-                </Badge>
+                {canManage && canPackage ? (
+                    <button
+                        type="button"
+                        onClick={onPackage}
+                        title="포장하기"
+                        className="inline-flex items-center font-semibold px-2 py-0 rounded-sm border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 hover:border-primary/60 text-[10px] h-5 transition-colors cursor-pointer"
+                    >
+                        포장
+                    </button>
+                ) : (
+                    <Badge
+                        variant={isAvailable ? 'outline' : 'secondary'}
+                        className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
+                    >
+                        {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
+                    </Badge>
+                )}
             </TableCell>
             <TableCell className="text-center w-[40px]">
                 {canManage && (
@@ -155,14 +191,19 @@ interface MobileCardProps {
     canManage?: boolean
     onEdit?: () => void
     onDelete?: () => void
+    onPackage?: () => void
 }
 
-export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete }: MobileCardProps) {
+export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete, onPackage }: MobileCardProps) {
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
     const isConsumed = stock.status === 'CONSUMED'
     const showRaw = stock.sourceType === 'CONSIGNMENT' || stock.sourceType === 'GERMINATION'
     const showYield = stock.sourceType === 'CONSIGNMENT'
+    const remainingKg = stock.remainingKg ?? stock.weightKg
+    const isDepleted = remainingKg <= 0.001
+    const isPartial = !isDepleted && remainingKg < stock.weightKg - 0.001
+    const canPackage = isAvailable && !isDepleted
     const certType = stock.farmer.group?.certType
 
     return (
@@ -185,12 +226,22 @@ export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete
                     )}
                 </div>
                 <div className="flex items-center gap-0.5 shrink-0">
-                    <Badge
-                        variant={isAvailable ? 'outline' : 'secondary'}
-                        className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
-                    >
-                        {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
-                    </Badge>
+                    {canManage && canPackage ? (
+                        <button
+                            type="button"
+                            onClick={onPackage}
+                            className="inline-flex items-center font-semibold px-2 py-0 rounded-sm border border-primary/40 text-primary bg-primary/10 active:bg-primary/20 text-[10px] h-5 transition-colors"
+                        >
+                            포장
+                        </button>
+                    ) : (
+                        <Badge
+                            variant={isAvailable ? 'outline' : 'secondary'}
+                            className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
+                        >
+                            {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
+                        </Badge>
+                    )}
                     {canManage && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -220,18 +271,28 @@ export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete
                 <div className="flex items-center gap-1.5 min-w-0">
                     <span className="font-mono tabular-nums shrink-0">#{stock.bagNo}</span>
                     {stock.lotNo ? (
-                        <span className="inline-flex items-center font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] truncate">
-                            {stock.lotNo}
+                        <span
+                            className="inline-flex items-center font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums shrink-0"
+                            title={stock.lotNo}
+                        >
+                            {shortLot(stock.lotNo)}
                         </span>
                     ) : (
                         <span className="text-[10px] text-slate-400">로트없음</span>
                     )}
                     <span className="text-[10px] tabular-nums shrink-0">· {formatYMD(stock.incomingDate)}</span>
                 </div>
-                <span className="font-black text-[14px] text-slate-800 tracking-tight leading-none tabular-nums shrink-0">
-                    {stock.weightKg.toLocaleString()}
-                    <span className="text-[10px] font-bold ml-0.5 opacity-60">kg</span>
-                </span>
+                <div className="flex items-baseline gap-1 shrink-0">
+                    {isPartial && (
+                        <span className="text-[10px] text-slate-400 line-through tabular-nums">
+                            {stock.weightKg.toLocaleString()}
+                        </span>
+                    )}
+                    <span className={`font-black text-[14px] tracking-tight leading-none tabular-nums ${isDepleted ? 'text-slate-400' : 'text-slate-800'}`}>
+                        {Math.round(remainingKg).toLocaleString()}
+                        <span className="text-[10px] font-bold ml-0.5 opacity-60">kg</span>
+                    </span>
+                </div>
             </div>
             {(showRaw || showYield) && (
                 <div className="flex items-center justify-end gap-3 mt-0.5 text-[10px] text-slate-500">

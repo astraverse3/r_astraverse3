@@ -1,5 +1,48 @@
 # 작업일지
 
+## 2026-05-06
+
+### 잡곡 재고관리 #7a — 컬럼 정리 + 재고 노출 + 상태 셀 포장 트리거 `feat`
+
+**배경**: #7 잡곡 포장 다이얼로그 착수. #7a는 본 다이얼로그 머지(#7b) 전 사전 정리 — 잔량(재고) 노출, 컬럼 슬림화, 상태 셀을 포장 트리거로 전환. 계획서: `docs/plan-잡곡재고관리-#7.md`.
+
+**신규 파일**:
+- `docs/plan-잡곡재고관리-#7.md` — #7 본 계획서. 4단계 분할(#7a/b/c/d), 데이터 일관성(삭제·수정 시 status 재평가) 명시.
+
+**Server Action**:
+- `app/actions/misc-stock.ts`:
+  - `getMiscStocks` 반환에 `outputPackages: { totalWeight }` include + 매 조회 시 `remainingKg = max(0, weightKg - sum(totalWeight))` 산출. DB 컬럼 미추가 (정합성 리스크 회피)
+  - `MiscStockGroup` 타입에 `remainingTotal` 필드
+
+**컬럼 정리** (`misc-stock-table-row.tsx`):
+- 수율 컬럼 제거 → "재고(kg)" 신설(primary 강조, 0이면 회색)
+- 원료(kg) 셀에 점선 밑줄(`underline decoration-dotted`) + `title` 툴팁("수율 87.5%"). 도정위탁(CONSIGNMENT)에만 적용
+- Lot No 컬럼 110→60px 축소, 짧은 뱃지(끝 4자리, 6자리 이하면 그대로) + `title` 툴팁(전체 lot)
+- 모바일 카드: 메인 표시를 입고 → 재고로, 부분 포장 시 입고는 `line-through`로 옆에 작게
+
+**상태 셀 포장 트리거**:
+- `AVAILABLE && remainingKg > 0 && canManage` → "포장" primary 버튼(클릭 가능, hover/active 효과)
+- `AVAILABLE && !canManage` → "보관중" 뱃지 (권한 없음)
+- `CONSUMED` → "소진됨" 뱃지 (기존)
+- 점세개 메뉴의 "포장하기" 항목은 중복 제거(수정/삭제만 남김)
+- 모바일 펼친 그룹의 카드에도 액션 props 흐름 추가 (이전엔 `canManage`/`onEdit`/`onDelete` 미전달로 펼친 후 액션 불가했음)
+
+**그룹 헤더 합계**:
+- 입고 합계(slate-500 톤다운) + 재고 합계(primary 강조) 동시 표시
+
+**제품재고 잡곡 패널** (`misc-package-panel.tsx`):
+- `[+ 포장하기]` disabled 풀고 onClick → 토스트 "#7b에서 활성화"
+
+**계획 변경 (1건)**:
+- `app/actions/packages.ts` 액션 skeleton(create/update/delete Misc Package) 사전 추가는 폐기. 본구현(#7b·#7c)에서 한 번에 추가하는 게 lint warning 회피·코드 응집도 측면에서 깔끔. plan-#7.md §5 단계별 작업의 #7a에서 skeleton 항목 제거 필요(#7b 작업 시 함께 정리)
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- `npx eslint` 신규 오류·경고 0건 (기존 any/`@ts-ignore` 잔존만 존재)
+- 브라우저 검증: 컬럼 헤더 정상, 원료/Lot 툴팁 동작, 포장 트리거 클릭 시 토스트, 점세개 메뉴 수정/삭제만 노출 (사용자 확인 완료)
+
+---
+
 ## 2026-05-04
 
 ### 잡곡 재고관리 #6d — 대시보드 차트 라벨 분리 (백로그 §3) `chore`

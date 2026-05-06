@@ -381,9 +381,19 @@ export async function getMiscStocks(params?: GetMiscStocksParams) {
             include: {
                 variety: true,
                 farmer: { include: { group: true } },
+                outputPackages: { select: { totalWeight: true } },
             },
         })
-        return { success: true, data: stocks }
+
+        // 각 stock의 잔량(재고) 계산: stock.weightKg - sum(outputPackages.totalWeight)
+        // 별도 DB 컬럼 없이 매 조회 시 재산출 — 등록·수정·삭제 모두 자동 반영
+        const withRemaining = stocks.map(({ outputPackages, ...rest }) => {
+            const consumed = outputPackages.reduce((sum, p) => sum + p.totalWeight, 0)
+            const remainingKg = Math.max(0, rest.weightKg - consumed)
+            return { ...rest, remainingKg }
+        })
+
+        return { success: true, data: withRemaining }
     } catch (error) {
         console.error('Failed to get misc stocks:', error)
         return { success: false, error: '잡곡 재고 조회에 실패했습니다.' }
@@ -400,7 +410,8 @@ export type MiscStockGroup = {
     year: number
     variety: string
     certType: string
-    totalWeight: number
+    totalWeight: number      // 입고 합계 (kg)
+    remainingTotal: number   // 재고(잔량) 합계 (kg)
     count: number
     farmerSetSize: number
     items: any[]
