@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronRight, Inbox } from 'lucide-react'
 import {
     Table,
@@ -20,6 +21,7 @@ import {
 } from '@/app/actions/misc-stock'
 import { MiscStockTableRow, MiscStockMobileCard, CERT_BADGE_CLASS } from './misc-stock-table-row'
 import { AddMiscStockDialog, type MiscStockEditTarget } from './add-misc-stock-dialog'
+import { MiscPackageDialog } from '@/app/(dashboard)/packages/misc-package-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
 
 interface Farmer {
@@ -56,6 +58,10 @@ export function MiscStockListClient({
     const [editTarget, setEditTarget] = useState<MiscStockEditTarget | null>(null)
     const [editOpen, setEditOpen] = useState(false)
 
+    const [packageStock, setPackageStock] = useState<any | null>(null)
+    const [packageOpen, setPackageOpen] = useState(false)
+
+    const router = useRouter()
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
@@ -141,9 +147,10 @@ export function MiscStockListClient({
         }
     }
 
-    // #7a: 다이얼로그 자리만. #7b에서 misc-package-dialog 마운트로 교체.
-    const handlePackage = () => {
-        toast.info('포장 다이얼로그는 #7b에서 활성화돼요.')
+    // 진입점 ① — 행 메뉴/상태 셀에서 트리거 → stock 미리 지정한 다이얼로그
+    const handlePackage = (stock: any) => {
+        setPackageStock(stock)
+        setPackageOpen(true)
     }
 
     const toggleGroup = (key: string) => {
@@ -244,7 +251,7 @@ export function MiscStockListClient({
                                                 inExpandedGroup={isMulti}
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
-                                                onPackage={handlePackage}
+                                                onPackage={() => handlePackage(stock)}
                                             />
                                         ))}
                                     </Fragment>
@@ -334,7 +341,7 @@ export function MiscStockListClient({
                                                 canManage={canManage}
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
-                                                onPackage={handlePackage}
+                                                onPackage={() => handlePackage(stock)}
                                             />
                                         ))}
                                     </div>
@@ -362,6 +369,33 @@ export function MiscStockListClient({
                         setEditOpen(o)
                         if (!o) setEditTarget(null)
                     }}
+                />
+            )}
+
+            {/* 진입점 ① — 행에서 트리거된 잡곡 포장 다이얼로그 */}
+            {packageStock && (
+                <MiscPackageDialog
+                    open={packageOpen}
+                    onOpenChange={(o) => {
+                        setPackageOpen(o)
+                        if (!o) setPackageStock(null)
+                    }}
+                    initialStock={{
+                        id: packageStock.id,
+                        productionYear: packageStock.productionYear,
+                        bagNo: packageStock.bagNo,
+                        weightKg: packageStock.weightKg,
+                        remainingKg: packageStock.remainingKg ?? packageStock.weightKg,
+                        lotNo: packageStock.lotNo,
+                        sourceType: packageStock.sourceType,
+                        variety: { id: packageStock.variety.id, name: packageStock.variety.name },
+                        farmer: {
+                            id: packageStock.farmer.id,
+                            name: packageStock.farmer.name,
+                            group: packageStock.farmer.group ? { certType: packageStock.farmer.group.certType } : null,
+                        },
+                    }}
+                    onSuccess={() => router.refresh()}
                 />
             )}
         </section>

@@ -88,8 +88,13 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
     return (
         <TableRow className={inExpandedGroup ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'bg-white hover:bg-slate-50'}>
             <TableCell className="text-center text-xs text-slate-400">—</TableCell>
-            <TableCell className="text-center text-xs tabular-nums hidden sm:table-cell">{stock.productionYear}</TableCell>
-            <TableCell className="text-center text-xs">{stock.variety.name}</TableCell>
+            {/* 다중 그룹 서브행은 년도·품종 셀 비워 그룹 시각 구분 강화 (그리드 정렬은 유지) */}
+            <TableCell className="text-center text-xs tabular-nums hidden sm:table-cell">
+                {inExpandedGroup ? null : stock.productionYear}
+            </TableCell>
+            <TableCell className="text-center text-xs">
+                {inExpandedGroup ? null : stock.variety.name}
+            </TableCell>
             <TableCell className="text-xs">
                 <div className="inline-flex items-center gap-1.5">
                     <span className="font-medium text-slate-700">{stock.farmer.name}</span>

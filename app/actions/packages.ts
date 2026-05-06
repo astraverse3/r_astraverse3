@@ -1,6 +1,11 @@
 'use server'
 
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
+import { recordAuditLog } from '@/lib/audit'
+import { requireSession } from '@/lib/auth-guard'
+import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
@@ -253,6 +258,169 @@ export async function getPackages(
     } catch (error: any) {
         console.error('[getPackages] failed:', error)
         return { success: false, error: error?.message ?? '제품재고를 불러오지 못했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 포장 — selector용 사용 가능 stock 목록 (#7b/#7c)
+// -----------------------------
+
+export interface AvailableMiscStock {
+    id: number
+    productionYear: number
+    bagNo: number
+    weightKg: number
+    remainingKg: number
+    incomingDate: string // ISO yyyy-mm-dd
+    lotNo: string | null
+    sourceType: 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION' | null
+    variety: { id: number; name: string }
+    farmer: { id: number; name: string; group: { certType: string } | null }
+}
+
+/**
+ * 포장 가능한 잡곡 stock 목록 — 진입점 ②(제품재고 헤더 [+ 포장하기])에서 selector로 사용.
+ * - category=MISC_GRAIN, status=AVAILABLE, remainingKg > 0
+ * - FIFO 정렬: 입고일 오래된 순
+ */
+export async function getAvailableMiscStocks(): Promise<
+    { success: true; data: AvailableMiscStock[] } | { success: false; error: string }
+> {
+    await requireSession()
+    try {
+        const stocks = await prisma.stock.findMany({
+            where: { category: 'MISC_GRAIN', status: 'AVAILABLE' },
+            include: {
+                variety: { select: { id: true, name: true } },
+                farmer: { include: { group: { select: { certType: true } } } },
+                outputPackages: { select: { totalWeight: true } },
+            },
+            orderBy: { incomingDate: 'asc' },
+        })
+
+        const data: AvailableMiscStock[] = stocks
+            .map(s => {
+                const consumed = s.outputPackages.reduce((sum, p) => sum + p.totalWeight, 0)
+                const remainingKg = Math.max(0, s.weightKg - consumed)
+                return {
+                    id: s.id,
+                    productionYear: s.productionYear,
+                    bagNo: s.bagNo,
+                    weightKg: s.weightKg,
+                    remainingKg,
+                    incomingDate: s.incomingDate.toISOString().slice(0, 10),
+                    lotNo: s.lotNo,
+                    sourceType: s.sourceType as 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION' | null,
+                    variety: { id: s.variety.id, name: s.variety.name },
+                    farmer: {
+                        id: s.farmer.id,
+                        name: s.farmer.name,
+                        group: s.farmer.group ? { certType: s.farmer.group.certType } : null,
+                    },
+                }
+            })
+            .filter(s => s.remainingKg > 0.001)
+
+        return { success: true, data }
+    } catch (error) {
+        console.error('[getAvailableMiscStocks] failed:', error)
+        return { success: false, error: '포장 가능한 재고 목록을 불러오지 못했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 포장 — 신규 등록 (#7b)
+// -----------------------------
+
+const EPSILON_KG = 0.001
+
+const CreateMiscPackageSchema = z.object({
+    stockId: z.number().int().positive(),
+    packageType: z.string().min(1).max(20),
+    weightPerUnit: z.number().positive(),
+    count: z.number().int().positive(),
+})
+
+export type CreateMiscPackageInput = z.infer<typeof CreateMiscPackageSchema>
+
+/**
+ * 잡곡 포장 등록.
+ *  - source=MILLED, category=MISC_GRAIN
+ *  - stockId 참조 (배치는 잡곡에 없음 → batchId=null)
+ *  - lotNo는 stock.lotNo 그대로 복사
+ *  - 트랜잭션 내부에서 잔량 재계산 → 초과 시 차단 → status 자동 전이 (CONSUMED)
+ *  - 동시성: status='AVAILABLE' 조건부 update로 후행 충돌 차단
+ */
+export async function createMiscPackage(
+    input: CreateMiscPackageInput,
+): Promise<{ success: true; id: number } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const data = CreateMiscPackageSchema.parse(input)
+        const totalWeight = +(data.weightPerUnit * data.count).toFixed(3)
+
+        const result = await prisma.$transaction(async (tx) => {
+            const stock = await tx.stock.findUnique({
+                where: { id: data.stockId },
+                include: {
+                    variety: { select: { name: true } },
+                    outputPackages: { select: { totalWeight: true } },
+                },
+            })
+            if (!stock) throw new Error('재고를 찾을 수 없습니다.')
+            if (stock.category !== 'MISC_GRAIN') throw new Error('잡곡 재고가 아닙니다.')
+            if (stock.status !== 'AVAILABLE') throw new Error('보관중 상태가 아닙니다.')
+
+            const consumed = stock.outputPackages.reduce((sum, p) => sum + p.totalWeight, 0)
+            const remainingKg = stock.weightKg - consumed
+            if (totalWeight - remainingKg > EPSILON_KG) {
+                throw new Error(`재고(${remainingKg.toFixed(2)}kg)를 초과했습니다.`)
+            }
+
+            const created = await tx.millingOutputPackage.create({
+                data: {
+                    source: 'MILLED',
+                    category: 'MISC_GRAIN',
+                    stockId: stock.id,
+                    batchId: null,
+                    varietyId: null,
+                    packageType: data.packageType,
+                    weightPerUnit: data.weightPerUnit,
+                    count: data.count,
+                    totalWeight,
+                    lotNo: stock.lotNo,
+                },
+            })
+
+            // status 자동 전이: 잔량 - totalWeight ≤ ε 이면 CONSUMED
+            const nextRemaining = remainingKg - totalWeight
+            if (nextRemaining <= EPSILON_KG) {
+                // 동시성 가드: status='AVAILABLE' 조건부 update
+                await tx.stock.updateMany({
+                    where: { id: stock.id, status: 'AVAILABLE' },
+                    data: { status: 'CONSUMED' },
+                })
+            }
+
+            return { id: created.id, varietyName: stock.variety.name }
+        })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'MillingOutputPackage',
+            entityId: result.id,
+            details: { ...data, totalWeight },
+            description: `잡곡 포장: ${result.varietyName} ${data.packageType} × ${data.count}개 (${totalWeight}kg)`,
+        })
+
+        revalidatePath('/raw-stocks')
+        revalidatePath('/packages')
+        revalidatePath('/')
+
+        return { success: true, id: result.id }
+    } catch (error) {
+        console.error('[createMiscPackage] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '포장 등록에 실패했습니다.') }
     }
 }
 

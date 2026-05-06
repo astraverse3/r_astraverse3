@@ -2,6 +2,60 @@
 
 ## 2026-05-06
 
+### 잡곡 재고관리 #7b — 잡곡 포장 다이얼로그 본구현 `feat`
+
+**배경**: #7a에서 자리만 두었던 포장 트리거를 본 다이얼로그로 활성화. 양쪽 진입점(원물재고 행 / 제품재고 헤더) 공유.
+
+**Server Action** (`app/actions/packages.ts`):
+- `getAvailableMiscStocks()` — selector용. `category=MISC_GRAIN, status=AVAILABLE, remainingKg > 0`, FIFO(입고일 asc) 정렬
+- `createMiscPackage(input)` — zod + 트랜잭션. 잔량 재계산 → 초과 시 차단(ε=0.001) → `MillingOutputPackage` 생성(`source=MILLED, category=MISC_GRAIN, batchId=null, varietyId=null, lotNo=stock.lotNo`) → 잔량 ≤ ε 시 `Stock.status='CONSUMED'` 조건부 update(동시성 가드). audit + revalidatePath 3개(`/raw-stocks`, `/packages`, `/`)
+
+**다이얼로그 컴포넌트** (`misc-package-dialog.tsx` 신규):
+- 진입점 ① (`initialStock` prop) — stock 정보 카드 고정
+- 진입점 ② (prop 없음) — open 시 lazy fetch + 인라인 라디오 카드 목록
+- 라디오 카드 한 줄: 품종 / 생산자 / 입고일 / 잔량 (lot은 selector 식별 정보로 결정적이지 않아 제외, `title` 툴팁으로 풀 표시)
+- `max-h-[240px] overflow-y-auto` 스크롤
+- 포장단위 7칸 그리드 (`10/5/1kg + 800/500/420g + 기타`)
+- "기타" 선택 시 `규격 라벨` + `단중(kg)` 입력
+- 총 포장중량 미리보기(초과 시 빨간색)
+- 잔여 미리보기 박스: `포장 후 잔여 N kg / 소진 처리됨` 뱃지
+
+**진입점 마운트**:
+- `misc-package-panel.tsx`: `[+ 포장하기]` → 다이얼로그 open + `router.refresh()`
+- `misc-stock-list-client.tsx`: `handlePackage(stock)` → stock 미리 지정한 다이얼로그
+
+**잡곡 원물재고 그룹 서브행 시각 정리** (`misc-stock-table-row.tsx`):
+- 다중 그룹 펼침 서브행에서 년도·품종 셀 비움 → 그룹 헤더의 년도·품종과 중복 제거, 묶음 시각 구분 강화
+- 단일 건 그룹은 그대로(헤더 미표시 케이스)
+
+**선택지 결정**:
+- selector UX는 옵션 B(인라인 카드 목록) 채택. C(Combobox) / D(2단계) 대비 데이터 규모 작은 잡곡에 적합
+- 폼 리셋은 `useEffect` 대신 `onOpenChange` 콜백에서 직접 처리. 단 selector용 fetch는 부모가 `open` prop을 직접 토글하므로 useEffect 사용(eslint-disable 1줄)
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- `npx eslint` 신규 오류·경고 0건 (기존 any/`@ts-ignore` 잔존만)
+
+---
+
+### 제품재고 컬럼 정리 — 순서·라벨·정렬·비율 `style`
+
+**배경**: #7 작업 진행 중 사용자 결정으로 컬럼 디자인 핸드오프(§4.2.3)와 다르게 재정의. plan 본문 "번들과 충돌 시 계획서·CLAUDE.md 우선" 정책 적용.
+
+**변경** (`app/(dashboard)/packages/package-row.tsx`):
+- 순서: `품종 / 규격 / 개수 / 생산자 / 로트 / 날짜 / 합계` → **`품종 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자`**
+- 라벨: `합계` → `총량`, `날짜` → `포장일자`
+- 그리드 비율: `[1fr_0.55fr_0.6fr_1.1fr_1.2fr_0.9fr_0.9fr]` → `[0.7fr_0.85fr_1.5fr_0.55fr_0.6fr_0.9fr_0.85fr]`
+  - 짧은 데이터(품종·생산자) 셀 압축, lot 셀 확장 (긴 코드 풀 표시)
+- 헤더 정렬을 데이터 셀과 일치 (좌·중앙·우 분기). 핸드오프와 별개 결정
+- 그룹 헤더의 메타데이터(`{N}종 규격`, `{totalQty}개`) 자동으로 규격/개수 셀로 따라옴, 마지막 포장일자 셀은 dash
+
+**적용 범위**: 벼/잡곡 탭 공통(컴포넌트 동일)
+
+**디자인 핸드오프 충돌 보고**: §4.2.3 명세는 `품종/규격/개수/생산자/로트/날짜/합계`. 본 변경으로 사용자 결정이 핸드오프와 분기됨. 핸드오프 문서는 historical reference로 유지.
+
+---
+
 ### 잡곡 재고관리 #7a — 컬럼 정리 + 재고 노출 + 상태 셀 포장 트리거 `feat`
 
 **배경**: #7 잡곡 포장 다이얼로그 착수. #7a는 본 다이얼로그 머지(#7b) 전 사전 정리 — 잔량(재고) 노출, 컬럼 슬림화, 상태 셀을 포장 트리거로 전환. 계획서: `docs/plan-잡곡재고관리-#7.md`.
