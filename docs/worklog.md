@@ -2,7 +2,42 @@
 
 ## 2026-05-07
 
-### 잡곡 재고관리 #7d — 모바일 UI 정리 (다이얼로그 fit + 원물 카드 재배치) `style` (미커밋)
+### 잡곡 재고관리 #8a — 매입 격리 인프라 + 매입 Server Actions `feat`
+
+**배경**: 외부매입 잡곡(`source=PURCHASED`) 등록 흐름의 토대 마련. 매입 품종을 `Variety.type='PURCHASED'` 플래그로 격리해서 다른 화면에 안 섞이게 인프라 구축 + 매입 CRUD 액션 5개 신설. 사용자 결정: D안(텍스트 입력 + findOrCreate) + 노출 격리 + name 충돌 시 한글 곡종명 안내 후 차단.
+
+**격리 인프라**:
+- `lib/variety-labels.ts` 신규 — `VARIETY_TYPE_LABELS` 매핑(메벼/찰벼/인디카/잡곡/기타/매입) + `getVarietyTypeLabel()` 헬퍼
+- `app/actions/admin.ts`:
+  - `deriveVarietyCategory()` 보강: `type='PURCHASED'`도 `category=MISC_GRAIN`로 분류
+  - `getRiceVarieties()` 신설 (`where: { category: 'RICE' }`) — 벼 화면 전용
+- `app/actions/misc-stock.ts:475` — `getMiscVarieties` where에 `type: { not: 'PURCHASED' }` 추가 (블랙리스트, 사용자 결정: type 더 안 늘어남)
+- 호출자 3곳 교체: `raw-stocks/page.tsx`, `milling/page.tsx`, `packages/page.tsx`(RicePackagePanel 분기) — 모두 `getVarieties()` → `getRiceVarieties()`
+- `/admin/varieties/page.tsx`는 그대로 (관리자 전체 노출 의도)
+
+**매입 Server Actions** (`app/actions/packages.ts`):
+- `getPurchaseVarieties()` — `type='PURCHASED'` distinct, 다이얼로그 자동완성용
+- `createMiscPurchase(input)` — zod 검증 → `findOrCreatePurchaseVariety` (같은 type 매칭 우선 / 다른 type 충돌 시 한글 곡종명 포함 안내) → `MillingOutputPackage.create(source=PURCHASED, batchId/stockId/lotNo=null)` → `varietyCreated: boolean` 반환
+- `getMiscPurchaseEditContext(id)` — 수정 prefill (variety include + readonly 가드)
+- `updateMiscPurchase(id, input)` — findOrCreate 동일 흐름 + update
+- `deleteMiscPurchase(id)` — Stock 참조 없으므로 단순 delete
+
+**보장**:
+- 매입 품종은 잡곡 입고·벼 화면 어디에도 노출 안 됨 (블랙리스트/카테고리 둘 다 가드)
+- `Variety.name @unique` 충돌은 사전 검증 → 한글 안내 후 차단 (`"이미 '잡곡' 곡종으로 등록된 품종이에요. 다른 이름을 사용해주세요."`)
+- 통계/대시보드는 기존 `batch null` / `category='RICE'` 필터로 자동 격리 — 추가 변경 불필요
+
+**문서화**:
+- `docs/plan-잡곡재고관리-#8.md` 신규 — 단일 진실 원천
+- `docs/research-잡곡재고관리-#8.md` 신규 — 사전조사 결과 (위험도별 호출부 정리)
+
+**검증**: `npx tsc --noEmit` 통과. 실데이터 검증은 #8b 다이얼로그 완성 후.
+
+**다음 진행**: #8b 매입 등록 다이얼로그 + 패널 `[+ 매입 등록]` 활성화.
+
+---
+
+### 잡곡 재고관리 #7d — 모바일 UI 정리 (다이얼로그 fit + 원물 카드 재배치) `style` (`4e2615b`)
 
 **배경**: #7d 잔여 항목인 모바일 다이얼로그 fit 검수 중 발견된 자잘한 정리들. 함께 사용자 검수에서 잡곡 원물재고 모바일 카드 정보 위계 재정의 요청 받아 일괄 처리.
 

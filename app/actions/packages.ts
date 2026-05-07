@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { getVarietyTypeLabel } from '@/lib/variety-labels'
 
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
@@ -684,5 +685,281 @@ export async function getPurchaseVendors(): Promise<{ success: true; data: strin
     } catch (error: any) {
         console.error('[getPurchaseVendors] failed:', error)
         return { success: false, error: error?.message ?? '매입처 목록을 불러오지 못했습니다.' }
+    }
+}
+
+// -----------------------------
+// 매입 품종 자동완성 (type='PURCHASED' 전용 — #8 매입 다이얼로그)
+// -----------------------------
+
+export async function getPurchaseVarieties(): Promise<
+    { success: true; data: { id: number; name: string }[] } | { success: false; error: string }
+> {
+    await requireSession()
+    try {
+        const varieties = await prisma.variety.findMany({
+            where: { type: 'PURCHASED' },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+        })
+        return { success: true, data: varieties }
+    } catch (error) {
+        console.error('[getPurchaseVarieties] failed:', error)
+        return { success: false, error: '매입 품종 목록을 불러오지 못했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 매입 등록 (#8b)
+// 신규 품종 자동 생성(findOrCreate). 동일 name이 다른 type으로 존재 시 충돌 안내 + 차단.
+// -----------------------------
+
+const CreateMiscPurchaseSchema = z.object({
+    purchaseVendor: z.string().trim().min(1).max(100),
+    varietyName: z.string().trim().min(1).max(50),
+    incomingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '입력일 형식은 YYYY-MM-DD이어야 합니다.'),
+    packageType: z.string().trim().min(1).max(20),
+    weightPerUnit: z.number().positive(),
+    count: z.number().int().positive(),
+})
+
+export type CreateMiscPurchaseInput = z.infer<typeof CreateMiscPurchaseSchema>
+
+/**
+ * 변수명 → 매입 품종 findOrCreate.
+ * 같은 name이 다른 type으로 이미 존재하면 충돌 에러 반환(저장 차단).
+ *
+ * 반환:
+ *  - `{ ok: true, varietyId, created }` — 정상 매핑 (created=true면 신규 생성)
+ *  - `{ ok: false, error }` — 충돌 안내
+ */
+async function findOrCreatePurchaseVariety(
+    name: string,
+): Promise<{ ok: true; varietyId: number; created: boolean } | { ok: false; error: string }> {
+    // 1) 같은 이름 + type=PURCHASED 매칭 (재사용)
+    const exact = await prisma.variety.findFirst({
+        where: { name, type: 'PURCHASED' },
+        select: { id: true },
+    })
+    if (exact) return { ok: true, varietyId: exact.id, created: false }
+
+    // 2) 다른 type으로 존재하면 unique 위반 → 한글 곡종명 포함 안내
+    const conflict = await prisma.variety.findFirst({
+        where: { name },
+        select: { type: true },
+    })
+    if (conflict) {
+        const label = getVarietyTypeLabel(conflict.type)
+        return { ok: false, error: `이미 '${label}' 곡종으로 등록된 품종이에요. 다른 이름을 사용해주세요.` }
+    }
+
+    // 3) 신규 생성
+    const created = await prisma.variety.create({
+        data: { name, type: 'PURCHASED', category: 'MISC_GRAIN' },
+        select: { id: true },
+    })
+    return { ok: true, varietyId: created.id, created: true }
+}
+
+export async function createMiscPurchase(
+    rawInput: unknown,
+): Promise<{ success: true; data: { id: number; varietyCreated: boolean } } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const parsed = CreateMiscPurchaseSchema.safeParse(rawInput)
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message ?? '입력값을 확인해주세요.' }
+        }
+        const { purchaseVendor, varietyName, incomingDate, packageType, weightPerUnit, count } = parsed.data
+
+        const lookup = await findOrCreatePurchaseVariety(varietyName)
+        if (!lookup.ok) return { success: false, error: lookup.error }
+
+        const totalWeight = +(weightPerUnit * count).toFixed(3)
+        const incoming = new Date(`${incomingDate}T00:00:00`)
+
+        const created = await prisma.millingOutputPackage.create({
+            data: {
+                source: 'PURCHASED',
+                category: 'MISC_GRAIN',
+                batchId: null,
+                stockId: null,
+                varietyId: lookup.varietyId,
+                purchaseVendor,
+                incomingDate: incoming,
+                packageType,
+                weightPerUnit,
+                count,
+                totalWeight,
+                lotNo: null,
+                productCode: null,
+            },
+            select: { id: true },
+        })
+
+        await recordAuditLog({
+            action: 'CREATE',
+            entity: 'MillingOutputPackage',
+            entityId: created.id,
+            details: { source: 'PURCHASED', purchaseVendor, varietyName, incomingDate, packageType, count, totalWeight, varietyCreated: lookup.created },
+            description: `잡곡 매입 등록: ${purchaseVendor} / ${varietyName} / ${packageType}×${count} (${totalWeight}kg)`,
+        })
+
+        revalidatePath('/packages')
+
+        return { success: true, data: { id: created.id, varietyCreated: lookup.created } }
+    } catch (error) {
+        console.error('[createMiscPurchase] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '매입 등록에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
+// 잡곡 매입 수정 컨텍스트 조회 (#8c)
+// -----------------------------
+
+export interface MiscPurchaseEditContext {
+    id: number
+    purchaseVendor: string
+    varietyId: number
+    varietyName: string
+    incomingDate: string // YYYY-MM-DD
+    packageType: string
+    weightPerUnit: number
+    count: number
+}
+
+export async function getMiscPurchaseEditContext(
+    id: number,
+): Promise<{ success: true; data: MiscPurchaseEditContext } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const pkg = await prisma.millingOutputPackage.findUnique({
+            where: { id },
+            include: { variety: { select: { id: true, name: true } } },
+        })
+        if (!pkg) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
+        if (pkg.source !== 'PURCHASED' || pkg.category !== 'MISC_GRAIN') {
+            return { success: false, error: '잡곡 매입 레코드만 본 화면에서 수정할 수 있습니다.' }
+        }
+        if (!pkg.variety || !pkg.purchaseVendor || !pkg.incomingDate) {
+            return { success: false, error: '매입 레코드에 필수 필드가 누락되어 있습니다.' }
+        }
+        return {
+            success: true,
+            data: {
+                id: pkg.id,
+                purchaseVendor: pkg.purchaseVendor,
+                varietyId: pkg.variety.id,
+                varietyName: pkg.variety.name,
+                incomingDate: pkg.incomingDate.toISOString().slice(0, 10),
+                packageType: pkg.packageType,
+                weightPerUnit: pkg.weightPerUnit,
+                count: pkg.count,
+            },
+        }
+    } catch (error) {
+        console.error('[getMiscPurchaseEditContext] failed:', error)
+        return { success: false, error: '컨텍스트 조회에 실패했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 매입 수정 (#8c)
+// -----------------------------
+
+const UpdateMiscPurchaseSchema = CreateMiscPurchaseSchema
+
+export async function updateMiscPurchase(
+    id: number,
+    rawInput: unknown,
+): Promise<{ success: true; data: { varietyCreated: boolean } } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const parsed = UpdateMiscPurchaseSchema.safeParse(rawInput)
+        if (!parsed.success) {
+            return { success: false, error: parsed.error.issues[0]?.message ?? '입력값을 확인해주세요.' }
+        }
+        const { purchaseVendor, varietyName, incomingDate, packageType, weightPerUnit, count } = parsed.data
+
+        const existing = await prisma.millingOutputPackage.findUnique({
+            where: { id },
+            select: { source: true, category: true },
+        })
+        if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
+        if (existing.source !== 'PURCHASED' || existing.category !== 'MISC_GRAIN') {
+            return { success: false, error: '잡곡 매입 레코드만 수정할 수 있습니다.' }
+        }
+
+        const lookup = await findOrCreatePurchaseVariety(varietyName)
+        if (!lookup.ok) return { success: false, error: lookup.error }
+
+        const totalWeight = +(weightPerUnit * count).toFixed(3)
+        const incoming = new Date(`${incomingDate}T00:00:00`)
+
+        await prisma.millingOutputPackage.update({
+            where: { id },
+            data: {
+                varietyId: lookup.varietyId,
+                purchaseVendor,
+                incomingDate: incoming,
+                packageType,
+                weightPerUnit,
+                count,
+                totalWeight,
+            },
+        })
+
+        await recordAuditLog({
+            action: 'UPDATE',
+            entity: 'MillingOutputPackage',
+            entityId: id,
+            details: { source: 'PURCHASED', purchaseVendor, varietyName, incomingDate, packageType, count, totalWeight, varietyCreated: lookup.created },
+            description: `잡곡 매입 수정: ${purchaseVendor} / ${varietyName} / ${packageType}×${count}`,
+        })
+
+        revalidatePath('/packages')
+
+        return { success: true, data: { varietyCreated: lookup.created } }
+    } catch (error) {
+        console.error('[updateMiscPurchase] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '매입 수정에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
+// 잡곡 매입 삭제 (#8c) — Stock 참조 없으므로 단순 delete
+// -----------------------------
+
+export async function deleteMiscPurchase(
+    id: number,
+): Promise<{ success: true } | { success: false; error: string }> {
+    await requireSession()
+    try {
+        const existing = await prisma.millingOutputPackage.findUnique({
+            where: { id },
+            select: { source: true, category: true, purchaseVendor: true, packageType: true, count: true },
+        })
+        if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
+        if (existing.source !== 'PURCHASED' || existing.category !== 'MISC_GRAIN') {
+            return { success: false, error: '잡곡 매입 레코드만 삭제할 수 있습니다.' }
+        }
+
+        await prisma.millingOutputPackage.delete({ where: { id } })
+
+        await recordAuditLog({
+            action: 'DELETE',
+            entity: 'MillingOutputPackage',
+            entityId: id,
+            details: { source: 'PURCHASED', purchaseVendor: existing.purchaseVendor, packageType: existing.packageType, count: existing.count },
+            description: `잡곡 매입 삭제 (id=${id})`,
+        })
+
+        revalidatePath('/packages')
+
+        return { success: true }
+    } catch (error) {
+        console.error('[deleteMiscPurchase] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '매입 삭제에 실패했습니다.') }
     }
 }

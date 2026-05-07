@@ -470,13 +470,14 @@ export async function getSproutingVendors() {
 }
 
 // -----------------------------
-// 헬퍼 쿼리: 잡곡 품종 목록 (category=MISC_GRAIN)
+// 헬퍼 쿼리: 잡곡 품종 목록 (category=MISC_GRAIN, type≠PURCHASED)
+// 매입 전용 품종(type='PURCHASED')은 잡곡 입고 화면에 노출되지 않도록 제외 (#8 격리 정책)
 // -----------------------------
 export async function getMiscVarieties() {
     await requireSession()
     try {
         const varieties = await prisma.variety.findMany({
-            where: { category: 'MISC_GRAIN' },
+            where: { category: 'MISC_GRAIN', type: { not: 'PURCHASED' } },
             orderBy: { name: 'asc' },
         })
         return { success: true, data: varieties }

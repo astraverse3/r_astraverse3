@@ -12,9 +12,9 @@ export type VarietyFormData = {
     type: string
 }
 
-// type='MISC_GRAIN'이면 category=MISC_GRAIN, 그 외(URUCHI/GLUTINOUS/INDICA/OTHER 등)는 RICE
+// type='MISC_GRAIN' 또는 'PURCHASED'이면 category=MISC_GRAIN, 그 외(URUCHI/GLUTINOUS/INDICA/OTHER 등)는 RICE
 function deriveVarietyCategory(type: string): 'RICE' | 'MISC_GRAIN' {
-    return type === 'MISC_GRAIN' ? 'MISC_GRAIN' : 'RICE'
+    return type === 'MISC_GRAIN' || type === 'PURCHASED' ? 'MISC_GRAIN' : 'RICE'
 }
 
 export async function getVarieties() {
@@ -27,6 +27,21 @@ export async function getVarieties() {
     } catch (error) {
         console.error('Failed to get varieties:', error)
         return { success: false, error: 'Failed to get varieties' }
+    }
+}
+
+// 벼 화면 전용 — category='RICE'만. 매입(PURCHASED, category=MISC_GRAIN)도 자동 제외됨.
+export async function getRiceVarieties() {
+    await requireSession()
+    try {
+        const varieties = await prisma.variety.findMany({
+            where: { category: 'RICE' },
+            orderBy: { name: 'asc' },
+        })
+        return { success: true, data: varieties }
+    } catch (error) {
+        console.error('Failed to get rice varieties:', error)
+        return { success: false, error: 'Failed to get rice varieties' }
     }
 }
 

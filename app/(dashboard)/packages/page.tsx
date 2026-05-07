@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 
 import { getPackages, type GetPackagesParams, type PackageItem, type PackageSort } from '@/app/actions/packages'
-import { getVarieties } from '@/app/actions/admin'
+import { getRiceVarieties } from '@/app/actions/admin'
 import { getMiscVarieties } from '@/app/actions/misc-stock'
 import { PackagesTabs, type PackageTab } from './packages-tabs'
 import { RicePackagePanel } from './rice-package-panel'
@@ -59,7 +59,7 @@ async function RicePanelLoader({
 
     const [packagesResult, varietiesResult] = await Promise.all([
         getPackages(filters),
-        getVarieties(),
+        getRiceVarieties(),
     ])
     const items: PackageItem[] = packagesResult.success ? packagesResult.data : []
     const varieties = (varietiesResult.success && varietiesResult.data ? varietiesResult.data : []) as { id: number; name: string }[]

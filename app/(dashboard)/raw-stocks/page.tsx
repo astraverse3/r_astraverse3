@@ -1,5 +1,5 @@
 import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
-import { getVarieties, getFarmersWithGroups } from '@/app/actions/admin'
+import { getRiceVarieties, getFarmersWithGroups } from '@/app/actions/admin'
 import {
     getMiscVarieties,
     getMiscFarmers,
@@ -92,7 +92,7 @@ async function RiceStockPanel({
 
     const initialGroups = stockGroupsResult.success && stockGroupsResult.data ? stockGroupsResult.data : []
 
-    const varietyResult = await getVarieties()
+    const varietyResult = await getRiceVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
     const farmerResult = await getFarmersWithGroups()

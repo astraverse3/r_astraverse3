@@ -1,5 +1,5 @@
 import { getMillingLogs, GetMillingLogsParams } from '@/app/actions/milling'
-import { getVarieties } from '@/app/actions/admin'
+import { getRiceVarieties } from '@/app/actions/admin'
 import { MillingFilters } from './milling-filters'
 import { MillingPageWrapper } from './milling-page-wrapper'
 import { Suspense } from 'react'
@@ -32,7 +32,7 @@ export default async function MillingListPage({
     const result = await getMillingLogs(filters)
     const logs = result.success && result.data ? result.data : []
 
-    const varietyResult = await getVarieties()
+    const varietyResult = await getRiceVarieties()
     const varieties = (varietyResult.success && varietyResult.data ? varietyResult.data : []) as { id: number; name: string }[]
 
     const serializedLogs = JSON.parse(JSON.stringify(logs))
