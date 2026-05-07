@@ -201,6 +201,10 @@ source = 'PURCHASED' →
 - `variety-dialog.tsx` (관리자 품종 관리):
   - 라디오에 `PURCHASED` ("매입") 항목 추가 (관리자가 수동 등록·관리 가능하게)
   - 라디오 그리드 5개 → 6개로 확장
+- `app/actions/admin.ts` `deleteVariety` / `deleteVarieties` 가드 보강:
+  - 매입 품종이 추가되면서 `MillingOutputPackage.varietyId` 참조 케이스가 새로 등장. 현재 `deleteVariety` 단건은 참조 가드 자체 없고(외래키 위반 → generic 영문 에러), `deleteVarieties` 다중은 `Stock`만 체크 → `MillingOutputPackage` 참조는 잘못된 사유로 실패함
+  - 보강: Stock + OutputPackage(varietyId) 카운트 둘 다 체크 → `"이 품종은 재고 N건 / 포장 M건에서 사용 중이라 삭제할 수 없어요."` 한글 안내 (사용자 결정 2026-05-07 — A안 풀 버전)
+  - 이중 동시 가드 적용 (단건/다중 공통 헬퍼화 검토)
 
 **검증**: 매입 수정 → 제품재고 갱신 / 매입 삭제 → 목록에서 사라짐 / 품종 관리 화면에서 "매입" 라디오 동작.
 

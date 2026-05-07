@@ -23,7 +23,7 @@ export const PKG_GRID =
 
 // 행 액션 콜백 — 콜백 흐름: panel → list-client → row.
 // 콜백 없으면 메뉴 안 보임 (벼 탭).
-// PURCHASED 행은 #8 매입 다이얼로그와 함께 처리 → 본 #7c는 source='MILLED'만 활성
+// MILLED는 잡곡 포장 수정/삭제 다이얼로그(#7c), PURCHASED는 잡곡 매입 수정/삭제 다이얼로그(#8c)로 분기.
 export interface PackageRowActions {
     onEdit?: (row: PackageRowData) => void
     onDelete?: (row: PackageRowData) => void
@@ -45,13 +45,11 @@ export function PackageColumnHeader() {
     )
 }
 
-// 행 액션 메뉴 — 콜백/source 분기. 콜백 없으면 빈 셀 반환.
+// 행 액션 메뉴 — 콜백 있으면 활성. MILLED/PURCHASED 모두 패널에서 source로 분기 처리.
 function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
     if (!actions || (!actions.onEdit && !actions.onDelete)) {
         return <span />
     }
-    // PURCHASED는 #8과 함께 처리 — 본 #7c는 MILLED만 활성. PURCHASED는 비활성 표시.
-    const purchased = row.source === 'PURCHASED'
     return (
         <span className="flex items-center justify-center">
             <DropdownMenu>
@@ -60,7 +58,6 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-slate-400 hover:text-slate-600"
-                        title={purchased ? '매입 행 수정/삭제는 #8에서 활성화' : undefined}
                     >
                         <MoreVertical className="h-4 w-4" />
                     </Button>
@@ -68,7 +65,7 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
                 <DropdownMenuContent align="end" className="w-[120px]">
                     <DropdownMenuItem
                         onClick={() => actions.onEdit?.(row)}
-                        disabled={purchased || !actions.onEdit}
+                        disabled={!actions.onEdit}
                         className="gap-2 cursor-pointer"
                     >
                         <Pencil className="h-4 w-4 text-slate-500" />
@@ -76,7 +73,7 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => actions.onDelete?.(row)}
-                        disabled={purchased || !actions.onDelete}
+                        disabled={!actions.onDelete}
                         className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                     >
                         <Trash2 className="h-4 w-4" />

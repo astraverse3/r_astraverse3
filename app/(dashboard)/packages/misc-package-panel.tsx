@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { deleteMiscPackage, type PackageItem, type PackageRow } from '@/app/actions/packages'
+import { deleteMiscPackage, deleteMiscPurchase, type PackageItem, type PackageRow } from '@/app/actions/packages'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { PackageListClient } from './package-list-client'
 import { PackageSearchDialog } from './package-search-dialog'
@@ -12,6 +12,7 @@ import { ActivePackageFilters } from './active-package-filters'
 import { MiscPackageDialog } from './misc-package-dialog'
 import { EditMiscPackageDialog } from './edit-misc-package-dialog'
 import { MiscPurchaseDialog } from './misc-purchase-dialog'
+import { EditMiscPurchaseDialog } from './edit-misc-purchase-dialog'
 
 interface Props {
     items: PackageItem[]
@@ -22,7 +23,7 @@ interface Props {
  * 잡곡 제품재고 패널.
  * [+ 포장하기]: 진입점 ② — stock selector 포함 다이얼로그.
  * [+ 매입 등록]: #8b — 외부매입 잡곡 등록 다이얼로그.
- * 행 메뉴 (수정/삭제): MILLED만 활성. PURCHASED는 #8c와 함께.
+ * 행 메뉴 (수정/삭제): MILLED는 잡곡 포장 다이얼로그(#7c), PURCHASED는 잡곡 매입 다이얼로그(#8c)로 분기.
  */
 export function MiscPackagePanel({ items, varieties }: Props) {
     const router = useRouter()
@@ -30,6 +31,8 @@ export function MiscPackagePanel({ items, varieties }: Props) {
     const [purchaseOpen, setPurchaseOpen] = useState(false)
     const [editPackageId, setEditPackageId] = useState<number | null>(null)
     const [editOpen, setEditOpen] = useState(false)
+    const [editPurchaseId, setEditPurchaseId] = useState<number | null>(null)
+    const [editPurchaseOpen, setEditPurchaseOpen] = useState(false)
 
     const totalCount = items.reduce(
         (sum, it) => sum + (it.type === 'group' ? it.rows.length : 1),
@@ -37,24 +40,42 @@ export function MiscPackagePanel({ items, varieties }: Props) {
     )
 
     const handleEditRow = (row: PackageRow) => {
-        if (row.source !== 'MILLED') return
-        setEditPackageId(row.id)
-        setEditOpen(true)
+        if (row.source === 'MILLED') {
+            setEditPackageId(row.id)
+            setEditOpen(true)
+        } else if (row.source === 'PURCHASED') {
+            setEditPurchaseId(row.id)
+            setEditPurchaseOpen(true)
+        }
     }
 
     const handleDeleteRow = async (row: PackageRow) => {
-        if (row.source !== 'MILLED') return
-        const ok = confirm(
-            `이 포장을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)\n\n포장 자체가 없었던 것으로 처리되며, 원물 재고가 복원됩니다.`,
-        )
-        if (!ok) return
-        const result = await deleteMiscPackage(row.id)
-        if (result.success) {
-            toast.success('포장이 삭제되었습니다.')
-            triggerDataUpdate()
-            router.refresh()
-        } else {
-            toast.error(result.error || '삭제에 실패했습니다.')
+        if (row.source === 'MILLED') {
+            const ok = confirm(
+                `이 포장을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)\n\n포장 자체가 없었던 것으로 처리되며, 원물 재고가 복원됩니다.`,
+            )
+            if (!ok) return
+            const result = await deleteMiscPackage(row.id)
+            if (result.success) {
+                toast.success('포장이 삭제되었습니다.')
+                triggerDataUpdate()
+                router.refresh()
+            } else {
+                toast.error(result.error || '삭제에 실패했습니다.')
+            }
+        } else if (row.source === 'PURCHASED') {
+            const ok = confirm(
+                `이 매입을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)`,
+            )
+            if (!ok) return
+            const result = await deleteMiscPurchase(row.id)
+            if (result.success) {
+                toast.success('매입이 삭제되었습니다.')
+                triggerDataUpdate()
+                router.refresh()
+            } else {
+                toast.error(result.error || '삭제에 실패했습니다.')
+            }
         }
     }
 
@@ -99,6 +120,16 @@ export function MiscPackagePanel({ items, varieties }: Props) {
                     if (!o) setEditPackageId(null)
                 }}
                 packageId={editPackageId}
+                onSuccess={() => router.refresh()}
+            />
+
+            <EditMiscPurchaseDialog
+                open={editPurchaseOpen}
+                onOpenChange={(o) => {
+                    setEditPurchaseOpen(o)
+                    if (!o) setEditPurchaseId(null)
+                }}
+                packageId={editPurchaseId}
                 onSuccess={() => router.refresh()}
             />
 

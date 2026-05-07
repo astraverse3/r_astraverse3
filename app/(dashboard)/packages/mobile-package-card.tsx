@@ -43,10 +43,9 @@ function LotOrSourceCell({ lot, source }: { lot: string | null; source: PackageR
     return <span className="text-[10px] text-slate-300">—</span>
 }
 
-// 모바일 행 액션 메뉴 — 콜백/source 분기. PURCHASED는 #8과 함께.
+// 모바일 행 액션 메뉴 — 콜백 있으면 활성. MILLED/PURCHASED 모두 패널에서 source로 분기.
 function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
     if (!actions || (!actions.onEdit && !actions.onDelete)) return null
-    const purchased = row.source === 'PURCHASED'
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -57,7 +56,7 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
             <DropdownMenuContent align="end" className="w-[120px]">
                 <DropdownMenuItem
                     onClick={() => actions.onEdit?.(row)}
-                    disabled={purchased || !actions.onEdit}
+                    disabled={!actions.onEdit}
                     className="gap-2 cursor-pointer"
                 >
                     <Pencil className="h-4 w-4 text-slate-500" />
@@ -65,7 +64,7 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
                 </DropdownMenuItem>
                 <DropdownMenuItem
                     onClick={() => actions.onDelete?.(row)}
-                    disabled={purchased || !actions.onDelete}
+                    disabled={!actions.onDelete}
                     className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                 >
                     <Trash2 className="h-4 w-4" />

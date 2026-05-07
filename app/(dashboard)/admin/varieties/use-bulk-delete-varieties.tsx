@@ -30,11 +30,13 @@ export function useBulkDeleteVarieties() {
 
         if (result.success && result.data) {
             const { success, failed } = result.data
-            let message = `${success.length}개 품종이 삭제되었습니다.`
-            if (failed.length > 0) {
-                message += `\n\n삭제 실패 (${failed.length}개):\n${failed.map(f => f.reason).join('\n')}`
+            if (success.length > 0) {
+                toast.success(`${success.length}개 품종이 삭제되었습니다.`)
             }
-            toast.success(message)
+            if (failed.length > 0) {
+                const lines = failed.map(f => f.reason).join('\n')
+                toast.error(`삭제 실패 (${failed.length}개)\n${lines}`)
+            }
             triggerDataUpdate()
             setSelectedIds(new Set())
         } else {
@@ -51,7 +53,7 @@ export function useBulkDeleteVarieties() {
                         선택한 {selectedIds.size}개의 품종을 삭제하시겠습니까?
                         <br /><br />
                         <span className="text-amber-600 font-medium">
-                            ⚠️ 재고가 등록된 품종은 삭제되지 않습니다.
+                            ⚠️ 재고/포장에 사용된 품종은 삭제되지 않아요.
                         </span>
                     </AlertDialogDescription>
                 </AlertDialogHeader>

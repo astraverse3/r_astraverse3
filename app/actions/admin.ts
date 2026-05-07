@@ -111,9 +111,44 @@ export async function updateVariety(id: number, data: VarietyFormData) {
     }
 }
 
+/**
+ * 품종 삭제 사전 가드 — Stock + MillingOutputPackage(varietyId) 참조 검사.
+ * Variety는 두 모델에 의해 참조됨:
+ *  - Stock.varietyId (벼 입고, 잡곡 도정위탁/농가도정 입고)
+ *  - MillingOutputPackage.varietyId (잡곡 매입 — #8 도입)
+ * 둘 중 하나라도 참조 중이면 한글 안내 + 차단.
+ */
+async function checkVarietyReferences(
+    id: number,
+): Promise<{ blocked: false } | { blocked: true; reason: string }> {
+    const [stockCount, packageCount, variety] = await Promise.all([
+        prisma.stock.count({ where: { varietyId: id } }),
+        prisma.millingOutputPackage.count({ where: { varietyId: id } }),
+        prisma.variety.findUnique({ where: { id }, select: { name: true } }),
+    ])
+
+    if (stockCount === 0 && packageCount === 0) {
+        return { blocked: false }
+    }
+
+    const parts: string[] = []
+    if (stockCount > 0) parts.push(`재고 ${stockCount}건`)
+    if (packageCount > 0) parts.push(`포장 ${packageCount}건`)
+    const name = variety?.name ?? `id=${id}`
+    return {
+        blocked: true,
+        reason: `${name}: ${parts.join(' / ')}에서 사용 중이라 삭제할 수 없어요.`,
+    }
+}
+
 export async function deleteVariety(id: number) {
     await requirePermission('VARIETY_MANAGE')
     try {
+        const guard = await checkVarietyReferences(id)
+        if (guard.blocked) {
+            return { success: false, error: guard.reason }
+        }
+
         const deleted = await prisma.variety.delete({
             where: { id }
         })
@@ -130,7 +165,7 @@ export async function deleteVariety(id: number) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete variety:', error)
-        return { success: false, error: 'Failed to delete variety' }
+        return { success: false, error: '품종 삭제에 실패했어요.' }
     }
 }
 
@@ -143,17 +178,9 @@ export async function deleteVarieties(ids: number[]) {
         }
 
         for (const id of ids) {
-            // Check if variety has stocks
-            const stockCount = await prisma.stock.count({
-                where: { varietyId: id }
-            })
-
-            if (stockCount > 0) {
-                const variety = await prisma.variety.findUnique({ where: { id } })
-                results.failed.push({
-                    id,
-                    reason: `${variety?.name || id}: 재고가 등록되어 삭제 불가`
-                })
+            const guard = await checkVarietyReferences(id)
+            if (guard.blocked) {
+                results.failed.push({ id, reason: guard.reason })
                 continue
             }
 
@@ -183,7 +210,7 @@ export async function deleteVarieties(ids: number[]) {
         }
     } catch (error) {
         console.error('Failed to delete varieties:', error)
-        return { success: false, error: 'Failed to delete varieties' }
+        return { success: false, error: '품종 다중 삭제에 실패했어요.' }
     }
 }
 

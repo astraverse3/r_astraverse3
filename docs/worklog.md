@@ -2,7 +2,43 @@
 
 ## 2026-05-07
 
-### 잡곡 재고관리 #8b — 매입 등록 다이얼로그 + 패널 활성화 `feat`
+### 잡곡 재고관리 #8c — 매입 수정/삭제 + 행 메뉴 + 품종관리 보완 `feat`
+
+**배경**: #8b 등록 흐름까지 마친 후 정정 흐름 + 관리자 화면 보완. 매입은 Stock 참조 없으므로 #7c와 달리 검증·트랜잭션 단순. 추가로 매입 도입에 따른 `deleteVariety` 참조 가드 보강.
+
+**매입 수정 다이얼로그** (`app/(dashboard)/packages/edit-misc-purchase-dialog.tsx` 신규):
+- open 시 `getMiscPurchaseEditContext` + `getPurchaseVendors` + `getPurchaseVarieties` 병렬 lazy fetch + prefill
+- 등록 다이얼로그와 동일 구조 (datalist / 신규 품종 실시간 안내 / confirm 안전장치)
+- 저장 후 toast 분기 (`varietyCreated` → "새 품종 'X' 등록 + 매입 수정 완료" / 그 외 "매입이 수정되었습니다.")
+
+**행 메뉴 PURCHASED 활성화** (`misc-package-panel.tsx`, `package-row.tsx`, `mobile-package-card.tsx`):
+- panel `handleEditRow` / `handleDeleteRow` source 분기:
+  - MILLED → 잡곡 포장 수정/삭제 (#7c 흐름)
+  - PURCHASED → 매입 수정/삭제 (#8c 흐름)
+- 삭제 confirm 메시지 분기 ("이 매입을 삭제할까요?" 등)
+- 행 메뉴 컴포넌트 (`RowActionMenu`)에서 `purchased` `disabled` 조건 + "매입 행 수정/삭제는 #8에서" 툴팁 제거 — 콜백 있으면 무조건 활성
+
+**품종관리 UI 보완**:
+- `variety-dialog.tsx` 라디오에 `PURCHASED` ("매입") 항목 추가 (관리자 수동 등록 가능)
+- `variety-list-client.tsx` 라벨 매핑 3곳 + 정렬 우선순위(`typeOrder`) `PURCHASED: 6` (매입은 끝)
+
+**`deleteVariety` / `deleteVarieties` 가드 보강** (`app/actions/admin.ts`):
+- `checkVarietyReferences(id)` 헬퍼 신설 — Stock + MillingOutputPackage(varietyId) 카운트 + 한글 안내 문자열 반환
+- 단건 삭제: 가드 호출 → 차단 시 `"흑보리: 재고 N건 / 포장 M건에서 사용 중이라 삭제할 수 없어요."` 안내
+- 다중 삭제: 기존 `stockCount`만 체크하던 부분 동일 가드로 교체. 매입 케이스 잘못된 사유 표시 버그 해소
+
+**다중 삭제 토스트 분기 버그 수정** (`use-bulk-delete-varieties.tsx`):
+- 발견: `success.length=0, failed.length=1`일 때 `"0개 품종이 삭제되었습니다.\n\n삭제 실패..."` 같이 한 토스트로 묶여 어색
+- 수정: success 카운트 / failed 카운트별 분리 토스트 (성공만→success / 실패만→error / 둘 다→두 개)
+- AlertDialog 안내 문구도 "재고가 등록된 품종" → "재고/포장에 사용된 품종"으로 매입 포함 보완
+
+**검증**: `npx tsc --noEmit` 통과. 사용자 브라우저 검수 OK (다중 삭제 토스트 분기 버그 발견 후 추가 수정).
+
+**잡곡 #8 전체 완료** — 매입 등록·수정·삭제 + 행 메뉴 + 품종 격리 인프라 + 품종관리 UI + 참조 가드 보강. 다음 단계는 메모리 갱신 후 사용자와 결정.
+
+---
+
+### 잡곡 재고관리 #8b — 매입 등록 다이얼로그 + 패널 활성화 `feat` (`8318e7b`)
 
 **배경**: #8a에서 깔아둔 매입 actions 5종을 사용자가 호출할 수 있는 진입점 마련. 잡곡 탭 헤더 `[+ 매입 등록]` 활성화 + 다이얼로그 신규.
 

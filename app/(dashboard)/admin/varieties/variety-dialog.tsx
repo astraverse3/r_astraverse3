@@ -174,6 +174,17 @@ export function VarietyDialog({ mode, variety }: Props) {
                                 />
                                 <span>기타</span>
                             </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="PURCHASED"
+                                    checked={type === 'PURCHASED'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-[#00a2e8] w-4 h-4"
+                                />
+                                <span>매입</span>
+                            </label>
                         </div>
                     </div>
                     <div className="flex items-center justify-between w-full pt-4 border-t border-slate-100 mt-2">

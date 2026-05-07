@@ -134,7 +134,8 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
                 const label = variety.type === 'URUCHI' ? '메벼' :
                     variety.type === 'GLUTINOUS' ? '찰벼' :
                         variety.type === 'INDICA' ? '인디카' :
-                            variety.type === 'MISC_GRAIN' ? '잡곡' : '기타'
+                            variety.type === 'MISC_GRAIN' ? '잡곡' :
+                                variety.type === 'PURCHASED' ? '매입' : '기타'
                 grouped[key] = {
                     key,
                     type: variety.type,
@@ -152,8 +153,8 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
             group.items.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
         })
 
-        // Sort groups by type — 잡곡은 기타 앞
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5 }
+        // Sort groups by type — 매입은 끝, 잡곡은 기타 앞
+        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5, 'PURCHASED': 6 }
 
         return Object.values(grouped).sort((a, b) => {
             return (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
@@ -204,9 +205,9 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
     onSelectOne: (id: number, checked: boolean) => void,
     canManage: boolean
 }) {
-    // Sort varieties by type then name — 잡곡은 기타 앞
+    // Sort varieties by type then name — 매입은 끝, 잡곡은 기타 앞
     const sortedVarieties = useMemo(() => {
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5 }
+        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5, 'PURCHASED': 6 }
         return [...varieties].sort((a, b) => {
             const typeDiff = (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
             if (typeDiff !== 0) return typeDiff
@@ -233,7 +234,8 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
                             : variety.type === 'GLUTINOUS' ? '찰벼'
                                 : variety.type === 'INDICA' ? '인디카'
                                     : variety.type === 'MISC_GRAIN' ? '잡곡'
-                                        : '기타'}
+                                        : variety.type === 'PURCHASED' ? '매입'
+                                            : '기타'}
                     </TableCell>
                     {canManage && (
                         <TableCell className="text-center">
