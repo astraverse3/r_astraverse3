@@ -2,6 +2,33 @@
 
 ## 2026-05-07
 
+### 잡곡 재고관리 #8b — 매입 등록 다이얼로그 + 패널 활성화 `feat`
+
+**배경**: #8a에서 깔아둔 매입 actions 5종을 사용자가 호출할 수 있는 진입점 마련. 잡곡 탭 헤더 `[+ 매입 등록]` 활성화 + 다이얼로그 신규.
+
+**다이얼로그** (`app/(dashboard)/packages/misc-purchase-dialog.tsx` 신규):
+- open 시 `getPurchaseVendors` + `getPurchaseVarieties` 병렬 lazy fetch
+- 매입처 / 품종 모두 HTML datalist 자동완성 — 가벼움 + 키보드/터치 호환 OK
+- 신규 품종 실시간 안내: 자동완성 매칭 X 시 amber `"새 품종 'XX' 으로 등록돼요"`, 매칭 시 회색 `"기존 품종 사용"` (대소문자 무시)
+- 포장단위 7칸 그리드 (잡곡 포장과 동일 셋, 인라인 정의)
+- "기타" 선택 시 규격 라벨 + 단중(kg) 두 칸
+- 개수 인풋 `w-[140px]` 고정폭, 우측 상단 총 포장중량 미리보기 (#7d 정착 패턴)
+- 저장 시 신규 품종이면 `confirm("새 품종 'XX'을(를) 추가하고 매입 등록할게요. 계속할까요?")` 마지막 안전장치
+- 저장 후 toast 분기: `varietyCreated`면 "새 품종 'XX' 등록 + 매입 등록 완료" / 아니면 "매입이 등록되었습니다."
+
+**패널 연결** (`misc-package-panel.tsx`):
+- `[+ 매입 등록]` 버튼 `disabled` 제거 + onClick에서 다이얼로그 open
+- `MiscPurchaseDialog` 마운트 (varieties prop 불필요 — 다이얼로그 내부 fetch)
+- title 툴팁 "준비중 (#8에서 활성화)" 제거
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 사용자 브라우저 검수 OK (시나리오 1~5 동작 확인 — 다이얼로그 진입, 자동완성, 신규 품종 안내, 충돌 가드 한글 토스트, 정상 등록 흐름)
+
+**다음 진행**: #8c 매입 수정 다이얼로그 + 행 메뉴 PURCHASED 활성화 + 품종관리 UI에 "매입" 라디오 + `deleteVariety`/`deleteVarieties` 가드 보강.
+
+---
+
 ### 잡곡 재고관리 #8a — 매입 격리 인프라 + 매입 Server Actions `feat`
 
 **배경**: 외부매입 잡곡(`source=PURCHASED`) 등록 흐름의 토대 마련. 매입 품종을 `Variety.type='PURCHASED'` 플래그로 격리해서 다른 화면에 안 섞이게 인프라 구축 + 매입 CRUD 액션 5개 신설. 사용자 결정: D안(텍스트 입력 + findOrCreate) + 노출 격리 + name 충돌 시 한글 곡종명 안내 후 차단.

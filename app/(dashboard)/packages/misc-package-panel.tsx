@@ -11,6 +11,7 @@ import { PackageSearchDialog } from './package-search-dialog'
 import { ActivePackageFilters } from './active-package-filters'
 import { MiscPackageDialog } from './misc-package-dialog'
 import { EditMiscPackageDialog } from './edit-misc-package-dialog'
+import { MiscPurchaseDialog } from './misc-purchase-dialog'
 
 interface Props {
     items: PackageItem[]
@@ -20,12 +21,13 @@ interface Props {
 /**
  * 잡곡 제품재고 패널.
  * [+ 포장하기]: 진입점 ② — stock selector 포함 다이얼로그.
- * [+ 매입 등록]: #8에서 활성.
- * 행 메뉴 (수정/삭제): MILLED만 활성. PURCHASED는 #8과 함께.
+ * [+ 매입 등록]: #8b — 외부매입 잡곡 등록 다이얼로그.
+ * 행 메뉴 (수정/삭제): MILLED만 활성. PURCHASED는 #8c와 함께.
  */
 export function MiscPackagePanel({ items, varieties }: Props) {
     const router = useRouter()
     const [packageOpen, setPackageOpen] = useState(false)
+    const [purchaseOpen, setPurchaseOpen] = useState(false)
     const [editPackageId, setEditPackageId] = useState<number | null>(null)
     const [editOpen, setEditOpen] = useState(false)
 
@@ -71,9 +73,8 @@ export function MiscPackagePanel({ items, varieties }: Props) {
                 </Button>
                 <Button
                     size="sm"
-                    disabled
-                    className="h-8 px-3 bg-primary text-primary-foreground font-semibold rounded-md"
-                    title="준비중 (#8에서 활성화)"
+                    onClick={() => setPurchaseOpen(true)}
+                    className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
                 >
                     + 매입 등록
                 </Button>
@@ -82,6 +83,12 @@ export function MiscPackagePanel({ items, varieties }: Props) {
             <MiscPackageDialog
                 open={packageOpen}
                 onOpenChange={setPackageOpen}
+                onSuccess={() => router.refresh()}
+            />
+
+            <MiscPurchaseDialog
+                open={purchaseOpen}
+                onOpenChange={setPurchaseOpen}
                 onSuccess={() => router.refresh()}
             />
 
