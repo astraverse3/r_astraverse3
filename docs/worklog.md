@@ -1,5 +1,45 @@
 # 작업일지
 
+## 2026-05-07
+
+### 잡곡 재고관리 #7d — 모바일 UI 정리 (다이얼로그 fit + 원물 카드 재배치) `style` (미커밋)
+
+**배경**: #7d 잔여 항목인 모바일 다이얼로그 fit 검수 중 발견된 자잘한 정리들. 함께 사용자 검수에서 잡곡 원물재고 모바일 카드 정보 위계 재정의 요청 받아 일괄 처리.
+
+**잡곡 포장 수정 다이얼로그 — LOT 풀 표시** (`app/actions/packages.ts`, `edit-misc-package-dialog.tsx`):
+- `MiscPackageEditContext`에 `lotNo: string | null` 추가, `getMiscPackageEditContext`에서 `stock.lotNo` 전달
+- readonly 헤더에 LOT 풀 뱃지(font-mono, `ml-auto` 우측 정렬, 폭 부족 시 `flex-wrap`으로 줄바꿈)
+
+**개수 인풋 폭 축소** (`misc-package-dialog.tsx`, `edit-misc-package-dialog.tsx`):
+- `grid-cols-[1fr_auto]` → `flex justify-between`, 인풋 wrapper에 `w-[140px]` 고정. 등록·수정 양쪽 동일 적용
+
+**벼 포장 다이얼로그 — 모바일 그룹 헤더 2줄** (`milling/add-packaging-dialog.tsx`):
+- 외부 wrapper로 묶고 `flex-wrap sm:flex-nowrap` 분기
+- 모바일: LOT은 1행 인라인(폭 부족 시 자연 wrap), 입력kg→예상kg는 2번째 줄 우측 정렬
+- PC(`sm:` 이상): 기존 한 줄 레이아웃 그대로
+- 백로그 §16 (벼 포장 다이얼로그 모바일 짤림) 같이 처리
+
+**잡곡 원물재고 모바일 카드 통일 재배치** (`raw-stocks/misc/misc-stock-table-row.tsx`, `misc-stock-list-client.tsx`):
+- `MiscStockMobileCard`에 `inExpandedGroup` prop 추가 → 단일건/그룹 서브 분기
+- **단일건** (그룹 헤더 없는 케이스): `[품종(14,bold) 년도 인증]` / `[생산자(13,bold) LOT풀 입고일]` / `[재고(14,black) kg]` (우측)
+- **그룹 서브**: `[생산자 #번호 LOT풀 입고일]` / `[재고]` (우측). 품종/년도/인증은 그룹 헤더에 양도
+- **모바일 한정 제거**: 소스타입 뱃지, 입고량, 원물·수율 (작업현장 실무 화면 컨셉)
+- **#bagNo 정책**: 단일건 생략, 그룹 서브는 생산자 다음 위치(생산자별 sequence 의미)
+- LOT 짧은 뱃지(`shortLot`) → 풀 텍스트로 변경
+- 입고/재고 표시: `재고(강조) / 입고량(작게) kg` 슬래시 형태로 통일했다가 사용자 결정으로 입고량 자체 제거 → 최종 `재고 kg`만
+- list-client: 그룹 펼친 서브 카드 호출에 `inExpandedGroup` prop 전달
+- 데스크톱 테이블은 변경 없음 (모든 정보 유지)
+
+**검증**:
+- `npx tsc --noEmit` 통과 (각 변경 단계마다)
+- 브라우저 모바일 검수: 사용자가 단계별로 직접 확인하며 위계·여백·정보 노출 조정 반복
+
+**관련 메모리/메모**:
+- 메모리 `project_misc_grain_feature.md` #7d 잔여 항목(모바일 다이얼로그 fit 검수) 처리 완료. 권한 정책(STOCK_MANAGE 분리)은 #9.5로 이월 (기존 결정 그대로)
+- 백로그 §16 (벼 포장 다이얼로그 모바일 짤림) 본 작업에 흡수됨 → 백로그에서 처리 표시 필요
+
+---
+
 ## 2026-05-06
 
 ### 잡곡 재고관리 #7c — 잡곡 포장 수정·삭제 + 행 액션 메뉴 `feat`

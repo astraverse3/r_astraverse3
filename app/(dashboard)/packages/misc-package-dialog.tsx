@@ -244,8 +244,8 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
                     </div>
 
                     {/* 3. 개수 + 미리보기 */}
-                    <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
-                        <div className="space-y-1">
+                    <div className="flex items-end justify-between gap-3">
+                        <div className="space-y-1 w-[140px]">
                             <Label className="text-[13px]">개수</Label>
                             <Input
                                 type="number"

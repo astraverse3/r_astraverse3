@@ -156,9 +156,16 @@ export function EditMiscPackageDialog({ open, onOpenChange, packageId, onSuccess
                     <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                         {/* 대상 정보 (readonly) */}
                         <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[12px] text-slate-700">
-                            <span className="font-bold">{ctx.variety}</span>
-                            <span className="text-slate-500 mx-1.5">·</span>
-                            <span>{ctx.producer}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold">{ctx.variety}</span>
+                                <span className="text-slate-400">·</span>
+                                <span>{ctx.producer}</span>
+                                {ctx.lotNo && (
+                                    <span className="ml-auto font-mono text-[11px] text-slate-600 bg-white border border-slate-200 rounded px-1.5 py-[1px]">
+                                        {ctx.lotNo}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* 포장단위 */}
@@ -210,8 +217,8 @@ export function EditMiscPackageDialog({ open, onOpenChange, packageId, onSuccess
                         </div>
 
                         {/* 개수 + 미리보기 */}
-                        <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
-                            <div className="space-y-1">
+                        <div className="flex items-end justify-between gap-3">
+                            <div className="space-y-1 w-[140px]">
                                 <Label className="text-[13px]">개수</Label>
                                 <Input
                                     type="number"

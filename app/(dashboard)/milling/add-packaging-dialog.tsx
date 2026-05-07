@@ -333,29 +333,42 @@ export function AddPackagingDialog({
 
                         return (
                             <div key={group.lotNo || 'single'} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
-                                {/* 그룹 헤더 */}
+                                {/* 그룹 헤더 — 모바일: LOT은 1줄 인라인, 입력→예상은 2번째 줄 우측 정렬 / PC: 모두 1줄 */}
                                 {(isMultiGroup || group.farmerName) && (
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-stone-50 border-b border-stone-100">
-                                        <span className="text-[12px] font-bold text-stone-700 shrink-0">{group.farmerName}</span>
-                                        {group.varietyName && (
-                                            <span className="text-stone-400 text-[11px]">{group.varietyName}</span>
-                                        )}
-                                        {group.lotNo && (
-                                            <span className="font-mono text-[11px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 shrink-0">
-                                                {group.lotNo}
-                                            </span>
-                                        )}
-                                        <div className="flex-1" />
+                                    <div className="bg-stone-50 border-b border-stone-100">
+                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 px-3 py-2">
+                                            <span className="text-[12px] font-bold text-stone-700 shrink-0">{group.farmerName}</span>
+                                            {group.varietyName && (
+                                                <span className="text-stone-400 text-[11px] shrink-0">{group.varietyName}</span>
+                                            )}
+                                            {group.lotNo && (
+                                                <span className="font-mono text-[11px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 shrink-0">
+                                                    {group.lotNo}
+                                                </span>
+                                            )}
+                                            <div className="flex-1" />
+                                            {isMultiGroup && (
+                                                <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                                                    <span className="text-[11px] text-stone-500">
+                                                        {group.totalInputKg.toLocaleString()}kg
+                                                    </span>
+                                                    <span className="text-stone-300 text-[10px]">→</span>
+                                                    <span className="text-[11px] font-bold text-[#00a2e8]">
+                                                        예상 {expectedKg.toLocaleString()}kg
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                         {isMultiGroup && (
-                                            <>
-                                                <span className="text-[11px] text-stone-500 shrink-0">
+                                            <div className="sm:hidden flex justify-end items-center gap-1.5 px-3 pb-2 -mt-1">
+                                                <span className="text-[11px] text-stone-500">
                                                     {group.totalInputKg.toLocaleString()}kg
                                                 </span>
                                                 <span className="text-stone-300 text-[10px]">→</span>
-                                                <span className="text-[11px] font-bold text-[#00a2e8] shrink-0">
+                                                <span className="text-[11px] font-bold text-[#00a2e8]">
                                                     예상 {expectedKg.toLocaleString()}kg
                                                 </span>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
                                 )}

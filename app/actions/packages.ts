@@ -432,6 +432,7 @@ export interface MiscPackageEditContext {
     id: number
     variety: string
     producer: string
+    lotNo: string | null
     packageType: string
     weightPerUnit: number
     count: number
@@ -472,6 +473,7 @@ export async function getMiscPackageEditContext(
                 id: pkg.id,
                 variety: pkg.stock.variety.name,
                 producer: pkg.stock.farmer.name,
+                lotNo: pkg.stock.lotNo ?? null,
                 packageType: pkg.packageType,
                 weightPerUnit: pkg.weightPerUnit,
                 count: pkg.count,

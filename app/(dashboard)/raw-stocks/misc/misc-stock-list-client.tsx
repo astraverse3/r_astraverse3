@@ -339,6 +339,7 @@ export function MiscStockListClient({
                                                 key={stock.id}
                                                 stock={stock}
                                                 canManage={canManage}
+                                                inExpandedGroup
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
                                                 onPackage={() => handlePackage(stock)}

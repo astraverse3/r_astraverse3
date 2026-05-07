@@ -194,123 +194,153 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
 interface MobileCardProps {
     stock: MiscStock
     canManage?: boolean
+    /** 그룹 펼침의 서브 카드 여부. true면 품종/년도/인증을 그룹 헤더에 양도하고 카드는 생산자부터 시작. */
+    inExpandedGroup?: boolean
     onEdit?: () => void
     onDelete?: () => void
     onPackage?: () => void
 }
 
-export function MiscStockMobileCard({ stock, canManage = false, onEdit, onDelete, onPackage }: MobileCardProps) {
-    const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
+export function MiscStockMobileCard({
+    stock,
+    canManage = false,
+    inExpandedGroup = false,
+    onEdit,
+    onDelete,
+    onPackage,
+}: MobileCardProps) {
     const isAvailable = stock.status === 'AVAILABLE'
     const isConsumed = stock.status === 'CONSUMED'
-    const showRaw = stock.sourceType === 'CONSIGNMENT' || stock.sourceType === 'GERMINATION'
-    const showYield = stock.sourceType === 'CONSIGNMENT'
     const remainingKg = stock.remainingKg ?? stock.weightKg
     const isDepleted = remainingKg <= 0.001
-    const isPartial = !isDepleted && remainingKg < stock.weightKg - 0.001
     const canPackage = isAvailable && !isDepleted
     const certType = stock.farmer.group?.certType
 
+    const actionCluster = (
+        <div className="flex items-center gap-0.5 shrink-0">
+            {canManage && canPackage ? (
+                <button
+                    type="button"
+                    onClick={onPackage}
+                    className="inline-flex items-center font-semibold px-2 py-0 rounded-sm border border-primary/40 text-primary bg-primary/10 active:bg-primary/20 text-[10px] h-5 transition-colors"
+                >
+                    포장
+                </button>
+            ) : (
+                <Badge
+                    variant={isAvailable ? 'outline' : 'secondary'}
+                    className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
+                >
+                    {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
+                </Badge>
+            )}
+            {canManage && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600">
+                            <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[120px]">
+                        <DropdownMenuItem onClick={onEdit} disabled={isConsumed} className="gap-2 cursor-pointer">
+                            <Edit className="h-4 w-4 text-slate-500" />
+                            <span>수정</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={onDelete}
+                            disabled={isConsumed}
+                            className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            <span>삭제</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
+        </div>
+    )
+
+    // 재고만 강조 (입고량은 모바일 실무 화면에서 제거)
+    const remainingCluster = (
+        <div className="flex items-baseline gap-0.5 shrink-0">
+            <span className={`font-black text-[14px] tracking-tight leading-none tabular-nums ${isDepleted ? 'text-slate-400' : 'text-slate-800'}`}>
+                {Math.round(remainingKg).toLocaleString()}
+            </span>
+            <span className="text-[10px] font-bold opacity-60">kg</span>
+        </div>
+    )
+
+    // 생산자 옆 메타: LOT(풀) · 입고일 — 단일건/서브 공통
+    const producerMeta = (
+        <>
+            <span className="font-bold text-[13px] text-slate-700 leading-tight shrink-0">
+                {stock.farmer.name}
+                {stock.actualFarmer && <span className="text-slate-400 text-[11px] font-normal"> ({stock.actualFarmer})</span>}
+            </span>
+            {stock.lotNo && (
+                <span className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums shrink-0">
+                    {stock.lotNo}
+                </span>
+            )}
+            <span className="text-[10px] text-slate-500 tabular-nums shrink-0">{formatYMD(stock.incomingDate)}</span>
+        </>
+    )
+
     return (
         <div className="relative py-2 px-2.5 rounded-lg border border-slate-200/80 bg-white shadow-sm">
-            <div className="flex justify-between items-center mb-1 gap-1">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <span className="font-bold text-[13px] text-slate-800 leading-tight truncate min-w-0">
-                        {stock.farmer.name}
-                        {stock.actualFarmer && <span className="text-slate-400 text-[11px]"> ({stock.actualFarmer})</span>}
-                    </span>
-                    {certType && (
-                        <span className={`inline-flex items-center font-medium px-1 py-0 rounded text-[9px] border shrink-0 ${CERT_BADGE_CLASS[certType] ?? CERT_BADGE_CLASS['일반']}`}>
-                            {certType}
-                        </span>
-                    )}
-                    {sourceConf && (
-                        <span className={`inline-flex items-center font-medium px-1 py-0 rounded text-[9px] border shrink-0 ${sourceConf.className}`}>
-                            {sourceConf.label}
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                    {canManage && canPackage ? (
-                        <button
-                            type="button"
-                            onClick={onPackage}
-                            className="inline-flex items-center font-semibold px-2 py-0 rounded-sm border border-primary/40 text-primary bg-primary/10 active:bg-primary/20 text-[10px] h-5 transition-colors"
-                        >
-                            포장
-                        </button>
-                    ) : (
-                        <Badge
-                            variant={isAvailable ? 'outline' : 'secondary'}
-                            className={`text-[10px] h-5 px-1.5 rounded-sm ${isAvailable ? 'border-primary/30 text-primary bg-primary/10' : ''}`}
-                        >
-                            {isAvailable ? '보관중' : isConsumed ? '소진됨' : stock.status}
-                        </Badge>
-                    )}
-                    {canManage && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600">
-                                    <MoreVertical className="h-3.5 w-3.5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[120px]">
-                                <DropdownMenuItem onClick={onEdit} disabled={isConsumed} className="gap-2 cursor-pointer">
-                                    <Edit className="h-4 w-4 text-slate-500" />
-                                    <span>수정</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={onDelete}
-                                    disabled={isConsumed}
-                                    className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span>삭제</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="font-mono tabular-nums shrink-0">#{stock.bagNo}</span>
-                    {stock.lotNo ? (
-                        <span
-                            className="inline-flex items-center font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums shrink-0"
-                            title={stock.lotNo}
-                        >
-                            {shortLot(stock.lotNo)}
-                        </span>
-                    ) : (
-                        <span className="text-[10px] text-slate-400">로트없음</span>
-                    )}
-                    <span className="text-[10px] tabular-nums shrink-0">· {formatYMD(stock.incomingDate)}</span>
-                </div>
-                <div className="flex items-baseline gap-1 shrink-0">
-                    {isPartial && (
-                        <span className="text-[10px] text-slate-400 line-through tabular-nums">
-                            {stock.weightKg.toLocaleString()}
-                        </span>
-                    )}
-                    <span className={`font-black text-[14px] tracking-tight leading-none tabular-nums ${isDepleted ? 'text-slate-400' : 'text-slate-800'}`}>
-                        {Math.round(remainingKg).toLocaleString()}
-                        <span className="text-[10px] font-bold ml-0.5 opacity-60">kg</span>
-                    </span>
-                </div>
-            </div>
-            {(showRaw || showYield) && (
-                <div className="flex items-center justify-end gap-3 mt-0.5 text-[10px] text-slate-500">
-                    {showRaw && stock.rawWeightKg && (
-                        <span>
-                            {stock.sourceType === 'GERMINATION' ? '현미' : '원물'}{' '}
-                            <span className="font-medium text-slate-700 tabular-nums">{stock.rawWeightKg.toLocaleString()}kg</span>
-                        </span>
-                    )}
-                    {showYield && (
-                        <span>수율 <span className="font-medium text-slate-700 tabular-nums">{calcYield(stock.rawWeightKg, stock.weightKg)}</span></span>
-                    )}
-                </div>
+            {!inExpandedGroup ? (
+                <>
+                    {/* 단일건 1행: [품종 + 년도 + 인증]  ─  [포장 ⋮] */}
+                    <div className="flex justify-between items-center gap-1 mb-1">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <span className="font-bold text-[14px] text-slate-800 leading-tight truncate min-w-0">
+                                {stock.variety.name}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium bg-white border border-slate-200 px-1 py-0 rounded shrink-0 leading-none whitespace-nowrap">
+                                {stock.productionYear}년
+                            </span>
+                            {certType && (
+                                <span className={`inline-flex items-center font-medium px-1 py-0 rounded text-[9px] border shrink-0 ${CERT_BADGE_CLASS[certType] ?? CERT_BADGE_CLASS['일반']}`}>
+                                    {certType}
+                                </span>
+                            )}
+                        </div>
+                        {actionCluster}
+                    </div>
+                    {/* 단일건 2행: [생산자 LOT 입고일]  ─  [재고] */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                            {producerMeta}
+                        </div>
+                        {remainingCluster}
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* 그룹 서브 1행: [생산자 #번호 LOT 입고일]  ─  [포장 ⋮] */}
+                    <div className="flex justify-between items-center gap-1 mb-1">
+                        <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+                            <span className="font-bold text-[13px] text-slate-700 leading-tight shrink-0">
+                                {stock.farmer.name}
+                                {stock.actualFarmer && <span className="text-slate-400 text-[11px] font-normal"> ({stock.actualFarmer})</span>}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono tabular-nums shrink-0">
+                                #{stock.bagNo}
+                            </span>
+                            {stock.lotNo && (
+                                <span className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums shrink-0">
+                                    {stock.lotNo}
+                                </span>
+                            )}
+                            <span className="text-[10px] text-slate-500 tabular-nums shrink-0">{formatYMD(stock.incomingDate)}</span>
+                        </div>
+                        {actionCluster}
+                    </div>
+                    {/* 그룹 서브 2행: 우측 [재고] */}
+                    <div className="flex items-center justify-end gap-2">
+                        {remainingCluster}
+                    </div>
+                </>
             )}
         </div>
     )
