@@ -40,7 +40,9 @@
 
 **검증**: `npx tsc --noEmit` 통과 (수정 4회 반복, 매번 무에러)
 
-**다음 재개 지점**: 사용자 결정 필요 — **#9.5 권한 분리** vs **벼/잡곡 판매 탭 본 구현(plan-판매관리.md)** vs **`/releases` 디렉토리 정리**
+**후속 fix** (별도 커밋): 모바일 5탭에서 홈(`/`) 진입 시 blob이 첫 탭(원물)에 박히는 문제 — `mobile-nav.tsx`에 `blobVisible = activeHref !== '/'` + 컨테이너 `transition-opacity duration-300` + `opacity` 토글로 fade-out 처리. `getActiveIndex` fallback `0` 자체는 유지(blob 위치는 첫 탭이지만 페이드아웃되어 안 보임)
+
+**다음 재개 지점**: **#9.5 권한 분리** (`MISC_STOCK_MANAGE`/`PURCHASE_MANAGE`/`SALES_MANAGE` 등) — 사용자 합의됨 (2026-05-07)
 
 ---
 

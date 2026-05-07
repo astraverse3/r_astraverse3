@@ -75,6 +75,8 @@ export function MobileNav() {
 
     const isActive = (href: string) => activeHref.startsWith(href);
     const isStatsActive = activeHref.startsWith('/statistics');
+    // 홈(`/`)에서는 5탭 어느 것도 활성 아님 — blob 숨김 (헤더 로고가 홈 진입점)
+    const blobVisible = activeHref !== '/';
 
     const handleNav = (href: string) => {
         setActiveHref(href);
@@ -106,7 +108,10 @@ export function MobileNav() {
                     }}
                 >
                     {/* Goo blob 레이어 (흰 원) — overflow-hidden을 여기에만 적용 */}
-                    <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none" style={{ filter: 'url(#nav-goo)' }}>
+                    <div
+                        className="absolute inset-0 rounded-full overflow-hidden pointer-events-none transition-opacity duration-300"
+                        style={{ filter: 'url(#nav-goo)', opacity: blobVisible ? 1 : 0 }}
+                    >
                         <div className="absolute rounded-full" style={{ background: '#2563eb',
                             width: BLOB_SIZE, height: BLOB_SIZE, top: blobTop, left: 0,
                             transform: `translateX(${blobX}px)`,
