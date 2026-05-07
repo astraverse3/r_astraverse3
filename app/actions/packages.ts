@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import * as XLSX from 'xlsx'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -961,5 +962,132 @@ export async function deleteMiscPurchase(
     } catch (error) {
         console.error('[deleteMiscPurchase] failed:', error)
         return { success: false, error: sanitizeErrorMessage(error, '매입 삭제에 실패했습니다.') }
+    }
+}
+
+// -----------------------------
+// 제품재고 엑셀 다운로드 (#10)
+// 카테고리(RICE/MISC_GRAIN) + 활성 필터 적용. getPackages의 1달 cutoff는 적용 X (전체 노출).
+// -----------------------------
+
+const PACKAGE_EXPORT_HEADERS = [
+    '포장일자', '출처', '카테고리', '품종', '생산자/매입처', '로트번호',
+    '규격', '단중(kg)', '개수', '총중량(kg)', '매입일',
+] as const
+
+const SOURCE_LABEL_KO: Record<string, string> = {
+    MILLED: '도정산',
+    PURCHASED: '매입',
+}
+
+const CATEGORY_LABEL_KO: Record<string, string> = {
+    RICE: '벼',
+    MISC_GRAIN: '잡곡',
+}
+
+export async function exportPackages(
+    params: GetPackagesParams,
+): Promise<
+    { success: true; data: string; fileName: string } | { success: false; error: string }
+> {
+    await requireSession()
+    try {
+        const { category, varietyId, productionYear, source } = params
+
+        const splitMulti = (s: string | undefined): string[] =>
+            s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
+
+        const where: any = { category }
+
+        const sourceList = splitMulti(source).filter((s): s is PackageSource => s === 'MILLED' || s === 'PURCHASED')
+        if (sourceList.length === 1) where.source = sourceList[0]
+        else if (sourceList.length > 1) where.source = { in: sourceList }
+
+        const varietyIdList = splitMulti(varietyId)
+            .map(v => parseInt(v, 10))
+            .filter(n => !Number.isNaN(n))
+        if (varietyIdList.length > 0) {
+            where.AND = [
+                ...(where.AND ?? []),
+                {
+                    OR: [
+                        { varietyId: { in: varietyIdList } },
+                        { stock: { varietyId: { in: varietyIdList } } },
+                    ],
+                },
+            ]
+        }
+
+        const yearList = splitMulti(productionYear)
+            .map(y => parseInt(y, 10))
+            .filter(n => !Number.isNaN(n))
+        if (yearList.length > 0) {
+            where.AND = [
+                ...(where.AND ?? []),
+                {
+                    OR: yearList.flatMap(py => [
+                        { stock: { productionYear: py } },
+                        { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
+                    ]),
+                },
+            ]
+        }
+
+        const packages = await prisma.millingOutputPackage.findMany({
+            where,
+            include: {
+                stock: { include: { variety: true, farmer: true } },
+                variety: true,
+                batch: true,
+            },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        })
+
+        const rows = packages.map(p => {
+            const isPurchased = p.source === 'PURCHASED'
+            const variety = isPurchased ? p.variety?.name : p.stock?.variety.name
+            const producer = isPurchased ? (p.purchaseVendor ?? '') : (p.stock?.farmer.name ?? '')
+            const lot = p.lotNo ?? p.stock?.lotNo ?? ''
+            const incoming = isPurchased && p.incomingDate ? p.incomingDate.toISOString().slice(0, 10) : ''
+            return {
+                '포장일자': p.createdAt.toISOString().slice(0, 10),
+                '출처': SOURCE_LABEL_KO[p.source] ?? p.source,
+                '카테고리': CATEGORY_LABEL_KO[p.category] ?? p.category,
+                '품종': variety ?? '',
+                '생산자/매입처': producer,
+                '로트번호': lot,
+                '규격': p.packageType,
+                '단중(kg)': p.weightPerUnit,
+                '개수': p.count,
+                '총중량(kg)': p.totalWeight,
+                '매입일': incoming,
+            }
+        })
+
+        const worksheet =
+            rows.length === 0
+                ? XLSX.utils.aoa_to_sheet([[...PACKAGE_EXPORT_HEADERS]])
+                : XLSX.utils.json_to_sheet(rows)
+
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Packages')
+
+        const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
+
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'MillingOutputPackage',
+            description: `${CATEGORY_LABEL_KO[category]} 제품재고 엑셀 다운로드 (${rows.length}건)`,
+        })
+
+        const slug = category === 'RICE' ? 'rice' : 'misc'
+        return {
+            success: true,
+            data: buf,
+            fileName: `package_list_${slug}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        }
+    } catch (error) {
+        console.error('[exportPackages] failed:', error)
+        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
     }
 }

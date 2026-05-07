@@ -1,16 +1,18 @@
 'use client'
 
-import type { PackageItem } from '@/app/actions/packages'
+import type { GetPackagesParams, PackageItem } from '@/app/actions/packages'
 import { PackageListClient } from './package-list-client'
 import { PackageSearchDialog } from './package-search-dialog'
 import { ActivePackageFilters } from './active-package-filters'
+import { PackageExcelButtons } from './package-excel-buttons'
 
 interface Props {
     items: PackageItem[]
     varieties: { id: number; name: string }[]
+    filters: GetPackagesParams
 }
 
-export function RicePackagePanel({ items, varieties }: Props) {
+export function RicePackagePanel({ items, varieties, filters }: Props) {
     const totalCount = items.reduce(
         (sum, it) => sum + (it.type === 'group' ? it.rows.length : 1),
         0,
@@ -19,6 +21,7 @@ export function RicePackagePanel({ items, varieties }: Props) {
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
             <section className="flex items-center justify-end gap-2 px-1">
+                <PackageExcelButtons filters={filters} />
                 <PackageSearchDialog category="RICE" varieties={varieties} />
             </section>
 

@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { deleteMiscPackage, deleteMiscPurchase, type PackageItem, type PackageRow } from '@/app/actions/packages'
+import { deleteMiscPackage, deleteMiscPurchase, type GetPackagesParams, type PackageItem, type PackageRow } from '@/app/actions/packages'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { PackageListClient } from './package-list-client'
 import { PackageSearchDialog } from './package-search-dialog'
 import { ActivePackageFilters } from './active-package-filters'
+import { PackageExcelButtons } from './package-excel-buttons'
 import { MiscPackageDialog } from './misc-package-dialog'
 import { EditMiscPackageDialog } from './edit-misc-package-dialog'
 import { MiscPurchaseDialog } from './misc-purchase-dialog'
@@ -17,6 +18,7 @@ import { EditMiscPurchaseDialog } from './edit-misc-purchase-dialog'
 interface Props {
     items: PackageItem[]
     varieties: { id: number; name: string }[]
+    filters: GetPackagesParams
 }
 
 /**
@@ -25,7 +27,7 @@ interface Props {
  * [+ 매입 등록]: #8b — 외부매입 잡곡 등록 다이얼로그.
  * 행 메뉴 (수정/삭제): MILLED는 잡곡 포장 다이얼로그(#7c), PURCHASED는 잡곡 매입 다이얼로그(#8c)로 분기.
  */
-export function MiscPackagePanel({ items, varieties }: Props) {
+export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const router = useRouter()
     const [packageOpen, setPackageOpen] = useState(false)
     const [purchaseOpen, setPurchaseOpen] = useState(false)
@@ -82,6 +84,7 @@ export function MiscPackagePanel({ items, varieties }: Props) {
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
             <section className="flex items-center justify-end gap-2 px-1">
+                <PackageExcelButtons filters={filters} />
                 <PackageSearchDialog category="MISC_GRAIN" varieties={varieties} />
                 {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
                 <Button
@@ -90,14 +93,14 @@ export function MiscPackagePanel({ items, varieties }: Props) {
                     onClick={() => setPackageOpen(true)}
                     className="h-8 px-3 font-semibold rounded-md"
                 >
-                    + 포장하기
+                    + 포장<span className="hidden sm:inline">하기</span>
                 </Button>
                 <Button
                     size="sm"
                     onClick={() => setPurchaseOpen(true)}
                     className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
                 >
-                    + 매입 등록
+                    + 매입<span className="hidden sm:inline"> 등록</span>
                 </Button>
             </section>
 

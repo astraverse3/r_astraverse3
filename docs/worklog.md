@@ -2,7 +2,46 @@
 
 ## 2026-05-07
 
-### 잡곡 재고관리 #8c — 매입 수정/삭제 + 행 메뉴 + 품종관리 보완 `feat`
+### 잡곡 재고관리 #10 — 엑셀 다운로드 + 헤더 버튼 정리 (모바일 축약) `feat`
+
+**배경**: plan §"엑셀 Seed/Import"에서 import 단계까지 예정이었으나, 25년산 데이터 13건뿐이라 import 스크립트 비용 대비 이득 적음 → **다운로드만** 처리하고 import는 폐기. 같은 흐름에서 헤더 버튼 위치/모바일 축약 정리도 함께.
+
+**잡곡 원물재고 다운로드** (`app/actions/misc-stock.ts`, `app/(dashboard)/raw-stocks/misc/misc-stock-excel-buttons.tsx` 신규):
+- `exportMiscStocks(params?: GetMiscStocksParams)` — `buildMiscWhere` 재사용해서 활성 필터 그대로 적용
+- 컬럼 15개: 입고일자/생산년도/생산자/농가명/작목반/인증구분/품종/일련번호/입고유형(도정위탁/농가도정/발아위탁)/원물중량/입고중량/수율/위탁업체/로트번호/상태
+- 도정위탁만 수율 자동 계산 (`weightKg / rawWeightKg * 100`)
+- 빈 데이터도 헤더만 있는 시트 반환 (벼 export 패턴 동일)
+- UI 컴포넌트는 다운로드 버튼 1개만 (벼 패턴의 업로드+미리보기 부분 제외 — import 안 하기로)
+
+**제품재고 다운로드** (`app/actions/packages.ts`, `app/(dashboard)/packages/package-excel-buttons.tsx` 신규):
+- `exportPackages(params: GetPackagesParams)` — 카테고리(RICE/MISC_GRAIN) + 필터 적용. **getPackages의 1달 cutoff는 미적용** (전체 노출)
+- 컬럼 11개: 포장일자/출처(도정산/매입)/카테고리(벼/잡곡)/품종/생산자(매입처)/로트번호/규격/단중/개수/총중량/매입일
+- source 분기: MILLED → stock 기반 / PURCHASED → variety+purchaseVendor+incomingDate
+- 파일명에 `rice`/`misc` slug
+- UI는 `category` prop으로 분기. 벼/잡곡 양쪽 패널에서 동일 컴포넌트 사용
+
+**헤더 버튼 위치 정리**:
+- 다운로드 버튼을 헤더 좌측으로 이동 (잡곡 원물 / 벼·잡곡 제품 모두) — 우측 끝은 추가/등록 버튼 위치라는 시각 일관성
+- 변경 파일: `misc-stock-panel.tsx`, `rice-package-panel.tsx`, `misc-package-panel.tsx`
+
+**모바일 축약** (`misc-package-panel.tsx`, `package-search-dialog.tsx`):
+- `+ 포장하기` → 모바일 `+ 포장` (span "하기" `hidden sm:inline`)
+- `+ 매입 등록` → 모바일 `+ 매입` (span " 등록" `hidden sm:inline`)
+- 검색 버튼: `<span>검색</span>` → `<span className="hidden sm:inline">검색</span>` + 버튼 padding 모바일 축소 (`px-2 sm:pl-3 sm:pr-2`)
+- 잡곡 원물 필터(`misc-stock-filters.tsx`)는 이미 동일 패턴 적용돼 있어 변경 없음
+
+**page.tsx 보강**:
+- `RicePanelLoader`/`MiscPanelLoader`에서 빌드한 `filters: GetPackagesParams`를 패널에 prop으로 전달 (`<RicePackagePanel filters={filters} />`, `<MiscPackagePanel filters={filters} />`)
+
+**검증**:
+- `npx tsc --noEmit` 통과
+- 사용자 브라우저 검수 OK
+
+**다음 재개 지점**: **#9 사이드바/모바일 네비 개편** — 새 세션에서 진행. 핸드오프 `잡곡재고관리 사이드바 & 모바일 네비.html` + plan §"#9" 참고. plan-잡곡재고관리-#9.md 신규 작성 예정.
+
+---
+
+### 잡곡 재고관리 #8c — 매입 수정/삭제 + 행 메뉴 + 품종관리 보완 `feat` (`fbf0b6f`)
 
 **배경**: #8b 등록 흐름까지 마친 후 정정 흐름 + 관리자 화면 보완. 매입은 Stock 참조 없으므로 #7c와 달리 검증·트랜잭션 단순. 추가로 매입 도입에 따른 `deleteVariety` 참조 가드 보강.
 

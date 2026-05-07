@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import * as XLSX from 'xlsx'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -502,5 +503,88 @@ export async function getMiscFarmers() {
     } catch (error) {
         console.error('Failed to get misc farmers:', error)
         return { success: false, error: '잡곡 농가 목록 조회에 실패했습니다.' }
+    }
+}
+
+// -----------------------------
+// 잡곡 원물재고 엑셀 다운로드 (#10)
+// 현재 활성 필터 적용. 업로드는 본 단계 범위 외.
+// -----------------------------
+
+const MISC_SOURCE_LABEL: Record<string, string> = {
+    CONSIGNMENT: '도정위탁',
+    FARMER_MILLED: '농가도정',
+    GERMINATION: '발아위탁',
+}
+
+const MISC_EXPORT_HEADERS = [
+    '입고일자', '생산년도', '생산자', '농가명', '작목반', '인증구분',
+    '품종', '일련번호', '입고유형', '원물중량(kg)', '입고중량(kg)', '수율(%)',
+    '위탁업체', '로트번호', '상태',
+] as const
+
+export async function exportMiscStocks(
+    params?: GetMiscStocksParams,
+): Promise<
+    { success: true; data: string; fileName: string } | { success: false; error: string }
+> {
+    await requireSession()
+    try {
+        const where = buildMiscWhere(params)
+
+        const stocks = await prisma.stock.findMany({
+            where,
+            include: {
+                farmer: { include: { group: true } },
+                variety: true,
+            },
+            orderBy: [{ productionYear: 'desc' }, { incomingDate: 'desc' }, { id: 'desc' }],
+        })
+
+        const rows = stocks.map(s => ({
+            '입고일자': s.incomingDate ? s.incomingDate.toISOString().slice(0, 10) : '',
+            '생산년도': s.productionYear,
+            '생산자': s.farmer.name,
+            '농가명': s.actualFarmer ?? '',
+            '작목반': s.farmer.group?.name ?? '',
+            '인증구분': s.farmer.group?.certType ?? '일반',
+            '품종': s.variety.name,
+            '일련번호': s.bagNo,
+            '입고유형': s.sourceType ? (MISC_SOURCE_LABEL[s.sourceType] ?? s.sourceType) : '',
+            '원물중량(kg)': s.rawWeightKg ?? '',
+            '입고중량(kg)': s.weightKg,
+            '수율(%)':
+                s.sourceType === 'CONSIGNMENT' && s.rawWeightKg && s.rawWeightKg > 0
+                    ? +((s.weightKg / s.rawWeightKg) * 100).toFixed(1)
+                    : '',
+            '위탁업체': s.millingVendor ?? '',
+            '로트번호': s.lotNo ?? '',
+            '상태': s.status === 'AVAILABLE' ? '보관중' : s.status === 'CONSUMED' ? '소진됨' : s.status,
+        }))
+
+        const worksheet =
+            rows.length === 0
+                ? XLSX.utils.aoa_to_sheet([[...MISC_EXPORT_HEADERS]])
+                : XLSX.utils.json_to_sheet(rows)
+
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'MiscStocks')
+
+        const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
+
+        await recordAuditLog({
+            action: 'EXPORT',
+            entity: 'Stock',
+            description: `잡곡 원물재고 엑셀 다운로드 (${rows.length}건)`,
+        })
+
+        return {
+            success: true,
+            data: buf,
+            fileName: `misc_stock_list_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        }
+    } catch (error) {
+        console.error('[exportMiscStocks] failed:', error)
+        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
     }
 }

@@ -64,7 +64,7 @@ async function RicePanelLoader({
     const items: PackageItem[] = packagesResult.success ? packagesResult.data : []
     const varieties = (varietiesResult.success && varietiesResult.data ? varietiesResult.data : []) as { id: number; name: string }[]
 
-    return <RicePackagePanel items={items} varieties={varieties} />
+    return <RicePackagePanel items={items} varieties={varieties} filters={filters} />
 }
 
 async function MiscPanelLoader({
@@ -87,5 +87,5 @@ async function MiscPanelLoader({
     const items: PackageItem[] = packagesResult.success ? packagesResult.data : []
     const varieties = (varietiesResult.success && varietiesResult.data ? varietiesResult.data : []) as { id: number; name: string }[]
 
-    return <MiscPackagePanel items={items} varieties={varieties} />
+    return <MiscPackagePanel items={items} varieties={varieties} filters={filters} />
 }

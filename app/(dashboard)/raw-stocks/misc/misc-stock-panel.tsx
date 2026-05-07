@@ -7,6 +7,7 @@ import { AddMiscStockDialog } from './add-misc-stock-dialog'
 import { MiscStockFilters } from './misc-stock-filters'
 import { MiscStockListClient } from './misc-stock-list-client'
 import { ActiveMiscFilters } from './active-misc-filters'
+import { MiscStockExcelButtons } from './misc-stock-excel-buttons'
 
 interface Farmer {
     id: number
@@ -54,6 +55,7 @@ export function MiscStockPanel({
             {/* Header */}
             <section className="flex flex-col gap-2 px-1">
                 <div className="flex items-center justify-end gap-2">
+                    <MiscStockExcelButtons filters={filters} />
                     <MiscStockFilters varieties={varieties} />
                     {canStock && (
                         <AddMiscStockDialog

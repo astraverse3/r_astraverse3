@@ -128,10 +128,10 @@ export function PackageSearchDialog({ category, varieties }: Props) {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 pl-3 pr-2 gap-1.5 bg-blue-50 border-blue-200 text-primary font-semibold hover:bg-blue-100 hover:text-primary"
+                        className="h-8 px-2 sm:pl-3 sm:pr-2 gap-1.5 bg-blue-50 border-blue-200 text-primary font-semibold hover:bg-blue-100 hover:text-primary"
                     >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
-                        <span>검색</span>
+                        <span className="hidden sm:inline">검색</span>
                         {activeFilterCount > 0 && (
                             <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-white border border-blue-200 text-[10px] font-bold text-primary tabular-nums">
                                 {activeFilterCount}
