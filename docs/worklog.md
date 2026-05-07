@@ -2,6 +2,48 @@
 
 ## 2026-05-07
 
+### 잡곡 재고관리 #9 — 사이드바·모바일 네비 개편 + 판매관리 라우트 이관 `feat`
+
+**배경**: 메모리/계획서상 다음 재개 지점이 #9 사이드바·네비 개편. 작업흐름 순서(원물→도정→제품→판매)로 메뉴 재배치 + Set C 듀오톤 주입 + `/sales` 라우트 신설(기존 `/releases`를 "출고" 탭으로 이관) + "출고분석"→"판매분석" 라벨 변경. 단일 커밋.
+
+**`/sales` 신설 (`app/(dashboard)/sales/`)**:
+- `page.tsx` server component — `searchParams.tab` 분기(`rice`/`misc`/`release`, default `release`)
+- `sales-tabs.tsx` — F안 애니메이션 탭 (handoff §4.1)
+- `release-section.tsx` — 기존 `/releases` 컴포넌트(`ReleasePageWrapper`/`ReleaseFilters`/`ReleaseExcelButton`) **import 재사용** (디렉토리 이동 X)
+- `coming-soon-panel.tsx` — 벼/잡곡 탭 placeholder
+
+**`/releases` 호환**:
+- `next.config.ts` redirects: `/releases` + `/releases/:path*` → `/sales` 308
+- `app/actions/release.ts`: `revalidatePath('/releases')` 3곳 → `'/sales'`
+- `release-filters.tsx`: `usePathname()` 도입해 `router.push('${pathname}?...')` — 출고 탭 검색이 `/sales` 경로 유지
+
+**사이드바 (`components/desktop-sidebar.tsx`)**:
+- 6 메뉴: 홈(lucide Home) + 원물재고/도정관리/제품재고/판매관리(Set C 듀오톤) + 통계(StatsIcon)
+- 듀오톤에 `active` prop 전달 → 활성 시 fill currentColor (primary 채움)
+- 통계 하위: 수율분석/재고분석/**판매분석**
+- active 색 `text-blue-600` → `text-primary` 통일
+- MANAGEMENT 섹션(품종/생산자/관리자) 권한 가드 그대로
+
+**모바일 네비 (`components/mobile-nav.tsx`)**:
+- 5탭(홈 제거): 원물/도정/제품/판매(Set C 듀오톤) + 통계(StatsIcon)
+- statsSubItems "출고분석" → "판매분석"
+- Goo blob + cubic-bezier + safe-area 그대로 유지
+
+**라벨 + 임시 카드 정리**:
+- `output-stats-client.tsx:324` — `fileNamePrefix` `출고분석_` → `판매분석_`
+- `app/(dashboard)/page.tsx` — TEMP `/packages` 임시 링크 카드 + `Package` import 제거 (#6에서 깔아둔 임시)
+
+**사용자 추가 요청** (잡곡 원물재고 PC 모드 + 브레드크럼):
+- `misc-stock-list-client.tsx`: PC 헤더 "생산자" `text-center` → `text-left`, Lot 헤더 `w-[60px] px-1` → `w-[110px] px-2`
+- `misc-stock-table-row.tsx`: PC Lot 셀 `shortLot()` 제거 → 풀 표시, `cursor-help`/`title` 제거, dead 함수 `shortLot()` 정의 삭제
+- `breadcrumb-display.tsx`: `PATH_DEFAULT_TAB`에 `/packages: 'rice'`, `/sales: 'release'` 추가 — 직접 진입 시 "/ 벼", "/ 출고" 자동 표시
+
+**검증**: `npx tsc --noEmit` 통과 (수정 4회 반복, 매번 무에러)
+
+**다음 재개 지점**: 사용자 결정 필요 — **#9.5 권한 분리** vs **벼/잡곡 판매 탭 본 구현(plan-판매관리.md)** vs **`/releases` 디렉토리 정리**
+
+---
+
 ### 잡곡 재고관리 #10 — 엑셀 다운로드 + 헤더 버튼 정리 (모바일 축약) `feat`
 
 **배경**: plan §"엑셀 Seed/Import"에서 import 단계까지 예정이었으나, 25년산 데이터 13건뿐이라 import 스크립트 비용 대비 이득 적음 → **다운로드만** 처리하고 import는 폐기. 같은 흐름에서 헤더 버튼 위치/모바일 축약 정리도 함께.

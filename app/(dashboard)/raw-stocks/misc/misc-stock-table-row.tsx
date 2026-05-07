@@ -28,12 +28,6 @@ interface MiscStock {
     farmer: { name: string; group: { certType: string } | null }
 }
 
-// Lot 뱃지 표시: 길면 끝 4자리 + ...prefix, 짧으면 그대로
-function shortLot(lot: string): string {
-    if (lot.length <= 6) return lot
-    return `…${lot.slice(-4)}`
-}
-
 const SOURCE_BADGE: Record<string, { label: string; className: string }> = {
     CONSIGNMENT: { label: '도정위탁', className: 'border-primary/30 text-primary bg-primary/10' },
     FARMER_MILLED: { label: '농가도정', className: 'border-emerald-200 text-emerald-700 bg-emerald-50' },
@@ -111,13 +105,10 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
             <TableCell className="text-center text-xs text-slate-500 tabular-nums hidden md:table-cell">
                 {formatYMD(stock.incomingDate)}
             </TableCell>
-            <TableCell className="text-center">
+            <TableCell className="text-center px-2">
                 {stock.lotNo ? (
-                    <span
-                        className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums cursor-help"
-                        title={stock.lotNo}
-                    >
-                        {shortLot(stock.lotNo)}
+                    <span className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums">
+                        {stock.lotNo}
                     </span>
                 ) : (
                     <span className="text-[11px] text-slate-400">-</span>

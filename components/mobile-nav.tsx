@@ -1,22 +1,36 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Box, Clipboard, Compass, Activity, ArrowRightLeft, BarChart2, Layers, Package } from 'lucide-react';
+import { BarChart2, Layers, Package as PackageLucide } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+    RawStockIcon,
+    MillingIcon,
+    PackageIcon,
+    SalesIcon,
+    StatsIcon,
+} from '@/components/icons/duotone';
 
-const statsSubItems = [
+type IconComponent = React.ComponentType<{
+    className?: string
+    strokeWidth?: number
+    active?: boolean
+}>
+
+const statsSubItems: { href: string; label: string; icon: IconComponent }[] = [
     { href: '/statistics/milling', label: '수율분석', icon: BarChart2 },
-    { href: '/statistics/stock',   label: '재고분석', icon: Package },
-    { href: '/statistics/output',  label: '출고분석', icon: Layers },
+    { href: '/statistics/stock', label: '재고분석', icon: PackageLucide },
+    { href: '/statistics/output', label: '판매분석', icon: Layers },
 ];
 
-const navItems = [
-    { href: '/', icon: Compass, label: '홈' },
-    { href: '/raw-stocks', icon: Box, label: '원물' },
-    { href: '/milling', icon: Clipboard, label: '도정' },
-    { href: '/releases', icon: ArrowRightLeft, label: '출고' },
-    { href: '/statistics', icon: Activity, label: '통계' },
+const navItems: { href: string; icon: IconComponent; label: string }[] = [
+    { href: '/raw-stocks', icon: RawStockIcon, label: '원물' },
+    { href: '/milling', icon: MillingIcon, label: '도정' },
+    { href: '/packages', icon: PackageIcon, label: '제품' },
+    { href: '/sales', icon: SalesIcon, label: '판매' },
 ];
+
+const STATS_INDEX = navItems.length;
 
 const BLOB_SIZE = 42;
 const NAV_HEIGHT = 60;
@@ -24,10 +38,8 @@ const NAV_BG = '#ffffff';
 const blobTop = (NAV_HEIGHT - BLOB_SIZE) / 2;
 
 const getActiveIndex = (href: string) => {
-    if (href.startsWith('/statistics')) return 4;
-    const idx = navItems.findIndex((item) =>
-        item.href === '/' ? href === '/' : href.startsWith(item.href)
-    );
+    if (href.startsWith('/statistics')) return STATS_INDEX;
+    const idx = navItems.findIndex((item) => href.startsWith(item.href));
     return idx >= 0 ? idx : 0;
 };
 
@@ -61,7 +73,7 @@ export function MobileNav() {
         setBlobX(x);
     }, [pathname, getTargetX]);
 
-    const isActive = (href: string) => activeHref === href;
+    const isActive = (href: string) => activeHref.startsWith(href);
     const isStatsActive = activeHref.startsWith('/statistics');
 
     const handleNav = (href: string) => {
@@ -108,7 +120,7 @@ export function MobileNav() {
                     </div>
 
                     {/* 일반 메뉴 버튼 */}
-                    {navItems.slice(0, 4).map((item, i) => {
+                    {navItems.map((item, i) => {
                         const active = isActive(item.href);
                         const Icon = item.icon;
                         return (
@@ -138,7 +150,7 @@ export function MobileNav() {
 
                     {/* 통계 버튼 + 서브메뉴 */}
                     <div
-                        ref={(el) => { buttonRefs.current[4] = el; }}
+                        ref={(el) => { buttonRefs.current[STATS_INDEX] = el; }}
                         className="relative flex items-center justify-center flex-1 h-full"
                         onMouseEnter={() => setStatsOpen(true)}
                         onMouseLeave={() => setStatsOpen(false)}
@@ -152,7 +164,7 @@ export function MobileNav() {
                             <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
                                 <div className="p-1 flex flex-col gap-0.5">
                                     {statsSubItems.map((sub, si) => {
-                                        const subActive = isActive(sub.href);
+                                        const subActive = activeHref === sub.href;
                                         const SubIcon = sub.icon;
                                         return (
                                             <button
@@ -160,12 +172,12 @@ export function MobileNav() {
                                                 onClick={() => { handleNav(sub.href); setStatsOpen(false); }}
                                                 className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all duration-200 w-full text-left ${
                                                     statsOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
-                                                } ${subActive ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50'}`}
+                                                } ${subActive ? 'bg-blue-50 text-primary' : 'text-slate-500 hover:bg-slate-50'}`}
                                                 style={{ transitionDelay: statsOpen ? `${si * 50 + 40}ms` : '0ms' }}
                                             >
-                                                <SubIcon className={`w-3.5 h-3.5 stroke-[2px] shrink-0 ${subActive ? 'text-blue-500' : 'text-slate-400'}`} />
+                                                <SubIcon className={`w-3.5 h-3.5 stroke-[2px] shrink-0 ${subActive ? 'text-primary' : 'text-slate-400'}`} />
                                                 <span className={`text-xs ${subActive ? 'font-semibold' : 'font-medium'}`}>{sub.label}</span>
-                                                {subActive && <span className="ml-auto w-1 h-1 rounded-full bg-blue-500 shrink-0" />}
+                                                {subActive && <span className="ml-auto w-1 h-1 rounded-full bg-primary shrink-0" />}
                                             </button>
                                         );
                                     })}
@@ -177,13 +189,13 @@ export function MobileNav() {
                         <button
                             onClick={() => {
                                 setActiveHref('/statistics');
-                                setBlobX(getTargetX(4));
+                                setBlobX(getTargetX(STATS_INDEX));
                                 setStatsOpen(true);
                             }}
                             className="relative flex items-center justify-center w-full h-full z-10 transition-transform active:scale-[0.92]"
                         >
                             <div className="flex flex-col items-center justify-center gap-[3px]">
-                                <Activity className={`transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                                <StatsIcon className={`transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                                     isStatsActive || statsOpen
                                         ? 'w-[18px] h-[18px] stroke-[2.5px] text-white'
                                         : 'w-[20px] h-[20px] stroke-[2px] text-slate-400'

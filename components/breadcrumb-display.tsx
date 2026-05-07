@@ -96,6 +96,8 @@ const TAB_LABEL_MAP: Record<string, string> = {
 // 예) /raw-stocks 직접 진입 시 자동으로 '벼'를 서브컨텍스트로 표시.
 const PATH_DEFAULT_TAB: Record<string, string> = {
     '/raw-stocks': 'rice',
+    '/packages': 'rice',
+    '/sales': 'release',
 }
 
 function resolveConfig(pathname: string): BreadcrumbConfig | null {

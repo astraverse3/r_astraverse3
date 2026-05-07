@@ -4,15 +4,46 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import {
-    Package,
-    ClipboardList,
+    Home,
     Server,
-    BarChart3,
-    Truck,
     Leaf,
-    Users
+    Users,
 } from "lucide-react"
+import {
+    RawStockIcon,
+    MillingIcon,
+    PackageIcon,
+    SalesIcon,
+    StatsIcon,
+} from "@/components/icons/duotone"
 import { hasPermission, hasAnyPermission } from "@/lib/permissions"
+
+type IconComponent = React.ComponentType<{
+    className?: string
+    strokeWidth?: number
+    active?: boolean
+}>
+
+type MainMenuItem = {
+    href: string
+    label: string
+    icon: IconComponent
+    duotone?: boolean
+}
+
+const MAIN_MENU: MainMenuItem[] = [
+    { href: '/', label: '홈', icon: Home },
+    { href: '/raw-stocks', label: '원물재고', icon: RawStockIcon, duotone: true },
+    { href: '/milling', label: '도정관리', icon: MillingIcon, duotone: true },
+    { href: '/packages', label: '제품재고', icon: PackageIcon, duotone: true },
+    { href: '/sales', label: '판매관리', icon: SalesIcon, duotone: true },
+]
+
+const STATS_SUB = [
+    { href: '/statistics/milling', label: '수율분석' },
+    { href: '/statistics/stock', label: '재고분석' },
+    { href: '/statistics/output', label: '판매분석' },
+]
 
 export function DesktopSidebar() {
     const pathname = usePathname();
@@ -37,72 +68,52 @@ export function DesktopSidebar() {
                 <div className="space-y-1">
                     <p className="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
 
-                    <Link
-                        href="/raw-stocks"
-                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/raw-stocks')
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }`}
-                    >
-                        <Package className="w-4 h-4" />
-                        재고관리
-                    </Link>
-
-                    <Link
-                        href="/milling"
-                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/milling')
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }`}
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        도정관리
-                    </Link>
-
-                    <Link
-                        href="/releases"
-                        className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/releases')
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }`}
-                    >
-                        <Truck className="w-4 h-4" />
-                        출고관리
-                    </Link>
+                    {MAIN_MENU.map(item => {
+                        const active = isActive(item.href)
+                        const Icon = item.icon
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                    active
+                                        ? 'bg-blue-50 text-primary'
+                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                            >
+                                <Icon
+                                    className="w-4 h-4 shrink-0"
+                                    strokeWidth={1.8}
+                                    {...(item.duotone ? { active } : {})}
+                                />
+                                {item.label}
+                            </Link>
+                        )
+                    })}
 
                     <div className="pt-1">
-                        <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg ${isActive('/statistics') ? 'text-blue-600' : 'text-slate-600'}`}>
-                            <BarChart3 className="w-4 h-4" />
+                        <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg ${isActive('/statistics') ? 'text-primary' : 'text-slate-600'}`}>
+                            <StatsIcon
+                                className="w-4 h-4 shrink-0"
+                                strokeWidth={1.8}
+                                active={isActive('/statistics')}
+                            />
                             통계
                         </div>
                         <div className="pl-10 mt-1 space-y-1">
-                            <Link
-                                href="/statistics/milling"
-                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/milling')
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                            {STATS_SUB.map(sub => (
+                                <Link
+                                    key={sub.href}
+                                    href={sub.href}
+                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${
+                                        isActive(sub.href)
+                                            ? 'text-primary bg-blue-50'
+                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                     }`}
-                            >
-                                수율분석
-                            </Link>
-                            <Link
-                                href="/statistics/stock"
-                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/stock')
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                    }`}
-                            >
-                                재고분석
-                            </Link>
-                            <Link
-                                href="/statistics/output"
-                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/statistics/output')
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                    }`}
-                            >
-                                출고분석
-                            </Link>
+                                >
+                                    {sub.label}
+                                </Link>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -115,7 +126,7 @@ export function DesktopSidebar() {
                         <Link
                             href="/admin/varieties"
                             className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/admin/varieties')
-                                ? 'bg-blue-50 text-blue-600'
+                                ? 'bg-blue-50 text-primary'
                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
@@ -125,7 +136,7 @@ export function DesktopSidebar() {
                         <Link
                             href="/admin/farmers"
                             className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/admin/farmers')
-                                ? 'bg-blue-50 text-blue-600'
+                                ? 'bg-blue-50 text-primary'
                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
@@ -144,7 +155,7 @@ export function DesktopSidebar() {
                                     <Link
                                         href="/admin/users"
                                         className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
-                                            ? 'text-blue-600 bg-blue-50'
+                                            ? 'text-primary bg-blue-50'
                                             : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                             }`}
                                     >
@@ -155,7 +166,7 @@ export function DesktopSidebar() {
                                     <Link
                                         href="/admin/notices"
                                         className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/notices')
-                                            ? 'text-blue-600 bg-blue-50'
+                                            ? 'text-primary bg-blue-50'
                                             : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                             }`}
                                     >
@@ -167,7 +178,7 @@ export function DesktopSidebar() {
                                         <Link
                                             href="/admin/logs"
                                             className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/logs')
-                                                ? 'text-blue-600 bg-blue-50'
+                                                ? 'text-primary bg-blue-50'
                                                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                                 }`}
                                         >
@@ -176,7 +187,7 @@ export function DesktopSidebar() {
                                         <Link
                                             href="/admin/backup"
                                             className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/backup')
-                                                ? 'text-blue-600 bg-blue-50'
+                                                ? 'text-primary bg-blue-50'
                                                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                                 }`}
                                         >
@@ -188,7 +199,7 @@ export function DesktopSidebar() {
                                     <Link
                                         href="/admin/settings"
                                         className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/settings')
-                                            ? 'text-blue-600 bg-blue-50'
+                                            ? 'text-primary bg-blue-50'
                                             : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                             }`}
                                     >

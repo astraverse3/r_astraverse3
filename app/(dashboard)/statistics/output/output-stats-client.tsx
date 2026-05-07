@@ -321,7 +321,7 @@ export function OutputStatsClient({ initialData, varietyOptions }: Props) {
                   : activeTab === 'destination' ? '출고처별'
                   : '규격별'
               }
-              fileNamePrefix={`출고분석_${activeTab}`}
+              fileNamePrefix={`판매분석_${activeTab}`}
             />
             {/* 모바일 필터 버튼 */}
             <button

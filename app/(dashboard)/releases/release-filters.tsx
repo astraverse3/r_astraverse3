@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 export function ReleaseFilters() {
     const router = useRouter()
     const searchParams = useSearchParams()
+    const pathname = usePathname()
 
     const [open, setOpen] = useState(false)
 
@@ -67,7 +68,7 @@ export function ReleaseFilters() {
         if (dateRange.to) params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'))
         if (keyword) params.set('keyword', keyword)
 
-        router.push(`/releases?${params.toString()}`)
+        router.push(`${pathname}?${params.toString()}`)
         setOpen(false)
     }
 
@@ -76,7 +77,7 @@ export function ReleaseFilters() {
         const defaultTo = new Date()
         setDateRange({ from: defaultFrom, to: defaultTo })
         setKeyword('')
-        router.push(`/releases?startDate=${format(defaultFrom, 'yyyy-MM-dd')}&endDate=${format(defaultTo, 'yyyy-MM-dd')}`)
+        router.push(`${pathname}?startDate=${format(defaultFrom, 'yyyy-MM-dd')}&endDate=${format(defaultTo, 'yyyy-MM-dd')}`)
         setOpen(false)
     }
 

@@ -189,7 +189,7 @@ export async function updateStockRelease(
             description: `출고 정보 수정: ${data.destination}`
         })
 
-        revalidatePath('/releases')
+        revalidatePath('/sales')
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to update stock release:', error)
@@ -221,7 +221,7 @@ export async function deleteStockReleases(ids: number[]) {
             description: `출고 내역 삭제: ${ids.length}건 (재고 복구됨)`
         })
 
-        revalidatePath('/releases')
+        revalidatePath('/sales')
         revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {
@@ -267,7 +267,7 @@ export async function removeStockFromRelease(stockId: number) {
                 })
             }
         })
-        revalidatePath('/releases')
+        revalidatePath('/sales')
         revalidatePath('/raw-stocks')
         return { success: true }
     } catch (error) {

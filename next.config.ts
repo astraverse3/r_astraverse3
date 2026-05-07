@@ -40,6 +40,8 @@ const nextConfig: NextConfig = {
     return [
       { source: '/stocks', destination: '/raw-stocks', permanent: true },
       { source: '/stocks/:path*', destination: '/raw-stocks/:path*', permanent: true },
+      { source: '/releases', destination: '/sales', permanent: true },
+      { source: '/releases/:path*', destination: '/sales', permanent: true },
     ]
   },
 };
