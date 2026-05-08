@@ -1,9 +1,9 @@
 import { Suspense } from 'react'
 import { startOfYear, endOfDay } from 'date-fns'
 import { getReleaseLogs } from '@/app/actions/release'
-import { ReleasePageWrapper } from '../releases/release-page-wrapper'
-import { ReleaseFilters } from '../releases/release-filters'
-import { ReleaseExcelButton } from '../releases/release-excel-button'
+import { ReleasePageWrapper } from './release/release-page-wrapper'
+import { ReleaseFilters } from './release/release-filters'
+import { ReleaseExcelButton } from './release/release-excel-button'
 
 export async function ReleaseSection({
     searchParams,

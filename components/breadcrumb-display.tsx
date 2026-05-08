@@ -60,11 +60,6 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
         title: '판매관리',
         description: '출고 및 판매 내역을 관리합니다.',
     },
-    '/releases': {
-        icon: SalesIcon,
-        title: '출고 관리',
-        description: '출고 내역을 관리합니다.',
-    },
 
     '/statistics': {
         icon: StatsIcon,

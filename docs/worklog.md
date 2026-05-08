@@ -1,5 +1,28 @@
 # 작업일지
 
+## 2026-05-08
+
+### `/releases` 디렉토리 정리 — `sales/release/` 이전 + dead route 삭제 `chore`
+
+**배경**: 잡곡 #9(2026-05-07, `c6c5292`)에서 `/sales` 신설 시 308 리다이렉트 + import 재사용으로 임시 처리. 컴포넌트 위치-실 사용처 미스매치를 해소하기 위한 후속 클린업.
+
+**변경 (총 11파일)**:
+- `git mv` 8개 — `app/(dashboard)/releases/*.tsx` → `app/(dashboard)/sales/release/*.tsx` (release-page-wrapper / release-page-client / release-history-list / release-filters / release-excel-button / active-release-filters / mobile-release-card / edit-release-dialog). git이 모두 R(rename) 인식, 내부 `./` 상대 import 그대로 유효
+- `git rm` 1개 — `app/(dashboard)/releases/page.tsx` (308로 도달 불가 dead route)
+- 디렉토리 자동 삭제 — `app/(dashboard)/releases/`
+- import 경로 수정 — `app/(dashboard)/sales/release-section.tsx`의 3줄 (`../releases/` → `./release/`)
+- dead 매핑 제거 — `components/breadcrumb-display.tsx`의 `PAGE_CONFIG['/releases']` 항목 5줄 삭제
+
+**유지**:
+- `next.config.ts` 308 리다이렉트 (`/releases` + `/releases/:path*` → `/sales`) — 북마크 호환
+- `app/actions/release.ts` — server action, 디렉토리와 무관
+
+**결정사항**: 이전 위치는 `sales/release/` 서브폴더(평탄화 X). 출고는 sales의 한 탭이라는 의미 구조 유지. 향후 벼·잡곡 본구현 시 `sales/rice/`, `sales/misc/` 같은 동일 패턴으로 확장 가능.
+
+**검증**: `tsc --noEmit` 통과 / 본 작업으로 새로 발생한 lint 에러 0건 (이동 파일들의 기존 경고는 수술적 변경 원칙으로 유지).
+
+**계획서**: `docs/plan-releases-디렉토리정리.md` / **결과보고서**: `docs/report-releases-디렉토리정리-2026-05-08.md`
+
 ## 2026-05-07
 
 ### 잡곡 재고관리 #9 — 사이드바·모바일 네비 개편 + 판매관리 라우트 이관 `feat`
