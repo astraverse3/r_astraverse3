@@ -2,6 +2,47 @@
 
 ## 2026-05-08
 
+### 잡곡 재고관리 #9.5 — 권한 체계 정리 (그림 B + 매트릭스 문서) `feat`
+
+**배경**: 잡곡 입고·포장·매입·판매 라인업이 정리되면서 단일 `STOCK_MANAGE` 권한으로 모든 업무를 통제하던 구조가 한계. 사용자 결정으로 **그림 B**(들여오기 STOCK_MANAGE / 가공 MILLING_MANAGE / 내보내기 SALES_MANAGE 신규) 채택.
+
+**A. 단일 진실 원천 신설**:
+- `docs/permission-matrix.md` — 권한 키 정의 + 페이지·버튼·행별 매핑 + server action 매핑 + 변경 이력. 향후 권한 변경 시 이 문서를 먼저 갱신
+
+**B. 권한 키 마스터 갱신** (`lib/permissions.ts`):
+- 상단 정책 요약 주석 + 매트릭스 docs 링크
+- `STOCK_MANAGE` label "재고 관리" → "원물 관리" (출고 분리)
+- `MILLING_MANAGE` label "도정 관리" → "도정·포장 관리"
+- **`SALES_MANAGE` 신규 추가** (BUSINESS_PERMISSIONS)
+
+**C. Server actions `requirePermission` 가드 일괄 주입** (5파일, 28함수):
+- `stock.ts` (4) → STOCK_MANAGE
+- `misc-stock.ts` (3) → STOCK_MANAGE
+- `packages.ts` MILLED 3개 → MILLING_MANAGE / PURCHASED 3개 → STOCK_MANAGE
+- `release.ts` (5) → SALES_MANAGE 신규
+- `milling.ts` (10 직접 + 2 wrapper 자동) → MILLING_MANAGE
+- read 함수는 `requireSession` 유지
+
+**D. 클라이언트 가드 — 이중 권한 페이지 도입**:
+- `/raw-stocks` 잡곡 탭: `canMill = MILLING_MANAGE` 신설, **포장 버튼 가드 STOCK_MANAGE → MILLING_MANAGE**, 입고/수정/삭제는 STOCK_MANAGE 그대로 (`misc-stock-list-client`/`misc-stock-table-row` prop drill)
+- `/packages` 잡곡 탭: `canMill`/`canPurchase` 이중 권한 + `[+ 포장하기]`(MILLING) / `[+ 매입 등록]`(STOCK) 버튼 분리 가드 + 행 메뉴 source별 toast 안내 (`misc-package-panel`)
+- `/sales/release`: STOCK_MANAGE → SALES_MANAGE (3파일)
+- `/raw-stocks` 벼 페이지: 출고/출고취소 버튼만 SALES_MANAGE 분리 (`stock-page-client`)
+
+**핵심 결정사항**:
+- 코드명 `STOCK_MANAGE` 유지(label만 변경) → DB의 `User.permissions` 배열 호환성
+- 메뉴 ≠ 단일 권한 (이중 권한 페이지가 자연 발생) → 매트릭스 문서로 일관성 확보
+- `/packages` 콜백 가드는 panel 단에서 처리 (prop drill을 list-client/row까지 가져가지 않음 — 수술적 변경)
+
+**운영 마이그레이션 필요**:
+- `STOCK_MANAGE`만 보유한 출고 담당자에게 `SALES_MANAGE` 별도 부여 필요. ADMIN이 `/admin/users`에서 수동 부여.
+
+**검증**: `tsc --noEmit` 통과 / 본 작업으로 새로 발생한 lint 에러 0건.
+
+**계획서**: `docs/plan-잡곡재고관리-#9.5.md` / **결과보고서**: `docs/report-잡곡재고관리-#9.5-2026-05-08.md` / **매트릭스**: `docs/permission-matrix.md`
+
+---
+
 ### `/releases` 디렉토리 정리 — `sales/release/` 이전 + dead route 삭제 `chore`
 
 **배경**: 잡곡 #9(2026-05-07, `c6c5292`)에서 `/sales` 신설 시 308 리다이렉트 + import 재사용으로 임시 처리. 컴포넌트 위치-실 사용처 미스매치를 해소하기 위한 후속 클린업.

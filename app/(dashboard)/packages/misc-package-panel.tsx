@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { deleteMiscPackage, deleteMiscPurchase, type GetPackagesParams, type PackageItem, type PackageRow } from '@/app/actions/packages'
+import { hasPermission } from '@/lib/permissions'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { PackageListClient } from './package-list-client'
 import { PackageSearchDialog } from './package-search-dialog'
@@ -29,6 +31,15 @@ interface Props {
  */
 export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const router = useRouter()
+    const { data: session } = useSession()
+    // 매트릭스: docs/permission-matrix.md
+    // 포장 = MILLING_MANAGE / 매입 = STOCK_MANAGE
+    // @ts-ignore
+    const canMill = hasPermission(session?.user, 'MILLING_MANAGE')
+    // @ts-ignore
+    const canPurchase = hasPermission(session?.user, 'STOCK_MANAGE')
+    const canAnyRow = canMill || canPurchase
+
     const [packageOpen, setPackageOpen] = useState(false)
     const [purchaseOpen, setPurchaseOpen] = useState(false)
     const [editPackageId, setEditPackageId] = useState<number | null>(null)
@@ -43,9 +54,17 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
 
     const handleEditRow = (row: PackageRow) => {
         if (row.source === 'MILLED') {
+            if (!canMill) {
+                toast.error('포장 수정 권한(MILLING_MANAGE)이 없어요.')
+                return
+            }
             setEditPackageId(row.id)
             setEditOpen(true)
         } else if (row.source === 'PURCHASED') {
+            if (!canPurchase) {
+                toast.error('매입 수정 권한(STOCK_MANAGE)이 없어요.')
+                return
+            }
             setEditPurchaseId(row.id)
             setEditPurchaseOpen(true)
         }
@@ -53,6 +72,10 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
 
     const handleDeleteRow = async (row: PackageRow) => {
         if (row.source === 'MILLED') {
+            if (!canMill) {
+                toast.error('포장 삭제 권한(MILLING_MANAGE)이 없어요.')
+                return
+            }
             const ok = confirm(
                 `이 포장을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)\n\n포장 자체가 없었던 것으로 처리되며, 원물 재고가 복원됩니다.`,
             )
@@ -66,6 +89,10 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 toast.error(result.error || '삭제에 실패했습니다.')
             }
         } else if (row.source === 'PURCHASED') {
+            if (!canPurchase) {
+                toast.error('매입 삭제 권한(STOCK_MANAGE)이 없어요.')
+                return
+            }
             const ok = confirm(
                 `이 매입을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)`,
             )
@@ -87,21 +114,25 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 <PackageExcelButtons filters={filters} />
                 <PackageSearchDialog category="MISC_GRAIN" varieties={varieties} />
                 {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setPackageOpen(true)}
-                    className="h-8 px-3 font-semibold rounded-md"
-                >
-                    + 포장<span className="hidden sm:inline">하기</span>
-                </Button>
-                <Button
-                    size="sm"
-                    onClick={() => setPurchaseOpen(true)}
-                    className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
-                >
-                    + 매입<span className="hidden sm:inline"> 등록</span>
-                </Button>
+                {canMill && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPackageOpen(true)}
+                        className="h-8 px-3 font-semibold rounded-md"
+                    >
+                        + 포장<span className="hidden sm:inline">하기</span>
+                    </Button>
+                )}
+                {canPurchase && (
+                    <Button
+                        size="sm"
+                        onClick={() => setPurchaseOpen(true)}
+                        className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
+                    >
+                        + 매입<span className="hidden sm:inline"> 등록</span>
+                    </Button>
+                )}
             </section>
 
             <MiscPackageDialog
@@ -142,8 +173,8 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 items={items}
                 emptyMessage="아직 등록된 잡곡 제품재고가 없어요."
                 emptyHint="상단 [+ 포장하기]로 잡곡 원물재고를 포장해 등록하세요."
-                onEditRow={handleEditRow}
-                onDeleteRow={handleDeleteRow}
+                onEditRow={canAnyRow ? handleEditRow : undefined}
+                onDeleteRow={canAnyRow ? handleDeleteRow : undefined}
             />
         </div>
     )

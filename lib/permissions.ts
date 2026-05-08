@@ -1,9 +1,18 @@
 // 권한 상수 정의
+//
+// 권한 매트릭스(단일 진실 원천): docs/permission-matrix.md
+// 권한 변경 시 매트릭스 문서를 먼저 갱신한 뒤 코드 수정.
+//
+// 3-way 비즈니스 권한 (잡곡 #9.5, 2026-05-08 그림 B 채택):
+//   - STOCK_MANAGE   = 들여오기 (원물 입고 + 잡곡 매입)
+//   - MILLING_MANAGE = 가공     (벼 도정/포장 + 잡곡 포장)
+//   - SALES_MANAGE   = 내보내기 (출고 + 향후 판매)
 
 // 업무 권한: 페이지 조회는 누구나 가능, 등록/수정/삭제만 제어
 export const BUSINESS_PERMISSIONS = {
-    STOCK_MANAGE: { code: 'STOCK_MANAGE', label: '재고 관리', description: '입고 등록/수정/삭제, 출고' },
-    MILLING_MANAGE: { code: 'MILLING_MANAGE', label: '도정 관리', description: '도정 등록/수정/삭제' },
+    STOCK_MANAGE: { code: 'STOCK_MANAGE', label: '원물 관리', description: '원물 입고 등록/수정/삭제 + 잡곡 매입 등록/수정/삭제' },
+    MILLING_MANAGE: { code: 'MILLING_MANAGE', label: '도정·포장 관리', description: '벼 도정 + 벼 포장 + 잡곡 포장 등록/수정/삭제' },
+    SALES_MANAGE: { code: 'SALES_MANAGE', label: '판매 관리', description: '출고 + 향후 벼/잡곡 판매 등록/수정/삭제' },
     VARIETY_MANAGE: { code: 'VARIETY_MANAGE', label: '품종 관리', description: '품종 등록/수정/삭제' },
     FARMER_MANAGE: { code: 'FARMER_MANAGE', label: '생산자 관리', description: '생산자 등록/수정/삭제' },
 } as const

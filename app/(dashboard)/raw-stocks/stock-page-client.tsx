@@ -42,6 +42,8 @@ export function StockPageClient({
     const canStock = hasPermission(session?.user, 'STOCK_MANAGE')
     // @ts-ignore
     const canMilling = hasPermission(session?.user, 'MILLING_MANAGE')
+    // @ts-ignore
+    const canSales = hasPermission(session?.user, 'SALES_MANAGE')
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24 sm:pb-2 px-1.5 sm:px-0">
@@ -100,13 +102,13 @@ export function StockPageClient({
                                     <ClipboardList className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />도정
                                 </Button>
                             )}
-                            {isAllAvailable && canStock && (
+                            {isAllAvailable && canSales && (
                                 <Button variant="outline" size="sm" onClick={onShowRelease}
                                     className="text-slate-600 border-slate-200 hover:bg-slate-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
                                     <Truck className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />출고
                                 </Button>
                             )}
-                            {isAllReleased && canStock && (
+                            {isAllReleased && canSales && (
                                 <Button variant="outline" size="sm" onClick={onCancelRelease} disabled={isCanceling}
                                     className="text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
                                     <RotateCcw className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />{isCanceling ? '취소중' : '출고취소'}

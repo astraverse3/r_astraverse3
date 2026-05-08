@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-import { requireSession } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { generateLotNo } from '@/lib/lot-generation'
 
@@ -90,7 +90,7 @@ async function deriveLotNo(
 // CREATE — 잡곡 입고
 // -----------------------------
 export async function createMiscStock(input: MiscStockFormData) {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const data = MiscStockFormSchema.parse(input)
 
@@ -169,7 +169,7 @@ export async function createMiscStock(input: MiscStockFormData) {
 // UPDATE — 잡곡 입고 수정
 // -----------------------------
 export async function updateMiscStock(id: number, input: MiscStockFormData) {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const data = MiscStockFormSchema.parse(input)
 
@@ -252,7 +252,7 @@ export async function updateMiscStock(id: number, input: MiscStockFormData) {
 // DELETE — 잡곡 입고 삭제 (CONSUMED 또는 포장 연결 시 거절)
 // -----------------------------
 export async function deleteMiscStock(id: number) {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const current = await prisma.stock.findUnique({
             where: { id },

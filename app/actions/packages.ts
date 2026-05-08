@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-import { requireSession } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 
@@ -356,7 +356,7 @@ export type CreateMiscPackageInput = z.infer<typeof CreateMiscPackageSchema>
 export async function createMiscPackage(
     input: CreateMiscPackageInput,
 ): Promise<{ success: true; id: number } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('MILLING_MANAGE')
     try {
         const data = CreateMiscPackageSchema.parse(input)
         const totalWeight = +(data.weightPerUnit * data.count).toFixed(3)
@@ -511,7 +511,7 @@ export async function updateMiscPackage(
     id: number,
     input: UpdateMiscPackageInput,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('MILLING_MANAGE')
     try {
         const data = UpdateMiscPackageSchema.parse(input)
         const newTotalWeight = +(data.weightPerUnit * data.count).toFixed(3)
@@ -610,7 +610,7 @@ export async function updateMiscPackage(
 export async function deleteMiscPackage(
     id: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('MILLING_MANAGE')
     try {
         const audit = await prisma.$transaction(async (tx) => {
             const pkg = await tx.millingOutputPackage.findUnique({
@@ -765,7 +765,7 @@ async function findOrCreatePurchaseVariety(
 export async function createMiscPurchase(
     rawInput: unknown,
 ): Promise<{ success: true; data: { id: number; varietyCreated: boolean } } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const parsed = CreateMiscPurchaseSchema.safeParse(rawInput)
         if (!parsed.success) {
@@ -875,7 +875,7 @@ export async function updateMiscPurchase(
     id: number,
     rawInput: unknown,
 ): Promise<{ success: true; data: { varietyCreated: boolean } } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const parsed = UpdateMiscPurchaseSchema.safeParse(rawInput)
         if (!parsed.success) {
@@ -935,7 +935,7 @@ export async function updateMiscPurchase(
 export async function deleteMiscPurchase(
     id: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requireSession()
+    await requirePermission('STOCK_MANAGE')
     try {
         const existing = await prisma.millingOutputPackage.findUnique({
             where: { id },

@@ -65,6 +65,8 @@ export function MiscStockListClient({
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
+    // @ts-ignore
+    const canMill = hasPermission(session?.user, 'MILLING_MANAGE')
 
     // 새 데이터가 들어오면 hide 마스크 리셋
     useEffect(() => {
@@ -248,6 +250,7 @@ export function MiscStockListClient({
                                                 key={stock.id}
                                                 stock={stock}
                                                 canManage={canManage}
+                                                canMill={canMill}
                                                 inExpandedGroup={isMulti}
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
@@ -284,6 +287,7 @@ export function MiscStockListClient({
                                             key={stock.id}
                                             stock={stock}
                                             canManage={canManage}
+                                            canMill={canMill}
                                             onEdit={() => handleEdit(stock)}
                                             onDelete={() => handleDelete(stock)}
                                             onPackage={() => handlePackage(stock)}
@@ -339,6 +343,7 @@ export function MiscStockListClient({
                                                 key={stock.id}
                                                 stock={stock}
                                                 canManage={canManage}
+                                                canMill={canMill}
                                                 inExpandedGroup
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}

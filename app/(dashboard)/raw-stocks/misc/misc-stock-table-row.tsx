@@ -56,13 +56,14 @@ export const CERT_BADGE_CLASS: Record<string, string> = {
 interface Props {
     stock: MiscStock
     canManage?: boolean
+    canMill?: boolean
     inExpandedGroup?: boolean
     onEdit?: () => void
     onDelete?: () => void
     onPackage?: () => void
 }
 
-export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = false, onEdit, onDelete, onPackage }: Props) {
+export function MiscStockTableRow({ stock, canManage = false, canMill = false, inExpandedGroup = false, onEdit, onDelete, onPackage }: Props) {
     const isConsumed = stock.status === 'CONSUMED'
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
@@ -135,7 +136,7 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
                 {Math.round(remainingKg).toLocaleString()}
             </TableCell>
             <TableCell className="text-center text-xs">
-                {canManage && canPackage ? (
+                {canMill && canPackage ? (
                     <button
                         type="button"
                         onClick={onPackage}
@@ -185,6 +186,7 @@ export function MiscStockTableRow({ stock, canManage = false, inExpandedGroup = 
 interface MobileCardProps {
     stock: MiscStock
     canManage?: boolean
+    canMill?: boolean
     /** 그룹 펼침의 서브 카드 여부. true면 품종/년도/인증을 그룹 헤더에 양도하고 카드는 생산자부터 시작. */
     inExpandedGroup?: boolean
     onEdit?: () => void
@@ -195,6 +197,7 @@ interface MobileCardProps {
 export function MiscStockMobileCard({
     stock,
     canManage = false,
+    canMill = false,
     inExpandedGroup = false,
     onEdit,
     onDelete,
@@ -209,7 +212,7 @@ export function MiscStockMobileCard({
 
     const actionCluster = (
         <div className="flex items-center gap-0.5 shrink-0">
-            {canManage && canPackage ? (
+            {canMill && canPackage ? (
                 <button
                     type="button"
                     onClick={onPackage}
