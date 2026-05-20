@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>대시보드 v2 제안 — MILL · LOG</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: { primary: { DEFAULT: '#2563eb', foreground: '#f8fafc' } } } }
+  };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<div id="root"></div>
+
+<script type="text/babel" src="components/icons.jsx"></script>
+<script type="text/babel" src="components/mobile-nav-icon-sets.jsx"></script>
+<script type="text/babel" src="components/data-viz.jsx"></script>
+<script type="text/babel" src="components/status-system.jsx"></script>
+<script type="text/babel" src="components/dashboard-options.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas title="대시보드 v2 제안" subtitle="카드 구성 3안 + 수율 차트 3안. 드래그/포커스로 비교하고, 마음에 드는 조합을 알려주세요.">
+      <DCSection id="layouts" title="① 전체 레이아웃 — 카드 구성">
+        <DCArtboard id="layout-a" label="A · Quad KPI Row (균등 4분할)" width={1280} height={620}>
+          <window.LayoutA />
+        </DCArtboard>
+        <DCArtboard id="layout-b" label="B · Hero + Tiles (핵심 강조)" width={1280} height={620}>
+          <window.LayoutB />
+        </DCArtboard>
+        <DCArtboard id="layout-c" label="C · Stat Strip + Tabs (정보 밀도 ↑)" width={1280} height={620}>
+          <window.LayoutC />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="charts" title="② 수율 차트 비주얼 — 단독">
+        <DCArtboard id="chart-1" label="1 · Refined Bar (현재 개선)" width={560} height={360}>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-full">
+            <window.ChartOption1 />
+          </div>
+        </DCArtboard>
+        <DCArtboard id="chart-2" label="2 · Horizontal Lollipop + 추세" width={560} height={360}>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-full">
+            <window.ChartOption2 />
+          </div>
+        </DCArtboard>
+        <DCArtboard id="chart-3" label="3 · Radial Gauge (반원)" width={560} height={360}>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 h-full">
+            <window.ChartOption3 />
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="notes" title="③ 검토 메모">
+        <DCArtboard id="notes-card" label="제안 의도" width={1100} height={520}>
+          <div className="bg-white h-full p-8 text-[13.5px] leading-relaxed text-slate-700 overflow-auto">
+            <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+              <div>
+                <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">A · Quad KPI Row</div>
+                <p>4개 카드가 균등하게 한 줄 — 현재 패턴의 자연스러운 확장. 잡곡/판매를 추가하면 카드 폭이 좁아지지만, 통일감이 높음. <strong>판매 카드는 "전월비 추세"</strong>를 메인 시각화로.</p>
+                <ul className="mt-2.5 space-y-1 text-[12px] text-slate-600 list-disc list-inside">
+                  <li>장점: 모든 카테고리 동등하게 노출</li>
+                  <li>단점: 1280px 미만에서 정보 밀도 떨어짐</li>
+                </ul>
+              </div>
+              <div>
+                <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">B · Hero + Tiles</div>
+                <p>벼 원곡 재고를 <strong>대시보드의 주인공</strong>으로 키우고, 잡곡/제품/판매/수율은 보조 타일. 가장 중요한 KPI 하나에 시선이 즉시 꽂힘.</p>
+                <ul className="mt-2.5 space-y-1 text-[12px] text-slate-600 list-disc list-inside">
+                  <li>장점: 핵심 지표 강조, 보조 정보도 충분히 제공</li>
+                  <li>단점: 잡곡/판매가 보조 위치 — 잡곡 비중 키우려면 부적합</li>
+                </ul>
+              </div>
+              <div>
+                <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">C · Stat Strip + Tabs</div>
+                <p>맨 위는 <strong>5개 콤팩트 KPI 스트립</strong> (한 줄에 모두), 아래는 <strong>탭 전환되는 분석 영역</strong>. 화면 공간을 가장 잘 쓰며, 뷰포트 작은 노트북에서 유리.</p>
+                <ul className="mt-2.5 space-y-1 text-[12px] text-slate-600 list-disc list-inside">
+                  <li>장점: 정보 밀도 최고, 확장성 좋음 (탭 추가)</li>
+                  <li>단점: 시각 자극이 적어 첫인상 약함</li>
+                </ul>
+              </div>
+              <div>
+                <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">차트 옵션 비교</div>
+                <ul className="space-y-2 text-[12.5px]">
+                  <li><strong>1 · Refined Bar</strong> — 현재 구조 유지. 라벨이 막대 위로 올라가고 목표선이 점선으로 명시 → 즉시 이해 가능. <span className="text-slate-500">가장 보수적</span></li>
+                  <li><strong>2 · Horizontal Lollipop</strong> — 가로 바 + 전월대비 트렌드 화살표. <strong>"변화량"</strong>을 함께 전달. <span className="text-slate-500">데이터 양 많아짐</span></li>
+                  <li><strong>3 · Radial Gauge</strong> — 게이지 = 목표 대비 도달도 직관적. <span className="text-slate-500">디자인 차별성 ↑, 정확값 비교는 약함</span></li>
+                </ul>
+                <div className="mt-3 pt-3 border-t border-slate-100 text-[11.5px] text-slate-500">
+                  추천 조합: <strong className="text-slate-700">레이아웃 A + 차트 1</strong>(보수적) · <strong className="text-slate-700">레이아웃 C + 차트 2</strong>(데이터 강조) · <strong className="text-slate-700">레이아웃 B + 차트 3</strong>(시각 임팩트).
+                </div>
+              </div>
+            </div>
+          </div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
