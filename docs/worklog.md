@@ -2,6 +2,32 @@
 
 ## 2026-05-20
 
+### 윤영식 유기농 IPS 92건 lot 번호 통일 마이그레이션 `chore`
+
+**배경**: 같은 농가(윤영식)·품종(IPS)·인증(유기농) 조합인데 입고일자가 5일치(2025-10-20 / 10-21 / 10-22 / 11-04 / 2026-01-20)로 분산 등록되어 lot 번호가 5개로 분기됨. 정책상 같은 농가/품종/인증은 처음 입고일 기준으로 lot 통일 필요.
+
+**변경 내용** (일회성 데이터 정정, 코드 변경 없음):
+- Stock 80건: lotNo + incomingDate → 모두 `2025-10-20` 기준으로 통일 (12건은 이미 일치)
+- MillingOutputPackage 2건: lotNo 첫 6자리만 갱신 (productCode 등 나머지 보존)
+- 결과: 92건 모두 `251020-18-15102443-11` 단일 lot
+- auditLog 1건 기록
+
+**알고리즘**: 기존 lot의 4-segment(`YYMMDD-productCode-certNo-personalNo`)에서 첫 segment만 교체. 외과적 변경.
+
+**스크립트**:
+- `scripts/inspect-lot-yoonyoungsik-ips.js` — 사전 조사 (read-only)
+- `scripts/backfill-lot-yoonyoungsik-ips.js` — 백필 (dry-run 기본 / --commit 플래그)
+
+**검증**: 트랜잭션 적용 후 inspect 재실행 → 92건 모두 단일 lot 확인 ✅
+
+**문서**: `docs/plan-lot번호통일-윤영식유기농.md`, `docs/report-lot번호통일-윤영식유기농-2026-05-20.md`
+
+**후속 검토 필요**:
+- 외부 출하 라벨/송장과 lot 불일치 여부 (마감 배치 108·110의 패키지 2건)
+- 입고 등록 정책 자체 변경 (같은 농가·품종·인증 조합이면 첫 lot 재사용) — 별도 plan
+
+---
+
 ### 도정 작업 상태 3단계 마이그레이션 — 도정중/포장중/마감됨 `feat`
 
 **배경**: 기존 코드에서 `isClosed` 단일 플래그로 "완료/마감/포장"이 혼용되어 사용자/엑셀/대시보드 간 라벨이 제각각. 데이터 모델 변경 없이 `isClosed` + `outputs.length` 조합으로 3단계 도출.
