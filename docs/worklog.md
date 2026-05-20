@@ -1,5 +1,41 @@
 # 작업일지
 
+## 2026-05-20
+
+### 도정 작업 상태 3단계 마이그레이션 — 도정중/포장중/마감됨 `feat`
+
+**배경**: 기존 코드에서 `isClosed` 단일 플래그로 "완료/마감/포장"이 혼용되어 사용자/엑셀/대시보드 간 라벨이 제각각. 데이터 모델 변경 없이 `isClosed` + `outputs.length` 조합으로 3단계 도출.
+
+**A. 공통 배지 컴포넌트 신설**:
+- `components/ui/milling-status-badge.tsx` — `MILLING_STATUS` 상수 + `getMillingStatus()` 헬퍼 + `<MillingStatusBadge>` 컴포넌트
+- 시안 색상 그대로: `milling`(sky) / `packaging`(amber + animate-pulse) / `closed`(emerald)
+
+**B. 표시 교체 (5파일)**:
+- `recent-logs-list.tsx` 대시보드 최근 로그 모바일/PC 인라인 배지
+- `milling-table-row.tsx` PC 테이블 행
+- `mobile-milling-card.tsx` 모바일 카드
+- `milling-filters.tsx` Select 옵션 2→3개 (`milling`/`packaging`/`closed`)
+- `active-milling-filters.tsx` 적용 필터 라벨 3단계 + `open` legacy alias("진행중") 유지
+
+**C. 쿼리 분기 (2파일)**:
+- `actions/milling.ts` `getMillingLogs` where 분기 3단계 + legacy alias(`open`/`active`/`completed`) 포함
+- `actions/milling-excel.ts` 동일 분기 + `statusStr` 3분기 + 엑셀 컬럼 `진행상태` → `도정상태`
+
+**D. 동시 수정**:
+- 기존 status 필터 키 불일치 버그(URL `open`/`closed` ↔ 액션 `active`/`completed`) 발견 → legacy alias 모두 매칭으로 함께 해결
+- `actions/dashboard.ts` outputs `orderBy` (farmer.name asc, bagNo asc) 추가 — 표시 순서 안정화
+
+**핵심 결정**:
+- 동사형 라벨("마감완료"/"포장하기"/"마감 해제") 그대로 유지 (상태 명사만 통일)
+- URL `?status=open` 북마크 호환을 위해 legacy alias 유지
+- `auditLog` 백필 없음 — 신규 변경분부터 세분화
+
+**근거**: `docs/handoff/status-migration.md` (3단계 시안)
+**문서**: `docs/plan-도정상태3단계.md`, `docs/report-도정상태3단계-2026-05-20.md`
+**검증**: `tsc --noEmit` 통과 / 실서버 QA(필터·배지 전환·엑셀)는 사용자 측 미실시
+
+---
+
 ## 2026-05-08
 
 ### 잡곡 재고관리 #9.5 — 권한 체계 정리 (그림 B + 매트릭스 문서) `feat`

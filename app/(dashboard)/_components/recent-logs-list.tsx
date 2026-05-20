@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
+import { MillingStatusBadge } from '@/components/ui/milling-status-badge';
 import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dialog';
 import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dialog';
 import { useSession } from 'next-auth/react';
@@ -81,7 +82,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                     const yieldColor = getYieldColor(Math.round(yieldRate * 10) / 10, log.millingType);
 
                     return (
-                        <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 cursor-pointer ${index >= 7 ? 'hidden lg:flex' : ''}`}
+                        <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2.5 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 cursor-pointer ${index >= 7 ? 'hidden lg:flex' : ''}`}
                             onClick={() => setSelectedInputLog(log)}
                         >
 
@@ -95,11 +96,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                         <span className={`px-1 py-0.5 rounded text-[10px] font-bold whitespace-nowrap border ${classStyle.bg} ${classStyle.text} ${classStyle.border}`}>{classification}</span>
                                     </div>
                                     <div className="shrink-0 flex items-center gap-1.5">
-                                        {log.isClosed ? (
-                                            <span className="text-[10px] font-bold text-[#7db037] bg-[#8dc540]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-[#8dc540]/20">완료</span>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-[#00a2e8]/20 animate-pulse">포장</span>
-                                        )}
+                                        <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                                     </div>
                                 </div>
 
@@ -179,11 +176,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                                 </div>
                                 {/* 상태 — 클릭 이벤트 없음 */}
                                 <div className="hidden md:flex w-[13%] text-right px-2 justify-end">
-                                    {log.isClosed ? (
-                                        <span className="text-[11px] font-bold text-[#7db037] bg-[#8dc540]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#8dc540]/20">완료</span>
-                                    ) : (
-                                        <span className="text-[11px] font-bold text-[#008cc9] bg-[#00a2e8]/10 px-2.5 py-1 rounded-full whitespace-nowrap border border-[#00a2e8]/20 animate-pulse">포장</span>
-                                    )}
+                                    <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                                 </div>
                             </div>
                         </div>

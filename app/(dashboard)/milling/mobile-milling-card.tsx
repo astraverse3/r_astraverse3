@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { MillingStatusBadge } from '@/components/ui/milling-status-badge'
 import { ArrowRight } from 'lucide-react'
 import { AddPackagingDialog } from './add-packaging-dialog'
 import { reopenMillingBatch } from '@/app/actions/milling'
@@ -136,12 +137,8 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                     <span className="text-[11px] text-slate-500 font-medium shrink-0 mr-2">
                         {format(new Date(log.date), 'yy.MM.dd')}
                     </span>
-                    <button onClick={handleStatusClick} className="shrink-0 flex items-center">
-                        {log.isClosed ? (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-[18px] leading-none border-[#8dc540]/30 text-[#7db037] hover:bg-[#8dc540]/10 font-bold cursor-pointer">마감</Badge>
-                        ) : (
-                            <Badge variant="default" className="text-[10px] px-1.5 py-0 h-[18px] leading-none bg-[#00a2e8] hover:bg-[#00a2e8] animate-pulse font-bold cursor-pointer">포장</Badge>
-                        )}
+                    <button onClick={handleStatusClick} className="shrink-0 flex items-center cursor-pointer">
+                        <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                     </button>
                 </div>
 

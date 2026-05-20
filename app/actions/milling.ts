@@ -160,7 +160,7 @@ export type GetMillingLogsParams = {
     keyword?: string
     startDate?: Date
     endDate?: Date
-    status?: string // 'active' | 'completed'
+    status?: string // 'milling' | 'packaging' | 'closed' | 'open'(legacy: milling+packaging) | 'active'(legacy alias of open) | 'completed'(legacy alias of closed)
     variety?: string // variety name search
     millingType?: string
     yieldRate?: string
@@ -179,12 +179,19 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
             }
         }
 
-        // Status filter
+        // Status filter — 3단계 (도정중/포장중/마감됨) + legacy alias
         if (params?.status) {
-            if (params.status === 'active') {
+            if (params.status === 'milling') {
                 where.isClosed = false
-            } else if (params.status === 'completed') {
+                where.outputs = { none: {} }
+            } else if (params.status === 'packaging') {
+                where.isClosed = false
+                where.outputs = { some: {} }
+            } else if (params.status === 'closed' || params.status === 'completed') {
                 where.isClosed = true
+            } else if (params.status === 'open' || params.status === 'active') {
+                // legacy: 마감 안 된 모든 작업 (도정중 + 포장중)
+                where.isClosed = false
             }
         }
 
@@ -265,7 +272,11 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                         farmer: {
                             include: { group: true }
                         }
-                    }
+                    },
+                    orderBy: [
+                        { farmer: { name: 'asc' } },
+                        { bagNo: 'asc' }
+                    ]
                 },
                 outputs: true
             },

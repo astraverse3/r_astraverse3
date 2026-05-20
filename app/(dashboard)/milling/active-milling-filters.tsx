@@ -23,7 +23,13 @@ export function ActiveMillingFilters({ totalCount, defaultStartDate, defaultEndD
 
     const varieties = varietyParam ? varietyParam.split(',').map(s => s.trim()).filter(Boolean) : []
 
-    const statusLabel = status === 'open' ? '진행중' : status === 'closed' ? '마감' : null
+    // 'open' 은 legacy alias — 도정중+포장중 묶음
+    const statusLabel =
+        status === 'milling' ? '도정중' :
+        status === 'packaging' ? '포장중' :
+        status === 'closed' ? '마감됨' :
+        status === 'open' ? '진행중' :
+        null
 
     const startDateStr = searchParams.get('startDate')
     const endDateStr = searchParams.get('endDate')

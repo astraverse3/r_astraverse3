@@ -84,7 +84,11 @@ export async function getDashboardStats() {
                                     }
                                 }
                             }
-                        }
+                        },
+                        orderBy: [
+                            { farmer: { name: 'asc' } },
+                            { bagNo: 'asc' }
+                        ]
                     }
                 }
             }),

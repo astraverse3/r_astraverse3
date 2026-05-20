@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
+import { MillingStatusBadge } from '@/components/ui/milling-status-badge'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { AddPackagingDialog } from './add-packaging-dialog'
 import { reopenMillingBatch } from '@/app/actions/milling'
@@ -191,12 +191,8 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
 
                 {/* 10. Status - Clickable for Packaging */}
                 <TableCell className="py-3 px-3 text-center w-[60px]">
-                    <button onClick={handleStatusClick} className="inline-block transition-transform hover:scale-105 active:scale-95">
-                        {log.isClosed ? (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5 border-[#8dc540]/30 text-[#7db037] hover:bg-[#8dc540]/10 font-bold cursor-pointer">마감</Badge>
-                        ) : (
-                            <Badge variant="default" className="text-xs px-2 py-0.5 bg-[#00a2e8] hover:bg-[#00a2e8] animate-pulse font-bold cursor-pointer">포장</Badge>
-                        )}
+                    <button onClick={handleStatusClick} className="inline-block transition-transform hover:scale-105 active:scale-95 cursor-pointer">
+                        <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                     </button>
                 </TableCell>
             </TableRow>

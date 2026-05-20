@@ -78,7 +78,7 @@ export function MillingFilters({
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
-            setStatus(searchParams.get('status') || 'open')
+            setStatus(searchParams.get('status') || 'ALL')
             setVarietyValues(parseMulti(searchParams.get('variety')))
             setMillingTypes(parseMulti(searchParams.get('millingType')))
             setKeyword(searchParams.get('keyword') || '')
@@ -243,8 +243,9 @@ export function MillingFilters({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">전체</SelectItem>
-                                    <SelectItem value="open">진행중</SelectItem>
-                                    <SelectItem value="closed">마감</SelectItem>
+                                    <SelectItem value="milling">도정중</SelectItem>
+                                    <SelectItem value="packaging">포장중</SelectItem>
+                                    <SelectItem value="closed">마감됨</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

@@ -17,11 +17,18 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
             }
         }
 
+        // Status filter — 3단계 (도정중/포장중/마감됨) + legacy alias
         if (params?.status) {
-            if (params.status === 'active') {
+            if (params.status === 'milling') {
                 where.isClosed = false
-            } else if (params.status === 'completed') {
+                where.outputs = { none: {} }
+            } else if (params.status === 'packaging') {
+                where.isClosed = false
+                where.outputs = { some: {} }
+            } else if (params.status === 'closed' || params.status === 'completed') {
                 where.isClosed = true
+            } else if (params.status === 'open' || params.status === 'active') {
+                where.isClosed = false
             }
         }
 
@@ -100,7 +107,9 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
         for (const batch of logs) {
             const dateStr = batch.date ? new Date(batch.date).toLocaleDateString('ko-KR') : ''
-            const statusStr = batch.isClosed ? '완료' : '진행중'
+            const statusStr = batch.isClosed
+                ? '마감됨'
+                : batch.outputs.length > 0 ? '포장중' : '도정중'
             const productionSum = batch.outputs.reduce((sum, out) => sum + out.totalWeight, 0)
             const yieldRate = batch.totalInputKg > 0 ? (productionSum / batch.totalInputKg) * 100 : 0
             const formattedYield = yieldRate === 0 && !batch.isClosed ? '-' : `${(Math.round(yieldRate * 10) / 10).toFixed(1)}%`
@@ -110,7 +119,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                 // Edge case: batch with no stocks linked yet
                 rows.push({
                     '도정일자': dateStr,
-                    '진행상태': statusStr,
+                    '도정상태': statusStr,
                     '품종': '',
                     '도정분류': batch.millingType,
                     '생산자명': '',
@@ -129,7 +138,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                     const lotDisplay = isConventional ? '관행' : (stock.lotNo || '-')
                     rows.push({
                         '도정일자': dateStr,
-                        '진행상태': statusStr,
+                        '도정상태': statusStr,
                         '품종': stock.variety.name,
                         '도정분류': batch.millingType,
                         '생산자명': stock.farmer.name,
@@ -148,14 +157,14 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
         let worksheet
         if (rows.length === 0) {
-            worksheet = XLSX.utils.aoa_to_sheet([['도정일자', '진행상태', '품종', '도정분류', '생산자명', '작목반', '톤백번호', '톤백무게(kg)', '총 투입량(kg)', '총 생산량(kg)', '수율', '로트번호', '비고']])
+            worksheet = XLSX.utils.aoa_to_sheet([['도정일자', '도정상태', '품종', '도정분류', '생산자명', '작목반', '톤백번호', '톤백무게(kg)', '총 투입량(kg)', '총 생산량(kg)', '수율', '로트번호', '비고']])
         } else {
             worksheet = XLSX.utils.json_to_sheet(rows)
 
             // Adjust column widths roughly
             const wscols = [
                 { wch: 15 }, // 도정일자
-                { wch: 10 }, // 진행상태
+                { wch: 10 }, // 도정상태
                 { wch: 15 }, // 품종
                 { wch: 10 }, // 도정분류
                 { wch: 12 }, // 생산자명
