@@ -2,6 +2,21 @@
 
 ## 2026-05-21
 
+### 벼 탭 주요 버튼 색 보정 — emerald → primary (PR1 부작용 fix) `fix`
+
+**증상**: 벼 입고등록 버튼이 초록(emerald)인데 잡곡 등록 버튼은 파랑(primary) — 색 불일치(사용자 지적).
+
+**원인**: PR1 색상 치환에서 `#8dc540`을 유기농 인증색으로 보고 `emerald-600`에 매핑했으나, 이 hex가 일부 **주요 액션 버튼색으로도** 쓰여서 등록/저장 버튼이 초록으로 남음.
+
+**수정** (3개 버튼 → 기본 `primary`):
+- `add-stock-dialog.tsx`(벼 입고등록), `edit-stock-dialog.tsx`(수정 완료), `edit-release-dialog.tsx`(저장하기)
+- `bg-emerald-600 hover:bg-emerald-700 text-white` 제거 → shadcn 기본 Button
+- 엑셀 다운로드 버튼의 emerald hover는 잡곡도 쓰는 의도된 색이라 유지
+
+**검증**: `tsc --noEmit` 통과.
+
+---
+
 ### 벼 탭 시각 디테일 정렬 — 인증뱃지·체크박스 (디자인 점검 후속) `refactor`
 
 **인증뱃지** (`stock-table-row.tsx`): 잡곡 `CERT_BADGE_CLASS`와 색 통일.

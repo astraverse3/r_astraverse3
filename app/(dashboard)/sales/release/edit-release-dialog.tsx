@@ -122,7 +122,7 @@ export function EditReleaseDialog({ release, open, onOpenChange }: EditReleaseDi
                 </div>
                 <DialogFooter>
                     <Button variant="ghost" onClick={() => onOpenChange(false)}>취소</Button>
-                    <Button onClick={handleSave} disabled={loading || !date || !destination.trim()} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button onClick={handleSave} disabled={loading || !date || !destination.trim()}>
                         {loading ? '저장 중...' : '저장하기'}
                     </Button>
                 </DialogFooter>

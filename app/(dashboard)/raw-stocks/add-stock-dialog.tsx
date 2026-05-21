@@ -121,7 +121,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
             if (!open) resetForm()
         }}>
             <DialogTrigger asChild>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 sm:px-3">
+                <Button size="sm" className="px-2 sm:px-3 font-semibold">
                     <Plus className="sm:mr-1 h-4 w-4" />
                     <span className="hidden sm:inline">입고 등록</span>
                 </Button>
