@@ -2,6 +2,20 @@
 
 ## 2026-05-21
 
+### 벼 탭 행 액션 DropdownMenu 통일 (디자인 점검 PR4) `refactor`
+
+**출처**: `docs/벼탭-디자인점검.html` P1 — 벼 데스크탑은 인라인 수정/삭제 아이콘 2개, 잡곡은 점세개 드롭다운으로 달랐음.
+
+**변경** (`stock-table-row.tsx`): 벼 데스크탑 행의 인라인 Edit/Trash 아이콘 → 점세개(`MoreVertical`) DropdownMenu(수정/삭제). 잡곡 `misc-stock-table-row` 패턴과 통일.
+- 행 클릭=선택과 충돌 방지: 트리거 버튼·메뉴 아이템에 `stopPropagation` 유지
+- 삭제는 기존대로 소진(CONSUMED) 시 비활성
+- 미사용 import(`MoreHorizontal`/`AlertCircle`) 정리
+- 모바일(MobileStockDetailCard)은 이미 드롭다운이라 데스크탑만 변경
+
+**검증**: `tsc --noEmit` 통과 + 사용자 동작 확인(드롭다운 열림/수정·삭제/행 선택 비충돌).
+
+---
+
 ### 원물재고 벼 탭 상단 여백 잡곡과 통일 `fix`
 
 **증상**: 벼/잡곡 탭 전환 시 ① 탭라인↔버튼행, ② 버튼행↔테이블 여백이 서로 다름(사용자 지적).
