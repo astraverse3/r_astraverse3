@@ -1,5 +1,26 @@
 # 작업일지
 
+## 2026-05-21
+
+### 도정 포장내역 표시 버그 핫픽스 `fix`
+
+**증상**: 도정목록에서 포장 다이얼로그를 열면 포장단위별 포장내역이 안 보이는 배치가 많음.
+
+**원인 (회귀)**: 어제 `6428ba3`(도정 상태 3단계)에서 `getMillingLogs` stocks 조회에 `orderBy: [farmer.name, bagNo]` 추가 → `computeLotGroups`가 "정렬된 stocks의 첫 stock"을 그룹 대표로 잡는데 정렬이 바뀌어 대표 ID 변동 → 과거 `output.stockId`(옛 대표)와 단일 매칭 실패로 화면 누락. lot 그룹에 stock이 여러 개인 배치에서만 발생.
+
+**수정** (`add-packaging-dialog.tsx` 1파일):
+- `LotGroup`에 `stockIds: number[]` 추가, `computeLotGroups`가 그룹의 모든 stock.id 수집
+- `getGroupOutputs`를 단일 대표 매칭 → **그룹 stockId 집합 매칭**으로 변경 (정렬·대표 변동에 무관)
+- 어제 추가된 stocks orderBy는 그대로 유지 (부작용 없음)
+
+**진단/검증** (read-only 스크립트, 실행 후 삭제):
+- 122배치 중 **67배치, 180건** 표시 누락 확인 — **데이터 손실 아님**(DB output은 정상, 화면 매칭만 깨짐)
+- 수정안 적용 후 안 보이는 건수 **0** (180건 전부 복구), `tsc --noEmit` 통과
+
+**문서**: `docs/report-도정포장내역표시버그-2026-05-21.md`
+
+---
+
 ## 2026-05-20
 
 ### 윤영식 유기농 IPS 92건 lot 번호 통일 마이그레이션 `chore`

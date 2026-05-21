@@ -34,6 +34,7 @@ interface Props {
 type LotGroup = {
     lotNo: string
     representativeStockId: number
+    stockIds: number[]
     farmerName: string
     varietyName: string
     totalInputKg: number
@@ -73,12 +74,15 @@ function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
             map.set(groupKey, {
                 lotNo: displayLotNo,
                 representativeStockId: stock.id,
+                stockIds: [],
                 farmerName: stock.farmerName || stock.farmer?.name || '알수없음',
                 varietyName: stock.variety?.name || '',
                 totalInputKg: 0,
             })
         }
-        map.get(groupKey)!.totalInputKg += stock.weightKg
+        const group = map.get(groupKey)!
+        group.totalInputKg += stock.weightKg
+        group.stockIds.push(stock.id)
     }
     return Array.from(map.values())
 }
@@ -287,14 +291,19 @@ export function AddPackagingDialog({
         }
     }
 
-    // 그룹에 속한 outputs 필터
-    const getGroupOutputs = (group: LotGroup) =>
-        outputs.map((o, i) => ({ o, i })).filter(({ o }) => o.stockId === group.representativeStockId)
+    // 그룹에 속한 outputs 필터 — 그룹의 모든 stockId로 매칭 (대표 stock이 정렬에 따라 바뀌어도 안 깨짐).
+    // stockIds가 비어있으면(stocks 없는 fallback 그룹) 전체 output을 노출한다.
+    const getGroupOutputs = (group: LotGroup) => {
+        const ids = new Set(group.stockIds)
+        return outputs
+            .map((o, i) => ({ o, i }))
+            .filter(({ o }) => ids.size === 0 || ids.has(o.stockId as number))
+    }
 
     // 단일 그룹이면 stocks가 없어도 빈 그룹 하나로 처리
     const displayGroups: LotGroup[] = lotGroups.length > 0
         ? lotGroups
-        : [{ lotNo: '', representativeStockId: 0, farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
+        : [{ lotNo: '', representativeStockId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
