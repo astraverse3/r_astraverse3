@@ -2,6 +2,22 @@
 
 ## 2026-05-21
 
+### 벼 탭 시각 디테일 정렬 — 인증뱃지·체크박스 (디자인 점검 후속) `refactor`
+
+**인증뱃지** (`stock-table-row.tsx`): 잡곡 `CERT_BADGE_CLASS`와 색 통일.
+- 무농약 `primary`(파랑) → `sky-700`(하늘) — 두 탭 무농약 색 어긋남 해소
+- 유기농 `emerald-600/10` → `emerald-50/700`, 일반 `slate-500` → `slate-600`
+
+**체크박스** (`stock-list-client.tsx` 3곳): 커스텀 `data-[state=checked]:bg-primary border-primary` 제거. shadcn 기본 Checkbox가 이미 primary라 중복(시각 동일, 코드 일관성).
+
+**기록**: §3.3 1줄 헤더 브레드크럼은 이미 `components/breadcrumb-display.tsx`로 layout 전역 구현돼 있음 → 점검 보고서의 "헤더 누락" 지적은 부정확(페이지 컴포넌트만 보고 전역 헤더 놓침). PageBreadcrumbHeader 신규 생성 불필요.
+
+**검증**: `tsc --noEmit` 통과.
+
+**남은 P1~ (구조 작업, 다음)**: 인증뱃지·EmptyState 공용 컴포넌트화, 행 액션 DropdownMenu 통일, 다이얼로그 shell 정렬, statistics 순수 hex.
+
+---
+
 ### 벼 탭 그룹 펼침 톤 정렬 (디자인 점검 PR2) `refactor`
 
 **출처**: `docs/벼탭-디자인점검.html` §4.2.6(펼친 그룹 primary 액센트 금지)/§4.2.7(모바일 묶음 컨테이너). 잡곡 `misc-stock-list-client` 기준 이식.

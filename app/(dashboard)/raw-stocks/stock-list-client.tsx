@@ -224,7 +224,7 @@ function GroupedStockRows({
                                         onCheckedChange={() => { }} // Handled by onClick wrapper
                                         onClick={onCheckboxClick}
                                         disabled={availableItems.length === 0 && items.length > 0} // Disabled if loaded but no available items
-                                        className="border-slate-400 bg-white data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                        className="border-slate-400 bg-white"
                                     />
                                 )}
                             </TableCell>
@@ -377,7 +377,7 @@ function GroupedStockMobileCards({
                                                 onClick={onCheckboxClick}
                                                 disabled={availableItems.length === 0 && items.length > 0}
                                                 aria-label={`${group.variety} 전체 선택`}
-                                                className="w-5 h-5 rounded-md border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                                className="w-5 h-5 rounded-md border-slate-300"
                                             />
                                         )}
                                     </div>
@@ -484,7 +484,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                                     onCheckedChange={(checked) => onSelect(checked as boolean)}
                                     disabled={!isAvailable || isCartBlocked}
                                     aria-label="개별 재고 선택"
-                                    className="w-4 h-4 rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                    className="w-4 h-4 rounded-sm border-slate-300"
                                 />
                             </div>
                         )}
