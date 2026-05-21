@@ -117,7 +117,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
     return (
         <div>
             <div
-                className={`relative rounded-xl border bg-white shadow-sm transition-all ${selected ? 'border-[#00a2e8] ring-1 ring-[#00a2e8]/20 bg-[#f0f9ff]' : 'border-slate-200'} cursor-pointer active:scale-[0.99]`}
+                className={`relative rounded-xl border bg-white shadow-sm transition-all ${selected ? 'border-primary ring-1 ring-primary/20 bg-blue-50' : 'border-slate-200'} cursor-pointer active:scale-[0.99]`}
                 onClick={handleCardClick}
             >
                 {/* Row 1: Checkbox + Variety + Classification + Date + Status */}
@@ -126,7 +126,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                         <Checkbox
                             checked={selected}
                             onCheckedChange={onSelect}
-                            className="w-4 h-4 rounded border-slate-300 data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
+                            className="w-4 h-4 rounded border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                     </div>
                     <span className="font-bold text-[13px] text-slate-900 shrink-0">{varietiesSummary}</span>
@@ -158,11 +158,11 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                             <>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
-                                    className="text-[12px] font-bold text-[#00a2e8] tabular-nums underline underline-offset-2 decoration-[#00a2e8]/40 hover:decoration-[#00a2e8]"
+                                    className="text-[12px] font-bold text-primary tabular-nums underline underline-offset-2 decoration-primary/40 hover:decoration-primary"
                                 >
-                                    {totalRiceKg.toLocaleString()}<span className="text-[9px] font-medium text-[#00a2e8]/60 ml-0.5 no-underline">kg</span>
+                                    {totalRiceKg.toLocaleString()}<span className="text-[9px] font-medium text-primary/60 ml-0.5 no-underline">kg</span>
                                 </button>
-                                <span className={`text-[10px] px-1 ml-1 py-0 rounded-full font-bold ${yieldRate >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : yieldRate >= 60 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
+                                <span className={`text-[10px] px-1 ml-1 py-0 rounded-full font-bold ${yieldRate >= 70 ? 'bg-primary/10 text-primary' : yieldRate >= 60 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
                                     {Math.round(yieldRate)}%
                                 </span>
                             </>

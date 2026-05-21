@@ -324,7 +324,7 @@ export function AddPackagingDialog({
                     <DialogTitle>포장 기록 관리</DialogTitle>
                     <div className="flex items-center gap-2 mt-1.5">
                         {millingType && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#00a2e8]/20 text-[#007ab3]">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/20 text-primary">
                                 {millingType}
                             </span>
                         )}
@@ -362,7 +362,7 @@ export function AddPackagingDialog({
                                                         {group.totalInputKg.toLocaleString()}kg
                                                     </span>
                                                     <span className="text-stone-300 text-[10px]">→</span>
-                                                    <span className="text-[11px] font-bold text-[#00a2e8]">
+                                                    <span className="text-[11px] font-bold text-primary">
                                                         예상 {expectedKg.toLocaleString()}kg
                                                     </span>
                                                 </div>
@@ -374,7 +374,7 @@ export function AddPackagingDialog({
                                                     {group.totalInputKg.toLocaleString()}kg
                                                 </span>
                                                 <span className="text-stone-300 text-[10px]">→</span>
-                                                <span className="text-[11px] font-bold text-[#00a2e8]">
+                                                <span className="text-[11px] font-bold text-primary">
                                                     예상 {expectedKg.toLocaleString()}kg
                                                 </span>
                                             </div>

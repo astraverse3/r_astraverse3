@@ -124,7 +124,7 @@ export function ReleaseStockDialog({ selectedIds, onOpenChange, open, onSuccess 
                 </div>
                 <DialogFooter>
                     <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}
-                        className="bg-[#00a2e8] hover:bg-[#008cc9] text-white text-[13px]">
+                        className="bg-primary hover:bg-primary text-white text-[13px]">
                         {isSubmitting ? '처리 중...' : '출고하기'}
                     </Button>
                 </DialogFooter>

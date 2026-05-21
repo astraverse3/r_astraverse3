@@ -65,7 +65,7 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
     return (
         <div>
             <div
-                className={`relative rounded-xl border bg-white shadow-sm transition-all ${selected ? 'border-[#00a2e8] ring-1 ring-[#00a2e8]/20 bg-[#f0f9ff]' : 'border-slate-200'} cursor-pointer active:scale-[0.99]`}
+                className={`relative rounded-xl border bg-white shadow-sm transition-all ${selected ? 'border-primary ring-1 ring-primary/20 bg-blue-50' : 'border-slate-200'} cursor-pointer active:scale-[0.99]`}
                 onClick={() => setExpanded(!expanded)}
             >
                 {/* Row 1: Checkbox + Destination + Date + Edit */}
@@ -74,7 +74,7 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
                         <Checkbox
                             checked={selected}
                             onCheckedChange={onSelect}
-                            className="w-4 h-4 rounded border-slate-300 data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
+                            className="w-4 h-4 rounded border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                     </div>
                     <span className="font-bold text-[13px] text-slate-900 truncate">{log.destination}</span>
@@ -85,7 +85,7 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
                     {canManage && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setEditOpen(true) }}
-                            className="shrink-0 p-1 text-slate-400 hover:text-[#00a2e8]"
+                            className="shrink-0 p-1 text-slate-400 hover:text-primary"
                         >
                             <Pencil className="h-3 w-3" />
                         </button>
@@ -108,8 +108,8 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-slate-200 text-slate-500 bg-slate-50 font-bold mr-1">
                             {log.stocks.length}개
                         </Badge>
-                        <span className="text-[12px] font-bold text-[#8dc540] tabular-nums">
-                            {totalWeight.toLocaleString()}<span className="text-[9px] font-medium text-[#8dc540]/60 ml-0.5">kg</span>
+                        <span className="text-[12px] font-bold text-emerald-600 tabular-nums">
+                            {totalWeight.toLocaleString()}<span className="text-[9px] font-medium text-emerald-600/60 ml-0.5">kg</span>
                         </span>
                     </div>
                 </div>

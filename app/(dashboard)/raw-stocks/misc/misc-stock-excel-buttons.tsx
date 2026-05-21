@@ -48,7 +48,7 @@ export function MiscStockExcelButtons({ filters }: { filters?: GetMiscStocksPara
             <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
+                className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-emerald-600/20 hover:text-emerald-700 hover:border-emerald-600/50 transition-colors"
                 onClick={handleExport}
                 disabled={exporting}
                 title="엑셀 다운로드"

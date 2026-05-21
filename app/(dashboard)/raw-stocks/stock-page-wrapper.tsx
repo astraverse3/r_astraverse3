@@ -204,7 +204,7 @@ export function StockPageWrapper({
                 <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50">
                     <Button
                         onClick={() => setIsCartOpen(true)}
-                        className="rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-2xl bg-[#00a2e8] hover:bg-[#008cc9] text-white p-0 relative border-2 border-white/50 backdrop-blur-sm"
+                        className="rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-2xl bg-primary hover:bg-primary text-white p-0 relative border-2 border-white/50 backdrop-blur-sm"
                     >
                         <ShoppingCart className="h-6 w-6" />
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">

@@ -210,7 +210,7 @@ function GroupedStockRows({
                     <Fragment key={group.key}>
                         {/* Summary Row */}
                         <TableRow
-                            className="bg-[#00a2e8]/[0.04] hover:bg-[#00a2e8]/[0.08] cursor-pointer border-y border-[#00a2e8]/20 font-bold text-slate-800 shadow-sm h-12"
+                            className="bg-primary/[0.04] hover:bg-primary/[0.08] cursor-pointer border-y border-primary/20 font-bold text-slate-800 shadow-sm h-12"
                             onClick={() => toggleGroup(group)}
                         >
                             {/* Checkbox Column */}
@@ -224,7 +224,7 @@ function GroupedStockRows({
                                         onCheckedChange={() => { }} // Handled by onClick wrapper
                                         onClick={onCheckboxClick}
                                         disabled={availableItems.length === 0 && items.length > 0} // Disabled if loaded but no available items
-                                        className="border-slate-400 bg-white data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
+                                        className="border-slate-400 bg-white data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                     />
                                 )}
                             </TableCell>
@@ -260,7 +260,7 @@ function GroupedStockRows({
                             </TableCell>
 
                             {/* Total Weight */}
-                            <TableCell className="text-right text-sm text-[#008cc9]">
+                            <TableCell className="text-right text-sm text-primary">
                                 {group.totalWeight.toLocaleString()}
                             </TableCell>
 
@@ -361,7 +361,7 @@ function GroupedStockMobileCards({
                     <div key={group.key} className="flex flex-col gap-2">
                         {/* Summary Mobile Card */}
                         <div
-                            className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-blue-300 bg-[#00a2e8]/[0.08] shadow-md' : 'border-slate-200 bg-[#00a2e8]/[0.04] shadow-sm'} transition-colors`}
+                            className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-blue-300 bg-primary/[0.08] shadow-md' : 'border-slate-200 bg-primary/[0.04] shadow-sm'} transition-colors`}
                             onClick={() => toggleGroup(group)}
                         >
                             {/* FIRST ROW */}
@@ -377,7 +377,7 @@ function GroupedStockMobileCards({
                                                 onClick={onCheckboxClick}
                                                 disabled={availableItems.length === 0 && items.length > 0}
                                                 aria-label={`${group.variety} 전체 선택`}
-                                                className="w-5 h-5 rounded-md border-slate-300 data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
+                                                className="w-5 h-5 rounded-md border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                             />
                                         )}
                                     </div>
@@ -405,7 +405,7 @@ function GroupedStockMobileCards({
                                     <div className="text-[11px] text-slate-500 whitespace-nowrap">
                                         톤백 <span className="font-bold text-slate-700">{group.count}개</span>
                                     </div>
-                                    <div className="text-[17px] font-black text-[#008cc9] tracking-tight leading-none whitespace-nowrap">
+                                    <div className="text-[17px] font-black text-primary tracking-tight leading-none whitespace-nowrap">
                                         {group.totalWeight.toLocaleString()}<span className="text-[11px] font-bold ml-0.5 opacity-70">kg</span>
                                     </div>
                                 </div>
@@ -472,7 +472,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
 
     return (
         <div
-            className={`relative py-2 px-2.5 rounded-lg border ${selected ? 'border-[#00a2e8] bg-[#f0f9ff] ring-1 ring-[#00a2e8]/20' : isConsumed ? 'border-slate-200 bg-slate-50' : 'border-slate-200/80 bg-white'} ${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
+            className={`relative py-2 px-2.5 rounded-lg border ${selected ? 'border-primary bg-blue-50 ring-1 ring-primary/20' : isConsumed ? 'border-slate-200 bg-slate-50' : 'border-slate-200/80 bg-white'} ${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
             onClick={handleCardClick}
         >
             <div className={`${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
@@ -485,7 +485,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                                     onCheckedChange={(checked) => onSelect(checked as boolean)}
                                     disabled={!isAvailable || isCartBlocked}
                                     aria-label="개별 재고 선택"
-                                    className="w-4 h-4 rounded-sm border-slate-300 data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]"
+                                    className="w-4 h-4 rounded-sm border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                 />
                             </div>
                         )}
@@ -498,7 +498,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                     </div>
 
                     <div className="flex gap-1.5 items-center shrink-0">
-                        <Badge variant={stock.status === 'AVAILABLE' ? 'outline' : 'secondary'} className={`text-[10px] h-5 px-1.5 rounded-sm whitespace-nowrap ${stock.status === 'AVAILABLE' ? 'border-[#00a2e8]/40 text-[#008cc9] bg-[#00a2e8]/10' : ''}`}>
+                        <Badge variant={stock.status === 'AVAILABLE' ? 'outline' : 'secondary'} className={`text-[10px] h-5 px-1.5 rounded-sm whitespace-nowrap ${stock.status === 'AVAILABLE' ? 'border-primary/40 text-primary bg-primary/10' : ''}`}>
                             {stock.status === 'AVAILABLE' ? '보관중' : stock.status === 'IN_PRODUCTION' ? '투입됨' : '소진됨'}
                         </Badge>
                         {canManage && (

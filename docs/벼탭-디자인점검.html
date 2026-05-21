@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>벼 탭 디자인 점검 — 디자인 시스템 기준 갭 분석</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: { DEFAULT: '#2563eb', foreground: '#f8fafc' },
+        },
+      },
+    },
+  };
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11.5px; line-height: 1.55; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+// ===== severity helpers =====
+const SEV = {
+  P0: { label: 'P0', tone: 'bg-red-50 text-red-700 border-red-200', desc: '디자인 시스템 위반 — 즉시 교체 필요' },
+  P1: { label: 'P1', tone: 'bg-amber-50 text-amber-700 border-amber-200', desc: '패턴 불일치 — 단계적 정렬 필요' },
+  P2: { label: 'P2', tone: 'bg-slate-100 text-slate-600 border-slate-200', desc: '폴리시 — 여유 있을 때' },
+  FN: { label: 'UX', tone: 'bg-violet-50 text-violet-700 border-violet-200', desc: '기능/사용성 개선 제안' },
+};
+
+function SevTag({ k }) {
+  const s = SEV[k];
+  return (
+    <span className={`inline-flex items-center justify-center h-5 px-1.5 rounded text-[10.5px] font-bold border tabular-nums ${s.tone}`}>
+      {s.label}
+    </span>
+  );
+}
+
+// ===== layout =====
+function Section({ id, eyebrow, title, subtitle, children }) {
+  return (
+    <section id={id} className="scroll-mt-24 mb-14">
+      <div className="mb-5">
+        {eyebrow && <div className="text-[10.5px] font-bold tracking-[0.14em] text-slate-400 uppercase mb-1.5">{eyebrow}</div>}
+        <h2 className="text-[22px] font-bold tracking-tight text-slate-900">{title}</h2>
+        {subtitle && <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">{subtitle}</p>}
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+// ===== finding card =====
+function Finding({ sev, title, where, dsRef, issue, fix, code, children }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+        <div className="flex items-start gap-2.5 mb-1.5">
+          <SevTag k={sev} />
+          <h3 className="text-[14.5px] font-bold text-slate-900 leading-snug">{title}</h3>
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500 pl-[34px]">
+          {where && <span>📂 <span className="mono text-slate-600">{where}</span></span>}
+          {dsRef && <span>📘 디자인 시스템 <span className="font-semibold text-slate-700">{dsRef}</span></span>}
+        </div>
+      </div>
+      <div className="px-5 py-4 space-y-3 text-[12.5px] leading-relaxed">
+        {issue && (
+          <div>
+            <div className="text-[10.5px] font-bold tracking-wider text-red-600 uppercase mb-1">현 상태</div>
+            <div className="text-slate-700">{issue}</div>
+          </div>
+        )}
+        {fix && (
+          <div>
+            <div className="text-[10.5px] font-bold tracking-wider text-emerald-700 uppercase mb-1">권장 변경</div>
+            <div className="text-slate-700">{fix}</div>
+          </div>
+        )}
+        {code && (
+          <pre className="code bg-slate-900 text-slate-100 px-4 py-3 rounded-md overflow-auto whitespace-pre-wrap">{code}</pre>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Diff({ before, after }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+      <div className="rounded-md border border-red-200 bg-red-50/40 p-3">
+        <div className="text-[10.5px] font-bold tracking-wider text-red-600 uppercase mb-1.5">현재 (벼)</div>
+        <pre className="code text-slate-800 whitespace-pre-wrap">{before}</pre>
+      </div>
+      <div className="rounded-md border border-emerald-200 bg-emerald-50/40 p-3">
+        <div className="text-[10.5px] font-bold tracking-wider text-emerald-700 uppercase mb-1.5">권장</div>
+        <pre className="code text-slate-800 whitespace-pre-wrap">{after}</pre>
+      </div>
+    </div>
+  );
+}
+
+// ===== top summary =====
+const COUNTS = { P0: 4, P1: 7, P2: 4, FN: 3 };
+
+function TopBar() {
+  return (
+    <header className="border-b border-slate-200 bg-white">
+      <div className="max-w-[1080px] mx-auto px-6 sm:px-10 py-7">
+        <div className="text-[10.5px] font-bold tracking-[0.14em] text-slate-400 uppercase mb-1.5">벼 탭 디자인 점검</div>
+        <h1 className="text-[28px] font-bold tracking-tight text-slate-900 leading-tight">
+          오래된 벼 페이지를 디자인 시스템에 맞춰 정렬하기
+        </h1>
+        <p className="text-[13.5px] text-slate-600 mt-2 leading-relaxed max-w-2xl">
+          잡곡 탭 페이지들은 최신 핸드오프 기준으로 새로 만들어졌지만 벼 탭 페이지들(원물재고/도정관리/제품재고)은 가장 먼저 구현되어 디자인 토큰·패턴이 시스템과 어긋나 있습니다.
+          아래는 페이지·서브 라우트·다이얼로그까지 모두 훑은 점검 결과입니다.
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-6">
+          {Object.entries(COUNTS).map(([k, n]) => (
+            <div key={k} className={`rounded-lg border px-3 py-2.5 ${SEV[k].tone}`}>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[10.5px] font-bold tracking-wider uppercase">{SEV[k].label}</span>
+                <span className="text-[20px] font-black tabular-nums leading-none">{n}</span>
+              </div>
+              <div className="text-[10.5px] mt-1 opacity-90 leading-tight">{SEV[k].desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ===== Page-by-page summary card =====
+function PageCard({ path, label, status, items }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="text-[10.5px] font-mono text-slate-400 mb-0.5">{path}</div>
+          <div className="text-[15px] font-bold text-slate-900">{label}</div>
+        </div>
+        <span className={`text-[10.5px] font-bold px-2 py-1 rounded border ${status.tone}`}>{status.label}</span>
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start gap-2 text-[12px] text-slate-700">
+            <SevTag k={it.sev} />
+            <span className="leading-snug">{it.text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ===== comparison row =====
+function CmpRow({ topic, ds, misc, rice }) {
+  return (
+    <tr className="border-t border-slate-100">
+      <td className="py-3 px-3 text-[12px] font-semibold text-slate-800 align-top w-[180px]">{topic}</td>
+      <td className="py-3 px-3 text-[11.5px] text-slate-600 align-top">{ds}</td>
+      <td className="py-3 px-3 text-[11.5px] text-slate-700 align-top">{misc}</td>
+      <td className="py-3 px-3 text-[11.5px] text-slate-700 align-top">{rice}</td>
+    </tr>
+  );
+}
+
+// ====================================================
+//   APP
+// ====================================================
+function App() {
+  return (
+    <div>
+      <TopBar />
+
+      <main className="max-w-[1080px] mx-auto px-6 sm:px-10 py-10">
+
+        {/* ========================================== */}
+        <Section
+          id="overview"
+          eyebrow="요약"
+          title="가장 큰 갭 한 줄로"
+          subtitle="벼 탭의 모든 시각 토큰이 레거시 하늘색(#00a2e8) 기반이고, 그룹 펼침·모바일 그룹·헤더 액션·상태 뱃지 패턴이 핸드오프 §1·§3·§4와 모두 다릅니다."
+        >
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2.5">
+                <div className="text-[12.5px] font-bold text-slate-800">📌 잡곡 탭이 이미 따르는 패턴 (정답지)</div>
+                <ul className="text-[12px] text-slate-600 space-y-1 pl-4 list-disc marker:text-emerald-500">
+                  <li>색은 모두 <code className="mono text-[11px] bg-slate-100 px-1 rounded">primary</code>·slate 토큰</li>
+                  <li>펼친 그룹 = <code className="mono text-[11px] bg-slate-100 px-1 rounded">bg-slate-50/60 + ring-1 ring-inset</code></li>
+                  <li>모바일 펼친 그룹 = <code className="mono text-[11px] bg-slate-100 px-1 rounded">bg-slate-50/70</code> 묶음 컨테이너 + 카드는 흰 배경</li>
+                  <li>인증 뱃지 = <code className="mono text-[11px] bg-slate-100 px-1 rounded">CERT_BADGE_CLASS</code> 상수 재사용</li>
+                  <li>행 액션 = <code className="mono text-[11px] bg-slate-100 px-1 rounded">DropdownMenu</code> (수정/삭제/도정)</li>
+                  <li>빈 상태 = 아이콘 + 친근 카피 (<code className="mono text-[11px] bg-slate-100 px-1 rounded">EmptyState</code> 패턴)</li>
+                </ul>
+              </div>
+              <div className="space-y-2.5">
+                <div className="text-[12.5px] font-bold text-slate-800">🚧 벼 탭이 아직 들고 있는 흔적</div>
+                <ul className="text-[12px] text-slate-600 space-y-1 pl-4 list-disc marker:text-red-500">
+                  <li><code className="mono text-[11px] bg-red-50 text-red-700 px-1 rounded">#00a2e8</code>·<code className="mono text-[11px] bg-red-50 text-red-700 px-1 rounded">#008cc9</code> 하드코딩 (raw-stocks·milling·sales/release에 70+곳)</li>
+                  <li>펼친 그룹 = <code className="mono text-[11px] bg-red-50 text-red-700 px-1 rounded">bg-[#00a2e8]/[0.04]</code> (NOTE 위반)</li>
+                  <li>모바일 펼친 그룹 = <code className="mono text-[11px] bg-red-50 text-red-700 px-1 rounded">border-l-4 border-blue-200</code> 좌측 라인 패턴</li>
+                  <li>인증 뱃지 = 셀 안에 인라인 hex 분기</li>
+                  <li>행 액션 = 셀에 Edit·Trash 아이콘 2개 노출 (모바일만 Dropdown)</li>
+                  <li>빈 상태 = "검색 결과가 없습니다." (반말체 + 아이콘 없음)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        {/* ========================================== */}
+        {/*  P0 — 디자인 시스템 위반                  */}
+        {/* ========================================== */}
+        <Section
+          id="p0"
+          eyebrow="P0 · 디자인 시스템 위반"
+          title="레거시 토큰 · 위반 패턴 — 즉시 교체"
+          subtitle="핸드오프 §1.1에 '#00a2e8은 사용 금지'로 못박혀 있고, §4.2.6 NOTE는 펼침 그룹의 primary 액센트를 명시적으로 금지합니다."
+        >
+          <Finding
+            sev="P0"
+            title="레거시 #00a2e8 / #008cc9 하드코딩이 벼 탭 거의 모든 컴포넌트에 박혀 있음"
+            where="raw-stocks/* (10+ 파일) · milling/* (8+ 파일) · sales/release/* (4 파일)"
+            dsRef="§1.1 Color"
+            issue={
+              <span>
+                <code className="mono bg-red-50 text-red-700 px-1 rounded">#00a2e8</code>은 핸드오프에서 <strong>사용 금지</strong>로 지정된 레거시 시안톤입니다.
+                현재 페이지 헤더, 체크박스 체크 상태, 그룹 행 배경, 보유 뱃지, 합계 숫자, primary 버튼, 호버 톤, floating cart, 통계 차트까지
+                약 <strong>70여 곳</strong>에 그대로 박혀 있습니다.
+              </span>
+            }
+            fix={
+              <span>
+                전수 치환. <code className="mono bg-slate-100 px-1 rounded">bg-[#00a2e8]</code> → <code className="mono bg-slate-100 px-1 rounded">bg-primary</code>,
+                <code className="mono bg-slate-100 px-1 rounded">text-[#00a2e8]</code> → <code className="mono bg-slate-100 px-1 rounded">text-primary</code>,
+                <code className="mono bg-slate-100 px-1 rounded">text-[#008cc9]</code> → <code className="mono bg-slate-100 px-1 rounded">text-primary</code> (또는 합계 강조는 slate-900 굵게).
+                루트의 <code className="mono">replace-colors.js</code>가 이미 있는데 적용 범위가 누락된 듯합니다. 단일 PR로 일괄 치환 + 시각 회귀 테스트 권장.
+              </span>
+            }
+            code={`# 영향 받는 위치 (대표 사례)
+raw-stocks/stock-list-client.tsx:213    bg-[#00a2e8]/[0.04] hover:bg-[#00a2e8]/[0.08]
+raw-stocks/stock-list-client.tsx:227    data-[state=checked]:bg-[#00a2e8]
+raw-stocks/stock-list-client.tsx:263    text-[#008cc9]
+raw-stocks/stock-list-client.tsx:364    bg-[#00a2e8]/[0.08]
+raw-stocks/stock-list-client.tsx:408    text-[#008cc9]
+raw-stocks/stock-list-client.tsx:475    border-[#00a2e8] bg-[#f0f9ff] ring-1 ring-[#00a2e8]/20
+raw-stocks/stock-table-row.tsx:62       hover:bg-[#00a2e8]/10
+raw-stocks/stock-table-row.tsx:133      bg-[#00a2e8]/10 text-[#008cc9]
+raw-stocks/stock-page-wrapper.tsx:207   rounded-full bg-[#00a2e8] hover:bg-[#008cc9]  ← floating cart
+milling/milling-table-row.tsx:166       text-[#00a2e8]
+milling/mobile-milling-card.tsx:120     border-[#00a2e8] bg-[#f0f9ff]
+milling/add-form.tsx:119                bg-[#00a2e8] shadow-[#00a2e8]/30
+milling/stock-list-dialog.tsx:206       bg-[#00a2e8]                   ← 다이얼로그 내부
+sales/release/release-history-list.tsx:180   text-[#00a2e8]            ← '/sales > 출고' 탭`}
+          />
+
+          <Finding
+            sev="P0"
+            title="펼친 그룹 행에 primary 액센트 사용 — §4.2.6 NOTE 명시적 위반"
+            where="raw-stocks/stock-list-client.tsx · 데스크탑/모바일 둘 다"
+            dsRef="§4.2.6"
+            issue={
+              <span>
+                핸드오프 §4.2.6 NOTE에 <em>"초기 시안에서는 시안톤으로 강조했으나, 같은 테이블 안에 낱개 행이 섞이면 톤이 어긋나 보여 slate-50 + ring으로 톤다운. primary 액센트는 사용하지 않음"</em>이라고 명시되어 있습니다.
+                벼 탭은 아직 시안톤 강조 시점의 코드입니다.
+              </span>
+            }
+            fix={
+              <span>
+                잡곡(<code className="mono">misc-stock-list-client.tsx</code>)의 그룹 행 톤을 그대로 이식.
+                <strong>펼친 그룹</strong>: <code className="mono">bg-slate-50/60 hover:bg-slate-100/60</code>,
+                테두리는 <code className="mono">border-y border-slate-200/70</code>.
+              </span>
+            }
+          />
+          <Diff
+            before={`// stock-list-client.tsx:213 (데스크탑)
+<TableRow className="bg-[#00a2e8]/[0.04]
+  hover:bg-[#00a2e8]/[0.08]
+  border-y border-[#00a2e8]/20 ...">
+
+// stock-list-client.tsx:364 (모바일)
+<div className={\`... \${isExpanded
+  ? 'border-blue-300 bg-[#00a2e8]/[0.08]'
+  : 'border-slate-200 bg-[#00a2e8]/[0.04]'}\`}>`}
+            after={`// misc-stock-list-client.tsx:206 (참조 — 잡곡)
+<TableRow className={\`... \${isExpanded
+  ? 'bg-slate-50/60 hover:bg-slate-100/60'
+  : 'bg-slate-50 hover:bg-slate-100'}
+  border-y border-slate-200/70\`}>
+
+// 모바일도 슬레이트 톤만 사용 — bg-white + shadow로
+// 깊이감만 변화 (시안톤 ❌)`}
+          />
+
+          <Finding
+            sev="P0"
+            title="모바일 펼친 그룹 — '좌측 굵은 청색 보더' 패턴이 §4.2.7과 다름"
+            where="raw-stocks/stock-list-client.tsx:366"
+            dsRef="§4.2.7"
+            issue={
+              <span>
+                벼 모바일은 펼친 후 하위 카드를 <code className="mono bg-red-50 text-red-700 px-1 rounded">border-l-4 border-blue-200 ml-4 pl-3</code>로 들여쓰고 청색 라인을 답니다.
+                §4.2.7은 <em>"펼친 그룹은 bg-slate-50/70 묶음 컨테이너, 내부 카드는 흰색 + border-slate-200/80"</em>로 표현하라고 합니다.
+              </span>
+            }
+            fix={<span>좌측 라인 제거 → 잡곡과 동일한 회색 묶음 컨테이너로 교체. 깊이감은 컨테이너 배경 하나로 처리.</span>}
+          />
+
+          <Finding
+            sev="P0"
+            title="인증 뱃지(유기·무농·일반) — 셀 안에 hex 인라인 분기, 잡곡은 상수화"
+            where="raw-stocks/stock-table-row.tsx:100 · 모바일도 동일"
+            dsRef="§4.5 뱃지"
+            issue={
+              <span>
+                벼 데스크탑 행은 <code className="mono">유기농 → #8dc540</code>, <code className="mono">무농약 → #00a2e8</code>으로 셀 안에서 직접 hex를 분기합니다.
+                잡곡 탭은 <code className="mono">CERT_BADGE_CLASS</code> 상수를 <code className="mono">misc-stock-table-row.tsx</code>에서 export해 공용으로 씁니다.
+              </span>
+            }
+            fix={
+              <span>
+                <code className="mono">CERT_BADGE_CLASS</code>를 <code className="mono">components/badges/cert-badge.tsx</code> 같은 공용 위치로 끌어올리고
+                벼·잡곡 모두에서 import. 색상은 <code className="mono">유기농 = emerald-600</code>, <code className="mono">무농약 = primary</code>, <code className="mono">일반 = slate</code> 정도로 토큰화.
+              </span>
+            }
+          />
+        </Section>
+
+        {/* ========================================== */}
+        {/*  P1 — 패턴 불일치                         */}
+        {/* ========================================== */}
+        <Section
+          id="p1"
+          eyebrow="P1 · 패턴 불일치"
+          title="구조는 비슷한데 디테일이 다른 곳"
+          subtitle="잡곡과 벼가 같은 워크플로우를 다르게 그리고 있어 사용자가 두 번 학습해야 하는 항목들."
+        >
+          <Finding
+            sev="P1"
+            title="1줄 브레드크럼 헤더(§3.3)가 두 탭 모두 누락"
+            where="raw-stocks/page.tsx · milling/page.tsx · packages/page.tsx"
+            dsRef="§3.3"
+            issue={
+              <span>
+                §3.3에 정의된 <code className="mono">[Set C Icon] 원물재고 / 벼 · 설명</code> 패턴 헤더가 세 페이지 모두 비어 있습니다.
+                현재는 탭만 보여서 페이지 위치 인지가 약하고, 모바일에선 더 그렇습니다.
+              </span>
+            }
+            fix={
+              <span>
+                공용 <code className="mono">PageBreadcrumbHeader icon={'{C.Raw}'} title="원물재고" sub={'{tab === "rice" ? "벼" : "잡곡"}'} desc="…"</code> 컴포넌트 생성.
+                <code className="mono">RawStocksTabs</code> 위에 배치. 잡곡 탭 점검도 같이.
+              </span>
+            }
+            code={`<header className="h-12 px-6 flex items-center gap-2 border-b border-slate-200 bg-white">
+  <C.Raw className="w-4 h-4 text-slate-700" active />
+  <span className="text-base font-bold text-slate-900">원물재고</span>
+  <span className="text-slate-300 font-light">/</span>
+  <span className="text-sm font-medium text-slate-600">
+    {tab === 'rice' ? '벼' : '잡곡'}
+  </span>
+  <span className="text-slate-300 px-1">·</span>
+  <p className="text-xs text-slate-500 truncate">
+    수확한 톤백 단위 원물 재고를 LOT 번호로 추적하고 도정에 투입합니다.
+  </p>
+</header>`}
+          />
+
+          <Finding
+            sev="P1"
+            title="헤더 액션 버튼 세트 — 정사각 회색 아이콘 버튼 패턴(§3.4) 미적용"
+            where="raw-stocks/stock-excel-buttons.tsx · stock-filters.tsx · stock-page-client.tsx"
+            dsRef="§3.4"
+            issue={
+              <span>
+                §3.4는 업로드·다운로드를 <code className="mono">w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-md</code> 정사각 아이콘 버튼, 검색을 <code className="mono">h-8 pl-3 pr-2 bg-blue-50 border-blue-200 text-primary</code> + 활성 카운트 배지, 추가를 <code className="mono">h-8 px-3 bg-primary</code>로 정의합니다.
+                벼 stock-excel-buttons는 <code className="mono">hover:bg-[#00a2e8]/20</code> 시안 톤이고, 검색 카운트 배지는 <code className="mono">h-5 px-1.5 bg-[#00a2e8]/20</code>로 규격 어긋남.
+              </span>
+            }
+            fix={<span>잡곡 panel의 헤더 액션 배치(<code className="mono">misc-stock-panel.tsx:58</code>)와 동일한 정렬: 우측 정렬, gap-2, 엑셀 → 검색 → 추가 순.</span>}
+          />
+
+          <Finding
+            sev="P1"
+            title="상태 뱃지 — 보유/출고/소진 색이 §1.1 의미 색과 불일치"
+            where="raw-stocks/stock-table-row.tsx:132"
+            dsRef="§1.1 상태 색상"
+            issue={
+              <span>
+                §1.1: <strong>성공/완료 = emerald</strong>, 주의 = amber, 경고 = red, 중성 = slate.
+                현재 벼 행: <code className="mono">AVAILABLE → bg-[#00a2e8]/10 text-[#008cc9]</code> (시안톤 = 정보 톤이지만 의미는 '보유'이므로 중립이 더 맞음).
+                <code className="mono">RELEASED → amber</code>, <code className="mono">CONSUMED → slate</code>은 OK.
+              </span>
+            }
+            fix={
+              <span>
+                <code className="mono">AVAILABLE → emerald-50 / emerald-700</code> 또는 중립 <code className="mono">slate-100 / slate-700</code> + 작은 점 인디케이터.
+                "출고"가 amber인 게 의외인데(출고는 보통 성공 액션), 이건 도메인 관점(재고 빠짐)으로 amber도 납득 가능.
+                Tweaks로 두 가지 안 보여드리고 결정 권장.
+              </span>
+            }
+          />
+
+          <Finding
+            sev="P1"
+            title="행 액션 — 데스크탑은 아이콘 2개 노출 / 모바일은 Dropdown — 잡곡은 둘 다 Dropdown"
+            where="stock-table-row.tsx:152 (데스크탑) vs stock-list-client.tsx:514 (모바일) vs misc-stock-table-row.tsx"
+            dsRef="§4.4 / §5.1"
+            issue={
+              <span>
+                벼 데스크탑은 셀에 <code className="mono">Edit</code> + <code className="mono">Trash</code> 아이콘 버튼이 항상 떠 있어 행 우측이 시끄럽고,
+                모바일에선 <code className="mono">MoreVertical</code> 3-dot 드롭다운으로 다릅니다.
+                잡곡은 데스크탑·모바일 모두 드롭다운으로 통일.
+              </span>
+            }
+            fix={<span>데스크탑도 드롭다운으로 통일. 핸드오프엔 명시적 규칙은 없지만 일관성 측면에서 잡곡 패턴이 더 깨끗하고 행 폭도 절약됨.</span>}
+          />
+
+          <Finding
+            sev="P1"
+            title="체크박스 커스텀 색 (data-[state=checked]:bg-[#00a2e8]) — shadcn primary로 통일"
+            where="stock-list-client.tsx · stock-table-row.tsx · mobile-milling-card.tsx"
+            dsRef="§1.1"
+            issue={<span>벼는 체크박스 체크 색을 직접 <code className="mono">data-[state=checked]:bg-[#00a2e8]</code>로 강제합니다. shadcn checkbox는 기본 primary를 사용하므로 이 className 자체를 제거하면 자동으로 시스템 토큰 적용.</span>}
+            fix={<span>모든 <code className="mono">data-[state=checked]:bg-[#00a2e8] data-[state=checked]:border-[#00a2e8]</code> 제거.</span>}
+          />
+
+          <Finding
+            sev="P1"
+            title="합계/주요 숫자 컬러 — 벼는 #008cc9, 디자인 시스템·잡곡은 slate-900"
+            where="stock-list-client.tsx:263, 408 · milling-table-row.tsx:166"
+            dsRef="§1.2 (숫자 표기)"
+            issue={
+              <span>
+                §1.2는 숫자에 <code className="mono">tabular-nums</code>만 요구하고, 합계 강조는 굵기로 처리합니다.
+                잡곡 그룹 헤더의 합계는 <code className="mono">text-slate-500 tabular-nums</code>이고, 잔여 재고만 <code className="mono">text-primary font-semibold</code>로 가볍게 강조합니다.
+                벼는 합계 모두 <code className="mono">text-[#008cc9]</code> + black 폰트로 매우 진해 시각적 노이즈가 큽니다.
+              </span>
+            }
+            fix={<span>합계 = <code className="mono">text-slate-900 font-bold tabular-nums</code>로 통일. primary 강조는 "잔여" 같은 동적 값에만.</span>}
+          />
+
+          <Finding
+            sev="P1"
+            title="원물 입고 다이얼로그 — 벼는 평탄, 잡곡은 sourceType 토글 등 정교 — 디자인 시스템 §5는 후자 기반"
+            where="add-stock-dialog.tsx (257줄) vs add-misc-stock-dialog.tsx (487줄)"
+            dsRef="§4.6 / plan-잡곡재고관리.md §3"
+            issue={
+              <span>
+                잡곡 다이얼로그는 <strong>위탁도정/농가도정/발아용</strong> sourceType 토글, 수율 자동계산, 원물중량 필드 등을 가지고 있고
+                폼 컴포넌트 톤·간격이 디자인 시스템 기준에 맞춰져 있습니다.
+                벼 입고 다이얼로그는 톤백 단일 vs 다중 모드만 있고 헤더·필드 그리드·푸터 버튼 색 모두 옛 톤입니다.
+              </span>
+            }
+            fix={
+              <span>
+                벼 다이얼로그는 자체 워크플로우(톤백·LOT)는 유지하되 폼 마크업·푸터 버튼·필드 spacing을 잡곡 다이얼로그와 동일한 shell로 리팩토링.
+                푸터 primary 버튼 <code className="mono">bg-[#00a2e8] hover:bg-[#008cc9]</code> 제거 → shadcn 기본 <code className="mono">{'<Button>'}</code>.
+              </span>
+            }
+          />
+        </Section>
+
+        {/* ========================================== */}
+        {/*  P2 — 폴리시                              */}
+        {/* ========================================== */}
+        <Section
+          id="p2"
+          eyebrow="P2 · 폴리시"
+          title="여유 있을 때 정리하면 좋은 것들"
+        >
+          <Finding
+            sev="P2"
+            title="빈 상태 — 아이콘·친근 카피 누락"
+            where="stock-list-client.tsx:107 · milling-list-client.tsx:54, 96"
+            dsRef="§5.3 · §7 빈 상태 메시지"
+            issue={<span>현재 모든 빈 상태가 <code className="mono">"검색 결과가 없습니다."</code> 한 줄 텍스트. 잡곡 EmptyState는 Inbox 아이콘 + 친근체 카피.</span>}
+            fix={<span>잡곡의 <code className="mono">EmptyState</code> 컴포넌트(<code className="mono">misc-stock-list-client.tsx:415</code>)를 공용 컴포넌트로 추출, 벼에서도 사용. 카피: "아직 등록된 벼 원물재고가 없어요." / "조건에 맞는 결과가 없어요. 필터를 바꿔보세요."</span>}
+          />
+
+          <Finding
+            sev="P2"
+            title="모바일 stock 카드 — 그룹 헤더 안에 'border + ring + shadow' 3중 강조"
+            where="stock-list-client.tsx:364"
+            dsRef="§1.5 Shadow"
+            issue={<span><code className="mono">border-blue-300 bg-[#00a2e8]/[0.08] shadow-md</code> 동시 적용 — depth 표현 수단이 셋. 잡곡은 <code className="mono">shadow-sm → shadow-md</code> 깊이감만 사용.</span>}
+            fix={<span>border 색은 slate-200 고정, 깊이감은 shadow로만. 색 변화 X.</span>}
+          />
+
+          <Finding
+            sev="P2"
+            title="floating action bar — 디자인 시스템에 정의 없음 (벼 전용 기능). 잡곡과 톤 통일 필요"
+            where="stock-page-client.tsx:78"
+            issue={<span>다중 선택 시 떠오르는 액션 바는 정의되지 않았지만 잘 작동합니다. 다만 <code className="mono">text-[#00a2e8] border-[#00a2e8]/30</code> 도정 액션 버튼 색 등을 primary로 교체.</span>}
+            fix={<span>색 토큰만 정리. 구조는 유지.</span>}
+          />
+
+          <Finding
+            sev="P2"
+            title="도정관리 테이블 폰트·패딩 — 잡곡보다 굵고 큼 (text-sm / py-3 vs text-xs / py-2)"
+            where="milling-list-client.tsx:73 · milling-table-row.tsx 전체"
+            dsRef="§1.2 type scale"
+            issue={<span>도정관리 행은 <code className="mono">text-sm py-3 px-3</code>, 잡곡 행은 <code className="mono">text-xs py-2 px-1</code>. 같은 화면에서 시각 위계 차이가 큼.</span>}
+            fix={<span>도정관리도 잡곡의 컴팩트 그리드(<code className="mono">text-xs / py-2 px-1</code>)에 맞춰 정렬 — 다만 정보 밀도가 다르므로 한 단계만 줄여도 충분 (<code className="mono">text-[12.5px] / py-2.5</code>).</span>}
+          />
+        </Section>
+
+        {/* ========================================== */}
+        {/*  UX / 기능 개선                            */}
+        {/* ========================================== */}
+        <Section
+          id="ux"
+          eyebrow="UX · 기능 개선"
+          title="시각 외 — 클릭 동선과 패턴"
+          subtitle="디자인 시스템에 직접 명시되진 않지만 잡곡 탭과 벼 탭을 같이 쓰면서 흠칫하게 되는 차이들."
+        >
+          <Finding
+            sev="FN"
+            title="⏸ 보류 — 도정관리 행 클릭 영역이 셋으로 분기 (행 vs 생산량 vs 상태)"
+            where="milling-table-row.tsx:115, 168, 184"
+            issue={
+              <span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600 border border-slate-200 mr-1.5">보류</span>
+                같은 행 안에:
+                <ul className="list-disc pl-5 mt-1 space-y-0.5 text-[11.5px]">
+                  <li>행 클릭 → <code className="mono">MillingStockListDialog</code> (투입 내역)</li>
+                  <li>품종 셀 호버 → 같은 다이얼로그 (시각 표시: <code className="mono">hover:text-[#00a2e8] hover:underline</code>)</li>
+                  <li>생산kg 셀 → <code className="mono">AddPackagingDialog</code> (포장)</li>
+                  <li>상태 뱃지 → <code className="mono">AddPackagingDialog</code> + 마감 해제 confirm</li>
+                </ul>
+              </span>
+            }
+            fix={
+              <span>
+                잡곡 행 패턴 차용: 행 메뉴(DropdownMenu)에 <strong>투입 내역 보기 / 포장하기 / 마감 해제 / 수정 / 삭제</strong>를 모두 모으고
+                행 자체는 클릭 가능 영역으로 두지 않거나, 행 전체 = 가장 빈도 높은 액션(포장) 하나로 단순화.
+                <span className="block mt-2 px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200 text-[11.5px] text-slate-600">
+                  📌 사용자 메모 — 접근 방식은 더 고민 후 결정. 현재 구조가 익숙함/빠른 접근의 장점이 있을 수 있으므로
+                  이번 정리 대상에서 제외. 추후 재검토.
+                </span>
+              </span>
+            }
+          />
+
+          <Finding
+            sev="FN"
+            title="원물재고 벼 — 그룹 체크 시 lazy-load 때문에 두 번 클릭해야 선택됨"
+            where="stock-list-client.tsx:194"
+            issue={
+              <span>
+                벼 raw-stocks는 그룹 펼침 시에만 서버에서 items를 fetch하므로, 사용자가 펼치지 않고 그룹 체크박스를 누르면
+                <code className="mono">"items.length === 0 ⇒ toggleGroup → 사용자 다시 클릭 필요"</code>로 흐릅니다.
+                인라인 주석에도 "User has to click again to select"라고 적혀 있을 정도.
+              </span>
+            }
+            fix={
+              <span>
+                두 가지 옵션:
+                <ol className="list-decimal pl-5 mt-1 space-y-0.5">
+                  <li>그룹 헤더에 톤백 개수만큼 미리 합계가 있으니, <strong>실제 ID는 fetch 직후 자동 선택</strong>으로 이어주기 (한 클릭 = 펼침 + 전체선택).</li>
+                  <li>잡곡처럼 처음부터 전체 데이터를 prefetch하고 클라이언트 그룹핑. 잡곡 규모가 더 작긴 하지만, 벼도 한 년산 200건 수준이면 일괄 fetch가 충분.</li>
+                </ol>
+              </span>
+            }
+          />
+
+          <Finding
+            sev="FN"
+            title="장바구니(milling cart) — 디자인 시스템 외 패턴, 잡곡에는 없음"
+            where="raw-stocks/milling-cart-context.tsx · MillingCartSheet · stock-page-wrapper.tsx:204"
+            issue={
+              <span>
+                벼 원물재고에는 톤백 여러 개를 한 번에 도정에 투입하기 위한 floating cart가 있고, 잡곡에는 없습니다.
+                이 자체는 도메인상 합리적(잡곡은 입고 시 이미 도정 완료)이지만, 디자인 시스템에 정의된 컴포넌트가 아니라서 색·위치 등 가이드라인이 없습니다.
+              </span>
+            }
+            fix={
+              <span>
+                <ol className="list-decimal pl-5 mt-1 space-y-0.5">
+                  <li>현재 floating cart의 색은 모두 primary로 통일.</li>
+                  <li>디자인 시스템에 <strong>"§4.7 Floating Cart (선택 누적)"</strong> 섹션 신설 권장 — 위치, 색, 카운트 배지 spec 명문화.</li>
+                </ol>
+              </span>
+            }
+          />
+        </Section>
+
+        {/* ========================================== */}
+        {/*  페이지별 체크리스트                       */}
+        {/* ========================================== */}
+        <Section
+          id="bypage"
+          eyebrow="페이지별"
+          title="페이지·서브 라우트 점검 체크리스트"
+          subtitle="각 페이지에 대해 우선순위별 작업 카드"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <PageCard
+              path="/raw-stocks?tab=rice"
+              label="원물재고 — 벼 탭"
+              status={{ label: '대대적 정리', tone: 'bg-red-50 text-red-700 border-red-200' }}
+              items={[
+                { sev: 'P0', text: '전체 #00a2e8/#008cc9 → primary 토큰 치환 (stock-list-client, stock-table-row, stock-page-wrapper, stock-filters, stock-excel-buttons, edit-stock-dialog, add-stock-dialog, start-milling-dialog, release-stock-dialog)' },
+                { sev: 'P0', text: '그룹 펼침 톤 시안 → slate-50/60 + ring (§4.2.6)' },
+                { sev: 'P0', text: '모바일 펼침 좌측 border-l-4 → bg-slate-50/70 컨테이너 (§4.2.7)' },
+                { sev: 'P0', text: '인증 뱃지 hex 분기 제거 → CERT_BADGE_CLASS 공용화' },
+                { sev: 'P1', text: '1줄 헤더 브레드크럼 추가 (§3.3)' },
+                { sev: 'P1', text: '데스크탑 행 액션 → DropdownMenu 통일' },
+                { sev: 'P1', text: '체크박스 커스텀 색 제거' },
+                { sev: 'P2', text: '빈 상태 EmptyState 컴포넌트로' },
+                { sev: 'FN', text: '그룹 체크 lazy-load 두 번 클릭 이슈 해결' },
+              ]}
+            />
+
+            <PageCard
+              path="/raw-stocks (다이얼로그)"
+              label="입고·수정·도정·출고 다이얼로그"
+              status={{ label: '컬러 + 푸터 정리', tone: 'bg-amber-50 text-amber-700 border-amber-200' }}
+              items={[
+                { sev: 'P0', text: 'add-stock-dialog.tsx 푸터 buttom bg-[#00a2e8] 제거' },
+                { sev: 'P0', text: 'edit-stock-dialog.tsx primary 토큰화' },
+                { sev: 'P0', text: 'start-milling-dialog.tsx — 큰 숫자 text-[#00a2e8], 체크 항목 시안 hex 모두 교체' },
+                { sev: 'P0', text: 'release-stock-dialog.tsx primary 토큰화 (또는 emerald 검토)' },
+                { sev: 'P1', text: '폼 그리드·spacing을 misc 다이얼로그와 동일한 shell로 정렬' },
+                { sev: 'P2', text: '취소/저장 푸터 spacing — gap-2 통일' },
+              ]}
+            />
+
+            <PageCard
+              path="/milling"
+              label="도정관리 — 벼 전용"
+              status={{ label: '대대적 정리', tone: 'bg-red-50 text-red-700 border-red-200' }}
+              items={[
+                { sev: 'P0', text: '#00a2e8 30+곳 치환 (table-row, mobile-card, page-client, filters, add-form, add-packaging-dialog, stock-list-dialog)' },
+                { sev: 'P0', text: 'mobile-milling-card 선택 bg-[#f0f9ff] 제거 → primary/5 + ring-primary/20' },
+                { sev: 'P1', text: '1줄 헤더 브레드크럼 (§3.3)' },
+                { sev: 'P1', text: '테이블 폰트 한 단계 컴팩트화 (text-sm → text-[12.5px])' },
+                { sev: 'P2', text: '⏸ 행 트리거 셋 → DropdownMenu 통합 — 보류 (더 고민 후)' },
+                { sev: 'P2', text: '빈 상태 → EmptyState' },
+              ]}
+            />
+
+            <PageCard
+              path="/milling/new"
+              label="도정 작업 추가 (add-form)"
+              status={{ label: '컬러 위주', tone: 'bg-amber-50 text-amber-700 border-amber-200' }}
+              items={[
+                { sev: 'P0', text: '저장 버튼 bg-[#00a2e8] shadow-[#00a2e8]/30 → bg-primary' },
+                { sev: 'P0', text: '톤백 카드 선택 상태 색 토큰화' },
+                { sev: 'P1', text: '폼 spacing·라벨 spec을 misc add 다이얼로그와 정렬' },
+                { sev: 'P2', text: '입력 focus ring을 primary로' },
+              ]}
+            />
+
+            <PageCard
+              path="/packages?tab=rice"
+              label="제품재고 — 벼 탭"
+              status={{ label: '판매관리 연동 시 정리', tone: 'bg-slate-100 text-slate-500 border-slate-200' }}
+              items={[
+                { sev: 'P2', text: '판매관리(/sales 벼·잡곡 탭) 기능 연결 시점에 함께 정리 — 이번 라운드에서는 손대지 않음' },
+                { sev: 'P2', text: '진입점·행 액션·빈 상태 카피·헤더 브레드크럼 모두 그때 한 번에 결정' },
+              ]}
+            />
+
+            <PageCard
+              path="/sales?tab=release"
+              label="판매관리 — 출고 탭 (벼 영향)"
+              status={{ label: '컬러 정리', tone: 'bg-amber-50 text-amber-700 border-amber-200' }}
+              items={[
+                { sev: 'P0', text: 'release-filters #00a2e8 → primary' },
+                { sev: 'P0', text: 'release-history-list 합계 text-[#00a2e8] → text-slate-900' },
+                { sev: 'P0', text: 'mobile-release-card 선택 색 토큰화' },
+                { sev: 'P0', text: 'release-page-client 선택 카운트 색 → primary' },
+              ]}
+            />
+          </div>
+        </Section>
+
+        {/* ========================================== */}
+        {/*  잡곡 vs 벼 비교표                         */}
+        {/* ========================================== */}
+        <Section
+          id="cmp"
+          eyebrow="비교표"
+          title="잡곡 ↔ 벼 — 같은 자리, 다른 처리"
+          subtitle="디자인 시스템(DS) 가이드를 기준으로 현재 두 탭의 구현 차이"
+        >
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-slate-50/80">
+                <tr className="border-b border-slate-200">
+                  <th className="py-2 px-3 text-left text-[10.5px] font-bold uppercase tracking-wider text-slate-500 w-[180px]">항목</th>
+                  <th className="py-2 px-3 text-left text-[10.5px] font-bold uppercase tracking-wider text-slate-500">DS 가이드</th>
+                  <th className="py-2 px-3 text-left text-[10.5px] font-bold uppercase tracking-wider text-emerald-700">잡곡 (현재)</th>
+                  <th className="py-2 px-3 text-left text-[10.5px] font-bold uppercase tracking-wider text-red-600">벼 (현재)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <CmpRow topic="Primary 색" ds="primary (#2563eb)" misc="primary 토큰 ✅" rice="#00a2e8 하드코딩 ❌" />
+                <CmpRow topic="펼친 그룹 행 배경" ds="bg-slate-50/60 + ring (§4.2.6)" misc="bg-slate-50/60 hover:bg-slate-100/60 ✅" rice="bg-[#00a2e8]/[0.04] ❌" />
+                <CmpRow topic="모바일 펼침 컨테이너" ds="bg-slate-50/70 묶음 (§4.2.7)" misc="bg-slate-50/70 ✅" rice="border-l-4 border-blue-200 + bg-[#00a2e8]/[0.04] ❌" />
+                <CmpRow topic="1줄 헤더 브레드크럼" ds="[Icon] 페이지명 / 탭값 · 설명 (§3.3)" misc="누락 ⚠️" rice="누락 ⚠️" />
+                <CmpRow topic="헤더 추가 버튼" ds="h-8 px-3 bg-primary (§3.4)" misc="bg-primary ✅" rice="bg-[#00a2e8] ❌" />
+                <CmpRow topic="검색 카운트 배지" ds="h-4 min-w-4 bg-white border-blue-200 text-primary (§3.4)" misc="검토 필요" rice="bg-[#00a2e8]/20 h-5 px-1.5 ❌" />
+                <CmpRow topic="체크박스 체크 색" ds="primary (shadcn 기본)" misc="기본 ✅" rice="data-[state=checked]:bg-[#00a2e8] ❌" />
+                <CmpRow topic="인증 뱃지" ds="§4.5 (셋 톤만 정의)" misc="CERT_BADGE_CLASS 상수 ✅" rice="셀 안 hex 분기 #8dc540/#00a2e8 ❌" />
+                <CmpRow topic="합계 숫자 강조" ds="font-bold tabular-nums" misc="slate-900 (잔여만 primary) ✅" rice="text-[#008cc9] + font-black ❌" />
+                <CmpRow topic="상태 뱃지 — 보유" ds="emerald(성공) or slate(중성)" misc="badge 패턴 일관" rice="bg-[#00a2e8]/10 text-[#008cc9] ⚠️" />
+                <CmpRow topic="행 액션" ds="명시 없음" misc="DropdownMenu (데스크탑·모바일 통일)" rice="데스크탑: 인라인 아이콘 2개 / 모바일: Dropdown ⚠️" />
+                <CmpRow topic="빈 상태" ds="아이콘 + 친근체 (§5.3, §7)" misc="EmptyState 컴포넌트 ✅" rice="텍스트 한 줄 ⚠️" />
+                <CmpRow topic="입고 다이얼로그" ds="shadcn Dialog + primary 푸터 (§4.4)" misc="487줄 정교 — sourceType 토글, 수율 자동 ✅" rice="bg-[#00a2e8] 푸터, 톤백 다중 모드 ⚠️" />
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        {/* ========================================== */}
+        {/*  추천 작업 순서                            */}
+        {/* ========================================== */}
+        <Section
+          id="plan"
+          eyebrow="작업 순서 제안"
+          title="어디부터 손대면 효율적인지"
+        >
+          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">1</span>
+                <h3 className="text-[14px] font-bold text-slate-900">레거시 색 일괄 치환 (PR 1)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                루트의 <code className="mono bg-slate-100 px-1 rounded">replace-colors.js</code>를 raw-stocks/, milling/, sales/release/, statistics/, _components/realtime-status까지 확장 적용.
+                <code className="mono bg-slate-100 px-1 rounded">#00a2e8 → primary</code>, <code className="mono bg-slate-100 px-1 rounded">#008cc9 → primary</code>, <code className="mono bg-slate-100 px-1 rounded">#f0f9ff → blue-50</code>, <code className="mono bg-slate-100 px-1 rounded">#8dc540 → emerald-600</code>.
+                약 70여 곳. 가장 임팩트 큼 + 안전한 시각 회귀.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">2</span>
+                <h3 className="text-[14px] font-bold text-slate-900">stock-list-client 그룹 톤 정렬 (PR 2)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                misc-stock-list-client의 그룹 행 톤·모바일 묶음 컨테이너를 그대로 이식.
+                §4.2.6 NOTE 의도가 가장 잘 드러나는 변화.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">3</span>
+                <h3 className="text-[14px] font-bold text-slate-900">공용 컴포넌트 추출 (PR 3)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                <code className="mono bg-slate-100 px-1 rounded">EmptyState</code>, <code className="mono bg-slate-100 px-1 rounded">CertBadge</code>, <code className="mono bg-slate-100 px-1 rounded">PageBreadcrumbHeader</code>를 <code className="mono">components/</code>로 추출 후
+                벼·잡곡 모두에서 import.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">4</span>
+                <h3 className="text-[14px] font-bold text-slate-900">행 액션 통일 (PR 4)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                <code className="mono bg-slate-100 px-1 rounded">stock-table-row</code>의 셀 안 인라인 Edit·Trash 아이콘 두 개를 DropdownMenu로 교체.
+                <span className="block mt-1 text-slate-500">⏸ 도정관리(milling-table-row)의 행 트리거 통합은 보류 — 현재 구조의 장/단점 더 검토 후 결정.</span>
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">5</span>
+                <h3 className="text-[14px] font-bold text-slate-900">다이얼로그 shell 정렬 (PR 5)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                add-stock-dialog / edit-stock-dialog / start-milling-dialog / release-stock-dialog / add-packaging-dialog의 헤더·푸터·필드 spacing을 misc 다이얼로그와 정렬.
+                폼 비즈니스 로직은 손대지 않음.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-[12px] font-bold">6</span>
+                <h3 className="text-[14px] font-bold text-slate-900">UX 이슈 (PR 6)</h3>
+              </div>
+              <p className="text-[12px] text-slate-600 mt-1.5 pl-8 leading-relaxed">
+                그룹 체크 lazy-load 두 번 클릭 해결.
+                기능 변경이라 별도 PR.
+              </p>
+            </div>
+
+            <div className="pt-3 mt-1 border-t border-slate-100">
+              <div className="flex items-baseline gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-slate-500 text-[12px] font-bold">⏸</span>
+                <h3 className="text-[14px] font-bold text-slate-500">제품재고(벼) — 판매관리 연동 시 같이</h3>
+              </div>
+              <p className="text-[12px] text-slate-500 mt-1.5 pl-8 leading-relaxed">
+                <code className="mono bg-slate-100 px-1 rounded">/packages?tab=rice</code>는 판매관리(<code className="mono">/sales</code>의 벼·잡곡 탭) 기능이 연결되는 시점에 함께 정리.
+                진입점·행 액션·빈 상태 카피·브레드크럼을 그때 한 번에 결정해야 일관성 유지에 유리.
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        <footer className="text-center text-[11px] text-slate-400 mt-16 pb-12">
+          본 점검 문서는 <span className="mono">handoff/handoff.md</span>(§1~§7)와 코드베이스 <span className="mono">milling-log/</span>를 대조해 작성되었습니다.
+          잡곡 탭(<span className="mono">misc-stock-list-client.tsx</span>, <span className="mono">misc-package-panel.tsx</span>)을 시스템 합치 기준으로 삼았습니다.
+        </footer>
+
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

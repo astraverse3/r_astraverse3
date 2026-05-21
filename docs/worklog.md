@@ -2,6 +2,28 @@
 
 ## 2026-05-21
 
+### 벼 탭 레거시색 → 디자인 토큰 치환 (디자인 점검 PR1) `refactor`
+
+**배경**: `docs/벼탭-디자인점검.html`(디자인 시스템 갭 분석) P0 §1.1 — 벼 탭이 레거시 시안톤(`#00a2e8`)을 하드코딩해 시스템과 어긋남. 잡곡 탭은 이미 토큰 기반.
+
+**범위**: 벼 탭 3개 디렉토리만 (`raw-stocks/**`, `milling/**`, `sales/release/**`). admin·statistics·제품재고·구조 변경은 제외.
+
+**변경**: 25개 파일 173곳 치환.
+- `#00a2e8`·`#008cc9`·`#007ab3` → `primary`
+- `#f0f9ff` → `blue-50`
+- `#8dc540`·`#7db037` → `emerald-600`/`emerald-700` (유기농 인증색)
+- opacity 전부 보존(`/[0.04]`·`/20` 등), 매핑 외 `#2a2a2a` 보존
+
+**방식**: 역방향 치환 스크립트(dry-run 검토 → `--commit`, 실행 후 삭제). 벼 탭은 순수 hex 없이 className arbitrary뿐이라 패턴 치환 100% 커버.
+
+**검증**: `tsc --noEmit` 통과 + 벼 탭 레거시 hex 잔여 0건(grep).
+
+**남은 작업**: P1~(합계 slate-900 톤다운, 그룹 펼침 톤, 모바일 좌측라인 제거, 인증뱃지 CERT_BADGE_CLASS 공용화, 1줄 헤더, 행 액션 Dropdown 통일, 다이얼로그 shell), statistics 순수 hex, 제품재고 벼 탭(판매관리 연동 시).
+
+**문서**: `docs/벼탭-디자인점검.html`(점검 원본), `docs/plan-벼탭-색상치환.md`, `docs/report-벼탭-색상치환-2026-05-21.md`
+
+---
+
 ### 탭 아이콘 통일 + PC 사이드바 자동펼침 `feat`
 
 **작업 A — 벼/잡곡 탭 아이콘 통일**: 원물재고·제품재고 탭 아이콘을 판매관리(`Wheat`/`Sprout`)와 동일하게 교체. `RiceIcon`/`GrainIcon`(category.tsx) → lucide `Wheat`/`Sprout`. F안 스타일 유지, lucide 기본 24px이라 크기 `w-3.5 h-3.5` 명시. 유일 사용처였던 `components/icons/category.tsx` 삭제. (raw-stocks-tabs.tsx, packages-tabs.tsx)

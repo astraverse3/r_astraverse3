@@ -153,7 +153,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
             {trigger && (
                 <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
                     {typeof trigger === 'string' ? (
-                        <button className="text-slate-900 font-bold hover:text-[#00a2e8] hover:underline transition-colors text-left cursor-pointer">
+                        <button className="text-slate-900 font-bold hover:text-primary hover:underline transition-colors text-left cursor-pointer">
                             {trigger}
                         </button>
                     ) : (
@@ -203,8 +203,8 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                             size="sm"
                                             variant={editMillingType === type ? 'default' : 'outline'}
                                             className={`h-7 px-2.5 text-[12px] ${editMillingType === type
-                                                ? 'bg-[#00a2e8] hover:bg-[#008cc9] text-white'
-                                                : 'text-slate-500 hover:text-[#00a2e8] hover:border-[#00a2e8]/30'
+                                                ? 'bg-primary hover:bg-primary text-white'
+                                                : 'text-slate-500 hover:text-primary hover:border-primary/30'
                                                 }`}
                                             onClick={() => setEditMillingType(type)}
                                         >
@@ -217,7 +217,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleCancelMeta}>
                                     <X className="h-3 w-3 mr-1" />취소
                                 </Button>
-                                <Button size="sm" className="h-7 px-2 text-xs bg-[#00a2e8] hover:bg-[#008cc9]" onClick={handleSaveMeta} disabled={isSavingMeta}>
+                                <Button size="sm" className="h-7 px-2 text-xs bg-primary hover:bg-primary" onClick={handleSaveMeta} disabled={isSavingMeta}>
                                     <Check className="h-3 w-3 mr-1" />
                                     {isSavingMeta ? '저장 중...' : '저장'}
                                 </Button>
@@ -235,7 +235,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                     </div>
                                     <div>
                                         <span className="text-xs text-slate-400 mr-1">구분</span>
-                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[#00a2e8]/30 text-[#00a2e8] bg-[#00a2e8]/5 font-bold">
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary bg-primary/5 font-bold">
                                             {editMillingType || millingType}
                                         </Badge>
                                     </div>
@@ -244,7 +244,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        className="h-7 px-2 text-xs text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10 shrink-0"
+                                        className="h-7 px-2 text-xs text-slate-500 hover:text-primary hover:bg-primary/10 shrink-0"
                                         onClick={() => setIsEditingMeta(true)}
                                     >
                                         <Pencil className="h-3 w-3 mr-1" />
@@ -312,7 +312,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                 <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
                     <div>
                         {canDelete ? (
-                            <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10 hover:border-[#00a2e8]/30" onClick={handleAddStock}>
+                            <Button size="sm" variant="outline" className="h-9 gap-1 text-slate-600 hover:text-primary hover:bg-primary/10 hover:border-primary/30" onClick={handleAddStock}>
                                 <Plus className="h-4 w-4" />
                                 톤백 추가/수정
                             </Button>

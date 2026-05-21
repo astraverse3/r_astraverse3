@@ -118,7 +118,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                         </div>
                         <div className="text-right">
                             <div className="text-[11px] font-medium text-slate-500">총 투입 중량</div>
-                            <div className="text-xl font-black text-[#00a2e8]">
+                            <div className="text-xl font-black text-primary">
                                 {totalInputKg.toLocaleString()} <span className="text-[11px] text-slate-500 font-medium">kg</span>
                             </div>
                         </div>
@@ -133,7 +133,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                                     key={type}
                                     type="button"
                                     className={`py-1.5 text-[12px] font-bold rounded-lg border transition-all ${millingType === type
-                                        ? 'bg-[#00a2e8] border-[#00a2e8] text-white shadow-md'
+                                        ? 'bg-primary border-primary text-white shadow-md'
                                         : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                                         }`}
                                     onClick={() => setMillingType(type)}
@@ -178,7 +178,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
 
                 <DialogFooter className="gap-3 sm:gap-2 pt-4 border-t border-slate-100 mt-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="text-[13px]">취소</Button>
-                    <Button onClick={handleSubmit} disabled={isLoading} className="bg-[#00a2e8] hover:bg-[#008cc9] text-[13px]">
+                    <Button onClick={handleSubmit} disabled={isLoading} className="bg-primary hover:bg-primary text-[13px]">
                         {isLoading ? '처리 중...' : (isEditing ? '작업 수정 완료' : '작업 시작')}
                     </Button>
                 </DialogFooter>

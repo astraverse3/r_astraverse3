@@ -113,7 +113,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
     return (
         <>
             <TableRow
-                className="group hover:bg-[#00a2e8]/5 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
+                className="group hover:bg-primary/5 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
                 onClick={handleRowClick}
             >
                 {/* Checkbox */}
@@ -133,7 +133,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 {/* 2. Variety - Clickable for Input History */}
                 <TableCell className="py-3 px-3 text-sm font-bold text-slate-800 md:w-[140px]">
                     <div className="flex items-center gap-2">
-                        <div className="group hover:text-[#00a2e8] hover:underline cursor-pointer flex items-center gap-1.5" title={varietiesFull}>
+                        <div className="group hover:text-primary hover:underline cursor-pointer flex items-center gap-1.5" title={varietiesFull}>
                             <span className="font-bold text-slate-900 line-clamp-1 break-all">
                                 {varietiesSummary}
                             </span>
@@ -163,9 +163,9 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 7. Output Weight - Clickable to open packaging */}
-                <TableCell className="py-3 px-3 text-right text-sm font-bold text-[#00a2e8] w-[90px]">
+                <TableCell className="py-3 px-3 text-right text-sm font-bold text-primary w-[90px]">
                     <span
-                        className="cursor-pointer underline decoration-dashed decoration-[#00a2e8]/40 underline-offset-2 hover:decoration-[#00a2e8] hover:text-[#008cc9] transition-colors"
+                        className="cursor-pointer underline decoration-dashed decoration-primary/40 underline-offset-2 hover:decoration-primary hover:text-primary transition-colors"
                         onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
                         title="포장 내역 보기"
                     >
@@ -176,7 +176,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 {/* 8. Yield */}
                 <TableCell className="py-3 px-3 text-center text-sm font-mono font-bold w-[60px]">
                     {totalRiceKg > 0 ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : 'bg-slate-50 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-primary/10 text-primary' : 'bg-slate-50 text-slate-500'}`}>
                             {Math.round(yieldRate)}%
                         </span>
                     ) : <span className="text-slate-300">-</span>}

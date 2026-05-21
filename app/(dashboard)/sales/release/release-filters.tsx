@@ -84,11 +84,11 @@ export function ReleaseFilters() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className={`h-8 gap-1.5 px-2 sm:px-3 ${activeFilterCount > 0 ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30' : 'text-slate-600'}`}>
+                <Button variant="outline" size="sm" className={`h-8 gap-1.5 px-2 sm:px-3 ${activeFilterCount > 0 ? 'bg-primary/10 text-primary border-primary/30' : 'text-slate-600'}`}>
                     <SlidersHorizontal className="h-4 w-4" />
                     <span className="hidden sm:inline">검색</span>
                     {activeFilterCount > 0 && (
-                        <Badge variant="secondary" className="h-5 px-1.5 bg-[#00a2e8]/20 text-[#008cc9] ml-0.5 rounded-full text-[10px]">
+                        <Badge variant="secondary" className="h-5 px-1.5 bg-primary/20 text-primary ml-0.5 rounded-full text-[10px]">
                             {activeFilterCount}
                         </Badge>
                     )}
@@ -106,7 +106,7 @@ export function ReleaseFilters() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-primary hover:bg-primary/10"
                                     onClick={() => setDateRange({ from: subMonths(new Date(), 3), to: new Date() })}
                                 >
                                     3개월
@@ -114,7 +114,7 @@ export function ReleaseFilters() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-primary hover:bg-primary/10"
                                     onClick={() => setDateRange({ from: subMonths(new Date(), 6), to: new Date() })}
                                 >
                                     6개월
@@ -122,7 +122,7 @@ export function ReleaseFilters() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#00a2e8] hover:bg-[#00a2e8]/10"
+                                    className="h-7 px-2 text-[10px] text-slate-500 hover:text-primary hover:bg-primary/10"
                                     onClick={() => setDateRange({ from: subYears(new Date(), 1), to: new Date() })}
                                 >
                                     1년
@@ -195,7 +195,7 @@ export function ReleaseFilters() {
                 </div>
                 <DialogFooter className="flex flex-row justify-between items-center sm:justify-between w-full mt-2">
                     <Button variant="ghost" size="sm" onClick={handleReset} className="text-slate-500 hover:text-slate-700 px-2">초기화</Button>
-                    <Button size="sm" onClick={handleApply} className="bg-[#00a2e8] hover:bg-[#008cc9] px-6">적용하기</Button>
+                    <Button size="sm" onClick={handleApply} className="bg-primary hover:bg-primary px-6">적용하기</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

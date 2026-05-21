@@ -53,7 +53,7 @@ export function ReleasePageClient({
                     {/* Mobile: selected count */}
                     <div className="sm:hidden">
                         {selectedIds.size > 0 && (
-                            <span className="text-[13px] font-bold text-[#00a2e8]">
+                            <span className="text-[13px] font-bold text-primary">
                                 {selectedIds.size}건 선택
                             </span>
                         )}

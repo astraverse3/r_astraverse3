@@ -53,7 +53,7 @@ export function StockPageClient({
                     {/* Desktop: show selected count */}
                     <div className="hidden sm:flex items-center gap-2">
                         {selectedIds.size > 0 && (
-                            <span className="text-sm font-bold text-[#00a2e8]">
+                            <span className="text-sm font-bold text-primary">
                                 {selectedIds.size}건 선택
                             </span>
                         )}
@@ -62,7 +62,7 @@ export function StockPageClient({
                     {/* Mobile: show selected count only */}
                     <div className="sm:hidden">
                         {selectedIds.size > 0 && (
-                            <span className="text-[13px] font-bold text-[#00a2e8]">
+                            <span className="text-[13px] font-bold text-primary">
                                 {selectedIds.size}건 선택
                             </span>
                         )}
@@ -98,7 +98,7 @@ export function StockPageClient({
                             )}
                             {isAllAvailable && canMilling && (
                                 <Button variant="outline" size="sm" onClick={onStartMilling}
-                                    className="text-[#00a2e8] border-[#00a2e8]/30 hover:bg-[#00a2e8] hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
+                                    className="text-primary border-primary/30 hover:bg-primary hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
                                     <ClipboardList className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />도정
                                 </Button>
                             )}
