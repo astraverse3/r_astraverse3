@@ -70,8 +70,8 @@ type Props = {
   groupBy: GroupBy
 }
 
-const COLOR_INPUT  = 'rgba(0, 162, 232, 0.18)'
-const COLOR_OUTPUT = '#00a2e8'
+const COLOR_INPUT  = 'rgba(0, 128, 200, 0.18)'
+const COLOR_OUTPUT = '#0080c8'
 const COLOR_YIELD  = '#f89c1e'
 
 function OverlappingBar(props: any) {

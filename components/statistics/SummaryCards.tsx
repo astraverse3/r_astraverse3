@@ -14,8 +14,8 @@ const cards = [
     label: '총 투입량',
     unit: 'kg',
     gradient: 'from-sky-100/70 to-white',
-    dotStyle: { backgroundColor: '#00a2e8' },
-    valueStyle: { color: '#00a2e8' },
+    dotStyle: { backgroundColor: '#0080c8' },
+    valueStyle: { color: '#006097' },
     format: formatKg,
   },
   {

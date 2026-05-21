@@ -249,7 +249,7 @@ export function MonthlyBarChart({ data, height = 320 }: { data: ByMonthRow[]; he
         />
         <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
         <Tooltip content={<MonthlyTooltip />} cursor={{ fill: '#f1f5f9' }} />
-        <Bar dataKey="productionKg" name="생산량" fill="#00a2e8" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+        <Bar dataKey="productionKg" name="생산량" fill="#0080c8" radius={[3, 3, 0, 0]} isAnimationActive={false} />
         <Bar dataKey="releaseKg"    name="출고량" fill="#8dc540" radius={[3, 3, 0, 0]} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>

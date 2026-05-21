@@ -119,8 +119,8 @@ function OutputSummaryCards({ summary }: { summary: OutputStatisticsData['summar
       label: '총 생산량',
       value: formatKg(summary.totalProductionKg),
       unit: 'kg',
-      accent: '#00a2e8',
-      valueColor: '#00a2e8',
+      accent: '#0080c8',
+      valueColor: '#006097',
     },
     {
       label: '총 출고량',

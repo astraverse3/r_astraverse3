@@ -2,6 +2,20 @@
 
 ## 2026-05-21
 
+### statistics 데이터 시각화 메벼색 #00a2e8 → #0080c8 (디자인 §1.5 팔레트) `refactor`
+
+**출처**: `docs/벼탭-디자인점검.html` + design-system §1.5 Data Visualization. 데이터 시각화는 UI primary와 별도 팔레트(VARIETY_TOKENS): 메벼=`#0080c8`(코발트, 기존 `#00a2e8` 대체), 인디카=`#8dc540`, 찰벼=`#f89c1e`, 기타=`#94a3b8`.
+
+**변경** (메벼색만 — 나머지 품종색은 이미 팔레트 일치):
+- 차트 시리즈: `MillingChart`(COLOR_INPUT/OUTPUT), `MultiSeriesChart`(PALETTE[0]), `OutputChart`(생산량 fill) — `#00a2e8`/rgba → `#0080c8`, yield `#006097`
+- 카드 지표: `SummaryCards`/`stock-summary-cards`/`output-stats-client` 메벼 카드 — dot/accent `#0080c8`, 숫자 text `#006097`
+
+**남은 statistics (다음)**: UI 강조색(필터 활성칩 stock/milling/output-stats, MillingTable 행·링크 hover/뱃지, `#008cc9`) → `primary`. 데이터색이 아니라 UI 액션이라 토큰.
+
+**검증**: `tsc --noEmit` 통과. 차트 색 실제 렌더는 사용자 검수 권장.
+
+---
+
 ### 원물재고 빈 상태 EmptyState 공용 컴포넌트화 (디자인 점검 PR3) `refactor`
 
 **출처**: `docs/벼탭-디자인점검.html` P2 §5.3/§7 — 잡곡은 아이콘+친근체 EmptyState, 벼는 "검색 결과가 없습니다" 텍스트 한 줄.

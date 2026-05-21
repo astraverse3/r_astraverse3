@@ -11,8 +11,8 @@ export function StockSummaryCards({ summary }: { summary: StockStatisticsData['s
       label: '총 입고량',
       value: formatKg(summary.totalKg),
       unit: 'kg',
-      accent: '#00a2e8',
-      valueColor: '#00a2e8',
+      accent: '#0080c8',
+      valueColor: '#006097',
     },
     {
       label: '도정완료',

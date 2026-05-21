@@ -15,7 +15,7 @@ import type { MultiSeriesChartData, GroupBy } from '@/app/actions/statistics'
 
 // 시리즈별 색상 팔레트
 const PALETTE = [
-  { input: 'rgba(0,162,232,0.18)',   output: '#00a2e8', yield: '#007cb3' },
+  { input: 'rgba(0,128,200,0.18)',   output: '#0080c8', yield: '#006097' },
   { input: 'rgba(34,197,94,0.18)',   output: '#22c55e', yield: '#16a34a' },
   { input: 'rgba(139,92,246,0.18)',  output: '#8b5cf6', yield: '#7c3aed' },
   { input: 'rgba(248,156,30,0.18)',  output: '#f89c1e', yield: '#d97706' },
