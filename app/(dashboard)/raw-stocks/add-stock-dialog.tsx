@@ -134,7 +134,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                 <DialogHeader>
                     <DialogTitle>벼 입고 등록</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={onSubmit} className="grid gap-4 py-4">
+                <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     {/* 1. Context: Year & Cert Type */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -244,8 +244,8 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-4">
-                        <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary text-white text-[13px]">
+                    <div className="flex justify-end pt-2">
+                        <Button type="submit" disabled={isLoading} className="text-[13px]">
                             {isLoading ? '저장 중...' : '저장'}
                         </Button>
                     </div>

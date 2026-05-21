@@ -145,7 +145,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         <p>중량 수정 시 해당 도정 일지의 **총 투입량**도 자동으로 수정됩니다.</p>
                     </div>
                 )}
-                <form onSubmit={onSubmit} className="grid gap-4 py-4">
+                <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label htmlFor="productionYear" className="text-[13px] whitespace-nowrap">생산년도</Label>
@@ -257,7 +257,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center pt-4">
+                    <div className="flex justify-between items-center pt-2">
                         <Button
                             type="button"
                             variant="link"

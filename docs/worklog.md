@@ -2,6 +2,22 @@
 
 ## 2026-05-21
 
+### 벼 입고/수정 다이얼로그 shell 정렬 (디자인 점검 PR5-1) `refactor`
+
+**출처**: `docs/벼탭-디자인점검.html` PR5 — 벼 다이얼로그의 form·footer spacing을 잡곡 `add-misc-stock-dialog` 기준으로.
+
+**변경** (`add-stock-dialog.tsx`, `edit-stock-dialog.tsx`):
+- form: `gap-4 py-4` → `gap-4 py-2 max-h-[80vh] overflow-y-auto px-1` (긴 폼 스크롤 일관)
+- footer 패딩 `pt-4` → `pt-2`
+- add-stock 저장 버튼 `bg-primary hover:bg-primary text-white` → 기본 Button(hover `/90` 복원, 중복 제거)
+- edit-stock 저장 버튼은 이미 기본(앞선 PR1 부작용 수정에서 처리됨)
+
+**검증**: `tsc --noEmit` 통과.
+
+**남은 다이얼로그 (다음)**: start-milling / release-stock / add-packaging — 폼 구조가 제각각(특히 add-packaging은 이미 `flex-col max-h-[90dvh]` 스크롤)이라 각각 확인 후.
+
+---
+
 ### 벼 탭 행 액션 DropdownMenu 통일 (디자인 점검 PR4) `refactor`
 
 **출처**: `docs/벼탭-디자인점검.html` P1 — 벼 데스크탑은 인라인 수정/삭제 아이콘 2개, 잡곡은 점세개 드롭다운으로 달랐음.
