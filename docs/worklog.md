@@ -2,6 +2,20 @@
 
 ## 2026-05-21
 
+### 벼 탭 그룹 펼침 톤 정렬 (디자인 점검 PR2) `refactor`
+
+**출처**: `docs/벼탭-디자인점검.html` §4.2.6(펼친 그룹 primary 액센트 금지)/§4.2.7(모바일 묶음 컨테이너). 잡곡 `misc-stock-list-client` 기준 이식.
+
+**변경** (`raw-stocks/stock-list-client.tsx` 5곳):
+- 데스크탑 그룹 행: `bg-primary/[0.04]` → `bg-slate-50/60`(펼침)·`bg-slate-50`(평소), border `primary/20` → `slate-200/70`
+- 모바일 그룹 카드: `border-blue-300 bg-primary/[0.08]` → 흰 배경 + shadow만으로 깊이 표현
+- 모바일 하위 컨테이너: `border-l-4 border-blue-200` 좌측 라인 → `bg-slate-50/70` 회색 묶음 컨테이너
+- 그룹 합계 숫자(데스크탑·모바일) `text-primary` → `text-slate-900`
+
+**검증**: `tsc --noEmit` 통과.
+
+---
+
 ### 벼 탭 레거시색 → 디자인 토큰 치환 (디자인 점검 PR1) `refactor`
 
 **배경**: `docs/벼탭-디자인점검.html`(디자인 시스템 갭 분석) P0 §1.1 — 벼 탭이 레거시 시안톤(`#00a2e8`)을 하드코딩해 시스템과 어긋남. 잡곡 탭은 이미 토큰 기반.

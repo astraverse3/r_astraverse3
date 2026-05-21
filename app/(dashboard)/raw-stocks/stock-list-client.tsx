@@ -210,7 +210,7 @@ function GroupedStockRows({
                     <Fragment key={group.key}>
                         {/* Summary Row */}
                         <TableRow
-                            className="bg-primary/[0.04] hover:bg-primary/[0.08] cursor-pointer border-y border-primary/20 font-bold text-slate-800 shadow-sm h-12"
+                            className={`${isExpanded ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'bg-slate-50 hover:bg-slate-100'} cursor-pointer border-y border-slate-200/70 font-bold text-slate-800 shadow-sm h-12`}
                             onClick={() => toggleGroup(group)}
                         >
                             {/* Checkbox Column */}
@@ -260,7 +260,7 @@ function GroupedStockRows({
                             </TableCell>
 
                             {/* Total Weight */}
-                            <TableCell className="text-right text-sm text-primary">
+                            <TableCell className="text-right text-sm text-slate-900">
                                 {group.totalWeight.toLocaleString()}
                             </TableCell>
 
@@ -361,7 +361,7 @@ function GroupedStockMobileCards({
                     <div key={group.key} className="flex flex-col gap-2">
                         {/* Summary Mobile Card */}
                         <div
-                            className={`flex flex-col p-3 rounded-xl border ${isExpanded ? 'border-blue-300 bg-primary/[0.08] shadow-md' : 'border-slate-200 bg-primary/[0.04] shadow-sm'} transition-colors`}
+                            className={`flex flex-col p-3 rounded-xl border border-slate-200 bg-white ${isExpanded ? 'shadow-md' : 'shadow-sm'} transition-shadow`}
                             onClick={() => toggleGroup(group)}
                         >
                             {/* FIRST ROW */}
@@ -405,7 +405,7 @@ function GroupedStockMobileCards({
                                     <div className="text-[11px] text-slate-500 whitespace-nowrap">
                                         톤백 <span className="font-bold text-slate-700">{group.count}개</span>
                                     </div>
-                                    <div className="text-[17px] font-black text-primary tracking-tight leading-none whitespace-nowrap">
+                                    <div className="text-[17px] font-black text-slate-900 tracking-tight leading-none whitespace-nowrap">
                                         {group.totalWeight.toLocaleString()}<span className="text-[11px] font-bold ml-0.5 opacity-70">kg</span>
                                     </div>
                                 </div>
@@ -414,8 +414,7 @@ function GroupedStockMobileCards({
 
                         {/* Detailed Mobile Cards (Sub-cards) */}
                         {isExpanded && (
-                            <div className="flex flex-col gap-1.5 pl-3 border-l-4 border-blue-200 ml-4 mr-1 mb-2 relative">
-                                {/* Ensure the line container itself has no background that bleeds */}
+                            <div className="flex flex-col gap-1.5 p-2 mx-1 mb-2 rounded-lg bg-slate-50/70">
                                 {isLoading && items.length === 0 && (
                                     <div className="flex flex-col items-center justify-center py-6 text-slate-400 bg-white rounded-lg border border-slate-100 shadow-sm">
                                         <Loader2 className="h-5 w-5 animate-spin mb-2" />
