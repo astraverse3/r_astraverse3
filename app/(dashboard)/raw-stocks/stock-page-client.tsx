@@ -46,9 +46,9 @@ export function StockPageClient({
     const canSales = hasPermission(session?.user, 'SALES_MANAGE')
 
     return (
-        <div className="grid grid-cols-1 gap-1 pb-24 sm:pb-2 px-1.5 sm:px-0">
+        <div className="grid grid-cols-1 gap-2 pb-24 sm:pb-2 px-1.5 sm:px-0">
             {/* Header */}
-            <section className="flex flex-col gap-2 pt-2 px-1">
+            <section className="flex flex-col gap-2 px-1">
                 <div className="flex items-center justify-between gap-2">
                     {/* Desktop: show selected count */}
                     <div className="hidden sm:flex items-center gap-2">
