@@ -2,6 +2,23 @@
 
 ## 2026-05-21
 
+### 원물재고 빈 상태 EmptyState 공용 컴포넌트화 (디자인 점검 PR3) `refactor`
+
+**출처**: `docs/벼탭-디자인점검.html` P2 §5.3/§7 — 잡곡은 아이콘+친근체 EmptyState, 벼는 "검색 결과가 없습니다" 텍스트 한 줄.
+
+**변경**:
+- `components/empty-state.tsx` 신규 — Inbox 아이콘 + 친근체 카피. `filtered`(공통 카피) / `emptyText`(도메인별) prop
+- 잡곡 `misc-stock-list-client`: 자체 `EmptyState` 함수 → 공용 import, 미사용 `Inbox` import 정리
+- 벼 `stock-list-client`: 텍스트 빈 상태 → `EmptyState` (데스크탑 colSpan + 모바일)
+
+**범위 판단**:
+- **CertBadge 공용화는 스킵** — 벼 인증뱃지 색이 이미 잡곡과 동일(앞 작업에서 통일)해 단일소스화는 체감 0인데 4파일 회귀 위험. ROI 안 맞음.
+- **도정(milling) 빈 상태는 다음 차례** (별도 화면)
+
+**검증**: `tsc --noEmit` 통과.
+
+---
+
 ### 벼 입고/수정 다이얼로그 shell 정렬 (디자인 점검 PR5-1) `refactor`
 
 **출처**: `docs/벼탭-디자인점검.html` PR5 — 벼 다이얼로그의 form·footer spacing을 잡곡 `add-misc-stock-dialog` 기준으로.

@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { EditStockDialog } from './edit-stock-dialog'
+import { EmptyState } from '@/components/empty-state'
 
 interface StockListClientProps {
     initialGroups: StockGroup[]
@@ -99,8 +100,8 @@ export function StockListClient({
                             />
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={10} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                    {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 재고가 없습니다.'}
+                                <TableHead colSpan={10} className="text-center">
+                                    <EmptyState filtered={Object.keys(filters).length > 0} emptyText="아직 등록된 벼 재고가 없어요." />
                                 </TableHead>
                             </TableRow>
                         )}
@@ -124,8 +125,8 @@ export function StockListClient({
                         cartItemIds={cartItemIds}
                     />
                 ) : (
-                    <div className="text-center text-sm text-slate-400 py-10 bg-white rounded-xl border border-slate-200">
-                        검색 결과가 없습니다.
+                    <div className="bg-white rounded-xl border border-slate-200">
+                        <EmptyState filtered={Object.keys(filters).length > 0} emptyText="아직 등록된 벼 재고가 없어요." />
                     </div>
                 )}
             </div>

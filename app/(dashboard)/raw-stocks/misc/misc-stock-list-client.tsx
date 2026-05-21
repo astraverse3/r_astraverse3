@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, Inbox } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import {
     Table,
     TableBody,
@@ -20,6 +20,7 @@ import {
     type GetMiscStocksParams,
 } from '@/app/actions/misc-stock'
 import { MiscStockTableRow, MiscStockMobileCard, CERT_BADGE_CLASS } from './misc-stock-table-row'
+import { EmptyState } from '@/components/empty-state'
 import { AddMiscStockDialog, type MiscStockEditTarget } from './add-misc-stock-dialog'
 import { MiscPackageDialog } from '@/app/(dashboard)/packages/misc-package-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
@@ -263,7 +264,7 @@ export function MiscStockListClient({
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={13} className="py-16">
-                                    <EmptyState filtered={filterCount > 0} />
+                                    <EmptyState filtered={filterCount > 0} emptyText="아직 등록된 잡곡 재고가 없어요." />
                                 </TableCell>
                             </TableRow>
                         )}
@@ -357,7 +358,7 @@ export function MiscStockListClient({
                     })
                 ) : (
                     <div className="bg-white rounded-xl border border-slate-200">
-                        <EmptyState filtered={filterCount > 0} />
+                        <EmptyState filtered={filterCount > 0} emptyText="아직 등록된 잡곡 재고가 없어요." />
                     </div>
                 )}
             </div>
@@ -408,16 +409,3 @@ export function MiscStockListClient({
     )
 }
 
-// §5.3 빈 상태 + §7 친근체 카피
-function EmptyState({ filtered }: { filtered: boolean }) {
-    return (
-        <div className="py-12 flex flex-col items-center gap-3 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                <Inbox className="w-5 h-5 text-slate-400" />
-            </div>
-            <p className="text-sm text-slate-600">
-                {filtered ? '조건에 맞는 결과가 없어요. 필터를 바꿔보세요.' : '아직 등록된 잡곡 재고가 없어요.'}
-            </p>
-        </div>
-    )
-}
