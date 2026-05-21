@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { RiceIcon, GrainIcon } from '@/components/icons/category'
+import { Wheat, Sprout, type LucideIcon } from 'lucide-react'
 
 export type PackageTab = 'rice' | 'misc'
 
@@ -12,12 +12,12 @@ interface PackagesTabsProps {
 type TabSpec = {
     value: PackageTab
     label: string
-    Icon: typeof RiceIcon
+    Icon: LucideIcon
 }
 
 const TABS: TabSpec[] = [
-    { value: 'rice', label: '벼', Icon: RiceIcon },
-    { value: 'misc', label: '잡곡', Icon: GrainIcon },
+    { value: 'rice', label: '벼', Icon: Wheat },
+    { value: 'misc', label: '잡곡', Icon: Sprout },
 ]
 
 /**
@@ -49,7 +49,7 @@ export function PackagesTabs({ activeTab }: PackagesTabsProps) {
                         }`}
                     >
                         <Icon
-                            className={`transition-transform duration-300 ${on ? 'scale-110' : 'scale-100'}`}
+                            className={`w-3.5 h-3.5 transition-transform duration-300 ${on ? 'scale-110' : 'scale-100'}`}
                             strokeWidth={on ? 2.4 : 1.8}
                         />
                         <span className={`transition-all ${on ? 'text-[14px]' : 'text-[13px]'}`}>{label}</span>

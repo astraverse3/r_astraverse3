@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -8,6 +9,8 @@ import {
     Server,
     Leaf,
     Users,
+    ChevronDown,
+    ChevronRight,
 } from "lucide-react"
 import {
     RawStockIcon,
@@ -58,6 +61,21 @@ export function DesktopSidebar() {
         return pathname.startsWith(path);
     };
 
+    // 서브메뉴 자동펼침: 현재 경로가 해당 섹션 하위면 펼침 + 화살표 클릭으로 토글.
+    const statsActive = isActive('/statistics');
+    const adminActive = isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers');
+    const [statsOpen, setStatsOpen] = useState(statsActive);
+    const [adminOpen, setAdminOpen] = useState(adminActive);
+
+    // 사이드바는 layout에 상주해 경로 이동 시 useState 초기값이 재평가되지 않으므로,
+    // 해당 섹션 경로로 진입하면 자동으로 펼친다.
+    useEffect(() => {
+        if (statsActive) setStatsOpen(true);
+    }, [statsActive]);
+    useEffect(() => {
+        if (adminActive) setAdminOpen(true);
+    }, [adminActive]);
+
     return (
         <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 flex-col">
             <div className="p-6 flex-1 overflow-y-auto">
@@ -92,29 +110,38 @@ export function DesktopSidebar() {
                     })}
 
                     <div className="pt-1">
-                        <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg ${isActive('/statistics') ? 'text-primary' : 'text-slate-600'}`}>
+                        <button
+                            type="button"
+                            onClick={() => setStatsOpen(v => !v)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/statistics') ? 'text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
+                        >
                             <StatsIcon
                                 className="w-4 h-4 shrink-0"
                                 strokeWidth={1.8}
                                 active={isActive('/statistics')}
                             />
-                            통계
-                        </div>
-                        <div className="pl-10 mt-1 space-y-1">
-                            {STATS_SUB.map(sub => (
-                                <Link
-                                    key={sub.href}
-                                    href={sub.href}
-                                    className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${
-                                        isActive(sub.href)
-                                            ? 'text-primary bg-blue-50'
-                                            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {sub.label}
-                                </Link>
-                            ))}
-                        </div>
+                            <span className="flex-1 text-left">통계</span>
+                            {statsOpen
+                                ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                        </button>
+                        {statsOpen && (
+                            <div className="pl-10 mt-1 space-y-1">
+                                {STATS_SUB.map(sub => (
+                                    <Link
+                                        key={sub.href}
+                                        href={sub.href}
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${
+                                            isActive(sub.href)
+                                                ? 'text-primary bg-blue-50'
+                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {sub.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -146,10 +173,18 @@ export function DesktopSidebar() {
 
                         {hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
                         <div className="group pt-1">
-                            <div className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers') ? 'bg-slate-50 text-slate-900' : ''}`}>
+                            <button
+                                type="button"
+                                onClick={() => setAdminOpen(v => !v)}
+                                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 transition-colors ${adminActive ? 'bg-slate-50 text-slate-900' : ''}`}
+                            >
                                 <Server className="w-4 h-4" />
-                                <span>관리자 메뉴</span>
-                            </div>
+                                <span className="flex-1 text-left">관리자 메뉴</span>
+                                {adminOpen
+                                    ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                    : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                            </button>
+                            {adminOpen && (
                             <div className="pl-10 mt-1 space-y-1">
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <Link
@@ -207,6 +242,7 @@ export function DesktopSidebar() {
                                     </Link>
                                 )}
                             </div>
+                            )}
                         </div>
                         )}
                     </div>

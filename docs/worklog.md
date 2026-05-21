@@ -2,6 +2,18 @@
 
 ## 2026-05-21
 
+### 탭 아이콘 통일 + PC 사이드바 자동펼침 `feat`
+
+**작업 A — 벼/잡곡 탭 아이콘 통일**: 원물재고·제품재고 탭 아이콘을 판매관리(`Wheat`/`Sprout`)와 동일하게 교체. `RiceIcon`/`GrainIcon`(category.tsx) → lucide `Wheat`/`Sprout`. F안 스타일 유지, lucide 기본 24px이라 크기 `w-3.5 h-3.5` 명시. 유일 사용처였던 `components/icons/category.tsx` 삭제. (raw-stocks-tabs.tsx, packages-tabs.tsx)
+
+**작업 B — PC 사이드바 자동펼침**: `desktop-sidebar.tsx`의 통계·관리자 서브메뉴를 항상 펼침 → 경로 진입 시 자동 펼침 + 화살표(Chevron) 클릭 토글. `useState` 초기값(경로 기반) + `useEffect`로 SPA 이동 시 자동 펼침 동기화.
+
+**검증**: `tsc --noEmit` 통과. 디자인 문서 §6은 아직 `GrainIcon`이라 코드와 불일치 — 핸드오프 산출물이라 코드 우선, 추후 디자인 측 정합.
+
+**문서**: `docs/plan-탭아이콘통일-사이드바자동펼침.md`, `docs/report-탭아이콘통일-사이드바자동펼침-2026-05-21.md`
+
+---
+
 ### 도정 포장내역 표시 버그 핫픽스 `fix`
 
 **증상**: 도정목록에서 포장 다이얼로그를 열면 포장단위별 포장내역이 안 보이는 배치가 많음.
