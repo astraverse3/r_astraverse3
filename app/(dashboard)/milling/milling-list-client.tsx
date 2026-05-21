@@ -10,6 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import { EmptyState } from '@/components/empty-state'
 
 interface MillingListClientProps {
     logs: any[]
@@ -51,9 +52,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                         />
                     ))
                 ) : (
-                    <div className="text-center text-sm text-slate-400 py-16">
-                        {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 작업이 없습니다.'}
-                    </div>
+                    <EmptyState filtered={Object.keys(filters).length > 0} emptyText="아직 등록된 도정 작업이 없어요." />
                 )}
             </section>
 
@@ -92,8 +91,8 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                             ))
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={9} className="h-32 text-center text-xs text-slate-400 font-medium">
-                                    {Object.keys(filters).length > 0 ? '검색 결과가 없습니다.' : '등록된 작업이 없습니다.'}
+                                <TableHead colSpan={9} className="text-center">
+                                    <EmptyState filtered={Object.keys(filters).length > 0} emptyText="아직 등록된 도정 작업이 없어요." />
                                 </TableHead>
                             </TableRow>
                         )}
