@@ -387,13 +387,13 @@ export function StockStatsClient({
               onClick={() => setShowFilter(true)}
               className={`md:hidden flex items-center gap-1.5 h-8 px-2 rounded-lg border text-xs font-semibold transition-colors ${
                 activeFilterCount > 0
-                  ? 'bg-[#00a2e8]/10 text-[#00a2e8] border-[#00a2e8]/30'
+                  ? 'bg-primary/10 text-primary border-primary/30'
                   : 'text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
               {activeFilterCount > 0 && (
-                <span className="h-5 px-1.5 bg-[#00a2e8]/20 text-[#008cc9] ml-0.5 rounded-full text-[10px] flex items-center">
+                <span className="h-5 px-1.5 bg-primary/20 text-primary ml-0.5 rounded-full text-[10px] flex items-center">
                   {activeFilterCount}
                 </span>
               )}

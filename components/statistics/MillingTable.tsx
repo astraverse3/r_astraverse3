@@ -57,7 +57,7 @@ function PackagingPopup({ row, onClose }: { row: TableRow; onClose: () => void }
         <DialogHeader>
           <DialogTitle>포장 기록 관리</DialogTitle>
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#00a2e8]/20 text-[#007ab3]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/20 text-primary">
               {row.millingType}
             </span>
             <span className="text-[13px] font-bold text-slate-700">
@@ -170,7 +170,7 @@ export function MillingTable({ data }: Props) {
       accessorKey: 'millingType',
       header: '도정종류',
       cell: info => (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[#00a2e8]/30 text-[#00a2e8] bg-[#00a2e8]/5 font-bold">
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary bg-primary/5 font-bold">
           {info.getValue() as string}
         </Badge>
       ),
@@ -200,7 +200,7 @@ export function MillingTable({ data }: Props) {
         return (
           <button
             onClick={e => { e.stopPropagation(); setInputPopup(row) }}
-            className="font-medium text-slate-700 underline decoration-dotted underline-offset-2 hover:text-[#00a2e8] transition-colors"
+            className="font-medium text-slate-700 underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
           >
             {(info.getValue() as number).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}
           </button>
@@ -215,7 +215,7 @@ export function MillingTable({ data }: Props) {
         return (
           <button
             onClick={e => { e.stopPropagation(); setOutputPopup(row) }}
-            className="font-bold text-[#00a2e8] underline decoration-dashed decoration-[#00a2e8]/40 underline-offset-2 hover:decoration-[#00a2e8] hover:text-[#008cc9] transition-colors"
+            className="font-bold text-[#0080c8] underline decoration-dashed decoration-[#0080c8]/40 underline-offset-2 hover:decoration-[#0080c8] hover:text-[#006097] transition-colors"
           >
             {(info.getValue() as number) > 0
               ? (info.getValue() as number).toLocaleString('ko-KR', { maximumFractionDigits: 1 })
@@ -232,7 +232,7 @@ export function MillingTable({ data }: Props) {
         const val = info.getValue() as number
         return val > 0 ? (
           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            val >= 70 ? 'bg-[#00a2e8]/10 text-[#00a2e8]' : 'bg-slate-50 text-slate-500'
+            val >= 70 ? 'bg-[#0080c8]/10 text-[#0080c8]' : 'bg-slate-50 text-slate-500'
           }`}>
             {Math.round(val)}%
           </span>
@@ -300,7 +300,7 @@ export function MillingTable({ data }: Props) {
                 table.getRowModel().rows.map(row => (
                   <tr
                     key={row.id}
-                    className="border-t border-slate-50 hover:bg-[#00a2e8]/5 transition-colors"
+                    className="border-t border-slate-50 hover:bg-primary/5 transition-colors"
                   >
                     {row.getVisibleCells().map(cell => (
                       <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
