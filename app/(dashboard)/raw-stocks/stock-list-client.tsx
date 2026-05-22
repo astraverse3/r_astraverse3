@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { ChevronRight, ChevronDown, Loader2, MoreVertical, Edit, Trash2 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StockTableRow } from './stock-table-row'
@@ -162,6 +162,29 @@ function GroupedStockRows({
         setExpandedGroups(newSet)
     }
 
+    // 미로드 그룹 체크 시: 로드 완료되면 자동으로 선택 (두 번 클릭 불필요)
+    const [pendingSelect, setPendingSelect] = useState<Set<string>>(new Set())
+    useEffect(() => {
+        if (pendingSelect.size === 0) return
+        const newSelected = new Set(selectedIds)
+        const stillPending = new Set(pendingSelect)
+        let changed = false
+        pendingSelect.forEach((key: string) => {
+            if (loadingGroups.has(key)) return        // 로딩 중 → 대기
+            const loaded = loadedItems[key]
+            if (loaded === undefined) return           // fetch 전 → 대기
+            loaded
+                .filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                .forEach((s: any) => newSelected.add(s.id))
+            stillPending.delete(key)
+            changed = true
+        })
+        if (changed) {
+            onSelectionChange(newSelected)
+            setPendingSelect(stillPending)
+        }
+    }, [loadedItems, loadingGroups, pendingSelect, selectedIds, cartItemIds, onSelectionChange])
+
     return (
         <>
             {groups.map((group: StockGroup) => {
@@ -191,16 +214,12 @@ function GroupedStockRows({
                     onSelectionChange(newSet)
                 }
 
-                // IMPROVED Selection Logic to handle "Not Loaded"
-                // If not loaded, we can't select.
-                // Let's auto-expand when clicking checkbox if not loaded?
                 const onCheckboxClick = async (e: any) => {
                     e.stopPropagation()
                     if (items.length === 0) {
-                        // Trigger load
+                        // 미로드: 펼치며 로드 시작 + 로드 완료 시 자동 선택 예약 (두 번 클릭 불필요)
                         toggleGroup(group)
-                        // This expands and loads. 
-                        // User has to click again to select.
+                        setPendingSelect(prev => new Set(prev).add(group.key))
                         return
                     }
                     // If loaded, toggle selection
@@ -327,6 +346,29 @@ function GroupedStockMobileCards({
         setExpandedGroups(newSet)
     }
 
+    // 미로드 그룹 체크 시: 로드 완료되면 자동으로 선택 (두 번 클릭 불필요)
+    const [pendingSelect, setPendingSelect] = useState<Set<string>>(new Set())
+    useEffect(() => {
+        if (pendingSelect.size === 0) return
+        const newSelected = new Set(selectedIds)
+        const stillPending = new Set(pendingSelect)
+        let changed = false
+        pendingSelect.forEach((key: string) => {
+            if (loadingGroups.has(key)) return        // 로딩 중 → 대기
+            const loaded = loadedItems[key]
+            if (loaded === undefined) return           // fetch 전 → 대기
+            loaded
+                .filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                .forEach((s: any) => newSelected.add(s.id))
+            stillPending.delete(key)
+            changed = true
+        })
+        if (changed) {
+            onSelectionChange(newSelected)
+            setPendingSelect(stillPending)
+        }
+    }, [loadedItems, loadingGroups, pendingSelect, selectedIds, cartItemIds, onSelectionChange])
+
     return (
         <>
             {groups.map((group: StockGroup) => {
@@ -352,7 +394,9 @@ function GroupedStockMobileCards({
                 const onCheckboxClick = async (e: any) => {
                     e.stopPropagation()
                     if (items.length === 0) {
+                        // 미로드: 펼치며 로드 시작 + 로드 완료 시 자동 선택 예약 (두 번 클릭 불필요)
                         toggleGroup(group)
+                        setPendingSelect(prev => new Set(prev).add(group.key))
                         return
                     }
                     handleGroupSelect(!isGroupSelected)
