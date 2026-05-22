@@ -1,5 +1,36 @@
 # 작업일지
 
+## 2026-05-22
+
+### statistics UI 강조색 → primary (벼탭 디자인점검 마무리) `refactor` `5c1eed3`
+
+**출처**: `docs/벼탭-디자인점검.html`. 어제 데이터 시각화색(`#0080c8`) 처리에 이어, statistics의 **UI 액션색**(데이터색 아님)을 `primary`로 통일.
+
+**변경** (4파일):
+- 모바일 필터 활성칩·카운트뱃지: `stock-stats-client`/`output-stats-client`/`milling-stats-client` — `bg-[#00a2e8]/10 text-[#00a2e8]`, `text-[#008cc9]` → `primary`
+- `MillingTable` UI: 도정종류 뱃지·투입량 링크 hover·행 hover → `primary`
+- `MillingTable` **데이터 강조 유지**: 생산량 링크·수율 뱃지(L218/235)는 데이터색 `#0080c8`/`#006097`로 통일 (UI색과 의미 구분, 디자인 §1.5)
+
+**판단**: 점검 항목 중 다이얼로그(start-milling/release-stock/add-packaging)·§3.4 헤더 액션은 **어제 PR1 색상 토큰화 때 이미 primary로 정렬 완료** → 실측 후 작업 제외.
+
+**검증**: `next build` 통과(TypeScript OK, 19페이지 생성). statistics 폴더 `#00a2e8`/`#008cc9`/`#007ab3` 잔존 0건.
+
+---
+
+### 원물재고 그룹체크 lazy-load 두번클릭 해소 (디자인 점검 FN) `fix` `95f08f9`
+
+**출처**: `docs/벼탭-디자인점검.html` FN — 미펼침 그룹 체크박스를 누르면 펼침+로드만 되고 선택이 안 돼 다시 클릭해야 했음("User has to click again" 주석).
+
+**변경** (`stock-list-client.tsx`):
+- `pendingSelect: Set<string>` 대기열 도입 — 미로드 그룹 체크 시 `toggleGroup`(펼침+fetch) + 대기열 등록
+- `loadedItems`/`loadingGroups` 변화 감지 `useEffect`로 로드 완료된 대기 그룹을 자동 전체선택 후 대기열 정리
+- 무한루프 방지: `pendingSelect.size===0` early-return + 처리 후 즉시 비움
+- 데스크탑(`GroupedStockRows`)·모바일(`GroupedStockMobileCards`) 동일 적용
+
+**검증**: `next build` 통과. 단 실제 그룹 선택 동작은 로그인+재고 데이터 필요 → 사용자 실동작 확인 권장.
+
+---
+
 ## 2026-05-21
 
 ### statistics 데이터 시각화 메벼색 #00a2e8 → #0080c8 (디자인 §1.5 팔레트) `refactor`
