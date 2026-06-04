@@ -67,21 +67,21 @@ Claude Design 모바일 점검에서 발견된 **20건**(P0 4 / P1 11 / P2 5)을
 - 활성/비활성 폰트 크기 14px 고정 → layout shift 제거
 - (`packages-tabs.tsx`, `sales-tabs.tsx`는 후속 — 이번 PR은 raw-stocks만)
 
-### PR-5: Typography Sweep (P1 모바일 카드 본문)
-**범위**: 모바일 카드 본문 폰트 한 단계씩 올림.
+### PR-5: Typography Sweep (축소 — 2026-06-04 사용자 지시)
+> ⚠️ **방향 변경**: 모바일 카드 본문 폰트 sweep은 **전면 제외**. 사용자 지시 —
+> "도정 카드·MobileStockDetailCard는 현재 폰트 크기 유지. 폰트 키우면 한 줄에 안 들어가 **줄 넘어가는(깨지는) 게 더 큰 문제**."
+> 두 카드 모두 `shrink-0`/`truncate`/`whitespace-nowrap`으로 한 줄에 욱여넣은 구조라, 폰트 상향 시 레이아웃 붕괴. → 카드는 손대지 않음.
 
-| 패턴 | Before → After |
-|---|---|
-| 단위(kg) | `text-[9px]` → `text-[10.5px]` |
-| 메타 정보 | `text-[10px]` → `text-[11.5px]` |
-| 본문 | `text-[11px]` → `text-[12.5px]` |
+**실제 진행 범위**: 하단 네비 라벨 + 원물 카드 레이아웃 재배치(A안).
 
-| 파일 | 범위 |
-|---|---|
-| `milling/mobile-milling-card.tsx` | 카드 전반 |
-| `raw-stocks/stock-list-client.tsx` (MobileStockDetailCard) | 카드 전반 |
-| `components/mobile-nav.tsx:147,211` | 비활성 라벨 9px → 10.5px |
-| `stock-list-client.tsx:545` | 생산자 + LOT 한 줄 → 2줄 분리 (LOT은 우측 mono chip) |
+| 파일 | 범위 | 상태 |
+|---|---|---|
+| `components/mobile-nav.tsx:147,211` | 비활성 라벨 `text-[9px]` → `text-[10.5px]` (`leading-none`+`max-h-3`로 wrap 위험 없음) | ✅ 완료 |
+| ~~`milling/mobile-milling-card.tsx`~~ | ~~카드 본문 폰트 sweep~~ | ❌ 제외(폰트 유지) |
+| `raw-stocks/stock-list-client.tsx` (MobileStockDetailCard) | **A안 적용**: 1행 테이블형 재배치 + 상태칩 제거. 폰트는 키우지 않음(컬럼화로 정리) | ✅ 완료 |
+| `tsconfig.json` | `exclude`에 `docs` 추가 (핸드오프 번들 .tsx가 컴파일 대상에 잡히던 문제) | ✅ 완료 |
+
+> **LOT 잘림 해결 — A안 채택 경위 (2026-06-04)**: 생산자명 잘림(흔치 않은 엣지케이스)을 모바일에서 어떻게 다룰지 논의 → PC tooltip의 모바일 이식은 부적합(hover 없음·탭=선택 충돌). 사용자가 Claude Design 핸드오프 번들(`docs/원물카드_상태간소화_A안/`)로 **테이블형 1행 + 상태칩 제거** 시안을 제시·채택. 상태칩(보관중/소진됨)은 카드 배경+흐림으로 대체 표현하여 가변폭 ~50px 확보 → 긴 생산자명도 안 잘림. 폰트는 상향하지 않음(사용자 "줄 넘침" 우려 존중). 드롭인 교체본 그대로 적용.
 
 ### PR-6: Dialog Shell 통일 (P1 3건 + P2 1건)
 | 항목 | 파일 |

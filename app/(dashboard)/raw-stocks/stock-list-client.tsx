@@ -513,76 +513,78 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
     }
 
     const isConsumed = stock.status === 'CONSUMED'
+    const lotText = stock.farmer.group?.certType === '일반' ? '관행' : (stock.lotNo || '-')
 
     return (
         <div
-            className={`relative py-2 px-2.5 rounded-lg border ${selected ? 'border-primary bg-blue-50 ring-1 ring-primary/20' : isConsumed ? 'border-slate-200 bg-slate-50' : 'border-slate-200/80 bg-white'} ${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
+            className={`relative flex items-center gap-2 py-2 px-2.5 rounded-lg border ${selected ? 'border-primary bg-blue-50 ring-1 ring-primary/20' : isConsumed ? 'border-slate-200 bg-slate-50' : 'border-slate-200/80 bg-white'} ${!isAvailable || isCartBlocked ? '' : 'cursor-pointer'} shadow-sm transition-all`}
             onClick={handleCardClick}
         >
-            <div className={`${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
-                <div className="flex justify-between items-center mb-0.5 gap-1">
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        {!hideCheckbox && (
-                            <div onClick={(e) => e.stopPropagation()} className="flex shrink-0 items-center justify-center">
-                                <Checkbox
-                                    checked={selected}
-                                    onCheckedChange={(checked) => onSelect(checked as boolean)}
-                                    disabled={!isAvailable || isCartBlocked}
-                                    aria-label="개별 재고 선택"
-                                    className="w-4 h-4 rounded-sm border-slate-300"
-                                />
-                            </div>
-                        )}
-                        <span className="font-bold text-[13px] text-slate-800 leading-tight truncate min-w-0">
-                            {stock.farmer.name}{stock.actualFarmer ? ` (${stock.actualFarmer})` : ''}
-                        </span>
-                        <span className="text-[11px] font-mono text-slate-400 leading-tight truncate shrink-0">
-                            ({stock.farmer.group?.certType === '일반' ? '관행' : (stock.lotNo || '-')})
-                        </span>
-                    </div>
+            <div className={`flex items-center gap-2 w-full ${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
 
-                    <div className="flex gap-1.5 items-center shrink-0">
-                        <Badge variant={stock.status === 'AVAILABLE' ? 'outline' : 'secondary'} className={`text-[10px] h-5 px-1.5 rounded-sm whitespace-nowrap ${stock.status === 'AVAILABLE' ? 'border-primary/40 text-primary bg-primary/10' : ''}`}>
-                            {stock.status === 'AVAILABLE' ? '보관중' : stock.status === 'IN_PRODUCTION' ? '투입됨' : '소진됨'}
-                        </Badge>
-                        {canManage && (
-                            <div onClick={(e) => e.stopPropagation()} className="shrink-0 -mr-1.5">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 relative">
-                                            {/* hit-area 44px 확장 (시각 24px 유지) */}
-                                            <span aria-hidden className="absolute -inset-2.5" />
-                                            <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-[120px]">
-                                        <DropdownMenuItem onClick={() => setEditOpen(true)} className="gap-2 cursor-pointer">
-                                            <Edit className="h-4 w-4 text-slate-500" />
-                                            <span>수정</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={handleDelete}
-                                            disabled={stock.status === 'CONSUMED'}
-                                            className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                            <span>삭제</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        )}
+                {/* 1) 체크박스 (시각 16px, hit-area 44px 확장) */}
+                {!hideCheckbox && (
+                    <div onClick={(e) => e.stopPropagation()} className="relative flex shrink-0 items-center justify-center">
+                        <Checkbox
+                            checked={selected}
+                            onCheckedChange={(checked) => onSelect(checked as boolean)}
+                            disabled={!isAvailable || isCartBlocked}
+                            aria-label="개별 재고 선택"
+                            className="w-4 h-4 rounded-sm border-slate-300"
+                        />
+                        <span aria-hidden className="absolute -inset-2.5" />
+                    </div>
+                )}
+
+                {/* 2) 톤백번호 — 고정폭 우측정렬 컬럼 (목록 세로 정렬의 기준 · 시선 앵커) */}
+                <span className="w-[34px] shrink-0 text-right font-mono font-black text-[14px] text-slate-900 tabular-nums leading-none">
+                    <span className="text-[10px] font-bold text-slate-400">#</span>{stock.bagNo}
+                </span>
+
+                {/* 3) 생산자 + LOT (가변폭 2줄, 칩이 없어 폭 여유 확보) */}
+                <div className="flex-1 min-w-0">
+                    <div className="font-bold text-[12.5px] text-slate-800 leading-tight truncate">
+                        {stock.farmer.name}{stock.actualFarmer ? ` (${stock.actualFarmer})` : ''}
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-400 leading-tight truncate mt-0.5">
+                        {lotText}
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center pl-6">
-                    <div className="text-[11px] text-slate-400 font-medium">
-                        #<span className="font-mono text-slate-600">{stock.bagNo}</span>
+                {/* 4) 무게 — 고정폭 우측정렬 컬럼 (톤백번호와 짝) */}
+                <span className="w-[52px] shrink-0 text-right font-mono font-bold text-[13px] text-slate-700 tabular-nums leading-none">
+                    {stock.weightKg.toLocaleString()}<span className="text-[9px] font-bold text-slate-400 ml-px">kg</span>
+                </span>
+
+                {/* 5) 상태칩 없음 — 보관/소진은 카드 배경(bg-slate-50)+흐림(opacity-60)으로 구분 */}
+
+                {/* 6) 점세개 관리메뉴 — 현행 그대로 (hit-area 44px 확장 유지) */}
+                {canManage && (
+                    <div onClick={(e) => e.stopPropagation()} className="shrink-0 -mr-1.5">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 relative">
+                                    <span aria-hidden className="absolute -inset-2.5" />
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[120px]">
+                                <DropdownMenuItem onClick={() => setEditOpen(true)} className="gap-2 cursor-pointer">
+                                    <Edit className="h-4 w-4 text-slate-500" />
+                                    <span>수정</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={handleDelete}
+                                    disabled={stock.status === 'CONSUMED'}
+                                    className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span>삭제</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
-                    <div className="font-black text-[14px] text-slate-800 tracking-tight leading-none">
-                        {stock.weightKg.toLocaleString()}<span className="text-[10px] font-bold ml-0.5 opacity-60">kg</span>
-                    </div>
-                </div>
+                )}
             </div>
 
             <EditStockDialog

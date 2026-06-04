@@ -144,7 +144,7 @@ export function MobileNav() {
                                     <span className={`tracking-tight leading-none transition-all duration-300 overflow-hidden ${
                                         active
                                             ? 'text-[0px] max-h-0 opacity-0 font-bold'
-                                            : 'text-[9px] max-h-3 opacity-100 font-medium text-slate-400'
+                                            : 'text-[10.5px] max-h-3 opacity-100 font-medium text-slate-400'
                                     }`}>
                                         {item.label}
                                     </span>
@@ -208,7 +208,7 @@ export function MobileNav() {
                                 <span className={`tracking-tight leading-none transition-all duration-300 overflow-hidden ${
                                     isStatsActive || statsOpen
                                         ? 'text-[0px] max-h-0 opacity-0 font-bold'
-                                        : 'text-[9px] max-h-3 opacity-100 font-medium text-slate-400'
+                                        : 'text-[10.5px] max-h-3 opacity-100 font-medium text-slate-400'
                                 }`}>
                                     통계
                                 </span>
