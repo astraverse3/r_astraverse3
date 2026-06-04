@@ -1,5 +1,22 @@
 # 작업일지
 
+## 2026-06-04
+
+### 모바일 디자인 점검 PR-1 — P0 일괄 처리 `fix` `1e9a6f6`
+
+**출처**: `docs/모바일-디자인점검.html` (Claude Design). P0 4건 중 단독 처리 가능한 3건 묶음.
+
+**변경** (3파일):
+- `stock-list-client.tsx:67,113` — 템플릿 리터럴 escape 버그 (`\${` → `${`) 2곳. `\${...}`가 문자열로 들어가 Tailwind 조건부 클래스(`bg-transparent`/`bg-white`/`py-3 gap-3`)가 통째로 무시되던 진성 버그
+- `layout.tsx:24` — 모바일 컨텐츠 `pb` 4px 부족 해소. `pb-[calc(3.5rem+safe+1rem)]`(=72+safe) → `pb-[calc(60px+safe+1.5rem)]`(=84+safe). nav 실측치(`h-[60px]+mb-4+safe`=76+safe)와 동기화 + 주석 추가
+- `mobile-milling-card.tsx:178` — 비고 영역 `📝` 이모지 → `lucide-react`의 `StickyNote` (DS §7 Voice & Tone 위반 해소). `line-clamp-1`이 `inline-flex`와 충돌해 `flex + truncate` 구조로 함께 재작성
+
+**판단**: 보고서가 묶었던 P0-3(Floating Cart × BulkActionBar Y 충돌)은 카트/액션바 로직을 함께 손대야 해서 PR-2로 분리.
+
+**검증**: 변경 규모 작음(3파일 8줄+/6줄-, 시각 변화 없음) → `next build` 생략, diff 시각 확인으로 갈음.
+
+---
+
 ## 2026-05-22
 
 ### statistics UI 강조색 → primary (벼탭 디자인점검 마무리) `refactor` `5c1eed3`
