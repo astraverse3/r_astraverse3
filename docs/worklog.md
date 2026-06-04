@@ -2,6 +2,27 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-2 — Floating UI 정리 `fix` `9d7b7a5`
+
+**출처**: `docs/모바일-디자인점검.html`. P0-3(Floating 충돌) + P1 BulkActionBar 아이콘화 + P1 Cart 배지색 + P2 잡곡 FAB 숨김 묶음.
+
+**변경** (2파일):
+- `stock-page-wrapper.tsx`:
+  - `useSearchParams` 도입 → 잡곡 탭(`?tab=misc`) 판별. 잡곡일 때 Cart FAB 비표시(도정 카트는 벼 전용)
+  - Cart Y 동적: `selectedIds.size > 0` 시 `bottom-[calc(12rem+safe)]`로 한 단 위, 아니면 기존 `7.5rem`. `transition-[bottom]` 추가
+  - 카운트 배지: `bg-red-500/text-white/-top-1 -right-1` → `bg-white text-primary border-2 border-primary/top-0 right-0` (알림이 아닌 "담긴 수" 의미 정합)
+  - 외곽 `border-2 border-white/50` 제거 (배지 보더와 중복)
+- `stock-page-client.tsx` (BulkActionBar):
+  - 모바일 정사각 아이콘 버튼(`h-9 w-9 p-0`), 라벨 `hidden sm:inline` → 6버튼 다 들어가도 라벨 잘림 없음
+  - 카운트 텍스트 `"{n}건 선택"` → 모바일 `"{n}건"`·`text-[12px]`·`slate-700`·`semibold` (좁은 폭에 정보 손실 최소)
+  - 컨테이너 padding 모바일 `px-2.5 py-1.5`로 축소
+
+**판단**: BulkActionBar는 데스크탑 동작 100% 보존 (sm↑ 분기로 기존 클래스 유지). 모바일에서만 시각 변경.
+
+**검증**: 변경은 시각·동작 두 측면 모두 모바일 전용 분기. 데스크탑은 영향 없음. 사용자 실기기 확인 권장 — 특히 (a) 톤백 선택 시 카트 위로 슬라이드, (b) 잡곡 탭에서 카트 사라짐, (c) 모바일 액션바 아이콘만 표시.
+
+---
+
 ### 모바일 디자인 점검 PR-1 — P0 일괄 처리 `fix` `1e9a6f6`
 
 **출처**: `docs/모바일-디자인점검.html` (Claude Design). P0 4건 중 단독 처리 가능한 3건 묶음.
