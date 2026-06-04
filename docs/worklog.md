@@ -2,7 +2,7 @@
 
 ## 2026-06-04
 
-### 모바일 디자인 점검 PR-7 — native confirm/alert → 공용 AlertDialog `fix`
+### 모바일 디자인 점검 PR-7 — native confirm/alert → 공용 AlertDialog `fix` `c773053`
 
 **출처**: `docs/모바일-디자인점검.html` P2. 사용자 결정으로 **공용 훅 방식 전체 통일**.
 
