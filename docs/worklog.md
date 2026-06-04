@@ -2,6 +2,24 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-3 — 터치 타깃 hit-area 확장 `fix` `3fb20da`
+
+**출처**: `docs/모바일-디자인점검.html`. P1 hit-area 3건 + P2 Dialog X 1건 묶음. **시각 변화 없는 사용성 개선**이 원칙.
+
+**변경** (4파일, +10/−4):
+- `stock-list-client.tsx:552` (DropdownMenu trigger) — `relative` + `<span aria-hidden absolute -inset-2.5>` pseudo로 시각 24px 유지, hit 44px 확보. Button 외곽 invisible 확장 패턴
+- `mobile-milling-card.tsx:140` (MillingStatusBadge button) — `p-1.5 -m-1.5`로 padding+negative margin. row 높이/시각 위치 동일, hit 확장
+- `packages/mobile-package-card.tsx:52` (DropdownMenu trigger) — 동일 pseudo span 패턴
+- `components/ui/dialog.tsx:72` (X 버튼) — `top-2.5 right-2.5 size-9 inline-flex items-center justify-center rounded-md`로 hit 36px. svg 위치 4px 안쪽으로 미세 변동(허용 범위)
+
+**판단**:
+- **체크박스 hit-area 확장 (보고서 P1, 2건) → 보류**: stock-list-client / mobile-milling-card 모두 카드 전체에 `onClick=handleCardClick`(토글) + 체크박스만 `stopPropagation`으로 격리한 구조. 즉 사용자 입장에선 카드 어디 눌러도 토글되므로 체크박스의 16×16 hit-area는 실질 문제가 아님. 부모 div 확장은 옆 텍스트 영역과 충돌하여 부작용만 발생 → 의도 X.
+- **mobile-milling-card에 DropdownMenu 없음** — 보고서 표기와 달리 실제 코드엔 없음(grep 0건). 해당 항목 제외.
+
+**검증**: 시각 영역 무변화가 핵심. Button 컴포넌트가 `overflow`/`relative` 강제 안 함을 확인하여 pseudo span 확장 안전성 확보. 사용자 실기기에서 (a) 톤백 카드 더보기 버튼 hit, (b) 도정 상태 뱃지 hit, (c) 제품 카드 더보기, (d) 다이얼로그 X 버튼 hit이 모두 손가락 편안한지 확인 권장.
+
+---
+
 ### 모바일 디자인 점검 PR-2 — Floating UI 정리 `fix` `9d7b7a5`
 
 **출처**: `docs/모바일-디자인점검.html`. P0-3(Floating 충돌) + P1 BulkActionBar 아이콘화 + P1 Cart 배지색 + P2 잡곡 FAB 숨김 묶음.
