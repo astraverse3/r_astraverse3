@@ -549,7 +549,9 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
                             <div onClick={(e) => e.stopPropagation()} className="shrink-0 -mr-1.5">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-600 relative">
+                                            {/* hit-area 44px 확장 (시각 24px 유지) */}
+                                            <span aria-hidden className="absolute -inset-2.5" />
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>

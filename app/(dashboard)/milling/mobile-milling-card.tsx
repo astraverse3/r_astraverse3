@@ -137,7 +137,8 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                     <span className="text-[11px] text-slate-500 font-medium shrink-0 mr-2">
                         {format(new Date(log.date), 'yy.MM.dd')}
                     </span>
-                    <button onClick={handleStatusClick} className="shrink-0 flex items-center cursor-pointer">
+                    {/* hit-area: p-1.5 -m-1.5로 시각 위치 유지하며 hit 44px 가까이 확보 */}
+                    <button onClick={handleStatusClick} className="shrink-0 flex items-center cursor-pointer p-1.5 -m-1.5">
                         <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                     </button>
                 </div>

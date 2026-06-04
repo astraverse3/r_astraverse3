@@ -49,7 +49,9 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 text-slate-400 hover:text-slate-600 shrink-0">
+                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 text-slate-400 hover:text-slate-600 shrink-0 relative">
+                    {/* hit-area 44px 확장 (시각 24px 유지) */}
+                    <span aria-hidden className="absolute -inset-2.5" />
                     <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
             </DropdownMenuTrigger>
