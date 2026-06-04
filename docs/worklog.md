@@ -2,6 +2,23 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-4 — 벼/잡곡 Segmented Tab `fix`
+
+**출처**: `docs/모바일-디자인점검.html` §4.1. 모바일 underline 탭의 hit-area 협소(~40px)·화면 폭 미활용 해소. 사용자 사전 시안 확인 후 진행(게이트 통과).
+
+**시안 확인**: `public/preview/raw-stocks-tab.html`로 3안 비교(현재 underline / A 흰카드+그림자 / B primary 파랑) → 사용자 **A(권장안, 중립 흰 카드)** 선택.
+
+**변경** (1파일, `raw-stocks-tabs.tsx`):
+- 모바일(sm 미만): `grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg` segmented. 활성 `bg-white shadow-sm font-bold`, 비활성 `font-semibold text-slate-500`. 각 탭 `h-11`(44px 터치 타깃) + 화면 폭 절반씩 full-width.
+- 데스크탑(sm 이상): 기존 underline 탭(F안 애니메이션 하이라이트) **그대로 유지** — `hidden sm:flex` 분기.
+- 두 모드 모두 폰트 14px 고정 → 활성/비활성 전환 시 layout shift 없음.
+
+**판단**: 점검 권장안(§4.1 "권장 — full-width 2 segmented")을 클래스 단위까지 그대로 적용. 데스크탑 동작·시각 무변경. `packages-tabs.tsx`·`sales-tabs.tsx` 확장은 후속(사용자 피드백 후 결정).
+
+**검증**: `tsc --noEmit` 통과, `next build` 통과(raw-stocks 라우트 정상). 사용자 실기기에서 (a) 모바일 segmented 전환, (b) 데스크탑 underline 유지, (c) layout shift 없음 확인 권장.
+
+---
+
 ### 모바일 디자인 점검 PR-3 — 터치 타깃 hit-area 확장 `fix` `3fb20da`
 
 **출처**: `docs/모바일-디자인점검.html`. P1 hit-area 3건 + P2 Dialog X 1건 묶음. **시각 변화 없는 사용성 개선**이 원칙.
