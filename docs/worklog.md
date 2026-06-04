@@ -2,7 +2,7 @@
 
 ## 2026-06-04
 
-### 모바일 디자인 점검 PR-4 후속 — packages/sales 탭 Segmented 확장 `fix`
+### 모바일 디자인 점검 PR-4 후속 — packages/sales 탭 Segmented 확장 `fix` `0b1a9c4`
 
 **배경**: PR-4에서 raw-stocks만 모바일 segmented 적용했던 것을 사용자 확인 후 나머지 탭으로 확장. **모바일 화면만** 변경(데스크탑 underline 전부 유지).
 
