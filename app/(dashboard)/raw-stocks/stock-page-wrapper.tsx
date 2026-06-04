@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode, useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { StockListClient } from './stock-list-client'
 import { StockPageClient } from './stock-page-client'
 import { useBulkDeleteStocks } from './use-bulk-delete-stocks'
@@ -58,6 +59,8 @@ export function StockPageWrapper({
     addDialogSlot
 }: StockPageWrapperProps) {
     const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDeleteStocks()
+    const searchParams = useSearchParams()
+    const isMiscTab = searchParams.get('tab') === 'misc'
     const [showReleaseDialog, setShowReleaseDialog] = useState(false)
     const [showMillingDialog, setShowMillingDialog] = useState(false)
     const [millingSource, setMillingSource] = useState<'SELECTION' | 'CART'>('SELECTION') // Track source
@@ -199,15 +202,18 @@ export function StockPageWrapper({
                 />
             </StockPageClient>
 
-            {/* Floating Cart Button (Mobile/Desktop) */}
-            {cartItems.length > 0 && (
-                <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bottom-6 right-4 sm:right-6 z-50">
+            {/* Floating Cart Button (Mobile/Desktop)
+                - 잡곡 탭에선 비표시 (도정 카트는 벼 전용)
+                - 모바일에서 BulkActionBar 활성 시(selectedIds>0) Y축 한 단 위로 — Y 충돌 회피
+                - 카운트 배지: 알림(red)이 아닌 "담긴 수" → primary 토큰 + 안쪽 정렬 */}
+            {cartItems.length > 0 && !isMiscTab && (
+                <div className={`fixed ${selectedIds.size > 0 ? 'bottom-[calc(12rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'} sm:bottom-6 right-4 sm:right-6 z-50 transition-[bottom] duration-200`}>
                     <Button
                         onClick={() => setIsCartOpen(true)}
-                        className="rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-2xl bg-primary hover:bg-primary text-white p-0 relative border-2 border-white/50 backdrop-blur-sm"
+                        className="rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-2xl bg-primary hover:bg-primary text-white p-0 relative backdrop-blur-sm"
                     >
                         <ShoppingCart className="h-6 w-6" />
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                        <span className="absolute top-0 right-0 bg-white text-primary text-[10px] font-bold min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full border-2 border-primary tabular-nums">
                             {cartItems.length}
                         </span>
                     </Button>

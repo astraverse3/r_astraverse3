@@ -78,40 +78,47 @@ export function StockPageClient({
 
             {children}
 
-            {/* Floating Action Bar (above bottom nav on mobile, fixed bottom on desktop) */}
+            {/* Floating Action Bar (above bottom nav on mobile, fixed bottom on desktop)
+                - 모바일: 아이콘 정사각 버튼(h-9 w-9), 라벨 숨김 — 6개까지 들어가도 잘림 없음
+                - sm↑: 기존 라벨+아이콘 유지 */}
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bottom-4 left-0 right-0 sm:left-auto sm:right-4 z-50 animate-in slide-in-from-bottom-4 duration-200 sm:w-auto flex justify-center sm:justify-end">
-                    <div className="w-fit bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg px-3 sm:px-4 py-2">
-                        <div className="flex items-center gap-1 sm:gap-2.5 justify-end">
-                            <span className="text-[10px] sm:text-xs text-slate-500 font-medium shrink-0">{selectedIds.size}건 선택</span>
+                <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bottom-4 left-0 right-0 sm:left-auto sm:right-4 z-50 animate-in slide-in-from-bottom-4 duration-200 sm:w-auto flex justify-center sm:justify-end px-3 sm:px-0">
+                    <div className="w-fit bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg px-2.5 sm:px-4 py-1.5 sm:py-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2.5 justify-end">
+                            <span className="text-[12px] sm:text-xs text-slate-700 font-semibold sm:font-medium sm:text-slate-500 shrink-0 mr-0.5">{selectedIds.size}건</span>
                             {canStock && (
-                                <Button variant="outline" size="sm" onClick={onShowDelete}
-                                    className="text-red-600 border-red-200 hover:bg-red-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
-                                    <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />삭제
+                                <Button variant="outline" onClick={onShowDelete}
+                                    className="text-red-600 border-red-200 hover:bg-red-600 hover:text-white h-9 w-9 p-0 sm:w-auto sm:px-3 text-[11px] sm:text-xs rounded-lg gap-0 sm:gap-1 shrink-0">
+                                    <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">삭제</span>
                                 </Button>
                             )}
                             {canMilling && (
-                                <Button variant="outline" size="sm" onClick={onAddToCart}
-                                    className="text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
-                                    <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />담기
+                                <Button variant="outline" onClick={onAddToCart}
+                                    className="text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white h-9 w-9 p-0 sm:w-auto sm:px-3 text-[11px] sm:text-xs rounded-lg gap-0 sm:gap-1 shrink-0">
+                                    <ShoppingCart className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">담기</span>
                                 </Button>
                             )}
                             {isAllAvailable && canMilling && (
-                                <Button variant="outline" size="sm" onClick={onStartMilling}
-                                    className="text-primary border-primary/30 hover:bg-primary hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
-                                    <ClipboardList className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />도정
+                                <Button variant="outline" onClick={onStartMilling}
+                                    className="text-primary border-primary/30 hover:bg-primary hover:text-white h-9 w-9 p-0 sm:w-auto sm:px-3 text-[11px] sm:text-xs rounded-lg gap-0 sm:gap-1 shrink-0">
+                                    <ClipboardList className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">도정</span>
                                 </Button>
                             )}
                             {isAllAvailable && canSales && (
-                                <Button variant="outline" size="sm" onClick={onShowRelease}
-                                    className="text-slate-600 border-slate-200 hover:bg-slate-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
-                                    <Truck className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />출고
+                                <Button variant="outline" onClick={onShowRelease}
+                                    className="text-slate-600 border-slate-200 hover:bg-slate-600 hover:text-white h-9 w-9 p-0 sm:w-auto sm:px-3 text-[11px] sm:text-xs rounded-lg gap-0 sm:gap-1 shrink-0">
+                                    <Truck className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">출고</span>
                                 </Button>
                             )}
                             {isAllReleased && canSales && (
-                                <Button variant="outline" size="sm" onClick={onCancelRelease} disabled={isCanceling}
-                                    className="text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white h-7 sm:h-8 px-1.5 sm:px-3 text-[10px] sm:text-xs rounded-lg gap-0.5">
-                                    <RotateCcw className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />{isCanceling ? '취소중' : '출고취소'}
+                                <Button variant="outline" onClick={onCancelRelease} disabled={isCanceling}
+                                    className="text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white h-9 w-9 p-0 sm:w-auto sm:px-3 text-[11px] sm:text-xs rounded-lg gap-0 sm:gap-1 shrink-0">
+                                    <RotateCcw className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">{isCanceling ? '취소중' : '출고취소'}</span>
                                 </Button>
                             )}
                         </div>
