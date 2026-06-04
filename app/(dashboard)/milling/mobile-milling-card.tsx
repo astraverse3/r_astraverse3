@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { MillingStatusBadge } from '@/components/ui/milling-status-badge'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, StickyNote } from 'lucide-react'
 import { AddPackagingDialog } from './add-packaging-dialog'
 import { reopenMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
@@ -174,8 +174,9 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
 
                 {/* Row 3: Remarks (optional) */}
                 {log.remarks && (
-                    <div className="px-2.5 pb-1.5" style={{ paddingLeft: 'calc(0.625rem + 1rem + 0.5rem)' }}>
-                        <span className="text-[10px] text-slate-400 line-clamp-1">📝 {log.remarks}</span>
+                    <div className="px-2.5 pb-1.5 flex items-center gap-1 text-[10px] text-slate-400" style={{ paddingLeft: 'calc(0.625rem + 1rem + 0.5rem)' }}>
+                        <StickyNote className="w-3 h-3 shrink-0" strokeWidth={1.8} />
+                        <span className="truncate">{log.remarks}</span>
                     </div>
                 )}
             </div>

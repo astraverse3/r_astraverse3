@@ -64,7 +64,7 @@ export function StockListClient({
 
 
     return (
-        <section className={`overflow-hidden md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-200 \${Object.keys(filters).length === 0 ? 'bg-transparent' : 'bg-white'}`}>
+        <section className={`overflow-hidden md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-200 ${Object.keys(filters).length === 0 ? 'bg-transparent' : 'bg-white'}`}>
             {/* --- DESKTOP VIEW --- */}
             <div className="hidden md:block">
                 <Table>
@@ -110,7 +110,7 @@ export function StockListClient({
             </div>
 
             {/* --- MOBILE VIEW (Search First Strategy) --- */}
-            <div className={`md:hidden flex flex-col min-h-[50vh] \${Object.keys(filters).length === 0 ? 'bg-transparent' : 'py-3 gap-3 bg-transparent'}`}>
+            <div className={`md:hidden flex flex-col min-h-[50vh] ${Object.keys(filters).length === 0 ? 'bg-transparent' : 'py-3 gap-3 bg-transparent'}`}>
                 {Object.keys(filters).length === 0 ? null : initialGroups.length > 0 ? (
                     <GroupedStockMobileCards
                         groups={initialGroups}

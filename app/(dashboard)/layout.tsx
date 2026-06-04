@@ -21,7 +21,8 @@ export default function DashboardLayout({
                 <DesktopSidebar />
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col min-h-screen bg-transparent lg:pl-64 pt-[44px] pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] lg:pt-0 lg:pb-0">
+                {/* pb = nav h-[60px] + mb-4(16px) + env(safe) + 8px breathing = 84px + safe (mobile-nav.tsx와 동기화) */}
+                <div className="flex-1 flex flex-col min-h-screen bg-transparent lg:pl-64 pt-[44px] pb-[calc(60px+env(safe-area-inset-bottom)+1.5rem)] lg:pt-0 lg:pb-0">
 
                     {/* Desktop Header (Hidden on Mobile) — handoff.md §3.3: h-12 1줄 브레드크럼 */}
                     <header className="hidden lg:flex h-12 bg-white border-b border-slate-200 items-center justify-between gap-4 px-6 z-40">
