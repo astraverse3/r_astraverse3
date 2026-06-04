@@ -2,7 +2,7 @@
 
 ## 2026-06-04
 
-### 모바일 디자인 점검 PR-6 — Dialog Shell 통일 `fix`
+### 모바일 디자인 점검 PR-6 — Dialog Shell 통일 `fix` `22776fc`
 
 **출처**: `docs/모바일-디자인점검.html` §다이얼로그. 실측 후 `start-milling-dialog`는 이미 정합(grid-cols-2 없음·footer/색상 primary)이라 제외 → 실제 3파일.
 
