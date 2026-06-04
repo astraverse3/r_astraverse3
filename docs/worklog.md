@@ -2,7 +2,7 @@
 
 ## 2026-06-04
 
-### 모바일 디자인 점검 PR-4 — 벼/잡곡 Segmented Tab `fix`
+### 모바일 디자인 점검 PR-4 — 벼/잡곡 Segmented Tab `fix` `a10f7f7`
 
 **출처**: `docs/모바일-디자인점검.html` §4.1. 모바일 underline 탭의 hit-area 협소(~40px)·화면 폭 미활용 해소. 사용자 사전 시안 확인 후 진행(게이트 통과).
 
