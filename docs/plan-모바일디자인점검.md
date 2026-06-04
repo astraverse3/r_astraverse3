@@ -67,6 +67,8 @@ Claude Design 모바일 점검에서 발견된 **20건**(P0 4 / P1 11 / P2 5)을
 - 활성/비활성 폰트 크기 14px 고정 → layout shift 제거
 - (`packages-tabs.tsx`, `sales-tabs.tsx`는 후속 — 이번 PR은 raw-stocks만)
 
+> **후속 확장 완료 (2026-06-04)**: 사용자 확인 후 `packages-tabs`(벼/잡곡 2탭, raw-stocks와 동일 패턴)·`sales-tabs`(벼/잡곡/출고 3탭+"준비중" 배지) 모두 모바일 segmented 적용. sales는 `grid-cols-3`, 배지는 좁은 칸이라 칩 배경 빼고 `text-[9px]` 축소. 데스크탑 underline은 전부 유지.
+
 ### PR-5: Typography Sweep (축소 — 2026-06-04 사용자 지시)
 > ⚠️ **방향 변경**: 모바일 카드 본문 폰트 sweep은 **전면 제외**. 사용자 지시 —
 > "도정 카드·MobileStockDetailCard는 현재 폰트 크기 유지. 폰트 키우면 한 줄에 안 들어가 **줄 넘어가는(깨지는) 게 더 큰 문제**."

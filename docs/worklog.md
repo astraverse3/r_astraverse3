@@ -2,6 +2,18 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-4 후속 — packages/sales 탭 Segmented 확장 `fix`
+
+**배경**: PR-4에서 raw-stocks만 모바일 segmented 적용했던 것을 사용자 확인 후 나머지 탭으로 확장. **모바일 화면만** 변경(데스크탑 underline 전부 유지).
+
+**변경**:
+- `app/(dashboard)/packages/packages-tabs.tsx` — 벼/잡곡 2탭. raw-stocks-tabs와 **동일 패턴**: 모바일 `grid grid-cols-2` segmented(활성 `bg-white shadow-sm`, `h-11`), 데스크탑 `hidden sm:flex` underline.
+- `app/(dashboard)/sales/sales-tabs.tsx` — 벼/잡곡/출고 **3탭** + "준비중" 배지. 모바일 `grid grid-cols-3` segmented. 배지는 좁은 칸이라 칩 배경 제거하고 `text-[9px] text-slate-400` 텍스트로 축소. 데스크탑은 기존 underline + 칩 배지(`bg-slate-100`) 유지. wrapper `border-b`를 데스크탑 분기로 이동(`hidden sm:block`)해 모바일 segmented엔 밑줄 안 생기게.
+
+**검증**: `tsc --noEmit` 통과, `next build` 통과. 사용자 실기기에서 (a) 제품/판매 탭 모바일 segmented, (b) sales 3칸에 "준비중" 배지 안 깨지는지, (c) 데스크탑 underline 유지 확인 권장.
+
+---
+
 ### 모바일 디자인 점검 PR-7 — native confirm/alert → 공용 AlertDialog `fix` `c773053`
 
 **출처**: `docs/모바일-디자인점검.html` P2. 사용자 결정으로 **공용 훅 방식 전체 통일**.
