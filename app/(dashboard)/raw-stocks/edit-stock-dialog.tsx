@@ -146,7 +146,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                     </div>
                 )}
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label htmlFor="productionYear" className="text-[13px] whitespace-nowrap">생산년도</Label>
                             <Input
@@ -172,7 +172,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                     </div>
 
                     <div className="space-y-1.5">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                                 <Label className="text-[13px]">생산자</Label>
                                 <Select value={selectedFarmerId} onValueChange={(val) => {

@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -127,14 +128,14 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                 </Button>
             </DialogTrigger>
             <DialogContent
-                className="sm:max-w-[500px]"
+                className="sm:max-w-[500px] flex flex-col max-h-[85vh]"
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
             >
                 <DialogHeader>
                     <DialogTitle>벼 입고 등록</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
+                <form id="add-stock-form" onSubmit={onSubmit} className="grid gap-4 py-2 overflow-y-auto px-1 flex-1 min-h-0">
                     {/* 1. Context: Year & Cert Type */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -166,7 +167,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
                     {/* 2. Target: Farmer + Actual Farmer */}
                     <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-[13px]">생산자</Label>
                                 <Select
@@ -211,7 +212,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     </div>
 
                     {/* 3. Meta: Variety & Incoming Date */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="varietyId" className="text-[13px]">품종</Label>
                             <Select name="varietyId" required>
@@ -244,12 +245,12 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-2">
-                        <Button type="submit" disabled={isLoading} className="text-[13px]">
-                            {isLoading ? '저장 중...' : '저장'}
-                        </Button>
-                    </div>
                 </form>
+                <DialogFooter className="-mx-6 px-6 pt-3 border-t border-slate-100 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    <Button type="submit" form="add-stock-form" disabled={isLoading} className="text-[13px]">
+                        {isLoading ? '저장 중...' : '저장'}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

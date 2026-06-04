@@ -62,7 +62,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
 
                 <div className="bg-slate-50 p-4 border-b border-slate-100">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-slate-500 uppercase">Summary</span>
+                        <span className="text-xs font-bold text-slate-500">요약</span>
                         {items.length > 0 && (
                             <Button variant="ghost" size="sm" onClick={clearCart} className="h-6 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2">
                                 전체 비우기
@@ -72,7 +72,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-3 rounded border border-slate-200 shadow-sm">
                             <div className="text-[10px] text-slate-400 font-bold mb-0.5">총 중량</div>
-                            <div className="text-lg font-black text-blue-600 leading-none">
+                            <div className="text-lg font-black text-primary leading-none">
                                 {totalWeight.toLocaleString()}<span className="text-xs font-medium text-slate-400 ml-1">kg</span>
                             </div>
                         </div>
@@ -94,7 +94,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
                             </div>
                         ) : (
                             items.map(item => (
-                                <div key={item.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center group hover:border-blue-300 transition-colors">
+                                <div key={item.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center group hover:border-primary/40 transition-colors">
                                     <div className="flex flex-col gap-0.5">
                                         <div className="flex items-center gap-1.5">
                                             <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 h-4 border-slate-200 text-slate-500 bg-slate-50">
@@ -107,7 +107,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
 
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="text-sm font-bold text-blue-600 font-mono">
+                                        <div className="text-sm font-bold text-primary font-mono">
                                             {item.weightKg.toLocaleString()}
                                         </div>
                                         <button
@@ -123,9 +123,9 @@ export function MillingCartSheet({ onStartMilling }: Props) {
                     </div>
                 </div>
 
-                <SheetFooter className="p-4 border-t border-slate-100 bg-white">
+                <SheetFooter className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 bg-white">
                     <Button
-                        className={`w-full h-11 text-base font-bold shadow-lg ${editingBatchId ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
+                        className={`w-full h-11 text-base font-bold shadow-lg ${editingBatchId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-primary hover:bg-primary/90'}`}
                         disabled={items.length === 0}
                         onClick={editingBatchId ? handleUpdate : handleStart}
                     >

@@ -2,6 +2,31 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-6 — Dialog Shell 통일 `fix`
+
+**출처**: `docs/모바일-디자인점검.html` §다이얼로그. 실측 후 `start-milling-dialog`는 이미 정합(grid-cols-2 없음·footer/색상 primary)이라 제외 → 실제 3파일.
+
+**변경**:
+- `components/milling-cart-sheet.tsx` (색상 DS 정합):
+  - `text-blue-600` → `text-primary` (총중량·아이템중량 2곳)
+  - 풋 버튼: 신규 `bg-blue-600...` → `bg-primary hover:bg-primary/90`, 수정모드 `bg-orange-500 shadow-orange-200`(DS 미정의색) → `bg-amber-600 hover:bg-amber-700` (색그림자 제거)
+  - `hover:border-blue-300` → `hover:border-primary/40`
+  - `SheetFooter` `pb-[max(1rem,env(safe-area-inset-bottom))]` 추가 (iOS 홈 인디케이터)
+  - 마이크로 헤더 `Summary`(uppercase) → `요약`
+- `app/(dashboard)/raw-stocks/add-stock-dialog.tsx` (sticky footer):
+  - DialogContent `flex flex-col max-h-[85vh]` (twMerge로 기본 `grid`→`flex` 전환), form `id="add-stock-form"` + `flex-1 min-h-0 overflow-y-auto`(기존 `max-h-[80vh]` 제거)
+  - 저장 버튼을 form 밖 `DialogFooter`로 분리 + `form="add-stock-form"` 속성. footer `-mx-6 px-6 pt-3 border-t pb-[max(0.75rem,env(safe))]` → 폼 길어도 버튼 항상 노출
+  - grid: 생산자-농가명·품종-입고일자 → `grid-cols-1 sm:grid-cols-2` (모바일 1열). 생산년도-인증·톤백-중량은 2열 유지
+- `app/(dashboard)/raw-stocks/edit-stock-dialog.tsx` (grid): 생산년도-입고일자·생산자-농가명 → `grid-cols-1 sm:grid-cols-2`. 톤백-중량 2열 유지
+
+**판단**: grid 1열화는 점검 원칙("짝지어야 의미 있는 필드만 2열 유지") 그대로 — 긴 Select 값(생산자/품종) truncate 방지. 색상은 메모리 경고대로 실측 후 진행(cart-sheet는 벼탭 완료분과 무관, 아직 blue/orange 하드코딩 잔존이었음). `replace-colors.js` 미사용(수동 편집).
+
+**미착수**: PR-7(native confirm → AlertDialog, P2)은 UX 변경이라 별도 PR로 분리.
+
+**검증**: `tsc --noEmit` 통과, `next build` 통과. 사용자 실기기에서 (a) 입고등록 폼 길어도 저장 버튼 고정 노출, (b) 모바일에서 생산자/품종 필드 1열로 넓어짐, (c) 도정 장바구니 색상 primary/amber, (d) 시트 버튼 safe-area 확인 권장.
+
+---
+
 ### 모바일 디자인 점검 PR-5 — 카드 폰트 방향전환 + 원물카드 A안 `fix` `2c3f3cb`
 
 **방향 변경(사용자 지시)**: 당초 PR-5 핵심이던 "모바일 카드 본문 폰트 한 단계 상향"은 **전면 철회**. 도정 카드·원물 카드 모두 `shrink-0`/`truncate`/`nowrap`으로 한 줄에 욱여넣은 구조라, 폰트 키우면 줄이 넘어가 깨지는 게 더 큰 문제. → 카드 폰트는 현재 크기 유지.

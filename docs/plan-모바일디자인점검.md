@@ -83,15 +83,19 @@ Claude Design 모바일 점검에서 발견된 **20건**(P0 4 / P1 11 / P2 5)을
 
 > **LOT 잘림 해결 — A안 채택 경위 (2026-06-04)**: 생산자명 잘림(흔치 않은 엣지케이스)을 모바일에서 어떻게 다룰지 논의 → PC tooltip의 모바일 이식은 부적합(hover 없음·탭=선택 충돌). 사용자가 Claude Design 핸드오프 번들(`docs/원물카드_상태간소화_A안/`)로 **테이블형 1행 + 상태칩 제거** 시안을 제시·채택. 상태칩(보관중/소진됨)은 카드 배경+흐림으로 대체 표현하여 가변폭 ~50px 확보 → 긴 생산자명도 안 잘림. 폰트는 상향하지 않음(사용자 "줄 넘침" 우려 존중). 드롭인 교체본 그대로 적용.
 
-### PR-6: Dialog Shell 통일 (P1 3건 + P2 1건)
-| 항목 | 파일 |
-|---|---|
-| sticky DialogFooter | `add-stock-dialog.tsx:138` — `<form id="...">`로 빼고 Footer 분리, `pb-[max(0.75rem,env(safe-area-inset-bottom))]` |
-| `grid-cols-2` → `grid-cols-1 sm:grid-cols-2` | add/edit-stock-dialog, start-milling-dialog 등 전반 |
-| MillingCartSheet 색상 DS 정합 | `milling-cart-sheet.tsx:79` — `text-blue-600`/`bg-blue-600` → `text-primary`/`bg-primary`, 수정모드 `bg-orange-500` → `bg-amber-600` 또는 outline+칩 |
-| SheetFooter safe-area | `milling-cart-sheet.tsx:128` — `pb-[max(1rem,env(safe-area-inset-bottom))]` |
-| `Summary` → "요약" 텍스트 | `milling-cart-sheet.tsx:71` |
-| (선택) native `confirm` → `AlertDialog` | 여러 곳 — 별도 PR로 분리 가능 |
+### PR-6: Dialog Shell 통일 (P1 3건) ✅ 완료
+> 실측 결과 `start-milling-dialog`는 손댈 것 없음(grid-cols-2 없음·footer/색상 이미 primary 정합). 실제 3파일 변경.
+
+| 항목 | 파일 | 상태 |
+|---|---|---|
+| sticky DialogFooter | `add-stock-dialog.tsx` — `<form id="add-stock-form">`로 분리, DialogContent `flex flex-col max-h-[85vh]`, form `flex-1 min-h-0 overflow-y-auto`, Footer `-mx-6 px-6 pt-3 border-t pb-[max(0.75rem,env(safe))]` | ✅ |
+| `grid-cols-2` → `grid-cols-1 sm:grid-cols-2` | **긴 값 필드만**: add(생산자-농가명, 품종-입고일자), edit(생산년도-입고일자, 생산자-농가명). 짝 숫자 필드(생산년도-인증, 톤백-중량)는 **2열 유지** | ✅ |
+| MillingCartSheet 색상 DS 정합 | `milling-cart-sheet.tsx` — `text-blue-600`→`text-primary`(2곳), 신규버튼 `bg-blue-600`→`bg-primary hover:bg-primary/90`, 수정모드 `bg-orange-500`→`bg-amber-600 hover:bg-amber-700`(색그림자 제거), `hover:border-blue-300`→`hover:border-primary/40` | ✅ |
+| SheetFooter safe-area | `milling-cart-sheet.tsx` — `pb-[max(1rem,env(safe-area-inset-bottom))]` | ✅ |
+| `Summary` → "요약" 텍스트 | `milling-cart-sheet.tsx` (`uppercase`도 제거) | ✅ |
+
+### PR-7 (선택·미착수): native `confirm` → `AlertDialog`
+점검 P2. `MobileStockDetailCard.handleDelete`(삭제 confirm), `MillingCartSheet.handleUpdate`(실패 시 `alert`), `MobileMillingCard.handleStatusClick`(마감해제 confirm) 등 잔존. UX·흐름 변경이라 **별도 PR로 분리**. 미착수.
 
 ---
 
