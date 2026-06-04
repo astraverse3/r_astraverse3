@@ -8,6 +8,7 @@ import { getBackups, createBackup, restoreBackup, type BackupFile } from '@/app/
 import { Loader2, RefreshCw, ArchiveRestore, Save } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 export function BackupManager() {
     const [backups, setBackups] = useState<BackupFile[]>([])
@@ -36,7 +37,7 @@ export function BackupManager() {
     }, [])
 
     const handleCreateBackup = async () => {
-        if (!confirm('현재 데이터베이스 상태를 백업하시겠습니까?')) return
+        if (!(await confirmDialog('현재 데이터베이스 상태를 백업하시겠습니까?'))) return
 
         setActionLoading(true)
         setStatus(null)

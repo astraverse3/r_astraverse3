@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation'
 import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/raw-stocks/milling-cart-context'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Stock {
     id: number
@@ -137,7 +138,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     }
 
     const handleDelete = async (stockId: number) => {
-        if (!confirm('투입 내역에서 이 톤백을 제외하시겠습니까? (상태가 [보관중]으로 변경됩니다)')) return
+        if (!(await confirmDialog('투입 내역에서 이 톤백을 제외하시겠습니까? (상태가 [보관중]으로 변경됩니다)'))) return
 
         setIsLoading(true)
         const result = await removeStockFromMilling(batchId, stockId)

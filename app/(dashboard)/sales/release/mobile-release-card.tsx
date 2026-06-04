@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Stock {
     id: number
@@ -52,7 +53,7 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
     }, [log.stocks])
 
     const handleRemoveStock = async (stockId: number) => {
-        if (!confirm('이 톤백을 출고 내역에서 제외하시겠습니까?')) return
+        if (!(await confirmDialog('이 톤백을 출고 내역에서 제외하시겠습니까?'))) return
         const result = await removeStockFromRelease(stockId)
         if (result.success) {
             toast.success('항목이 제외되었습니다.')

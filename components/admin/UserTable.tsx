@@ -8,6 +8,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { Shield, ShieldOff, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { ALL_PERMISSIONS } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface User {
     id: string
@@ -32,7 +33,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
             ? `${user.name}님을 관리자로 지정하시겠습니까?`
             : `${user.name}님의 관리자 권한을 해제하시겠습니까?`
 
-        if (!confirm(confirmMsg)) return
+        if (!(await confirmDialog(confirmMsg))) return
 
         const result = await updateUserRole(user.id, newRole)
         if (result.success) {
@@ -44,7 +45,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
     }
 
     const handleDelete = async (user: User) => {
-        if (!confirm(`정말로 ${user.name}님의 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return
+        if (!(await confirmDialog({ description: `정말로 ${user.name}님의 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`, destructive: true, confirmText: '삭제' }))) return
 
         const result = await deleteUser(user.id)
         if (result.success) {

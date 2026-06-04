@@ -2,6 +2,29 @@
 
 ## 2026-06-04
 
+### 모바일 디자인 점검 PR-7 — native confirm/alert → 공용 AlertDialog `fix`
+
+**출처**: `docs/모바일-디자인점검.html` P2. 사용자 결정으로 **공용 훅 방식 전체 통일**.
+
+**신규 인프라**:
+- `components/ui/confirm-dialog.tsx` — imperative `confirmDialog(msg | { description, destructive, confirmText, cancelText, title }): Promise<boolean>` + 루트 마운트 `<ConfirmDialogHost/>`. sonner `toast()`식 모듈 레벨 trigger라 컴포넌트 밖에서도 호출 가능. Host 미마운트 시 `window.confirm` 폴백. 삭제류는 `destructive`(빨강 버튼)+`confirmText:'삭제'`.
+- `app/layout.tsx` — `<ConfirmDialogHost/>` 1회 마운트(Providers·Toaster와 같은 레벨).
+
+**치환** (native `confirm` 28곳 → `await confirmDialog(...)`):
+- raw-stocks 6: stock-list-client, stock-table-row, delete-stock-button, edit-stock-dialog, stock-page-wrapper, misc/misc-stock-list-client
+- milling 8: add-packaging-dialog(4), close-batch-button, milling-table-row, stock-list-dialog, mobile-milling-card
+- admin 5: farmers/excel-buttons, varieties/variety-dialog, varieties/delete-button, BackupManager, NoticeTable, UserTable(2)
+- packages 4: edit-misc-purchase-dialog, misc-purchase-dialog, misc-package-panel(2)
+- sales 3: mobile-release-card, release-history-list, release-page-wrapper
+- 호출 함수 전부 이미 async → 호출측 수정 불필요. 메시지 원문·템플릿 리터럴 100% 보존. 삭제 의미 메시지는 destructive 적용.
+- `milling-cart-sheet.tsx` `alert`(수정 실패) → `toast.error` (확인용 아닌 에러 알림이라 AlertDialog 대신 toast).
+
+**범위밖**: `pwa-install-guard.tsx`의 안내성 `alert`(설치 가이드)은 유지.
+
+**검증**: `tsc --noEmit` 통과, `next build` 통과(DB cold start로 1회 타임아웃 후 재시도 성공). 실코드 `confirm(` 0건(docs 핸드오프 원본 제외), 28곳 전부 `await` 직접 확인. 작업은 파일 그룹 3분할 병렬(에이전트) 후 일괄 검증.
+
+---
+
 ### 모바일 디자인 점검 PR-6 — Dialog Shell 통일 `fix` `22776fc`
 
 **출처**: `docs/모바일-디자인점검.html` §다이얼로그. 실측 후 `start-milling-dialog`는 이미 정합(grid-cols-2 없음·footer/색상 primary)이라 제외 → 실제 3파일.

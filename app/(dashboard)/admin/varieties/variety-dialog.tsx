@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     mode: 'create' | 'edit'
@@ -67,7 +68,7 @@ export function VarietyDialog({ mode, variety }: Props) {
     }
 
     const handleDelete = async () => {
-        if (!variety || !confirm('정말 삭제하시겠습니까?')) return
+        if (!variety || !(await confirmDialog({ description: '정말 삭제하시겠습니까?', destructive: true, confirmText: '삭제' }))) return
 
         setLoading(true)
         const result = await deleteVariety(variety.id)

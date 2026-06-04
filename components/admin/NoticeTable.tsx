@@ -8,6 +8,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { Pencil, Trash2, Plus, Megaphone, User as UserIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Notice {
     id: number
@@ -25,7 +26,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
 
     const handleDelete = async (notice: Notice) => {
-        if (!confirm(`정말로 이 공지를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`)) return
+        if (!(await confirmDialog({ description: `정말로 이 공지를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`, destructive: true, confirmText: '삭제' }))) return
 
         const result = await deleteNotice(notice.id)
         if (result.success) {

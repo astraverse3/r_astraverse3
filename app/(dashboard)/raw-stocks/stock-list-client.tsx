@@ -21,6 +21,7 @@ import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { EditStockDialog } from './edit-stock-dialog'
 import { EmptyState } from '@/components/empty-state'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface StockListClientProps {
     initialGroups: StockGroup[]
@@ -496,7 +497,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
     const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
 
     const handleDelete = async () => {
-        if (confirm('정말 삭제하시겠습니까? (삭제 후 복구 불가)')) {
+        if (await confirmDialog({ description: '정말 삭제하시겠습니까? (삭제 후 복구 불가)', destructive: true, confirmText: '삭제' })) {
             const result = await deleteStock(stock.id)
             if (!result.success) {
                 toast.error('삭제에 실패했습니다.')

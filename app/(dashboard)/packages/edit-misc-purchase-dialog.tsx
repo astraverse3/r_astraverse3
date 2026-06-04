@@ -20,6 +20,7 @@ import {
 } from '@/app/actions/packages'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 const PACKAGE_TEMPLATES_MISC = [
     { label: '10kg', weight: 10 },
@@ -142,7 +143,7 @@ export function EditMiscPurchaseDialog({ open, onOpenChange, packageId, onSucces
         if (!canSubmit || !ctx) return
 
         if (isNewVariety) {
-            const ok = confirm(`새 품종 '${trimmedVariety}'을(를) 추가하고 매입 수정할게요. 계속할까요?`)
+            const ok = await confirmDialog(`새 품종 '${trimmedVariety}'을(를) 추가하고 매입 수정할게요. 계속할까요?`)
             if (!ok) return
         }
 

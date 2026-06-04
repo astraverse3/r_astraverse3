@@ -18,6 +18,7 @@ import {
 } from '@/app/actions/packages'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 // 잡곡 포장 다이얼로그와 동일 셋 (잡곡 매입도 같은 포장단위)
 const PACKAGE_TEMPLATES_MISC = [
@@ -120,7 +121,7 @@ export function MiscPurchaseDialog({ open, onOpenChange, onSuccess }: Props) {
 
         // 신규 품종이면 한 번 더 확인 (마지막 안전장치)
         if (isNewVariety) {
-            const ok = confirm(`새 품종 '${trimmedVariety}'을(를) 추가하고 매입 등록할게요. 계속할까요?`)
+            const ok = await confirmDialog(`새 품종 '${trimmedVariety}'을(를) 추가하고 매입 등록할게요. 계속할까요?`)
             if (!ok) return
         }
 

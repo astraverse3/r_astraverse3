@@ -8,6 +8,7 @@ import { ActiveReleaseFilters } from './active-release-filters'
 import { deleteStockReleases } from '@/app/actions/release'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface ReleasePageWrapperProps {
     logs: any[]
@@ -26,7 +27,7 @@ export function ReleasePageWrapper({
 
     const handleBulkCancel = async () => {
         if (selectedIds.size === 0) return
-        if (!confirm(`선택한 ${selectedIds.size}건의 출고를 취소하시겠습니까? (포함된 재고는 다시 입고됩니다)`)) return
+        if (!(await confirmDialog(`선택한 ${selectedIds.size}건의 출고를 취소하시겠습니까? (포함된 재고는 다시 입고됩니다)`))) return
 
         try {
             const result = await deleteStockReleases(Array.from(selectedIds))

@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/empty-state'
 import { AddMiscStockDialog, type MiscStockEditTarget } from './add-misc-stock-dialog'
 import { MiscPackageDialog } from '@/app/(dashboard)/packages/misc-package-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Farmer {
     id: number
@@ -139,7 +140,7 @@ export function MiscStockListClient({
     }
 
     const handleDelete = async (stock: any) => {
-        if (!confirm(`이 잡곡 입고를 삭제하시겠습니까?\n${stock.variety.name} / ${stock.farmer.name} / ${stock.weightKg}kg`)) return
+        if (!(await confirmDialog({ description: `이 잡곡 입고를 삭제하시겠습니까?\n${stock.variety.name} / ${stock.farmer.name} / ${stock.weightKg}kg`, destructive: true, confirmText: '삭제' }))) return
         const result = await deleteMiscStock(stock.id)
         if (result.success) {
             toast.success('삭제되었습니다.')

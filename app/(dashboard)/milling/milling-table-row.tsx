@@ -12,6 +12,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface MillingBatch {
     id: number
@@ -93,7 +94,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 return
             }
 
-            if (confirm('마감된 작업입니다. 다시 작업하시겠습니까? (마감 해제)')) {
+            if (await confirmDialog('마감된 작업입니다. 다시 작업하시겠습니까? (마감 해제)')) {
                 setIsActionLoading(true)
                 const result = await reopenMillingBatch(log.id)
                 setIsActionLoading(false)

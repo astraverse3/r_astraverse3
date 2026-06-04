@@ -23,6 +23,7 @@ import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { Fragment } from 'react'
 import { cn } from '@/lib/utils'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Stock {
     id: number
@@ -83,7 +84,7 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
     }
 
     const handleRemoveStock = async (stockId: number) => {
-        if (!confirm('이 항목(톤백)을 출고 내역에서 제외하시겠습니까? (해당 재고만 다시 입고됩니다)')) return
+        if (!(await confirmDialog('이 항목(톤백)을 출고 내역에서 제외하시겠습니까? (해당 재고만 다시 입고됩니다)'))) return
         try {
             const result = await removeStockFromRelease(stockId)
             if (result.success) {

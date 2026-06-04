@@ -15,6 +15,7 @@ import { MillingCartSheet } from '@/components/milling-cart-sheet'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Stock {
     id: number
@@ -131,7 +132,7 @@ export function StockPageWrapper({
     const isAllAvailable = selectedStocks.length > 0 && selectedStocks.every(s => s.status === 'AVAILABLE')
 
     const handleCancelRelease = async () => {
-        if (!confirm(`선택한 ${selectedIds.size}개의 재고에 대한 출고 처리를 취소하시겠습니까?\n(재고가 다시 '보유' 상태로 변경됩니다)`)) return
+        if (!(await confirmDialog(`선택한 ${selectedIds.size}개의 재고에 대한 출고 처리를 취소하시겠습니까?\n(재고가 다시 '보유' 상태로 변경됩니다)`))) return
 
         setIsCanceling(true)
         const result = await cancelStockRelease(Array.from(selectedIds))

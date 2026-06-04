@@ -9,6 +9,7 @@ import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 export function ExcelButtons() {
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -45,7 +46,7 @@ export function ExcelButtons() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (!confirm('파일을 업로드하여 데이터를 등록하시겠습니까? (파일 내 생산년도 기준)')) {
+        if (!(await confirmDialog('파일을 업로드하여 데이터를 등록하시겠습니까? (파일 내 생산년도 기준)'))) {
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
         }

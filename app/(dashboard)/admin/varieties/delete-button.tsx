@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { deleteVariety } from '@/app/actions/admin'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 export function DeleteVarietyButton({ id }: { id: number }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
     const handleDelete = async () => {
-        if (!confirm('정말 이 품종을 삭제하시겠습니까?')) return
+        if (!(await confirmDialog({ description: '정말 이 품종을 삭제하시겠습니까?', destructive: true, confirmText: '삭제' }))) return
 
         setLoading(true)
         const result = await deleteVariety(id)

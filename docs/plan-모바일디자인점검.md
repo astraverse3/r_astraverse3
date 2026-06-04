@@ -94,8 +94,16 @@ Claude Design 모바일 점검에서 발견된 **20건**(P0 4 / P1 11 / P2 5)을
 | SheetFooter safe-area | `milling-cart-sheet.tsx` — `pb-[max(1rem,env(safe-area-inset-bottom))]` | ✅ |
 | `Summary` → "요약" 텍스트 | `milling-cart-sheet.tsx` (`uppercase`도 제거) | ✅ |
 
-### PR-7 (선택·미착수): native `confirm` → `AlertDialog`
-점검 P2. `MobileStockDetailCard.handleDelete`(삭제 confirm), `MillingCartSheet.handleUpdate`(실패 시 `alert`), `MobileMillingCard.handleStatusClick`(마감해제 confirm) 등 잔존. UX·흐름 변경이라 **별도 PR로 분리**. 미착수.
+### PR-7: native `confirm`/`alert` → 공용 AlertDialog ✅ 완료
+점검 P2. **공용 훅 방식으로 전체 통일**(사용자 결정).
+
+- 신규 `components/ui/confirm-dialog.tsx`: imperative `confirmDialog(msg | opts): Promise<boolean>` + 루트 마운트용 `<ConfirmDialogHost/>`. sonner `toast()`처럼 컴포넌트 밖에서 호출 가능(모듈 레벨 trigger), Host 미마운트 시 `window.confirm` 폴백. 삭제류는 `destructive`(빨강)+`confirmText:'삭제'`.
+- `app/layout.tsx`: `<ConfirmDialogHost/>` 1회 마운트.
+- **native `confirm` 28곳 → `await confirmDialog(...)`** (raw-stocks 6·milling 8·admin 5·packages 4·sales 3·기타). 호출 함수 전부 이미 async라 호출측 수정 불필요. 메시지 원문 보존.
+- `milling-cart-sheet.tsx`의 `alert`(수정 실패) → `toast.error`(확인용 아닌 에러 알림이라).
+- 범위밖: `pwa-install-guard.tsx`의 안내성 `alert`은 설치 가이드라 유지.
+
+**검증**: `tsc --noEmit` 통과, `next build` 통과, 실코드 `confirm(` 0건(docs 핸드오프 원본 제외), 28곳 전부 `await` 확인.
 
 ---
 

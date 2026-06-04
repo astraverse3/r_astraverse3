@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react'
 import { deleteStock } from '@/app/actions/stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     stockId: number
@@ -22,7 +23,7 @@ export function DeleteStockButton({ stockId, stockTitle, isConsumed }: Props) {
             message = `[${stockTitle}]는 이미 도정 작업에 사용되었습니다. 삭제하면 도정 일지의 투입 데이터와 불일치가 발생할 수 있습니다. 그래도 삭제하시겠습니까?`
         }
 
-        if (!confirm(message)) return
+        if (!(await confirmDialog({ description: message, destructive: true, confirmText: '삭제' }))) return
 
         setIsLoading(true)
         const result = await deleteStock(stockId)

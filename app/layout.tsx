@@ -4,6 +4,7 @@ import { PWAInstallGuard } from "@/components/pwa-install-guard"
 import { SWRegister } from "@/components/sw-register"
 import { Toaster } from "sonner"
 import { Providers } from "@/components/providers/session-provider"
+import { ConfirmDialogHost } from "@/components/ui/confirm-dialog"
 
 export const metadata: Metadata = {
   title: "땅끝황토친환경 - 도정 일지",
@@ -47,6 +48,7 @@ export default function RootLayout({
             {children}
           </PWAInstallGuard>
         </Providers>
+        <ConfirmDialogHost />
         <Toaster position="top-center" richColors />
       </body>
     </html>

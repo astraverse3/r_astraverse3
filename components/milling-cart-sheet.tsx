@@ -13,6 +13,7 @@ import { Trash2, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { updateMillingBatchStocks } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Props {
     onStartMilling: (stocks: any[]) => void
@@ -41,7 +42,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
             clearCart() // This clears editingBatchId too
             router.push('/milling') // Go back to milling log
         } else {
-            alert(result.error || '수정 실패')
+            toast.error(result.error || '수정 실패')
         }
     }
 

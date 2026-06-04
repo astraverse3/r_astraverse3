@@ -23,6 +23,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { Stock } from './page' // Import Stock interface
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     stock: Stock
@@ -110,7 +111,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
             message = `이미 도정 작업에 사용되었습니다. 삭제 시 데이터 불일치가 발생할 수 있습니다. 그래도 삭제하시겠습니까?`
         }
 
-        if (!confirm(message)) return
+        if (!(await confirmDialog(message))) return
 
         setIsDeleting(true)
         const result = await deleteStock(stock.id)

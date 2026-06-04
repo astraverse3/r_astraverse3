@@ -20,6 +20,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Stock } from './page'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     stock: any
@@ -47,7 +48,7 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     const certType = stock.farmer?.group?.certType || '일반'
 
     const handleDelete = async () => {
-        if (confirm('정말 삭제하시겠습니까? (삭제 후 복구 불가)')) {
+        if (await confirmDialog({ description: '정말 삭제하시겠습니까? (삭제 후 복구 불가)', destructive: true, confirmText: '삭제' })) {
             const result = await deleteStock(stock.id)
             if (!result.success) {
                 toast.error('삭제에 실패했습니다.')

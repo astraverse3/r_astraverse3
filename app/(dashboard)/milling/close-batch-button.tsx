@@ -7,6 +7,7 @@ import { closeMillingBatch } from '@/app/actions/milling'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     batchId: number
@@ -19,7 +20,7 @@ export function CloseBatchButton({ batchId }: Props) {
     const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
 
     const handleClose = async () => {
-        if (!confirm('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.')) return
+        if (!(await confirmDialog('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.'))) return
 
         setIsLoading(true)
         const result = await closeMillingBatch(batchId)

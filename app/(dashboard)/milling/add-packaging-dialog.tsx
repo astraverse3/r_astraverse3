@@ -21,6 +21,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     batchId: number
@@ -137,7 +138,7 @@ export function AddPackagingDialog({
     }
 
     const handleReopenAndOpen = async () => {
-        if (!confirm('마감된 작업을 다시 수정하시겠습니까?')) return
+        if (!(await confirmDialog('마감된 작업을 다시 수정하시겠습니까?'))) return
         setIsLoading(true)
         const result = await reopenMillingBatch(batchId)
         setIsLoading(false)
@@ -159,7 +160,7 @@ export function AddPackagingDialog({
                 toast.warning('포장 내역을 입력해주세요.')
                 return
             }
-            if (!confirm('포장 데이터를 저장하고 마감하시겠습니까?')) return
+            if (!(await confirmDialog('포장 데이터를 저장하고 마감하시겠습니까?'))) return
             setIsLoading(true)
             const saveResult = await updatePackagingLogs(batchId, validOutputs)
             if (!saveResult.success) {
@@ -168,7 +169,7 @@ export function AddPackagingDialog({
                 return
             }
         } else {
-            if (!confirm('작업을 마감하시겠습니까?')) return
+            if (!(await confirmDialog('작업을 마감하시겠습니까?'))) return
             setIsLoading(true)
         }
         const result = await closeMillingBatch(batchId)
@@ -183,7 +184,7 @@ export function AddPackagingDialog({
     }
 
     const handleClearPackaging = async () => {
-        if (!confirm('포장 기록을 모두 삭제하시겠습니까?')) return
+        if (!(await confirmDialog({ description: '포장 기록을 모두 삭제하시겠습니까?', destructive: true, confirmText: '삭제' }))) return
         setIsLoading(true)
         const result = await updatePackagingLogs(batchId, [])
         setIsLoading(false)

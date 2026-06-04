@@ -16,6 +16,7 @@ import { MiscPackageDialog } from './misc-package-dialog'
 import { EditMiscPackageDialog } from './edit-misc-package-dialog'
 import { MiscPurchaseDialog } from './misc-purchase-dialog'
 import { EditMiscPurchaseDialog } from './edit-misc-purchase-dialog'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
     items: PackageItem[]
@@ -76,9 +77,11 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 toast.error('포장 삭제 권한(MILLING_MANAGE)이 없어요.')
                 return
             }
-            const ok = confirm(
-                `이 포장을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)\n\n포장 자체가 없었던 것으로 처리되며, 원물 재고가 복원됩니다.`,
-            )
+            const ok = await confirmDialog({
+                description: `이 포장을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)\n\n포장 자체가 없었던 것으로 처리되며, 원물 재고가 복원됩니다.`,
+                destructive: true,
+                confirmText: '삭제',
+            })
             if (!ok) return
             const result = await deleteMiscPackage(row.id)
             if (result.success) {
@@ -93,9 +96,11 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 toast.error('매입 삭제 권한(STOCK_MANAGE)이 없어요.')
                 return
             }
-            const ok = confirm(
-                `이 매입을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)`,
-            )
+            const ok = await confirmDialog({
+                description: `이 매입을 삭제할까요?\n${row.variety} / ${row.producer} / ${row.spec} × ${row.qty}개 (${row.sub.toLocaleString()}kg)`,
+                destructive: true,
+                confirmText: '삭제',
+            })
             if (!ok) return
             const result = await deleteMiscPurchase(row.id)
             if (result.success) {
