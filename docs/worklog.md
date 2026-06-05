@@ -1,5 +1,20 @@
 # 작업일지
 
+## 2026-06-05
+
+### 투입내역 팝업 — 요약 밴드 + 생산자별 소계 `feat` `<hash>`
+
+**출처**: 핸드오프 + 시안 `docs/투입내역-요약-소계-시안.html`(B안). 표시 UI만 추가, 기존 props·삭제/수정/메타편집 로직 그대로.
+
+**변경** (`app/(dashboard)/milling/stock-list-dialog.tsx` 단일 파일):
+- `Fragment` import 추가. 집계 로직 추가 — `farmerNames`/`varietyNames`/`groups`(생산자 첫 등장 순서 유지)/`showSummary`(톤백 ≥2)/`showSubtotal`(생산자 ≥2). 기존 `totalWeight` 재사용.
+- 모듈 레벨 `Stat` 셀 컴포넌트 + **요약 밴드**(메타 밴드↔표 사이, `showSummary`일 때만. 톤백·생산자·품종·합계, 합계만 강조).
+- `TableBody`를 `groups.map`+`Fragment` 구조로 변경. 각 생산자 그룹 끝에 `showSubtotal`일 때 **소계 행**(`소계`+개수+중량만, 이름 텍스트 없음). `canDelete` 분기에서 빈 `<TableCell/>` +1로 컬럼 정렬 일치.
+
+**검증**: `tsc --noEmit` 통과. 엣지 3종(톤백1·단일생산자·다중생산자) 코드 분기 확인. 실데이터 600px 폭 육안 확인 권장.
+
+---
+
 ## 2026-06-04
 
 ### 모바일 디자인 점검 PR-4 후속 — packages/sales 탭 Segmented 확장 `fix` `0b1a9c4`

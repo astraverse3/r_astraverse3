@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -27,6 +27,17 @@ import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/raw-stocks
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+
+function Stat({ label, value, unit }: { label: string; value: number; unit: string }) {
+    return (
+        <div className="flex flex-col items-center flex-1 justify-center">
+            <div className="text-[10.5px] font-semibold text-slate-400 tracking-wide">{label}</div>
+            <div className="mt-0.5 text-[15px] font-black text-slate-800 font-mono tabular-nums leading-none">
+                {value.toLocaleString()}<span className="text-[10px] font-bold text-slate-400 ml-px">{unit}</span>
+            </div>
+        </div>
+    )
+}
 
 interface Stock {
     id: number
@@ -58,6 +69,16 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const { startEditing } = useMillingCart()
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
+
+    // 요약 밴드 / 생산자별 소계용 집계 (생산자 첫 등장 순서 유지)
+    const farmerNames = [...new Set(stocks.map(s => s.farmerName))]
+    const varietyNames = [...new Set(stocks.map(s => s.variety.name))]
+    const groups = farmerNames.map(name => {
+        const items = stocks.filter(s => s.farmerName === name)
+        return { farmer: name, items, kg: items.reduce((a, b) => a + b.weightKg, 0) }
+    })
+    const showSummary = stocks.length >= 2
+    const showSubtotal = farmerNames.length >= 2
 
     // Normalize legacy milling type values
     const normalizeMillingType = (type: string) => {
@@ -263,6 +284,24 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                     )}
                 </div>
 
+                {/* 요약 밴드 — 톤백 2개 이상일 때만 */}
+                {showSummary && (
+                    <div className="mx-4 sm:mx-6 mt-3 mb-1 rounded-xl border border-slate-200
+                                    bg-gradient-to-b from-white to-slate-50/60 shadow-sm
+                                    flex items-stretch divide-x divide-slate-100 px-1 py-2.5">
+                        <Stat label="톤백" value={stocks.length} unit="개" />
+                        <Stat label="생산자" value={farmerNames.length} unit="명" />
+                        <Stat label="품종" value={varietyNames.length} unit="종" />
+                        <div className="flex flex-col items-center flex-[1.3] justify-center">
+                            <div className="text-[10.5px] font-semibold text-primary/70 tracking-wide">합계</div>
+                            <div className="mt-0.5 text-[19px] font-black text-slate-900 font-mono tabular-nums leading-none">
+                                {totalWeight.toLocaleString()}
+                                <span className="text-[11px] font-bold text-slate-400 ml-0.5">kg</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 custom-scrollbar">
                     <Table>
                         <TableHeader className="sticky top-0 bg-white z-10">
@@ -276,35 +315,51 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {stocks.map((stock) => (
-                                <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                    <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
-                                    <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
-                                    <TableCell className="px-1 text-center text-xs text-slate-800">
-                                        <div className="truncate" title={stock.variety.name}>{stock.variety.name}</div>
-                                    </TableCell>
-                                    <TableCell className="px-1 text-center">
-                                        <Badge variant="secondary" className="text-[10px] py-0 px-1 font-normal bg-slate-100 text-slate-600 border-none">
-                                            {stock.certType}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="px-2 text-right font-mono font-bold text-xs text-slate-700">
-                                        {stock.weightKg.toLocaleString()}
-                                    </TableCell>
-                                    {canDelete && (
-                                        <TableCell className="px-0 text-center">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50"
-                                                disabled={isLoading}
-                                                onClick={() => handleDelete(stock.id)}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TableCell>
+                            {groups.map((g) => (
+                                <Fragment key={g.farmer}>
+                                    {g.items.map((stock) => (
+                                        <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                            <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
+                                            <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
+                                            <TableCell className="px-1 text-center text-xs text-slate-800">
+                                                <div className="truncate" title={stock.variety.name}>{stock.variety.name}</div>
+                                            </TableCell>
+                                            <TableCell className="px-1 text-center">
+                                                <Badge variant="secondary" className="text-[10px] py-0 px-1 font-normal bg-slate-100 text-slate-600 border-none">
+                                                    {stock.certType}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="px-2 text-right font-mono font-bold text-xs text-slate-700">
+                                                {stock.weightKg.toLocaleString()}
+                                            </TableCell>
+                                            {canDelete && (
+                                                <TableCell className="px-0 text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50"
+                                                        disabled={isLoading}
+                                                        onClick={() => handleDelete(stock.id)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                    {showSubtotal && (
+                                        <TableRow className="bg-primary/[0.04] border-y border-primary/10 hover:bg-primary/[0.04]">
+                                            <TableCell />
+                                            <TableCell className="px-1 text-[10.5px] font-bold text-primary/60 tracking-wide">소계</TableCell>
+                                            <TableCell className="px-1 text-center text-[11px] text-slate-400">{g.items.length}개</TableCell>
+                                            <TableCell />
+                                            <TableCell className="px-2 text-right font-mono font-black text-xs text-slate-900 tabular-nums">
+                                                {g.kg.toLocaleString()}<span className="text-[9px] font-bold text-slate-400 ml-px">kg</span>
+                                            </TableCell>
+                                            {canDelete && <TableCell />}
+                                        </TableRow>
                                     )}
-                                </TableRow>
+                                </Fragment>
                             ))}
                         </TableBody>
                     </Table>

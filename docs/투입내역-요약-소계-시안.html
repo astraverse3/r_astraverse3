@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>투입 상세 내역 — 요약 + 생산자별 소계 시안</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: { primary: { DEFAULT: '#2563eb', foreground: '#f8fafc' } } } },
+  };
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; margin: 0; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#2563eb"/>
+    <rect x="22" y="30" width="56" height="11" rx="2.5" fill="#fff"/>
+    <rect x="22" y="46" width="56" height="7" rx="2" fill="#bfdbfe"/>
+    <rect x="22" y="57" width="56" height="7" rx="2" fill="#bfdbfe"/>
+    <rect x="48" y="68" width="30" height="9" rx="2.5" fill="#fff"/>
+  </svg>
+</template>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+const { useMemo } = React;
+
+/* ─────────────────────────────────────────────────────────────
+   실제 데이터 모델 매핑 (stock-list-dialog.tsx 의 Stock[])
+   bagNo / farmerName / variety.name / certType / weightKg
+   ───────────────────────────────────────────────────────────── */
+const MULTI = [
+  { bagNo: 12,  farmer: '김재훈',   variety: '신동진', cert: '무농약', kg: 820 },
+  { bagNo: 13,  farmer: '김재훈',   variety: '신동진', cert: '무농약', kg: 800 },
+  { bagNo: 5,   farmer: '김재훈',   variety: '신동진', cert: '무농약', kg: 810 },
+  { bagNo: 7,   farmer: '이영수',   variety: '추청',   cert: '유기농', kg: 1040 },
+  { bagNo: 8,   farmer: '이영수',   variety: '추청',   cert: '유기농', kg: 1020 },
+  { bagNo: 4,   farmer: '박정호',   variety: '신동진', cert: '무농약', kg: 980 },
+  { bagNo: 9,   farmer: '박정호',   variety: '신동진', cert: '무농약', kg: 960 },
+];
+const SINGLE = [
+  { bagNo: 21, farmer: '윤영식유기농영농조합법인', variety: '삼광', cert: '유기농', kg: 940 },
+  { bagNo: 22, farmer: '윤영식유기농영농조합법인', variety: '삼광', cert: '유기농', kg: 910 },
+  { bagNo: 23, farmer: '윤영식유기농영농조합법인', variety: '삼광', cert: '유기농', kg: 935 },
+];
+const ONE = [
+  { bagNo: 4, farmer: '박정호', variety: '신동진', cert: '무농약', kg: 980 },
+];
+
+const num = (n) => n.toLocaleString();
+
+function summarize(rows) {
+  const farmers = Array.from(new Set(rows.map(r => r.farmer)));
+  const varieties = Array.from(new Set(rows.map(r => r.variety)));
+  const total = rows.reduce((s, r) => s + r.kg, 0);
+  const groups = farmers.map(f => {
+    const items = rows.filter(r => r.farmer === f);
+    return { farmer: f, items, kg: items.reduce((s, r) => s + r.kg, 0), cert: items[0].cert };
+  });
+  return { farmers, varieties, total, groups, count: rows.length };
+}
+
+const certStyle = (c) =>
+  c === '유기농' ? 'border-emerald-200 text-emerald-600 bg-emerald-50'
+  : c === '무농약' ? 'border-sky-200 text-sky-600 bg-sky-50'
+  : 'border-slate-200 text-slate-500 bg-slate-50';
+
+/* ── 공통 다이얼로그 쉘 ─────────────────────────────────── */
+function DialogShell({ children, footer }) {
+  return (
+    <div className="w-full bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 overflow-hidden flex flex-col">
+      <div className="px-6 pt-5 pb-3">
+        <div className="text-[17px] font-bold text-slate-900 leading-tight">투입 상세 내역</div>
+        <p className="text-[12.5px] text-slate-500 mt-1">도정 작업에 투입된 벼(원료곡) 상세 내역입니다.</p>
+      </div>
+      <div className="px-6 py-2.5 border-b border-slate-100 bg-slate-50 flex items-center gap-3 text-[12.5px]">
+        <span><span className="text-[11px] text-slate-400 mr-1">날짜</span><span className="font-semibold text-slate-700">2025-08-12</span></span>
+        <span><span className="text-[11px] text-slate-400 mr-1">구분</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 font-bold">백미</span>
+        </span>
+      </div>
+      {children}
+      <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+/* ── 요약 밴드 (2개 이상 톤백일 때 노출) ───────────────── */
+function SummaryBand({ s }) {
+  const Stat = ({ label, value, unit }) => (
+    <div className="flex flex-col items-center flex-1">
+      <div className="text-[10.5px] font-semibold text-slate-400 tracking-wide">{label}</div>
+      <div className="mt-0.5 text-[15px] font-black text-slate-800 mono tabular-nums leading-none">
+        {value}<span className="text-[10px] font-bold text-slate-400 ml-px">{unit}</span>
+      </div>
+    </div>
+  );
+  return (
+    <div className="mx-6 mt-3 mb-1 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/60 shadow-sm flex items-stretch divide-x divide-slate-100 px-1 py-2.5">
+      <Stat label="톤백" value={num(s.count)} unit="개" />
+      <Stat label="생산자" value={num(s.farmers.length)} unit="명" />
+      <Stat label="품종" value={num(s.varieties.length)} unit="종" />
+      <div className="flex flex-col items-center flex-[1.3] justify-center">
+        <div className="text-[10.5px] font-semibold text-primary/70 tracking-wide">합계</div>
+        <div className="mt-0.5 text-[19px] font-black text-slate-900 mono tabular-nums leading-none">
+          {num(s.total)}<span className="text-[11px] font-bold text-slate-400 ml-0.5">kg</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   평면 테이블 유지 + 생산자별 소계 행
+   ═══════════════════════════════════════════════════════════ */
+function FlatRow({ r }) {
+  return (
+    <div className="flex items-center px-3 py-1.5 border-b border-slate-50 hover:bg-slate-50/60">
+      <span className="w-[52px] shrink-0 text-center mono text-[12px] text-slate-500 tabular-nums">#{r.bagNo}</span>
+      <span className="flex-1 px-1 font-bold text-[12.5px] text-slate-900 truncate">{r.farmer}</span>
+      <span className="w-[70px] shrink-0 text-center text-[12px] text-slate-700 truncate">{r.variety}</span>
+      <span className="w-[60px] shrink-0 flex justify-center">
+        <span className={`text-[9.5px] px-1.5 py-px rounded border font-medium ${certStyle(r.cert)}`}>{r.cert}</span>
+      </span>
+      <span className="w-[72px] shrink-0 text-right mono font-bold text-[12.5px] text-slate-700 tabular-nums">{num(r.kg)}</span>
+    </div>
+  );
+}
+function SubtotalRow({ g }) {
+  return (
+    <div className="flex items-center px-3 py-1.5 bg-primary/[0.04] border-b border-primary/10">
+      <span className="w-[52px] shrink-0" />
+      <span className="flex-1 px-1 text-[10.5px] font-bold text-primary/60 tracking-wide">소계</span>
+      <span className="w-[70px] shrink-0 text-center text-[11px] text-slate-400">{g.items.length}개</span>
+      <span className="w-[60px] shrink-0" />
+      <span className="w-[72px] shrink-0 text-right mono font-black text-[12.5px] text-slate-900 tabular-nums">
+        {num(g.kg)}<span className="text-[9px] font-bold text-slate-400 ml-px">kg</span>
+      </span>
+    </div>
+  );
+}
+function VariantB({ rows }) {
+  const s = useMemo(() => summarize(rows), [rows]);
+  const multi = rows.length > 1;
+  const showSub = s.farmers.length > 1;
+  return (
+    <DialogShell footer={
+      <>
+        <div className="text-[12.5px] text-slate-500">총 <b className="text-slate-900">{s.count}</b>개 톤백</div>
+        <div className="text-[12.5px] text-slate-500">합계 <span className="text-2xl font-black text-slate-900 ml-1 mono">{num(s.total)} <span className="text-[12px] font-medium text-slate-500">kg</span></span></div>
+      </>
+    }>
+      {multi && <SummaryBand s={s} />}
+      <div className="px-6 py-3">
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="flex items-center px-3 py-2 bg-slate-50 text-[10.5px] font-bold text-slate-500 tracking-wide">
+            <span className="w-[52px] shrink-0 text-center">번호</span>
+            <span className="flex-1 px-1">생산자명</span>
+            <span className="w-[70px] shrink-0 text-center">품종</span>
+            <span className="w-[60px] shrink-0 text-center">인증</span>
+            <span className="w-[72px] shrink-0 text-right">중량</span>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto">
+            {s.groups.map(g => (
+              <React.Fragment key={g.farmer}>
+                {g.items.map(r => <FlatRow key={r.bagNo} r={r} />)}
+                {showSub && <SubtotalRow g={g} />}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
+    </DialogShell>
+  );
+}
+
+/* ── 노트 ─────────────────────────────────────────────── */
+function Note({ children, tone }) {
+  const c = tone === 'good' ? 'text-emerald-700' : 'text-slate-500';
+  return <div className={`text-[11.5px] leading-relaxed mb-3 px-1 ${c}`}>{children}</div>;
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="multi" title="투입 상세 내역 — 요약 + 생산자별 소계"
+        subtitle="도정목록 클릭 → 투입내역 팝업(MillingStockListDialog). 톤백 2개 이상이면 상단 요약 밴드, 생산자 2명 이상이면 생산자별 소계를 노출. 다이얼로그 실폭 600px 기준.">
+
+        <DCArtboard id="B" label="평면 테이블 + 생산자별 소계 행" width={640} height={560}>
+          <div className="p-4" style={{ width: 600 }}>
+            <Note tone="good">기존 표 레이아웃을 그대로 유지. 생산자 그룹이 끝날 때마다 <b>소계 행</b>을 삽입(이름 텍스트 없이 개수·중량만). 상단 요약 밴드는 톤백·생산자·품종·합계 4지표.</Note>
+            <VariantB rows={MULTI} />
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="edge" title="엣지 케이스 — 단일 생산자 / 단일 톤백"
+        subtitle="요약·소계가 과하지 않도록 자동 축약되는 거동.">
+
+        <DCArtboard id="C" label="단일 생산자 · 여러 톤백 (소계 생략, 요약은 유지)" width={640} height={420}>
+          <div className="p-4" style={{ width: 600 }}>
+            <Note>생산자가 1명이면 <b>소계 행은 생략</b>(합계와 중복이라). 톤백이 2개 이상이므로 상단 요약 밴드는 그대로 유지.</Note>
+            <VariantB rows={SINGLE} />
+          </div>
+        </DCArtboard>
+
+        <DCArtboard id="D" label="단일 톤백 (요약·소계 모두 생략)" width={640} height={360}>
+          <div className="p-4" style={{ width: 600 }}>
+            <Note>톤백이 1개면 요약/소계 모두 불필요 → 기존 단순 표 그대로. 합계만 하단에.</Note>
+            <VariantB rows={ONE} />
+          </div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
