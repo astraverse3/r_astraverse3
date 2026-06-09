@@ -6,6 +6,7 @@ import { getMiscVarieties } from '@/app/actions/misc-stock'
 import { PackagesTabs, type PackageTab } from './packages-tabs'
 import { RicePackagePanel } from './rice-package-panel'
 import { MiscPackagePanel } from './misc-package-panel'
+import { SectionLoader } from '@/components/ui/section-loader'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,7 @@ export default async function PackagesPage({
     const tab: PackageTab = resolvedParams.tab === 'misc' ? 'misc' : 'rice'
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SectionLoader message="제품재고를 불러오는 중" />}>
             <div className="grid grid-cols-1 gap-2 pb-24 sm:pb-2 px-1.5 sm:px-0">
                 <div className="pt-2 px-1">
                     <PackagesTabs activeTab={tab} />

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, Fragment } from 'react'
+import React, { Fragment } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FarmerListWrapper, useBulkDelete } from './farmer-list-wrapper'
@@ -10,10 +10,10 @@ import { hasPermission } from '@/lib/permissions'
 interface Farmer {
     id: number
     name: string
-    farmerNo: string
+    farmerNo: string | null
     items: string | null
     phone: string | null
-    groupId: number
+    groupId: number | null
     group: {
         id: number
         code: string
@@ -21,7 +21,7 @@ interface Farmer {
         certNo: string
         certType: string
         cropYear: number
-    }
+    } | null
 }
 
 export function FarmerPageClient({
@@ -37,7 +37,6 @@ export function FarmerPageClient({
 }) {
     const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDelete()
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
 
     return (

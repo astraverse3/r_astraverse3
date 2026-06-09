@@ -4,6 +4,7 @@ import { AddFarmerDialog } from './add-farmer-dialog'
 import { ExcelButtons } from './excel-buttons'
 import { FarmerFilters } from './farmer-filters'
 import { FarmerPageClient } from './farmer-page-client'
+import { SectionLoader } from '@/components/ui/section-loader'
 
 export default async function AdminFarmersPage({
     searchParams,
@@ -25,9 +26,9 @@ export default async function AdminFarmersPage({
     const farmers = response.success ? response.data || [] : []
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SectionLoader message="농가 목록을 불러오는 중" />}>
             <FarmerPageClient
-                farmers={farmers as any}
+                farmers={farmers}
                 filtersSlot={<FarmerFilters />}
                 excelSlot={<ExcelButtons />}
                 addDialogSlot={<AddFarmerDialog />}

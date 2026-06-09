@@ -1,4 +1,4 @@
-import { getStocks, GetStocksParams, getStockGroups } from '@/app/actions/stock'
+import { GetStocksParams, getStockGroups } from '@/app/actions/stock'
 import { getRiceVarieties, getFarmersWithGroups } from '@/app/actions/admin'
 import {
     getMiscVarieties,
@@ -14,6 +14,7 @@ import { StockExcelButtons } from './stock-excel-buttons'
 import { StockPageWrapper } from './stock-page-wrapper'
 import { RawStocksTabs, type RawStockTab } from './raw-stocks-tabs'
 import { MiscStockPanel } from './misc/misc-stock-panel'
+import { SectionLoader } from '@/components/ui/section-loader'
 import { Suspense } from 'react'
 
 export interface Stock {
@@ -50,7 +51,7 @@ export default async function StocksPage({
     const tab: RawStockTab = resolvedParams.tab === 'misc' ? 'misc' : 'rice'
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SectionLoader message="재고를 불러오는 중" />}>
             <div className="grid grid-cols-1 gap-2 pb-24 sm:pb-2 px-1.5 sm:px-0">
                 <div className="pt-2 px-1">
                     <RawStocksTabs activeTab={tab} />
@@ -134,11 +135,11 @@ async function MiscStockPanelLoader({
         getMiscStocks(filters),
     ])
 
-    const farmers = (farmersRes.success && farmersRes.data ? farmersRes.data : []) as any[]
+    const farmers = farmersRes.success && farmersRes.data ? farmersRes.data : []
     const varieties = (varietiesRes.success && varietiesRes.data ? varietiesRes.data : []) as { id: number; name: string }[]
     const millingVendors = (millingVendorsRes.success && millingVendorsRes.data ? millingVendorsRes.data : []) as string[]
     const sproutingVendors = (sproutingVendorsRes.success && sproutingVendorsRes.data ? sproutingVendorsRes.data : []) as string[]
-    const initialStocks = (stocksRes.success && stocksRes.data ? stocksRes.data : []) as any[]
+    const initialStocks = stocksRes.success && stocksRes.data ? stocksRes.data : []
 
     return (
         <MiscStockPanel

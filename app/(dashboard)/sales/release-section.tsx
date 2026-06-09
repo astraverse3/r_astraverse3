@@ -4,6 +4,7 @@ import { getReleaseLogs } from '@/app/actions/release'
 import { ReleasePageWrapper } from './release/release-page-wrapper'
 import { ReleaseFilters } from './release/release-filters'
 import { ReleaseExcelButton } from './release/release-excel-button'
+import { SectionLoader } from '@/components/ui/section-loader'
 
 export async function ReleaseSection({
     searchParams,
@@ -31,7 +32,7 @@ export async function ReleaseSection({
     const logs = result.success && result.data ? result.data : []
 
     return (
-        <Suspense fallback={<div>출고 내역을 불러오는 중...</div>}>
+        <Suspense fallback={<SectionLoader message="출고 내역을 불러오는 중" />}>
             <ReleasePageWrapper
                 logs={logs}
                 filters={filters}

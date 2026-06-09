@@ -4,6 +4,7 @@ import { MillingFilters } from './milling-filters'
 import { MillingPageWrapper } from './milling-page-wrapper'
 import { Suspense } from 'react'
 import { subMonths } from 'date-fns'
+import { SectionLoader } from '@/components/ui/section-loader'
 
 export default async function MillingListPage({
     searchParams,
@@ -38,7 +39,7 @@ export default async function MillingListPage({
     const serializedLogs = JSON.parse(JSON.stringify(logs))
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SectionLoader message="도정 내역을 불러오는 중" />}>
             <MillingPageWrapper
                 logs={serializedLogs}
                 filters={filters}
