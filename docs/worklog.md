@@ -2,6 +2,31 @@
 
 ## 2026-06-09
 
+### 로딩 화면 공용 컴포넌트 통일 + lint/타입 정리 `refactor` (e2ced45)
+
+**배경**: 원물재고(/raw-stocks) 로딩 화면을 브랜드 스피너로 개선하다가, 동일한 `<div>Loading...</div>` fallback이 여러 메뉴에 흩어져 있어 공용 컴포넌트로 통일.
+
+**변경**:
+- `components/ui/section-loader.tsx` 신규 — `message`/`description` prop을 받는 Suspense fallback용 브랜드 스피너(`role="status"`·`motion-reduce:animate-none` 접근성). 액션 처리용 `full-screen-loader`와 역할 분리.
+- fallback 6곳 교체: raw-stocks(재고)/packages(제품재고)/milling(도정 내역)/admin·varieties(품종 목록)/admin·farmers(농가 목록)/sales-release(출고 내역).
+
+**부수 — lint/타입 부채 정리**(이왕 연 파일들): raw-stocks 미사용 import·`as any[]` 제거, admin/farmers의 `as any`를 떼다가 `FarmerPageClient`의 `Farmer` 타입이 `group`·`groupId`·`farmerNo`를 non-null로 잘못 정의한 불일치 발견 → 실제(nullable)에 정합(하위 컴포넌트는 이미 nullable 처리 중). 무의미한 `@ts-ignore`·미사용 `Suspense` import 제거. tsc·eslint 통과 확인.
+
+---
+
+### 발주서 판매처리 — §8.1 포장지 마스터 구현 설계 `docs`
+
+**배경**: 도메인 결정 #1~#25 확정 후 설계 단계 착수. 의존순서대로 단계별 진행, 선행 1순위인 포장지 마스터부터. 계획서 [docs/plan/plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.1.
+
+**설계 내용**:
+- 모델 4개: `Packaging`(마스터, name unique+active soft-delete) / `PackagingMapping`(품종×중량→포장지, isDefault, @@unique·@@index) / `MillingOutputPackage.packagingId?` / `Variety.aliases`. isDefault "조합당 1개"는 DB 제약 대신 Server Action 트랜잭션으로 보장(과설계 회피).
+- `app/actions/packaging.ts` Server Action 7개. 마이그레이션 = 스키마→시드→누락조합 점검→백필(MILLED는 `stock.varietyId` 경유 분기).
+- 화면 결정 3건 확정: 관리 화면=`/settings/packaging`(설정 메뉴 신규), 마스터 변경 권한=`MILLING_MANAGE`, 포장 등록 시 포장지=강제(DB nullable 유지·입력단 Zod required). 강제 때문에 매핑 정비가 포장 등록 입력 추가보다 선행.
+
+**다음**: §8.2 발주서 파싱 + 도메인 모델 설계.
+
+---
+
 ### 발주서 판매처리 — 품목명↔품종 매칭 전략 확정 (결정 #22~#25) `docs`
 
 **배경**: 발주서 판매처리 계획서의 마지막 블로커였던 품목명↔품종 매칭을 실데이터 대조 + 담당자 미팅으로 해소. 계획서 [docs/plan/plan-발주서판매처리.md](plan/plan-발주서판매처리.md).

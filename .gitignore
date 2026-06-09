@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Office 임시 lock 파일 (엑셀 등 열어둘 때 생성)
+~$*
+
 # debug
 npm-debug.log*
 yarn-debug.log*

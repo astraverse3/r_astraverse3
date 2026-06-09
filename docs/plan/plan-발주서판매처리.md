@@ -236,6 +236,114 @@ PackageMovement      (제품재고 차감 — 세 경로 단일 테이블)
 - 영향: stock 10건 이미 `category=RICE`/RELEASED → **재고목록 영향 0**(필터는 stock.category 기준). 잡곡 품종 드롭다운(`variety.category` 기준, misc-stock.ts:481)에서만 빠지고 벼 품종 드롭다운으로 이동 = 원물출고용 정상화.
 - 발주서 매칭과 무관(가바흑미는 흑미 id18로 매칭). 이 작업은 발주서 본구현과 독립적으로 선행/병행 가능. **원물출고(Stock) 도메인 정리라 본 계획서 핵심 범위 밖** — 별도 처리 권장.
 
+## 8. 구현 설계 (2026-06-09~ 작성 중, 의존순서대로 단계별)
+
+> 결정 #1~#25를 코드 설계로 전개. UI 비주얼은 Claude Design 위임 → 본 설계는 *모델·Server Action 시그니처·화면별 데이터/상호작용 요구사항·작업순서*까지.
+> 작성 진행: **[8.1 포장지 마스터 — 1차 작성]** · 8.2 발주서 파싱+모델 · 8.3 Server Actions · 8.4 화면 요구사항 · 8.5 구현순서 = 미작성.
+
+### 8.1 포장지 마스터 (§6.0 — 선행 1순위, 결정 #2·#6·#7·#8·#10·#21)
+
+발주서 매칭 4키(품종+도정유형+중량+포장지) 중 **포장지** 축을 제품재고에 심는 선행 작업. 이게 없으면 발주서 매칭이 성립 안 함 → 전 작업의 기반.
+
+#### 8.1.1 Prisma 모델 (3개 변경)
+
+기존 `Variety`(schema.prisma:52)·`MillingOutputPackage`(:133)·enum 구조 확인 완료. 추가/변경:
+
+```prisma
+// (1) 신규 — 포장지 마스터
+model Packaging {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique          // '자연주의' | '아이담쌀' | 'PET' | '무지' …
+  active    Boolean  @default(true)    // 폐기 대신 비활성(이력 보존). 목록/추천에서 제외
+  mappings  PackagingMapping[]
+  packages  MillingOutputPackage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// (2) 신규 — 품종×중량 → 허용 포장지 매핑(기본값 지정, 결정 #7)
+model PackagingMapping {
+  id          Int       @id @default(autoincrement())
+  varietyId   Int
+  variety     Variety   @relation(fields: [varietyId], references: [id])
+  packageType String                    // 중량 문자열('10kg' 등) — MillingOutputPackage.packageType과 동일 도메인
+  packagingId Int
+  packaging   Packaging @relation(fields: [packagingId], references: [id])
+  isDefault   Boolean   @default(false)  // 포장 등록 시 자동추천 대상(결정 #8). 빈칸 발주서 매칭의 기본값(결정 #21)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([varietyId, packageType, packagingId])   // 같은 조합 중복 매핑 방지
+  @@index([varietyId, packageType])                 // 추천 조회 키
+}
+
+// (3) 변경 — 제품재고에 포장지 정식 승격(결정 #2)
+model MillingOutputPackage {
+  // … 기존 필드 …
+  packagingId Int?                        // 포장지(FIFO 매칭 키). nullable=매핑 밖 값/미지정 허용(결정 #8)
+  packaging   Packaging? @relation(fields: [packagingId], references: [id])
+}
+
+// (4) 변경 — 품종 별칭(결정 #22, 8.2에서 본격 사용하나 마이그레이션은 여기서 함께)
+model Variety {
+  // … 기존 필드 …
+  aliases String[] @default([])           // Postgres 배열. 현장통칭→행정품종명 매칭(#22)
+}
+```
+
+- ⚠️ `isDefault`는 "품종×중량당 1개"가 자연스럽지만 **DB 제약으로 강제하지 않음**(부분 유니크 인덱스 = Prisma 비표준 → raw SQL 필요, 과설계). 대신 **Server Action에서 보장**(기본 지정 시 동일 조합 기존 기본 해제). 결정 #8 "강제 아님"과도 일관.
+- `Packaging.active`: 포장지 단종 시 row 삭제하면 과거 재고 FK 깨짐 → soft(active=false). 기존 잡곡포장 soft 패턴과 일관.
+
+#### 8.1.2 마이그레이션 + 백필 (결정 #10)
+
+2-스텝(스키마 → 데이터). 둘 다 idempotent 권장:
+
+1. **스키마 마이그레이션**: 위 4개 모델 반영. `packagingId`는 nullable이라 기존 row 무영향.
+2. **시드 — 포장지·매핑 마스터 정비**: 발주서 실측 포장지(`자연주의`·`아이담쌀`·`PET` 등 §2.1)와 품종×중량 조합별 기본 포장지를 등록. **이게 백필의 선행조건**(기본값 없는 조합은 백필 불가).
+3. **백필 스크립트**: 각 `MillingOutputPackage`(packagingId=null)에 대해 (varietyId or batch.stock.varietyId, packageType)로 `PackagingMapping.isDefault=true` 조회 → packagingId 주입.
+   - ⚠️ **품종 해석 주의**: MILLED 포장은 `varietyId`가 null(batch.stock 경유) → 백필 시 `stock.varietyId`를 거쳐야 함. PURCHASED는 직접 `varietyId`. 백필 쿼리에서 두 경로 분기.
+   - **누락 조합 사전 점검 스크립트**(결정 #10): 백필 전, 기본값 매핑이 없는 (품종×중량) 조합을 전수 리포트 → 사용자가 마스터 보완 후 백필 실행. 점검에서 0건 나와야 백필 진행.
+4. `Variety.aliases` 시드: 서농22호=`['가바']`, 흑미=`['가바흑미']`, 발아현미=`['가바발아현미']`, 천지향1세=`['천지향']`, 백옥찰=`['찹쌀']`(결정 #22). ⚠️ 흑미·발아현미 id는 §6.1.1 확인값(18·47)이나 **시드 시 id 하드코딩 말고 name으로 조회**.
+
+#### 8.1.3 Server Actions (포장지 마스터 도메인) — `app/actions/packaging.ts` 신규
+
+| Action | 권한 | 역할 |
+|---|---|---|
+| `listPackagings()` | 공개 | 포장지 목록(active 우선) |
+| `createPackaging(name)` | `MILLING_MANAGE` | 포장지 추가 |
+| `togglePackagingActive(id)` | `MILLING_MANAGE` | 활성/비활성 토글(삭제 대신) |
+| `listMappings(filter?)` | 공개 | 품종×중량 매핑 목록 |
+| `upsertMapping({varietyId,packageType,packagingId,isDefault})` | `MILLING_MANAGE` | 매핑 추가/수정. **isDefault=true면 동일 조합 기존 기본 해제(트랜잭션)** |
+| `deleteMapping(id)` | `MILLING_MANAGE` | 매핑 제거 |
+| `suggestPackaging(varietyId, packageType)` | 공개 | 포장 등록용 — 해당 조합 기본 포장지 + 허용 목록 반환 |
+
+- **마스터 변경 권한 = `MILLING_MANAGE`**(2026-06-09 확정, 매칭 권한 #14와 일관). permission-matrix.md에 포장지 마스터 항목 등록.
+- 모든 변경 Action에 `recordAuditLog`, `revalidatePath('/settings/packaging')`.
+
+#### 8.1.4 화면 요구사항 (비주얼은 Claude Design)
+
+- **포장지 마스터 관리 화면 = `/settings/packaging`**(2026-06-09 확정 — **설정/관리 메뉴 신규**. 향후 품종·거래처 등 타 마스터도 이 설정 공간에 흡수 가능). 진입 = `MILLING_MANAGE`:
+  - 포장지 목록 + 추가 + 활성토글
+  - 품종×중량별 매핑 테이블: 조합마다 허용 포장지(다중) + 기본 1개 지정. **누락 조합 강조 표시**(백필 선행 점검과 연동)
+  - ⚠️ 설정 메뉴 자체가 신규 → desktop-sidebar / mobile-nav 등록 + 라우트 신설 필요(작업순서 반영).
+- **포장 등록 3곳 포장지 입력 추가**(결정 #8, 자동추천+자유선택):
+  - [add-packaging-dialog.tsx](app/(dashboard)/milling/add-packaging-dialog.tsx) — 도정산
+  - [misc-purchase-dialog.tsx](app/(dashboard)/packages/misc-purchase-dialog.tsx) — 잡곡 매입
+  - [misc-package-dialog.tsx](app/(dashboard)/packages/misc-package-dialog.tsx) — 잡곡 포장
+  - 셋 다: 품종·중량 선택되면 `suggestPackaging`로 기본값 자동선택, 드롭다운에서 전체 active 포장지 자유변경 가능. **빈 선택(null) 불가 — 포장지 항상 강제**(2026-06-09 확정). 기본추천이 있어 부담 적고 매칭 정합성↑. DB는 nullable 유지(기존 row·매핑밖 예외 대비), **입력단에서만 required 검증**(Zod). ⚠️기본추천 없는 조합(매핑 누락)에서 강제하면 등록 막힘 → 마스터 매핑 정비가 등록 강제의 선행조건(누락조합 점검과 연동).
+
+#### 8.1.5 이 단계 작업 순서(8.5 전체 순서의 1블록)
+
+1. schema.prisma 4개 변경 → `prisma migrate`
+2. `app/actions/packaging.ts` Server Actions
+3. 설정 메뉴 신설(`/settings` 라우트 + 사이드바/모바일내비 등록) → 포장지 마스터 관리 화면(`/settings/packaging`, 요구사항 → Claude Design 핸드오프 → 구현)
+4. 시드(포장지·매핑·aliases) → **누락조합 점검**(0건 확인) → 백필 실행
+5. 포장 등록 3곳에 입력 추가(포장지 강제 — 마스터 매핑 정비 완료가 선행). 증거 확인 후 완료선언
+
+> **검토 포인트 — 2026-06-09 전부 확정**: ①관리 화면 경로 = **`/settings/packaging`(설정 메뉴 신규)** ②마스터 변경 권한 = **`MILLING_MANAGE`** ③포장 등록 시 포장지 = **강제(항상 선택)**. ⇒ 매핑 정비가 등록 강제의 선행조건이 됨(순서 4→5 반영).
+
+---
+
 ## 7. 원칙
 
 - 800줄/함수 50줄 제한, 수술적 변경, 시스템 경계 Zod 검증, 불변성, 시크릿 환경변수
