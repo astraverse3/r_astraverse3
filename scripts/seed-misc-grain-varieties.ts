@@ -1,6 +1,6 @@
 // 잡곡 품종 일회성 시드 (멱등 — findFirst → 없으면 create)
 //
-// 계획서 `docs/plan-잡곡재고관리.md` §품종 시드 정책:
+// 계획서 `docs/plan/plan-잡곡재고관리.md` §품종 시드 정책:
 //   - 🚨 기존 RICE 품종 데이터는 절대 수정/삭제 금지
 //   - 잡곡 품종은 `lib/lot-generation.ts` 매핑 기준 신규 레코드만 추가
 //   - 시드 스크립트: `findFirst({ where: { name } })` 후 없을 때만 `create`

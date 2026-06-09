@@ -55,4 +55,4 @@ next-env.d.ts
 memory/
 
 # Claude Design 핸드오프 번들 (일회성 참고자료 — 구현 완료 후 삭제)
-/docs/handoff-*/
+/docs/handoff/잡곡재고관리/

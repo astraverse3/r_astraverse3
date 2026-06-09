@@ -1,6 +1,6 @@
 # 도정 작업 상태 3단계 마이그레이션 — 작업 계획서
 
-> 근거: [docs/handoff/status-migration.md](./handoff/status-migration.md)
+> 근거: [docs/handoff/status-migration.md](../handoff/디자인시스템/status-migration.md)
 > 기준일: 2026-05-20
 
 ---
@@ -96,7 +96,7 @@ const statusStr = batch.isClosed
 - [ ] 마감됨 배지 클릭 시 포장내역 다이얼로그 열림 (recent-logs-list 의 hover 동작 유지)
 - [ ] URL `?status=open` 으로 직접 접근해도 작동
 - [ ] 엑셀 다운로드 후 "진행상태" 컬럼 세분화 확인
-- [ ] [docs/permission-matrix.md](./permission-matrix.md) 영향 없음
+- [ ] [docs/permission-matrix.md](../permission-matrix.md) 영향 없음
 
 ---
 

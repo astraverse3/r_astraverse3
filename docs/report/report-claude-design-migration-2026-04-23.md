@@ -2,7 +2,7 @@
 
 작성일: 2026-04-23
 작업명: claude-design-migration
-계획서: [plan-claude-design-migration.md](./plan-claude-design-migration.md)
+계획서: [plan-claude-design-migration.md](../plan/plan-claude-design-migration.md)
 
 ## 변경 사항 요약
 
@@ -23,8 +23,8 @@
 - `~/.claude/settings.json.bak-20260423`
 
 ### 신규 문서
-- [docs/plan-claude-design-migration.md](./plan-claude-design-migration.md) — 마이그레이션 계획
-- [docs/claude-design-workflow.md](./claude-design-workflow.md) — Claude Design 핸드오프 표준 절차
+- [docs/plan-claude-design-migration.md](../plan/plan-claude-design-migration.md) — 마이그레이션 계획
+- [docs/claude-design-workflow.md](../claude-design-workflow.md) — Claude Design 핸드오프 표준 절차
 
 ### 영향 없음
 - `src/`, `app/` 등 프로덕트 코드: 변경 없음 (이번 단계는 툴·워크플로우 교체만)

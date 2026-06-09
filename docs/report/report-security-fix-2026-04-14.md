@@ -1,7 +1,7 @@
 # 보안 이슈 수정 결과보고서
 
 > 작업일: 2026-04-14
-> 기반 계획서: [plan-security-fix.md](plan-security-fix.md)
+> 기반 계획서: [plan-security-fix.md](../plan/plan-security-fix.md)
 > 기반 분석서: [report-security-audit-2026-04-13.md](report-security-audit-2026-04-13.md)
 
 ## 작업 요약

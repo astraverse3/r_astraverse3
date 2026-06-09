@@ -160,6 +160,6 @@
 - `admin.ts`/`excel.ts`/`notice.ts`만 server action 가드 적용
 
 ## 관련 문서
-- [docs/plan-잡곡재고관리-#9.5.md](plan-잡곡재고관리-#9.5.md) — 본 변경의 계획서
-- [docs/plan-잡곡재고관리.md](plan-잡곡재고관리.md) — 상위 잡곡 기능 계획서 (§9.5 권한 단계)
+- [docs/plan-잡곡재고관리-#9.5.md](plan/plan-잡곡재고관리-#9.5.md) — 본 변경의 계획서
+- [docs/plan-잡곡재고관리.md](plan/plan-잡곡재고관리.md) — 상위 잡곡 기능 계획서 (§9.5 권한 단계)
 - [docs/리팩토링-백로그.md](리팩토링-백로그.md) §12 — 권한 정비 백로그 (✅ #9.5에서 처리)

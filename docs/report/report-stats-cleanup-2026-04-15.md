@@ -1,7 +1,7 @@
 # 통계 페이지 정리 & 리팩토링 결과보고서
 
 > 작성일: 2026-04-15
-> 계획서: [plan-stats-cleanup.md](./plan-stats-cleanup.md)
+> 계획서: [plan-stats-cleanup.md](../plan/plan-stats-cleanup.md)
 > 종합 리뷰 기반 우선순위 액션 후속 작업
 
 ---

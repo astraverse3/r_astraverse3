@@ -3,7 +3,7 @@
 조사일: 2026-04-28
 조사자: Claude (사용자 요청)
 대상: `prisma.stock.*`, `prisma.millingOutputPackage.*`, `prisma.variety.*` 호출부
-목적: [작업 단계 #1 (Prisma 스키마 확장)](plan-잡곡재고관리.md) 착수 전, `category`/`source` 기본 필터 누락 시 잡곡 데이터가 벼 목록에 섞일 수 있는 위치 식별.
+목적: [작업 단계 #1 (Prisma 스키마 확장)](../plan/plan-잡곡재고관리.md) 착수 전, `category`/`source` 기본 필터 누락 시 잡곡 데이터가 벼 목록에 섞일 수 있는 위치 식별.
 
 ---
 
@@ -143,5 +143,5 @@ purchaseDate  DateTime?                              // 매입일 (PURCHASED 필
 
 ## 5. 참고
 
-- 단일 진실 원천: [docs/plan-잡곡재고관리.md](plan-잡곡재고관리.md)
+- 단일 진실 원천: [docs/plan-잡곡재고관리.md](../plan/plan-잡곡재고관리.md)
 - 호출부 전체 grep 결과는 본 문서 작성 시점(2026-04-28) 기준. 코드가 변경되면 재조사 필요.

@@ -2,7 +2,7 @@
 
 > 작업일: 2026-04-09
 > 작업자: Claude (사용자 승인 후 진행)
-> 관련 계획서: [docs/plan-forge-cleanup.md](plan-forge-cleanup.md)
+> 관련 계획서: [docs/plan-forge-cleanup.md](../plan/plan-forge-cleanup.md)
 > 상태: ✅ 완료
 
 ---

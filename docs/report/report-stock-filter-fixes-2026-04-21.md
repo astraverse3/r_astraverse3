@@ -1,7 +1,7 @@
 # 재고관리 필터·엑셀 수정 + 통계 엑셀다운 추가 결과보고서
 
 **작업일**: 2026-04-21
-**관련 계획서**: [plan-stock-filter-fixes.md](plan-stock-filter-fixes.md)
+**관련 계획서**: [plan-stock-filter-fixes.md](../plan/plan-stock-filter-fixes.md)
 **타입체크**: `npx tsc --noEmit` **통과** (exit 0)
 
 ---

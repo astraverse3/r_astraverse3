@@ -9,7 +9,7 @@
 
 ## 디자인 시스템 이관 정책 (B안 — 점진적 이관)
 
-핸드오프 번들 [docs/handoff-잡곡재고관리/](handoff-잡곡재고관리/)을 "접촉하는 경로만" 새 시스템으로 이관한다. 기존 벼 UI(`/milling`, `/admin` 등)의 일괄 교체는 본 계획 범위 밖.
+핸드오프 번들 [docs/handoff/잡곡재고관리/](../handoff/잡곡재고관리/)을 "접촉하는 경로만" 새 시스템으로 이관한다. 기존 벼 UI(`/milling`, `/admin` 등)의 일괄 교체는 본 계획 범위 밖.
 
 ### 이번 범위에 포함
 - **전역 토큰**: `app/globals.css` — 번들 HSL 토큰·커스텀 shadow 추가
@@ -315,7 +315,7 @@ model Variety {
 - 실행: `npx tsx scripts/import-misc-stock-legacy.ts`
 
 ## Claude Design 활용 계획
-워크플로우 문서: [docs/claude-design-workflow.md](docs/claude-design-workflow.md)
+워크플로우 문서: [docs/claude-design-workflow.md](../claude-design-workflow.md)
 
 ### 시안 제작이 필요한 신규 화면
 1. **제품재고 페이지** (`/packages`)
@@ -365,7 +365,7 @@ model Variety {
    - `active?: boolean` prop으로 내부 fill 토글
 1. **스키마 확장 + 마이그레이션** — Stock/Variety/MillingOutputPackage 확장, enum 3종, **CHECK 제약조건 2개**(pkg_milled_has_source, pkg_purchased_required_fields)
 2. **Seed 데이터** — 잡곡 품종만 등록 (중복 체크, 기존 데이터 보호)
-3. **포장단위 정책 확정** — 벼 현행 유지(`톤백/20/10/8/5/4/3/1kg/잔량 + 기타`), 잡곡은 `10/5/1kg + 800g/500g/420g + 기타` (톤백·잔량 없음). 옵션 셋이 다르므로 공용 상수 도입 폐기 — 잡곡 PACKAGE_TEMPLATES는 #7 잡곡 포장 다이얼로그에서 인라인 정의. **코드 변경 0건, 정책 문서화로 종결**. 사전조사: [docs/research-잡곡재고관리-#3.md](research-잡곡재고관리-#3.md)
+3. **포장단위 정책 확정** — 벼 현행 유지(`톤백/20/10/8/5/4/3/1kg/잔량 + 기타`), 잡곡은 `10/5/1kg + 800g/500g/420g + 기타` (톤백·잔량 없음). 옵션 셋이 다르므로 공용 상수 도입 폐기 — 잡곡 PACKAGE_TEMPLATES는 #7 잡곡 포장 다이얼로그에서 인라인 정의. **코드 변경 0건, 정책 문서화로 종결**. 사전조사: [docs/research-잡곡재고관리-#3.md](../research/research-잡곡재고관리-#3.md)
 4. **기존 `/stocks` → `/raw-stocks` 라우팅 이동** + 벼 탭 유지 (벼 탭 내부 디자인은 범위 밖, 이동만)
 5. **잡곡 입고 등록** — 2가지 sourceType 토글 다이얼로그(도정위탁/농가도정) + 잡곡 원물재고 탭
    - 번들 스펙: F안 탭, shadcn `Dialog`, 폼 패턴 (`handoff.md §4.1`, `§4.6`)
@@ -392,7 +392,7 @@ model Variety {
    - `lib/permissions.ts` 권한 키 마스터 업데이트
    - `/admin/users` 권한 편집 UI에 신규 키 노출
    - 사이드바/모바일 네비/페이지 가드(`hasPermission`) 일괄 점검
-   - 자세한 내용: [docs/리팩토링-백로그.md §12](리팩토링-백로그.md)
+   - 자세한 내용: [docs/리팩토링-백로그.md §12](../리팩토링-백로그.md)
 10. **엑셀 Import/Export** — category별 컬럼 스펙
 11. **기존 엑셀 Seed 스크립트 실행** — 25년산 대장 데이터 입력
 12. **브라우저 수동 테스트** — 도정위탁/농가도정 입고 → 포장 → 제품재고 확인, 매입 등록 → 제품재고 확인
@@ -439,5 +439,5 @@ model Variety {
 4. **3개 이상 파일 변경 시** 각 단계마다 증거 기반 완료 확인 (타입체크 / 수동 테스트)
 
 ### 참고 문서
-- 디자인 워크플로우: [docs/claude-design-workflow.md](docs/claude-design-workflow.md)
+- 디자인 워크플로우: [docs/claude-design-workflow.md](../claude-design-workflow.md)
 - 마이그레이션 리포트(진행 시 기록): `docs/report-잡곡재고관리-YYYY-MM-DD.md`

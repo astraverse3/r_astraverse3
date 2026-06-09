@@ -41,7 +41,7 @@
 | --- | --- | --- |
 | [app/(dashboard)/milling/add-packaging-dialog.tsx](../app/(dashboard)/milling/add-packaging-dialog.tsx) | **변경 없음** | 벼 전용 유지 |
 | [app/(dashboard)/packages/misc/...](#) (#7에서 신설) | 신규 인라인 `PACKAGE_TEMPLATES_MISC` | #7 단계에서 처리 |
-| [docs/plan-잡곡재고관리.md](plan-잡곡재고관리.md) §작업 단계 #3 / §139 / §306 | 정책 반영 문구 갱신 | 본 #3 단계 산출물 |
+| [docs/plan-잡곡재고관리.md](../plan/plan-잡곡재고관리.md) §작업 단계 #3 / §139 / §306 | 정책 반영 문구 갱신 | 본 #3 단계 산출물 |
 
 ### 검증 — 통계·표시 라인은 영향 없음
 - [components/statistics/MillingTable.tsx:111](../components/statistics/MillingTable.tsx#L111) `톤백/잔량` 분기 — 잡곡은 두 옵션 자체가 없어서 영향 없음
@@ -81,7 +81,7 @@ const PACKAGE_TEMPLATES_MISC = [
 
 ## 6. 부수 발견 (본 범위 외)
 
-본 사전조사 중 발견된 dead code / 미스매치는 [docs/리팩토링-백로그.md](리팩토링-백로그.md) §1, §2로 이관. 본 #3 PR과 분리 처리.
+본 사전조사 중 발견된 dead code / 미스매치는 [docs/리팩토링-백로그.md](../리팩토링-백로그.md) §1, §2로 이관. 본 #3 PR과 분리 처리.
 
 ---
 

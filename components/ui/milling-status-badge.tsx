@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-// 도정 작업 상태 3단계 — docs/handoff/status-migration.md
+// 도정 작업 상태 3단계 — docs/handoff/디자인시스템/status-migration.md
 // 판정: isClosed + outputs.length
 //  - isClosed === true            → closed   (마감됨)
 //  - !isClosed && hasOutputs      → packaging (포장중)

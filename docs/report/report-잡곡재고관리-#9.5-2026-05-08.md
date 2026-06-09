@@ -1,8 +1,8 @@
 # 잡곡 재고관리 #9.5 — 권한 체계 정리 (그림 B) — 결과보고서
 
 > **작업일**: 2026-05-08
-> **계획서**: [plan-잡곡재고관리-#9.5.md](plan-잡곡재고관리-#9.5.md)
-> **매트릭스**: [permission-matrix.md](permission-matrix.md) (단일 진실 원천)
+> **계획서**: [plan-잡곡재고관리-#9.5.md](../plan/plan-잡곡재고관리-#9.5.md)
+> **매트릭스**: [permission-matrix.md](../permission-matrix.md) (단일 진실 원천)
 
 ## 변경 사항 요약
 

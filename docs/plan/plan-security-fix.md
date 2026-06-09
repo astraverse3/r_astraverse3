@@ -1,7 +1,7 @@
 # 보안 이슈 수정 계획
 
 > 작성일: 2026-04-14
-> 기반 보고서: [report-security-audit-2026-04-13.md](report-security-audit-2026-04-13.md)
+> 기반 보고서: [report-security-audit-2026-04-13.md](../report/report-security-audit-2026-04-13.md)
 
 ## 작업 목표
 

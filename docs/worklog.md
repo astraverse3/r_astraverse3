@@ -2,6 +2,24 @@
 
 ## 2026-06-05
 
+### docs 폴더 분류별 정리 `chore`
+
+**배경**: `docs/` 루트에 평면적으로 흩어진 문서 70여 개를 분류별 하위 폴더로 정리. 계획서 [docs/plan/plan-docs폴더정리.md](plan/plan-docs폴더정리.md).
+
+**구조 변경**:
+- `plan-*.md`(33) → `docs/plan/`, `report-*.md`(31) → `docs/report/`, `research-*.md`(5) → `docs/research/` (전부 `git mv`로 히스토리 보존)
+- claude design 산출물 `docs/handoff/` 하위 통합: 현 활성 번들 → `handoff/디자인시스템/`, `handoff-잡곡재고관리/` → `handoff/잡곡재고관리/`(미추적 유지), `원물카드_상태간소화_A안/` 이동, 시안 html 3개(모바일·벼탭·투입내역) → `handoff/`
+- 루트 유지: `worklog.md`, `permission-matrix.md`, `리팩토링-백로그.md`, `claude-design-workflow.md`
+
+**참조 보정**:
+- 문서 간 상호링크: 카테고리 교차 참조에 `../plan/`·`../report/`·`../research/` 경로 부여, `./`접두·`docs/`절대형 정규화, `status-migration.md`는 `handoff/디자인시스템/` 하위 경로로 조정
+- 코드/설정: `scripts/seed-misc-grain-varieties.ts`(주석), `components/ui/milling-status-badge.tsx`(주석), `.gitignore`(`/docs/handoff/잡곡재고관리/`), `README.md`(워크플로 경로)
+- 메모리(`project_misc_grain_feature.md` 등) docs 경로 일괄 보정
+
+**검증**: 전체 `.md` 깨진 링크 전수 검사 — 이동으로 인한 깨짐 0건. 잔존 2건(`plan-stats-cleanup → README.md`, `report-도정상태3단계 → draft-공지`)은 **이동과 무관한 기존 깨짐**(draft 공지는 삭제된 파일)이라 미수정. 코드 변경은 주석/문자열뿐이라 빌드 영향 없음.
+
+---
+
 ### 투입내역 팝업 — 요약 밴드 + 생산자별 소계 `feat` `5c375c0`
 
 **출처**: 핸드오프 + 시안 `docs/투입내역-요약-소계-시안.html`(B안). 표시 UI만 추가, 기존 props·삭제/수정/메타편집 로직 그대로.
@@ -1153,7 +1171,7 @@
 - `npx tsc --noEmit` 통과
 - 브라우저 검수 필요: 위탁/농가 토글, 수율 미리보기, 도정업체 자동완성, 인증 변경 시 농가 목록 갱신, 저장 후 toast/닫힘, 권한 없는 사용자에게 버튼 미노출
 
-**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5c
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan/plan-잡곡재고관리-#5.md) §단계별 #5c
 
 ### 잡곡 재고관리 #5b — 탭 인프라 (벼/잡곡) `feat`
 
@@ -1171,7 +1189,7 @@
 - `npx tsc --noEmit` 통과
 - 브라우저 검수: `/raw-stocks` 진입 → 벼 탭 기본 활성, 기존 동작 회귀 X / 잡곡 탭 클릭 → URL `?tab=misc`, placeholder 표시 / 벼 탭 복귀 시 필터 리셋 확인
 
-**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5b
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan/plan-잡곡재고관리-#5.md) §단계별 #5b
 
 ### 잡곡 재고관리 #5a — 잡곡 Server Actions + zod `feat`
 
@@ -1194,7 +1212,7 @@
 - `npx tsc --noEmit` 통과 (에러 0)
 - 액션 호출 회귀는 #5c 다이얼로그 결합 후 브라우저 검증
 
-**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5a
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan/plan-잡곡재고관리-#5.md) §단계별 #5a
 
 ### 잡곡 재고관리 #5-pre — Farmer 모델 확장 + admin 체크박스 `feat`
 
@@ -1222,8 +1240,8 @@
 - `npx tsc --noEmit` 통과 (에러 0)
 - 브라우저 1차 검수 완료(PC), 2~3차 통합본은 커밋 후 검수 예정
 
-**계획서**: [docs/plan-잡곡재고관리-#5.md](plan-잡곡재고관리-#5.md) §단계별 #5-pre
-**보고서**: [docs/report-잡곡재고관리-#5-pre-2026-04-30.md](report-잡곡재고관리-#5-pre-2026-04-30.md)
+**계획서**: [docs/plan-잡곡재고관리-#5.md](plan/plan-잡곡재고관리-#5.md) §단계별 #5-pre
+**보고서**: [docs/report-잡곡재고관리-#5-pre-2026-04-30.md](report/report-잡곡재고관리-#5-pre-2026-04-30.md)
 
 ## 2026-04-29
 
@@ -1245,8 +1263,8 @@
 - `revalidatePath('/stocks')` / 디렉터리 import 잔존 0건
 - 브라우저 스모크 9 시나리오는 사용자 검수 (보고서 §3.2)
 
-**계획서**: [docs/plan-잡곡재고관리-#4.md](plan-잡곡재고관리-#4.md)
-**결과보고서**: [docs/report-잡곡재고관리-#4-2026-04-29.md](report-잡곡재고관리-#4-2026-04-29.md)
+**계획서**: [docs/plan-잡곡재고관리-#4.md](plan/plan-잡곡재고관리-#4.md)
+**결과보고서**: [docs/report-잡곡재고관리-#4-2026-04-29.md](report/report-잡곡재고관리-#4-2026-04-29.md)
 
 ### 잡곡 재고관리 #3 — 포장단위 정책 확정 (코드 변경 0건) `docs`
 
@@ -1292,7 +1310,7 @@
 - 2차 실행 (멱등 검증): 신규 0건, 스킵 15건
 - 최종 Variety 분포: RICE=23 (그대로) + MISC_GRAIN=15
 
-**결과보고서**: [docs/report-잡곡재고관리-#2-2026-04-29.md](report-잡곡재고관리-#2-2026-04-29.md)
+**결과보고서**: [docs/report-잡곡재고관리-#2-2026-04-29.md](report/report-잡곡재고관리-#2-2026-04-29.md)
 
 ### 잡곡 재고관리 #1 — Prisma 스키마 + RICE 필터 호출부 안전화 `feat` `schema`
 
@@ -1318,7 +1336,7 @@
 
 **충돌 처리**: 사전조사와 계획서 사이에서 매입 필드명(`purchaseFrom` vs `purchaseVendor`), CHECK 조건(AND vs OR)이 어긋났는데 단일 진실 원천(계획서) 우선 적용.
 
-**결과보고서**: [docs/report-잡곡재고관리-#1-2026-04-29.md](report-잡곡재고관리-#1-2026-04-29.md)
+**결과보고서**: [docs/report-잡곡재고관리-#1-2026-04-29.md](report/report-잡곡재고관리-#1-2026-04-29.md)
 
 ### 잡곡 재고관리 #1 사전조사 산출물 커밋 `docs`
 
