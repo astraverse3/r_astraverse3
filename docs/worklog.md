@@ -2,6 +2,18 @@
 
 ## 2026-06-09
 
+### 원물재고 검색 시 도정내역으로 튕기는 버그 수정 `fix`
+
+**증상**: 모바일에서 원물재고 검색(필터 다이얼로그) 적용/초기화 후 가끔 도정내역(`/milling`) 페이지로 이동.
+
+**원인**: [stock-filters.tsx](../app/(dashboard)/raw-stocks/stock-filters.tsx)의 `handleApply`(112)·`handleReset`(125)이 존재하지 않는 `/stocks`로 `router.push`. 잡곡재고관리 #4(`/stocks`→`/raw-stocks` 마이그레이션, 25곳 치환) 때 이 2곳이 누락됨. `next.config.ts`의 308 영구 리다이렉트가 받아주고 있었으나, 308 브라우저 영구 캐시 + next-pwa service worker 캐시 + 클라이언트 라우터의 redirect 추적이 엉키며 인접 하단탭(원물 옆 도정)으로 간헐적 오동작.
+
+**변경**: 112·125번 `router.push` 대상을 `/stocks` → `/raw-stocks`로 수정(2줄). 이제 리다이렉트·SW 캐시 경유 없이 곧장 `/raw-stocks`로 이동. 잡곡 필터(`misc-stock-filters.tsx`)는 이미 `/raw-stocks?tab=misc`로 정상.
+
+**참고**: 기존 기기의 308 영구 캐시·SW 캐시는 배포 후 SW 갱신/새로고침 시 해소.
+
+---
+
 ### 로딩 화면 공용 컴포넌트 통일 + lint/타입 정리 `refactor` (e2ced45)
 
 **배경**: 원물재고(/raw-stocks) 로딩 화면을 브랜드 스피너로 개선하다가, 동일한 `<div>Loading...</div>` fallback이 여러 메뉴에 흩어져 있어 공용 컴포넌트로 통일.

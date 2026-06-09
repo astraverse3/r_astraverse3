@@ -109,7 +109,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         if (status && status !== 'ALL') params.set('status', status)
 
         startTransition(() => {
-            router.push(`/stocks?${params.toString()}`)
+            router.push(`/raw-stocks?${params.toString()}`)
         })
         setOpen(false)
     }
@@ -122,7 +122,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         setStatus('ALL')
 
         startTransition(() => {
-            router.push(`/stocks?productionYear=${defaultYear}`)
+            router.push(`/raw-stocks?productionYear=${defaultYear}`)
         })
         setOpen(false)
     }
