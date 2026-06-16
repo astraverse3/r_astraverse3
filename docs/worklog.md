@@ -2,6 +2,15 @@
 
 ## 2026-06-16
 
+### 제품유형 마스터 — 단계 2: Server Actions `feat`
+
+**변경**:
+- [lib/product-type.ts](../lib/product-type.ts) 신규: `findOrCreateProductType(client, params)` 헬퍼. **`'use server'`가 아닌 순수 모듈** — 단계 5에서 매입/포장 등록 트랜잭션 내부에서 `tx`를 주입받아 호출하기 위함(RPC로 노출되면 비직렬화 인자 `tx`를 못 받음). upsert로 동시생성 경합 흡수. 계획서 §5 단계2의 헬퍼를 위치만 lib로 분리(의도 동일).
+- [app/actions/product-type.ts](../app/actions/product-type.ts) 신규: `listPackagings`/`createPackaging`/`togglePackagingActive`(포장지 마스터), `listProductTypes`/`upsertProductType`/`deleteProductType`/`toggleProductTypeActive`/`suggestProductType`(SKU). 권한=조회 `requireSession`, write `SALES_MANAGE`. `upsertProductType`은 isDefault 단일성을 트랜잭션으로 보장(동일 품종+도정+규격 기존 기본 해제). 모든 write `recordAuditLog` + `revalidatePath('/admin/product-types')`.
+- `tsc --noEmit` 통과.
+
+---
+
 ### 제품유형(ProductType/SKU) 마스터 — 단계 1: 스키마 + 마이그레이션 `feat`
 
 **배경**: 발주서 판매처리 선행 1순위. 매칭 4키(품종+도정구분+규격+포장지)를 단일 SKU 엔티티로 정규화. 계획서 [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) 단계 1.
