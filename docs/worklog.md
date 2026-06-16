@@ -2,6 +2,17 @@
 
 ## 2026-06-16
 
+### 제품유형 마스터 — 단계 3: 관리 메뉴 + 화면 `feat`
+
+**변경**:
+- [middleware.ts](../middleware.ts): `ADMIN_ROUTE_PERMISSIONS`에 `/admin/product-types`=`SALES_MANAGE` 한 줄 추가(기존 `/admin/*` 가드 재사용).
+- [app/(dashboard)/admin/product-types/](<../app/(dashboard)/admin/product-types/>) 신규 3파일: `page.tsx`(server, 데이터 fetch), `product-type-page-client.tsx`(포장지 칩 토글·추가 + SKU 카탈로그 테이블), `product-type-dialog.tsx`(SKU 추가/수정 다이얼로그). 기존 admin/varieties 패턴 재사용. 비주얼 고도화는 추후 Claude Design.
+- 진입 링크: [desktop-sidebar.tsx](../components/desktop-sidebar.tsx)·[mobile-header.tsx](../components/mobile-header.tsx) Management 섹션에 "제품유형 관리"(Package 아이콘), [breadcrumb-display.tsx](../components/breadcrumb-display.tsx) 경로 매핑 추가.
+- [docs/permission-matrix.md](permission-matrix.md): `/admin/product-types` 라우트 + product-type.ts 액션 가드 등록.
+- 신규/변경 코드 tsc·eslint 클린(기존 부채 desktop-sidebar:77·mobile-header:18은 수술적 변경 원칙상 미수정).
+
+---
+
 ### 제품유형 마스터 — 단계 2: Server Actions `feat`
 
 **변경**:

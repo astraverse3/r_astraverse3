@@ -5,6 +5,7 @@ import {
     Home,
     Leaf,
     Users,
+    Package,
     Megaphone,
     History,
     Database,
@@ -72,6 +73,7 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
     '/statistics/output': { icon: StatsIcon, title: '판매분석' },
 
     '/admin/varieties': { icon: Leaf, title: '품종 관리' },
+    '/admin/product-types': { icon: Package, title: '제품유형 관리' },
     '/admin/farmers': { icon: Users, title: '생산자 관리' },
     '/admin/users': { icon: Users, title: '사용자 관리' },
     '/admin/notices': { icon: Megaphone, title: '공지사항 관리' },

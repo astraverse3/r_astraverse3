@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link"
-import { Settings, Users, Wheat, Tractor, LogOut, MoreVertical, Building, BadgeCheck, Megaphone, History } from "lucide-react"
+import { Settings, Users, Wheat, Tractor, Package, LogOut, MoreVertical, Building, BadgeCheck, Megaphone, History } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import { hasPermission, hasAnyPermission } from "@/lib/permissions"
 
@@ -77,6 +77,12 @@ export function MobileHeader() {
                             <Link href="/admin/farmers" className="flex items-center gap-2 cursor-pointer">
                                 <Tractor className="w-4 h-4 text-slate-500" />
                                 <span>생산자 관리</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/product-types" className="flex items-center gap-2 cursor-pointer">
+                                <Package className="w-4 h-4 text-slate-500" />
+                                <span>제품유형 관리</span>
                             </Link>
                         </DropdownMenuItem>
 

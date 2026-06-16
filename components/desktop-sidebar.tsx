@@ -9,6 +9,7 @@ import {
     Server,
     Leaf,
     Users,
+    Package,
     ChevronDown,
     ChevronRight,
 } from "lucide-react"
@@ -63,7 +64,7 @@ export function DesktopSidebar() {
 
     // 서브메뉴 자동펼침: 현재 경로가 해당 섹션 하위면 펼침 + 화살표 클릭으로 토글.
     const statsActive = isActive('/statistics');
-    const adminActive = isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers');
+    const adminActive = isActive('/admin') && !isActive('/admin/varieties') && !isActive('/admin/farmers') && !isActive('/admin/product-types');
     const [statsOpen, setStatsOpen] = useState(statsActive);
     const [adminOpen, setAdminOpen] = useState(adminActive);
 
@@ -169,6 +170,16 @@ export function DesktopSidebar() {
                         >
                             <Users className="w-4 h-4" />
                             생산자 관리
+                        </Link>
+                        <Link
+                            href="/admin/product-types"
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive('/admin/product-types')
+                                ? 'bg-blue-50 text-primary'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <Package className="w-4 h-4" />
+                            제품유형 관리
                         </Link>
 
                         {hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 // permission === null 인 경우 ADMIN 전용
 const ADMIN_ROUTE_PERMISSIONS: Array<{ prefix: string; permission: string | null }> = [
     { prefix: "/admin/varieties", permission: "VARIETY_MANAGE" },
+    { prefix: "/admin/product-types", permission: "SALES_MANAGE" },
     { prefix: "/admin/farmers", permission: "FARMER_MANAGE" },
     { prefix: "/admin/users", permission: "USER_MANAGE" },
     { prefix: "/admin/notices", permission: "NOTICE_MANAGE" },

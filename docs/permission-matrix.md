@@ -79,6 +79,7 @@
 | 라우트 | 권한 |
 | --- | --- |
 | `/admin/varieties` | `VARIETY_MANAGE` |
+| `/admin/product-types` | `SALES_MANAGE` |
 | `/admin/farmers` | `FARMER_MANAGE` |
 | `/admin/users` | `USER_MANAGE` |
 | `/admin/notices` | `NOTICE_MANAGE` |
@@ -107,6 +108,7 @@
 | 파일 | 함수 |
 | --- | --- |
 | `app/actions/release.ts` | `createStockRelease`, `cancelStockRelease`, `updateStockRelease`, `deleteStockReleases`, `removeStockFromRelease` |
+| `app/actions/product-type.ts` | `createPackaging`, `togglePackagingActive`, `upsertProductType`, `deleteProductType`, `toggleProductTypeActive` (`SALES_MANAGE`) · `findOrCreateProductType`은 내부 헬퍼(무가드, 상위 액션이 가드) |
 
 ### 마스터 (`VARIETY_MANAGE` / `FARMER_MANAGE`)
 | 파일 | 함수 |
