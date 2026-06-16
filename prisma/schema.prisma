@@ -54,8 +54,10 @@ model Variety {
   name           String                 @unique // 품종명
   type           String // 곡종 구분 (URUCHI, GLUTINOUS, BLACK 등)
   category       StockCategory          @default(RICE) // 벼/잡곡 구분
+  aliases        String[]               @default([]) // 발주서 품목명↔품종 별칭 (결정 #22)
   stocks         Stock[]
   outputPackages MillingOutputPackage[] // 잡곡 매입(PURCHASED) 시 직접 참조
+  productTypes   ProductType[] // 제품유형(SKU) 카탈로그
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 }
@@ -158,8 +160,46 @@ model MillingOutputPackage {
   productCode String? // 제품코드 (예: 11)
   lotNo       String? // PURCHASED는 항상 null
 
+  // 제품유형(SKU) 연동 — nullable=백필용. 신규(도정산/매입)는 항상 채움
+  productTypeId Int?
+  productType   ProductType? @relation(fields: [productTypeId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// 6.4 ProductType (제품유형 SKU 카탈로그) + Packaging (포장지명 마스터)
+// ------------------------------------------------------
+
+// 포장지명 마스터 (정규화·재사용)
+model Packaging {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique // 자연주의 | 아이담쌀 | PET | 매입포장(sentinel) … (약 20종)
+  active       Boolean       @default(true) // 매입포장=false → 도정산 드롭다운 숨김
+  productTypes ProductType[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// 제품유형 (SKU 카탈로그) — (품종+도정+규격+포장지) 4키 정규화 ★핵심
+model ProductType {
+  id          Int    @id @default(autoincrement())
+  varietyId   Int
+  variety     Variety @relation(fields: [varietyId], references: [id])
+  millingType String  @default("기타") // 벼=백미 등, 잡곡='기타' sentinel. NOT NULL
+  packageType String // 규격 '10kg' 등
+  packagingId Int // NOT NULL ('매입포장' sentinel 허용)
+  packaging   Packaging @relation(fields: [packagingId], references: [id])
+  isDefault   Boolean   @default(false) // (품종+도정+규격)당 기본 포장지 추천
+  active      Boolean   @default(true)
+  packages    MillingOutputPackage[]
+  // ⚠️ orderItems PurchaseOrderItem[] 는 발주서 단계에서 양방향 관계로 추가
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([varietyId, millingType, packageType, packagingId])
+  @@index([varietyId, millingType, packageType]) // 기본추천 조회
 }
 
 // ------------------------------------------------------

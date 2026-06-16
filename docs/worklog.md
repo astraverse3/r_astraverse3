@@ -1,5 +1,18 @@
 # 작업일지
 
+## 2026-06-16
+
+### 제품유형(ProductType/SKU) 마스터 — 단계 1: 스키마 + 마이그레이션 `feat`
+
+**배경**: 발주서 판매처리 선행 1순위. 매칭 4키(품종+도정구분+규격+포장지)를 단일 SKU 엔티티로 정규화. 계획서 [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) 단계 1.
+
+**변경**:
+- [prisma/schema.prisma](../prisma/schema.prisma): `Packaging`(포장지명 마스터, `name @unique`·`active`)·`ProductType`(SKU 카탈로그, `(varietyId, millingType, packageType, packagingId)` `@@unique` + `(varietyId, millingType, packageType)` 인덱스) 신규. `MillingOutputPackage.productTypeId Int?`(nullable=백필용)·`Variety.aliases String[]`·양방향 관계 추가.
+- `millingType` NOT NULL `@default("기타")` sentinel, `packagingId` NOT NULL('매입포장' sentinel 행 예정) — NULL 유니크 구멍 방지.
+- 마이그레이션 `20260616000000_add_product_type_master`: Neon 비대화형 환경이라 `migrate diff`로 SQL 생성 → 파일 작성 → `migrate deploy` 적용(전부 additive). `prisma generate`·`tsc --noEmit` 통과.
+
+---
+
 ## 2026-06-09
 
 ### 원물재고 검색 시 도정내역으로 튕기는 버그 수정 `fix`
