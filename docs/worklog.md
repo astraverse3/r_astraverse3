@@ -2,6 +2,22 @@
 
 ## 2026-06-16
 
+### 제품유형 마스터 — 단계 4: 시드 → 점검 → 백필 `feat`
+
+**소스**: 사용자 제공 `docs/resources/규격별포장지종류.xlsx`(품종×도정×규격별 포장지 매핑).
+
+**결정 반영**(계획서 [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) §단계4):
+- 포장지 보정: 삼광 20kg `20kg`→`PP마대`(오타), 서농22호 4kg `수출?`→`가바수출용`.
+- 복수 포장지 조합 기본: 서농22호 백미4kg·1kg·현미1kg=자연주의, 하이아미 5kg=땅끝에서보냅니다, 4kg=자연주의.
+- **톤백**=포장지 `톤백`으로 일반 SKU. **잔량**=백필 제외(productTypeId=null 유지). 발주처별 기본 포장지는 백로그.
+
+**실행**:
+- [seed-product-type.ts](../scripts/seed-product-type.ts): Packaging 9종(활성 8 + `매입포장` 비활성), ProductType 57개, `Variety.aliases` 5종(서농22호=가바 등) upsert(멱등).
+- [check-product-type-backfill.ts](../scripts/check-product-type-backfill.ts): 백필 대상 44조합(잔량 제외) 기본 ProductType 누락 **0건** 확인.
+- [backfill-product-type.ts](../scripts/backfill-product-type.ts): MillingOutputPackage **360건** productTypeId 주입(멱등), 잔량 72건 제외(null 유지). 잔존 null(잔량 제외) **0건**.
+
+---
+
 ### 찰벼 도정유형 정리 — millingType 정규화(입력 백미/현미, 표시만 찹쌀/찰현미) `feat` `refactor`
 
 **계기**: 제품유형 백필 점검 중 백옥찰(찰벼)이 `millingType`='백미'14·'찹쌀'12·'현미'2로 갈려 저장된 것 발견 → 같은 제품이 다른 SKU로 쪼개짐. 백필 선행 정리. 방향 A 확정(계획서 [plan-찰벼도정유형정리.md](plan/plan-찰벼도정유형정리.md)).

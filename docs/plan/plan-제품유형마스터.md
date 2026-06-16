@@ -140,9 +140,17 @@ model Variety {
 - 사이드바/모바일내비 Management 섹션에 진입 링크(기존 품종·생산자 관리 옆).
 
 **단계 4 — 시드 → 누락점검 → 백필** (순서 엄수):
-1. `seed`: Packaging(자연주의·아이담쌀·PET…(약 20종) + **'매입포장'(active=false)**) / 기본 ProductType(발주서 18품목 조합 = 상위 [plan-발주서판매처리.md](plan-발주서판매처리.md) §6.1.1) / `Variety.aliases`(상위 §6.1.1·시드값: 서농22호=['가바']·흑미=['가바흑미']·발아현미=['가바발아현미']·천지향1세=['천지향']·백옥찰=['찹쌀'], name 조회·id 하드코딩 금지).
-2. `check`: `productTypeId=null` 재고의 (품종+도정+규격) 중 기본 ProductType 없는 조합 전수 리포트. **0건 확인 후 백필.**
-3. `backfill`: 각 `MillingOutputPackage`에 productTypeId 주입(idempotent). ⚠️ **품종·도정 2경로 분기**:
+
+> **2026-06-16 실측·결정 반영**(점검 스크립트 [scripts/check-product-type-backfill.ts](../../scripts/check-product-type-backfill.ts)):
+> - 운영 DB MillingOutputPackage 428건 전부 productTypeId=null, 전부 벼 도정산(MILLED). 잡곡 매입/위탁 제품재고는 0건.
+> - 찰벼 정규화([plan-찰벼도정유형정리.md](plan-찰벼도정유형정리.md)) 후 백필 대상 **58조합**(백옥찰 찹쌀→백미 흡수).
+> - **발주서 명시 포장지는 3종**(자연주의·아이담쌀·PET) + 대부분 빈칸(기본). "약 20종"은 과대 추정 → **포장지 목록은 사용자 제공**.
+> - **포장지 매칭키 결정(2026-06-16)**: `톤백`=일반 제품처럼 SKU 부여(발주/판매 매칭 O), 포장지=**`'톤백'`**(규격과 동명이나 packageType≠packaging.name 별개 필드라 무관). `잔량`=자체 판매 안 함(재포장 소진) → **SKU 백필 제외(productTypeId=null 유지)**. 잔량의 품종·생산자별 제품목록 처리는 **백로그**(재포장 흐름 + 잔량 전용 UX 별도 설계).
+> - 시드 sentinel 포장지: `'톤백'`(톤백 규격용, active=true)·`'매입포장'`(매입 sentinel, active=false).
+
+1. `seed`: Packaging(**사용자 제공 목록** + `'톤백'` + `'매입포장'`(active=false)) / 기본 ProductType(정규 규격별 기본 포장지 = 사용자 확정 / 톤백 규격은 포장지 `'톤백'`) / `Variety.aliases`(상위 §6.1.1·시드값: 서농22호=['가바']·흑미=['가바흑미']·발아현미=['가바발아현미']·천지향1세=['천지향']·백옥찰=['찹쌀'], name 조회·id 하드코딩 금지).
+2. `check`: `productTypeId=null` 재고의 (품종+도정+규격) 중 기본 ProductType 없는 조합 전수 리포트(**'잔량' 규격 제외**). **0건 확인 후 백필.**
+3. `backfill`: 각 `MillingOutputPackage`에 productTypeId 주입(idempotent). **'잔량' packageType은 스킵(null 유지)**. ⚠️ **품종·도정 2경로 분기**:
    - MILLED 벼: `stock.varietyId` + `batch.millingType`
    - MILLED 잡곡(`batchId=null`): `stock.varietyId` + `millingType='기타'`
    - PURCHASED 매입: `varietyId` + `'기타'` + `packagingId='매입포장'`
