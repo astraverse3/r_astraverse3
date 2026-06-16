@@ -2,6 +2,20 @@
 
 ## 2026-06-16
 
+### 찰벼 도정유형 정리 — millingType 정규화(입력 백미/현미, 표시만 찹쌀/찰현미) `feat` `refactor`
+
+**계기**: 제품유형 백필 점검 중 백옥찰(찰벼)이 `millingType`='백미'14·'찹쌀'12·'현미'2로 갈려 저장된 것 발견 → 같은 제품이 다른 SKU로 쪼개짐. 백필 선행 정리. 방향 A 확정(계획서 [plan-찰벼도정유형정리.md](plan/plan-찰벼도정유형정리.md)).
+
+**변경**:
+- **데이터 정규화**: [scripts/normalize-glutinous-milling-type.ts](../scripts/normalize-glutinous-milling-type.ts) 신규(멱등·dry-run·감사로그). `millingType='찹쌀'` batch 4건(전부 백옥찰) → '백미' 적용 완료, 잔존 0.
+- **표시 헬퍼**: [lib/milling-type-display.ts](../lib/milling-type-display.ts) 신규 — `getDisplayMillingType(millingType, varietyType)`(찰벼+백미→찹쌀, +현미→찰현미). 기존 3중복 인라인(milling-table-row·mobile-milling-card·recent-logs-list)을 헬퍼로 통일.
+- **입력 UI 3곳**(start-milling-dialog·stock-list-dialog·add-form): '찹쌀' 버튼 제거 + 찰벼 투입 시 백미/현미 버튼 라벨을 찹쌀/찰현미로 동적 표시(저장값은 백미/현미). 카트는 단일곡종 보장(milling-cart-context), selection 경로도 variety.type 보유 → 양 경로 작동.
+- **필터/상수**: [milling-filters.tsx](<../app/(dashboard)/milling/milling-filters.tsx>) `MILLING_TYPE_OPTIONS`·[settings-constants.ts](../lib/settings-constants.ts) `MILLING_TYPES`에서 '찹쌀' 제거.
+- 범위 제외: 통계 `MillingTable.tsx`(품종정보 부재, 저장값 표시 유지 — 별도 후속).
+- 검증: tsc 통과, 변경분 eslint 클린(기존 any/effect 부채는 미수정).
+
+---
+
 ### 제품유형 마스터 — 단계 3: 관리 메뉴 + 화면 `feat`
 
 **변경**:

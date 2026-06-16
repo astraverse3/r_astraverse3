@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 
 interface MillingBatch {
     id: number
@@ -63,20 +64,11 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
         return uniqueFarmers[0] || '-'
     }, [log.stocks])
 
-    // Determine Classification (구분)
+    // Determine Classification (구분) — 찰벼는 표시만 찹쌀/찰현미로 파생
     const classification = useMemo(() => {
         const primaryStock = log.stocks && log.stocks.length > 0 ? log.stocks[0] : null;
         if (!primaryStock) return '-';
-
-        const varietyType = primaryStock.variety?.type;
-        const millingType = log.millingType;
-
-        if (varietyType === 'GLUTINOUS') {
-            if (millingType === '백미') return '찹쌀';
-            if (millingType === '현미') return '찰현미';
-            return millingType;
-        }
-        return millingType || '-';
+        return getDisplayMillingType(log.millingType, primaryStock.variety?.type) || '-';
     }, [log.stocks, log.millingType])
 
     // Row Click -> Open Input History (Stock List)

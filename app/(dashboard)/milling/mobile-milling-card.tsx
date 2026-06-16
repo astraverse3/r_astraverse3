@@ -9,6 +9,7 @@ import { ArrowRight, StickyNote } from 'lucide-react'
 import { AddPackagingDialog } from './add-packaging-dialog'
 import { reopenMillingBatch } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
@@ -76,14 +77,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
     const classification = useMemo(() => {
         const primaryStock = log.stocks && log.stocks.length > 0 ? log.stocks[0] : null
         if (!primaryStock) return '-'
-        const varietyType = primaryStock.variety?.type
-        const millingType = log.millingType
-        if (varietyType === 'GLUTINOUS') {
-            if (millingType === '백미') return '찹쌀'
-            if (millingType === '현미') return '찰현미'
-            return millingType
-        }
-        return millingType || '-'
+        return getDisplayMillingType(log.millingType, primaryStock.variety?.type) || '-'
     }, [log.stocks, log.millingType])
 
     const classStyle = getMillingTypeStyle(classification)

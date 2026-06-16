@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 
 interface Stock {
     id: number
@@ -20,6 +21,7 @@ interface Stock {
     // Relations
     variety: {
         name: string
+        type?: string // 찰벼(GLUTINOUS) 라벨 동적화용
     }
     farmer: {
         name: string
@@ -69,6 +71,12 @@ export function AddMillingLogForm({ availableStocks }: Props) {
         return availableStocks
             .filter(s => selectedStockIds.includes(s.id))
             .reduce((sum, s) => sum + s.weightKg, 0)
+    }, [availableStocks, selectedStockIds])
+
+    // 선택된 stock이 전부 찰벼면 도정 버튼 라벨을 찹쌀/찰현미로 표시(저장값은 백미/현미)
+    const isGlutinous = useMemo(() => {
+        const sel = availableStocks.filter(s => selectedStockIds.includes(s.id))
+        return sel.length > 0 && sel.every(s => s.variety?.type === 'GLUTINOUS')
     }, [availableStocks, selectedStockIds])
 
     const toggleStock = (id: number) => {
@@ -128,7 +136,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                     <div>
                         <Label className="text-sm font-bold text-slate-800 mb-1.5 block">도정 구분</Label>
                         <div className="grid grid-cols-3 gap-1.5">
-                            {['백미', '현미', '오분도미', '칠분도미', '찹쌀', '기타'].map((type) => (
+                            {['백미', '현미', '오분도미', '칠분도미', '기타'].map((type) => (
                                 <button
                                     key={type}
                                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-all ${millingType === type
@@ -137,7 +145,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
                                         }`}
                                     onClick={() => setMillingType(type)}
                                 >
-                                    {type}
+                                    {getDisplayMillingType(type, isGlutinous ? 'GLUTINOUS' : null)}
                                 </button>
                             ))}
                         </div>

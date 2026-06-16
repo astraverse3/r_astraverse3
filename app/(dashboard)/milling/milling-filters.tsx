@@ -24,12 +24,12 @@ import {
 import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal, Calendar as CalendarIcon } from 'lucide-react'
 
+// 저장값 기준 필터. '찹쌀'은 폐기(찰벼 백미는 '백미'로 저장됨)
 const MILLING_TYPE_OPTIONS = [
     { label: '백미', value: '백미' },
     { label: '현미', value: '현미' },
     { label: '오분도미', value: '오분도미' },
     { label: '칠분도미', value: '칠분도미' },
-    { label: '찹쌀', value: '찹쌀' },
     { label: '기타', value: '기타' },
 ]
 import { format, subYears, subMonths } from 'date-fns'

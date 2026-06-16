@@ -15,13 +15,14 @@ import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { triggerDataUpdate } from '@/components/last-updated'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 
 interface Stock {
     id: number
     bagNo: number
     weightKg: number
     lotNo: string | null // Added
-    variety: { name: string }
+    variety: { name: string; type?: string } // type: 찰벼(GLUTINOUS) 라벨 동적화용
     farmer: { name: string, group: { certType: string } | null }
 }
 
@@ -57,6 +58,12 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
     const totalInputKg = useMemo(() => {
         return selectedStocks.reduce((sum, s) => sum + s.weightKg, 0)
     }, [selectedStocks])
+
+    // 투입 stock이 전부 찰벼(GLUTINOUS)면 도정 버튼 라벨을 찹쌀/찰현미로 표시(저장값은 백미/현미)
+    const isGlutinous = useMemo(
+        () => selectedStocks.length > 0 && selectedStocks.every((s) => s.variety?.type === 'GLUTINOUS'),
+        [selectedStocks],
+    )
 
     async function handleSubmit() {
         if (selectedStocks.length === 0) return
@@ -124,11 +131,11 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                         </div>
                     </div>
 
-                    {/* Milling Type */}
+                    {/* Milling Type — 저장값은 도정정도(백미/현미/…). 찰벼는 라벨만 찹쌀/찰현미 */}
                     <div className="space-y-1">
                         <Label className="text-[13px]">도정 구분</Label>
                         <div className="grid grid-cols-3 gap-1.5">
-                            {['백미', '현미', '오분도미', '칠분도미', '찹쌀', '기타'].map((type) => (
+                            {['백미', '현미', '오분도미', '칠분도미', '기타'].map((type) => (
                                 <button
                                     key={type}
                                     type="button"
@@ -138,7 +145,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                                         }`}
                                     onClick={() => setMillingType(type)}
                                 >
-                                    {type}
+                                    {getDisplayMillingType(type, isGlutinous ? 'GLUTINOUS' : null)}
                                 </button>
                             ))}
                         </div>

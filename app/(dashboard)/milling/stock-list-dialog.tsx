@@ -27,6 +27,7 @@ import { useMillingCart, Stock as CartStock } from '@/app/(dashboard)/raw-stocks
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 
 function Stat({ label, value, unit }: { label: string; value: number; unit: string }) {
     return (
@@ -69,6 +70,9 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const { startEditing } = useMillingCart()
     const [isLoading, setIsLoading] = useState(false)
     const totalWeight = stocks.reduce((sum, s) => sum + s.weightKg, 0)
+
+    // 투입 stock이 전부 찰벼면 도정 버튼 라벨을 찹쌀/찰현미로 표시(저장값은 백미/현미)
+    const isGlutinous = stocks.length > 0 && stocks.every(s => s.variety?.type === 'GLUTINOUS')
 
     // 요약 밴드 / 생산자별 소계용 집계 (생산자 첫 등장 순서 유지)
     const farmerNames = [...new Set(stocks.map(s => s.farmerName))]
@@ -218,7 +222,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500">도정구분</Label>
                                 <div className="grid grid-cols-3 gap-1.5">
-                                    {['백미', '현미', '오분도미', '칠분도미', '찹쌀', '기타'].map((type) => (
+                                    {['백미', '현미', '오분도미', '칠분도미', '기타'].map((type) => (
                                         <Button
                                             key={type}
                                             type="button"
@@ -230,7 +234,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                                 }`}
                                             onClick={() => setEditMillingType(type)}
                                         >
-                                            {type}
+                                            {getDisplayMillingType(type, isGlutinous ? 'GLUTINOUS' : null)}
                                         </Button>
                                     ))}
                                 </div>

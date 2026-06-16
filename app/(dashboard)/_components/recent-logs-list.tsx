@@ -9,6 +9,7 @@ import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dial
 import { useSession } from 'next-auth/react';
 import { hasPermission } from '@/lib/permissions';
 import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants';
+import { getDisplayMillingType } from '@/lib/milling-type-display';
 
 interface RecentLogsListProps {
     logs: any[];
@@ -73,11 +74,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                         : farmerNames[0] || '알 수 없음';
 
                     const primaryStock = log.stocks && log.stocks.length > 0 ? log.stocks[0] : null;
-                    let classification = log.millingType || '-';
-                    if (primaryStock && primaryStock.variety?.type === 'GLUTINOUS') {
-                        if (classification === '백미') classification = '찹쌀';
-                        else if (classification === '현미') classification = '찰현미';
-                    }
+                    const classification = getDisplayMillingType(log.millingType, primaryStock?.variety?.type) || '-';
                     const classStyle = getMillingTypeStyle(classification);
                     const yieldColor = getYieldColor(Math.round(yieldRate * 10) / 10, log.millingType);
 
