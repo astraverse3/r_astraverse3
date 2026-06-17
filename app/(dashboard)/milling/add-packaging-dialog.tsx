@@ -486,14 +486,41 @@ export function AddPackagingDialog({
                                         </div>
                                     )}
                                     {groupOutputs.map(({ o, i }) => (
-                                        <div key={i} className="px-3 py-1.5">
-                                          <div className="grid grid-cols-[52px_1fr_92px_28px] items-center gap-1">
-                                            {/* 규격 badge */}
+                                        <div key={i} className="px-3 py-[5px]">
+                                          <div className="grid grid-cols-[40px_140px_1fr_58px_24px] items-center gap-1">
+                                            {/* 1. 규격 badge */}
                                             <Badge variant="secondary" className="bg-stone-100 text-stone-600 hover:bg-stone-100 px-1.5 py-0 rounded text-[11px] justify-center">
                                                 {o.packageType}
                                             </Badge>
 
-                                            {/* 수량 */}
+                                            {/* 2. 포장지 — 잔량=—, 톤백=고정, 그 외 드롭다운(기본 자동) */}
+                                            {o.packageType === PKG_TONBAG ? (
+                                                <span className="text-[11px] text-stone-400 pl-0.5">포장지: 톤백</span>
+                                            ) : o.packageType === PKG_REMAINDER ? (
+                                                <span className="text-[11px] text-stone-200 pl-0.5">—</span>
+                                            ) : isClosed || !canManage ? (
+                                                <span className="text-[11px] text-stone-400 truncate">
+                                                    {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
+                                                </span>
+                                            ) : (
+                                                <select
+                                                    value={o.packagingId ?? ''}
+                                                    onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
+                                                    className="h-[26px] w-full rounded-md border border-stone-200 bg-white px-1.5 pr-5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none"
+                                                    style={{
+                                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                                                        backgroundRepeat: 'no-repeat',
+                                                        backgroundPosition: 'right 6px center',
+                                                    }}
+                                                >
+                                                    <option value="">포장지 미지정</option>
+                                                    {packagings.map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+
+                                            {/* 3. 수량 stepper */}
                                             {isClosed || !canManage ? (
                                                 <span className="text-[12px] font-mono font-bold text-stone-600 text-center">{o.count}개</span>
                                             ) : (
@@ -514,11 +541,11 @@ export function AddPackagingDialog({
                                                 </div>
                                             )}
 
-                                            {/* 중량 */}
+                                            {/* 4. 중량 */}
                                             <div className="flex items-center gap-1 justify-end w-full">
                                                 {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                                     isClosed || !canManage ? (
-                                                        <span className="text-[13px] font-bold text-stone-600">{o.weightPerUnit.toLocaleString()} kg</span>
+                                                        <span className="text-[11px] font-bold text-stone-600">{o.weightPerUnit.toLocaleString()} kg</span>
                                                     ) : (
                                                         <>
                                                             <Input
@@ -526,47 +553,23 @@ export function AddPackagingDialog({
                                                                 value={o.weightPerUnit}
                                                                 onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                                 onFocus={(e) => e.target.select()}
-                                                                className="h-7 w-16 text-right pr-1 text-[13px] font-medium border-stone-200 rounded-lg shadow-none px-1"
+                                                                className="h-6 w-[38px] text-right text-[11px] border-stone-200 rounded px-1"
                                                             />
-                                                            <span className="text-xs text-stone-400 font-medium">kg</span>
+                                                            <span className="text-[10px] text-stone-400">kg</span>
                                                         </>
                                                     )
                                                 ) : (
-                                                    <span className="text-[13px] font-bold text-stone-600">{(o.weightPerUnit * o.count).toLocaleString()} kg</span>
+                                                    <span className="text-[12px] font-bold text-stone-600 whitespace-nowrap">{(o.weightPerUnit * o.count).toLocaleString()} kg</span>
                                                 )}
                                             </div>
 
-                                            {/* 삭제 */}
+                                            {/* 5. 삭제 */}
                                             {!isClosed && canManage ? (
                                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             ) : <div />}
                                           </div>
-
-                                          {/* 포장지 줄 — 잔량은 SKU 없음(숨김), 톤백은 고정, 그 외 드롭다운(기본 자동) */}
-                                          {o.packageType !== PKG_REMAINDER && (
-                                            <div className="pl-[56px] pt-1">
-                                                {o.packageType === PKG_TONBAG ? (
-                                                    <span className="text-[11px] text-stone-400">포장지: 톤백</span>
-                                                ) : isClosed || !canManage ? (
-                                                    <span className="text-[11px] text-stone-400">
-                                                        포장지: {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
-                                                    </span>
-                                                ) : (
-                                                    <select
-                                                        value={o.packagingId ?? ''}
-                                                        onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
-                                                        className="h-7 w-full max-w-[180px] rounded-md border border-stone-200 bg-white px-1.5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-                                                    >
-                                                        <option value="">포장지 미지정</option>
-                                                        {packagings.map(p => (
-                                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                                        ))}
-                                                    </select>
-                                                )}
-                                            </div>
-                                          )}
                                         </div>
                                     ))}
                                 </div>

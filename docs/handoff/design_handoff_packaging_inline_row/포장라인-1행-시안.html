@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포장 라인 1행 레이아웃 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  background: #94a3b8;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+/* ── Dialog 껍데기 — 실제 코드: sm:max-w-[500px], px-6 ── */
+.dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 500px;
+  overflow: hidden;
+}
+
+/* DialogContent는 기본 px-6(24px) py-6 */
+.dialog-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 7px;
+}
+.dialog-meta { display: flex; align-items: center; gap: 8px; }
+.badge-milling {
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(37,99,235,0.15);
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+.meta-text { font-size: 13px; font-weight: 700; color: #334155; }
+
+/* ── 그룹 카드 (border-stone-200) ── */
+.group-card {
+  margin: 12px;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 그룹 헤더 (bg-stone-50) */
+.group-header {
+  background: #fafaf9;
+  border-bottom: 1px solid #f5f5f4;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gh-farmer { font-size: 12px; font-weight: 700; color: #44403c; }
+.gh-variety { font-size: 11px; color: #a8a29e; }
+.gh-lot {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 11px;
+  color: #78716c;
+  background: white;
+  border: 1px solid #e7e5e4;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.gh-spacer { flex: 1; }
+.gh-expected {
+  font-size: 11px;
+  color: #78716c;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.gh-expected strong { font-weight: 700; color: #2563eb; }
+
+/* 규격 버튼 영역 */
+.spec-area {
+  padding: 8px 10px 9px;
+  border-bottom: 1px solid #e7e5e4;
+}
+.spec-grid {
+  display: grid;
+  /* 10개 버튼: 톤백 20kg 10kg 8kg 5kg 4kg 3kg 1kg 잔량 기타 */
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+.spec-btn {
+  height: 30px;
+  border: none;
+  background: #f5f5f4;
+  color: #57534e;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+.spec-btn:hover { background: #e7e5e4; }
+.spec-btn.dashed {
+  background: white;
+  border: 1.5px dashed #d6d3d1;
+  color: #a8a29e;
+}
+
+/* ── 아이템 공용 ── */
+.pkg-divider { border: none; border-top: 1px solid #f5f5f4; }
+
+.badge-spec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2px 0;
+  background: #f5f5f4;
+  color: #57534e;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.stepper-btn {
+  width: 22px; height: 22px;
+  border: none; background: none;
+  color: #a8a29e;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+.stepper-btn:hover { background: #f5f5f4; color: #292524; }
+.stepper-count {
+  width: 26px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c1917;
+  font-variant-numeric: tabular-nums;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: 'Pretendard', monospace;
+}
+
+.weight-display {
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1c1917;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.weight-unit { font-size: 10px; font-weight: 500; color: #a8a29e; margin-left: 1px; }
+
+.pkg-select {
+  width: 100%;
+  height: 26px;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  background: white;
+  font-size: 11px;
+  color: #57534e;
+  padding: 0 20px 0 7px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+.pkg-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+
+.del-btn {
+  width: 22px; height: 22px;
+  border: none; background: none;
+  color: #d6d3d1;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  padding: 0; margin: 0 auto;
+  flex-shrink: 0;
+}
+.del-btn:hover { background: #fef2f2; color: #ef4444; }
+
+/* 소계 */
+.group-subtotal {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px;
+  background: #fafaf9;
+  border-top: 1px solid #f5f5f4;
+  font-size: 12px;
+  color: #78716c;
+  gap: 4px;
+}
+
+/* 다이얼로그 footer */
+.dialog-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-total { font-size: 13px; }
+.footer-total strong { font-size: 18px; font-weight: 800; color: #0f172a; }
+.btn-save {
+  height: 36px; padding: 0 20px;
+  background: #2563eb; color: white;
+  border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+.dialog-footer-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px 12px;
+  border-top: 1px dashed #f1f5f9;
+}
+.btn-ghost-amber {
+  background: none; border: none;
+  color: #d97706; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 4px;
+}
+.btn-ghost-red {
+  background: none; border: none;
+  color: #ef4444; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── 레이블 ── */
+.panel-wrap { display: flex; flex-direction: column; gap: 8px; }
+.panel-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; color: white;
+}
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 600;
+}
+.tag-before { background: #fef2f2; color: #dc2626; }
+.tag-after  { background: #dcfce7; color: #16a34a; }
+
+/* 수치 주석 */
+.measure-bar {
+  display: flex; align-items: center;
+  font-size: 10px; font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  gap: 0;
+  width: 500px;
+  font-variant-numeric: tabular-nums;
+  font-family: 'SF Mono', monospace;
+}
+.measure-seg {
+  height: 4px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 6px;
+  position: relative;
+}
+.measure-seg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: 2px;
+}
+/* Before 측정 */
+.before-cols {
+  display: grid;
+  grid-template-columns: 52px 1fr 92px 28px;
+  gap: 4px;
+  width: calc(500px - 48px - 24px); /* 428px */
+  margin: 0 auto;
+}
+/* After 측정 */
+/* 실제 그리드:
+   dialog 500px
+   - DialogContent px-6 양쪽 24px → 452px
+   - 아이템 px-3 양쪽 12px → 428px 사용 가능
+   
+   grid-cols: [40px gap4 select(1fr) gap4 76px gap4 58px gap4 24px]
+   고정: 40+76+58+24 = 198px
+   gap: 4×4 = 16px
+   1fr (select) = 428 - 198 - 16 = 214px
+   → "땅끝에서보냅니다"(9자) @11px ≈ 120px → 여유 94px
+*/
+.after-cols {
+  display: grid;
+  grid-template-columns: 40px 1fr 76px 58px 24px;
+  gap: 4px;
+  width: 428px;
+  margin: 0 auto;
+}
+
+/* ─── BEFORE 아이템 (2행) ─── */
+.item-before { padding: 8px 12px 6px; }
+.item-row1-before {
+  display: grid;
+  grid-template-columns: 52px 1fr 92px 28px;
+  align-items: center;
+  gap: 4px;
+}
+.item-row2-before {
+  padding-left: 56px;
+  padding-top: 5px;
+  padding-bottom: 3px;
+}
+
+/* ─── AFTER 아이템 (1행) ─── */
+/*
+  실제 수치:
+  • dialog: 500px max (sm:max-w-[500px])
+  • DialogContent padding: px-6 = 24px 양쪽 → content 452px
+  • group card margin: 12px 양쪽 → 428px
+  • item padding: px-3 = 12px 양쪽 → grid area 404px
+  
+  grid-cols-[40px_140px_1fr_58px_24px] + gap-1(4px):
+  → 고정: 40+140+58+24 = 262px
+  → 갭:   4×4 = 16px
+  → stepper 1fr: 404 - 262 - 16 = 126px (내용 76px 센터 정렬)
+  
+  "땅끝에서보냅니다" 11px Pretendard ≈ 9자 × 11.5px + padding(27px) ≈ 131px
+  → select 140px: 최소 여유 9px
+*/
+.item-after { padding: 5px 12px; }
+.item-row1-after {
+  display: grid;
+  grid-template-columns: 40px 140px 1fr 58px 24px;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── 눈금자 바 ── */
+.ruler {
+  height: 20px;
+  position: relative;
+  font-size: 9px;
+  font-family: 'SF Mono', monospace;
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: flex-end;
+}
+.ruler-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  padding-left: 2px;
+  padding-bottom: 2px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     BEFORE: 현재 2행
+══════════════════════════════ -->
+<div class="panel-wrap">
+  <div class="panel-label">
+    <span class="tag tag-before">Before</span> 현재 — 2행 구조
+  </div>
+
+  <div class="dialog">
+    <div class="dialog-header">
+      <div class="dialog-title">포장 기록 관리</div>
+      <div class="dialog-meta">
+        <span class="badge-milling">백미</span>
+        <span class="meta-text">총 투입: 3,213kg</span>
+      </div>
+    </div>
+
+    <!-- 그룹 카드 -->
+    <div class="group-card">
+      <div class="group-header">
+        <span class="gh-farmer">이만배</span>
+        <span class="gh-variety">천지향1세</span>
+        <span class="gh-lot">251126-11-15103885-4128</span>
+        <span class="gh-spacer"></span>
+        <span class="gh-expected">2,418kg →&nbsp;<strong>예상 1,644kg</strong></span>
+      </div>
+
+      <div class="spec-area">
+        <div class="spec-grid">
+          <button class="spec-btn">톤백</button><button class="spec-btn">20kg</button>
+          <button class="spec-btn">10kg</button><button class="spec-btn">8kg</button>
+          <button class="spec-btn">5kg</button><button class="spec-btn">4kg</button>
+          <button class="spec-btn">3kg</button><button class="spec-btn">1kg</button>
+          <button class="spec-btn">잔량</button><button class="spec-btn dashed">기타</button>
+        </div>
+      </div>
+
+      <!-- 아이템 8kg -->
+      <div class="item-before">
+        <div class="item-row1-before">
+          <span class="badge-spec">8kg</span>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="text-align:right;">
+            <span class="weight-display">8<span class="weight-unit">kg</span></span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+        <div class="item-row2-before">
+          <select class="pkg-select" style="max-width:180px;">
+            <option>자연주의</option>
+            <option>땅끝에서보냅니다</option>
+            <option>천지향</option>
+            <option>포장지 미지정</option>
+          </select>
+        </div>
+      </div>
+      <hr class="pkg-divider">
+
+      <!-- 아이템 10kg -->
+      <div class="item-before">
+        <div class="item-row1-before">
+          <span class="badge-spec">10kg</span>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="text-align:right;">
+            <span class="weight-display">10<span class="weight-unit">kg</span></span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+        <div class="item-row2-before">
+          <select class="pkg-select" style="max-width:180px;">
+            <option>땅끝에서보냅니다</option>
+            <option>자연주의</option>
+            <option>포장지 미지정</option>
+          </select>
+        </div>
+      </div>
+      <hr class="pkg-divider">
+
+      <!-- 아이템 톤백 -->
+      <div class="item-before">
+        <div class="item-row1-before">
+          <span class="badge-spec">톤백</span>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;justify-content:flex-end;">
+            <input type="number" value="0" style="width:52px;height:26px;text-align:right;border:1px solid #e7e5e4;border-radius:6px;font-size:12px;padding:0 4px;font-family:inherit;color:#1c1917;">
+            <span class="weight-unit" style="font-size:11px;">kg</span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+        <div class="item-row2-before">
+          <span style="font-size:11px;color:#a8a29e;">포장지: 톤백</span>
+        </div>
+      </div>
+
+      <div class="group-subtotal">소계 <strong style="color:#1c1917;">18</strong><span style="color:#a8a29e;"> / 1,644 kg</span></div>
+    </div>
+
+    <div class="dialog-footer">
+      <span class="footer-total">총 포장: <strong>18 kg</strong></span>
+      <button class="btn-save">기록 저장</button>
+    </div>
+    <div class="dialog-footer-sub">
+      <button class="btn-ghost-amber">🔒 작업 마감</button>
+      <button class="btn-ghost-red">🗑 포장 초기화</button>
+    </div>
+  </div>
+
+  <!-- 눈금 주석 (before) -->
+  <div style="width:500px;padding:0 24px;">
+    <!-- group card margin 12px 감안, px-3 아이템 -->
+    <div style="padding:0 12px;">
+      <div style="display:grid;grid-template-columns:52px 1fr 92px 28px;gap:4px;font-size:9px;font-family:monospace;color:rgba(255,255,255,0.6);text-align:center;padding-top:4px;">
+        <span>52px</span><span>1fr</span><span>92px</span><span>28px</span>
+      </div>
+      <div style="display:grid;grid-template-columns:52px 1fr 92px 28px;gap:4px;height:3px;padding-top:2px;">
+        <div style="background:rgba(239,68,68,0.5);border-radius:2px;"></div>
+        <div style="background:rgba(239,68,68,0.3);border-radius:2px;"></div>
+        <div style="background:rgba(239,68,68,0.5);border-radius:2px;"></div>
+        <div style="background:rgba(239,68,68,0.5);border-radius:2px;"></div>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);padding-top:3px;font-family:monospace;">row 2 → pl-[56px] + select max-w-[180px]</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════
+     AFTER: 새 1행
+══════════════════════════════ -->
+<div class="panel-wrap">
+  <div class="panel-label">
+    <span class="tag tag-after">After</span> 개선 — 1행 통합
+  </div>
+
+  <div class="dialog">
+    <div class="dialog-header">
+      <div class="dialog-title">포장 기록 관리</div>
+      <div class="dialog-meta">
+        <span class="badge-milling">백미</span>
+        <span class="meta-text">총 투입: 3,213kg</span>
+      </div>
+    </div>
+
+    <div class="group-card">
+      <div class="group-header">
+        <span class="gh-farmer">이만배</span>
+        <span class="gh-variety">천지향1세</span>
+        <span class="gh-lot">251126-11-15103885-4128</span>
+        <span class="gh-spacer"></span>
+        <span class="gh-expected">2,418kg →&nbsp;<strong>예상 1,644kg</strong></span>
+      </div>
+
+      <div class="spec-area">
+        <div class="spec-grid">
+          <button class="spec-btn">톤백</button><button class="spec-btn">20kg</button>
+          <button class="spec-btn">10kg</button><button class="spec-btn">8kg</button>
+          <button class="spec-btn">5kg</button><button class="spec-btn">4kg</button>
+          <button class="spec-btn">3kg</button><button class="spec-btn">1kg</button>
+          <button class="spec-btn">잔량</button><button class="spec-btn dashed">기타</button>
+        </div>
+      </div>
+
+      <!-- 컬럼 헤더 힌트 -->
+      <div style="display:grid;grid-template-columns:40px 140px 1fr 58px 24px;gap:4px;padding:4px 12px 2px;align-items:center;">
+        <span style="font-size:9px;color:#d6d3d1;font-weight:600;text-align:center;letter-spacing:-.2px;">규격</span>
+        <span style="font-size:9px;color:#d6d3d1;font-weight:600;letter-spacing:-.2px;">포장지</span>
+        <span style="font-size:9px;color:#d6d3d1;font-weight:600;text-align:center;letter-spacing:-.2px;">수량</span>
+        <span style="font-size:9px;color:#d6d3d1;font-weight:600;text-align:right;letter-spacing:-.2px;">중량</span>
+        <span></span>
+      </div>
+
+      <!-- 아이템 8kg -->
+      <div class="item-after">
+        <div class="item-row1-after">
+          <span class="badge-spec">8kg</span>
+          <select class="pkg-select">
+            <option>자연주의</option>
+            <option>땅끝에서보냅니다</option>
+            <option>천지향</option>
+            <option>포장지 미지정</option>
+          </select>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="text-align:right;">
+            <span class="weight-display">8<span class="weight-unit">kg</span></span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+      </div>
+      <hr class="pkg-divider">
+
+      <!-- 아이템 10kg -->
+      <div class="item-after">
+        <div class="item-row1-after">
+          <span class="badge-spec">10kg</span>
+          <select class="pkg-select">
+            <option>땅끝에서보냅니다</option>
+            <option>자연주의</option>
+            <option>포장지 미지정</option>
+          </select>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="text-align:right;">
+            <span class="weight-display">10<span class="weight-unit">kg</span></span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+      </div>
+      <hr class="pkg-divider">
+
+      <!-- 아이템 톤백 — 포장지 열: 고정 텍스트 -->
+      <div class="item-after">
+        <div class="item-row1-after">
+          <span class="badge-spec">톤백</span>
+          <span style="font-size:11px;color:#a8a29e;padding-left:2px;">포장지: 톤백</span>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <!-- 톤백: 중량 직접 입력 → 58px 컬럼 안에 input+단위 -->
+          <div style="display:flex;align-items:center;gap:2px;justify-content:flex-end;">
+            <input type="number" value="0"
+              style="width:38px;height:24px;text-align:right;border:1px solid #e7e5e4;border-radius:5px;font-size:11px;padding:0 3px;font-family:inherit;color:#1c1917;outline:none;">
+            <span style="font-size:10px;color:#a8a29e;">kg</span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+      </div>
+      <hr class="pkg-divider">
+
+      <!-- 아이템 잔량 — 포장지 열: 대시 -->
+      <div class="item-after">
+        <div class="item-row1-after">
+          <span class="badge-spec" style="background:#fef9c3;color:#a16207;">잔량</span>
+          <span style="font-size:11px;color:#d6d3d1;padding-left:2px;">—</span>
+          <div class="stepper">
+            <button class="stepper-btn">−</button>
+            <input class="stepper-count" value="1" readonly>
+            <button class="stepper-btn">+</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:2px;justify-content:flex-end;">
+            <input type="number" value="18"
+              style="width:38px;height:24px;text-align:right;border:1px solid #e7e5e4;border-radius:5px;font-size:11px;padding:0 3px;font-family:inherit;color:#1c1917;outline:none;">
+            <span style="font-size:10px;color:#a8a29e;">kg</span>
+          </div>
+          <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+      </div>
+
+      <div class="group-subtotal">소계 <strong style="color:#1c1917;">18</strong><span style="color:#a8a29e;"> / 1,644 kg</span></div>
+    </div>
+
+    <div class="dialog-footer">
+      <span class="footer-total">총 포장: <strong>18 kg</strong></span>
+      <button class="btn-save">기록 저장</button>
+    </div>
+    <div class="dialog-footer-sub">
+      <button class="btn-ghost-amber">🔒 작업 마감</button>
+      <button class="btn-ghost-red">🗑 포장 초기화</button>
+    </div>
+  </div>
+
+  <!-- 눈금 주석 (after) -->
+  <div style="width:500px;padding:0 24px;">
+    <div style="padding:0 12px;">
+      <div style="display:grid;grid-template-columns:40px 140px 1fr 58px 24px;gap:4px;font-size:9px;font-family:monospace;color:rgba(255,255,255,0.6);text-align:center;padding-top:4px;">
+        <span>40px</span><span>140px</span><span>1fr≈126px</span><span>58px</span><span>24px</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px 140px 1fr 58px 24px;gap:4px;height:3px;padding-top:2px;">
+        <div style="background:rgba(34,197,94,0.5);border-radius:2px;"></div>
+        <div style="background:rgba(34,197,94,0.6);border-radius:2px;"></div>
+        <div style="background:rgba(34,197,94,0.5);border-radius:2px;"></div>
+        <div style="background:rgba(34,197,94,0.5);border-radius:2px;"></div>
+        <div style="background:rgba(34,197,94,0.4);border-radius:2px;"></div>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);padding-top:3px;font-family:monospace;">
+        grid area 404px · "땅끝에서보냅니다" ≈ 131px → select 140px(여유 9px) · stepper 1fr
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

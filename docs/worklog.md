@@ -2,6 +2,16 @@
 
 ## 2026-06-17
 
+### 도정 포장 다이얼로그 — 포장지 라인 1행 통합 `design`
+
+**소스**: Claude Design 핸드오프 [docs/handoff/design_handoff_packaging_inline_row/](handoff/design_handoff_packaging_inline_row/).
+
+**변경**: [add-packaging-dialog.tsx](<../app/(dashboard)/milling/add-packaging-dialog.tsx>) 포장 라인이 단계5(2/2) 1차 구현에서 **2행**(규격·수량·중량 / 포장지 별도 줄)이라 다이얼로그가 길어지던 것을 **1행 통합**. 그리드 `[52px_1fr_92px_28px]` → `[40px_140px_1fr_58px_24px]`, 포장지 select를 규격 옆 2번째 열(140px, custom 화살표 `appearance-none`)로 인라인. 잔량=`—`(stone-200), 톤백=`포장지: 톤백` 고정. py-1.5→py-[5px]. 동작 규칙·SKU 로직 불변(시각만).
+
+**검증**: tsc 통과, 변경분 신규 lint 0(HEAD 대비 9=9).
+
+---
+
 ### 제품유형 마스터 — 단계 5(2/2): 도정산(add-packaging) 라인별 포장지 SKU 연동 `feat`
 
 **계획서** [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) §단계5 — 난도 최상 도정산 경로. 이로써 **단계 5 전체 완료**.
