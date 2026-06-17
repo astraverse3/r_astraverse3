@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Plus, Trash2, Star } from 'lucide-react'
+import { Plus, Trash2, Star, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { hasPermission } from '@/lib/permissions'
+import { getVarietyTypeLabel } from '@/lib/variety-labels'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import {
     createPackaging,
@@ -87,6 +89,31 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
         else toast.error(result.error || '상태 변경에 실패했어요.')
     }
 
+    // varietyId → type 매핑 (곡종 배지용)
+    const varietyTypeMap = new Map(varieties.map((v) => [v.id, v.type]))
+
+    // 품종별 그룹 (품종명 가나다순)
+    const groups = (() => {
+        const m = new Map<string, ProductTypeRow[]>()
+        for (const row of productTypes) {
+            const key = row.variety.name
+            if (!m.has(key)) m.set(key, [])
+            m.get(key)!.push(row)
+        }
+        return [...m.entries()]
+            .map(([name, rows]) => ({
+                name,
+                type: varietyTypeMap.get(rows[0].varietyId) ?? '',
+                rows,
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    })()
+
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+    const isOpen = (name: string) => openGroups[name] ?? false // 기본 접힘
+    const toggleGroup = (name: string) =>
+        setOpenGroups((s) => ({ ...s, [name]: !(s[name] ?? false) }))
+
     return (
         <div className="flex flex-col gap-5 pb-24 sm:pb-4 px-1.5 sm:px-0 pt-2">
             {/* 포장지 마스터 */}
@@ -144,85 +171,117 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                     )}
                 </div>
 
-                <div className="overflow-x-auto -mx-1">
-                    <table className="w-full text-sm border-collapse">
-                        <thead>
-                            <tr className="text-left text-[11px] text-slate-400 border-b border-slate-100">
-                                <th className="py-2 px-2 font-medium">품종</th>
-                                <th className="py-2 px-2 font-medium">도정</th>
-                                <th className="py-2 px-2 font-medium">규격</th>
-                                <th className="py-2 px-2 font-medium">포장지</th>
-                                <th className="py-2 px-2 font-medium text-center">기본</th>
-                                <th className="py-2 px-2 font-medium text-center">상태</th>
-                                <th className="py-2 px-2 font-medium text-right">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {productTypes.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className={`border-b border-slate-50 ${row.active ? '' : 'opacity-50'}`}
+                <div className="flex flex-col gap-2">
+                    {groups.map((g) => {
+                        const open = isOpen(g.name)
+                        const activeN = g.rows.filter((r) => r.active).length
+                        return (
+                            <div key={g.name} className="rounded-lg border border-slate-200 overflow-hidden">
+                                {/* 그룹 헤더 */}
+                                <button
+                                    type="button"
+                                    onClick={() => toggleGroup(g.name)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 hover:bg-primary/5 transition-colors"
                                 >
-                                    <td className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</td>
-                                    <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.millingType}</td>
-                                    <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packageType}</td>
-                                    <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
-                                    <td className="py-2 px-2 text-center">
-                                        {row.isDefault && (
-                                            <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
+                                    <div className="flex items-center gap-2">
+                                        <ChevronDown
+                                            className={`w-4 h-4 text-slate-400 transition-transform ${open ? '' : '-rotate-90'}`}
+                                        />
+                                        <span className="font-bold text-[14px] text-slate-900">{g.name}</span>
+                                        {g.type && (
+                                            <span className="text-[10px] px-1.5 h-4 inline-flex items-center border border-slate-200 text-slate-500 bg-white rounded">
+                                                {getVarietyTypeLabel(g.type)}
+                                            </span>
                                         )}
-                                    </td>
-                                    <td className="py-2 px-2 text-center">
-                                        <button
-                                            type="button"
-                                            disabled={!canManage}
-                                            onClick={() => canManage && handleToggleProductType(row.id)}
-                                            className={`text-[11px] px-2 py-0.5 rounded-full ${row.active
-                                                ? 'bg-emerald-50 text-emerald-600'
-                                                : 'bg-slate-100 text-slate-400'
-                                                } ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-                                        >
-                                            {row.active ? '활성' : '비활성'}
-                                        </button>
-                                    </td>
-                                    <td className="py-2 px-2 text-right whitespace-nowrap">
-                                        {canManage && (
-                                            <div className="inline-flex items-center gap-0.5">
-                                                <ProductTypeDialog
-                                                    mode="edit"
-                                                    varieties={varieties}
-                                                    packagings={packagings}
-                                                    productType={{
-                                                        id: row.id,
-                                                        varietyId: row.varietyId,
-                                                        millingType: row.millingType,
-                                                        packageType: row.packageType,
-                                                        packagingId: row.packagingId,
-                                                        isDefault: row.isDefault,
-                                                    }}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteProductType(row)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"
-                                                    title="삭제"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {productTypes.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="py-8 text-center text-xs text-slate-400">
-                                        등록된 제품유형이 없어요.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                        <span>SKU <b className="text-slate-600">{g.rows.length}</b></span>
+                                        <span className="text-slate-300">·</span>
+                                        <span>활성 <b className="text-emerald-600">{activeN}</b></span>
+                                    </div>
+                                </button>
+
+                                {/* 하위 SKU 테이블 (품종 컬럼 없음) */}
+                                {open && (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm border-collapse">
+                                            <thead>
+                                                <tr className="text-left text-[10px] text-slate-400 border-b border-slate-100 bg-white">
+                                                    <th className="py-1.5 px-3 font-medium">도정</th>
+                                                    <th className="py-1.5 px-2 font-medium">규격</th>
+                                                    <th className="py-1.5 px-2 font-medium">포장지</th>
+                                                    <th className="py-1.5 px-2 font-medium text-center">기본</th>
+                                                    <th className="py-1.5 px-2 font-medium text-center">상태</th>
+                                                    <th className="py-1.5 px-3 font-medium text-right">관리</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {g.rows.map((row) => (
+                                                    <tr
+                                                        key={row.id}
+                                                        className={`border-b border-slate-50 last:border-0 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
+                                                    >
+                                                        <td className="py-2 px-3 text-slate-700 font-medium whitespace-nowrap">{getDisplayMillingType(row.millingType, g.type)}</td>
+                                                        <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packageType}</td>
+                                                        <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
+                                                        <td className="py-2 px-2 text-center">
+                                                            {row.isDefault && (
+                                                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
+                                                            )}
+                                                        </td>
+                                                        <td className="py-2 px-2 text-center">
+                                                            <button
+                                                                type="button"
+                                                                disabled={!canManage}
+                                                                onClick={() => canManage && handleToggleProductType(row.id)}
+                                                                className={`text-[11px] px-2 py-0.5 rounded-full ${row.active
+                                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                                    : 'bg-slate-100 text-slate-400'
+                                                                    } ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                                            >
+                                                                {row.active ? '활성' : '비활성'}
+                                                            </button>
+                                                        </td>
+                                                        <td className="py-2 px-3 text-right whitespace-nowrap">
+                                                            {canManage && (
+                                                                <div className="inline-flex items-center gap-0.5">
+                                                                    <ProductTypeDialog
+                                                                        mode="edit"
+                                                                        varieties={varieties}
+                                                                        packagings={packagings}
+                                                                        productType={{
+                                                                            id: row.id,
+                                                                            varietyId: row.varietyId,
+                                                                            millingType: row.millingType,
+                                                                            packageType: row.packageType,
+                                                                            packagingId: row.packagingId,
+                                                                            isDefault: row.isDefault,
+                                                                        }}
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteProductType(row)}
+                                                                        className="p-2 text-slate-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"
+                                                                        title="삭제"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+
+                    {productTypes.length === 0 && (
+                        <p className="py-8 text-center text-xs text-slate-400">등록된 제품유형이 없어요.</p>
+                    )}
                 </div>
             </section>
         </div>

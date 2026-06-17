@@ -1,5 +1,19 @@
 # 작업일지
 
+## 2026-06-17
+
+### admin 제품유형 UI — 색상 시스템 정렬 + SKU 카탈로그 품종별 그룹화 `feat` `design`
+
+**소스**: Claude Design 핸드오프([docs/handoff/](handoff/)) — 색상정렬·SKU그룹화 작업지시 2종.
+
+**변경**:
+- **색상 정렬**: admin 다이얼로그 3곳([product-type-dialog](<../app/(dashboard)/admin/product-types/product-type-dialog.tsx>)·[variety-dialog](<../app/(dashboard)/admin/varieties/variety-dialog.tsx>)·[add-farmer-dialog](<../app/(dashboard)/admin/farmers/add-farmer-dialog.tsx>))의 레거시 액션색(녹색 `#8dc540`/시안 `#00a2e8`) → 디자인 토큰 `primary`(`#2563eb`)로 통일. 녹색 버튼은 클래스 삭제로 Button 기본 variant 사용, 포커스링·체크박스·아이콘 hover 치환. 통계 의미색은 미변경.
+- **SKU 카탈로그 그룹화**: [product-type-page-client.tsx](<../app/(dashboard)/admin/product-types/product-type-page-client.tsx>) 평면 테이블 → **품종별 아코디언**(A안). 품종 헤더(곡종 배지 + SKU 수·활성 수 집계, 클릭 접기/펼침, **기본 접힘**) + 하위 SKU 테이블(품종 컬럼 제거). 품종명 가나다순. 핸들러·다이얼로그는 그대로.
+- **찰벼 도정 표시**: 도정 컬럼에 [getDisplayMillingType](../lib/milling-type-display.ts) 적용 — 찰벼(`GLUTINOUS`)는 저장값 백미/현미를 찹쌀/찰현미로 표시.
+- 검증: tsc 통과, 변경분 eslint 클린.
+
+---
+
 ## 2026-06-16
 
 ### 제품유형 마스터 — 단계 4: 시드 → 점검 → 백필 `feat`

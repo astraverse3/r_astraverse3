@@ -92,13 +92,13 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
-                    <Button size="sm" className="bg-[#8dc540] hover:bg-[#7db037] text-white px-2.5 sm:px-4">
+                    <Button size="sm" className="px-2.5 sm:px-4">
                         <Plus className="w-4 h-4 sm:mr-1.5" />
                         <span className="hidden sm:inline">제품유형 등록</span>
                     </Button>
                 ) : (
                     <button
-                        className="p-2 text-slate-400 hover:text-[#00a2e8] rounded-full hover:bg-[#00a2e8]/10 transition-colors"
+                        className="p-2 text-slate-400 hover:text-primary rounded-full hover:bg-primary/10 transition-colors"
                         title="수정"
                     >
                         <Pencil className="w-4 h-4" />
@@ -119,7 +119,7 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                             id="pt-variety"
                             value={varietyId}
                             onChange={(e) => setVarietyId(e.target.value === '' ? '' : Number(e.target.value))}
-                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00a2e8]/40"
+                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                             required
                         >
                             <option value="">선택하세요</option>
@@ -136,7 +136,7 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                                 id="pt-milling"
                                 value={millingType}
                                 onChange={(e) => setMillingType(e.target.value)}
-                                className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00a2e8]/40"
+                                className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                             >
                                 {MILLING_TYPES.map((t) => (
                                     <option key={t} value={t}>{t}</option>
@@ -161,7 +161,7 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                             id="pt-packaging"
                             value={packagingId}
                             onChange={(e) => setPackagingId(e.target.value === '' ? '' : Number(e.target.value))}
-                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00a2e8]/40"
+                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                             required
                         >
                             <option value="">선택하세요</option>
@@ -178,14 +178,14 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                             type="checkbox"
                             checked={isDefault}
                             onChange={(e) => setIsDefault(e.target.checked)}
-                            className="accent-[#00a2e8] w-4 h-4"
+                            className="accent-blue-600 w-4 h-4"
                         />
                         <span className="text-sm text-slate-700">이 조합(품종+도정+규격)의 기본 포장지로 지정</span>
                     </label>
 
                     <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-2">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={loading}>취소</Button>
-                        <Button type="submit" disabled={loading} className="bg-[#8dc540] hover:bg-[#7db037] text-white">
+                        <Button type="submit" disabled={loading}>
                             {loading ? '처리 중...' : '저장'}
                         </Button>
                     </div>
