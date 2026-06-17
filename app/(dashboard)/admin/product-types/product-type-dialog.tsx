@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 import { MILLING_TYPES } from '@/lib/settings-constants'
 import { upsertProductType } from '@/app/actions/product-type'
 
-export type VarietyOption = { id: number; name: string }
+export type VarietyOption = { id: number; name: string; category: string }
 export type PackagingOption = { id: number; name: string; active: boolean }
 
 export type ProductTypeEdit = {
@@ -52,6 +52,17 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
     const packagingOptions = packagings.filter(
         (p) => p.active || p.id === productType?.packagingId,
     )
+
+    // 잡곡 품종은 도정 구분이 없음 → 도정 select 숨김, 저장 시 '기타' sentinel
+    const isMisc = varieties.find((v) => v.id === varietyId)?.category === 'MISC_GRAIN'
+
+    const handleVarietyChange = (value: string) => {
+        const id = value === '' ? '' : Number(value)
+        setVarietyId(id)
+        const v = varieties.find((x) => x.id === id)
+        if (v?.category === 'MISC_GRAIN') setMillingType('기타')
+        else if (millingType === '기타') setMillingType('백미')
+    }
 
     const reset = () => {
         setVarietyId('')
@@ -113,36 +124,42 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="pt-variety">품종</Label>
-                        <select
-                            id="pt-variety"
-                            value={varietyId}
-                            onChange={(e) => setVarietyId(e.target.value === '' ? '' : Number(e.target.value))}
-                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            required
-                        >
-                            <option value="">선택하세요</option>
-                            {varieties.map((v) => (
-                                <option key={v.id} value={v.id}>{v.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
+                    {/* 1행: 품종 | 도정 구분 (잡곡 선택 시 도정 숨김) */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label htmlFor="pt-milling">도정 구분</Label>
+                            <Label htmlFor="pt-variety">품종</Label>
                             <select
-                                id="pt-milling"
-                                value={millingType}
-                                onChange={(e) => setMillingType(e.target.value)}
+                                id="pt-variety"
+                                value={varietyId}
+                                onChange={(e) => handleVarietyChange(e.target.value)}
                                 className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                required
                             >
-                                {MILLING_TYPES.map((t) => (
-                                    <option key={t} value={t}>{t}</option>
+                                <option value="">선택하세요</option>
+                                {varieties.map((v) => (
+                                    <option key={v.id} value={v.id}>{v.name}</option>
                                 ))}
                             </select>
                         </div>
+                        {!isMisc && (
+                            <div className="space-y-2">
+                                <Label htmlFor="pt-milling">도정 구분</Label>
+                                <select
+                                    id="pt-milling"
+                                    value={millingType}
+                                    onChange={(e) => setMillingType(e.target.value)}
+                                    className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                >
+                                    {MILLING_TYPES.map((t) => (
+                                        <option key={t} value={t}>{t}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 2행: 규격 | 포장지 */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                             <Label htmlFor="pt-package">규격</Label>
                             <Input
@@ -153,24 +170,23 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                                 required
                             />
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="pt-packaging">포장지</Label>
-                        <select
-                            id="pt-packaging"
-                            value={packagingId}
-                            onChange={(e) => setPackagingId(e.target.value === '' ? '' : Number(e.target.value))}
-                            className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            required
-                        >
-                            <option value="">선택하세요</option>
-                            {packagingOptions.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                    {p.name}{!p.active ? ' (비활성)' : ''}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="space-y-2">
+                            <Label htmlFor="pt-packaging">포장지</Label>
+                            <select
+                                id="pt-packaging"
+                                value={packagingId}
+                                onChange={(e) => setPackagingId(e.target.value === '' ? '' : Number(e.target.value))}
+                                className="w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                required
+                            >
+                                <option value="">선택하세요</option>
+                                {packagingOptions.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}{!p.active ? ' (비활성)' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer pt-1">

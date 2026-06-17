@@ -2,6 +2,18 @@
 
 ## 2026-06-17
 
+### admin 제품유형 카탈로그 — 벼/잡곡 탭 분리 + 등록 다이얼로그 레이아웃 `feat` `design`
+
+**소스**: Claude Design 2차 핸드오프([docs/handoff/제품유형-핸드오프/](handoff/제품유형-핸드오프/)) — 탭-그룹화 작업지시. 직전 "전체 품종 단일 아코디언"을 탭 구조로 교체.
+
+**변경**:
+- **벼/잡곡 탭 분리**: [product-type-page-client.tsx](<../app/(dashboard)/admin/product-types/product-type-page-client.tsx>) 카탈로그를 `Wheat`(벼)/`Sprout`(잡곡) 탭으로 분리(raw-stocks 패턴, useState). **벼 탭**=품종 아코디언(도정 컬럼 O), **잡곡 탭**=평면 테이블(그룹화 X, 품종 컬럼 O, 도정 컬럼 X). `variety.category`로 분류(이미 `include: { variety: true }`로 내려옴). 상태토글·관리 버튼은 `statusButton`/`actionButtons` 헬퍼로 공통화.
+  - ⚠️ 지시서와 다르게 **기본 접힘**(`?? false`)·**찰벼 도정 표시**(`getDisplayMillingType`) 유지 — 핸드오프 왕복에 미반영된 직전 사용자 지시 우선.
+- **등록 다이얼로그 레이아웃**: [product-type-dialog.tsx](<../app/(dashboard)/admin/product-types/product-type-dialog.tsx>) 2행 그리드로 재배치(1행 품종|도정, 2행 규격|포장지). **잡곡 품종 선택 시 도정 구분 숨김** + `millingType='기타'` sentinel 자동 설정(벼 복귀 시 '백미' 복원). `VarietyOption`에 `category` 추가.
+- 검증: tsc 통과, 변경분 eslint 클린.
+
+---
+
 ### admin 제품유형 UI — 색상 시스템 정렬 + SKU 카탈로그 품종별 그룹화 `feat` `design`
 
 **소스**: Claude Design 핸드오프([docs/handoff/](handoff/)) — 색상정렬·SKU그룹화 작업지시 2종.
