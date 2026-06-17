@@ -8,6 +8,12 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
+import { findOrCreateProductType } from '@/lib/product-type'
+
+// ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
+// 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
+const MISC_MILLING_SENTINEL = '기타'
+const MISC_PURCHASE_PACKAGING = '매입포장'
 
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
@@ -341,6 +347,7 @@ const CreateMiscPackageSchema = z.object({
     packageType: z.string().min(1).max(20),
     weightPerUnit: z.number().positive(),
     count: z.number().int().positive(),
+    packagingId: z.number().int().positive(),
 })
 
 export type CreateMiscPackageInput = z.infer<typeof CreateMiscPackageSchema>
@@ -379,6 +386,14 @@ export async function createMiscPackage(
                 throw new Error(`재고(${remainingKg.toFixed(2)}kg)를 초과했습니다.`)
             }
 
+            // 잡곡 포장 SKU = (품종 + '기타' + 규격 + 선택 포장지) 4키. 포장지는 사용자 선택.
+            const productTypeId = await findOrCreateProductType(tx, {
+                varietyId: stock.varietyId,
+                millingType: MISC_MILLING_SENTINEL,
+                packageType: data.packageType,
+                packagingId: data.packagingId,
+            })
+
             const created = await tx.millingOutputPackage.create({
                 data: {
                     source: 'MILLED',
@@ -391,6 +406,7 @@ export async function createMiscPackage(
                     count: data.count,
                     totalWeight,
                     lotNo: stock.lotNo,
+                    productTypeId,
                 },
             })
 
@@ -779,23 +795,42 @@ export async function createMiscPurchase(
         const totalWeight = +(weightPerUnit * count).toFixed(3)
         const incoming = new Date(`${incomingDate}T00:00:00`)
 
-        const created = await prisma.millingOutputPackage.create({
-            data: {
-                source: 'PURCHASED',
-                category: 'MISC_GRAIN',
-                batchId: null,
-                stockId: null,
+        const created = await prisma.$transaction(async (tx) => {
+            // 매입 SKU = (품종 + '기타' + 규격 + '매입포장') 4키. 포장지는 sentinel 자동.
+            const packaging = await tx.packaging.findUnique({
+                where: { name: MISC_PURCHASE_PACKAGING },
+                select: { id: true },
+            })
+            if (!packaging) {
+                throw new Error('매입포장 마스터가 없습니다. 제품유형 시드를 확인해주세요.')
+            }
+
+            const productTypeId = await findOrCreateProductType(tx, {
                 varietyId: lookup.varietyId,
-                purchaseVendor,
-                incomingDate: incoming,
+                millingType: MISC_MILLING_SENTINEL,
                 packageType,
-                weightPerUnit,
-                count,
-                totalWeight,
-                lotNo: null,
-                productCode: null,
-            },
-            select: { id: true },
+                packagingId: packaging.id,
+            })
+
+            return tx.millingOutputPackage.create({
+                data: {
+                    source: 'PURCHASED',
+                    category: 'MISC_GRAIN',
+                    batchId: null,
+                    stockId: null,
+                    varietyId: lookup.varietyId,
+                    purchaseVendor,
+                    incomingDate: incoming,
+                    packageType,
+                    weightPerUnit,
+                    count,
+                    totalWeight,
+                    lotNo: null,
+                    productCode: null,
+                    productTypeId,
+                },
+                select: { id: true },
+            })
         })
 
         await recordAuditLog({

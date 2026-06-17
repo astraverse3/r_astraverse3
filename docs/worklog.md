@@ -2,6 +2,25 @@
 
 ## 2026-06-17
 
+### 제품유형 마스터 — 단계 5(1/2): 잡곡 매입·포장 등록 SKU 연동 `feat`
+
+**계획서** [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) §단계5 중 "쉬운 2곳"(매입·잡곡포장). 난도 최상인 도정산(add-packaging-dialog)은 별도.
+
+**변경**:
+- [packages.ts](../app/actions/packages.ts):
+  - sentinel 상수 `MISC_MILLING_SENTINEL='기타'`·`MISC_PURCHASE_PACKAGING='매입포장'` + `findOrCreateProductType` import.
+  - `createMiscPurchase`(매입): 단순 create → 트랜잭션으로 전환. `'매입포장'`(active=false) Packaging 조회 → `findOrCreateProductType(품종,'기타',규격,매입포장)` → `productTypeId` 주입. **UI 무변경**(포장지 자동).
+  - `createMiscPackage`(잡곡포장): `CreateMiscPackageSchema`에 `packagingId` 추가. 트랜잭션 안에서 `findOrCreateProductType(stock.varietyId,'기타',규격,선택포장지)` → `productTypeId` 주입.
+- [misc-package-dialog.tsx](<../app/(dashboard)/packages/misc-package-dialog.tsx>): 포장지 드롭다운 신설. `suggestProductType`로 (품종+'기타'+규격) 기본 포장지 자동선택 + 변경 가능. 규격 변경 시 재추천. `packagingId` 미선택이면 제출 차단.
+
+**결정**: 잡곡 포장지는 "기본 자동선택 + 변경 가능 드롭다운"(사용자 확정). ⚠️ 잡곡 품종은 시드 ProductType 0건 → 초기엔 기본 미지정("기본 미지정 — 직접 선택" 안내), 한 번 등록 시 해당 SKU 생성·admin에서 기본 지정하면 그다음부터 자동선택.
+
+**검증**: `tsc --noEmit` 통과. 변경분 신규 lint 0(잔존 96/100줄 `setLoadingStocks` effect 부채는 변경 전부터 존재=stash 비교 확인, 미수정).
+
+**남음**: 단계 5(2/2) add-packaging-dialog(도정산 라인별 포장지, 난도 최상, 라인별 UI=Claude Design 위임).
+
+---
+
 ### 제품유형 관리 메뉴 위치 이동 — 관리자 메뉴 그룹 안으로 `feat`
 
 **변경**: "제품유형 관리"를 Management 평면 목록에서 **접이식 "관리자 메뉴" 그룹 하위 항목**으로 이동.

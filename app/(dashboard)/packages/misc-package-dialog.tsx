@@ -16,8 +16,12 @@ import {
     getAvailableMiscStocks,
     type AvailableMiscStock,
 } from '@/app/actions/packages'
+import { suggestProductType } from '@/app/actions/product-type'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+
+// 잡곡 포장 SKU는 도정구분이 없어 millingType='기타' sentinel로 묶인다. (plan-제품유형마스터.md §2)
+const MISC_MILLING_SENTINEL = '기타'
 
 // 잡곡 전용 포장단위 7칸 — plan-잡곡재고관리-#7.md §3.4
 // "기타"는 weightPerUnit 직접 입력
@@ -66,12 +70,20 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
     const [countStr, setCountStr] = useState<string>('')
     const [isSaving, setIsSaving] = useState(false)
 
+    // 포장지(SKU) 선택 — 기본 자동선택 + 변경 가능
+    const [packagings, setPackagings] = useState<{ id: number; name: string }[]>([])
+    const [packagingId, setPackagingId] = useState<number | null>(null)
+    const [defaultPackagingId, setDefaultPackagingId] = useState<number | null>(null)
+
     function resetForm() {
         setSelectedStockId('')
         setPackageLabel('5kg')
         setCustomWeightStr('')
         setCustomLabelStr('')
         setCountStr('')
+        setPackagings([])
+        setPackagingId(null)
+        setDefaultPackagingId(null)
     }
 
     function handleOpenChange(next: boolean) {
@@ -118,6 +130,27 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
     const count = parseInt(countStr) || 0
     const totalWeight = +(weightPerUnit * count).toFixed(3)
 
+    // 확정 규격 (custom이면 입력 라벨)
+    const resolvedPackageType = isCustom ? customLabelStr.trim() : packageLabel
+    const varietyId = selectedStock?.variety.id ?? null
+
+    // (품종 + '기타' + 규격) 기준 포장지 후보·기본 lazy fetch.
+    // 규격이 바뀌면 그 규격의 기본 포장지로 재추천(잡곡은 기본 미시드 → 직접 선택).
+    useEffect(() => {
+        if (!open || !varietyId || !resolvedPackageType) return
+        let cancelled = false
+        suggestProductType(varietyId, MISC_MILLING_SENTINEL, resolvedPackageType).then(res => {
+            if (cancelled || !res.success || !res.data) return
+            setPackagings(res.data.packagings.map(p => ({ id: p.id, name: p.name })))
+            const def = res.data.default?.packagingId ?? null
+            setDefaultPackagingId(def)
+            if (def != null) setPackagingId(def)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [open, varietyId, resolvedPackageType])
+
     const remainingKg = selectedStock?.remainingKg ?? 0
     const isOver = totalWeight > 0 && totalWeight - remainingKg > 0.001
     const remainingAfter = remainingKg - totalWeight
@@ -128,12 +161,13 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
         weightPerUnit > 0 &&
         count > 0 &&
         !isOver &&
+        packagingId != null &&
         !isSaving &&
         (!isCustom || (customLabelStr.trim().length > 0 && customLabelStr.trim().length <= 20))
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
-        if (!canSubmit || !selectedStock) return
+        if (!canSubmit || !selectedStock || packagingId == null) return
 
         const packageType = isCustom ? customLabelStr.trim() : packageLabel
 
@@ -143,6 +177,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
             packageType,
             weightPerUnit,
             count,
+            packagingId,
         })
         setIsSaving(false)
 
@@ -243,7 +278,32 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
                         )}
                     </div>
 
-                    {/* 3. 개수 + 미리보기 */}
+                    {/* 3. 포장지 (SKU) — 기본 자동선택 + 변경 가능 */}
+                    <div className="space-y-1">
+                        <Label className="text-[13px]">
+                            포장지
+                            {selectedStock && defaultPackagingId == null && packagings.length > 0 && (
+                                <span className="ml-1.5 text-[11px] text-slate-400 font-normal">
+                                    기본 미지정 — 직접 선택
+                                </span>
+                            )}
+                        </Label>
+                        <select
+                            value={packagingId ?? ''}
+                            onChange={e => setPackagingId(e.target.value ? Number(e.target.value) : null)}
+                            disabled={!selectedStock || packagings.length === 0}
+                            className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-[13px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-slate-50 disabled:text-slate-400"
+                        >
+                            <option value="">포장지 선택</option>
+                            {packagings.map(p => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}{p.id === defaultPackagingId ? ' (기본)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* 4. 개수 + 미리보기 */}
                     <div className="flex items-end justify-between gap-3">
                         <div className="space-y-1 w-[140px]">
                             <Label className="text-[13px]">개수</Label>
