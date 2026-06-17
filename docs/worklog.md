@@ -13,7 +13,7 @@
   - `createMiscPackage`(잡곡포장): `CreateMiscPackageSchema`에 `packagingId` 추가. 트랜잭션 안에서 `findOrCreateProductType(stock.varietyId,'기타',규격,선택포장지)` → `productTypeId` 주입.
 - [misc-package-dialog.tsx](<../app/(dashboard)/packages/misc-package-dialog.tsx>): 포장지 드롭다운 신설. `suggestProductType`로 (품종+'기타'+규격) 기본 포장지 자동선택 + 변경 가능. 규격 변경 시 재추천. `packagingId` 미선택이면 제출 차단.
 
-**결정**: 잡곡 포장지는 "기본 자동선택 + 변경 가능 드롭다운"(사용자 확정). ⚠️ 잡곡 품종은 시드 ProductType 0건 → 초기엔 기본 미지정("기본 미지정 — 직접 선택" 안내), 한 번 등록 시 해당 SKU 생성·admin에서 기본 지정하면 그다음부터 자동선택.
+**결정**: 잡곡 포장지는 "기본 자동선택 + 변경 가능 드롭다운"(사용자 확정). 잡곡 품종은 시드 ProductType 0건이라 첫 등록 시 기본 미지정 → **`findOrCreateProductType`에 `promoteDefaultIfNone` 옵션 추가**: 새 SKU 생성 시 그 (품종+도정+규격) 조합에 기존 기본이 없으면 첫 등록 포장지를 기본으로 자동 승격(admin 안 거쳐도 다음부터 자동선택). 기존 기본 있으면 미변경. 헬퍼도 upsert→find→(기본유무체크)→upsert로 재구성.
 
 **검증**: `tsc --noEmit` 통과. 변경분 신규 lint 0(잔존 96/100줄 `setLoadingStocks` effect 부채는 변경 전부터 존재=stash 비교 확인, 미수정).
 

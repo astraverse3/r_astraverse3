@@ -387,11 +387,13 @@ export async function createMiscPackage(
             }
 
             // 잡곡 포장 SKU = (품종 + '기타' + 규격 + 선택 포장지) 4키. 포장지는 사용자 선택.
+            // 잡곡은 기본 포장지가 미시드 → 첫 등록 포장지를 기본으로 승격(다음부터 자동선택).
             const productTypeId = await findOrCreateProductType(tx, {
                 varietyId: stock.varietyId,
                 millingType: MISC_MILLING_SENTINEL,
                 packageType: data.packageType,
                 packagingId: data.packagingId,
+                promoteDefaultIfNone: true,
             })
 
             const created = await tx.millingOutputPackage.create({
