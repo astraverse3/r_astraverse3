@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
+import { listPackagings, suggestProductType } from '@/app/actions/product-type'
 import { generateLotNo } from '@/lib/lot-generation'
 import { getYieldRate } from '@/app/actions/settings'
 import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants'
@@ -35,11 +36,16 @@ interface Props {
 type LotGroup = {
     lotNo: string
     representativeStockId: number
+    varietyId: number
     stockIds: number[]
     farmerName: string
     varietyName: string
     totalInputKg: number
 }
+
+// SKU 특례: 잔량=포장지 없음(SKU 미부여), 톤백=포장지 '톤백' 고정.
+const PKG_REMAINDER = '잔량'
+const PKG_TONBAG = '톤백'
 
 const PACKAGE_TEMPLATES = [
     { label: '톤백', weight: 0 },
@@ -75,6 +81,7 @@ function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
             map.set(groupKey, {
                 lotNo: displayLotNo,
                 representativeStockId: stock.id,
+                varietyId: stock.variety?.id ?? stock.varietyId ?? 0,
                 stockIds: [],
                 farmerName: stock.farmerName || stock.farmer?.name || '알수없음',
                 varietyName: stock.variety?.name || '',
@@ -86,6 +93,17 @@ function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
         group.stockIds.push(stock.id)
     }
     return Array.from(map.values())
+}
+
+// 다이얼로그 재진입 시 기존 라인의 포장지(packagingId)를 productType에서 평탄화 복원.
+function restoreOutputs(raw: MillingOutputInput[]): MillingOutputInput[] {
+    return (raw ?? []).map(o => ({
+        ...o,
+        packagingId:
+            o.packagingId ??
+            (o as { productType?: { packagingId?: number | null } }).productType?.packagingId ??
+            null,
+    }))
 }
 
 export function AddPackagingDialog({
@@ -101,10 +119,12 @@ export function AddPackagingDialog({
 }: Props & { open?: boolean; onOpenChange?: (open: boolean) => void; trigger?: React.ReactNode }) {
     const router = useRouter()
     const [internalOpen, setInternalOpen] = useState(false)
-    const [outputs, setOutputs] = useState<MillingOutputInput[]>(initialOutputs)
+    const [outputs, setOutputs] = useState<MillingOutputInput[]>(() => restoreOutputs(initialOutputs))
     const [isLoading, setIsLoading] = useState(false)
     const [customWeights, setCustomWeights] = useState<Record<string, string>>({})
     const [customInputs, setCustomInputs] = useState<Record<string, boolean>>({})
+    // 활성 포장지 목록 (라인별 드롭다운 옵션)
+    const [packagings, setPackagings] = useState<{ id: number; name: string }[]>([])
     const scrollRef = useRef<HTMLDivElement>(null)
     const { data: session } = useSession()
     // @ts-ignore
@@ -129,11 +149,24 @@ export function AddPackagingDialog({
     }
 
     useEffect(() => {
-        if (open) setOutputs(initialOutputs)
+        if (open) setOutputs(restoreOutputs(initialOutputs))
     }, [open, initialOutputs])
 
+    // 활성 포장지 목록 lazy fetch (라인별 드롭다운 옵션)
+    useEffect(() => {
+        if (!open) return
+        let cancelled = false
+        listPackagings().then(res => {
+            if (cancelled || !res.success || !res.data) return
+            setPackagings(res.data.filter(p => p.active).map(p => ({ id: p.id, name: p.name })))
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [open])
+
     const handleOpenChange = (newOpen: boolean) => {
-        if (newOpen) setOutputs(initialOutputs)
+        if (newOpen) setOutputs(restoreOutputs(initialOutputs))
         setOpen(newOpen)
     }
 
@@ -144,7 +177,7 @@ export function AddPackagingDialog({
         setIsLoading(false)
         if (result.success) {
             triggerDataUpdate()
-            setOutputs(initialOutputs)
+            setOutputs(restoreOutputs(initialOutputs))
             setOpen(true)
             router.refresh()
         } else {
@@ -203,34 +236,47 @@ export function AddPackagingDialog({
         }, 50)
     }
 
-    const addToGroup = (group: LotGroup, template: { label: string; weight: number }) => {
+    const addToGroup = async (group: LotGroup, template: { label: string; weight: number }) => {
         const stockId = group.representativeStockId
-        if (template.label === '톤백' || template.label === '잔량') {
+        const label = template.label
+        // 톤백·잔량은 포장지 입력 없음(톤백=서버에서 '톤백' 강제, 잔량=SKU 미부여).
+        if (label === PKG_TONBAG || label === PKG_REMAINDER) {
             setOutputs(prev => [...prev, {
-                packageType: template.label,
+                packageType: label,
                 weightPerUnit: 0,
                 count: 1,
                 totalWeight: 0,
                 stockId,
+                packagingId: null,
             }])
             scrollToBottom()
             return
         }
-        setOutputs(prev => {
-            const idx = prev.findIndex(o => o.packageType === template.label && o.stockId === stockId)
-            if (idx >= 0) {
-                return prev.map((o, i) => i === idx
-                    ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
-                    : o)
-            }
-            return [...prev, {
-                packageType: template.label,
-                weightPerUnit: template.weight,
-                count: 1,
-                totalWeight: template.weight,
-                stockId,
-            }]
-        })
+        // 기존 동일 라인이 있으면 수량만 증가(포장지 유지).
+        const existing = outputs.find(o => o.packageType === label && o.stockId === stockId)
+        if (existing) {
+            setOutputs(prev => prev.map(o => (o.packageType === label && o.stockId === stockId)
+                ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
+                : o))
+            return
+        }
+        // 신규 라인: (품종+도정+규격) 기본 포장지를 추천받아 함께 추가.
+        let defaultPackagingId: number | null = null
+        const res = await suggestProductType(group.varietyId, millingType, label)
+        if (res.success && res.data) defaultPackagingId = res.data.default?.packagingId ?? null
+        setOutputs(prev => [...prev, {
+            packageType: label,
+            weightPerUnit: template.weight,
+            count: 1,
+            totalWeight: template.weight,
+            stockId,
+            packagingId: defaultPackagingId,
+        }])
+        scrollToBottom()
+    }
+
+    const setPackaging = (index: number, packagingId: number | null) => {
+        setOutputs(prev => prev.map((o, i) => i === index ? { ...o, packagingId } : o))
     }
 
     const handleCustomAdd = (group: LotGroup) => {
@@ -304,7 +350,7 @@ export function AddPackagingDialog({
     // 단일 그룹이면 stocks가 없어도 빈 그룹 하나로 처리
     const displayGroups: LotGroup[] = lotGroups.length > 0
         ? lotGroups
-        : [{ lotNo: '', representativeStockId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
+        : [{ lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -440,7 +486,8 @@ export function AddPackagingDialog({
                                         </div>
                                     )}
                                     {groupOutputs.map(({ o, i }) => (
-                                        <div key={i} className="grid grid-cols-[52px_1fr_92px_28px] items-center gap-1 px-3 py-1.5">
+                                        <div key={i} className="px-3 py-1.5">
+                                          <div className="grid grid-cols-[52px_1fr_92px_28px] items-center gap-1">
                                             {/* 규격 badge */}
                                             <Badge variant="secondary" className="bg-stone-100 text-stone-600 hover:bg-stone-100 px-1.5 py-0 rounded text-[11px] justify-center">
                                                 {o.packageType}
@@ -495,6 +542,31 @@ export function AddPackagingDialog({
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             ) : <div />}
+                                          </div>
+
+                                          {/* 포장지 줄 — 잔량은 SKU 없음(숨김), 톤백은 고정, 그 외 드롭다운(기본 자동) */}
+                                          {o.packageType !== PKG_REMAINDER && (
+                                            <div className="pl-[56px] pt-1">
+                                                {o.packageType === PKG_TONBAG ? (
+                                                    <span className="text-[11px] text-stone-400">포장지: 톤백</span>
+                                                ) : isClosed || !canManage ? (
+                                                    <span className="text-[11px] text-stone-400">
+                                                        포장지: {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
+                                                    </span>
+                                                ) : (
+                                                    <select
+                                                        value={o.packagingId ?? ''}
+                                                        onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
+                                                        className="h-7 w-full max-w-[180px] rounded-md border border-stone-200 bg-white px-1.5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                                                    >
+                                                        <option value="">포장지 미지정</option>
+                                                        {packagings.map(p => (
+                                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </div>
+                                          )}
                                         </div>
                                     ))}
                                 </div>

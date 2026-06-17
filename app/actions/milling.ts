@@ -8,6 +8,14 @@ import { getProductCode, generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { findOrCreateProductType } from '@/lib/product-type'
+
+// 도정산 SKU 연동 sentinel.
+// - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
+// - 톤백: 규격은 '톤백'이고 포장지도 '톤백' Packaging으로 강제(규격명과 동명이나 별개 필드).
+const PACKAGE_TYPE_REMAINDER = '잔량'
+const PACKAGE_TYPE_TONBAG = '톤백'
+const TONBAG_PACKAGING = '톤백'
 
 // Updated to match new schema relations
 export type MillingBatchFormData = {
@@ -25,6 +33,8 @@ export type MillingOutputInput = {
     count: number
     totalWeight: number
     stockId?: number
+    /** 라인별 포장지(SKU 매칭키). 잔량은 없음(null), 톤백은 '톤백' 고정, 그 외 기본/선택값. */
+    packagingId?: number | null
 }
 
 
@@ -278,7 +288,8 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                         { bagNo: 'asc' }
                     ]
                 },
-                outputs: true
+                // productType.packagingId는 다이얼로그 재진입 시 라인별 포장지 복원에 사용.
+                outputs: { include: { productType: { select: { packagingId: true } } } }
             },
             orderBy: [
                 { date: 'desc' },
@@ -424,6 +435,9 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 where: { batchId }
             });
 
+            // 톤백 포장지 sentinel id는 톤백 라인이 있을 때만 lazy 조회.
+            let tonbagPackagingId: number | null = null;
+
             // 3. Create new outputs
             for (const output of outputs) {
                 const targetStock = output.stockId
@@ -443,6 +457,33 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     farmerNo: targetStock.farmer.farmerNo || '00'
                 });
 
+                // ProductType(SKU) 결정: 잔량=미부여(null), 톤백='톤백' 포장지 강제, 그 외=라인 포장지.
+                let productTypeId: number | null = null;
+                if (output.packageType !== PACKAGE_TYPE_REMAINDER) {
+                    let packagingId = output.packagingId ?? null;
+                    if (output.packageType === PACKAGE_TYPE_TONBAG) {
+                        if (tonbagPackagingId === null) {
+                            const pkg = await tx.packaging.findUnique({
+                                where: { name: TONBAG_PACKAGING },
+                                select: { id: true },
+                            });
+                            if (!pkg) throw new Error("'톤백' 포장지 마스터가 없습니다. 제품유형 시드를 확인해주세요.");
+                            tonbagPackagingId = pkg.id;
+                        }
+                        packagingId = tonbagPackagingId;
+                    }
+                    // 포장지가 정해진 라인만 SKU 연동(미선택 일반 라인은 null 허용).
+                    if (packagingId !== null) {
+                        productTypeId = await findOrCreateProductType(tx, {
+                            varietyId: targetStock.varietyId,
+                            millingType: batch.millingType,
+                            packageType: output.packageType,
+                            packagingId,
+                            promoteDefaultIfNone: true,
+                        });
+                    }
+                }
+
                 await tx.millingOutputPackage.create({
                     data: {
                         batchId,
@@ -452,7 +493,8 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                         totalWeight: output.totalWeight,
                         productCode,
                         lotNo,
-                        stockId: targetStock.id
+                        stockId: targetStock.id,
+                        productTypeId
                     }
                 });
             }

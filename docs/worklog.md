@@ -2,6 +2,28 @@
 
 ## 2026-06-17
 
+### 제품유형 마스터 — 단계 5(2/2): 도정산(add-packaging) 라인별 포장지 SKU 연동 `feat`
+
+**계획서** [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) §단계5 — 난도 최상 도정산 경로. 이로써 **단계 5 전체 완료**.
+
+**변경**:
+- [milling.ts](../app/actions/milling.ts):
+  - `MillingOutputInput`에 `packagingId?: number | null` 추가. sentinel 상수(`잔량`/`톤백`/`톤백` 포장지).
+  - `updatePackagingLogs`(replace-all): 라인마다 SKU 결정 — **잔량=productTypeId null(SKU 미부여)**, **톤백=`톤백` Packaging 강제**(lazy 조회), 그 외=라인 `packagingId`로 `findOrCreateProductType(promoteDefaultIfNone)`. 포장지 미선택 일반 라인은 null 허용.
+  - `getMillingLogs`: `outputs: true` → `outputs: { include: { productType: { select: { packagingId: true } } } }` — 다이얼로그 재진입 시 라인별 포장지 복원용.
+  - `addPackagingLog`는 UI 미사용(데드코드)이라 이번 범위 제외.
+- [add-packaging-dialog.tsx](<../app/(dashboard)/milling/add-packaging-dialog.tsx>):
+  - `restoreOutputs`: `initialOutputs`의 `productType.packagingId`를 라인 `packagingId`로 평탄화 복원.
+  - `LotGroup`에 `varietyId` 추가(suggestProductType 호출용). 활성 포장지 목록 lazy fetch.
+  - `addToGroup`: 신규 규격 라인 추가 시 `suggestProductType`로 (품종+도정+규격) **기본 포장지 자동 부여**. 톤백/잔량은 포장지 입력 없음.
+  - 라인 UI에 포장지 줄 추가 — 잔량=숨김, 톤백=`포장지: 톤백` 고정, 그 외 드롭다운(기본 자동선택+변경).
+
+**검증**: `tsc` 통과. 변경분 신규 lint 0(stash 비교 16=16, 전부 기존 부채). **실 DB 동작 확인**(천지향1세 배치 재저장): 8kg/4kg/10kg/5kg 전부 `pt#…(기본)` 주입, 잔량 NULL 유지, 서농22호 4kg도 채워짐.
+
+**UI 비주얼**: 동작 우선으로 "라인 아래 작은 드롭다운" 배치. 레이아웃 다듬기는 Claude Design 위임 여지.
+
+---
+
 ### 제품유형 마스터 — 단계 5(1/2): 잡곡 매입·포장 등록 SKU 연동 `feat`
 
 **계획서** [plan-제품유형마스터.md](plan/plan-제품유형마스터.md) §단계5 중 "쉬운 2곳"(매입·잡곡포장). 난도 최상인 도정산(add-packaging-dialog)은 별도.
