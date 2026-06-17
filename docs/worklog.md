@@ -2,6 +2,15 @@
 
 ## 2026-06-17
 
+### 제품유형 관리 메뉴 위치 이동 — 관리자 메뉴 그룹 안으로 `feat`
+
+**변경**: "제품유형 관리"를 Management 평면 목록에서 **접이식 "관리자 메뉴" 그룹 하위 항목**으로 이동.
+- [desktop-sidebar.tsx](../components/desktop-sidebar.tsx): 그룹 펼침 영역 맨 위로. `adminActive`에 `/admin/product-types` 포함 → 제품유형 페이지 진입 시 그룹 자동 펼침(기존 useEffect). 미사용 `Package` import 정리.
+- [mobile-header.tsx](../components/mobile-header.tsx): 드롭다운 구분선 아래 그룹 맨 위로.
+- **권한**: 그룹 노출 조건에 `SALES_MANAGE` 추가(`hasAnyPermission([SALES_MANAGE, USER_MANAGE, NOTICE_MANAGE, SYSTEM_MANAGE])`), 항목은 `hasPermission(SALES_MANAGE)` 가드 → SALES_MANAGE만 가진 사용자도 정상 노출(middleware 가드와 일관). 기존 부채 2건(`@ts-ignore`·effect setState)은 미수정.
+
+---
+
 ### admin 제품유형 카탈로그 — 벼/잡곡 탭 분리 + 등록 다이얼로그 레이아웃 `feat` `design`
 
 **소스**: Claude Design 2차 핸드오프([docs/handoff/제품유형-핸드오프/](handoff/제품유형-핸드오프/)) — 탭-그룹화 작업지시. 직전 "전체 품종 단일 아코디언"을 탭 구조로 교체.

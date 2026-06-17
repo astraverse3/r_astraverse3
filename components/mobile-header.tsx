@@ -79,17 +79,18 @@ export function MobileHeader() {
                                 <span>생산자 관리</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/admin/product-types" className="flex items-center gap-2 cursor-pointer">
-                                <Package className="w-4 h-4 text-slate-500" />
-                                <span>제품유형 관리</span>
-                            </Link>
-                        </DropdownMenuItem>
-
-                        {/* 관리자 메뉴 (USER_MANAGE / NOTICE_MANAGE / SYSTEM_MANAGE 중 하나 또는 ADMIN일 때만 노출) */}
-                        {hasAnyPermission(user, ['USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
+                        {/* 관리자 메뉴 (SALES_MANAGE / USER_MANAGE / NOTICE_MANAGE / SYSTEM_MANAGE 중 하나일 때만 노출) */}
+                        {hasAnyPermission(user, ['SALES_MANAGE', 'USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
                             <>
                                 <DropdownMenuSeparator />
+                                {hasPermission(user, 'SALES_MANAGE') && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/product-types" className="flex items-center gap-2 cursor-pointer">
+                                            <Package className="w-4 h-4 text-slate-500" />
+                                            <span>제품유형 관리</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 {hasPermission(user, 'USER_MANAGE') && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
