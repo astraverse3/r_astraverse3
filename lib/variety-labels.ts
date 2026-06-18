@@ -7,6 +7,7 @@ export const VARIETY_TYPE_LABELS: Record<string, string> = {
     URUCHI: '메벼',
     GLUTINOUS: '찰벼',
     INDICA: '인디카',
+    BLACK: '흑미',
     MISC_GRAIN: '잡곡',
     OTHER: '기타',
     PURCHASED: '매입',

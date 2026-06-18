@@ -134,8 +134,9 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
                 const label = variety.type === 'URUCHI' ? '메벼' :
                     variety.type === 'GLUTINOUS' ? '찰벼' :
                         variety.type === 'INDICA' ? '인디카' :
-                            variety.type === 'MISC_GRAIN' ? '잡곡' :
-                                variety.type === 'PURCHASED' ? '매입' : '기타'
+                            variety.type === 'BLACK' ? '흑미' :
+                                variety.type === 'MISC_GRAIN' ? '잡곡' :
+                                    variety.type === 'PURCHASED' ? '매입' : '기타'
                 grouped[key] = {
                     key,
                     type: variety.type,
@@ -233,9 +234,10 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
                         {variety.type === 'URUCHI' ? '메벼'
                             : variety.type === 'GLUTINOUS' ? '찰벼'
                                 : variety.type === 'INDICA' ? '인디카'
-                                    : variety.type === 'MISC_GRAIN' ? '잡곡'
-                                        : variety.type === 'PURCHASED' ? '매입'
-                                            : '기타'}
+                                    : variety.type === 'BLACK' ? '흑미'
+                                        : variety.type === 'MISC_GRAIN' ? '잡곡'
+                                            : variety.type === 'PURCHASED' ? '매입'
+                                                : '기타'}
                     </TableCell>
                     {canManage && (
                         <TableCell className="text-center">

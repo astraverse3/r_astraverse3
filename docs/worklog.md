@@ -1,5 +1,25 @@
 # 작업일지
 
+## 2026-06-18
+
+### 로트번호 — 발아현미 131 + 서농24호 흑미(BLACK) 정리 `feat`
+
+**배경**: 발주서 판매처리 선행 데이터 정리(§6.1.1·§6.2) 연계. 색미류 로트코드 정합성.
+
+**변경**:
+- [lot-generation.ts](../lib/lot-generation.ts): `getProductCode`에 `'발아현미' → 131` 분기 추가(Special Rice 섹션 최상단). 흑미(15)/녹미(16)/홍미(17)/`BLACK→15`는 기존 유지.
+- 데이터: 서농24호(id20) `Variety.type` URUCHI → **BLACK** 1건 수정. 이름에 '흑미'가 없어 로트코드가 백미(11)로 잘못 떨어지던 것을 `BLACK→15`로 정상화. category는 이미 RICE라 `deriveVarietyCategory('BLACK')=RICE`와 정합 → **부작용 0**(§6.2 해소: category 환원은 이미 돼 있었고 type만 정리).
+- 관리화면 BLACK("흑미") 노출 3곳:
+  - [variety-dialog.tsx](<../app/(dashboard)/admin/varieties/variety-dialog.tsx>): 곡종 구분 라디오에 "흑미"(인디카 다음) 추가.
+  - [variety-list-client.tsx](<../app/(dashboard)/admin/varieties/variety-list-client.tsx>): 그룹 라벨·테이블 라벨 2곳에 `BLACK→'흑미'` 추가.
+  - [variety-labels.ts](../lib/variety-labels.ts): `VARIETY_TYPE_LABELS`에 `BLACK: '흑미'` 추가.
+
+**결정**: 흑미(id18)·녹미·홍미는 **미변경**. 흑미는 이름 매칭으로 이미 15가 나오고 잡곡(category=MISC_GRAIN) 유지가 §6.1.1 결정과 맞음. 녹미·홍미는 OTHER(기타)로 등록해도 이름으로 16/17 자동 산출. 즉 type 묶기·마이그레이션 불필요, 서농24호 1건만 정리.
+
+**검증**: `tsc --noEmit` 통과(exit 0). 로트코드 실산출 확인 — 서농24호→15·흑미→15·발아현미→131·녹미→16·홍미→17·서농22호(가바)→11 전부 정상.
+
+---
+
 ## 2026-06-17
 
 ### 도정 포장 다이얼로그 — 포장지 라인 1행 통합 `design`

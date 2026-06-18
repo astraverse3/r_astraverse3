@@ -39,6 +39,7 @@ export function getProductCode(varietyType: string, varietyName: string, milling
     // 2. Check for Rice (Category 1)
 
     // Special Rice Varieties
+    if (varietyName.includes('발아현미')) return '131'; // 발아현미
     if (varietyType === 'BLACK' || varietyName.includes('흑미')) return '15'; // 흑미
     if (varietyName.includes('녹미')) return '16'; // 녹미
     if (varietyName.includes('홍미')) return '17'; // 홍미

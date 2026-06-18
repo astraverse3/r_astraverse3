@@ -157,6 +157,17 @@ export function VarietyDialog({ mode, variety }: Props) {
                                 <input
                                     type="radio"
                                     name="type"
+                                    value="BLACK"
+                                    checked={type === 'BLACK'}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                <span>흑미</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="type"
                                     value="MISC_GRAIN"
                                     checked={type === 'MISC_GRAIN'}
                                     onChange={(e) => setType(e.target.value)}
