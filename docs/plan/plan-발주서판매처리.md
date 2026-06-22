@@ -240,15 +240,23 @@ PackageMovement      (제품재고 차감 — 세 경로 단일 테이블)
 ## 8. 구현 설계 (2026-06-09~ 작성 중, 의존순서대로 단계별)
 
 > 결정 #1~#25를 코드 설계로 전개. UI 비주얼은 Claude Design 위임 → 본 설계는 *모델·Server Action 시그니처·화면별 데이터/상호작용 요구사항·작업순서*까지.
-> 작성 진행: **[8.1 포장지 마스터 — 1차 작성]** · 8.2 발주서 파싱+모델 · 8.3 Server Actions · 8.4 화면 요구사항 · 8.5 구현순서 = 미작성.
+> 작성 진행: **[8.1 제품유형 마스터 — ✅ 구현 완료]** · 8.2 발주서 파싱+모델 · 8.3 Server Actions · 8.4 화면 요구사항 · 8.5 구현순서 = **미작성(다음 작업)**.
 
-### 8.1 제품유형(ProductType/SKU) 마스터 (§6.0 — 선행 1순위)
+### 8.1 제품유형(ProductType/SKU) 마스터 (§6.0 — 선행 1순위) — ✅ 구현 완료(2026-06-17)
 
-> **2026-06-15 전환**: 아래 8.1.1~8.1.5의 "포장지 마스터(Packaging+PackagingMapping)" 설계는 **제품유형(ProductType) 카탈로그로 격상되어 폐기**. 상세 구현 설계는 별도 문서 [plan-제품유형마스터.md](plan-제품유형마스터.md)로 분리(승인 대기). 핵심 변경은 상단 상태줄 2026-06-15 항목 참조. 아래 8.1.x는 **역사적 기록**으로만 보존(구현 시 제품유형 계획서를 따를 것).
+> **✅ 완료**: 발주서 매칭의 선행 1순위였던 SKU 정규화 작업이 **단계 1~5 전부 끝남**(2026-06-17). 발주서 매칭 4키(품종+도정+규격+포장지)는 이제 단일 `ProductType` 엔티티로 정규화되어 `WHERE productTypeId=X` 1:1 매칭이 가능.
+>
+> - **상세 구현 계획서**: [plan-제품유형마스터.md](plan-제품유형마스터.md) (단계 1~5)
+> - **결과보고서**: [report-제품유형마스터-단계5-2026-06-17.md](../report/report-제품유형마스터-단계5-2026-06-17.md)
+> - **실제 구현 ≠ 아래 구 설계**: 관리 라우트 = **`/admin/product-types`**(구 안 `/settings/packaging` 폐기), 권한 = **`SALES_MANAGE`**(구 안 `MILLING_MANAGE` 폐기), `PackagingMapping` **폐기**(기본 포장지 = `ProductType.isDefault`), `millingType`·`packagingId`는 **NOT NULL + sentinel**(`'기타'`/`'매입포장'`).
+> - **모델**: `Packaging`(name unique+active) / `ProductType`(varietyId+millingType+packageType+packagingId **@@unique 4키**, isDefault+active) / `MillingOutputPackage.productTypeId?` / `Variety.aliases`.
+> - **시드·백필**(실 DB 반영): Packaging 9종 · ProductType 57개 · aliases 5종 · **백필 360건**(잔량 72 제외 = null). 등록 3경로 find-or-create 연동 완료(잡곡매입 `55b4941`·잡곡포장 `55b4941`+`5dfc206`·도정산 `c7b03d5`·UI 1행 `892b0d5`).
+> - 발주서 매칭은 `PurchaseOrderItem.productTypeId` **1:1**(구 4키 조립 대체).
+
+<details>
+<summary>📜 구 설계(8.1.1~8.1.5) — 폐기·역사 기록 (펼치기). 2026-06-15 제품유형 카탈로그로 격상되며 폐기됨. 구현은 위 제품유형 계획서를 따랐음.</summary>
 
 발주서 매칭 4키(품종+도정+규격+포장지)를 **단일 SKU 엔티티(ProductType)로 정규화**하는 선행 작업. 이게 없으면 발주서 매칭이 성립 안 함 → 전 작업의 기반.
-
-#### (구 설계 — 폐기, 역사 기록)
 
 #### 8.1.1 Prisma 모델 (3개 변경)
 
@@ -346,6 +354,8 @@ model Variety {
 5. 포장 등록 3곳에 입력 추가(포장지 강제 — 마스터 매핑 정비 완료가 선행). 증거 확인 후 완료선언
 
 > **검토 포인트 — 2026-06-09 전부 확정**: ①관리 화면 경로 = **`/settings/packaging`(설정 메뉴 신규)** ②마스터 변경 권한 = **`MILLING_MANAGE`** ③포장 등록 시 포장지 = **강제(항상 선택)**. ⇒ 매핑 정비가 등록 강제의 선행조건이 됨(순서 4→5 반영).
+
+</details>
 
 ---
 
