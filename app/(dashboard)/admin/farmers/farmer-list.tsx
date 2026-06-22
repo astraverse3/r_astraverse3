@@ -152,7 +152,7 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
 function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const groups = farmers.reduce((acc: any, farmer: Farmer) => {
         const key = farmer.group ? farmer.group.id.toString() : 'no-group'
@@ -310,7 +310,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const toggleGroup = (key: string) => {
         const newSet = new Set(expandedGroups)

@@ -44,7 +44,7 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
     const { data: session } = useSession()
     const canManage = hasPermission(
         session?.user as { role?: string; permissions?: string[] } | undefined,
-        'SALES_MANAGE',
+        'OPERATION_MANAGE',
     )
 
     const [newPackaging, setNewPackaging] = useState('')

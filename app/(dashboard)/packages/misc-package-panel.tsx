@@ -34,11 +34,11 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const router = useRouter()
     const { data: session } = useSession()
     // 매트릭스: docs/permission-matrix.md
-    // 포장 = MILLING_MANAGE / 매입 = STOCK_MANAGE
+    // 포장 = OPERATION_MANAGE / 매입 = SUPPLY_MANAGE
     // @ts-ignore
-    const canMill = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canMill = hasPermission(session?.user, 'OPERATION_MANAGE')
     // @ts-ignore
-    const canPurchase = hasPermission(session?.user, 'STOCK_MANAGE')
+    const canPurchase = hasPermission(session?.user, 'SUPPLY_MANAGE')
     const canAnyRow = canMill || canPurchase
 
     const [packageOpen, setPackageOpen] = useState(false)
@@ -56,14 +56,14 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const handleEditRow = (row: PackageRow) => {
         if (row.source === 'MILLED') {
             if (!canMill) {
-                toast.error('포장 수정 권한(MILLING_MANAGE)이 없어요.')
+                toast.error('포장 수정 권한(OPERATION_MANAGE)이 없어요.')
                 return
             }
             setEditPackageId(row.id)
             setEditOpen(true)
         } else if (row.source === 'PURCHASED') {
             if (!canPurchase) {
-                toast.error('매입 수정 권한(STOCK_MANAGE)이 없어요.')
+                toast.error('매입 수정 권한(SUPPLY_MANAGE)이 없어요.')
                 return
             }
             setEditPurchaseId(row.id)
@@ -74,7 +74,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const handleDeleteRow = async (row: PackageRow) => {
         if (row.source === 'MILLED') {
             if (!canMill) {
-                toast.error('포장 삭제 권한(MILLING_MANAGE)이 없어요.')
+                toast.error('포장 삭제 권한(OPERATION_MANAGE)이 없어요.')
                 return
             }
             const ok = await confirmDialog({
@@ -93,7 +93,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
             }
         } else if (row.source === 'PURCHASED') {
             if (!canPurchase) {
-                toast.error('매입 삭제 권한(STOCK_MANAGE)이 없어요.')
+                toast.error('매입 삭제 권한(SUPPLY_MANAGE)이 없어요.')
                 return
             }
             const ok = await confirmDialog({

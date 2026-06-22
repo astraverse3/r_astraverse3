@@ -2,6 +2,20 @@
 
 ## 2026-06-22
 
+### 권한 단순화 — 비즈니스 5→2 + USER/SYSTEM ADMIN 흡수 `refactor`
+
+**배경**: 발주서 판매처리 설계 중 권한 #14 검토에서 파생. 실 DB 사용자 11명 권한 조합 진단 → MILLING↔SALES 100% 동행, VARIETY↔FARMER 동행, STOCK↔가공판매 분리 확인 → 2분할 확정. 계획서 [plan-권한단순화.md](plan/plan-권한단순화.md), 보고서 [report-권한단순화-2026-06-22.md](report/report-권한단순화-2026-06-22.md).
+
+**변경**:
+- `SUPPLY_MANAGE`(STOCK+VARIETY+FARMER)·`OPERATION_MANAGE`(MILLING+SALES) 신설, 구 5키 폐기. `USER_MANAGE`·`SYSTEM_MANAGE`→ADMIN 흡수(개별 보유자 0). `NOTICE_MANAGE` 유지.
+- [lib/permissions.ts](../lib/permissions.ts) 정의 교체 · [middleware.ts](../middleware.ts) 라우트 권한(users/logs/backup→null ADMIN 전용) · 서버 가드 ~45곳 + UI 가드 ~25곳 sed 일괄 치환 · [desktop-sidebar.tsx](../components/desktop-sidebar.tsx)·[mobile-header.tsx](../components/mobile-header.tsx) 관리자 메뉴 조건 재구성.
+- [permission-matrix.md](permission-matrix.md) 전면 갱신 · 발주서 계획서 §8.3 권한 OPERATION_MANAGE 확정.
+- **DB**: `scripts/migrate-permissions-2026-06-22.cjs` dry-run→apply, 7명 변환(합집합, 상실 0). 사용자 관리 화면은 동적 순회라 무수정.
+
+**검증**: 폐기 7키 grep 0건(코드) · `tsc --noEmit` exit 0 · DB dry-run↔예측표 일치 · idempotent 재실행 변경 0. ⚠️기존 로그인자는 **재로그인** 시 새 권한 반영(JWT 캐싱).
+
+---
+
 ### 도정 포장 다이얼로그 — 모바일 반응형 1행 + 흰 배경 `design`
 
 **소스**: Claude Design 핸드오프 [docs/handoff/design_handoff_packaging_inline_row/](handoff/design_handoff_packaging_inline_row/) (모바일 시안 추가). 단계5(2/2) 1행 통합이 데스크탑 기준이라 모바일에서 깨지던 것 반응형 보강.

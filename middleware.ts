@@ -4,13 +4,13 @@ import { NextResponse } from "next/server"
 // /admin/* 경로별 필요 권한 매핑 (ADMIN은 모든 경로 통과)
 // permission === null 인 경우 ADMIN 전용
 const ADMIN_ROUTE_PERMISSIONS: Array<{ prefix: string; permission: string | null }> = [
-    { prefix: "/admin/varieties", permission: "VARIETY_MANAGE" },
-    { prefix: "/admin/product-types", permission: "SALES_MANAGE" },
-    { prefix: "/admin/farmers", permission: "FARMER_MANAGE" },
-    { prefix: "/admin/users", permission: "USER_MANAGE" },
+    { prefix: "/admin/varieties", permission: "SUPPLY_MANAGE" },
+    { prefix: "/admin/product-types", permission: "OPERATION_MANAGE" },
+    { prefix: "/admin/farmers", permission: "SUPPLY_MANAGE" },
+    { prefix: "/admin/users", permission: null },
     { prefix: "/admin/notices", permission: "NOTICE_MANAGE" },
-    { prefix: "/admin/logs", permission: "SYSTEM_MANAGE" },
-    { prefix: "/admin/backup", permission: "SYSTEM_MANAGE" },
+    { prefix: "/admin/logs", permission: null },
+    { prefix: "/admin/backup", permission: null },
     { prefix: "/admin/settings", permission: null },
 ]
 

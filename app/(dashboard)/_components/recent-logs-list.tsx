@@ -41,7 +41,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
     const { data: session } = useSession();
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'MILLING_MANAGE');
+    const canManage = hasPermission(session?.user, 'OPERATION_MANAGE');
 
     return (
         <div className="w-full">

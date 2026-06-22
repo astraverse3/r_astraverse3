@@ -19,7 +19,7 @@ export type StockFormData = {
 }
 
 export async function createStock(data: StockFormData) {
-    await requirePermission('STOCK_MANAGE')
+    await requirePermission('SUPPLY_MANAGE')
     try {
         // 1. Fetch related info for Lot Generation
         const farmer = await prisma.farmer.findUnique({
@@ -96,7 +96,7 @@ export async function createStock(data: StockFormData) {
 }
 
 export async function updateStock(id: number, data: StockFormData) {
-    await requirePermission('STOCK_MANAGE')
+    await requirePermission('SUPPLY_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Get current stock info
@@ -221,7 +221,7 @@ export async function updateStock(id: number, data: StockFormData) {
 }
 
 export async function deleteStock(id: number) {
-    await requirePermission('STOCK_MANAGE')
+    await requirePermission('SUPPLY_MANAGE')
     try {
         const stock = await prisma.stock.findUnique({
             where: { id },
@@ -254,7 +254,7 @@ export async function deleteStock(id: number) {
 }
 
 export async function deleteStocks(ids: number[]) {
-    await requirePermission('STOCK_MANAGE')
+    await requirePermission('SUPPLY_MANAGE')
     try {
         const results = {
             success: [] as number[],

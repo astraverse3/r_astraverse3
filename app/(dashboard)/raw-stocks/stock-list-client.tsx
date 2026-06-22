@@ -494,7 +494,7 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
     const [editOpen, setEditOpen] = useState(false)
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const handleDelete = async () => {
         if (await confirmDialog({ description: '정말 삭제하시겠습니까? (삭제 후 복구 불가)', destructive: true, confirmText: '삭제' })) {

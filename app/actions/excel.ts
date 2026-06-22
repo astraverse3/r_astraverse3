@@ -71,7 +71,7 @@ export async function exportFarmers() {
 
 // --- IMPORT LOGIC ---
 export async function importFarmers(formData: FormData): Promise<import('@/lib/excel-utils').ExcelImportResult> {
-    await requirePermission('FARMER_MANAGE')
+    await requirePermission('SUPPLY_MANAGE')
     const result: import('@/lib/excel-utils').ExcelImportResult = {
         success: false, // Will be set to true if process completes without catastrophic failure
         counts: { total: 0, success: 0, skipped: 0, failed: 0 },

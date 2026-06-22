@@ -79,11 +79,11 @@ export function MobileHeader() {
                                 <span>생산자 관리</span>
                             </Link>
                         </DropdownMenuItem>
-                        {/* 관리자 메뉴 (SALES_MANAGE / USER_MANAGE / NOTICE_MANAGE / SYSTEM_MANAGE 중 하나일 때만 노출) */}
-                        {hasAnyPermission(user, ['SALES_MANAGE', 'USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
+                        {/* 관리자 메뉴 (OPERATION_MANAGE / NOTICE_MANAGE 또는 ADMIN일 때 노출. 사용자·로그·백업은 ADMIN 전용) */}
+                        {hasAnyPermission(user, ['OPERATION_MANAGE', 'NOTICE_MANAGE']) && (
                             <>
                                 <DropdownMenuSeparator />
-                                {hasPermission(user, 'SALES_MANAGE') && (
+                                {hasPermission(user, 'OPERATION_MANAGE') && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/admin/product-types" className="flex items-center gap-2 cursor-pointer">
                                             <Package className="w-4 h-4 text-slate-500" />
@@ -91,7 +91,7 @@ export function MobileHeader() {
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                {hasPermission(user, 'USER_MANAGE') && (
+                                {user?.role === 'ADMIN' && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
                                             <Users className="w-4 h-4 text-slate-500" />
@@ -107,7 +107,7 @@ export function MobileHeader() {
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                {hasPermission(user, 'SYSTEM_MANAGE') && (
+                                {user?.role === 'ADMIN' && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/admin/logs" className="flex items-center gap-2 cursor-pointer">
                                             <History className="w-4 h-4 text-slate-500" />

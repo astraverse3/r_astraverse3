@@ -66,9 +66,9 @@ export function MiscStockListClient({
     const router = useRouter()
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'STOCK_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
     // @ts-ignore
-    const canMill = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canMill = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     // 새 데이터가 들어오면 hide 마스크 리셋
     useEffect(() => {

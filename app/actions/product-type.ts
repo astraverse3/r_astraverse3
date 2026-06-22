@@ -27,7 +27,7 @@ export async function listPackagings() {
 }
 
 export async function createPackaging(name: string) {
-  await requirePermission('SALES_MANAGE')
+  await requirePermission('OPERATION_MANAGE')
   try {
     const trimmed = name.trim()
     if (!trimmed) return { success: false, error: '포장지명을 입력해주세요.' }
@@ -53,7 +53,7 @@ export async function createPackaging(name: string) {
 }
 
 export async function togglePackagingActive(id: number) {
-  await requirePermission('SALES_MANAGE')
+  await requirePermission('OPERATION_MANAGE')
   try {
     const pkg = await prisma.packaging.findUnique({ where: { id } })
     if (!pkg) return { success: false, error: '포장지를 찾을 수 없어요.' }
@@ -134,7 +134,7 @@ export type UpsertProductTypeInput = {
  * SKU 추가/수정. isDefault=true면 동일 (품종+도정+규격)의 기존 기본을 해제(트랜잭션).
  */
 export async function upsertProductType(input: UpsertProductTypeInput) {
-  await requirePermission('SALES_MANAGE')
+  await requirePermission('OPERATION_MANAGE')
   try {
     const millingType = input.millingType.trim() || '기타'
     const packageType = input.packageType.trim()
@@ -204,7 +204,7 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
 }
 
 export async function deleteProductType(id: number) {
-  await requirePermission('SALES_MANAGE')
+  await requirePermission('OPERATION_MANAGE')
   try {
     const used = await prisma.millingOutputPackage.count({ where: { productTypeId: id } })
     if (used > 0) {
@@ -232,7 +232,7 @@ export async function deleteProductType(id: number) {
 }
 
 export async function toggleProductTypeActive(id: number) {
-  await requirePermission('SALES_MANAGE')
+  await requirePermission('OPERATION_MANAGE')
   try {
     const pt = await prisma.productType.findUnique({ where: { id } })
     if (!pt) return { success: false, error: '제품유형을 찾을 수 없어요.' }

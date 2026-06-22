@@ -170,7 +170,7 @@ export function DesktopSidebar() {
                             <Users className="w-4 h-4" />
                             생산자 관리
                         </Link>
-                        {hasAnyPermission(user, ['SALES_MANAGE', 'USER_MANAGE', 'NOTICE_MANAGE', 'SYSTEM_MANAGE']) && (
+                        {hasAnyPermission(user, ['OPERATION_MANAGE', 'NOTICE_MANAGE']) && (
                         <div className="group pt-1">
                             <button
                                 type="button"
@@ -185,7 +185,7 @@ export function DesktopSidebar() {
                             </button>
                             {adminOpen && (
                             <div className="pl-10 mt-1 space-y-1">
-                                {hasPermission(user, 'SALES_MANAGE') && (
+                                {hasPermission(user, 'OPERATION_MANAGE') && (
                                     <Link
                                         href="/admin/product-types"
                                         className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/product-types')
@@ -196,7 +196,7 @@ export function DesktopSidebar() {
                                         제품유형 관리
                                     </Link>
                                 )}
-                                {hasPermission(user, 'USER_MANAGE') && (
+                                {user?.role === 'ADMIN' && (
                                     <Link
                                         href="/admin/users"
                                         className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
@@ -218,7 +218,7 @@ export function DesktopSidebar() {
                                         공지사항 관리
                                     </Link>
                                 )}
-                                {hasPermission(user, 'SYSTEM_MANAGE') && (
+                                {user?.role === 'ADMIN' && (
                                     <>
                                         <Link
                                             href="/admin/logs"

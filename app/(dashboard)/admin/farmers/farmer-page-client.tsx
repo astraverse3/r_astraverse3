@@ -37,7 +37,7 @@ export function FarmerPageClient({
 }) {
     const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDelete()
     const { data: session } = useSession()
-    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     return (
         <div className="grid grid-cols-1 gap-1 pb-24 sm:pb-2 px-1.5 sm:px-0">

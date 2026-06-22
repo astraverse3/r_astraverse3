@@ -240,7 +240,7 @@ PackageMovement      (제품재고 차감 — 세 경로 단일 테이블)
 ## 8. 구현 설계 (2026-06-09~ 작성 중, 의존순서대로 단계별)
 
 > 결정 #1~#25를 코드 설계로 전개. UI 비주얼은 Claude Design 위임 → 본 설계는 *모델·Server Action 시그니처·화면별 데이터/상호작용 요구사항·작업순서*까지.
-> 작성 진행: **[8.1 제품유형 마스터 — ✅ 구현 완료]** · 8.2 발주서 파싱+모델 · 8.3 Server Actions · 8.4 화면 요구사항 · 8.5 구현순서 = **미작성(다음 작업)**.
+> 작성 진행: **[8.1 제품유형 마스터 — ✅ 구현 완료]** · **[8.2 발주서 파싱+모델 — ✍️ 작성완료 2026-06-22]** · **[8.3 Server Actions — ✍️ 작성완료]** · **[8.4 화면 요구사항 — ✍️ 작성완료]** · **[8.5 구현순서 — ✍️ 작성완료]**. → 설계 1차 완성, 사용자 검토/승인 대기.
 
 ### 8.1 제품유형(ProductType/SKU) 마스터 (§6.0 — 선행 1순위) — ✅ 구현 완료(2026-06-17)
 
@@ -356,6 +356,229 @@ model Variety {
 > **검토 포인트 — 2026-06-09 전부 확정**: ①관리 화면 경로 = **`/settings/packaging`(설정 메뉴 신규)** ②마스터 변경 권한 = **`MILLING_MANAGE`** ③포장 등록 시 포장지 = **강제(항상 선택)**. ⇒ 매핑 정비가 등록 강제의 선행조건이 됨(순서 4→5 반영).
 
 </details>
+
+---
+
+### 8.2 발주서 파싱 + 도메인 모델 (✍️ 2026-06-22)
+
+> 제품유형 마스터(§8.1)가 매칭 4키를 `ProductType` 1:1로 정규화했으므로, 발주서 라인은 **`productTypeId` 하나**로 재고와 연결된다(구 4키 조립 폐기). 본 절은 신규 3모델 + enum + 파싱·매칭 파이프라인을 확정한다.
+
+#### 8.2.1 Prisma 모델 (신규 3개 + 역참조 1개 + enum 3개)
+
+```prisma
+// (1) 신규 — 업로드 묶음 (중복감지 #16 · 묶음목록 화면 · 감사 단위)
+//     가벼운 헤더 엔티티. 한 파일 업로드 = 1 PurchaseOrderUpload, 그 안에 시트·행별 PurchaseOrder N개.
+model PurchaseOrderUpload {
+  id            Int             @id @default(autoincrement())
+  fileName      String                              // 원본 파일명 (중복감지 키의 일부)
+  orderDate     DateTime?                           // 발주서 대표 발주일(파일/시트에서 추출, 없으면 업로드일)
+  orderCount    Int             @default(0)         // 적재된 PurchaseOrder 수(요약 표시·검증)
+  uploadedById  String?                             // 업로더(User.id)
+  uploadedName  String?                             // 업로더명(탈퇴 대비)
+  orders        PurchaseOrder[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([fileName, orderDate])                    // 재업로드 중복 감지 조회(#16)
+}
+
+// (2) 신규 — 주문 1건 = 발주처 + 수령인 = 엑셀 한 행 (결정 #11)
+model PurchaseOrder {
+  id         Int                 @id @default(autoincrement())
+  uploadId   Int?
+  upload     PurchaseOrderUpload? @relation(fields: [uploadId], references: [id])
+  channel    PurchaseChannel                         // DELIVERY(택배) | EMART(이마트) — 시트명으로 판별
+  orderDate  DateTime?                               // 발주일(있으면)
+  vendor     String                                  // 발주처 (이마트 시트는 '이마트' 고정)
+  recipient  String                                  // 수령인 (이마트 시트는 지점: 여주/대구/시화)
+  status     OrderStatus         @default(PENDING)   // 라인 집계 파생값(별도 수기관리 X, 결정 #12)
+  items      PurchaseOrderItem[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([uploadId])
+  @@index([vendor, recipient])                        // 중복감지 보조 키(#16)
+}
+
+// (3) 신규 — 품목 라인 = 엑셀 셀 1개 = (품종+도정+규격+포장지) 1조합 + 주문수량
+model PurchaseOrderItem {
+  id            Int           @id @default(autoincrement())
+  orderId       Int
+  order         PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // --- 파싱 원본 스냅샷 (매칭 실패 시 수동지정·재매칭·감사에 필요) ---
+  rawItemName   String                              // 원본 품목명 '유기농\n가바백미' (정규화 전 보존)
+  packageType   String                              // 규격(중량) '10kg' — 파싱에서 직접 추출, 항상 존재
+  rawPackaging  String?                             // 포장지 원본('자연주의' 등). 빈칸이면 null → 기본 포장지 적용(#21)
+  orderedQty    Int                                 // 주문 수량(셀 값)
+
+  // --- 매칭 결과 ---
+  productTypeId Int?                                // 매칭 성공 시 SKU 1:1. 실패=null(=매칭실패, 포장담당 수동, #18)
+  productType   ProductType?  @relation(fields: [productTypeId], references: [id])
+
+  movements     PackageMovement[]                   // 이 라인을 실제 차감한 로트별 배분(type=SALE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([productTypeId])
+}
+
+// (4) 신규 — 제품재고 차감 통합 모델 (결정 #19 — 세 경로 단일 테이블)
+//     발주서 일괄 / 개별 판매 / 비판매 차감 모두 "MillingOutputPackage에서 count개 차감"
+model PackageMovement {
+  id          Int                  @id @default(autoincrement())
+  packageId   Int
+  package     MillingOutputPackage @relation(fields: [packageId], references: [id])
+  count       Int                                   // 차감 개수(양수)
+  type        MovementType                          // SALE | GIFT | LOST | DAMAGED | OTHER (판매=SALE)
+
+  orderItemId Int?                                  // 발주서 경로만. 개별판매·비판매차감은 null
+  orderItem   PurchaseOrderItem?   @relation(fields: [orderItemId], references: [id])
+
+  customer    String?                               // 개별판매 거래처(자유 텍스트). 발주서는 order에서 파생되므로 null
+  note        String?                               // 비판매 사유 메모 등
+  occurredAt  DateTime             @default(now())  // 실제 차감/판매 발생일(사용자 입력 가능)
+
+  createdById String?                               // 작업자(감사 보강 — 하드삭제라 movement 자체엔 이력 남지만 AuditLog 병행)
+  createdName String?
+  createdAt   DateTime             @default(now())
+
+  // ※ 금액(단가·매출액) 필드 없음 — 수량 차감만(결정 #25)
+  @@index([packageId])                              // 가용재고 SUM 조회 핵심 인덱스
+  @@index([orderItemId])
+}
+
+// (5) 역참조 추가 — 기존 모델에 관계 한 줄씩
+model ProductType {
+  // … 기존 …
+  orderItems PurchaseOrderItem[]   // 8.1 주석 'orderItems ... 발주서 단계에서 추가' 이행
+}
+model MillingOutputPackage {
+  // … 기존 …
+  movements PackageMovement[]
+}
+
+enum PurchaseChannel { DELIVERY  EMART }
+enum OrderStatus     { PENDING  PARTIAL  COMPLETED }
+enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
+```
+
+- **가용재고 = `package.count - SUM(movement.count)`** — type 무관 전체 합산(판매·비판매 모두 실재고 차감, 결정 #19). `getPackages` 1달 cutoff(packages.ts:107-116 임시블록)는 이 도입 후 "가용수량 0 제외"로 대체·제거.
+- **라인 충족 판정 = `orderedQty` vs `SUM(movement.count where orderItemId=this AND type=SALE)`** → 충족/부분/미결. `PurchaseOrder.status`는 자기 라인 집계 파생(전부충족=COMPLETED / 일부=PARTIAL / 0=PENDING).
+- **`onDelete: Cascade`**(order→item): 업로드 취소(잘못 올린 건 삭제, #15) 시 item 동반 삭제. 단 **차감된 movement가 달린 item이 있으면 삭제 차단**(Server Action에서 선검사 — 이중차감/유령 movement 방지).
+- **`millingType`·`packagingId`를 item에 중복 저장 안 함**: 매칭 성공 시 전부 `productType`에서 파생. 매칭 실패(null)일 때 수동지정에 필요한 건 `rawItemName`+`packageType`+`rawPackaging`(재파싱 가능)이라 그것만 보존.
+- **`PurchaseOrderUpload` 신설 근거**(검토 포인트 ①): 묶음목록 화면(§6.1 화면후보)·중복감지(#16)·업로드 단위 감사·일괄삭제 앵커가 모두 묶음 헤더를 필요로 함 → 문자열 그룹키보다 가벼운 엔티티가 적절. *대안(uploadBatchId 문자열)도 가능하나 채택 안 함.*
+
+#### 8.2.2 엑셀 파싱 전략 (§2.1 실측 → 코드화)
+
+`xlsx`(SheetJS)의 `sheet_to_json`은 4줄 헤더·병합셀·피벗을 못 다룸 → **raw 셀 좌표 접근 전용 파서**를 `lib/purchase-order-parser.ts`(순수 함수, 'use server' 아님)로 분리. `app/actions/excel.ts`의 `importFarmers` 패턴(`XLSX.read(buffer)`)은 재사용하되 sheet_to_json은 안 씀.
+
+파서 흐름(시트별 반복):
+1. **channel 판별**: 시트명에 `'이마트'` 포함 → `EMART`, 아니면 `DELIVERY`.
+2. **헤더 행 위치 자동 탐지**: A열 라벨로(`A2='농가명'`, `A3='포장지'`, `A4='중량'`, `A5='소계'`, `A6` 이하 데이터). 행 인덱스 하드코딩 회피(§2.1).
+3. **규격 열 펼치기**: C열~마지막열. r0(품목명) 병합셀은 `ws['!merges']`로 펼쳐 각 규격 열에 품목명 채움. 각 규격 열 = `{ rawItemName(r0), rawPackaging(r2|null), packageType(r3) }`.
+4. **데이터 행 순회**(r6~, 소계행 무시): 각 행 = 1 `PurchaseOrder`(vendor=A열, recipient=B열 / 이마트는 vendor='이마트' 고정·recipient=지점). 행×규격열 교차 셀의 값(수량)이 있으면 1 `PurchaseOrderItem`.
+5. **정규화**: 모든 문자열 `/[\r\n]+/g`→공백, trim, 다중공백 단일화(CRLF 줄바꿈 #2.1).
+
+파서 반환 = 순수 DTO 배열(`ParsedUpload { fileName, sheets: [{ channel, orders: [{ vendor, recipient, items: [{ rawItemName, packageType, rawPackaging, orderedQty }] }] }] }`). **DB·매칭은 파서가 안 함** — Server Action(§8.3)이 DTO를 받아 적재+매칭. 파서는 Zod로 출력 형태만 검증(시스템 경계).
+
+#### 8.2.3 매칭 파이프라인 (결정 #23 — 라인 1개 → productTypeId 해석)
+
+순수 함수 `lib/purchase-order-matcher.ts`. 입력=`{ rawItemName, packageType, rawPackaging }` + 마스터(Variety[]·ProductType[]·기본포장지). 단계:
+
+```
+① 정규화: rawItemName에서 인증/브랜드 접두(유기농·프로틴 라이스·자스민 라이스) 제거,
+   도정유형 접미(백미/현미/오분도미/칠분도미) 분리 → (품종토큰, millingType?)
+   ⚠️ '흑미'·'발아현미'는 도정 접미로 취급 안 함(#1·#24) — 품종토큰에 그대로 남김
+② 품종 해석: Variety.name === 품종토큰 정확일치
+   → 실패 시 Variety.aliases.has(품종토큰) (가바흑미/가바발아현미 구 전체도 여기서)
+   → 실패 시 return { matched:false }  (매칭실패, productTypeId=null)
+③ 포장지 해석: rawPackaging 있으면 Packaging.name 일치 / 없으면(빈칸) 그 (품종+millingType+규격) 기본 ProductType의 packagingId(#21)
+④ SKU 해석: ProductType (varietyId + millingType['기타' 보정] + packageType + packagingId) @@unique 조회
+   - 위탁가공품(흑미·발아현미)·잡곡은 millingType='기타' sentinel로 보정(#24b)
+   - 단순도정 벼는 분리한 millingType 사용
+   → 매칭되면 { matched:true, productTypeId }
+```
+
+- **find-or-create 안 함**(검토 포인트 ②): 발주서 매칭은 *재고 차감*이 목적 → 카탈로그에 없는 SKU는 애초에 재고도 0 → 굳이 빈 SKU 생성 안 하고 **매칭실패(수동)로 회송**. SKU 생성은 도정산/매입 등록 경로(§8.1)의 책임. *단 매칭 성공해도 가용재고 부족이면 PARTIAL(#4).*
+- **수동지정 학습**(#22): 포장담당이 매칭실패 라인을 특정 품종으로 수동 확정하면, 그 품종토큰을 `Variety.aliases`에 append(append 시 중복·공백 가드). 다음 업로드부터 자동.
+
+### 8.3 Server Actions (✍️ 2026-06-22)
+
+> 신규 파일 **`app/actions/purchase-order.ts`**(발주서·매칭·차감) + **`app/actions/package-movement.ts`**(개별판매·비판매차감, 발주서 무관 공용). 모든 write에 `requirePermission` + `recordAuditLog` + `revalidatePath('/sales')`(차감은 `/packages`도).
+>
+> **⚠️ 권한 일괄 확정(2026-06-22 권한 단순화 완료)**: 아래 표의 모든 write Action 권한 = **`OPERATION_MANAGE`**(가공·판매). 구 `SALES_MANAGE`·`MILLING_MANAGE`는 폐기·통합됨 → 표 안의 옛 키 표기는 전부 `OPERATION_MANAGE`로 읽는다. 공개 조회(`list*`/`get*`/`exportPurchaseOrders`)는 그대로. #14의 "업로드=영업 / 매칭=포장" 역할 분리는 권한 통합으로 **소멸**(둘 다 가공·판매 권한). 참조: [plan-권한단순화.md](plan-권한단순화.md).
+
+#### 8.3.1 발주서 (`app/actions/purchase-order.ts`)
+
+| Action | 권한 | 역할·동작 |
+|---|---|---|
+| `uploadPurchaseOrder(formData)` | `SALES_MANAGE` | 파일검증(`validateExcelUpload`)→파서(§8.2.2)→**중복감지**(fileName+orderDate+vendor/recipient 대조, #16: 중복이면 `{ duplicate:true, conflicts }` 반환, 강제진행 플래그로 재호출)→트랜잭션 적재(Upload+Order+Item, status=PENDING)→각 라인 **자동매칭**(§8.2.3)+**FIFO 재고배분 미리계산은 안 함**(매칭=productTypeId만, 차감은 별도 확정). 반환=적재 요약(건수·매칭성공/실패 수) |
+| `listPurchaseUploads(filter?)` | 공개 | 업로드 묶음 목록(최신순, 건수·상태 요약) |
+| `listPurchaseOrders(uploadId?/filter)` | 공개 | 건 목록(상태·발주처·수령인·라인수·매칭실패수) |
+| `getPurchaseOrderDetail(orderId)` | 공개 | 건 상세 — 라인별 {rawItemName, 매칭결과(productType), orderedQty, 차감현황 SUM, 가용재고, 부족분} |
+| `autoMatchOrderItem(itemId)` | `MILLING_MANAGE` | 단일 라인 재매칭(업로드 후 마스터 보완했을 때). 결과 productTypeId 갱신 |
+| `setOrderItemProductType(itemId, productTypeId, {learnAlias?})` | `MILLING_MANAGE` | 매칭실패/오매칭 **수동 지정**(#18). learnAlias=true면 품종토큰을 `Variety.aliases` append(#22 학습) |
+| `confirmOrderItem(itemId, allocations[])` | `MILLING_MANAGE` | **차감 확정**(#12). allocations=[{packageId, count}](FIFO 자동추천을 사용자가 조정 가능, #3). 트랜잭션: 각 packageId **가용 재검증**(count-SUM≥요청)→`PackageMovement`(type=SALE, orderItemId) 생성→라인/건 status 재계산. 부족분 있으면 라인 부분충족·건 PARTIAL(#4) |
+| `confirmOrder(orderId)` | `MILLING_MANAGE` | 건의 전체 라인을 FIFO 자동배분으로 일괄 확정(라인별 부분성공 허용, #12 UX). 내부적으로 라인별 `confirmOrderItem` 로직 재사용 |
+| `cancelOrderItemMovements(itemId)` | `MILLING_MANAGE` | 차감 취소(#17) — 해당 라인 `PackageMovement`(type=SALE) **하드삭제**→가용 자동복원→status 재계산. `recordAuditLog` 필수(하드삭제 보완) |
+| `deletePurchaseUpload(uploadId)` / `deletePurchaseOrder(orderId)` | `SALES_MANAGE` | 잘못 올린 업로드/건 삭제(#15). **차감된 movement 존재 시 차단**(선검사). Cascade로 item 동반삭제 |
+| `exportPurchaseOrders(uploadId/filter)` | 공개(또는 `requireSession`) | 발주서 양식 복원 + **생산자명·로트번호 채움**(완료 건). `exportPackages`(packages.ts:1025) base64 패턴 재사용. movement→package→stock.farmer/lotNo 경유로 생산자·로트 주입 |
+
+- **FIFO 자동추천**(#3): `confirm*` 내부 헬퍼 `suggestAllocation(productTypeId, qty)` = `MillingOutputPackage where productTypeId AND 가용>0` 을 `createdAt`(또는 incomingDate) 오름차순으로 필요수량까지 그리디 배분. 포장담당이 상세에서 로트 교체 가능(반환된 추천을 UI에서 편집 후 `confirmOrderItem`에 전달).
+- **동시성**(리스크): 가용 재검증을 트랜잭션 내에서 하되 Prisma는 `SELECT FOR UPDATE` 미지원 → 동일 package 동시 차감 시 초과 위험. 차감은 포장담당 소수 작업이라 경합 낮음. 보강책 = 트랜잭션 직렬화 격리 또는 movement 생성 직후 가용 재검증해 음수면 롤백. **§8.5 리스크에 기록.**
+
+#### 8.3.2 개별판매·비판매차감 (`app/actions/package-movement.ts`) — 발주서 무관 공용(#20)
+
+| Action | 권한 | 역할 |
+|---|---|---|
+| `createSale({packageId, count, customer?, occurredAt?, note?})` | `SALES_MANAGE` | 개별 판매등록(type=SALE, orderItemId=null). 제품판매 탭 + `/packages` 행 진입. 가용 재검증 |
+| `createNonSaleMovement({packageId, count, type, note, occurredAt?})` | `MILLING_MANAGE` | 비판매 차감(GIFT/LOST/DAMAGED/OTHER). `/packages` 행 진입. ⚠️원물(stock) 복원 안 함(#19) |
+| `cancelMovement(movementId)` | type별(SALE=`SALES_MANAGE`/그 외=`MILLING_MANAGE`) | 단건 하드삭제+복원+`recordAuditLog`(#17) |
+| `listMovements(packageId)` | 공개 | 특정 제품재고의 차감 이력(판매·비판매 통합) |
+
+- **권한 = 전부 `OPERATION_MANAGE`**(2026-06-22 권한 단순화로 확정): 개별판매·비판매차감·취소 모두 가공·판매 권한 단일. (검토 포인트 ③의 "판매=SALES/비판매=MILLING 분리"안은 권한 통합으로 무효화 — 두 권한이 하나가 됨.)
+- `getPackages` 수정: cutoff 임시블록 제거 + 각 package에 `available = count - SUM(movement.count)` 동봉, available=0은 목록 제외(백로그 §13 종료).
+
+### 8.4 화면 요구사항 (✍️ 2026-06-22 — 비주얼은 Claude Design 위임)
+
+> 본 절은 *화면 목록 + 각 화면이 담을 데이터·상호작용 요구사항*까지만(결정대로). 레이아웃·비주얼은 [[design_tool_claude_design]] 핸드오프. `/sales` 탭은 **제품판매 / 원물출고 2탭**(결정 #13, 기존 rice/misc 준비중 placeholder 제거).
+
+| # | 화면 | 진입 | 데이터 | 핵심 상호작용 |
+|---|---|---|---|---|
+| 1 | **발주서 묶음 목록** | 제품판매 탭 | 업로드별 {파일명·발주일·건수·상태요약·매칭실패수} | 엑셀 업로드 버튼(SALES_MANAGE)·묶음 클릭→건목록·삭제 |
+| 2 | **건 목록** | 묶음 드릴다운 | 발주처·수령인·채널·라인수·상태(PENDING/PARTIAL/COMPLETED)·부족표시 | 건 클릭→상세·일괄 완료처리·export |
+| 3 | **건 상세(매칭·차감)** | 건 클릭 | 라인별 {품목명·매칭품종/SKU·규격·포장지·주문수량·가용재고·FIFO추천로트·부족분} | 라인 차감확정·로트교체·매칭실패 수동지정·차감취소 (전부 MILLING_MANAGE) |
+| 4 | **발주서 업로드** | 묶음목록 버튼 | 파일선택 | 업로드→중복경고 모달(#16)→적재요약. SALES_MANAGE |
+| 5 | **개별 판매등록** | 제품판매 탭 + `/packages` 행 | 제품재고 선택·수량·거래처·발생일 | 등록(createSale). SALES_MANAGE. 금액 입력 없음(#25) |
+| 6 | **비판매 차감** | `/packages` 행 | 제품재고·수량·사유(type)·메모·발생일 | 등록(createNonSaleMovement). MILLING_MANAGE |
+| 7 | **제품재고 목록 행 트리거** | `/packages` 각 행 | 가용재고(count-SUM)·차감이력 | 행 메뉴: 판매등록/비판매차감/이력보기 |
+| 8 | 위 전체 **모바일** | — | 동일 | 카드형(폰트 키우지 말 것 [[mobile_card_font_no_increase]]) |
+
+- 다운로드(export, #2/완료건): 발주서 원양식 + 생산자명·로트 채워진 상태(§1 4단계).
+- 매칭실패 라인은 상세에서 **빨강 강조 + 수동지정 드롭다운**(품종→SKU). 재고부족 라인은 **부족분 배지 + PARTIAL**.
+
+### 8.5 구현 순서 + 리스크 + 테스트 (✍️ 2026-06-22)
+
+**전제**: §8.1(제품유형 마스터) ✅ 완료. 아래는 발주서 본구현(§8.2~8.4) 순서.
+
+1. **스키마**: schema.prisma에 모델 3개(Upload/Order/Item)+PackageMovement+역참조 2개+enum 3개 → `prisma migrate`. (마이그레이션은 nullable·신규테이블이라 기존 row 무영향)
+2. **파서·매처**: `lib/purchase-order-parser.ts`(raw셀)·`lib/purchase-order-matcher.ts`(파이프라인 #23) 순수함수 + Zod. **실파일(docs/resources/발주서.xlsx)로 단위테스트** — 18종 품목 매칭 결과 검증(§6.1.1 기대표와 대조).
+3. **차감 공용 액션**: `app/actions/package-movement.ts`(createSale·createNonSale·cancel·list) + `getPackages` cutoff 제거·available 동봉. → 개별판매·비판매차감 먼저 동작(발주서와 독립 검증 가능).
+4. **발주서 액션**: `app/actions/purchase-order.ts`(upload·list·detail·match·confirm·cancel·export). FIFO 헬퍼.
+5. **권한 등록**: `permission-matrix.md`에 발주서/차감 항목 추가(업로드=SALES_MANAGE / 매칭·차감=MILLING_MANAGE / 비판매=MILLING_MANAGE / 판매=SALES_MANAGE). `/sales` 탭 placeholder 제거→제품판매 탭 골격.
+6. **화면**(§8.4) Claude Design 핸드오프 → 구현. 모바일 동반.
+7. **증거 기반 완료**: 실파일 업로드→매칭→차감→export 왕복을 실제 DB(Neon, [[deployment_db_infra]])에서 1건 검증 후 완료선언.
+
+**리스크**
+- **동시 차감 초과**(§8.3.1): Prisma FOR UPDATE 부재. 완화=트랜잭션 내 movement 생성 후 가용 재검증·음수면 롤백. 경합 낮음(포장담당 소수).
+- **양식 변동**: 발주서 열/시트 구조 바뀌면 파서 깨짐. 완화=A열 라벨 기반 탐지(행 하드코딩 회피)·파싱 실패 시 행 단위 skip+리포트(`importFarmers` 패턴).
+- **품종명 불일치 누적**: 신규 통칭 등장. 완화=수동지정 학습(#22 alias append)·매칭실패 리포트.
+- **이중차감**: 재업로드 중복(#16 경고)·movement 달린 건 삭제차단·차감/취소 감사로그 필수(#17).
+- **데이터 선결**: §6.1.1 후속확인(가바발아현미/흑미 재고 적재 검증)·§6.2(서농24호 RICE 환원)은 매칭 정확도 전제 → 본구현 전/병행 정리.
+
+**테스트 방안**: ①파서/매처 순수함수 단위테스트(실파일 픽스처) ②액션은 가용재검증·status 파생·하드삭제 복원 경로 중심 ③왕복 통합검증(업로드→차감→export) 1건.
 
 ---
 

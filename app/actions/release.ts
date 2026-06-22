@@ -12,7 +12,7 @@ export async function createStockRelease(
     destination: string,
     purpose: string | undefined
 ) {
-    await requirePermission('SALES_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Stocks
@@ -74,7 +74,7 @@ export async function createStockRelease(
 }
 
 export async function cancelStockRelease(stockIds: number[]) {
-    await requirePermission('SALES_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Stocks
@@ -171,7 +171,7 @@ export async function updateStockRelease(
     id: number,
     data: { date: Date; destination: string; purpose?: string }
 ) {
-    await requirePermission('SALES_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.stockRelease.update({
             where: { id },
@@ -198,7 +198,7 @@ export async function updateStockRelease(
 }
 
 export async function deleteStockReleases(ids: number[]) {
-    await requirePermission('SALES_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         await prisma.$transaction(async (tx) => {
             // 1. Revert all associated stocks
@@ -231,7 +231,7 @@ export async function deleteStockReleases(ids: number[]) {
 }
 
 export async function removeStockFromRelease(stockId: number) {
-    await requirePermission('SALES_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         await prisma.$transaction(async (tx) => {
             // 1. Find the release associated with this stock

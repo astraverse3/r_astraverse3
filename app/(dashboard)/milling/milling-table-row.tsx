@@ -39,7 +39,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
     const [isActionLoading, setIsActionLoading] = useState(false)
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const totalRiceKg = log.outputs.reduce((sum: number, o: any) => sum + o.totalWeight, 0)
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0

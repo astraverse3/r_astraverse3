@@ -32,7 +32,7 @@ interface VarietyListClientProps {
 export function VarietyListClient({ varieties, selectedIds, onSelectionChange }: VarietyListClientProps) {
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'VARIETY_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {

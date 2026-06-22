@@ -17,7 +17,7 @@ export function ExcelButtons() {
     const [exporting, setExporting] = useState(false)
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'FARMER_MANAGE')
+    const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const handleExport = async () => {
         setExporting(true)

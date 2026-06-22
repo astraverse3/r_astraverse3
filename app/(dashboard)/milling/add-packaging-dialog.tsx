@@ -128,7 +128,7 @@ export function AddPackagingDialog({
     const scrollRef = useRef<HTMLDivElement>(null)
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const lotGroups = computeLotGroups(stocks, millingType)
     const isMultiGroup = lotGroups.length > 1

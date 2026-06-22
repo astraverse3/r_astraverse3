@@ -39,11 +39,11 @@ export function StockPageClient({
 }: StockPageClientProps) {
     const { data: session } = useSession()
     // @ts-ignore
-    const canStock = hasPermission(session?.user, 'STOCK_MANAGE')
+    const canStock = hasPermission(session?.user, 'SUPPLY_MANAGE')
     // @ts-ignore
-    const canMilling = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canMilling = hasPermission(session?.user, 'OPERATION_MANAGE')
     // @ts-ignore
-    const canSales = hasPermission(session?.user, 'SALES_MANAGE')
+    const canSales = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     return (
         <div className="grid grid-cols-1 gap-2 pb-24 sm:pb-2 px-1.5 sm:px-0">

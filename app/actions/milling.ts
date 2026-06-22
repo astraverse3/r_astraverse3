@@ -42,7 +42,7 @@ export type MillingOutputInput = {
 
 
 export async function startMillingBatch(data: MillingBatchFormData) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 0. Update Mode Check
@@ -306,7 +306,7 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
 
 // Helper: Remove stock from batch
 export async function removeStockFromMilling(batchId: number, stockId: number) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             const batch = await tx.millingBatch.findUnique({ where: { id: batchId }, include: { stocks: true } });
@@ -344,7 +344,7 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
 }
 
 export async function addPackagingLog(batchId: number, data: MillingOutputInput) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         // Fetch Batch and related Stock info for LOT NUMBER GENERATION
         const batch = await prisma.millingBatch.findUnique({
@@ -415,7 +415,7 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
 
 // Update multiple packaging logs (Replace all for batch)
 export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Fetch Batch and Stock info for LOT generation
@@ -510,7 +510,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
 }
 
 export async function deletePackagingLog(outputId: number) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const deleted = await prisma.millingOutputPackage.delete({
             where: { id: outputId }
@@ -540,7 +540,7 @@ export async function reopenMillingBatch(batchId: number) {
 }
 
 export async function updateMillingBatchStatus(batchId: number, isClosed: boolean) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const batch = await prisma.millingBatch.findUnique({
             where: { id: batchId },
@@ -577,7 +577,7 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
 }
 
 export async function deleteMillingBatch(batchId: number) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Check if safe to delete
@@ -626,7 +626,7 @@ export async function deleteMillingBatch(batchId: number) {
 }
 
 export async function deleteMillingBatches(ids: number[]) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const results = {
             success: [] as number[],
@@ -718,7 +718,7 @@ export async function deleteMillingBatches(ids: number[]) {
 
 
 export async function updateMillingBatchStocks(batchId: number, stockIds: number[]) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Batch
@@ -796,7 +796,7 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
 }
 
 export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string, millingType?: string }) {
-    await requirePermission('MILLING_MANAGE')
+    await requirePermission('OPERATION_MANAGE')
     try {
         const updateData: any = {
             date: data.date,

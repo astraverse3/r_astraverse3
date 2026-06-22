@@ -17,7 +17,7 @@ export function CloseBatchButton({ batchId }: Props) {
     const [isLoading, setIsLoading] = useState(false)
     const { data: session } = useSession()
     // @ts-ignore
-    const canManage = hasPermission(session?.user, 'MILLING_MANAGE')
+    const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const handleClose = async () => {
         if (!(await confirmDialog('정말 마감하시겠습니까? 마감된 기록은 더 이상 수정할 수 없습니다.'))) return
