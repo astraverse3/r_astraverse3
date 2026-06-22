@@ -164,6 +164,9 @@ model MillingOutputPackage {
   productTypeId Int?
   productType   ProductType? @relation(fields: [productTypeId], references: [id])
 
+  // 제품재고 차감 이력 (판매·증정·분실·파손·기타 — 결정 #19. 가용재고 = count - SUM(movements.count))
+  movements PackageMovement[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -184,19 +187,19 @@ model Packaging {
 
 // 제품유형 (SKU 카탈로그) — (품종+도정+규격+포장지) 4키 정규화 ★핵심
 model ProductType {
-  id          Int    @id @default(autoincrement())
+  id          Int                    @id @default(autoincrement())
   varietyId   Int
-  variety     Variety @relation(fields: [varietyId], references: [id])
-  millingType String  @default("기타") // 벼=백미 등, 잡곡='기타' sentinel. NOT NULL
+  variety     Variety                @relation(fields: [varietyId], references: [id])
+  millingType String                 @default("기타") // 벼=백미 등, 잡곡='기타' sentinel. NOT NULL
   packageType String // 규격 '10kg' 등
   packagingId Int // NOT NULL ('매입포장' sentinel 허용)
-  packaging   Packaging @relation(fields: [packagingId], references: [id])
-  isDefault   Boolean   @default(false) // (품종+도정+규격)당 기본 포장지 추천
-  active      Boolean   @default(true)
+  packaging   Packaging              @relation(fields: [packagingId], references: [id])
+  isDefault   Boolean                @default(false) // (품종+도정+규격)당 기본 포장지 추천
+  active      Boolean                @default(true)
   packages    MillingOutputPackage[]
-  // ⚠️ orderItems PurchaseOrderItem[] 는 발주서 단계에서 양방향 관계로 추가
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  orderItems  PurchaseOrderItem[] // 발주서 라인이 이 SKU로 매칭됨 (결정 #1·#23)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 
   @@unique([varietyId, millingType, packageType, packagingId])
   @@index([varietyId, millingType, packageType]) // 기본추천 조회
@@ -219,6 +222,28 @@ enum SourceType {
 enum ProductSource {
   MILLED
   PURCHASED
+}
+
+// 발주서 채널 — 시트명으로 판별 (결정 #11, §8.2)
+enum PurchaseChannel {
+  DELIVERY // 택배
+  EMART // 이마트
+}
+
+// 발주서 건 진행상태 — 라인 집계 파생값 (결정 #12)
+enum OrderStatus {
+  PENDING // 미처리 (차감 0)
+  PARTIAL // 부분 차감
+  COMPLETED // 전체 차감 완료
+}
+
+// 제품재고 차감 유형 — 단일 enum (판매=SALE, 나머지=비판매 차감, 결정 #19)
+enum MovementType {
+  SALE // 판매 (발주서 일괄 / 개별판매)
+  GIFT // 증정
+  LOST // 분실
+  DAMAGED // 파손
+  OTHER // 기타
 }
 
 // ------------------------------------------------------
@@ -325,4 +350,91 @@ model AuditLog {
   userAgent String? // 접속 기기 정보 (선택 사항)
 
   createdAt DateTime @default(now())
+}
+
+// ------------------------------------------------------
+// 11. 발주서 판매처리 도메인 (§8.2 — 발주서 업로드 → 제품재고 차감 → 판매관리)
+//     PurchaseOrderUpload(묶음) → PurchaseOrder(건) → PurchaseOrderItem(라인) → PackageMovement(차감)
+// ------------------------------------------------------
+
+// 11.1 업로드 묶음 — 한 파일 업로드 = 1건. 중복감지(#16)·묶음목록·감사·일괄삭제 앵커
+model PurchaseOrderUpload {
+  id           Int             @id @default(autoincrement())
+  fileName     String // 원본 파일명 (중복감지 키의 일부)
+  orderDate    DateTime? // 발주서 대표 발주일 (없으면 업로드일)
+  orderCount   Int             @default(0) // 적재된 PurchaseOrder 수 (요약·검증)
+  uploadedById String? // 업로더 (User.id, relation 미설정 — 단순 저장)
+  uploadedName String? // 업로더명 (탈퇴 대비)
+  orders       PurchaseOrder[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([fileName, orderDate]) // 재업로드 중복 감지 조회(#16)
+}
+
+// 11.2 주문 1건 = 발주처 + 수령인 = 엑셀 한 행 (결정 #11)
+model PurchaseOrder {
+  id        Int                  @id @default(autoincrement())
+  uploadId  Int?
+  upload    PurchaseOrderUpload? @relation(fields: [uploadId], references: [id])
+  channel   PurchaseChannel // DELIVERY(택배) | EMART(이마트) — 시트명 판별
+  orderDate DateTime? // 발주일(있으면)
+  vendor    String // 발주처 (이마트 시트는 '이마트' 고정)
+  recipient String // 수령인 (이마트 시트는 지점: 여주/대구/시화)
+  status    OrderStatus          @default(PENDING) // 라인 집계 파생값 (결정 #12)
+  items     PurchaseOrderItem[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([uploadId])
+  @@index([vendor, recipient]) // 중복감지 보조 키(#16)
+}
+
+// 11.3 품목 라인 = 엑셀 셀 1개 = (품종+도정+규격+포장지) 1조합 + 주문수량
+model PurchaseOrderItem {
+  id      Int           @id @default(autoincrement())
+  orderId Int
+  order   PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // --- 파싱 원본 스냅샷 (매칭 실패 시 수동지정·재매칭·감사에 필요) ---
+  rawItemName  String // 원본 품목명 '유기농\n가바백미' (정규화 전 보존)
+  packageType  String // 규격(중량) '10kg' — 파싱에서 직접 추출
+  rawPackaging String? // 포장지 원본('자연주의' 등). 빈칸이면 null → 기본 포장지 적용(#21)
+  orderedQty   Int // 주문 수량(셀 값)
+
+  // --- 매칭 결과 ---
+  productTypeId Int? // 매칭 성공 시 SKU 1:1. 실패=null(=매칭실패, 포장담당 수동, #18)
+  productType   ProductType? @relation(fields: [productTypeId], references: [id])
+
+  movements PackageMovement[] // 이 라인을 실제 차감한 로트별 배분(type=SALE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([orderId])
+  @@index([productTypeId])
+}
+
+// 11.4 제품재고 차감 통합 모델 (결정 #19 — 세 경로 단일 테이블)
+//      발주서 일괄 / 개별 판매 / 비판매 차감 모두 "MillingOutputPackage에서 count개 차감"
+model PackageMovement {
+  id        Int                  @id @default(autoincrement())
+  packageId Int
+  package   MillingOutputPackage @relation(fields: [packageId], references: [id])
+  count     Int // 차감 개수(양수)
+  type      MovementType // SALE | GIFT | LOST | DAMAGED | OTHER (판매=SALE)
+
+  orderItemId Int? // 발주서 경로만. 개별판매·비판매차감은 null
+  orderItem   PurchaseOrderItem? @relation(fields: [orderItemId], references: [id])
+
+  customer   String? // 개별판매 거래처(자유 텍스트). 발주서는 order에서 파생되므로 null
+  note       String? // 비판매 사유 메모 등
+  occurredAt DateTime @default(now()) // 실제 차감/판매 발생일(사용자 입력 가능)
+
+  createdById String? // 작업자 (감사 보강 — 하드삭제 대비, relation 미설정)
+  createdName String?
+  createdAt   DateTime @default(now())
+
+  // ※ 금액(단가·매출액) 필드 없음 — 수량 차감만 (결정 #25)
+  @@index([packageId]) // 가용재고 SUM 조회 핵심 인덱스
+  @@index([orderItemId])
 }

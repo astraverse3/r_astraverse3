@@ -2,6 +2,22 @@
 
 ## 2026-06-22
 
+### 발주서 판매처리 — 본구현 단계1: 스키마 + 마이그레이션 `feat`
+
+**배경**: 발주서 판매처리 설계(§8.2~8.5) 검토·승인 → 본구현 착수. 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.5 구현순서 단계1. 결과보고서 [report-발주서판매처리-단계1-2026-06-22.md](report/report-발주서판매처리-단계1-2026-06-22.md).
+
+**설계 재검토(착수 전)**: 설계 §8.2~8.5를 실 코드와 대조 → ①권한 표기가 옛 키(SALES/MILLING_MANAGE)로 남아있어 실제 `OPERATION_MANAGE` 단일로 치환(§8.3~8.5 표·결정#14 소멸 주석), export=`requireSession` 확정 ②스키마 선행분(`Variety.aliases`·`MillingOutputPackage.productTypeId`·`ProductType`)은 이미 반영 확인 ③`getPackages` cutoff·`/sales` 탭(rice/misc 제거)·감사로그 action 유니온은 후속 단계에서 반영 메모.
+
+**변경**: [schema.prisma](../prisma/schema.prisma)
+- 신규 모델 4개: `PurchaseOrderUpload`(업로드 묶음·중복감지#16) → `PurchaseOrder`(건=발주처+수령인) → `PurchaseOrderItem`(라인=셀, `productTypeId` 1:1 매칭) → `PackageMovement`(제품재고 차감 통합, 결정#19 세 경로 단일 테이블).
+- enum 3개: `PurchaseChannel`(DELIVERY/EMART)·`OrderStatus`(PENDING/PARTIAL/COMPLETED)·`MovementType`(SALE/GIFT/LOST/DAMAGED/OTHER).
+- 역참조 2개: `ProductType.orderItems`·`MillingOutputPackage.movements`. 금액 필드 없음(결정#25), 발주서경로만 `orderItemId`.
+- 마이그레이션 [20260622000000_add_purchase_order_domain](../prisma/migrations/20260622000000_add_purchase_order_domain/migration.sql) — `migrate diff`(from-datasource)로 SQL 생성, 신규 테이블/타입/FK만(기존 데이터 무영향).
+
+**검증**: `prisma format`+`validate` 통과 · `migrate deploy` 실 Neon DB 적용 성공 · `prisma generate` 완료. **다음=단계2 파서·매처 순수함수**(`lib/purchase-order-parser.ts`·`matcher.ts`)+실파일 단위테스트.
+
+---
+
 ### 권한 단순화 — 비즈니스 5→2 + USER/SYSTEM ADMIN 흡수 `refactor`
 
 **배경**: 발주서 판매처리 설계 중 권한 #14 검토에서 파생. 실 DB 사용자 11명 권한 조합 진단 → MILLING↔SALES 100% 동행, VARIETY↔FARMER 동행, STOCK↔가공판매 분리 확인 → 2분할 확정. 계획서 [plan-권한단순화.md](plan/plan-권한단순화.md), 보고서 [report-권한단순화-2026-06-22.md](report/report-권한단순화-2026-06-22.md).

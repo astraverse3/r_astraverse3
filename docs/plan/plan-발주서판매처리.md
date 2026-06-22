@@ -114,7 +114,7 @@
 | 11 | 발주서 건 단위 | **발주처+수령인 1행 = 1건**. 완료·부분완료 상태가 배송행 단위로 돈다(`PurchaseOrder` 1행=1건). 2026-06-08 결정 |
 | 12 | 차감·완료 판정 단위 | **`PurchaseOrderItem`(라인) 단위**. 충분한 라인은 즉시 차감 확정, 부족 라인은 미결로 남아 건은 `PARTIAL`. 추후 보충 시 잔여 차감. 차감 *기록*은 `SalesAllocation`(로트별), *판정*은 라인. `PurchaseOrder.status`는 라인 집계 파생값(전부 차감=COMPLETED/일부=PARTIAL/없음=PENDING). UX는 '건 단위 처리 버튼 + 라인별 부분성공' 방향(UI 단계 확정). 2026-06-08 결정 |
 | 13 | `/sales` 탭 구조 | **제품판매 / 원물출고 2탭**. #9이 깔아둔 벼·잡곡 "준비중" placeholder 탭은 **제거**(빈 껍데기라 무손실). 발주서가 벼+잡곡을 한 매트릭스에 다 담으므로 분리 불필요. (2026-06-08 라벨 확정: "발주서"→**제품판매**=제품재고 `MillingOutputPackage` 차감 / "출고"→**원물출고**=원물 `Stock` 차감. 탭 이름이 두 도메인 구분을 그대로 드러냄, §3.5 참조. 발주서는 제품판매 탭의 입력수단일 뿐, 향후 직접판매도 같은 탭에 흡수.) 2026-06-08 결정 |
-| 14 | 권한 역할 분리 | **업로드/수정/삭제 = `SALES_MANAGE`** (영업담당) · **조회 = 가드 없음**(누구나) · **매칭/차감/처리 = `MILLING_MANAGE`** (포장담당). §2 흐름(영업 업로드 → 포장 매칭)과 일치. `permission-matrix.md`에 등록. 2026-06-08 결정 |
+| 14 | 권한 역할 분리 | ~~업로드=`SALES_MANAGE`(영업) / 매칭·차감=`MILLING_MANAGE`(포장)~~ **(2026-06-22 소멸 — 권한 단순화로 두 키가 `OPERATION_MANAGE` 하나로 통합. 역할분리 폐기, write 전부 `OPERATION_MANAGE` 단일. 조회=공개·export=requireSession. §8.3 도입부 참조.)** 2026-06-08 결정 → 2026-06-22 무효화 |
 | 15 | 업로드 시점 적재 | **업로드 즉시 파싱 → DB 적재**. 올리는 순간 `PurchaseOrder`/`PurchaseOrderItem` 생성(status=PENDING), 매칭은 그 위에서 진행. 미리보기-확정 2단계 아님. 잘못 올린 건 삭제로 처리. 2026-06-08 결정 |
 | 16 | 재업로드 중복 | **중복 감지 후 경고**. 업로드 시 기존 데이터와 키(파일명/발주날짜+발주처+수령인 조합) 대조 → 중복 가능성 있으면 경고 + 진행 여부 확인. 강제 차단 아님(사용자 확정 시 적재). 이중차감 사고 방지 목적. 2026-06-08 결정 |
 | 17 | 차감 취소/되돌리기 | **하드 삭제**. `SalesAllocation` 레코드 자체를 삭제 → 가용수량(`count - SUM(allocation)`) 자동 복원, 라인 status 재계산(→PENDING/PARTIAL), 건 status 파생 갱신. ⚠️ 하드 삭제라 레코드 이력이 안 남으므로 **차감·취소 시 `recordAuditLog`로 감사로그 필수 기록**(보완책). 기존 `cancelStockRelease`와 패턴은 다름(그쪽은 soft). 2026-06-08 결정 |
@@ -508,23 +508,23 @@ enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
 
 > 신규 파일 **`app/actions/purchase-order.ts`**(발주서·매칭·차감) + **`app/actions/package-movement.ts`**(개별판매·비판매차감, 발주서 무관 공용). 모든 write에 `requirePermission` + `recordAuditLog` + `revalidatePath('/sales')`(차감은 `/packages`도).
 >
-> **⚠️ 권한 일괄 확정(2026-06-22 권한 단순화 완료)**: 아래 표의 모든 write Action 권한 = **`OPERATION_MANAGE`**(가공·판매). 구 `SALES_MANAGE`·`MILLING_MANAGE`는 폐기·통합됨 → 표 안의 옛 키 표기는 전부 `OPERATION_MANAGE`로 읽는다. 공개 조회(`list*`/`get*`/`exportPurchaseOrders`)는 그대로. #14의 "업로드=영업 / 매칭=포장" 역할 분리는 권한 통합으로 **소멸**(둘 다 가공·판매 권한). 참조: [plan-권한단순화.md](plan-권한단순화.md).
+> **⚠️ 권한 일괄 확정(2026-06-22 권한 단순화 완료 — 표 실제 키로 갱신 완료)**: 모든 write Action 권한 = **`OPERATION_MANAGE`**(가공·판매) 단일. 구 `SALES_MANAGE`·`MILLING_MANAGE`는 폐기·통합됨(`lib/permissions.ts` 2-way). 공개 조회(`list*`/`get*`)는 가드 없음. **단 `exportPurchaseOrders`는 `requireSession`(로그인만)** — 생산자명·로트 등 내부정보가 채워지므로 공개 노출 금지. **#14의 "업로드=영업 / 매칭=포장" 역할 분리는 권한 통합으로 소멸** → 화면에서 권한별 분기 UI 불필요(가공·판매 권한 하나로 업로드·매칭·차감 모두 수행). 참조: [plan-권한단순화.md](plan-권한단순화.md).
 
 #### 8.3.1 발주서 (`app/actions/purchase-order.ts`)
 
 | Action | 권한 | 역할·동작 |
 |---|---|---|
-| `uploadPurchaseOrder(formData)` | `SALES_MANAGE` | 파일검증(`validateExcelUpload`)→파서(§8.2.2)→**중복감지**(fileName+orderDate+vendor/recipient 대조, #16: 중복이면 `{ duplicate:true, conflicts }` 반환, 강제진행 플래그로 재호출)→트랜잭션 적재(Upload+Order+Item, status=PENDING)→각 라인 **자동매칭**(§8.2.3)+**FIFO 재고배분 미리계산은 안 함**(매칭=productTypeId만, 차감은 별도 확정). 반환=적재 요약(건수·매칭성공/실패 수) |
+| `uploadPurchaseOrder(formData)` | `OPERATION_MANAGE` | 파일검증(`validateExcelUpload`)→파서(§8.2.2)→**중복감지**(fileName+orderDate+vendor/recipient 대조, #16: 중복이면 `{ duplicate:true, conflicts }` 반환, 강제진행 플래그로 재호출)→트랜잭션 적재(Upload+Order+Item, status=PENDING)→각 라인 **자동매칭**(§8.2.3)+**FIFO 재고배분 미리계산은 안 함**(매칭=productTypeId만, 차감은 별도 확정). 반환=적재 요약(건수·매칭성공/실패 수) |
 | `listPurchaseUploads(filter?)` | 공개 | 업로드 묶음 목록(최신순, 건수·상태 요약) |
 | `listPurchaseOrders(uploadId?/filter)` | 공개 | 건 목록(상태·발주처·수령인·라인수·매칭실패수) |
 | `getPurchaseOrderDetail(orderId)` | 공개 | 건 상세 — 라인별 {rawItemName, 매칭결과(productType), orderedQty, 차감현황 SUM, 가용재고, 부족분} |
-| `autoMatchOrderItem(itemId)` | `MILLING_MANAGE` | 단일 라인 재매칭(업로드 후 마스터 보완했을 때). 결과 productTypeId 갱신 |
-| `setOrderItemProductType(itemId, productTypeId, {learnAlias?})` | `MILLING_MANAGE` | 매칭실패/오매칭 **수동 지정**(#18). learnAlias=true면 품종토큰을 `Variety.aliases` append(#22 학습) |
-| `confirmOrderItem(itemId, allocations[])` | `MILLING_MANAGE` | **차감 확정**(#12). allocations=[{packageId, count}](FIFO 자동추천을 사용자가 조정 가능, #3). 트랜잭션: 각 packageId **가용 재검증**(count-SUM≥요청)→`PackageMovement`(type=SALE, orderItemId) 생성→라인/건 status 재계산. 부족분 있으면 라인 부분충족·건 PARTIAL(#4) |
-| `confirmOrder(orderId)` | `MILLING_MANAGE` | 건의 전체 라인을 FIFO 자동배분으로 일괄 확정(라인별 부분성공 허용, #12 UX). 내부적으로 라인별 `confirmOrderItem` 로직 재사용 |
-| `cancelOrderItemMovements(itemId)` | `MILLING_MANAGE` | 차감 취소(#17) — 해당 라인 `PackageMovement`(type=SALE) **하드삭제**→가용 자동복원→status 재계산. `recordAuditLog` 필수(하드삭제 보완) |
-| `deletePurchaseUpload(uploadId)` / `deletePurchaseOrder(orderId)` | `SALES_MANAGE` | 잘못 올린 업로드/건 삭제(#15). **차감된 movement 존재 시 차단**(선검사). Cascade로 item 동반삭제 |
-| `exportPurchaseOrders(uploadId/filter)` | 공개(또는 `requireSession`) | 발주서 양식 복원 + **생산자명·로트번호 채움**(완료 건). `exportPackages`(packages.ts:1025) base64 패턴 재사용. movement→package→stock.farmer/lotNo 경유로 생산자·로트 주입 |
+| `autoMatchOrderItem(itemId)` | `OPERATION_MANAGE` | 단일 라인 재매칭(업로드 후 마스터 보완했을 때). 결과 productTypeId 갱신 |
+| `setOrderItemProductType(itemId, productTypeId, {learnAlias?})` | `OPERATION_MANAGE` | 매칭실패/오매칭 **수동 지정**(#18). learnAlias=true면 품종토큰을 `Variety.aliases` append(#22 학습) |
+| `confirmOrderItem(itemId, allocations[])` | `OPERATION_MANAGE` | **차감 확정**(#12). allocations=[{packageId, count}](FIFO 자동추천을 사용자가 조정 가능, #3). 트랜잭션: 각 packageId **가용 재검증**(count-SUM≥요청)→`PackageMovement`(type=SALE, orderItemId) 생성→라인/건 status 재계산. 부족분 있으면 라인 부분충족·건 PARTIAL(#4) |
+| `confirmOrder(orderId)` | `OPERATION_MANAGE` | 건의 전체 라인을 FIFO 자동배분으로 일괄 확정(라인별 부분성공 허용, #12 UX). 내부적으로 라인별 `confirmOrderItem` 로직 재사용 |
+| `cancelOrderItemMovements(itemId)` | `OPERATION_MANAGE` | 차감 취소(#17) — 해당 라인 `PackageMovement`(type=SALE) **하드삭제**→가용 자동복원→status 재계산. `recordAuditLog` 필수(하드삭제 보완) |
+| `deletePurchaseUpload(uploadId)` / `deletePurchaseOrder(orderId)` | `OPERATION_MANAGE` | 잘못 올린 업로드/건 삭제(#15). **차감된 movement 존재 시 차단**(선검사). Cascade로 item 동반삭제 |
+| `exportPurchaseOrders(uploadId/filter)` | `requireSession`(로그인) | 발주서 양식 복원 + **생산자명·로트번호 채움**(완료 건). `exportPackages`(packages.ts:1025) base64 패턴 재사용. movement→package→stock.farmer/lotNo 경유로 생산자·로트 주입 |
 
 - **FIFO 자동추천**(#3): `confirm*` 내부 헬퍼 `suggestAllocation(productTypeId, qty)` = `MillingOutputPackage where productTypeId AND 가용>0` 을 `createdAt`(또는 incomingDate) 오름차순으로 필요수량까지 그리디 배분. 포장담당이 상세에서 로트 교체 가능(반환된 추천을 UI에서 편집 후 `confirmOrderItem`에 전달).
 - **동시성**(리스크): 가용 재검증을 트랜잭션 내에서 하되 Prisma는 `SELECT FOR UPDATE` 미지원 → 동일 package 동시 차감 시 초과 위험. 차감은 포장담당 소수 작업이라 경합 낮음. 보강책 = 트랜잭션 직렬화 격리 또는 movement 생성 직후 가용 재검증해 음수면 롤백. **§8.5 리스크에 기록.**
@@ -533,12 +533,12 @@ enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
 
 | Action | 권한 | 역할 |
 |---|---|---|
-| `createSale({packageId, count, customer?, occurredAt?, note?})` | `SALES_MANAGE` | 개별 판매등록(type=SALE, orderItemId=null). 제품판매 탭 + `/packages` 행 진입. 가용 재검증 |
-| `createNonSaleMovement({packageId, count, type, note, occurredAt?})` | `MILLING_MANAGE` | 비판매 차감(GIFT/LOST/DAMAGED/OTHER). `/packages` 행 진입. ⚠️원물(stock) 복원 안 함(#19) |
-| `cancelMovement(movementId)` | type별(SALE=`SALES_MANAGE`/그 외=`MILLING_MANAGE`) | 단건 하드삭제+복원+`recordAuditLog`(#17) |
+| `createSale({packageId, count, customer?, occurredAt?, note?})` | `OPERATION_MANAGE` | 개별 판매등록(type=SALE, orderItemId=null). 제품판매 탭 + `/packages` 행 진입. 가용 재검증 |
+| `createNonSaleMovement({packageId, count, type, note, occurredAt?})` | `OPERATION_MANAGE` | 비판매 차감(GIFT/LOST/DAMAGED/OTHER). `/packages` 행 진입. ⚠️원물(stock) 복원 안 함(#19) |
+| `cancelMovement(movementId)` | `OPERATION_MANAGE` | 단건 하드삭제+복원+`recordAuditLog`(#17) |
 | `listMovements(packageId)` | 공개 | 특정 제품재고의 차감 이력(판매·비판매 통합) |
 
-- **권한 = 전부 `OPERATION_MANAGE`**(2026-06-22 권한 단순화로 확정): 개별판매·비판매차감·취소 모두 가공·판매 권한 단일. (검토 포인트 ③의 "판매=SALES/비판매=MILLING 분리"안은 권한 통합으로 무효화 — 두 권한이 하나가 됨.)
+- **권한 = 전부 `OPERATION_MANAGE`**(2026-06-22 권한 단순화로 확정): 개별판매·비판매차감·취소 모두 가공·판매 권한 단일. (검토 포인트 ③의 "판매=SALES/비판매=MILLING 분리"안은 권한 통합으로 무효화 — 두 권한이 하나가 됨.) `cancelMovement`도 type 무관 단일 권한(구 type별 분기 폐기).
 - `getPackages` 수정: cutoff 임시블록 제거 + 각 package에 `available = count - SUM(movement.count)` 동봉, available=0은 목록 제외(백로그 §13 종료).
 
 ### 8.4 화면 요구사항 (✍️ 2026-06-22 — 비주얼은 Claude Design 위임)
@@ -547,12 +547,12 @@ enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
 
 | # | 화면 | 진입 | 데이터 | 핵심 상호작용 |
 |---|---|---|---|---|
-| 1 | **발주서 묶음 목록** | 제품판매 탭 | 업로드별 {파일명·발주일·건수·상태요약·매칭실패수} | 엑셀 업로드 버튼(SALES_MANAGE)·묶음 클릭→건목록·삭제 |
+| 1 | **발주서 묶음 목록** | 제품판매 탭 | 업로드별 {파일명·발주일·건수·상태요약·매칭실패수} | 엑셀 업로드 버튼(OPERATION_MANAGE)·묶음 클릭→건목록·삭제 |
 | 2 | **건 목록** | 묶음 드릴다운 | 발주처·수령인·채널·라인수·상태(PENDING/PARTIAL/COMPLETED)·부족표시 | 건 클릭→상세·일괄 완료처리·export |
-| 3 | **건 상세(매칭·차감)** | 건 클릭 | 라인별 {품목명·매칭품종/SKU·규격·포장지·주문수량·가용재고·FIFO추천로트·부족분} | 라인 차감확정·로트교체·매칭실패 수동지정·차감취소 (전부 MILLING_MANAGE) |
-| 4 | **발주서 업로드** | 묶음목록 버튼 | 파일선택 | 업로드→중복경고 모달(#16)→적재요약. SALES_MANAGE |
-| 5 | **개별 판매등록** | 제품판매 탭 + `/packages` 행 | 제품재고 선택·수량·거래처·발생일 | 등록(createSale). SALES_MANAGE. 금액 입력 없음(#25) |
-| 6 | **비판매 차감** | `/packages` 행 | 제품재고·수량·사유(type)·메모·발생일 | 등록(createNonSaleMovement). MILLING_MANAGE |
+| 3 | **건 상세(매칭·차감)** | 건 클릭 | 라인별 {품목명·매칭품종/SKU·규격·포장지·주문수량·가용재고·FIFO추천로트·부족분} | 라인 차감확정·로트교체·매칭실패 수동지정·차감취소 (전부 OPERATION_MANAGE) |
+| 4 | **발주서 업로드** | 묶음목록 버튼 | 파일선택 | 업로드→중복경고 모달(#16)→적재요약. OPERATION_MANAGE |
+| 5 | **개별 판매등록** | 제품판매 탭 + `/packages` 행 | 제품재고 선택·수량·거래처·발생일 | 등록(createSale). OPERATION_MANAGE. 금액 입력 없음(#25) |
+| 6 | **비판매 차감** | `/packages` 행 | 제품재고·수량·사유(type)·메모·발생일 | 등록(createNonSaleMovement). OPERATION_MANAGE |
 | 7 | **제품재고 목록 행 트리거** | `/packages` 각 행 | 가용재고(count-SUM)·차감이력 | 행 메뉴: 판매등록/비판매차감/이력보기 |
 | 8 | 위 전체 **모바일** | — | 동일 | 카드형(폰트 키우지 말 것 [[mobile_card_font_no_increase]]) |
 
@@ -567,7 +567,7 @@ enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
 2. **파서·매처**: `lib/purchase-order-parser.ts`(raw셀)·`lib/purchase-order-matcher.ts`(파이프라인 #23) 순수함수 + Zod. **실파일(docs/resources/발주서.xlsx)로 단위테스트** — 18종 품목 매칭 결과 검증(§6.1.1 기대표와 대조).
 3. **차감 공용 액션**: `app/actions/package-movement.ts`(createSale·createNonSale·cancel·list) + `getPackages` cutoff 제거·available 동봉. → 개별판매·비판매차감 먼저 동작(발주서와 독립 검증 가능).
 4. **발주서 액션**: `app/actions/purchase-order.ts`(upload·list·detail·match·confirm·cancel·export). FIFO 헬퍼.
-5. **권한 등록**: `permission-matrix.md`에 발주서/차감 항목 추가(업로드=SALES_MANAGE / 매칭·차감=MILLING_MANAGE / 비판매=MILLING_MANAGE / 판매=SALES_MANAGE). `/sales` 탭 placeholder 제거→제품판매 탭 골격.
+5. **권한 등록**: `permission-matrix.md`에 발주서/차감 항목 추가(업로드·매칭·차감·판매·비판매 = 전부 `OPERATION_MANAGE` 단일 / export=requireSession / 조회=공개). `/sales` 탭 placeholder(rice·misc) 제거→제품판매 탭 골격(release→원물출고 라벨, page.tsx 분기·`?tab=` 라우팅 동반 수정).
 6. **화면**(§8.4) Claude Design 핸드오프 → 구현. 모바일 동반.
 7. **증거 기반 완료**: 실파일 업로드→매칭→차감→export 왕복을 실제 DB(Neon, [[deployment_db_infra]])에서 1건 검증 후 완료선언.
 
