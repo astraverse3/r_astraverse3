@@ -495,8 +495,8 @@ export function AddPackagingDialog({
                                     )}
                                     {groupOutputs.map(({ o, i }) => (
                                         <div key={i} className="px-2 sm:px-3 py-1.5">
-                                          {/* 모바일: 36/1fr/64/52/22 — 데스크탑: 40/140/1fr/58/24 (반응형 1행 유지) */}
-                                          <div className="grid grid-cols-[36px_1fr_64px_52px_22px] sm:grid-cols-[40px_140px_1fr_58px_24px] items-center gap-1">
+                                          {/* 모바일: 36/1fr/64/58/22 — 데스크탑: 40/140/1fr/64/24 (반응형 1행 유지) */}
+                                          <div className="grid grid-cols-[36px_1fr_64px_58px_22px] sm:grid-cols-[40px_140px_1fr_64px_24px] items-center gap-1">
                                             {/* 1. 규격 badge (잔량=노랑) */}
                                             <Badge variant="secondary" className={`w-full justify-center px-0 py-0.5 rounded text-[11px] ${o.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' : 'bg-stone-100 text-stone-600 hover:bg-stone-100'}`}>
                                                 {o.packageType}
@@ -562,7 +562,7 @@ export function AddPackagingDialog({
                                                                 value={o.weightPerUnit}
                                                                 onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                                 onFocus={(e) => e.target.select()}
-                                                                className="h-6 w-9 text-right text-[11px] border-stone-200 rounded px-1"
+                                                                className="h-6 w-11 text-right text-[11px] border-stone-200 rounded px-1"
                                                             />
                                                             <span className="text-[9px] text-stone-400">kg</span>
                                                         </>
