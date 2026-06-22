@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포장 라인 1행 — 모바일 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  background: #475569;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px 80px;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.col-label {
+  font-size: 13px; font-weight: 700; color: white;
+  display: flex; align-items: center; gap: 8px;
+}
+.tag { padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.tag-w { background: #fef9c3; color: #a16207; }
+.tag-ok { background: #dcfce7; color: #16a34a; }
+
+/* ── 폰 프레임 ── */
+.phone {
+  width: 375px;
+  background: #0f172a;
+  border-radius: 44px;
+  padding: 11px;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.4);
+}
+.phone-screen {
+  background: #e2e8f0;
+  border-radius: 34px;
+  overflow: hidden;
+  height: 760px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.statusbar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.sb-right { display: flex; align-items: center; gap: 5px; }
+
+/* ── 다이얼로그 (모바일: 화면 거의 꽉 참) ── */
+.sheet {
+  position: absolute;
+  left: 8px; right: 8px; bottom: 0; top: 54px;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sheet-header {
+  padding: 16px 16px 11px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+.sheet-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.sheet-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+.x-btn {
+  width: 26px; height: 26px; border: none; background: #f1f5f9; border-radius: 50%;
+  color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.sheet-meta { display: flex; align-items: center; gap: 7px; }
+.badge-milling { padding: 2px 8px; border-radius: 5px; background: rgba(37,99,235,0.15); color: #2563eb; font-size: 11px; font-weight: 700; }
+.meta-text { font-size: 12px; font-weight: 700; color: #334155; }
+
+.sheet-body { flex: 1; overflow-y: auto; padding: 10px; }
+
+/* 그룹 카드 — 모바일에선 좌우 마진 없이 폭 최대 활용 */
+.group-card { border: 1px solid #e7e5e4; border-radius: 12px; overflow: hidden; }
+.group-header {
+  background: #fafaf9; border-bottom: 1px solid #f5f5f4;
+  padding: 7px 10px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+}
+.gh-farmer { font-size: 12px; font-weight: 700; color: #44403c; }
+.gh-variety { font-size: 11px; color: #a8a29e; }
+.gh-spacer { flex: 1; }
+.gh-expected { font-size: 11px; color: #78716c; }
+.gh-expected strong { font-weight: 700; color: #2563eb; }
+.gh-lot {
+  font-family: 'SF Mono', monospace; font-size: 11.5px; color: #78716c;
+  background: white; border: 1px solid #e7e5e4; border-radius: 4px; padding: 2px 6px;
+  width: 100%; margin-top: 3px;
+}
+
+.spec-area { padding: 8px 8px 9px; border-bottom: 1px solid #e7e5e4; }
+.spec-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.spec-btn {
+  height: 32px; border: none; background: #f5f5f4; color: #57534e;
+  font-size: 12px; font-weight: 600; border-radius: 7px; cursor: pointer; font-family: inherit;
+}
+.spec-btn.dashed { background: white; border: 1.5px dashed #d6d3d1; color: #a8a29e; }
+
+.pkg-divider { border: none; border-top: 1px solid #f5f5f4; }
+
+/* ════════════════════════════════
+   핵심: 모바일 1행 그리드
+   폰 375px → screen 353px → sheet(좌우8) 337px
+   → body px-2.5(10) 317px → card border 315px
+   → item px-2(8) 299px grid area
+   gap-1 (4×4=16)
+   고정: 규격36 + 수량64 + 중량46 + 삭제22 = 168
+   select 1fr = 299 - 168 - 16 = 115px  ← truncate
+════════════════════════════════ */
+.item { padding: 6px 8px; }
+.item-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 64px 52px 22px;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-spec {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 100%; padding: 3px 0;
+  background: #f5f5f4; color: #57534e; border-radius: 5px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge-spec.remain { background: #fef9c3; color: #a16207; }
+
+.pkg-select {
+  width: 100%; height: 28px; min-width: 0;
+  border: 1px solid #e7e5e4; border-radius: 6px; background: white;
+  font-size: 11px; color: #57534e; padding: 0 18px 0 7px;
+  font-family: inherit; cursor: pointer; outline: none; appearance: none;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 5px center;
+}
+.pkg-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+.pkg-fixed { font-size: 11px; color: #a8a29e; padding-left: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pkg-dash { font-size: 11px; color: #d6d3d1; padding-left: 2px; }
+
+.stepper { display: flex; align-items: center; justify-content: center; gap: 0; }
+.stepper-btn {
+  width: 22px; height: 22px; border: none; background: none; color: #a8a29e;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; line-height: 1; flex-shrink: 0;
+}
+.stepper-btn:active { background: #f5f5f4; }
+.stepper-count {
+  width: 20px; text-align: center; font-size: 12px; font-weight: 700; color: #1c1917;
+  font-variant-numeric: tabular-nums; border: none; background: transparent; outline: none;
+  font-family: 'Pretendard', monospace;
+}
+
+.weight-display { text-align: right; font-size: 12px; font-weight: 700; color: #1c1917; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.weight-unit { font-size: 9px; font-weight: 500; color: #a8a29e; }
+.weight-input {
+  width: 36px; height: 24px; text-align: right; border: 1px solid #e7e5e4;
+  border-radius: 5px; font-size: 11px; padding: 0 4px; font-family: inherit; color: #1c1917; outline: none;
+}
+
+.del-btn {
+  width: 22px; height: 22px; border: none; background: none; color: #d6d3d1;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  padding: 0; margin: 0 auto; flex-shrink: 0;
+}
+.del-btn:active { background: #fef2f2; color: #ef4444; }
+
+.group-subtotal {
+  display: flex; justify-content: flex-end; padding: 6px 10px;
+  background: #fafaf9; border-top: 1px solid #f5f5f4; font-size: 12px; color: #78716c;
+}
+
+.sheet-footer { flex-shrink: 0; border-top: 1px solid #f1f5f9; }
+.footer-main {
+  display: flex; align-items: center; justify-content: space-between; padding: 11px 14px;
+}
+.footer-total { font-size: 13px; color: #475569; }
+.footer-total strong { font-size: 17px; font-weight: 800; color: #0f172a; }
+.btn-save {
+  height: 38px; padding: 0 20px; background: #2563eb; color: white; border: none;
+  border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.footer-sub {
+  display: flex; justify-content: space-between; padding: 8px 14px 14px; border-top: 1px dashed #f1f5f9;
+}
+.btn-ghost-amber { background: none; border: none; color: #d97706; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-ghost-red { background: none; border: none; color: #ef4444; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+.note {
+  width: 375px; background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+  padding: 12px 14px; font-size: 11.5px; color: #cbd5e1; line-height: 1.7;
+}
+.note strong { color: white; }
+.note code { background: #334155; padding: 1px 5px; border-radius: 4px; font-family: 'SF Mono', monospace; font-size: 10.5px; color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<div class="col">
+  <div class="col-label"><span class="tag tag-ok">Mobile</span> 375px · 1행 통합</div>
+
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="statusbar">
+        <span>9:41</span>
+        <div class="sb-right">
+          <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="#0f172a"/><rect x="4.3" y="4.5" width="3" height="6.5" rx="0.6" fill="#0f172a"/><rect x="8.6" y="2" width="3" height="9" rx="0.6" fill="#0f172a"/><rect x="12.9" y="0" width="3" height="11" rx="0.6" fill="#0f172a"/></svg>
+          <svg width="24" height="12" viewBox="0 0 24 12"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="#0f172a" stroke-opacity="0.4" fill="none"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="#0f172a"/><path d="M22 4v4c.7-.3 1.2-1 1.2-2S22.7 4.3 22 4Z" fill="#0f172a" fill-opacity="0.4"/></svg>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-header">
+          <div class="sheet-title-row">
+            <span class="sheet-title">포장 기록 관리</span>
+            <button class="x-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="sheet-meta">
+            <span class="badge-milling">백미</span>
+            <span class="meta-text">총 투입: 3,213kg</span>
+          </div>
+        </div>
+
+        <div class="sheet-body">
+          <div class="group-card">
+            <div class="group-header">
+              <span class="gh-farmer">이만배</span>
+              <span class="gh-variety">천지향1세</span>
+              <span class="gh-spacer"></span>
+              <span class="gh-expected">예상 <strong>1,644kg</strong></span>
+              <span class="gh-lot">251126-11-15103885-4128</span>
+            </div>
+
+            <div class="spec-area">
+              <div class="spec-grid">
+                <button class="spec-btn">톤백</button><button class="spec-btn">20kg</button>
+                <button class="spec-btn">10kg</button><button class="spec-btn">8kg</button>
+                <button class="spec-btn">5kg</button><button class="spec-btn">4kg</button>
+                <button class="spec-btn">3kg</button><button class="spec-btn">1kg</button>
+                <button class="spec-btn">잔량</button><button class="spec-btn dashed">기타</button>
+              </div>
+            </div>
+
+            <!-- 8kg -->
+            <div class="item">
+              <div class="item-row">
+                <span class="badge-spec">8kg</span>
+                <select class="pkg-select">
+                  <option>땅끝에서보냅니다</option>
+                  <option>자연주의</option>
+                  <option>천지향</option>
+                  <option>포장지 미지정</option>
+                </select>
+                <div class="stepper">
+                  <button class="stepper-btn">−</button>
+                  <input class="stepper-count" value="1" readonly>
+                  <button class="stepper-btn">+</button>
+                </div>
+                <div style="text-align:right;"><span class="weight-display">8<span class="weight-unit">kg</span></span></div>
+                <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+              </div>
+            </div>
+            <hr class="pkg-divider">
+
+            <!-- 10kg -->
+            <div class="item">
+              <div class="item-row">
+                <span class="badge-spec">10kg</span>
+                <select class="pkg-select">
+                  <option>자연주의</option>
+                  <option>땅끝에서보냅니다</option>
+                  <option>포장지 미지정</option>
+                </select>
+                <div class="stepper">
+                  <button class="stepper-btn">−</button>
+                  <input class="stepper-count" value="1" readonly>
+                  <button class="stepper-btn">+</button>
+                </div>
+                <div style="text-align:right;"><span class="weight-display">10<span class="weight-unit">kg</span></span></div>
+                <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+              </div>
+            </div>
+            <hr class="pkg-divider">
+
+            <!-- 톤백 -->
+            <div class="item">
+              <div class="item-row">
+                <span class="badge-spec">톤백</span>
+                <span class="pkg-fixed">포장지: 톤백</span>
+                <div class="stepper">
+                  <button class="stepper-btn">−</button>
+                  <input class="stepper-count" value="1" readonly>
+                  <button class="stepper-btn">+</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:2px;justify-content:flex-end;">
+                  <input class="weight-input" type="number" value="0">
+                  <span class="weight-unit" style="font-size:9px;">kg</span>
+                </div>
+                <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+              </div>
+            </div>
+            <hr class="pkg-divider">
+
+            <!-- 잔량 -->
+            <div class="item">
+              <div class="item-row">
+                <span class="badge-spec remain">잔량</span>
+                <span class="pkg-dash">—</span>
+                <div class="stepper">
+                  <button class="stepper-btn">−</button>
+                  <input class="stepper-count" value="1" readonly>
+                  <button class="stepper-btn">+</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:2px;justify-content:flex-end;">
+                  <input class="weight-input" type="number" value="18">
+                  <span class="weight-unit" style="font-size:9px;">kg</span>
+                </div>
+                <button class="del-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+              </div>
+            </div>
+
+            <div class="group-subtotal">소계 <strong style="color:#1c1917;margin:0 4px;">18</strong> / 1,644 kg</div>
+          </div>
+        </div>
+
+        <div class="sheet-footer">
+          <div class="footer-main">
+            <span class="footer-total">총 포장: <strong>18 kg</strong></span>
+            <button class="btn-save">기록 저장</button>
+          </div>
+          <div class="footer-sub">
+            <button class="btn-ghost-amber">🔒 작업 마감</button>
+            <button class="btn-ghost-red">🗑 포장 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>모바일 그리드</strong> — <code>grid-cols-[36px_1fr_64px_46px_22px]</code><br><br>
+  폰 375px → sheet 좌우 8px → body px-2.5 → 카드 내부 item px-2 = <strong>grid area ≈ 299px</strong><br>
+  고정 합계 168px + gap 16px → 포장지 <code>1fr ≈ 115px</code><br><br>
+  "땅끝에서보냅니다"(131px)는 115px 칸에서 <strong>말줄임(…)</strong> 처리되고, 펼치면 전체 표시.<br>
+  데스크탑(≥640px)에서는 select가 넓어져 전체가 그대로 보입니다.
+</div>
+
+</body>
+</html>

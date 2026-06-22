@@ -1,5 +1,22 @@
 # 작업일지
 
+## 2026-06-22
+
+### 도정 포장 다이얼로그 — 모바일 반응형 1행 + 흰 배경 `design`
+
+**소스**: Claude Design 핸드오프 [docs/handoff/design_handoff_packaging_inline_row/](handoff/design_handoff_packaging_inline_row/) (모바일 시안 추가). 단계5(2/2) 1행 통합이 데스크탑 기준이라 모바일에서 깨지던 것 반응형 보강.
+
+**변경**: [add-packaging-dialog.tsx](<../app/(dashboard)/milling/add-packaging-dialog.tsx>)
+- 그룹 헤더 반응형: 모바일=생산자·품종(좌)/예상(우) + **로트번호 풀폭 둘째 줄**, 데스크탑=로트 인라인 + `투입→예상` 한 줄. 로트 폰트 11→11.5px.
+- 규격 버튼: 모바일 **5열 2행**(`grid-cols-5`) / 데스크탑 10열 1행. 높이 h-8→h-7(밀도↑).
+- 포장 라인 1행 반응형 그리드(`36/1fr/64/52/22` ↔ `40/140/1fr/58/24`), 잔량 노란 badge, 포장지 select 말줄임, 중량 단위 인라인. **수량 직접입력 동작 유지**(시안 readOnly는 동작 변경이라 미적용).
+- 데스크탑 컬럼 헤더 힌트(규격·포장지·수량·중량) 추가.
+- 다이얼로그 배경 `bg-white` 강제 — 테마 `--background:#f1f5f9`(slate-100 회색)라 시안 흰색과 달랐던 것 정정. 카드 좌우 여백 모바일 px-6→px-4.
+
+**검증**: tsc 통과(exit 0). 동작·SKU 로직 불변(시각만).
+
+---
+
 ## 2026-06-18
 
 ### 로트번호 — 발아현미 131 + 서농24호 흑미(BLACK) 정리 `feat`

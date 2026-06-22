@@ -366,7 +366,7 @@ export function AddPackagingDialog({
                 )
             )}
 
-            <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90dvh]">
+            <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90dvh] px-4 sm:px-6 bg-white">
                 <DialogHeader>
                     <DialogTitle>포장 기록 관리</DialogTitle>
                     <div className="flex items-center gap-2 mt-1.5">
@@ -391,40 +391,37 @@ export function AddPackagingDialog({
                             <div key={group.lotNo || 'single'} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
                                 {/* 그룹 헤더 — 모바일: LOT은 1줄 인라인, 입력→예상은 2번째 줄 우측 정렬 / PC: 모두 1줄 */}
                                 {(isMultiGroup || group.farmerName) && (
-                                    <div className="bg-stone-50 border-b border-stone-100">
-                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 px-3 py-2">
+                                    <div className="bg-stone-50 border-b border-stone-100 px-3 py-2">
+                                        {/* 첫줄: 생산자·품종(좌) / 투입→예상(우). 데스크탑은 로트번호도 인라인 */}
+                                        <div className="flex items-center gap-2">
                                             <span className="text-[12px] font-bold text-stone-700 shrink-0">{group.farmerName}</span>
                                             {group.varietyName && (
                                                 <span className="text-stone-400 text-[11px] shrink-0">{group.varietyName}</span>
                                             )}
                                             {group.lotNo && (
-                                                <span className="font-mono text-[11px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 shrink-0">
+                                                <span className="hidden sm:inline-block font-mono text-[11px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 shrink-0">
                                                     {group.lotNo}
                                                 </span>
                                             )}
                                             <div className="flex-1" />
                                             {isMultiGroup && (
-                                                <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                                                    <span className="text-[11px] text-stone-500">
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {/* 투입량·화살표는 데스크탑만, 예상은 공통 */}
+                                                    <span className="hidden sm:inline text-[11px] text-stone-500">
                                                         {group.totalInputKg.toLocaleString()}kg
                                                     </span>
-                                                    <span className="text-stone-300 text-[10px]">→</span>
+                                                    <span className="hidden sm:inline text-stone-300 text-[10px]">→</span>
                                                     <span className="text-[11px] font-bold text-primary">
                                                         예상 {expectedKg.toLocaleString()}kg
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
-                                        {isMultiGroup && (
-                                            <div className="sm:hidden flex justify-end items-center gap-1.5 px-3 pb-2 -mt-1">
-                                                <span className="text-[11px] text-stone-500">
-                                                    {group.totalInputKg.toLocaleString()}kg
-                                                </span>
-                                                <span className="text-stone-300 text-[10px]">→</span>
-                                                <span className="text-[11px] font-bold text-primary">
-                                                    예상 {expectedKg.toLocaleString()}kg
-                                                </span>
-                                            </div>
+                                        {/* 모바일: 로트번호 풀폭 둘째줄 */}
+                                        {group.lotNo && (
+                                            <span className="sm:hidden block w-full font-mono text-[11.5px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 mt-1.5">
+                                                {group.lotNo}
+                                            </span>
                                         )}
                                     </div>
                                 )}
@@ -435,17 +432,17 @@ export function AddPackagingDialog({
                                         {!isMultiGroup && (
                                             <Label className="text-[12px] text-stone-500 block">규격 선택</Label>
                                         )}
-                                        {/* 1줄: 톤백 20kg 10kg 8kg 5kg 4kg 3kg 1kg 잔량 직접입력 */}
-                                        <div className="grid grid-cols-10 gap-1">
+                                        {/* 규격 버튼: 모바일 5열 2행, 데스크탑 10열 1행 */}
+                                        <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
                                             {PACKAGE_TEMPLATES.map(t => (
                                                 <Button key={t.label} variant="secondary"
-                                                    className="h-8 w-full px-0 text-[11px] hover:bg-stone-200 transition-colors"
+                                                    className="h-7 w-full px-0 text-[11px] hover:bg-stone-200 transition-colors"
                                                     onClick={() => addToGroup(group, t)}>
                                                     {t.label}
                                                 </Button>
                                             ))}
                                             <Button variant="outline"
-                                                className="h-8 w-full px-0 text-[11px] border-dashed border-stone-300 hover:bg-stone-100 text-stone-500"
+                                                className="h-7 w-full px-0 text-[11px] border-dashed border-stone-300 hover:bg-stone-100 text-stone-500"
                                                 onClick={() => setCustomInputs(prev => ({ ...prev, [group.lotNo]: true }))}>
                                                 기타
                                             </Button>
@@ -478,6 +475,17 @@ export function AddPackagingDialog({
                                     </div>
                                 )}
 
+                                {/* 컬럼 헤더 힌트 (데스크탑 전용) */}
+                                {groupOutputs.length > 0 && (
+                                    <div className="hidden sm:grid grid-cols-[40px_140px_1fr_58px_24px] gap-1 px-3 pt-1.5 pb-0.5">
+                                        <span className="text-[9px] font-semibold text-stone-300 text-center tracking-tight">규격</span>
+                                        <span className="text-[9px] font-semibold text-stone-300 tracking-tight">포장지</span>
+                                        <span className="text-[9px] font-semibold text-stone-300 text-center tracking-tight">수량</span>
+                                        <span className="text-[9px] font-semibold text-stone-300 text-right tracking-tight">중량</span>
+                                        <span />
+                                    </div>
+                                )}
+
                                 {/* 포장 목록 */}
                                 <div className="divide-y divide-stone-100">
                                     {groupOutputs.length === 0 && (
@@ -486,18 +494,19 @@ export function AddPackagingDialog({
                                         </div>
                                     )}
                                     {groupOutputs.map(({ o, i }) => (
-                                        <div key={i} className="px-3 py-[5px]">
-                                          <div className="grid grid-cols-[40px_140px_1fr_58px_24px] items-center gap-1">
-                                            {/* 1. 규격 badge */}
-                                            <Badge variant="secondary" className="bg-stone-100 text-stone-600 hover:bg-stone-100 px-1.5 py-0 rounded text-[11px] justify-center">
+                                        <div key={i} className="px-2 sm:px-3 py-1.5">
+                                          {/* 모바일: 36/1fr/64/52/22 — 데스크탑: 40/140/1fr/58/24 (반응형 1행 유지) */}
+                                          <div className="grid grid-cols-[36px_1fr_64px_52px_22px] sm:grid-cols-[40px_140px_1fr_58px_24px] items-center gap-1">
+                                            {/* 1. 규격 badge (잔량=노랑) */}
+                                            <Badge variant="secondary" className={`w-full justify-center px-0 py-0.5 rounded text-[11px] ${o.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' : 'bg-stone-100 text-stone-600 hover:bg-stone-100'}`}>
                                                 {o.packageType}
                                             </Badge>
 
                                             {/* 2. 포장지 — 잔량=—, 톤백=고정, 그 외 드롭다운(기본 자동) */}
                                             {o.packageType === PKG_TONBAG ? (
-                                                <span className="text-[11px] text-stone-400 pl-0.5">포장지: 톤백</span>
+                                                <span className="text-[11px] text-stone-400 pl-0.5 truncate">포장지: 톤백</span>
                                             ) : o.packageType === PKG_REMAINDER ? (
-                                                <span className="text-[11px] text-stone-200 pl-0.5">—</span>
+                                                <span className="text-[11px] text-stone-300 pl-0.5">—</span>
                                             ) : isClosed || !canManage ? (
                                                 <span className="text-[11px] text-stone-400 truncate">
                                                     {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
@@ -506,11 +515,11 @@ export function AddPackagingDialog({
                                                 <select
                                                     value={o.packagingId ?? ''}
                                                     onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
-                                                    className="h-[26px] w-full rounded-md border border-stone-200 bg-white px-1.5 pr-5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none"
+                                                    className="h-7 w-full min-w-0 truncate rounded-md border border-stone-200 bg-white pl-2 pr-5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none"
                                                     style={{
                                                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                                                         backgroundRepeat: 'no-repeat',
-                                                        backgroundPosition: 'right 6px center',
+                                                        backgroundPosition: 'right 5px center',
                                                     }}
                                                 >
                                                     <option value="">포장지 미지정</option>
@@ -520,12 +529,12 @@ export function AddPackagingDialog({
                                                 </select>
                                             )}
 
-                                            {/* 3. 수량 stepper */}
+                                            {/* 3. 수량 stepper (입력 동작 유지) */}
                                             {isClosed || !canManage ? (
-                                                <span className="text-[12px] font-mono font-bold text-stone-600 text-center">{o.count}개</span>
+                                                <span className="text-[12px] font-mono font-bold text-stone-700 text-center">{o.count}</span>
                                             ) : (
-                                                <div className="flex items-center justify-center gap-0.5">
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
+                                                <div className="flex items-center justify-center">
+                                                    <Button variant="ghost" size="icon" className="h-[22px] w-[22px] shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
                                                         <Minus className="h-3 w-3" />
                                                     </Button>
                                                     <Input
@@ -533,19 +542,19 @@ export function AddPackagingDialog({
                                                         value={o.count === 0 ? '' : o.count}
                                                         onChange={(e) => setCount(i, parseInt(e.target.value))}
                                                         onFocus={(e) => e.target.select()}
-                                                        className="w-9 h-6 text-center text-[12px] font-bold bg-transparent border-none shadow-none font-mono px-0"
+                                                        className="w-5 h-6 text-center text-[12px] font-bold bg-transparent border-none shadow-none font-mono px-0"
                                                     />
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
+                                                    <Button variant="ghost" size="icon" className="h-[22px] w-[22px] shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
                                                         <Plus className="h-3 w-3" />
                                                     </Button>
                                                 </div>
                                             )}
 
                                             {/* 4. 중량 */}
-                                            <div className="flex items-center gap-1 justify-end w-full">
+                                            <div className="flex items-center gap-0.5 justify-end">
                                                 {(o.packageType === '톤백' || o.packageType === '잔량') ? (
                                                     isClosed || !canManage ? (
-                                                        <span className="text-[11px] font-bold text-stone-600">{o.weightPerUnit.toLocaleString()} kg</span>
+                                                        <span className="text-[12px] font-bold text-stone-700 whitespace-nowrap">{o.weightPerUnit.toLocaleString()}<span className="text-[9px] text-stone-400 ml-px">kg</span></span>
                                                     ) : (
                                                         <>
                                                             <Input
@@ -553,19 +562,19 @@ export function AddPackagingDialog({
                                                                 value={o.weightPerUnit}
                                                                 onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                                 onFocus={(e) => e.target.select()}
-                                                                className="h-6 w-[38px] text-right text-[11px] border-stone-200 rounded px-1"
+                                                                className="h-6 w-9 text-right text-[11px] border-stone-200 rounded px-1"
                                                             />
-                                                            <span className="text-[10px] text-stone-400">kg</span>
+                                                            <span className="text-[9px] text-stone-400">kg</span>
                                                         </>
                                                     )
                                                 ) : (
-                                                    <span className="text-[12px] font-bold text-stone-600 whitespace-nowrap">{(o.weightPerUnit * o.count).toLocaleString()} kg</span>
+                                                    <span className="text-[12px] font-bold text-stone-700 whitespace-nowrap">{(o.weightPerUnit * o.count).toLocaleString()}<span className="text-[9px] text-stone-400 ml-px">kg</span></span>
                                                 )}
                                             </div>
 
                                             {/* 5. 삭제 */}
                                             {!isClosed && canManage ? (
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
+                                                <Button variant="ghost" size="icon" className="h-[22px] w-[22px] mx-auto text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             ) : <div />}
@@ -617,7 +626,7 @@ export function AddPackagingDialog({
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1"
+                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1 text-[12px] font-semibold"
                                     disabled={isLoading}
                                     onClick={handleCloseBatch}
                                 >
@@ -627,7 +636,7 @@ export function AddPackagingDialog({
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto text-[12px] font-semibold"
                                     disabled={isLoading || outputs.length === 0}
                                     onClick={handleClearPackaging}
                                 >
