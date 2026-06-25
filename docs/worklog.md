@@ -2,6 +2,26 @@
 
 ## 2026-06-25
 
+### 발주서 판매처리 — 본구현 단계4: 발주서 액션 (export 제외) `feat`
+
+**배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.3.1·§8.5 단계4. 적재→매칭→차감 전 흐름. export(원본 양식 복원)는 분량(현 747줄, 800 제한)·복잡도로 별도 파일 분리 예정.
+
+**변경(신규 3)**:
+- [lib/purchase-order-allocation.ts](<../lib/purchase-order-allocation.ts>) 순수 로직 — `suggestAllocation`(FIFO 그리디 배분+부족분#3·#4) · `computeLineStatus`/`computeOrderStatus`(라인 충족→건 status 파생#12) · `orderDuplicateKey`/`detectDuplicateOrders`(재업로드 중복감지#16). DB·매칭 안 함(액션이 조회결과 주입).
+- [lib/purchase-order-allocation.test.ts](<../lib/purchase-order-allocation.test.ts>) node:test 8케이스(FIFO 순서·부족·tie-break·status 경계·중복키). **전체 21/21 통과**.
+- [app/actions/purchase-order.ts](<../app/actions/purchase-order.ts>) (747줄) 액션 10개:
+  - `uploadPurchaseOrder(formData, {force?})`: 파일검증→`parsePurchaseOrder`→**중복감지**(같은 파일명의 vendor+recipient 겹침→`{duplicate, conflicts}` 경고, force로 강제진행#16)→트랜잭션 적재(Upload+Order+Item, PENDING)→라인 **자동매칭**(`matchPurchaseOrderItem`, productTypeId)→요약(orderCount/itemCount/matched/failed).
+  - 조회(공개): `listPurchaseUploads`(묶음+상태요약+매칭실패수)·`listPurchaseOrders(uploadId)`·`getPurchaseOrderDetail(orderId)`(라인별 매칭결과·차감현황·가용재고·**FIFO 추천배분**·부족분).
+  - 매칭: `autoMatchOrderItem`(재매칭)·`setOrderItemProductType(itemId, productTypeId, {learnAlias})`(수동지정+**별칭 학습** push #22).
+  - 차감: `confirmOrderItem(itemId, allocations)`·`confirmOrder(orderId)`(전 라인 FIFO 자동) — 트랜잭션 내 SKU 일치·가용 재검증→`PackageMovement`(SALE, orderItemId)→`recalcOrderStatus`. `cancelOrderItemMovements`(하드삭제+복원+감사#17).
+  - 삭제: `deletePurchaseUpload`/`deletePurchaseOrder` — movement 달린 건 **차단**(선검사), upload는 order先삭제(item Cascade).
+  - 내부 헬퍼: `loadMatcherMasters`·`loadAvailablePackages`(FIFO sortKey=MILLED createdAt/PURCHASED incomingDate)·`allocatedQtyOfItem`·`recalcOrderStatus`·`applyAllocations`(가용재검증+movement 생성 공용).
+- 권한: write 전부 `OPERATION_MANAGE`, 조회 공개.
+
+**검증**: `tsc --noEmit` 0 · 신규 3파일 eslint clean · `npm test` 21/21. 서버액션 실동작(세션)은 단계6 화면 왕복에서. **다음=`exportPurchaseOrders` 분리 구현 또는 단계5(권한 matrix 등록 + `/sales` 2탭 골격)**.
+
+---
+
 ### 발주서 판매처리 — 본구현 단계3: 제품재고 차감 공용 액션 `feat`
 
 **배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.3.2·§8.5 단계3. 단계2(파서·매처)는 `dce1eeb`로 커밋. 발주서와 독립적으로 동작하는 개별판매·비판매차감 먼저 구현(발주서 일괄은 단계4 `purchase-order.ts`).
