@@ -2,6 +2,21 @@
 
 ## 2026-06-25
 
+### 발주서 판매처리 — 본구현 단계5: /sales 2탭 골격 + 권한 등록 `feat`
+
+**배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.5 단계5·결정 #13. 백엔드(단계1~4) 위에 화면 골격을 올려 진행을 가시화. 실제 업로드·매칭·차감 UI는 단계6(Claude Design).
+
+**변경**:
+- [sales-tabs.tsx](<../app/(dashboard)/sales/sales-tabs.tsx>) — 구 3탭(벼/잡곡 준비중 + 출고) → **제품판매(product)/원물출고(release) 2탭**. grid-cols-3→2, 아이콘 Package/Truck, '준비중' 배지 제거, 기본탭 `DEFAULT_SALES_TAB='product'`(export 상수).
+- [page.tsx](<../app/(dashboard)/sales/page.tsx>) — VALID_TABS=['product','release'], 기본 product, 분기(product→ProductSalesSection / release→ReleaseSection 기존).
+- [product-sales-section.tsx](<../app/(dashboard)/sales/product-sales-section.tsx>) 신규 — server component, 실 `listPurchaseUploads()` 연결 발주서 묶음 목록 골격(파일명·업로드일·건수·상태배지 완료/부분/대기·매칭실패수). 0건이면 빈상태 안내. **업로드 버튼은 시각만(cursor-not-allowed)** — 기능 연결은 단계6.
+- [coming-soon-panel.tsx] **삭제**(rice/misc placeholder, 코드 참조 0=무손실).
+- [permission-matrix.md](permission-matrix.md) — 발주서/차감 "(향후)" 제거→실 함수명. `purchase-order.ts` 8 write 함수 + `package-movement.ts` 3 함수 = `OPERATION_MANAGE`, 조회 공개, export=requireSession 예정. /sales 클라이언트 가드 표에 발주서·개별판매·비판매차감 행 추가.
+
+**검증**: `tsc --noEmit` 0 · 신규/수정 화면 파일 eslint clean. ⚠️cutoff 제거(단계3)로 `/packages`에 과거 도정산 노출 중 + `/sales` 기본탭이 product로 바뀜 → **사용자 dev에서 화면 확인 권장**. **다음=단계6 화면**(발주서 업로드·건상세·차감·개별판매·비판매차감, Claude Design 핸드오프) + export 분리.
+
+---
+
 ### 발주서 판매처리 — 본구현 단계4: 발주서 액션 (export 제외) `feat`
 
 **배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.3.1·§8.5 단계4. 적재→매칭→차감 전 흐름. export(원본 양식 복원)는 분량(현 747줄, 800 제한)·복잡도로 별도 파일 분리 예정.
