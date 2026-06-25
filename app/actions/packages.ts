@@ -38,7 +38,8 @@ export type PackageRow = {
     variety: string
     spec: string // packageType ('5kg', '1kg', '500g', '톤백', …)
     weightPerUnit: number // kg 단위. 그룹 내부 정렬(FIFO) 키
-    qty: number // count
+    qty: number // count (총 포장 개수)
+    available: number // 가용 개수 = count - SUM(PackageMovement.count). 차감 도입(#19) 후 표시 기준
     producer: string // MILLED: farmer.name (+ "외 N명") / PURCHASED: purchaseVendor
     lot: string | null
     date: string // ISO yyyy-mm-dd
@@ -104,19 +105,8 @@ export async function getPackages(
         if (sourceList.length === 1) where.source = sourceList[0]
         else if (sourceList.length > 1) where.source = { in: sourceList }
 
-        // [임시] 판매처리 기능 미구현 상태 — 1달 이전 도정산(MILLED)은 사실상 판매된 재고이므로 노출 제외.
-        // 매입(PURCHASED)은 적어 그대로 유지. 판매처리 도입(#9 이후) 시 이 블록 제거.
-        const cutoff = new Date()
-        cutoff.setMonth(cutoff.getMonth() - 1)
-        where.AND = [
-            ...(where.AND ?? []),
-            {
-                OR: [
-                    { source: 'PURCHASED' },
-                    { AND: [{ source: 'MILLED' }, { createdAt: { gte: cutoff } }] },
-                ],
-            },
-        ]
+        // 판매처리 도입(#9·#19)으로 1달 cutoff 임시블록 제거 → 가용수량(count-SUM(movement)) 0 제외로 대체.
+        // 차감된 재고는 available=0이 되어 목록에서 자연히 빠진다(백로그 §13 종료).
 
         const varietyIdList = splitMulti(varietyId)
             .map(v => parseInt(v, 10))
@@ -167,12 +157,13 @@ export async function getPackages(
                         farmer: { select: { name: true } },
                     },
                 },
+                movements: { select: { count: true } }, // 가용수량 계산용(차감 합산, #19)
             },
             orderBy,
         })
 
-        // -- 행 → PackageRow 변환 --
-        const flat: PackageRow[] = rows.map(r => {
+        // -- 행 → PackageRow 변환 (가용수량 0 행은 제외) --
+        const flat: PackageRow[] = rows.flatMap(r => {
             // varietyId·variety 추출: MILLED는 stock.variety, PURCHASED는 자기 variety
             const varietyId =
                 r.variety?.id ?? r.stock?.variety.id ?? 0
@@ -194,19 +185,25 @@ export async function getPackages(
                     ? toIsoDate(r.incomingDate)
                     : toIsoDate(r.createdAt)
 
-            return {
+            // 가용수량 = count - SUM(movement.count). 0 이하면 목록 제외(차감 완료분)
+            const used = r.movements.reduce((s, m) => s + m.count, 0)
+            const available = r.count - used
+            if (available <= 0) return []
+
+            return [{
                 id: r.id,
                 varietyId,
                 variety: varietyName,
                 spec: r.packageType,
                 weightPerUnit: r.weightPerUnit,
                 qty: r.count,
+                available,
                 producer,
                 lot: r.lotNo,
                 date,
                 sub: r.totalWeight,
                 source: r.source as PackageSource,
-            }
+            }]
         })
 
         // -- varietyId 기준 그룹핑 (단, varietyId=0 행은 낱개로만) --

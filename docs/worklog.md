@@ -1,5 +1,21 @@
 # 작업일지
 
+## 2026-06-25
+
+### 발주서 판매처리 — 본구현 단계3: 제품재고 차감 공용 액션 `feat`
+
+**배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.3.2·§8.5 단계3. 단계2(파서·매처)는 `dce1eeb`로 커밋. 발주서와 독립적으로 동작하는 개별판매·비판매차감 먼저 구현(발주서 일괄은 단계4 `purchase-order.ts`).
+
+**변경(신규 1 + 수정 1)**:
+- [app/actions/package-movement.ts](<../app/actions/package-movement.ts>) 신규 — PackageMovement 통합모델(결정#19) 공용 액션. `createSale`(type=SALE, 거래처) · `createNonSaleMovement`(GIFT/LOST/DAMAGED/OTHER, 사유메모) · `cancelMovement`(하드삭제+가용복원+감사, #17) · `listMovements`(판매·비판매 통합 이력, 공개). 권한=`OPERATION_MANAGE`(list 제외). 금액 미관리(#25).
+  - **가용 재검증**: 트랜잭션 내 `count - SUM(movement.count)` 검증 후 생성. **동시성 보강**(Prisma FOR UPDATE 부재): 생성 후 총 차감이 보유 초과면 롤백(사후검증).
+  - **cancelMovement 가드**: `orderItemId≠null`(발주서 라인 차감)은 차단 → 발주서 상세(`cancelOrderItemMovements`, 단계4)에서 취소. 혼선·이중경로 방지.
+- [app/actions/packages.ts](<../app/actions/packages.ts>) `getPackages` 수정 — 1달 cutoff 임시블록 **제거**(#9·#19), `movements` include로 **`available=count-SUM(movement.count)` 동봉** + `PackageRow.available` 필드 추가 + **available≤0 행 제외**(flatMap). 백로그 §13 종료. ⚠️cutoff 제거로 차감 데이터 쌓이기 전엔 과거 도정산 재고가 노출됨(사용자 승인: "계획서대로 지금 제거"). `qty`(=count)는 유지, 화면의 가용 기준 전환은 단계6.
+
+**검증**: `tsc --noEmit` exit 0 · 신규 `package-movement.ts` eslint clean · `getPackages` 수정분 clean(기존 `any` 4개는 pre-existing=HEAD에 이미 존재, 수술적 원칙으로 미수정). 서버액션 실동작 왕복(세션 필요)은 화면 단계6에서. **다음=단계4 발주서 액션**(`app/actions/purchase-order.ts` upload·list·detail·match·confirm·cancel·export + FIFO 헬퍼).
+
+---
+
 ## 2026-06-23
 
 ### 발주서 판매처리 — 본구현 단계2: 파서·매처 순수함수 + 단위테스트 `feat`
