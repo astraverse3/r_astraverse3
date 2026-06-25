@@ -1,5 +1,25 @@
 # 작업일지
 
+## 2026-06-23
+
+### 발주서 판매처리 — 본구현 단계2: 파서·매처 순수함수 + 단위테스트 `feat`
+
+**배경**: 계획서 [plan-발주서판매처리.md](plan/plan-발주서판매처리.md) §8.2(파싱·매칭)·§8.5 구현순서 단계2. 단계1(스키마) 후속.
+
+**조사**: 실파일 `docs/resources/발주서.xlsx` raw 셀 덤프로 §2.1 실측 재확인(택배 A1:AJ30 규격 34열·이마트 A1:I8 규격 7열, 병합/4줄헤더 구조 일치, **단 주문 데이터 행은 빈 템플릿**). DB 마스터 조회로 품종 41·SKU 63·포장지 10 확인 → aliases 시드(서농22호=가바·천지향1세=천지향·백옥찰=찹쌀·흑미=가바흑미·발아현미=가바발아현미) 정상 반영 확인.
+
+**변경(신규 4)**:
+- [lib/purchase-order-parser.ts](../lib/purchase-order-parser.ts) — raw 셀 좌표 파서(순수). A열 라벨로 헤더 행 자동탐지, `!merges` 병합 펼치기(품목명·포장지), CRLF→공백 정규화, 시트명→channel. `parsePurchaseOrder`(주문 DTO) + `parseSpecCatalog`(헤더만으로 규격 종류 추출 — 빈 템플릿·업로드 미리보기용). Zod 출력검증.
+- [lib/purchase-order-matcher.ts](../lib/purchase-order-matcher.ts) — 매칭 파이프라인(순수). ①접두제거(유기농/프로틴 라이스/자스민 라이스)+도정접미 분리(백미/현미/오분도미/칠분도미, **흑미·발아현미 제외 #1·#24**) ②품종 name→aliases(공백무시) ③도정 미분리 시 category 디폴트(RICE→백미/MISC→기타, '찹쌀'·'천지향' 등 자동커버) ④(품종+도정+규격+포장지) SKU 조회. 실패는 사유별(variety/packaging/sku_unresolved)+학습용 토큰 보존. find-or-create 안 함.
+- [lib/purchase-order-parser.test.ts](../lib/purchase-order-parser.test.ts)·[lib/purchase-order-matcher.test.ts](../lib/purchase-order-matcher.test.ts) — node:test. 실파일 18종 품종 전수매칭(§6.1.1 기대표 대조)·SKU 케이스·정규화 단위·합성 워크북 병합/수량 파싱. **13/13 통과**.
+- [package.json](../package.json) `test` 스크립트(`tsx --test`) + `tsx` devDependency 추가(seed도 사용).
+
+**설계 보강(계획서 미명시 → 추가)**: ①포장지 매칭 공백 무시 비교(발주서 `자연\r\n주의`→`자연 주의` vs DB `자연주의`) ②품종토큰 공백 무시(`유기농\n가바\n발아현미`→`가바 발아현미` vs alias `가바발아현미`) ③도정 미분리 시 category 디폴트(찰벼 '찹쌀'=백미 등). 찰벼정리(millingType 백미/현미 통일)와 정합.
+
+**검증**: `npm test` 13/13 · `tsc --noEmit` exit 0 · 신규 4파일 eslint clean. **다음=단계3 차감 공용 액션**(`app/actions/package-movement.ts`)+`getPackages` cutoff 제거.
+
+---
+
 ## 2026-06-22
 
 ### 발주서 판매처리 — 본구현 단계1: 스키마 + 마이그레이션 `feat`

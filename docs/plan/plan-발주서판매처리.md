@@ -563,9 +563,9 @@ enum MovementType    { SALE  GIFT  LOST  DAMAGED  OTHER }
 
 **전제**: §8.1(제품유형 마스터) ✅ 완료. 아래는 발주서 본구현(§8.2~8.4) 순서.
 
-1. **스키마**: schema.prisma에 모델 3개(Upload/Order/Item)+PackageMovement+역참조 2개+enum 3개 → `prisma migrate`. (마이그레이션은 nullable·신규테이블이라 기존 row 무영향)
-2. **파서·매처**: `lib/purchase-order-parser.ts`(raw셀)·`lib/purchase-order-matcher.ts`(파이프라인 #23) 순수함수 + Zod. **실파일(docs/resources/발주서.xlsx)로 단위테스트** — 18종 품목 매칭 결과 검증(§6.1.1 기대표와 대조).
-3. **차감 공용 액션**: `app/actions/package-movement.ts`(createSale·createNonSale·cancel·list) + `getPackages` cutoff 제거·available 동봉. → 개별판매·비판매차감 먼저 동작(발주서와 독립 검증 가능).
+1. ✅ **스키마**(2026-06-22 `57bd9e2`): schema.prisma에 모델 3개(Upload/Order/Item)+PackageMovement+역참조 2개+enum 3개 → `prisma migrate`. (마이그레이션은 nullable·신규테이블이라 기존 row 무영향)
+2. ✅ **파서·매처**(2026-06-23): `lib/purchase-order-parser.ts`(raw셀, +`parseSpecCatalog`)·`lib/purchase-order-matcher.ts`(파이프라인 #23) 순수함수 + Zod. node:test 단위테스트(`tsx --test`, `npm test`) **13/13 통과** — 실파일 18종 품목 매칭 검증(§6.1.1 기대표 대조)+합성워크북 병합/수량 파싱. ⚠️실파일은 **빈 템플릿**(주문행 없음)이라 헤더 규격카탈로그로 검증. 설계보강: 포장지·품종토큰 공백무시 비교, 도정 미분리 시 category 디폴트(RICE→백미/MISC→기타).
+3. ⏭️ **차감 공용 액션**(다음): `app/actions/package-movement.ts`(createSale·createNonSale·cancel·list) + `getPackages` cutoff 제거·available 동봉. → 개별판매·비판매차감 먼저 동작(발주서와 독립 검증 가능).
 4. **발주서 액션**: `app/actions/purchase-order.ts`(upload·list·detail·match·confirm·cancel·export). FIFO 헬퍼.
 5. **권한 등록**: `permission-matrix.md`에 발주서/차감 항목 추가(업로드·매칭·차감·판매·비판매 = 전부 `OPERATION_MANAGE` 단일 / export=requireSession / 조회=공개). `/sales` 탭 placeholder(rice·misc) 제거→제품판매 탭 골격(release→원물출고 라벨, page.tsx 분기·`?tab=` 라우팅 동반 수정).
 6. **화면**(§8.4) Claude Design 핸드오프 → 구현. 모바일 동반.
