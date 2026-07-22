@@ -248,7 +248,7 @@ export function AddPackagingDialog({
         }
     }
 
-    const addToGroup = async (group: LotGroup, template: { label: string; weight: number }) => {
+    const addToGroup = (group: LotGroup, template: { label: string; weight: number }) => {
         const stockId = group.representativeStockId
         const label = template.label
         // 톤백·잔량은 포장지 입력 없음(톤백=서버에서 '톤백' 강제, 잔량=SKU 미부여).
@@ -274,10 +274,8 @@ export function AddPackagingDialog({
                 : o))
             return
         }
-        // 신규 라인: (품종+도정+규격) 기본 포장지를 추천받아 함께 추가. 수량칸으로 포커스.
-        let defaultPackagingId: number | null = null
-        const res = await suggestProductType(group.varietyId, millingType, label)
-        if (res.success && res.data) defaultPackagingId = res.data.default?.packagingId ?? null
+        // 신규 라인: 행을 먼저 즉시 추가하고(포장지 미지정으로 시작), 수량칸으로 포커스.
+        // 서버 왕복(기본 포장지 추천)이 행 추가를 블로킹하지 않도록 낙관적으로 그린다.
         pendingFocus.current = { index: outputs.length, field: 'count' }
         setOutputs(prev => [...prev, {
             packageType: label,
@@ -285,8 +283,18 @@ export function AddPackagingDialog({
             count: 1,
             totalWeight: template.weight,
             stockId,
-            packagingId: defaultPackagingId,
+            packagingId: null,
         }])
+        // (품종+도정+규격) 기본 포장지 추천은 백그라운드로 조회 → 응답이 오면 해당 라인의
+        // 포장지가 아직 미지정일 때만 채운다(사용자가 먼저 골랐으면 그 선택을 유지).
+        suggestProductType(group.varietyId, millingType, label).then(res => {
+            const defaultPackagingId = res.success && res.data ? (res.data.default?.packagingId ?? null) : null
+            if (defaultPackagingId == null) return
+            setOutputs(prev => prev.map(o =>
+                (o.packageType === label && o.stockId === stockId && o.packagingId == null)
+                    ? { ...o, packagingId: defaultPackagingId }
+                    : o))
+        })
     }
 
     const setPackaging = (index: number, packagingId: number | null) => {
