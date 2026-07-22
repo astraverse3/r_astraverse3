@@ -1,5 +1,19 @@
 # 작업일지
 
+## 2026-07-22
+
+### 포장 기록 관리 다이얼로그 — 입력 편의성 3종 개선 `feat`
+
+**대상**: [app/(dashboard)/milling/add-packaging-dialog.tsx](<app/(dashboard)/milling/add-packaging-dialog.tsx>) 단일 파일.
+
+1. **수량 입력칸 확장**: 모바일 그리드 수량 컬럼 64px→88px(포장지 1fr 자동 축소, PC 포장지 140→120px), 입력칸 `w-5`(20px)→`w-11`(44px). 3자리에서 잘리던 문제 해소.
+2. **규격별 합계 밴드 신설**: 헤더 고정(스크롤 밖). 전체 생산자 합산 규격별 `수량·중량`을 개별 박스(테두리+shadow, 잔량=노랑)로 구분 표시. 노출 조건=다중 생산자 or 규격 2종↑. 여러 투입건 계산 편의.
+3. **규격 버튼 클릭 시 포커스 이동**: `scrollToBottom()`(맨아래 튐) 제거 → `pendingFocus` ref + `outputs` useEffect로 방금 추가/증가한 행 입력칸에 자동 포커스+select+`scrollIntoView({block:'nearest'})`. 일반 규격=수량칸, 톤백·잔량=중량칸. `data-count-index`/`data-weight-index`로 대상 탐색.
+
+**검증**: `npx tsc --noEmit` 통과.
+
+---
+
 ## 2026-06-25
 
 ### 발주서 판매처리 — 단계6 화면 Claude Design 핸드오프 준비 `docs`

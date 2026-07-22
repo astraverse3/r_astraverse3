@@ -126,6 +126,8 @@ export function AddPackagingDialog({
     // 활성 포장지 목록 (라인별 드롭다운 옵션)
     const [packagings, setPackagings] = useState<{ id: number; name: string }[]>([])
     const scrollRef = useRef<HTMLDivElement>(null)
+    // 규격 버튼 클릭 후 방금 추가/증가한 행의 입력칸으로 포커스 이동(맨아래 스크롤 대신)
+    const pendingFocus = useRef<{ index: number; field: 'count' | 'weight' } | null>(null)
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
@@ -151,6 +153,22 @@ export function AddPackagingDialog({
     useEffect(() => {
         if (open) setOutputs(restoreOutputs(initialOutputs))
     }, [open, initialOutputs])
+
+    // outputs 변경 후, 대기 중인 포커스 대상 입력칸을 화면에 보이게 하고 포커스+전체선택
+    useEffect(() => {
+        const target = pendingFocus.current
+        if (!target) return
+        pendingFocus.current = null
+        requestAnimationFrame(() => {
+            const el = scrollRef.current?.querySelector<HTMLInputElement>(
+                `[data-${target.field}-index="${target.index}"]`
+            )
+            if (!el) return
+            el.scrollIntoView({ block: 'nearest' })
+            el.focus()
+            el.select()
+        })
+    }, [outputs])
 
     // 활성 포장지 목록 lazy fetch (라인별 드롭다운 옵션)
     useEffect(() => {
@@ -230,17 +248,13 @@ export function AddPackagingDialog({
         }
     }
 
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }, 50)
-    }
-
     const addToGroup = async (group: LotGroup, template: { label: string; weight: number }) => {
         const stockId = group.representativeStockId
         const label = template.label
         // 톤백·잔량은 포장지 입력 없음(톤백=서버에서 '톤백' 강제, 잔량=SKU 미부여).
+        // → 수량 대신 중량(kg) 입력칸으로 포커스.
         if (label === PKG_TONBAG || label === PKG_REMAINDER) {
+            pendingFocus.current = { index: outputs.length, field: 'weight' }
             setOutputs(prev => [...prev, {
                 packageType: label,
                 weightPerUnit: 0,
@@ -249,21 +263,22 @@ export function AddPackagingDialog({
                 stockId,
                 packagingId: null,
             }])
-            scrollToBottom()
             return
         }
-        // 기존 동일 라인이 있으면 수량만 증가(포장지 유지).
-        const existing = outputs.find(o => o.packageType === label && o.stockId === stockId)
-        if (existing) {
+        // 기존 동일 라인이 있으면 수량만 증가(포장지 유지). 해당 행 수량칸으로 포커스.
+        const existingIndex = outputs.findIndex(o => o.packageType === label && o.stockId === stockId)
+        if (existingIndex !== -1) {
+            pendingFocus.current = { index: existingIndex, field: 'count' }
             setOutputs(prev => prev.map(o => (o.packageType === label && o.stockId === stockId)
                 ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
                 : o))
             return
         }
-        // 신규 라인: (품종+도정+규격) 기본 포장지를 추천받아 함께 추가.
+        // 신규 라인: (품종+도정+규격) 기본 포장지를 추천받아 함께 추가. 수량칸으로 포커스.
         let defaultPackagingId: number | null = null
         const res = await suggestProductType(group.varietyId, millingType, label)
         if (res.success && res.data) defaultPackagingId = res.data.default?.packagingId ?? null
+        pendingFocus.current = { index: outputs.length, field: 'count' }
         setOutputs(prev => [...prev, {
             packageType: label,
             weightPerUnit: template.weight,
@@ -272,7 +287,6 @@ export function AddPackagingDialog({
             stockId,
             packagingId: defaultPackagingId,
         }])
-        scrollToBottom()
     }
 
     const setPackaging = (index: number, packagingId: number | null) => {
@@ -352,6 +366,27 @@ export function AddPackagingDialog({
         ? lotGroups
         : [{ lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
+    // 규격별 합계 — 전체 생산자 합산 (여러 투입건 계산용). 템플릿 순서 우선 정렬.
+    const specSummary = (() => {
+        const map = new Map<string, { count: number; weight: number }>()
+        for (const o of outputs) {
+            if (!o.count && !o.totalWeight) continue
+            const cur = map.get(o.packageType) ?? { count: 0, weight: 0 }
+            cur.count += o.count || 0
+            cur.weight += o.totalWeight || 0
+            map.set(o.packageType, cur)
+        }
+        const order = PACKAGE_TEMPLATES.map(t => t.label)
+        return [...map.entries()]
+            .map(([packageType, v]) => ({ packageType, ...v }))
+            .sort((a, b) => {
+                const ia = order.indexOf(a.packageType), ib = order.indexOf(b.packageType)
+                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+            })
+    })()
+    // 다중 생산자거나 규격이 2종 이상일 때만 노출(단일 생산자·단일 규격은 중복이라 생략)
+    const showSpecSummary = specSummary.length > 0 && (isMultiGroup || specSummary.length >= 2)
+
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             {trigger !== undefined ? trigger : (
@@ -380,6 +415,29 @@ export function AddPackagingDialog({
                         </span>
                     </div>
                 </DialogHeader>
+
+                {/* 규격별 합계 밴드 — 헤더 고정, 여러 생산자 투입 시 규격별 총 수량·중량 한눈에 */}
+                {showSpecSummary && (
+                    <div className="mt-2 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/60 shadow-sm px-3 py-2.5">
+                        <div className="text-[10.5px] font-semibold text-slate-400 tracking-wide mb-1.5">규격별 합계</div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {specSummary.map(s => (
+                                <div key={s.packageType} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${s.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700' : 'bg-stone-100 text-stone-600'}`}>
+                                        {s.packageType}
+                                    </span>
+                                    <span className="text-[12px] font-bold text-slate-600 font-mono tabular-nums">
+                                        {s.count.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">개</span>
+                                    </span>
+                                    <span className="text-slate-200">|</span>
+                                    <span className="text-[12px] font-black text-slate-800 font-mono tabular-nums">
+                                        {s.weight.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">kg</span>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div ref={scrollRef} className="py-4 space-y-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                     {displayGroups.map((group) => {
@@ -496,7 +554,7 @@ export function AddPackagingDialog({
                                     {groupOutputs.map(({ o, i }) => (
                                         <div key={i} className="px-2 sm:px-3 py-1.5">
                                           {/* 모바일: 36/1fr/64/58/22 — 데스크탑: 40/140/1fr/64/24 (반응형 1행 유지) */}
-                                          <div className="grid grid-cols-[36px_1fr_64px_58px_22px] sm:grid-cols-[40px_140px_1fr_64px_24px] items-center gap-1">
+                                          <div className="grid grid-cols-[36px_1fr_88px_58px_22px] sm:grid-cols-[40px_120px_1fr_64px_24px] items-center gap-1">
                                             {/* 1. 규격 badge (잔량=노랑) */}
                                             <Badge variant="secondary" className={`w-full justify-center px-0 py-0.5 rounded text-[11px] ${o.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' : 'bg-stone-100 text-stone-600 hover:bg-stone-100'}`}>
                                                 {o.packageType}
@@ -539,10 +597,11 @@ export function AddPackagingDialog({
                                                     </Button>
                                                     <Input
                                                         type="number"
+                                                        data-count-index={i}
                                                         value={o.count === 0 ? '' : o.count}
                                                         onChange={(e) => setCount(i, parseInt(e.target.value))}
                                                         onFocus={(e) => e.target.select()}
-                                                        className="w-5 h-6 text-center text-[12px] font-bold bg-transparent border-none shadow-none font-mono px-0"
+                                                        className="w-11 h-6 text-center text-[12px] font-bold bg-transparent border-none shadow-none font-mono px-0"
                                                     />
                                                     <Button variant="ghost" size="icon" className="h-[22px] w-[22px] shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
                                                         <Plus className="h-3 w-3" />
@@ -559,6 +618,7 @@ export function AddPackagingDialog({
                                                         <>
                                                             <Input
                                                                 type="number"
+                                                                data-weight-index={i}
                                                                 value={o.weightPerUnit}
                                                                 onChange={(e) => setWeight(i, parseFloat(e.target.value))}
                                                                 onFocus={(e) => e.target.select()}
