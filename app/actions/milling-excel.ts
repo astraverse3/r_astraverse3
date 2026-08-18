@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { GetMillingLogsParams } from './milling'
 import { requireSession } from '@/lib/auth-guard'
+import { matchesYieldFilter } from '@/lib/milling-yield'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
@@ -117,9 +118,14 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
             ]
         })
 
+        // Yield filter: 목록 조회와 동일한 공유 헬퍼로 post-query 필터. 미마감 배치는 제외.
+        const filteredLogs = params?.yieldRate && params.yieldRate !== 'ALL'
+            ? logs.filter(batch => matchesYieldFilter(batch, params.yieldRate))
+            : logs
+
         const rows: any[] = []
 
-        for (const batch of logs) {
+        for (const batch of filteredLogs) {
             const dateStr = batch.date ? new Date(batch.date).toLocaleDateString('ko-KR') : ''
             const statusStr = batch.isClosed
                 ? '마감됨'

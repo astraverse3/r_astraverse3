@@ -9,6 +9,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { findOrCreateProductType } from '@/lib/product-type'
+import { matchesYieldFilter } from '@/lib/milling-yield'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -297,7 +298,12 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
             ]
         })
 
-        return { success: true, data: logs }
+        // Yield filter: 계산값이라 DB where로 못 걸러 post-query 필터. 미마감 배치는 제외.
+        const filtered = params?.yieldRate && params.yieldRate !== 'ALL'
+            ? logs.filter(batch => matchesYieldFilter(batch, params.yieldRate))
+            : logs
+
+        return { success: true, data: filtered }
     } catch (error) {
         console.error('Failed to get milling logs:', error)
         return { success: false, error: 'Failed to get milling logs' }
