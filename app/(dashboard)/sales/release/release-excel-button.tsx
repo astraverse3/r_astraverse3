@@ -14,8 +14,8 @@ export function ReleaseExcelButton({ filters }: { filters?: { startDate?: Date; 
         setExporting(true)
         const result = await exportReleaseLogs(filters)
 
-        if (result.success && result.daa) {
-            const base64Data = result.daa
+        if (result.success && result.data) {
+            const base64Data = result.data
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
             link.download = result.fileName || 'release_logs.xlsx'

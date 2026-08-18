@@ -23,9 +23,9 @@ export function ExcelButtons() {
         setExporting(true)
         const result = await exportFarmers()
 
-        if (result.success && result.daa) {
+        if (result.success && result.data) {
             // Trigger Download
-            const base64Data = result.daa
+            const base64Data = result.data
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
             link.download = result.fileName || 'farmers.xlsx'

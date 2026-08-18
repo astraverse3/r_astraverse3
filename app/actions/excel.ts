@@ -61,7 +61,7 @@ export async function exportFarmers() {
             description: `생산자(작목반 포함) 목록 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, daa: buf, fileName: `producer_groups_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `producer_groups_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
         console.error('Export failed:', error)

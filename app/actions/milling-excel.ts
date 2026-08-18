@@ -199,7 +199,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
 
-        return { success: true, daa: buf, fileName: `milling_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `milling_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
         console.error('Export milling logs failed:', error)

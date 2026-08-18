@@ -109,7 +109,7 @@ export async function exportReleaseLogs(filters?: {
             description: `출고 내역 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, daa: buf, fileName: `release_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `release_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
 
     } catch (error) {
         console.error('Export release logs failed:', error)

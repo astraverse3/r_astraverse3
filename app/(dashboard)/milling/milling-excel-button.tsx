@@ -15,8 +15,8 @@ export function MillingExcelButton({ filters }: { filters?: GetMillingLogsParams
         setExporting(true)
         const result = await exportMillingLogs(filters)
 
-        if (result.success && result.daa) {
-            const base64Data = result.daa
+        if (result.success && result.data) {
+            const base64Data = result.data
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`
             link.download = result.fileName || 'milling_logs.xlsx'
