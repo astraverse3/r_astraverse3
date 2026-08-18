@@ -1,10 +1,12 @@
 // 발주서 엑셀(2차원 피벗 매트릭스) 파서 — 순수 모듈('use server' 아님)
 //
-// 계획서 §8.2.2: SheetJS의 sheet_to_json은 4줄 헤더·병합셀·피벗을 못 다룸
-// → raw 셀 좌표 접근 + !merges 병합 펼치기로 직접 파싱.
+// 계획서 §2.2 통일 양식(결정 #26) 기준:
+//   시트명 = `채널_YYMMDD` (고정 prefix 4종 이마트/택배/서울급식/해남급식, 그 외 = 기업별)
+//   1행 품종+도정명 · 2행 포장지 · 3행 중량 · 4행 라벨(A=발주처 B=수령인) · 5행~ 데이터
+//   가로축(열) = 제품규격, 세로축(행) = 발주처/수령인, 셀 값 = 주문 수량.
 //
-// 가로축(열) = 제품규격(품목명/포장지/중량 헤더), 세로축(행) = 발주처/수령인.
-// 셀 값 = 주문 수량. 시트명에 '이마트' 포함 여부로 channel 판별.
+// SheetJS의 sheet_to_json은 다줄 헤더·병합셀·피벗을 못 다룬다
+// → raw 셀 좌표 접근 + !merges 병합 펼치기로 직접 파싱.
 //
 // 파서는 DB·매칭을 하지 않는다. 순수 DTO(ParsedUpload)만 반환하고
 // 출력 형태를 Zod로 검증(시스템 경계). 적재·매칭은 Server Action(§8.3)의 책임.
@@ -23,21 +25,42 @@ const ParsedItemSchema = z.object({
 })
 
 const ParsedOrderSchema = z.object({
-  vendor: z.string().min(1), // 발주처 (이마트 시트는 '이마트' 고정)
-  recipient: z.string(), // 수령인 (이마트 시트는 지점). 택배 일부는 빈 값 허용
+  vendor: z.string().min(1), // 발주처 (이마트='이마트'·해남급식='해남급식' 고정)
+  recipient: z.string().min(1), // 수령인. 빈칸이면 파서가 vendor를 복사(택배·기업별 #26)
   items: z.array(ParsedItemSchema),
 })
 
+// 채널 5종(#26) — 스키마 enum PurchaseChannel과 동일
+const ChannelSchema = z.enum([
+  'DELIVERY',
+  'EMART',
+  'MEAL_SEOUL',
+  'MEAL_HAENAM',
+  'CORPORATE',
+])
+
 const ParsedSheetSchema = z.object({
   sheetName: z.string(),
-  channel: z.enum(['DELIVERY', 'EMART']),
+  channel: ChannelSchema,
+  orderDate: z.string().nullable(), // 시트명 끝 YYMMDD → 'yyyy-mm-dd'
   orders: z.array(ParsedOrderSchema),
+})
+
+const SkippedSheetSchema = z.object({
+  sheetName: z.string(),
+  reason: z.string(), // 미인식 사유(오타 방지용 경고 — 작성안내 5번)
 })
 
 export const ParsedUploadSchema = z.object({
   fileName: z.string(),
+  channel: ChannelSchema.nullable(), // 파일 대표 채널. 혼합·없음이면 null
+  channels: z.array(ChannelSchema), // 실제 등장한 채널(중복 제거)
+  orderDate: z.string().nullable(), // 대표 발주일 = 가장 이른 시트 날짜
   sheets: z.array(ParsedSheetSchema),
+  skipped: z.array(SkippedSheetSchema),
 })
+
+export type PurchaseChannel = z.infer<typeof ChannelSchema>
 
 export type ParsedItem = z.infer<typeof ParsedItemSchema>
 export type ParsedOrder = z.infer<typeof ParsedOrderSchema>
@@ -52,7 +75,7 @@ type SpecColumn = {
   packageType: string
 }
 
-const FIRST_SPEC_COL = 2 // C열부터 규격(A=발주처, B=수령인 / 이마트 A='이마트' 고정)
+const FIRST_SPEC_COL = 2 // C열부터 규격(A열=발주처, B열=수령인)
 
 // ------------------------------------------------------
 // 셀 접근 헬퍼
@@ -97,9 +120,10 @@ function getCellMerged(
 
 // ------------------------------------------------------
 // 헤더 행 위치 자동 탐지 (A열 라벨 기반 — 행 인덱스 하드코딩 회피 §2.1)
+// 통일 양식은 행 순서가 고정이지만, 위에 빈 행/제목이 끼어도 견디도록 라벨로 찾는다.
 // ------------------------------------------------------
 type HeaderLayout = {
-  itemNameRow: number // 품목명 행(농가명 행 바로 위)
+  itemNameRow: number // 품종+도정명 행(포장지 행 바로 위)
   packagingRow: number // 포장지 행
   weightRow: number // 중량 행
   dataStartRow: number // 데이터(발주처/수령인) 시작 행
@@ -109,31 +133,27 @@ function detectHeaderLayout(
   ws: XLSX.WorkSheet,
   range: XLSX.Range,
 ): HeaderLayout | null {
-  let farmerRow = -1
   let packagingRow = -1
   let weightRow = -1
-  let subtotalRow = -1
-  let vendorHeaderRow = -1 // 택배의 '(발주처)' 헤더 행(이마트엔 없음)
+  let vendorLabelRow = -1 // A열 '발주처' 라벨 행(B열 '수령인')
 
   for (let r = range.s.r; r <= range.e.r; r++) {
     const a = normalizeCell(getCellRaw(ws, r, 0))
-    if (a === '농가명') farmerRow = r
-    else if (a === '포장지') packagingRow = r
-    else if (a === '중량') weightRow = r
-    else if (a.includes('소계')) subtotalRow = r
-    else if (a.includes('발주처') || normalizeCell(getCellRaw(ws, r, 1)).includes('수령인'))
-      vendorHeaderRow = r
+    if (a === '포장지' && packagingRow < 0) packagingRow = r
+    else if (a === '중량' && weightRow < 0) weightRow = r
+    else if (a === '발주처' && vendorLabelRow < 0) vendorLabelRow = r
   }
 
-  if (farmerRow < 0 || packagingRow < 0 || weightRow < 0) return null
+  // 세 라벨이 모두 있어야 발주서 시트. 하나라도 없으면 미인식(작성안내 시트 등).
+  if (packagingRow < 0 || weightRow < 0 || vendorLabelRow < 0) return null
+  const itemNameRow = packagingRow - 1
+  if (itemNameRow < range.s.r) return null
 
-  // 데이터 시작: 택배는 '(발주처)' 헤더 다음 행, 이마트는 소계행 다음 행부터 바로 데이터.
-  const afterHeaders = vendorHeaderRow >= 0 ? vendorHeaderRow + 1 : subtotalRow + 1
   return {
-    itemNameRow: farmerRow - 1,
+    itemNameRow,
     packagingRow,
     weightRow,
-    dataStartRow: afterHeaders,
+    dataStartRow: vendorLabelRow + 1,
   }
 }
 
@@ -186,7 +206,8 @@ function extractOrders(
   const orders: ParsedOrder[] = []
   for (let r = layout.dataStartRow; r <= range.e.r; r++) {
     const vendor = normalizeCell(getCellRaw(ws, r, 0))
-    const recipient = normalizeCell(getCellRaw(ws, r, 1))
+    // 수령인 빈칸 = '발주처와 동일'(택배·기업별 #26) → 파서가 복사한다.
+    const recipient = normalizeCell(getCellRaw(ws, r, 1)) || vendor
     if (!vendor) continue // 발주처 없는 빈 행 skip
 
     const items: ParsedItem[] = []
@@ -206,28 +227,87 @@ function extractOrders(
   return orders
 }
 
-function channelOf(sheetName: string): ParsedSheet['channel'] {
-  return sheetName.includes('이마트') ? 'EMART' : 'DELIVERY'
+// ------------------------------------------------------
+// 시트명 해석 — `채널_YYMMDD` (#26)
+// ------------------------------------------------------
+
+/** 고정 채널 prefix 4종. 그 외 시트명(거래처명_YYMMDD)은 전부 기업별. */
+const FIXED_CHANNEL_PREFIX: Record<string, PurchaseChannel> = {
+  이마트: 'EMART',
+  택배: 'DELIVERY',
+  서울급식: 'MEAL_SEOUL',
+  해남급식: 'MEAL_HAENAM',
+}
+
+const SHEET_NAME_RE = /^(.+)_(\d{6})$/ // 거래처명에 밑줄이 있어도 끝 6자리 날짜 기준
+
+/** YYMMDD → 'yyyy-mm-dd'. 형식이 맞지 않으면 null. */
+function parseYYMMDD(s: string): string | null {
+  const yy = Number(s.slice(0, 2))
+  const mm = Number(s.slice(2, 4))
+  const dd = Number(s.slice(4, 6))
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null
+  const iso = `20${String(yy).padStart(2, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+  const d = new Date(`${iso}T00:00:00Z`)
+  if (Number.isNaN(d.getTime()) || d.getUTCDate() !== dd) return null // 2/31 등 존재하지 않는 날짜
+  return iso
+}
+
+export type SheetNameInfo = {
+  channel: PurchaseChannel
+  orderDate: string | null
+  label: string // prefix 부분(기업별은 거래처명)
+}
+
+/**
+ * 시트명 `채널_YYMMDD`를 해석. 형식이 아니면 null(= 미인식 시트, 작성안내 5번).
+ * 고정 prefix 4종 외에는 기업별(CORPORATE)로 분류한다.
+ */
+export function parseSheetName(sheetName: string): SheetNameInfo | null {
+  const m = SHEET_NAME_RE.exec(sheetName.trim())
+  if (!m) return null
+  const label = m[1].trim()
+  if (!label) return null
+  return {
+    channel: FIXED_CHANNEL_PREFIX[label] ?? 'CORPORATE',
+    orderDate: parseYYMMDD(m[2]),
+    label,
+  }
 }
 
 // ------------------------------------------------------
 // 시트 1개 파싱
 // ------------------------------------------------------
-function parseSheet(
-  ws: XLSX.WorkSheet,
-  sheetName: string,
-): ParsedSheet | null {
-  if (!ws['!ref']) return null
+type SheetOutcome =
+  | { ok: true; sheet: ParsedSheet }
+  | { ok: false; reason: string }
+
+function parseSheet(ws: XLSX.WorkSheet, sheetName: string): SheetOutcome {
+  const info = parseSheetName(sheetName)
+  if (!info) {
+    return { ok: false, reason: '시트명이 `채널_YYMMDD` 형식이 아닙니다.' }
+  }
+  if (!ws['!ref']) return { ok: false, reason: '빈 시트입니다.' }
   const range = XLSX.utils.decode_range(ws['!ref'])
   const merges = ws['!merges'] ?? []
 
   const layout = detectHeaderLayout(ws, range)
-  if (!layout) return null // 헤더 라벨 못 찾음 → 발주서 시트 아님(skip)
+  if (!layout) {
+    return { ok: false, reason: '헤더(포장지·중량·발주처 라벨)를 찾지 못했습니다.' }
+  }
 
   const specs = extractSpecColumns(ws, merges, range, layout)
   const orders = extractOrders(ws, range, layout, specs)
 
-  return { sheetName, channel: channelOf(sheetName), orders }
+  return {
+    ok: true,
+    sheet: {
+      sheetName,
+      channel: info.channel,
+      orderDate: info.orderDate,
+      orders,
+    },
+  }
 }
 
 // ------------------------------------------------------
@@ -245,12 +325,29 @@ export function parsePurchaseOrder(
 ): ParsedUpload {
   const wb = XLSX.read(buffer, { type: 'buffer' })
   const sheets: ParsedSheet[] = []
+  const skipped: { sheetName: string; reason: string }[] = []
   for (const name of wb.SheetNames) {
-    const parsed = parseSheet(wb.Sheets[name], name)
-    if (parsed) sheets.push(parsed)
+    const outcome = parseSheet(wb.Sheets[name], name)
+    if (outcome.ok) sheets.push(outcome.sheet)
+    else skipped.push({ sheetName: name, reason: outcome.reason })
   }
+
+  // 파일 1개 = 채널 1개(실무 확정). 섞이면 대표 채널을 비워 호출측이 거부하게 한다.
+  const channels = [...new Set(sheets.map((s) => s.channel))]
+  const dates = sheets
+    .map((s) => s.orderDate)
+    .filter((d): d is string => d !== null)
+    .sort()
+
   // 시스템 경계: 출력 형태 검증
-  return ParsedUploadSchema.parse({ fileName, sheets })
+  return ParsedUploadSchema.parse({
+    fileName,
+    channel: channels.length === 1 ? channels[0] : null,
+    channels,
+    orderDate: dates[0] ?? null,
+    sheets,
+    skipped,
+  })
 }
 
 // ------------------------------------------------------
@@ -264,7 +361,7 @@ export type SpecCatalogEntry = {
 }
 export type SpecCatalogSheet = {
   sheetName: string
-  channel: ParsedSheet['channel']
+  channel: PurchaseChannel
   specs: SpecCatalogEntry[]
 }
 export type SpecCatalog = {
@@ -279,6 +376,8 @@ export function parseSpecCatalog(
   const wb = XLSX.read(buffer, { type: 'buffer' })
   const sheets: SpecCatalogSheet[] = []
   for (const name of wb.SheetNames) {
+    const info = parseSheetName(name)
+    if (!info) continue
     const ws = wb.Sheets[name]
     if (!ws['!ref']) continue
     const range = XLSX.utils.decode_range(ws['!ref'])
@@ -292,7 +391,7 @@ export function parseSpecCatalog(
         rawPackaging,
       }),
     )
-    sheets.push({ sheetName: name, channel: channelOf(name), specs })
+    sheets.push({ sheetName: name, channel: info.channel, specs })
   }
   return { fileName, sheets }
 }

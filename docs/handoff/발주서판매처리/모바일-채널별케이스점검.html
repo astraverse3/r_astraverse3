@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>모바일 매트릭스 — 채널별 케이스 점검</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#2563eb'}}}}};</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.phone{width:390px;height:844px;background:#fff;border-radius:44px;box-shadow:0 30px 80px rgba(15,23,42,.28);overflow:hidden;position:relative;border:1px solid #e2e8f0;display:flex;flex-direction:column}
+.frame-label{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.frame-label .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.pill.bad{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.pill.good{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+.pill.keep{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+.mx{border-collapse:separate;border-spacing:0;table-layout:fixed}
+.mx th,.mx td{height:34px;font-size:11.5px;border-right:1px solid #eef2f6;border-bottom:1px solid #eef2f6;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx thead th{background:#f8fafc;font-size:10px;font-weight:700;color:#475569;text-align:center;height:38px;line-height:1.15}
+.mx td.q{text-align:right;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+.stickL{position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 #e2e8f0}
+.stickR{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-1px 0 0 #e2e8f0}
+.hdL{position:sticky;left:0;z-index:3;background:#f1f5f9!important;box-shadow:1px 0 0 #e2e8f0}
+.hdR{position:sticky;right:0;z-index:3;background:#f1f5f9!important;box-shadow:-1px 0 0 #e2e8f0}
+.note{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:17px 19px}
+.note h4{font-size:12.5px;font-weight:800;color:#0f172a}
+.note p,.note li{font-size:11.5px;color:#475569;line-height:1.6}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:36px;width:1500px">
+  <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">모바일 매트릭스 — 채널별 케이스 점검</h1>
+  <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.65;max-width:1420px">
+    모바일 매트릭스를 <b>「전 채널 공통」</b>으로 확정했지만 실제로 검증한 건 택배(14열 × 20행+) 하나였습니다. 데스크탑 시안의 실제 데이터를 390px에 그대로 올려보니
+    <b>채널마다 행렬 모양이 극단적으로 다릅니다</b> — 급식은 <b>2행 × 13열</b>(가로로 누움), 기업별은 <b>1행 × 1열</b>(셀 한 개). 같은 템플릿으로 버티는 건 택배·이마트뿐입니다.
+    아래 4프레임에서 깨지는 지점과 보정안을 확인하세요.
+  </p>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+    <span style="font-size:11.5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px"><b>택배</b> 14열 × 20행+ <span style="color:#047857;font-weight:700">현행 OK</span></span>
+    <span style="font-size:11.5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px"><b>이마트</b> 5열 × 3행 <span style="color:#047857;font-weight:700">현행 OK</span></span>
+    <span style="font-size:11.5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px"><b>서울급식</b> 13열 × 2행 <span style="color:#be123c;font-weight:700">깨짐 → 축 전치</span></span>
+    <span style="font-size:11.5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px"><b>해남급식</b> 10열 × 2행 <span style="color:#be123c;font-weight:700">동일</span></span>
+    <span style="font-size:11.5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px"><b>기업별</b> 1열 × 1행 <span style="color:#be123c;font-weight:700">과잉 → 카드</span></span>
+  </div>
+</div>
+
+<!-- ① 급식 현행 (문제) -->
+<div style="position:absolute;left:40px;top:220px">
+  <div class="frame-label"><span class="pill bad">문제 시연</span> 서울급식 · 현행 매트릭스 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:4px">13열 × 2행</span></div>
+  <div class="phone">
+    <div class="h-11 flex items-center justify-between px-6 pt-1.5 shrink-0"><span class="text-[13px] font-semibold text-slate-900">9:41</span><span class="text-[11px] text-slate-400">서울급식 6-4</span></div>
+    <div class="px-4 pb-2.5 border-b border-slate-100 shrink-0">
+      <div class="text-[15px] font-extrabold text-slate-900 leading-tight">행복플러스 · 서울급식</div>
+      <div class="text-[11px] text-slate-400 mt-0.5">26/06/16 · 수령처 2 · 규격 13 · 19라인</div>
+    </div>
+    <div class="flex-1 min-h-0 overflow-hidden relative">
+      <div id="mx1wrap" class="h-full overflow-hidden"><table class="mx" id="mx1"></table></div>
+      <!-- 스크롤 상태 표시 -->
+      <div class="absolute left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-slate-900/75 text-white text-[10px] font-semibold" style="bottom:12px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>13열 중 4열 표시 · 좌우 스크롤
+      </div>
+    </div>
+    <div class="shrink-0 px-4 py-3 border-t border-slate-200 bg-white">
+      <div class="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-[11px] text-rose-900 leading-snug"><b>문제</b> — 행이 2개뿐인데 화면의 대부분이 가로 스크롤에 쓰입니다. 규격 13개를 훑으려면 좌우로 3~4번 밀어야 하고, 어느 열을 보고 있는지 놓칩니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 급식 전치안 (보정) -->
+<div style="position:absolute;left:490px;top:220px">
+  <div class="frame-label"><span class="pill good">보정안 · 권장</span> 서울급식 · 축 전치 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:4px">행=규격 13, 열=수령처 2</span></div>
+  <div class="phone">
+    <div class="h-11 flex items-center justify-between px-6 pt-1.5 shrink-0"><span class="text-[13px] font-semibold text-slate-900">9:41</span><span class="text-[11px] text-slate-400">서울급식 6-4</span></div>
+    <div class="px-4 pb-2.5 border-b border-slate-100 shrink-0 flex items-start gap-2">
+      <div class="min-w-0"><div class="text-[15px] font-extrabold text-slate-900 leading-tight">행복플러스 · 서울급식</div>
+      <div class="text-[11px] text-slate-400 mt-0.5">수령처 2 · 규격 13 · <span id="sumKg" class="mono"></span></div></div>
+      <span class="ml-auto shrink-0 mt-0.5 text-[10px] font-bold text-primary bg-blue-50 border border-blue-200 rounded-md px-2 py-1">축 바꿈</span>
+    </div>
+    <div class="flex-1 min-h-0 overflow-hidden"><table class="mx" id="mx2"></table></div>
+    <div class="shrink-0 px-4 py-3 border-t border-slate-200 bg-white">
+      <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-[11px] text-emerald-900 leading-snug"><b>가로 스크롤 없음.</b> 13개 규격이 세로로 흐르고 수령처 2곳이 열이 됩니다. 부족(주황) 규격을 한눈에 찾을 수 있고, 셀 탭 → FIFO 배분은 그대로입니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ 기업별 -->
+<div style="position:absolute;left:940px;top:220px">
+  <div class="frame-label"><span class="pill bad">과잉</span> 기업별 · 매트릭스 대신 카드 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:4px">1열 × 1행</span></div>
+  <div class="phone">
+    <div class="h-11 flex items-center justify-between px-6 pt-1.5 shrink-0"><span class="text-[13px] font-semibold text-slate-900">9:41</span><span class="text-[11px] text-slate-400">광천김_260618</span></div>
+    <div class="px-4 pb-2.5 border-b border-slate-100 shrink-0">
+      <div class="text-[15px] font-extrabold text-slate-900 leading-tight">광천다솔김</div>
+      <div class="text-[11px] text-slate-400 mt-0.5">기업 발주 · 26/06/18 · 1라인</div>
+    </div>
+    <div class="flex-1 min-h-0 overflow-y-auto px-4 pt-4 bg-slate-50">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4">
+        <div class="flex items-start gap-2">
+          <div class="min-w-0"><div class="text-[15px] font-bold text-slate-900 leading-tight">하이아미</div><div class="text-[11.5px] text-slate-500 mt-0.5">기본포장 · 1,000kg 톤백</div></div>
+          <span class="ml-auto shrink-0 text-[10.5px] font-bold text-slate-500 bg-slate-100 rounded-md px-2 py-1">대기</span>
+        </div>
+        <div class="mt-3.5 flex items-end gap-5 pt-3.5 border-t border-slate-100">
+          <div><div class="text-[10.5px] font-semibold text-slate-400">주문</div><div class="text-[24px] font-extrabold text-slate-900 mono leading-none mt-1">10<span class="text-[13px] font-bold text-slate-400 ml-0.5">톤백</span></div></div>
+          <div><div class="text-[10.5px] font-semibold text-slate-400">= 중량</div><div class="text-[24px] font-extrabold text-slate-900 mono leading-none mt-1">10,000<span class="text-[13px] font-bold text-slate-400 ml-0.5">kg</span></div></div>
+        </div>
+        <div class="mt-3.5 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+          <svg width="14" height="14" class="shrink-0" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span class="text-[11.5px] text-amber-900 leading-snug">가용 <b class="mono">12</b>톤백 — 차감 후 <b class="mono">2</b>톤백 남음</span>
+        </div>
+        <button class="mt-3.5 w-full h-11 rounded-xl bg-primary text-white text-[13.5px] font-bold">FIFO 배분 · 차감</button>
+      </div>
+      <div class="mt-3 px-1 text-[11px] text-slate-400 leading-relaxed">노엘·맘스 등 기업별 발주도 같은 형태(수령처 1 · 규격 1~2). 규격이 3개 이상이면 아래처럼 카드가 규격별로 쌓입니다.</div>
+      <div class="mt-2 bg-white rounded-2xl border border-slate-200 border-dashed p-3.5 opacity-60">
+        <div class="text-[13px] font-bold text-slate-500">두 번째 규격 카드</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">규격 n개 → 카드 n장 (매트릭스 없음)</div>
+      </div>
+      <div class="h-4"></div>
+    </div>
+    <div class="shrink-0 px-4 py-3 border-t border-slate-200 bg-white">
+      <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-[11px] text-slate-600 leading-snug"><b>셀이 1개인데 행·열 머리글에 화면 절반</b>을 씁니다. 표를 버리고 <b>주문·가용·차감 카드</b>로 바꾸면 탭 1회로 끝납니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 이마트 유지 -->
+<div style="position:absolute;left:1390px;top:220px">
+  <div class="frame-label"><span class="pill keep">현행 유지</span> 이마트 · 매트릭스 그대로 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:4px">5열 × 3행</span></div>
+  <div class="phone">
+    <div class="h-11 flex items-center justify-between px-6 pt-1.5 shrink-0"><span class="text-[13px] font-semibold text-slate-900">9:41</span><span class="text-[11px] text-slate-400">이마트_260619</span></div>
+    <div class="px-4 pb-2.5 border-b border-slate-100 shrink-0">
+      <div class="text-[15px] font-extrabold text-slate-900 leading-tight">이마트 · 3지점</div>
+      <div class="text-[11px] text-slate-400 mt-0.5">26/06/19 · 규격 5 · 9라인</div>
+    </div>
+    <div class="flex-1 min-h-0 overflow-hidden"><table class="mx" id="mx3"></table></div>
+    <div class="shrink-0 px-4 py-3 border-t border-slate-200 bg-white">
+      <div class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-[11px] text-slate-600 leading-snug"><b>보정 불필요.</b> 지점 3 × 규격 5는 좌측 고정 + 5열이 390px에 거의 들어맞습니다(마지막 열만 살짝 스크롤). 택배도 행이 많아 현행 구조가 맞습니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 판정 규칙 노트 -->
+<div style="position:absolute;left:1840px;top:220px;width:520px">
+  <div class="frame-label"><span class="pill">핸드오프</span> 모바일 렌더 판정 규칙</div>
+  <div class="note">
+    <h4>세 가지 모드를 데이터 모양으로 자동 선택</h4>
+    <p style="margin-top:7px">채널 이름으로 분기하지 <b>않습니다</b> — 같은 채널도 파일에 따라 모양이 달라지므로 <b>행·열 개수로 판정</b>합니다. 데스크탑은 폭이 넉넉해 항상 매트릭스 그대로.</p>
+    <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:9px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:1fr;font-size:11.5px">
+        <div style="padding:9px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0"><b style="color:#0f172a">① 카드 모드</b> — <span class="mono">수령처 ≤ 2 && 규격 ≤ 2</span><div style="color:#64748b;margin-top:2px">기업별. 표 없이 규격별 카드 n장.</div></div>
+        <div style="padding:9px 12px;background:#fff;border-bottom:1px solid #e2e8f0"><b style="color:#0f172a">② 전치 매트릭스</b> — <span class="mono">수령처 ≤ 3 && 규격 ≥ 6</span><div style="color:#64748b;margin-top:2px">급식(서울·해남). 행=규격, 열=수령처. 가로 스크롤 제거.</div></div>
+        <div style="padding:9px 12px;background:#fff"><b style="color:#0f172a">③ 표준 매트릭스</b> — 그 외<div style="color:#64748b;margin-top:2px">택배·이마트. 행=수령처, 열=규격 + 좌우 고정(현행 확정판).</div></div>
+      </div>
+    </div>
+    <p style="margin-top:11px;color:#64748b">경계값은 실제 파일로 조정 필요 — 위 숫자는 현재 시안 5종(택배 14×20+, 이마트 5×3, 서울급식 13×2, 해남급식 10×2, 기업별 1×1)을 정확히 가르는 최소 규칙입니다.</p>
+  </div>
+  <div class="note" style="margin-top:14px">
+    <h4>전치 시 유지해야 하는 것</h4>
+    <ul style="margin-top:6px;padding-left:17px;list-style:disc">
+      <li><b>셀 탭 → FIFO 배분 바텀시트</b> — 축이 바뀌어도 셀의 의미(수령처×규격 주문량)는 동일.</li>
+      <li><b>부족 표시</b> — 표준 모드의 「가용 재고 띠」가 전치에서는 각 규격 행의 <b>가용 열</b>이 됩니다(주황=부족).</li>
+      <li><b>일괄 차감 진입</b> — 표준은 수령처 이름 탭, 전치는 <b>열 머리글(수령처) 탭</b>으로 같은 시트를 엽니다.</li>
+      <li>합계는 축과 무관하게 <b>규격별 개수 · 전체 kg</b> 둘 다 노출.</li>
+    </ul>
+  </div>
+  <div class="note" style="margin-top:14px">
+    <h4>확정 시 문서 정리</h4>
+    <p style="margin-top:6px">확정하면 <a href="건처리-매트릭스-모바일.html">건처리-매트릭스-모바일.html</a>의 「전 채널 공통」 표기를 <b>「표준 모드(택배·이마트)」</b>로 바꾸고, 전치·카드 모드를 같은 파일에 프레임으로 합치겠습니다. 개발 착수 전 이 규칙만 합의하면 됩니다.</p>
+  </div>
+</div>
+
+<script>
+const cols=[
+ {n:'새청무',w:'1kg',kg:1,avail:35},{n:'새청무',w:'5kg',kg:5,avail:18},{n:'새청무',w:'10kg',kg:10,avail:130},
+ {n:'현미',w:'1kg',kg:1,avail:24},{n:'찹쌀',w:'1kg',kg:1,avail:90},{n:'찹쌀',w:'5kg',kg:5,avail:6},
+ {n:'보리',w:'1kg',kg:1,avail:12},{n:'기장',w:'1kg',kg:1,avail:10},{n:'흑미',w:'1kg',kg:1,avail:9},
+ {n:'차조',w:'1kg',kg:1,avail:5},{n:'발아현미',w:'1kg',kg:1,avail:10},{n:'수수',w:'1kg',kg:1,avail:14},{n:'팥',w:'500g',kg:.5,avail:8}];
+const eun={0:19,1:5,2:112,4:60,5:4,6:4,7:7,8:4,9:3,10:5,11:9,12:1};
+const seo={0:1,1:5,2:68,3:9,4:18,6:4,9:4};
+
+// ① 현행: 행=수령처, 열=규격 (가로 스크롤 · 4열만 보임)
+let h='<thead><tr><th class="hdL" style="width:78px;text-align:left">수령처</th>';
+cols.forEach(c=>{h+=`<th style="width:62px">${c.n}<div style="font-weight:500;color:#94a3b8;font-size:9.5px">${c.w}</div></th>`});
+h+='<th class="hdR" style="width:74px">소계<div style="font-weight:500;color:#94a3b8;font-size:9.5px">kg</div></th></tr></thead><tbody>';
+[['은평구',eun],['서대문구',seo]].forEach(([nm,cs])=>{
+  let kg=0;Object.entries(cs).forEach(([i,q])=>kg+=q*cols[+i].kg);
+  h+=`<tr><td class="stickL" style="font-weight:600;color:#1e293b">${nm}</td>`;
+  cols.forEach((c,i)=>{const q=cs[i];h+=q?`<td class="q" style="background:#f1f5f9;color:#64748b">${q}</td>`:'<td class="q" style="color:#e2e8f0">·</td>'});
+  h+=`<td class="q stickR" style="font-weight:700;color:#0f172a">${kg.toLocaleString()}</td></tr>`;
+});
+h+='<tr><td class="stickL" style="font-size:10px;color:#94a3b8">가용</td>';
+cols.forEach((c,i)=>{const t=(eun[i]||0)+(seo[i]||0);const sh=t>c.avail;h+=`<td class="q" style="font-size:10.5px;color:${sh?'#b45309':'#94a3b8'};background:${sh?'#fffbeb':'#fff'}">${c.avail}</td>`});
+h+='<td class="stickR"></td></tr></tbody>';
+const t1=document.getElementById('mx1');t1.innerHTML=h;t1.style.width='920px';
+// 가로 스크롤 중간 상태를 흉내내기 위해 살짝 왼쪽으로 이동
+document.getElementById('mx1wrap').scrollLeft=0;
+
+// ② 전치: 행=규격, 열=수령처
+let g='<thead><tr><th class="hdL" style="width:112px;text-align:left">규격</th><th style="width:66px">은평구</th><th style="width:74px">서대문구</th><th style="width:52px">가용</th><th style="width:64px">kg</th></tr></thead><tbody>';
+let tot=0;
+cols.forEach((c,i)=>{
+  const a=eun[i]||0,b=seo[i]||0,sum=a+b,sh=sum>c.avail,kg=sum*c.kg;tot+=kg;
+  g+=`<tr><td class="stickL"><b style="color:#1e293b">${c.n}</b> <span style="color:#94a3b8;font-size:10.5px">${c.w}</span></td>
+   <td class="q" style="background:${a?'#f1f5f9':'#fff'};color:${a?'#64748b':'#e2e8f0'}">${a||'·'}</td>
+   <td class="q" style="background:${b?'#f1f5f9':'#fff'};color:${b?'#64748b':'#e2e8f0'}">${b||'·'}</td>
+   <td class="q" style="font-size:10.5px;color:${sh?'#b45309':'#94a3b8'};background:${sh?'#fffbeb':'#fff'};font-weight:${sh?700:400}">${c.avail}</td>
+   <td class="q" style="color:#475569">${kg.toLocaleString()}</td></tr>`;
+});
+g+=`<tr><td class="stickL" style="background:#f8fafc;font-weight:700;color:#0f172a">합계</td><td class="q" style="background:#f8fafc"></td><td class="q" style="background:#f8fafc"></td><td class="q" style="background:#f8fafc;font-size:10px;color:#b45309;font-weight:700">부족 2</td><td class="q" style="background:#f8fafc;font-weight:800;color:#0f172a">${tot.toLocaleString()}</td></tr></tbody>`;
+const t2=document.getElementById('mx2');t2.innerHTML=g;t2.style.width='368px';
+document.getElementById('sumKg').textContent=tot.toLocaleString()+'kg';
+
+// ④ 이마트
+const ec=[{n:'가바백미',w:'4kg',kg:4,avail:30},{n:'가바백미',w:'1kg',kg:1,avail:120},{n:'천지향',w:'4kg',kg:4,avail:40},{n:'귀리쌀',w:'420g',kg:.42,avail:80},{n:'천지향',w:'8kg',kg:8,avail:20}];
+const er=[['이마트 여주',{0:4,1:48,4:12}],['이마트 대구',{0:4,1:16,3:20}],['이마트 시화',{1:80,2:8,3:40}]];
+let m='<thead><tr><th class="hdL" style="width:74px;text-align:left">지점</th>';
+ec.forEach(c=>{m+=`<th style="width:58px">${c.n}<div style="font-weight:500;color:#94a3b8;font-size:9.5px">${c.w}</div></th>`});
+m+='<th class="hdR" style="width:56px">kg</th></tr></thead><tbody>';
+er.forEach(([nm,cs])=>{
+  let kg=0;Object.entries(cs).forEach(([i,q])=>kg+=q*ec[+i].kg);
+  m+=`<tr><td class="stickL" style="font-weight:600;color:#1e293b;font-size:11px">${nm.replace('이마트 ','')}</td>`;
+  ec.forEach((c,i)=>{const q=cs[i];m+=q?`<td class="q" style="background:#f1f5f9;color:#64748b">${q}</td>`:'<td class="q" style="color:#e2e8f0">·</td>'});
+  m+=`<td class="q stickR" style="font-weight:700;color:#0f172a;font-size:11px">${kg.toLocaleString()}</td></tr>`;
+});
+m+='<tr><td class="stickL" style="font-size:10px;color:#94a3b8">가용</td>';
+ec.forEach((c,i)=>{let t=0;er.forEach(([,cs])=>t+=cs[i]||0);const sh=t>c.avail;m+=`<td class="q" style="font-size:10.5px;color:${sh?'#b45309':'#94a3b8'};background:${sh?'#fffbeb':'#fff'}">${c.avail}</td>`});
+m+='<td class="stickR"></td></tr></tbody>';
+const t3=document.getElementById('mx3');t3.innerHTML=m;t3.style.width='420px';
+</script>
+</body>
+</html>

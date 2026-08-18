@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>화면1 발주서 묶음 목록 — 모바일</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .screen { width: 390px; background:#f8fafc; border-radius: 30px; box-shadow: 0 24px 60px rgba(15,23,42,.22); overflow:hidden; display:flex; flex-direction:column; height: 800px; border:1px solid #e2e8f0; }
+  .scrollbody::-webkit-scrollbar { width:0; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .frame-sub { font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px; }
+  .ch { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:6px; font-size:10.5px; font-weight:700; flex-shrink:0; }
+  .chiprow { scrollbar-width:none; }
+  .chiprow::-webkit-scrollbar { display:none; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<!-- ════════════ 캔버스 헤더 ════════════ -->
+<div style="position:absolute; left:40px; top:36px; width:1180px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">화면1 · 발주서 묶음 목록 (제품판매 탭)</h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1060px;">
+    <span class="mono" style="font-size:12px;">/sales</span> 진입 기본 화면. 업무상 <b>한 번에 한 채널만 업로드</b>하므로 묶음(업로드) = 단일 채널 → 행마다 <b>채널 배지</b>로 식별.
+    시트명 prefix(<span class="mono" style="font-size:12px;">이마트_·택배_·서울급식_·해남급식_</span> 외=기업별)로 시스템이 분류한 채널을 배지로 확인. 행을 탭하면 건 목록(화면2)으로 드릴다운.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     채워진 상태
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:40px; top:128px;">
+  <div class="frame-label"><span class="pill">기본</span> 묶음 목록 (채워진 상태)</div>
+  <div class="screen">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+      <h1 class="text-[17px] font-bold text-slate-900 mb-3">판매관리</h1>
+      <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg">
+        <button class="h-10 rounded-md flex items-center justify-center gap-1.5 bg-white shadow-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.2M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+          <span class="text-[13px] font-bold text-slate-900">제품판매</span>
+        </button>
+        <button class="h-10 rounded-md flex items-center justify-center gap-1.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <span class="text-[13px] font-semibold text-slate-500">원물출고</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 섹션 헤더 -->
+    <div class="bg-white px-4 pt-3 pb-3 border-b border-slate-100 shrink-0 flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.2M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        <h2 class="text-[13.5px] font-bold text-slate-900">발주서 판매처리</h2>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-50 border border-blue-200 text-primary text-[12.5px] font-semibold hover:bg-blue-100">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+          검색
+        </button>
+        <button class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-white text-[12.5px] font-semibold">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          엑셀 업로드
+        </button>
+      </div>
+    </div>
+
+    <!-- 채널/기간 빠른 필터 -->
+    <div class="chiprow bg-white px-3 pb-2.5 border-b border-slate-100 shrink-0 flex items-center gap-1.5 overflow-x-auto">
+      <button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] font-semibold bg-slate-900 text-white">전체</button>
+      <button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] font-medium bg-white text-slate-600 border border-slate-200">급식</button>
+      <button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] font-medium bg-white text-slate-600 border border-slate-200">택배</button>
+      <button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] font-medium bg-white text-slate-600 border border-slate-200">이마트</button>
+      <button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] font-medium bg-white text-slate-600 border border-slate-200">기업별</button>
+      <span class="shrink-0 w-px h-4 bg-slate-200 mx-0.5"></span>
+      <button class="shrink-0 inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-full text-[12px] font-medium bg-white text-slate-600 border border-slate-200">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        기간
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- 묶음 리스트 -->
+    <div class="scrollbody flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
+
+      <!-- 묶음 ① 서울급식 · 진행 중 + 매칭실패 -->
+      <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <a href="건목록-모바일.html" class="absolute inset-0 z-0" aria-label="건 목록 열기"></a>
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="ch bg-teal-50 text-teal-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>서울급식</span>
+            <span class="text-[13px] font-bold text-slate-900 truncate flex-1">서울급식_260616.xlsx</span>
+            <button class="relative z-10 w-7 h-7 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1.5">26.06.16 09:12 업로드 · <b class="text-slate-500">3건</b></div>
+          <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료 <span class="tabular-nums mono">1</span></span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 <span class="tabular-nums mono">1</span></span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 <span class="tabular-nums mono">1</span></span>
+            <span class="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[10.5px] font-bold border border-red-200">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              매칭실패 <span class="tabular-nums mono">2</span>
+            </span>
+          </div>
+        </div>
+        <div class="h-1 flex">
+          <div class="bg-emerald-400" style="width:33%"></div>
+          <div class="bg-amber-400" style="width:33%"></div>
+          <div class="bg-slate-200" style="width:34%"></div>
+        </div>
+      </div>
+
+      <!-- 묶음 ② 이마트 · 전체완료 -->
+      <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <a href="건목록-모바일.html" class="absolute inset-0 z-0" aria-label="건 목록 열기"></a>
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="ch bg-violet-50 text-violet-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/></svg>이마트</span>
+            <span class="text-[13px] font-bold text-slate-900 truncate flex-1">이마트_260619.xlsx</span>
+            <button class="relative z-10 w-7 h-7 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1.5">26.06.19 08:40 업로드 · <b class="text-slate-500">3건</b></div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료 <span class="tabular-nums mono">3</span></span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold ml-auto">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>전체 완료
+            </span>
+          </div>
+        </div>
+        <div class="h-1 bg-emerald-400"></div>
+      </div>
+
+      <!-- 묶음 ③ 택배 · 대기 + 행 메뉴 열림 -->
+      <div class="relative">
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden ring-1 ring-slate-300">
+          <a href="건목록-모바일.html" class="absolute inset-0 z-0" aria-label="건 목록 열기"></a>
+          <div class="px-3.5 pt-3 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="ch bg-blue-50 text-blue-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>택배</span>
+              <span class="text-[13px] font-bold text-slate-900 truncate flex-1">택배_260619.xlsx</span>
+              <button class="relative z-10 w-7 h-7 -mr-1 flex items-center justify-center rounded-lg bg-slate-900 text-white shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1.5">26.06.19 11:25 업로드 · <b class="text-slate-500">2건</b></div>
+            <div class="flex items-center gap-1.5 mt-2.5">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 <span class="tabular-nums mono">2</span></span>
+            </div>
+          </div>
+          <div class="h-1 bg-slate-200"></div>
+        </div>
+        <!-- 드롭다운 메뉴 -->
+        <div class="absolute right-2 top-11 w-40 bg-white rounded-xl border border-slate-200 shadow-xl py-1 z-10">
+          <button class="w-full flex items-center gap-2 px-3 py-2 text-[12.5px] text-slate-700 hover:bg-slate-50">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            엑셀 다운로드
+          </button>
+          <div class="h-px bg-slate-100 my-1"></div>
+          <button class="w-full flex items-center gap-2 px-3 py-2 text-[12.5px] text-red-600 hover:bg-red-50">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            묶음 삭제
+          </button>
+        </div>
+      </div>
+
+      <!-- 묶음 ④ 해남급식 · 부분 -->
+      <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <a href="건목록-모바일.html" class="absolute inset-0 z-0" aria-label="건 목록 열기"></a>
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="ch bg-cyan-50 text-cyan-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>해남급식</span>
+            <span class="text-[13px] font-bold text-slate-900 truncate flex-1">해남급식_260619.xlsx</span>
+            <button class="relative z-10 w-7 h-7 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1.5">26.06.19 14:03 업로드 · <b class="text-slate-500">2건</b></div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료 <span class="tabular-nums mono">1</span></span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 <span class="tabular-nums mono">1</span></span>
+          </div>
+        </div>
+        <div class="h-1 flex">
+          <div class="bg-emerald-400" style="width:50%"></div>
+          <div class="bg-amber-400" style="width:50%"></div>
+        </div>
+      </div>
+
+      <!-- 묶음 ⑤ 기업별 · 대기 -->
+      <div class="relative bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <a href="건목록-모바일.html" class="absolute inset-0 z-0" aria-label="건 목록 열기"></a>
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="ch bg-slate-100 text-slate-600"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M4 22h16M9 7h2M9 11h2M9 15h2"/></svg>기업별</span>
+            <span class="text-[13px] font-bold text-slate-900 truncate flex-1">광천김_260618.xlsx</span>
+            <button class="relative z-10 w-7 h-7 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1.5">26.06.18 16:47 업로드 · <b class="text-slate-500">1건</b></div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 <span class="tabular-nums mono">1</span></span>
+          </div>
+        </div>
+        <div class="h-1 bg-slate-200"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     빈 상태
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:470px; top:128px;">
+  <div class="frame-label"><span class="pill">빈 상태</span> 업로드 없음</div>
+  <div class="screen">
+    <div class="bg-white px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+      <h1 class="text-[17px] font-bold text-slate-900 mb-3">판매관리</h1>
+      <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg">
+        <button class="h-10 rounded-md flex items-center justify-center gap-1.5 bg-white shadow-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.2M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+          <span class="text-[13px] font-bold text-slate-900">제품판매</span>
+        </button>
+        <button class="h-10 rounded-md flex items-center justify-center gap-1.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <span class="text-[13px] font-semibold text-slate-500">원물출고</span>
+        </button>
+      </div>
+    </div>
+    <div class="bg-white px-4 pt-3 pb-3 border-b border-slate-100 shrink-0 flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.2M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        <h2 class="text-[13.5px] font-bold text-slate-900">발주서 판매처리</h2>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-blue-50 border border-blue-200 text-primary text-[12.5px] font-semibold hover:bg-blue-100">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+          검색
+        </button>
+        <button class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-white text-[12.5px] font-semibold">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          엑셀 업로드
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 flex flex-col items-center justify-center px-8 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>
+      </div>
+      <h3 class="text-[15px] font-bold text-slate-900 mb-1.5">아직 업로드된 발주서가 없어요</h3>
+      <p class="text-[12.5px] text-slate-500 leading-relaxed mb-5">통합 발주서(엑셀)를 업로드하면<br>규격별로 제품재고를 차감해 판매처리해요.</p>
+      <button class="inline-flex items-center gap-2 px-4 py-2.5 text-[13.5px] font-bold text-white bg-primary rounded-xl">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        엑셀 업로드
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 노트 ════════════ -->
+<div style="position:absolute; left:900px; top:128px; width:320px;">
+  <div class="frame-label">구조 노트</div>
+  <div style="background:#1e293b; border-radius:14px; padding:18px 20px; font-size:12px; line-height:1.7; color:#cbd5e1;">
+    <p style="margin-bottom:13px;"><b style="color:#fff;">묶음 = 업로드 1건 (단일 채널)</b><br>현 업무 프로세스상 한 번에 한 채널만 업로드 → 묶음마다 <b style="color:#e2e8f0;">채널 배지</b>로 식별. 시트명 prefix로 시스템이 분류.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">행 데이터</b><br><span class="mono" style="font-size:11px;">UploadSummaryRow</span>: 파일명 · <span class="mono" style="font-size:11px;">createdAt</span> · <span class="mono" style="font-size:11px;">orderCount</span>건. 채널은 묶음 내 건들의 공통 채널. (업로드자 이름은 공장용 지시서에 불필요 → 제외)</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">상태 카운트 + 진행 바</b><br><span class="mono" style="font-size:11px;">statusCount</span> 완료·부분·대기 칩(0이면 숨김) + 하단 진행 바로 처리율 시각화.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">매칭실패 배지</b><br><span class="mono" style="font-size:11px;">unmatched&gt;0</span> 빨강 칩 강조 → 건 상세에서 수동지정 유도.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">채널·기간 빠른 필터 + 검색</b><br>헤더 아래 <b style="color:#e2e8f0;">채널 칩</b>(전체·급식·택배·이마트·기업별)으로 즉시 필터. <span class="mono" style="font-size:11px;">검색</span>(blue-50·SlidersHorizontal — 기존 화면 동일 컨벤션)은 기간·복합 조건 다이얼로그.</p>
+    <p style="border-top:1px solid #334155; padding-top:13px; margin-top:4px; color:#94a3b8;">행 메뉴(⋮): 엑셀 다운로드 / 묶음 삭제(<span class="mono" style="font-size:11px;">deletePurchaseUpload</span> — 차감된 movement 있으면 비활성). 행 탭 → 건 목록(화면2).</p>
+  </div>
+</div>
+
+</body>
+</html>

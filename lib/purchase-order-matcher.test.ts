@@ -1,6 +1,5 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import {
   matchPurchaseOrderItem,
   normalizeItemName,
@@ -8,7 +7,6 @@ import {
   type MatcherVariety,
   type MatcherProductType,
 } from './purchase-order-matcher'
-import { parseSpecCatalog } from './purchase-order-parser'
 
 /** 매칭 성공을 단언하고 productTypeId를 반환(타입 좁히기). */
 function matchedId(r: MatchResult): number {
@@ -147,26 +145,23 @@ const expectedVariety: Record<string, string> = {
   '유기농 천지향5세 오분도미': '천지향5세',
 }
 
-test('품종 해석: 실파일 발주서.xlsx 18종 전수 매칭 (정규화+별칭)', () => {
-  const buf = readFileSync('docs/resources/발주서.xlsx')
-  const cat = parseSpecCatalog(buf, '발주서.xlsx')
+// 실사용 품목명 18종 전수 대조. 품목 목록은 기대표 자체(파일 파싱과 분리 — 파서 양식이
+// 바뀌어도 매처 회귀를 계속 잡는다). 통일양식 신규 품목 매칭은 실업로드로 검증(단계6 D1).
+test('품종 해석: 실사용 품목명 18종 전수 매칭 (정규화+별칭)', () => {
   const nameById = new Map(varieties.map((v) => [v.id, v.name]))
+  const items = Object.keys(expectedVariety)
+  assert.equal(items.length, 18, `distinct 품목 18종 기대, 실제 ${items.length}`)
 
-  const seen = new Set<string>()
-  for (const sheet of cat.sheets) {
-    for (const spec of sheet.specs) {
-      if (seen.has(spec.rawItemName)) continue
-      seen.add(spec.rawItemName)
-
-      const r = m(spec.rawItemName, spec.packageType, spec.rawPackaging)
-      assert.notEqual(r.varietyId, null, `품종 해석 실패: "${spec.rawItemName}"`)
-      const got = nameById.get(r.varietyId!)
-      const want = expectedVariety[spec.rawItemName]
-      assert.ok(want, `기대표에 없는 품목: "${spec.rawItemName}"`)
-      assert.equal(got, want, `"${spec.rawItemName}" → ${got} (기대 ${want})`)
-    }
+  for (const rawItemName of items) {
+    const r = m(rawItemName, '1kg', null)
+    assert.notEqual(r.varietyId, null, `품종 해석 실패: "${rawItemName}"`)
+    const got = nameById.get(r.varietyId!)
+    assert.equal(
+      got,
+      expectedVariety[rawItemName],
+      `"${rawItemName}" → ${got} (기대 ${expectedVariety[rawItemName]})`,
+    )
   }
-  assert.equal(seen.size, 18, `distinct 품목 18종 기대, 실제 ${seen.size}`)
 })
 
 // ------------------------------------------------------

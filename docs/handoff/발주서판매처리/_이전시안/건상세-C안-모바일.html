@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>화면3 건상세 — C안 모바일 (실데이터)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .screen { width: 390px; background:#f1f5f9; border-radius: 30px; box-shadow: 0 24px 60px rgba(15,23,42,.22); overflow:hidden; display:flex; flex-direction:column; height: 800px; border:1px solid #e2e8f0; }
+  .scrollbody::-webkit-scrollbar { width:0; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .frame-sub { font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<!-- ════════════ 캔버스 헤더 ════════════ -->
+<div style="position:absolute; left:40px; top:36px; width:1180px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">화면3 · 건 상세 — C안 (통일 양식 실데이터)</h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1060px;">
+    첨부 통일양식 템플릿(채널별 시트) 기준. 위쪽은 <b>채널 5종 적응형 헤더</b>(실제 발주처/수령인), 아래는 라인이 가장 많은
+    <b>서울급식 · 은평구→행복플러스</b> 건(17라인)을 C안 압축 리스트로. 혼합곡 등 마스터에 없는 품목이 자연스럽게 매칭실패로 떨어집니다.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     채널 5종 적응형 헤더 쇼케이스 (실데이터)
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:40px; top:128px;">
+  <div class="frame-label"><span class="pill">결정 #26</span> 채널 5종 — 적응형 헤더 <span class="frame-sub">템플릿 실제 발주처/수령인</span></div>
+  <div style="display:flex; gap:12px;">
+
+    <!-- 택배 -->
+    <div style="width:215px;" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-3.5 pt-3 pb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>택배
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">동일 주체</span>
+        </div>
+        <div class="text-[13.5px] font-bold text-slate-900 leading-tight">고양1</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">주문자 = 수령인</div>
+      </div>
+      <div class="px-3.5 py-1.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500 leading-snug">주문자 단일. 수령인 빈칸이면 발주처 복사.</div>
+    </div>
+
+    <!-- 이마트 -->
+    <div style="width:215px;" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-3.5 pt-3 pb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-[11px] font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/></svg>이마트
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">발주≠수령</span>
+        </div>
+        <div class="flex items-center gap-1 leading-tight">
+          <span class="text-[13.5px] font-bold text-slate-900">이마트</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="text-[12.5px] font-semibold text-slate-600">여주</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">발주처 고정 · 수령=물류센터</div>
+      </div>
+      <div class="px-3.5 py-1.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500 leading-snug">vendor「이마트」고정 / 여주·대구·시화</div>
+    </div>
+
+    <!-- 서울급식 -->
+    <div style="width:215px;" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-3.5 pt-3 pb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[11px] font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>서울급식
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">발주≠수령</span>
+        </div>
+        <div class="flex items-center gap-1 leading-tight">
+          <span class="text-[13.5px] font-bold text-slate-900">은평구</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="text-[12.5px] font-semibold text-slate-600">행복플러스</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">구청 발주 · 수령=행복플러스</div>
+      </div>
+      <div class="px-3.5 py-1.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500 leading-snug">학교급식, 행복플러스 경유</div>
+    </div>
+
+    <!-- 해남급식 -->
+    <div style="width:215px;" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-3.5 pt-3 pb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 text-[11px] font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>해남급식
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">발주≠수령</span>
+        </div>
+        <div class="flex items-center gap-1 leading-tight">
+          <span class="text-[13.5px] font-bold text-slate-900">해남급식</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="text-[12.5px] font-semibold text-slate-600">싱싱유통</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-0.5">발주처 고정 · 수령=배송업체</div>
+      </div>
+      <div class="px-3.5 py-1.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500 leading-snug">vendor「해남급식」고정 · 공공급식</div>
+    </div>
+
+    <!-- 기업별 -->
+    <div style="width:215px;" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="px-3.5 pt-3 pb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18M4 22h16M9 7h2M9 11h2M9 15h2"/></svg>기업별
+          </span>
+          <span class="text-[10px] text-slate-400 font-medium">동일 주체</span>
+        </div>
+        <div class="text-[13.5px] font-bold text-slate-900 leading-tight">광천다솔김</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">거래처 = 수령인</div>
+      </div>
+      <div class="px-3.5 py-1.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500 leading-snug">시트명 자유 prefix → CORPORATE</div>
+    </div>
+
+  </div>
+  <p style="font-size:11.5px; color:#64748b; margin-top:10px; max-width:1100px; line-height:1.6;">
+    <b style="color:#334155;">규칙:</b> 발주처≠수령인(이마트·서울급식·해남급식)은 <b>「발주처 → 수령인」</b> 화살표로, 동일 주체(택배·기업별)는 <b>단일 이름</b>으로 표시. 채널 배지 색은 상태색(emerald/amber/red/slate)과 겹치지 않게 분리.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     C안 — 전체 화면 (서울급식 · 은평구→행복플러스 건)
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:40px; top:360px;">
+  <div class="frame-label"><span class="pill">C안</span> 건 상세 전체 <span class="frame-sub">서울급식 은평구 건 · 17라인 · 압축 리스트</span></div>
+  <div class="screen">
+    <!-- 헤더 (서울급식 · 발주≠수령 → 화살표) -->
+    <div class="bg-white px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-2 mb-2.5">
+        <button class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="text-[15px] font-bold text-slate-900">건 상세</span>
+        <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[11px] font-bold">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>
+          서울급식
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[14px] font-bold text-slate-900">은평구</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span class="text-[13px] font-semibold text-slate-600">행복플러스</span>
+      </div>
+      <div class="flex items-center gap-1.5 mt-2">
+        <span class="px-1.5 py-0.5 rounded text-[10.5px] font-bold bg-amber-50 text-amber-700">부분 차감</span>
+        <span class="text-[11.5px] text-slate-500">17라인 · <b class="text-slate-700">12</b> 완료 · <b class="text-amber-600">1</b> 부분 · <b class="text-slate-500">3</b> 대기 · <b class="text-red-500">1</b> 실패</span>
+      </div>
+    </div>
+
+    <!-- 본문 : 리스트 (작업 필요 라인 먼저) -->
+    <div class="scrollbody flex-1 overflow-y-auto py-2.5">
+      <div class="bg-white mx-3 rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+
+        <!-- ① 부분 + 재고부족 (압축 행) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">새청무 · 백미</div>
+            <div class="text-[10.5px] text-slate-400">10kg · 기본포장</div>
+          </div>
+          <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>부족32
+          </span>
+          <span class="text-[12px] font-bold text-amber-700 tabular-nums mono shrink-0">80/112</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- ② 대기 (펼쳐진 상태 — FIFO 배분) -->
+        <div class="bg-slate-50/70">
+          <div class="px-3 py-2.5 flex items-center gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[12.5px] font-bold text-slate-900 truncate">백옥찰 · 백미 <span class="font-medium text-slate-400">(찹쌀)</span></div>
+              <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 75</div>
+            </div>
+            <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/60</span>
+            <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="px-3 pb-3 pt-0.5">
+            <div class="rounded-lg bg-white border border-slate-200 overflow-hidden">
+              <div class="px-2.5 py-1.5 text-[10.5px] font-bold text-slate-500 border-b border-slate-100 flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg>
+                FIFO 추천 배분 <span class="font-medium text-slate-400">· 오래된 로트부터</span>
+              </div>
+              <div class="px-2.5 py-1.5 flex items-center gap-2">
+                <div class="min-w-0">
+                  <div class="text-[11px] mono text-slate-600 truncate">250602-11-…7741</div>
+                  <div class="text-[9.5px] text-slate-400">도정 06.02 · 가용 40</div>
+                </div>
+                <div class="ml-auto flex items-center gap-0.5 shrink-0">
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                  <span class="w-7 text-center text-[12.5px] font-bold tabular-nums mono text-slate-900">40</span>
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+              </div>
+              <div class="px-2.5 py-1.5 flex items-center gap-2 border-t border-slate-100">
+                <div class="min-w-0">
+                  <div class="text-[11px] mono text-slate-600 truncate">250610-11-…8820</div>
+                  <div class="text-[9.5px] text-slate-400">도정 06.10 · 가용 35</div>
+                </div>
+                <div class="ml-auto flex items-center gap-0.5 shrink-0">
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                  <span class="w-7 text-center text-[12.5px] font-bold tabular-nums mono text-slate-900">20</span>
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+              </div>
+            </div>
+            <button class="w-full mt-2 h-9 rounded-lg bg-primary text-white text-[12.5px] font-bold">차감 확정 · 60개</button>
+          </div>
+        </div>
+
+        <!-- ③ 대기 (압축 행) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">흑미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 24</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/3</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- ④ 대기 (압축 행) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">발아현미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 16</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/9</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- ⑤ 매칭 실패 (펼쳐진 상태 — 수동 지정) -->
+        <div class="bg-red-50/40">
+          <div class="px-3 py-2.5 flex items-center gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[12.5px] font-bold text-slate-900 truncate">혼합곡</div>
+              <div class="text-[10.5px] text-red-500">1kg · 포장지 미지정 · 주문 6</div>
+            </div>
+            <span class="px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0 border border-red-200">실패</span>
+            <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="px-3 pb-3 pt-0.5">
+            <div class="flex items-center gap-1.5 text-[10.5px] text-red-600 mb-2">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              품종을 해석하지 못했어요. SKU를 지정해 주세요.
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="relative">
+                <select class="w-full h-8 appearance-none rounded-md border border-slate-300 bg-white pl-2 pr-5 text-[11.5px] text-slate-400 focus:border-primary focus:outline-none"><option>품종 선택</option><option>혼합곡</option><option>오곡</option></select>
+                <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              </div>
+              <div class="relative">
+                <select class="w-full h-8 appearance-none rounded-md border border-slate-300 bg-white pl-2 pr-5 text-[11.5px] text-slate-700 focus:border-primary focus:outline-none"><option>1kg</option></select>
+                <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              </div>
+              <div class="relative">
+                <select class="w-full h-8 appearance-none rounded-md border border-slate-300 bg-white pl-2 pr-5 text-[11.5px] text-slate-400 focus:border-primary focus:outline-none"><option>포장지</option></select>
+                <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#94a3b8" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <label class="flex items-center gap-1.5 text-[11px] text-slate-500 select-none mt-1.5 py-0.5">
+              <span class="w-3.5 h-3.5 rounded border-[1.5px] border-primary bg-primary flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+              "혼합곡"을 이 품종 별칭으로 학습
+            </label>
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <button class="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-600 text-[11px] font-semibold">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+                재매칭
+              </button>
+              <button class="ml-auto px-3 py-1.5 rounded-md bg-primary text-white text-[11.5px] font-bold">지정 저장</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑥ 완료 라인 묶음 (압축 — 탭하여 펼침) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900">완료 라인 12개</div>
+            <div class="text-[10.5px] text-slate-400 truncate">새청무 1kg·5kg · 귀리 · 보리 · 기장 · 차조 · 팥 외</div>
+          </div>
+          <span class="text-[12px] font-bold text-emerald-700 tabular-nums mono shrink-0">모두 차감</span>
+          <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="bg-white border-t border-slate-200 px-4 py-3 shrink-0">
+      <a href="차감확정-결과-모바일.html" class="w-full h-11 rounded-xl bg-primary text-white text-[14px] font-bold flex items-center justify-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        건 전체 차감 확정
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 상호작용 노트 ════════════ -->
+<div style="position:absolute; left:470px; top:360px; width:330px;">
+  <div class="frame-label">상호작용 노트</div>
+  <div style="background:#1e293b; border-radius:14px; padding:18px 20px; font-size:12px; line-height:1.7; color:#cbd5e1;">
+    <p style="margin-bottom:13px;"><b style="color:#fff;">작업 필요 라인 우선</b><br>부분·대기·실패를 위로, 완료 12라인은 <span style="color:#6ee7b7;">한 줄로 접어</span> 17라인이어도 스크롤이 짧음. 탭하면 완료 라인 펼침.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">행 = 한눈에 상태</b><br>좌측 점(emerald·amber·slate·red) + 우측 <span class="mono">차감/주문</span> + 재고부족 배지. 새청무 10kg = 112주문·가용 80 → 부분·부족32.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">대기 라인 펼침</b><br>FIFO 추천 배분(오래된 로트부터)을 ± 스텝퍼로 조정 → <span style="color:#93c5fd;">차감 확정</span>. <span class="mono">suggestion[{packageId,count}]</span> 기본값.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">매칭실패 = 통일양식 실사례</b><br>혼합곡·율무·렌틸콩·칼슘기장은 마스터에 없어 자동매칭 실패 → 품종→규격→포장지 수동지정 + 별칭 학습(<span class="mono">setOrderItemProductType</span>).</p>
+    <p style="border-top:1px solid #334155; padding-top:13px; margin-top:4px; color:#94a3b8;">헤더는 채널 적응형 — 서울급식은 발주처≠수령인이라 <b style="color:#e2e8f0;">은평구 → 행복플러스</b> 화살표 표기.</p>
+  </div>
+</div>
+
+</body>
+</html>

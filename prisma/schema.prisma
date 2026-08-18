@@ -224,10 +224,13 @@ enum ProductSource {
   PURCHASED
 }
 
-// 발주서 채널 — 시트명으로 판별 (결정 #11, §8.2)
+// 발주서 채널 — 시트명 prefix로 판별 (결정 #11·#26, §2.2)
 enum PurchaseChannel {
-  DELIVERY // 택배
-  EMART // 이마트
+  DELIVERY // 택배 (택배_YYMMDD) — vendor=주문자, recipient 빈칸→vendor 복사
+  EMART // 이마트 (이마트_YYMMDD) — vendor='이마트' 고정, recipient=물류센터(여주/대구/시화)
+  MEAL_SEOUL // 서울급식 (서울급식_YYMMDD) — vendor=구청, recipient=행복플러스
+  MEAL_HAENAM // 해남급식 (해남급식_YYMMDD) — vendor='해남급식' 고정, recipient=배송업체
+  CORPORATE // 기업별 (거래처명_YYMMDD fallback) — vendor=거래처, recipient 빈칸→vendor 복사
 }
 
 // 발주서 건 진행상태 — 라인 집계 파생값 (결정 #12)
@@ -377,10 +380,10 @@ model PurchaseOrder {
   id        Int                  @id @default(autoincrement())
   uploadId  Int?
   upload    PurchaseOrderUpload? @relation(fields: [uploadId], references: [id])
-  channel   PurchaseChannel // DELIVERY(택배) | EMART(이마트) — 시트명 판별
+  channel   PurchaseChannel // 5종(#26) — 시트명 prefix로 판별
   orderDate DateTime? // 발주일(있으면)
-  vendor    String // 발주처 (이마트 시트는 '이마트' 고정)
-  recipient String // 수령인 (이마트 시트는 지점: 여주/대구/시화)
+  vendor    String // 발주처
+  recipient String // 수령인 (택배·기업별은 빈칸 시 파서가 vendor 복사, #26)
   status    OrderStatus          @default(PENDING) // 라인 집계 파생값 (결정 #12)
   items     PurchaseOrderItem[]
   createdAt DateTime             @default(now())

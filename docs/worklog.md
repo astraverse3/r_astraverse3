@@ -2,6 +2,22 @@
 
 ## 2026-08-18
 
+### 발주서 판매처리 단계6 착수 — 계획 수립 + D0 파서 통일양식 대응 `docs` `feat`
+
+**배경**: Claude Design 시안(`docs/handoff/발주서판매처리/`, 데스크탑 5 STEP + 모바일 6화면)이 나와 화면 구현 단계6 착수. 진행 순서는 **데스크탑 차감 흐름 먼저 → 모바일 → 엑셀 내보내기**(B안)로 합의 — 모바일 3모드 판정 경계값이 아직 잠정이라 데스크탑에서 실측한 뒤 확정하기 위함.
+
+1. **계획서 작성** — [docs/plan/plan-발주서판매처리-단계6.md](<docs/plan/plan-발주서판매처리-단계6.md>). D0~D5·M1~M2 단계 분해 + 현행 코드 갭 12건(G1~G12) 정리. 주요 갭: 매트릭스용 조회 액션 부재·`getPurchaseOrderDetail`의 N+1(택배 1,700라인이면 수천 쿼리)·묶음 channel/note 필드 부재·dry-run 조회 부재.
+2. **D0 파서 통일양식 대응** — [lib/purchase-order-parser.ts](<lib/purchase-order-parser.ts>): 시트명 `채널_YYMMDD` 해석(`parseSheetName` 신규, 고정 prefix 4종 + 그 외 기업별), 3줄 헤더 탐지, 수령인 빈칸→발주처 복사(#26), 발주일 추출, 미인식 시트 `skipped[]` 반환, 파일 대표 채널(혼합이면 null).
+3. **액션 5채널화** — [app/actions/purchase-order.ts](<app/actions/purchase-order.ts>): `OrderRow`/`OrderDetail`의 channel이 `'DELIVERY'|'EMART'` 하드코딩이라 5종으로 확장. **채널 혼합 파일 업로드 거부**(파일 1개=채널 1개). `orderDate`를 upload·order에 저장 — 기존엔 항상 null이라 중복감지 키(`orderDuplicateKey`)가 날짜 없이 돌고 있었음.
+4. **DB enum 5종 마이그레이션** `20260818000000_purchase_channel_5types` — 스키마 파일은 5종이었으나 실제 마이그레이션 SQL은 `ENUM ('DELIVERY','EMART')` 2종이라 Prisma Client도 2종으로 생성되고 있었음. 값 3종 append(비파괴). **Neon 실DB 적용 완료**, `pg_enum` 조회로 5종 확인.
+5. **매처 테스트 파일 의존 제거** — [lib/purchase-order-matcher.test.ts](<lib/purchase-order-matcher.test.ts>): 구 양식 `발주서.xlsx`에서 품목명을 뽑아 18종 대조하던 구조라 파서 양식 변경에 깨짐. 기대표 키 순회로 변경(검증 내용 동일).
+
+**검증**: `npm test` 31 pass / 0 fail, `npx tsc --noEmit` 통과, `npx eslint`(변경 4파일) 경고 없음, `prisma migrate deploy` 적용 확인.
+
+**⚠️ 미결(다음 작업 전 확인)**: **표준 양식 미확정.** 사용자가 표준으로 지목한 `해남급식_20260619.xlsx`의 `공장동06.19` 시트는 D0에서 맞춘 통일양식 템플릿과 헤더 구조가 다름(농가명·소계·`(발주처)` 행 있음, 품목명에 농가명 괄호 포함). 현재 파서는 이 양식을 미인식으로 버림. **양식 재협의 후 `detectHeaderLayout`·파서 테스트만 재조정 예정** — D0의 나머지는 양식과 무관하게 유효. 음수 수량(보관요청 -50)은 일단 무시로 결정. 상세: [docs/report-발주서판매처리-D0파서통일양식-20260818.md](<docs/report-발주서판매처리-D0파서통일양식-20260818.md>)
+
+---
+
 ### 도정관리 엑셀 다운로드 필터 버그 수정 + 수율 필터 구현 `fix` `refactor` `feat`
 
 **배경**: 도정관리 목록에서 품종 5개를 골라 엑셀을 받으면 빈 파일이 나옴(전체 다운은 정상).

@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>건목록+건상세 통합 — 급식(해남급식 공장동06.19) · 데스크탑</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .win { width: 1440px; height: 900px; background:#f8fafc; border-radius: 16px; box-shadow: 0 30px 80px rgba(15,23,42,.28); overflow:hidden; display:flex; border:1px solid #e2e8f0; }
+  .scrollbody::-webkit-scrollbar { width:8px; height:8px; }
+  .scrollbody::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .nav { width:100%; display:flex; align-items:center; gap:12px; padding:8px 12px; font-size:13.5px; font-weight:500; border-radius:9px; color:#475569; }
+  .nav:hover { background:#f8fafc; }
+  .nav.on { background:#eff6ff; color:#2563eb; font-weight:600; }
+  .lt { display:grid; grid-template-columns: 78px minmax(0,1fr) 92px 56px 150px 96px 30px; align-items:center; }
+  .lt > div { padding-left:6px; padding-right:6px; }
+  a { color:#2563eb; } a:hover { color:#1d4ed8; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute; left:40px; top:36px; width:1440px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">건 목록 + 건 상세 — 좌우 통합 · 급식 (해남급식 공장동 06.19)</h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1220px;">
+    <b>해남급식_20260619.xlsx의 "공장동06.19" 시트만</b> 반영한 화면. 공장동 시트는 <b>발주처(해남급식) → 수령인 4곳(싱싱유통·급식센터·땅끝농협·참솔)</b>의 품목별 출고 수량 요약이다.
+    <b>좌측 건 목록 = 수령인</b>, 우측은 선택한 수령인의 라인 테이블. 해남고등학교 <b>보관요청 백미 −50포</b>는 별도 건으로 두어 소계(백미 27포)에 반영한다.
+    발주 품목 10종 · 발주 금액 합계 <b class="mono">1,904,400</b>원.
+  </p>
+</div>
+
+<div style="position:absolute; left:40px; top:150px;">
+  <div class="frame-label"><span class="pill">데스크탑</span> 건 목록(마스터) + 건 상세(디테일) · 해남급식 수령인 4곳 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900</span></div>
+  <div class="win relative">
+
+    <!-- ════════ 사이드바 ════════ -->
+    <aside class="w-60 bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <div class="px-5 py-5 flex items-center">
+        <img src="assets/logo-full.png" alt="MILL LOG" class="h-9 w-auto object-contain" />
+      </div>
+      <div class="px-3 flex-1 overflow-y-auto">
+        <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
+        <div class="space-y-0.5">
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="flex-1">홈</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span class="flex-1">원물재고</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg><span class="flex-1">도정관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85M7 16.5v5M7 16.5l4.74-2.85M17 16.5l5-3M17 16.5 12 13.5M17 16.5v5"/><path d="M12 13.5 17 10.5 12 7.5 7 10.5Z"/></svg><span class="flex-1">제품재고</span></div>
+          <div class="nav on"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="flex-1">판매관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="flex-1">통계</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="mt-6 pt-4 border-t border-slate-100">
+          <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Management</p>
+          <div class="space-y-0.5">
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg><span class="flex-1">품종 관리</span></div>
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="flex-1">생산자 관리</span></div>
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg><span class="flex-1">관리자 메뉴</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ════════ 메인 ════════ -->
+    <div class="flex-1 min-w-0 flex flex-col">
+      <div class="h-14 bg-white border-b border-slate-200 flex items-center px-6 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="text-[15px] font-bold text-slate-900">판매관리</span>
+          <span class="text-[13px] text-slate-300">/</span>
+          <span class="text-[13px] font-medium text-slate-600">제품판매</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <button class="w-9 h-9 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+          <div class="w-8 h-8 rounded-full bg-slate-800 text-white text-[12px] font-bold flex items-center justify-center">관</div>
+        </div>
+      </div>
+
+      <!-- 묶음 컨텍스트 바 -->
+      <div class="bg-white border-b border-slate-200 px-7 py-3 shrink-0">
+        <div class="flex items-center gap-1 mb-1.5">
+          <a href="묶음목록-데스크탑.html" class="w-6 h-6 -ml-0.5 flex items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
+          <a href="묶음목록-데스크탑.html" class="text-[12.5px] text-slate-400 hover:text-slate-600" style="color:#94a3b8;">묶음 목록</a>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <span class="text-[12.5px] font-medium text-slate-500 mono">해남급식_20260619.xlsx · 공장동06.19</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[12px] font-bold"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>급식</span>
+          <h2 class="text-[17px] font-bold text-slate-900 leading-none">해남급식 6/19 <span class="text-[13px] font-semibold text-slate-500">(6/22~6/26 발주량)</span></h2>
+          <span class="text-slate-300">·</span>
+          <span class="text-[12.5px] text-slate-500">발주처 <b class="text-slate-700">해남급식</b></span>
+          <span class="text-slate-300">·</span>
+          <span class="text-[12.5px] text-slate-500">수령인 <b class="text-slate-700 mono tabular-nums">4</b> · 라인 <b class="text-slate-700 mono tabular-nums">12</b> · 합계 <b class="text-slate-700 mono tabular-nums">1,904,400</b>원</span>
+          <span class="inline-flex items-center gap-1 text-[12px] text-slate-500 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 2</span>
+          <span class="inline-flex items-center gap-1 text-[12px] text-violet-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>보관차감 1</span>
+          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[11px] font-bold border border-red-200"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>매칭실패 1</span>
+        </div>
+      </div>
+
+      <!-- 본문 -->
+      <div class="flex-1 min-h-0 flex">
+
+        <!-- ════ 좌: 건 목록 = 수령인 ════ -->
+        <div class="w-[316px] shrink-0 border-r border-slate-200 bg-white flex flex-col min-h-0">
+          <div class="px-4 pt-3.5 pb-2 flex items-center justify-between">
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-[13px] font-bold text-slate-800">수령인</span>
+              <span class="text-[13px] font-bold text-primary mono tabular-nums">4</span>
+            </div>
+            <button class="h-7 px-2 rounded-md text-slate-500 text-[11.5px] font-medium hover:bg-slate-100 flex items-center gap-1">발주량순<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+          </div>
+
+          <div class="px-3 pb-2">
+            <div class="relative">
+              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" placeholder="수령인·품목 검색" class="w-full h-8 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12.5px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-300 focus:bg-white" />
+            </div>
+          </div>
+
+          <div class="px-3.5 pb-2 flex items-center gap-1.5">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[10px] font-bold border border-red-200"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>매칭실패 1</span>
+            <span class="text-[10.5px] text-slate-400">급식센터 찹쌀현미 · SKU 지정 필요</span>
+          </div>
+
+          <div class="flex-1 overflow-y-auto scrollbody px-2 pb-3 border-t border-slate-100">
+            <div class="h-1.5"></div>
+
+            <!-- 싱싱유통 (선택됨) -->
+            <button class="w-full text-left pl-2.5 pr-2 py-2.5 rounded-lg bg-blue-50/70 ring-1 ring-inset ring-primary/30 relative flex items-center gap-2.5">
+              <span class="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-primary"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-bold text-slate-900 truncate">싱싱유통</div>
+                <div class="text-[10.5px] text-slate-400 mono mt-0.5">3라인 · 백미62 찹쌀10kg2 찹쌀1kg34</div>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">대기</span>
+            </button>
+
+            <!-- 급식센터 -->
+            <button class="w-full text-left pl-2.5 pr-2 py-2.5 rounded-lg hover:bg-slate-50 flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-bold text-slate-900 truncate">급식센터</div>
+                <div class="text-[10.5px] text-slate-400 mono mt-0.5">9라인 · 백미15 찹쌀1 잡곡 7종</div>
+              </div>
+              <div class="flex flex-col items-end gap-1 shrink-0">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">대기</span>
+                <span class="px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold border border-red-200">실패1</span>
+              </div>
+            </button>
+
+            <!-- 땅끝농협 (발주 없음) -->
+            <button class="w-full text-left pl-2.5 pr-2 py-2.5 rounded-lg hover:bg-slate-50 flex items-center gap-2.5 opacity-55">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-bold text-slate-500 truncate">땅끝농협</div>
+                <div class="text-[10.5px] text-slate-400 mono mt-0.5">이번 주 발주 없음</div>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-400 shrink-0">0라인</span>
+            </button>
+
+            <!-- 참솔 (발주 없음) -->
+            <button class="w-full text-left pl-2.5 pr-2 py-2.5 rounded-lg hover:bg-slate-50 flex items-center gap-2.5 opacity-55">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-bold text-slate-500 truncate">참솔</div>
+                <div class="text-[10.5px] text-slate-400 mono mt-0.5">이번 주 발주 없음</div>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-400 shrink-0">0라인</span>
+            </button>
+
+            <!-- ── 보관요청 ── -->
+            <div class="px-2 pt-3 pb-1 flex items-center gap-1.5">
+              <span class="text-[10.5px] font-bold text-slate-400 uppercase tracking-wide">보관요청</span>
+              <span class="text-[10px] text-slate-300 mono">1</span>
+              <span class="flex-1 h-px bg-slate-100"></span>
+            </div>
+
+            <button class="w-full text-left pl-2.5 pr-2 py-2.5 rounded-lg hover:bg-slate-50 flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-bold text-slate-900 truncate">해남고등학교</div>
+                <div class="text-[10.5px] text-slate-400 mono mt-0.5">백미 10kg −50포 · 보관분 사용</div>
+              </div>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 shrink-0">보관차감</span>
+            </button>
+
+            <!-- 소계 요약 -->
+            <div class="mx-1 mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5">
+              <p class="text-[10.5px] font-bold text-slate-400 mb-1.5">이번 주 출고 소계 <span class="font-medium">(보관 −50 반영)</span></p>
+              <div class="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10.5px] text-slate-500 mono tabular-nums">
+                <span>백미10kg <b class="text-slate-700">27</b></span><span>찹쌀10kg <b class="text-slate-700">3</b></span><span>찹쌀1kg <b class="text-slate-700">34</b></span><span>찹쌀현미 <b class="text-slate-700">1</b></span><span>귀리 <b class="text-slate-700">3</b></span><span>보리 <b class="text-slate-700">5</b></span><span>기장 <b class="text-slate-700">4</b></span><span>흑미 <b class="text-slate-700">3</b></span><span>차조 <b class="text-slate-700">4</b></span><span>발아현미 <b class="text-slate-700">4</b></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ════ 우: 건 상세 — 싱싱유통 ════ -->
+        <div class="flex-1 min-w-0 flex flex-col bg-slate-50 min-h-0">
+          <div class="px-7 pt-4 pb-3.5 bg-white border-b border-slate-200 shrink-0">
+            <div class="flex items-start gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2.5">
+                  <h2 class="text-[20px] font-bold text-slate-900 leading-none">싱싱유통</h2>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-slate-100 text-slate-500">해남급식 발주 · 수령인</span>
+                  <span class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">대기</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2.5">
+                  <div class="w-48 h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-amber-400" style="width:0%"></div></div>
+                  <span class="text-[13px] text-slate-500"><b class="text-slate-800 mono tabular-nums">0</b>/3 완료</span>
+                  <span class="text-slate-300">·</span>
+                  <span class="text-[13px] text-slate-500">주문 <b class="text-slate-700 mono tabular-nums">98</b>포 · 금액 <b class="text-slate-700 mono tabular-nums">3,227,200</b>원</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button title="엑셀 다운로드" class="w-10 h-10 rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 flex items-center justify-center transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+                <button onclick="openConfirm()" class="h-10 px-5 rounded-md bg-primary text-white text-sm font-semibold flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>수령인 전체 차감 확정</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto scrollbody px-7 pt-4 pb-7">
+            <div class="flex items-center gap-2 mb-2 px-1">
+              <span class="text-[12px] font-bold text-slate-400">작업 필요 3</span>
+              <span class="text-[11px] text-slate-400">· 공장동 06.19 (6/22~6/26 발주량)</span>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="lt bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2">
+                <div>상태</div><div>품목</div><div>규격</div><div class="text-right">주문</div><div>차감</div><div class="text-right">단가</div><div></div>
+              </div>
+
+              <!-- 백미 62포 (선택됨 · 인라인 FIFO 펼침) -->
+              <div class="lt py-2.5 bg-blue-50/50 ring-1 ring-inset ring-primary/25 cursor-pointer">
+                <div><span class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span></div>
+                <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 truncate">유기농 백미 천지향5세</div><div class="text-[11px] text-slate-400">기본포장 · 가용 72포</div></div>
+                <div class="text-[12.5px] text-slate-500">10kg</div>
+                <div class="text-right text-[13px] mono tabular-nums text-slate-700">62</div>
+                <div><span class="text-[12.5px] font-bold mono tabular-nums text-slate-400">0/62</span></div>
+                <div class="text-right text-[12.5px] mono tabular-nums text-slate-500">47,000</div>
+                <div class="text-primary flex justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+              </div>
+
+              <!-- ▼ 인라인 FIFO 배분 -->
+              <div class="bg-blue-50/30 px-5 py-4">
+                <div class="rounded-xl border border-blue-200/70 bg-white p-4">
+                  <div class="flex items-center gap-1.5 mb-3">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg>
+                    <span class="text-[12.5px] font-bold text-slate-700">유기농 백미 10kg FIFO 추천 배분</span>
+                    <span class="text-[11px] text-slate-400">오래된 로트부터</span>
+                    <span class="ml-auto text-[11.5px] text-slate-500">배분 합계 <b class="text-slate-800 mono tabular-nums">62</b> <span class="text-slate-400">/ 62포</span></span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2.5">
+                    <div class="rounded-lg border border-slate-200 px-3 py-2.5 flex items-center gap-2">
+                      <div class="min-w-0 flex-1">
+                        <div class="text-[12px] mono text-slate-700">250610-11-…7741</div>
+                        <div class="text-[10.5px] text-slate-400">도정 06.10 · 가용 40포</div>
+                      </div>
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button class="w-7 h-7 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                        <span class="w-9 text-center text-[13.5px] font-bold tabular-nums mono text-slate-900">40</span>
+                        <button class="w-7 h-7 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="rounded-lg border border-slate-200 px-3 py-2.5 flex items-center gap-2">
+                      <div class="min-w-0 flex-1">
+                        <div class="text-[12px] mono text-slate-700">250616-11-…8820</div>
+                        <div class="text-[10.5px] text-slate-400">도정 06.16 · 가용 32포</div>
+                      </div>
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button class="w-7 h-7 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                        <span class="w-9 text-center text-[13.5px] font-bold tabular-nums mono text-slate-900">22</span>
+                        <button class="w-7 h-7 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 mt-3">
+                    <button class="h-9 px-3 rounded-md border border-dashed border-slate-300 text-slate-500 text-[12px] font-medium hover:bg-slate-50 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>다른 로트 추가</button>
+                    <button class="ml-auto h-9 px-5 rounded-md bg-primary text-white text-sm font-semibold flex items-center justify-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>차감 확정 · 62포</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 찹쌀 10kg × 2 -->
+              <div class="lt py-2.5 border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer">
+                <div><span class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span></div>
+                <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 truncate">유기농 찹쌀</div><div class="text-[11px] text-slate-400">기본포장 · 가용 11포</div></div>
+                <div class="text-[12.5px] text-slate-500">10kg</div>
+                <div class="text-right text-[13px] mono tabular-nums text-slate-700">2</div>
+                <div><span class="text-[12.5px] font-bold mono tabular-nums text-slate-400">0/2</span></div>
+                <div class="text-right text-[12.5px] mono tabular-nums text-slate-500">58,000</div>
+                <div class="text-slate-300 flex justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+              </div>
+
+              <!-- 찹쌀 1kg × 34 -->
+              <div class="lt py-2.5 border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer">
+                <div><span class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span></div>
+                <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 truncate">유기농 찹쌀</div><div class="text-[11px] text-slate-400">소포장 · 가용 60포</div></div>
+                <div class="text-[12.5px] text-slate-500">1kg</div>
+                <div class="text-right text-[13px] mono tabular-nums text-slate-700">34</div>
+                <div><span class="text-[12.5px] font-bold mono tabular-nums text-slate-400">0/34</span></div>
+                <div class="text-right text-[12.5px] mono tabular-nums text-slate-500">5,800</div>
+                <div class="text-slate-300 flex justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+              </div>
+            </div>
+
+            <!-- 보관요청 안내 -->
+            <div class="mt-4 rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-3 flex items-center gap-2.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+              <span class="text-[12px] text-slate-600">해남고등학교 <b class="text-violet-700">보관요청 백미 10kg −50포</b>가 별건으로 있어요. 이번 주 백미 실출고 소계는 <b class="text-slate-800 mono">27포</b>(62+15−50)입니다.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ▼ 수령인 전체 차감 확정 모달 -->
+    <div id="confirmModal" class="hidden absolute inset-0 z-50">
+      <div class="absolute inset-0 bg-slate-900/45" onclick="closeConfirm()"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-[460px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div class="px-5 pt-5 pb-4">
+            <div class="flex items-start gap-3">
+              <span class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+              <div class="flex-1">
+                <h3 class="text-[17px] font-bold text-slate-900">싱싱유통 차감 확정</h3>
+                <p class="text-[12.5px] text-slate-500 mt-1 leading-relaxed">3개 라인 98포를 오래된 로트부터(FIFO) 차감해요. 확정 후에는 제품재고에서 출고됩니다.</p>
+              </div>
+              <button onclick="closeConfirm()" class="w-7 h-7 -mt-1 -mr-1 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>지금 차감</span>
+                <span class="text-[13px] font-bold text-emerald-700"><b class="mono tabular-nums">3</b>라인 · <b class="mono tabular-nums">98</b>포</span>
+              </div>
+              <div class="flex flex-col gap-1.5 text-[12.5px] text-slate-600">
+                <div class="flex items-center justify-between"><span>유기농 백미 <span class="text-slate-400">10kg · 로트 250610/250616</span></span><span class="mono tabular-nums text-emerald-700 font-semibold">+62</span></div>
+                <div class="flex items-center justify-between"><span>유기농 찹쌀 <span class="text-slate-400">10kg</span></span><span class="mono tabular-nums text-emerald-700 font-semibold">+2</span></div>
+                <div class="flex items-center justify-between"><span>유기농 찹쌀 <span class="text-slate-400">1kg</span></span><span class="mono tabular-nums text-emerald-700 font-semibold">+34</span></div>
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-center justify-between px-1 text-[12px]">
+              <span class="text-slate-400">차감 후 백미 10kg 가용</span>
+              <span class="mono tabular-nums text-slate-600"><b class="text-slate-800">72</b> → 10포</span>
+            </div>
+          </div>
+          <div class="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+            <button onclick="closeConfirm()" class="h-10 px-4 rounded-md border border-slate-300 text-slate-600 text-sm font-medium">취소</button>
+            <button class="flex-1 h-10 rounded-md bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>98포 차감 확정</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openConfirm(){ document.getElementById('confirmModal').classList.remove('hidden'); }
+  function closeConfirm(){ document.getElementById('confirmModal').classList.add('hidden'); }
+</script>
+</body>
+</html>

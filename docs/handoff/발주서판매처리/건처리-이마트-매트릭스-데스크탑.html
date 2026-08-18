@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>이마트 — 엑셀 매트릭스 작업 화면 (이마트_260619 · 데스크탑)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .win { width: 1440px; height: 900px; background:#f8fafc; border-radius: 16px; box-shadow: 0 30px 80px rgba(15,23,42,.28); overflow:hidden; display:flex; border:1px solid #e2e8f0; position:relative; }
+  .scrollbody::-webkit-scrollbar { width:10px; height:10px; }
+  .scrollbody::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; border:2px solid #f8fafc; }
+  .scrollbody::-webkit-scrollbar-corner { background:#f8fafc; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .nav { width:100%; display:flex; align-items:center; gap:12px; padding:8px 12px; font-size:13.5px; font-weight:500; border-radius:9px; color:#475569; }
+  .nav:hover { background:#f8fafc; }
+  .nav.on { background:#eff6ff; color:#2563eb; font-weight:600; }
+  .mx { border-collapse: separate; border-spacing:0; font-size:12px; }
+  .mx th, .mx td { box-sizing:border-box; border-right:1px solid #e8edf3; border-bottom:1px solid #e8edf3; padding:0 8px; white-space:nowrap; background:#fff; }
+  .mx thead th { position:sticky; background:#f1f5f9; color:#475569; font-weight:700; text-align:center; }
+  .mx thead .r1 { top:0; height:42px; z-index:30; }
+  .mx thead .r2 { top:42px; height:26px; z-index:30; font-weight:600; font-size:10.5px; color:#64748b; }
+  .ck   { left:0;    width:38px;  position:sticky; z-index:20; text-align:center; }
+  .nm   { left:38px; width:180px; position:sticky; z-index:20; }
+  .st   { left:218px;width:62px;  position:sticky; z-index:20; text-align:center; }
+  .pg   { left:280px;width:96px;  position:sticky; z-index:20; box-shadow: 6px 0 8px -6px rgba(15,23,42,.12); }
+  thead .ck, thead .nm, thead .st, thead .pg { top:0; z-index:40; background:#e8eef5; height:68px; }
+  thead .pg { box-shadow: 6px 0 8px -6px rgba(15,23,42,.18); }
+  .cellnum { text-align:right; font-variant-numeric:tabular-nums; cursor:pointer; height:44px; }
+  .cellnum:hover { outline:2px solid #2563eb; outline-offset:-2px; z-index:15; }
+  .mx tbody tr:hover .nm, .mx tbody tr:hover .st, .mx tbody tr:hover .pg { background:#f8fafc; }
+  .subtot { right:0; width:100px; position:sticky; z-index:20; text-align:right; background:#f8fafc; font-weight:700; color:#475569; box-shadow:-6px 0 8px -6px rgba(15,23,42,.10); }
+  thead .subtot { z-index:40; background:#e8eef5; }
+  .mx thead .sumrow th, .mx thead .sumrow2 th { position:sticky; height:34px; background:#eef3f8; border-bottom:1px solid #d3dce6; color:#334155; font-size:11.5px; font-variant-numeric:tabular-nums; z-index:18; padding:0 8px; }
+  .mx thead .sumrow th { top:68px; }
+  .mx thead .sumrow2 th { top:102px; background:#f4f8fc; }
+  .mx thead .sumrow .sumcell, .mx thead .sumrow2 .sumcell { text-align:right; font-weight:700; }
+  .mx thead .sumrow .sumlabel, .mx thead .sumrow2 .sumlabel { left:0; text-align:left; padding-left:14px; font-weight:700; color:#475569; z-index:36; box-shadow:6px 0 8px -6px rgba(15,23,42,.18); }
+  .mx thead .sumrow2 .sumlabel { background:#f4f8fc; font-weight:600; color:#64748b; }
+  .mx thead .sumrow .sumkg, .mx thead .sumrow2 .sumkg { right:0; text-align:right; font-weight:800; color:#0f172a; background:#e3eaf2; z-index:36; box-shadow:-6px 0 8px -6px rgba(15,23,42,.10); }
+  .mx thead .sumrow2 .sumkg { background:#eef3f8; }
+  .mx thead .sumrow .short, .mx thead .sumrow2 .short { color:#b45309; }
+  .selrow .nm, .selrow .st, .selrow .pg, .selrow .ck { background:#eff6ff !important; }
+  a { color:#2563eb; } a:hover { color:#1d4ed8; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute; left:40px; top:36px; width:1480px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">이마트 — 엑셀 매트릭스 작업 화면 <span style="font-size:13px; font-weight:600; color:#2563eb; vertical-align:2px;">(이마트_260619)</span></h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1280px;">
+    통일 양식 <b>이마트_260619</b> 시트 실데이터: 발주처 <b>이마트</b> → 수령인 = <b>점포</b>(여주·대구·시화), 가로축 = <b>품목·포장지·중량</b> 규격, 우측 고정 열 = <b>출고 중량 소계(kg)</b>.
+    소계 띠의 <b class="text-amber-700">주황 규격</b> = 가용 재고 부족.
+    <b class="text-amber-700">가용 재고·로트는 가상 예시</b>이고, 품목·규격·수량은 발주서 실데이터입니다.
+  </p>
+</div>
+
+<div style="position:absolute; left:40px; top:158px;">
+  <div class="frame-label"><span class="pill">데스크탑</span> 이마트 매트릭스 · 점포 3 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900 · 점포 × 품목·포장·중량</span></div>
+  <div class="win">
+
+    <aside class="w-60 bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <div class="px-5 py-5 flex items-center"><img src="assets/logo-full.png" alt="MILL LOG" class="h-9 w-auto object-contain" /></div>
+      <div class="px-3 flex-1 overflow-y-auto">
+        <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
+        <div class="space-y-0.5">
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="flex-1">홈</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span class="flex-1">원물재고</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg><span class="flex-1">도정관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85M7 16.5v5M7 16.5l4.74-2.85M17 16.5l5-3M17 16.5 12 13.5M17 16.5v5"/><path d="M12 13.5 17 10.5 12 7.5 7 10.5Z"/></svg><span class="flex-1">제품재고</span></div>
+          <div class="nav on"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="flex-1">판매관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg><span class="flex-1">통계</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="mt-6 pt-4 border-t border-slate-100">
+          <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Management</p>
+          <div class="space-y-0.5">
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg><span class="flex-1">품종 관리</span></div>
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="flex-1">생산자 관리</span></div>
+            <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg><span class="flex-1">관리자 메뉴</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <div class="h-14 bg-white border-b border-slate-200 flex items-center px-6 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span class="text-[15px] font-bold text-slate-900">판매관리</span>
+          <span class="text-[13px] text-slate-300">/</span>
+          <span class="text-[13px] font-medium text-slate-600">제품판매</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <button class="w-9 h-9 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+          <div class="w-8 h-8 rounded-full bg-slate-800 text-white text-[12px] font-bold flex items-center justify-center">관</div>
+        </div>
+      </div>
+
+      <div class="bg-white border-b border-slate-200 px-7 py-3 shrink-0">
+        <div class="flex items-center gap-1.5 mb-2">
+          <a href="묶음목록-데스크탑.html" class="inline-flex items-center gap-1 text-[12.5px] font-medium text-slate-500 hover:text-slate-800"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>제품판매 목록</a>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <span class="text-[12.5px] font-medium text-slate-400 mono">이마트_260619.xlsx</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-[12px] font-bold"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/></svg>이마트</span>
+          <h2 class="text-[17px] font-bold text-slate-900 leading-none">26/06/19 <span class="text-[13px] font-semibold text-slate-500">(금) · 옥천농협 배송</span></h2>
+          <button title="엑셀 다운로드" class="ml-auto w-8 h-8 rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 flex items-center justify-center transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+        </div>
+      </div>
+
+      <div class="px-3 pt-2 pb-1 bg-slate-50 shrink-0 flex items-center gap-3">
+        <div class="ml-auto flex items-center gap-2.5 pr-2">
+          <span class="inline-flex items-center gap-1 text-[10.5px] text-slate-500"><span class="w-2.5 h-2.5 rounded-sm" style="background:#ecfdf5; border:1px solid #a7f3d0;"></span>완료</span>
+          <span class="inline-flex items-center gap-1 text-[10.5px] text-slate-500"><span class="w-2.5 h-2.5 rounded-sm" style="background:#fffbeb; border:1px solid #fde68a;"></span>부분</span>
+          <span class="inline-flex items-center gap-1 text-[10.5px] text-slate-500"><span class="w-2.5 h-2.5 rounded-sm" style="background:#f1f5f9; border:1px solid #cbd5e1;"></span>대기</span>
+          <span class="inline-flex items-center gap-1 text-[10.5px] text-slate-500"><span class="w-2.5 h-2.5 rounded-sm" style="background:#fef2f2; border:1px solid #fecaca;"></span>실패</span>
+        </div>
+      </div>
+
+      <div id="matrixWrap" class="flex-1 min-h-0 overflow-auto scrollbody bg-slate-50 relative">
+        <table id="matrix" class="mx"></table>
+
+        <div id="cellPop" class="hidden absolute z-50 w-[300px] bg-white rounded-xl border border-slate-200 shadow-2xl">
+          <div class="px-3.5 pt-3 pb-2.5 border-b border-slate-100">
+            <div class="flex items-center gap-1.5">
+              <span id="popTitle" class="text-[13px] font-bold text-slate-900"></span>
+              <span class="text-slate-300">·</span>
+              <span id="popWho" class="text-[12px] text-slate-500"></span>
+              <button onclick="closePop()" class="ml-auto w-6 h-6 -mr-1 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg>
+              <span class="text-[11px] font-semibold text-slate-500">FIFO 추천 배분 · 오래된 로트부터</span>
+              <span id="popSum" class="ml-auto text-[11px] text-slate-500"></span>
+            </div>
+          </div>
+          <div class="px-3.5 py-3 space-y-2" id="popLots"></div>
+          <div class="px-3.5 pb-3">
+            <button id="popConfirm" class="w-full h-9 rounded-md bg-primary text-white text-[13px] font-semibold flex items-center justify-center gap-1.5"></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="bulkBar" class="hidden shrink-0 bg-slate-900 text-white px-7 py-3 flex items-center gap-4">
+        <span class="inline-flex items-center gap-2 text-[13px] font-semibold"><span class="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center mono text-[12px]" id="bulkCount">0</span>점포 선택</span>
+        <span class="text-[12px] text-slate-300" id="bulkLines">— 라인 · 차감 가능 —개</span>
+        <button onclick="clearSel()" class="text-[12px] text-slate-400 hover:text-white underline-offset-2 hover:underline">선택 해제</button>
+        <div class="ml-auto flex items-center gap-2">
+          <button class="h-9 px-5 rounded-md bg-primary text-white text-[13px] font-semibold flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg>일괄 FIFO 차감</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 마트 납품 규격(가로축) — 전부 샘플 ──
+const cols = [
+  { item:'유기농 가바백미', pkg:'자연주의', w:'4kg',  kg:4,    avail:30 },
+  { item:'유기농 가바백미', pkg:'자연주의', w:'1kg',  kg:1,    avail:120 },
+  { item:'유기농 천지향',   pkg:'자연주의', w:'4kg',  kg:4,    avail:40 },
+  { item:'유기농 귀리쌀',   pkg:'PET',      w:'420g', kg:0.42, avail:80 },
+  { item:'유기농 천지향',   pkg:'자연주의', w:'8kg',  kg:8,    avail:20 },
+];
+
+// 상태: d=완료 p=부분 w=대기 f=실패
+function R(name, note, status, done, total, cells){ return {name, note, status, done, total, cells}; }
+const rows = [
+  R('이마트 여주', null, 'w', 0, 3, {0:[4,'w'],1:[48,'w'],4:[12,'w']}),
+  R('이마트 대구', null, 'p', 1, 3, {0:[4,'d'],1:[16,'p'],3:[20,'w']}),
+  R('이마트 시화', null, 'w', 0, 3, {1:[80,'w'],2:[8,'w'],3:[40,'w']}),
+];
+
+const STATE = {
+  d:{ bg:'#ecfdf5', fg:'#047857', fw:600 },
+  p:{ bg:'#fffbeb', fg:'#b45309', fw:700 },
+  w:{ bg:'#f1f5f9', fg:'#64748b', fw:500 },
+  f:{ bg:'#fef2f2', fg:'#dc2626', fw:700 },
+};
+const STATUS_BADGE = {
+  d:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료</span>',
+  p:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-amber-700"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분</span>',
+  w:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span>',
+  f:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-red-600"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>실패</span>',
+};
+
+function render(){
+  const tbl = document.getElementById('matrix');
+  const colCnt = cols.map((c, ci) => { let s = 0; rows.forEach(r => { if (r.cells[ci]) s += r.cells[ci][0]; }); return s; });
+  const grandKg = cols.reduce((t, c, ci) => t + colCnt[ci] * c.kg, 0);
+  const availKg = cols.reduce((t, c) => t + c.avail * c.kg, 0);
+  const fmtKg = v => (Math.round(v*10)/10).toLocaleString();
+  let h = '<thead><tr>';
+  h += '<th class="ck r1" rowspan="2"><input type="checkbox" onchange="toggleAll(this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></th>';
+  h += '<th class="nm r1" rowspan="2" style="text-align:left;">점포</th>';
+  h += '<th class="st r1" rowspan="2">상태</th>';
+  h += '<th class="pg r1" rowspan="2">진행</th>';
+  cols.forEach(c => {
+    h += `<th class="r1">${c.item.replace('유기농 ','')}<div style="font-weight:500;font-size:9.5px;color:#94a3b8;margin-top:-1px;">${c.pkg}</div></th>`;
+  });
+  h += '<th class="subtot r1" rowspan="2">소계<div style="font-weight:500;font-size:9px;color:#94a3b8;margin-top:-1px;">kg</div></th>';
+  h += '</tr><tr>';
+  cols.forEach(c => { h += `<th class="r2" style="min-width:58px;">${c.w}</th>`; });
+  h += '</tr>';
+  h += '<tr class="sumrow">';
+  h += '<th class="sumlabel" colspan="4">규격별 소계 <span style="font-weight:500;color:#94a3b8;">(주문 개)</span></th>';
+  cols.forEach((c, ci) => {
+    const n = colCnt[ci];
+    if (!n) { h += '<th class="sumcell mono" style="color:#cbd5e1;">·</th>'; return; }
+    const short = n > c.avail;
+    h += `<th class="sumcell mono${short?' short':''}">${n}</th>`;
+  });
+  h += `<th class="sumkg mono">${fmtKg(grandKg)}<span style="font-weight:500;font-size:8.5px;color:#64748b;"> kg</span></th>`;
+  h += '</tr>';
+  h += '<tr class="sumrow2">';
+  h += '<th class="sumlabel" colspan="4">가용 재고 <span style="font-weight:500;color:#94a3b8;">(현재 SKU · 개)</span></th>';
+  cols.forEach((c, ci) => {
+    const n = colCnt[ci];
+    const short = n > c.avail;
+    h += `<th class="sumcell mono${short?' short':''}" style="${short?'':'color:#64748b;'}">${c.avail}</th>`;
+  });
+  h += `<th class="sumkg mono" style="font-weight:600;color:#64748b;">${fmtKg(availKg)}<span style="font-weight:500;font-size:8.5px;color:#94a3b8;"> kg</span></th>`;
+  h += '</tr>';
+  h += '</thead><tbody>';
+
+  rows.forEach((r, ri) => {
+    let sub = 0; Object.entries(r.cells).forEach(([ci,[q]]) => { const c = cols[+ci]; if (c) sub += q * c.kg; });
+    const noteHtml = r.note ? `<div class="text-[10px] text-slate-400 leading-tight">${r.note}</div>` : '';
+    h += `<tr data-ri="${ri}">`;
+    h += `<td class="ck"><input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></td>`;
+    h += `<td class="nm"><div class="text-[12.5px] font-bold text-slate-900 leading-tight">${r.name}</div>${noteHtml}</td>`;
+    h += `<td class="st">${STATUS_BADGE[r.status]}</td>`;
+    h += `<td class="pg"><div class="flex items-center gap-1.5"><div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full ${r.done===r.total?'bg-emerald-400':'bg-amber-400'}" style="width:${Math.round(r.done/r.total*100)}%"></div></div><span class="text-[10px] mono text-slate-500 shrink-0">${r.done}/${r.total}</span></div></td>`;
+    cols.forEach((c, ci) => {
+      const cell = r.cells[ci];
+      if (!cell) { h += '<td class="cellnum" style="color:#dbe1e8;">·</td>'; return; }
+      const [q, s] = cell; const st = STATE[s];
+      h += `<td class="cellnum" onclick="openPop(this,${ri},${ci})" style="background:${st.bg};color:${st.fg};font-weight:${st.fw};">${q}</td>`;
+    });
+    h += `<td class="subtot mono">${fmtKg(sub)}<span style="font-weight:500;font-size:8px;color:#94a3b8;"> kg</span></td>`;
+    h += '</tr>';
+  });
+  h += '</tbody>';
+  tbl.innerHTML = h;
+}
+render();
+
+let popOpen = false;
+function lotRow(code, d, av, q){
+  return `<div class="rounded-lg border border-slate-200 px-3 py-2 flex items-center gap-2">
+    <div class="min-w-0 flex-1"><div class="text-[11.5px] mono text-slate-700">${code}</div><div class="text-[10px] text-slate-400">도정 ${d} · 가용 ${av}</div></div>
+    <div class="flex items-center gap-1 shrink-0">
+      <button class="w-6 h-6 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <span class="w-8 text-center text-[13px] font-bold tabular-nums mono text-slate-900">${q}</span>
+      <button class="w-6 h-6 rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+  </div>`;
+}
+function openPop(td, ri, ci){
+  const pop = document.getElementById('cellPop');
+  const wrap = document.getElementById('matrixWrap');
+  const c = cols[ci], r = rows[ri];
+  const [q, s] = r.cells[ci];
+  document.getElementById('popTitle').textContent = `${c.item} · ${c.w}`;
+  document.getElementById('popWho').textContent = r.name;
+  const lots = document.getElementById('popLots');
+  const btn = document.getElementById('popConfirm');
+  if (s === 'f'){
+    document.getElementById('popSum').innerHTML = `주문 <b class="text-red-600 mono">${q}</b>개`;
+    lots.innerHTML = `<div class="rounded-lg border border-red-200 bg-red-50/50 px-3 py-2.5 flex items-center gap-2"><span class="text-[11.5px] text-red-600 leading-snug flex-1">매칭 실패 — "혼합15곡 800g" 마트 전용 SKU가 등록돼 있지 않아요.</span><button class="h-7 px-3 rounded-md bg-white border border-red-300 text-red-600 text-[11.5px] font-semibold shrink-0 hover:bg-red-50">SKU 지정</button></div>`;
+    btn.innerHTML = 'SKU 지정 후 차감 가능';
+  } else if (s === 'd'){
+    document.getElementById('popSum').innerHTML = `차감 완료 <b class="text-emerald-700 mono">${q}</b>개`;
+    lots.innerHTML = `<div class="rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2.5 text-[11.5px] text-slate-600 leading-relaxed">로트 <span class="mono">250705-11-…3310</span>에서 <b class="text-emerald-700">${q}개 차감 완료</b>. 되돌리려면 차감 취소를 누르세요.</div>`;
+    btn.innerHTML = '차감 취소';
+  } else {
+    document.getElementById('popSum').innerHTML = `합계 <b class="text-slate-800 mono">${q}</b><span class="text-slate-400"> / ${q}</span>`;
+    lots.innerHTML = q > 40
+      ? lotRow('250705-11-…3310','07.05',40,40) + lotRow('250711-11-…6642','07.11',50,q-40)
+      : lotRow('250705-11-…3310','07.05',40,q);
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>이 셀 차감 확정 · ${q}개`;
+  }
+  const tr = td.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+  let x = tr.left - wr.left + wrap.scrollLeft + tr.width;
+  let y = tr.top - wr.top + wrap.scrollTop + tr.height;
+  if (x + 300 > wrap.scrollLeft + wrap.clientWidth) x = tr.left - wr.left + wrap.scrollLeft - 300;
+  if (x < wrap.scrollLeft + 380) x = wrap.scrollLeft + 380;
+  pop.style.left = x + 'px';
+  pop.style.top = Math.min(y, wrap.scrollTop + wrap.clientHeight - 240) + 'px';
+  pop.classList.remove('hidden');
+  popOpen = true;
+  event.stopPropagation();
+}
+function closePop(){ document.getElementById('cellPop').classList.add('hidden'); popOpen=false; }
+document.getElementById('matrixWrap').addEventListener('click', e => {
+  if (popOpen && !e.target.closest('#cellPop') && !e.target.closest('.cellnum')) closePop();
+});
+
+const sel = new Set();
+function onCheck(ri, el){
+  const tr = el.closest('tr');
+  if (el.checked){ sel.add(ri); tr.classList.add('selrow'); }
+  else { sel.delete(ri); tr.classList.remove('selrow'); }
+  updateBulk();
+}
+function updateBulk(){
+  const bar = document.getElementById('bulkBar');
+  if (sel.size === 0){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  let lines = 0, qty = 0;
+  sel.forEach(ri => { Object.entries(rows[ri].cells).forEach(([ci,[q,s]]) => { if (s==='w'||s==='p'){ lines++; qty += q; } }); });
+  document.getElementById('bulkCount').textContent = sel.size;
+  document.getElementById('bulkLines').textContent = `${lines}라인 · 차감 가능 ${qty.toLocaleString()}개`;
+}
+function clearSel(){ sel.clear(); document.querySelectorAll('#matrix input[type=checkbox]').forEach(c=>c.checked=false); document.querySelectorAll('.selrow').forEach(t=>t.classList.remove('selrow')); updateBulk(); }
+function toggleAll(el){
+  document.querySelectorAll('#matrix tbody tr').forEach(tr => {
+    const ri = +tr.dataset.ri, cb = tr.querySelector('input[type=checkbox]');
+    if (!cb) return;
+    cb.checked = el.checked;
+    if (el.checked){ sel.add(ri); tr.classList.add('selrow'); } else { sel.delete(ri); tr.classList.remove('selrow'); }
+  });
+  updateBulk();
+}
+</script>
+</body>
+</html>

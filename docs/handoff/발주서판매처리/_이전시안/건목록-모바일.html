@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>화면2 발주 건 목록 — 모바일</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .screen { width: 390px; background:#f8fafc; border-radius: 30px; box-shadow: 0 24px 60px rgba(15,23,42,.22); overflow:hidden; display:flex; flex-direction:column; height: 800px; border:1px solid #e2e8f0; }
+  .scrollbody::-webkit-scrollbar { width:0; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .frame-sub { font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px; }
+  .ch { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:6px; font-size:10.5px; font-weight:700; flex-shrink:0; }
+  .mini { display:inline-flex; align-items:center; gap:4px; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:700; }
+  .dot { width:6px; height:6px; border-radius:99px; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<!-- ════════════ 캔버스 헤더 ════════════ -->
+<div style="position:absolute; left:40px; top:36px; width:1180px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">화면2 · 발주 건 목록 (묶음 드릴다운)</h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1060px;">
+    화면1에서 묶음(<span class="mono" style="font-size:12px;">서울급식_260616.xlsx</span>)을 탭하면 진입. 한 묶음 안의 <b>발주 건(Order)</b>들을 채널 적응형 헤더(<b>발주처 → 수령인</b>)로 나열.
+    <span class="mono" style="font-size:12px;">listPurchaseOrders(uploadId)</span> → <span class="mono" style="font-size:12px;">OrderRow[]</span>. 건을 탭하면 <b>건 상세(화면3)</b>로, ⋮ 메뉴로 매칭실패 처리를 유도.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     채워진 상태
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:40px; top:128px;">
+  <div class="frame-label"><span class="pill">기본</span> 건 목록 (서울급식 묶음 · 3건)</div>
+  <div class="screen">
+
+    <!-- 헤더 -->
+    <div class="bg-white px-2.5 pt-3 pb-3 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-1.5">
+        <a href="묶음목록-모바일.html" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <span class="ch bg-teal-50 text-teal-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>서울급식</span>
+            <span class="text-[13.5px] font-bold text-slate-900 truncate">서울급식_260616.xlsx</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">26.06.16 09:12 업로드 · <b class="text-slate-500">3건</b></div>
+        </div>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+        </button>
+      </div>
+      <!-- 상태 요약 -->
+      <div class="flex items-center gap-1.5 mt-2.5 pl-0.5">
+        <span class="mini bg-emerald-50 text-emerald-700"><span class="dot bg-emerald-500"></span>완료 <span class="tabular-nums mono">1</span></span>
+        <span class="mini bg-amber-50 text-amber-700"><span class="dot bg-amber-500"></span>부분 <span class="tabular-nums mono">1</span></span>
+        <span class="mini bg-slate-100 text-slate-500"><span class="dot bg-slate-400"></span>대기 <span class="tabular-nums mono">1</span></span>
+        <span class="mini bg-red-50 text-red-600 border border-red-200 ml-auto"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>매칭실패 <span class="tabular-nums mono">2</span></span>
+      </div>
+    </div>
+
+    <!-- 매칭실패 안내 -->
+    <div class="px-3 pt-3 shrink-0">
+      <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100">
+        <svg width="14" height="14" class="mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <p class="text-[11.5px] text-red-600 leading-snug">매칭 실패 <b>2라인</b> — 건을 열어 품종을 지정하면 차감할 수 있어요.</p>
+      </div>
+    </div>
+
+    <!-- 건 리스트 -->
+    <div class="scrollbody flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
+
+      <!-- 건 ① 은평구 → 행복플러스 · 부분 -->
+      <a href="건상세-C안-모바일.html" class="block bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300">
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1 leading-tight">
+                <span class="text-[14px] font-bold text-slate-900">은평구</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                <span class="text-[12.5px] font-semibold text-slate-600">행복플러스</span>
+              </div>
+              <div class="text-[11.5px] text-slate-400 mt-1"><b class="text-slate-500">17</b>라인</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="mini bg-amber-50 text-amber-700">부분 차감</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="mini bg-emerald-50 text-emerald-700"><span class="dot bg-emerald-500"></span>완료 <span class="tabular-nums mono">12</span></span>
+            <span class="mini bg-amber-50 text-amber-700"><span class="dot bg-amber-500"></span>부분 <span class="tabular-nums mono">1</span></span>
+            <span class="mini bg-slate-100 text-slate-500"><span class="dot bg-slate-400"></span>대기 <span class="tabular-nums mono">3</span></span>
+            <span class="mini bg-red-50 text-red-600 border border-red-200 ml-auto">매칭실패 <span class="tabular-nums mono">1</span></span>
+          </div>
+        </div>
+        <div class="h-1 flex">
+          <div class="bg-emerald-400" style="width:70%"></div>
+          <div class="bg-amber-400" style="width:6%"></div>
+          <div class="bg-slate-200" style="width:24%"></div>
+        </div>
+      </a>
+
+      <!-- 건 ② 마포구 → 행복플러스 · 완료 -->
+      <a href="건상세-C안-모바일.html" class="block bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300">
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1 leading-tight">
+                <span class="text-[14px] font-bold text-slate-900">마포구</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                <span class="text-[12.5px] font-semibold text-slate-600">행복플러스</span>
+              </div>
+              <div class="text-[11.5px] text-slate-400 mt-1"><b class="text-slate-500">9</b>라인</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="mini bg-emerald-50 text-emerald-700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>완료</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="mini bg-emerald-50 text-emerald-700"><span class="dot bg-emerald-500"></span>완료 <span class="tabular-nums mono">9</span></span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold ml-auto">전체 차감 완료</span>
+          </div>
+        </div>
+        <div class="h-1 bg-emerald-400"></div>
+      </a>
+
+      <!-- 건 ③ 강서구 → 행복플러스 · 대기 -->
+      <a href="건상세-C안-모바일.html" class="block bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300">
+        <div class="px-3.5 pt-3 pb-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1 leading-tight">
+                <span class="text-[14px] font-bold text-slate-900">강서구</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                <span class="text-[12.5px] font-semibold text-slate-600">행복플러스</span>
+              </div>
+              <div class="text-[11.5px] text-slate-400 mt-1"><b class="text-slate-500">6</b>라인</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="mini bg-slate-100 text-slate-500">대기</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 mt-2.5">
+            <span class="mini bg-slate-100 text-slate-500"><span class="dot bg-slate-400"></span>대기 <span class="tabular-nums mono">5</span></span>
+            <span class="mini bg-red-50 text-red-600 border border-red-200 ml-auto">매칭실패 <span class="tabular-nums mono">1</span></span>
+          </div>
+        </div>
+        <div class="h-1 bg-slate-200"></div>
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 노트 ════════════ -->
+<div style="position:absolute; left:470px; top:128px; width:320px;">
+  <div class="frame-label">구조 노트</div>
+  <div style="background:#1e293b; border-radius:14px; padding:18px 20px; font-size:12px; line-height:1.7; color:#cbd5e1;">
+    <p style="margin-bottom:13px;"><b style="color:#fff;">진입</b><br>화면1 묶음 행 탭 → 이 화면. 헤더에 묶음(파일명·채널·업로드 일시) 컨텍스트 + 상태 요약을 그대로 이어받음.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">건 카드 = OrderRow</b><br><span class="mono" style="font-size:11px;">vendor → recipient</span>(채널 적응형: 택배는 단일 주체, 급식·이마트는 발주처→수령인) · <span class="mono" style="font-size:11px;">itemCount</span>라인 · <span class="mono" style="font-size:11px;">status</span> · <span class="mono" style="font-size:11px;">unmatched</span>.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">매칭실패 안내</b><br>묶음 단위 <span class="mono" style="font-size:11px;">unmatched</span> 합을 상단 띠로 노출 → 어느 건을 먼저 열어야 하는지 가이드.</p>
+    <p style="border-top:1px solid #334155; padding-top:13px; margin-top:4px; color:#94a3b8;">건 탭 → 건 상세(화면3)에서 라인별 차감확정·수동지정. ⋮ 메뉴: 건 삭제(<span class="mono" style="font-size:11px;">deletePurchaseOrder</span> — 차감 movement 있으면 비활성).</p>
+  </div>
+</div>
+
+</body>
+</html>

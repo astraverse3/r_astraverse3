@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>화면3 건상세 — C안 간결</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .screen { width: 390px; background:#f1f5f9; border-radius: 30px; box-shadow: 0 24px 60px rgba(15,23,42,.22); overflow:hidden; display:flex; flex-direction:column; height: 800px; border:1px solid #e2e8f0; }
+  .scrollbody::-webkit-scrollbar { width:0; }
+  .frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+  .frame-sub { font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<!-- ════════════ 캔버스 헤더 ════════════ -->
+<div style="position:absolute; left:40px; top:36px; width:1180px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">화면3 · 건 상세 — C안 간결 (한 단계 더 압축)</h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1060px;">
+    확정한 C안을 더 덜어낸 버전. 헤더 카운트를 <b>진행바 한 줄</b>로, 본문은 <b>전부 접힌 균일 행</b>이 기본 —
+    작업할 라인만 탭하면 패널이 인라인으로 열립니다. 17라인 건도 처음엔 <b>작업 5 + 완료 1줄 = 6줄</b>로 스캔.
+    같은 서울급식 · 은평구→행복플러스 건.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ① 기본 상태 — 전부 접힘
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:40px; top:150px;">
+  <div class="frame-label"><span class="pill">기본</span> 전부 접힘 <span class="frame-sub">작업 필요 5 + 완료 1줄 · 한눈에 스캔</span></div>
+  <div class="screen">
+    <!-- 헤더 -->
+    <div class="bg-white px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-2 mb-2.5">
+        <button class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="text-[15px] font-bold text-slate-900">건 상세</span>
+        <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[11px] font-bold">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>
+          서울급식
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[14px] font-bold text-slate-900">은평구</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span class="text-[13px] font-semibold text-slate-600">행복플러스</span>
+      </div>
+      <!-- 진행바 한 줄 -->
+      <div class="mt-2.5 flex items-center gap-2.5">
+        <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+          <div class="h-full bg-emerald-400" style="width:70.5%"></div>
+          <div class="h-full bg-amber-400" style="width:5.9%"></div>
+        </div>
+        <span class="text-[11.5px] text-slate-500 shrink-0"><b class="text-slate-800 mono tabular-nums">12</b>/17 완료 · <b class="text-primary">작업 5</b></span>
+      </div>
+    </div>
+
+    <!-- 본문 -->
+    <div class="scrollbody flex-1 overflow-y-auto py-2.5">
+
+      <!-- 작업 필요 -->
+      <div class="px-4 pb-1.5 pt-0.5 text-[11px] font-bold text-slate-400">작업 필요 5</div>
+      <div class="bg-white mx-3 rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+
+        <!-- 부분 -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">새청무 · 백미</div>
+            <div class="text-[10.5px] text-slate-400">10kg · 기본포장</div>
+          </div>
+          <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>부족32
+          </span>
+          <span class="text-[12px] font-bold text-amber-700 tabular-nums mono shrink-0">80/112</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 대기 -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">백옥찰 · 백미 <span class="font-medium text-slate-400">(찹쌀)</span></div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 75</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/60</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 대기 -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">흑미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 24</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/3</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 대기 -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">발아현미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 16</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/9</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 실패 -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">혼합곡</div>
+            <div class="text-[10.5px] text-red-500">1kg · 포장지 미지정 · 주문 6</div>
+          </div>
+          <span class="px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0 border border-red-200">실패</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- 완료 -->
+      <div class="px-4 pb-1.5 pt-3 text-[11px] font-bold text-slate-400">완료 12</div>
+      <div class="bg-white mx-3 rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900">완료 라인 12개</div>
+            <div class="text-[10.5px] text-slate-400 truncate">새청무 1kg·5kg · 귀리 · 보리 · 기장 · 차조 · 팥 외</div>
+          </div>
+          <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 푸터 -->
+    <div class="bg-white border-t border-slate-200 px-4 py-3 shrink-0">
+      <a href="차감확정-결과-모바일.html" class="w-full h-11 rounded-xl bg-primary text-white text-[14px] font-bold flex items-center justify-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        건 전체 차감 확정
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ② 한 줄 펼침 — 대기 라인 작업
+════════════════════════════════════════════════════════ -->
+<div style="position:absolute; left:470px; top:150px;">
+  <div class="frame-label"><span class="pill">탭</span> 한 줄 펼침 <span class="frame-sub">대기 라인 → FIFO 배분 인라인</span></div>
+  <div class="screen">
+    <!-- 헤더 -->
+    <div class="bg-white px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-2 mb-2.5">
+        <button class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="text-[15px] font-bold text-slate-900">건 상세</span>
+        <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[11px] font-bold">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v9M9 2v20M21 15V2a5 5 0 0 0-3 5v6c0 1.1.9 2 2 2h1z"/></svg>
+          서울급식
+        </span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[14px] font-bold text-slate-900">은평구</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span class="text-[13px] font-semibold text-slate-600">행복플러스</span>
+      </div>
+      <div class="mt-2.5 flex items-center gap-2.5">
+        <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+          <div class="h-full bg-emerald-400" style="width:70.5%"></div>
+          <div class="h-full bg-amber-400" style="width:5.9%"></div>
+        </div>
+        <span class="text-[11.5px] text-slate-500 shrink-0"><b class="text-slate-800 mono tabular-nums">12</b>/17 완료 · <b class="text-primary">작업 5</b></span>
+      </div>
+    </div>
+
+    <!-- 본문 -->
+    <div class="scrollbody flex-1 overflow-y-auto py-2.5">
+
+      <div class="px-4 pb-1.5 pt-0.5 text-[11px] font-bold text-slate-400">작업 필요 5</div>
+      <div class="bg-white mx-3 rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+
+        <!-- 부분 (접힘) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">새청무 · 백미</div>
+            <div class="text-[10.5px] text-slate-400">10kg · 기본포장</div>
+          </div>
+          <span class="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>부족32
+          </span>
+          <span class="text-[12px] font-bold text-amber-700 tabular-nums mono shrink-0">80/112</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 대기 (펼침) -->
+        <div class="bg-slate-50/70">
+          <div class="px-3 py-2.5 flex items-center gap-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[12.5px] font-bold text-slate-900 truncate">백옥찰 · 백미 <span class="font-medium text-slate-400">(찹쌀)</span></div>
+              <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 75</div>
+            </div>
+            <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/60</span>
+            <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="px-3 pb-3 pt-0.5">
+            <div class="rounded-lg bg-white border border-slate-200 overflow-hidden">
+              <div class="px-2.5 py-1.5 text-[10.5px] font-bold text-slate-500 border-b border-slate-100 flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg>
+                FIFO 추천 배분 <span class="font-medium text-slate-400">· 오래된 로트부터</span>
+              </div>
+              <div class="px-2.5 py-1.5 flex items-center gap-2">
+                <div class="min-w-0">
+                  <div class="text-[11px] mono text-slate-600 truncate">250602-11-…7741</div>
+                  <div class="text-[9.5px] text-slate-400">도정 06.02 · 가용 40</div>
+                </div>
+                <div class="ml-auto flex items-center gap-0.5 shrink-0">
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                  <span class="w-7 text-center text-[12.5px] font-bold tabular-nums mono text-slate-900">40</span>
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+              </div>
+              <div class="px-2.5 py-1.5 flex items-center gap-2 border-t border-slate-100">
+                <div class="min-w-0">
+                  <div class="text-[11px] mono text-slate-600 truncate">250610-11-…8820</div>
+                  <div class="text-[9.5px] text-slate-400">도정 06.10 · 가용 35</div>
+                </div>
+                <div class="ml-auto flex items-center gap-0.5 shrink-0">
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                  <span class="w-7 text-center text-[12.5px] font-bold tabular-nums mono text-slate-900">20</span>
+                  <button class="w-6 h-6 rounded-md text-slate-400 hover:bg-slate-50 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+              </div>
+            </div>
+            <button class="w-full mt-2 h-9 rounded-lg bg-primary text-white text-[12.5px] font-bold">차감 확정 · 60개</button>
+          </div>
+        </div>
+
+        <!-- 대기 (접힘) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">흑미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 24</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/3</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 대기 (접힘) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">발아현미</div>
+            <div class="text-[10.5px] text-slate-400">1kg · 기본포장 · 가용 16</div>
+          </div>
+          <span class="text-[12px] font-bold text-slate-500 tabular-nums mono shrink-0">0/9</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <!-- 실패 (접힘) -->
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900 truncate">혼합곡</div>
+            <div class="text-[10.5px] text-red-500">1kg · 포장지 미지정 · 주문 6</div>
+          </div>
+          <span class="px-1 py-0.5 rounded bg-red-50 text-red-600 text-[9.5px] font-bold shrink-0 border border-red-200">실패</span>
+          <svg class="shrink-0 text-slate-300" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="px-4 pb-1.5 pt-3 text-[11px] font-bold text-slate-400">완료 12</div>
+      <div class="bg-white mx-3 rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-3 py-2.5 flex items-center gap-2.5">
+          <span class="w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <div class="min-w-0 flex-1">
+            <div class="text-[12.5px] font-bold text-slate-900">완료 라인 12개</div>
+            <div class="text-[10.5px] text-slate-400 truncate">새청무 1kg·5kg · 귀리 · 보리 · 기장 · 차조 · 팥 외</div>
+          </div>
+          <svg class="shrink-0 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 푸터 -->
+    <div class="bg-white border-t border-slate-200 px-4 py-3 shrink-0">
+      <a href="차감확정-결과-모바일.html" class="w-full h-11 rounded-xl bg-primary text-white text-[14px] font-bold flex items-center justify-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        건 전체 차감 확정
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 노트 ════════════ -->
+<div style="position:absolute; left:900px; top:150px; width:300px;">
+  <div class="frame-label">덜어낸 것</div>
+  <div style="background:#1e293b; border-radius:14px; padding:18px 20px; font-size:12px; line-height:1.7; color:#cbd5e1;">
+    <p style="margin-bottom:13px;"><b style="color:#fff;">헤더 카운트 → 진행바</b><br>「12완료·1부분·3대기·1실패」 텍스트를 <span style="color:#6ee7b7;">색 진행바 + 12/17 · 작업 5</span> 한 줄로. 끝났는지/얼마 남았는지만.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">기본은 전부 접힘</b><br>미리 펼쳐 두지 않음. 작업 5줄 + 완료 1줄만 보여 17라인도 한 화면. <span style="color:#93c5fd;">탭한 라인만</span> 패널이 열림.</p>
+    <p style="margin-bottom:13px;"><b style="color:#fff;">두 그룹뿐</b><br>「작업 필요 5 / 완료 12」. 상태별 칩·테두리 색을 줄이고 <span class="mono">좌측 점 + 차감/주문</span>으로 통일.</p>
+    <p style="border-top:1px solid #334155; padding-top:13px; margin-top:4px; color:#94a3b8;">펼침 패널(FIFO·수동지정)은 C안과 동일 — 진입 시점만 사용자가 정함. 이 방향이면 데스크탑까지 확장.</p>
+  </div>
+</div>
+
+</body>
+</html>

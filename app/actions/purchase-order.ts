@@ -9,7 +9,7 @@
 // export(원본 양식 복원 + 생산자·로트 채움)는 별도 단계.
 // 모든 write = OPERATION_MANAGE(2026-06-22 권한 단순화), 조회(list*/get*) = 공개.
 
-import type { Prisma } from '@prisma/client'
+import type { Prisma, PurchaseChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -37,6 +37,11 @@ import {
 // ======================================================
 // 내부 헬퍼
 // ======================================================
+
+/** 'yyyy-mm-dd'(시트명 유래) → Date. 없으면 null. */
+function toDateOrNull(iso: string | null): Date | null {
+  return iso ? new Date(`${iso}T00:00:00Z`) : null
+}
 
 /** 매칭에 쓸 마스터(품종·SKU) 로드 — 순수 매처에 주입. */
 async function loadMatcherMasters(): Promise<{
@@ -188,11 +193,13 @@ async function applyAllocations(
 // ======================================================
 
 export type UploadConflict = { vendor: string; recipient: string }
+export type SkippedSheet = { sheetName: string; reason: string }
 export type UploadResult =
   | {
       success: true
       uploadId: number
       summary: { orderCount: number; itemCount: number; matched: number; failed: number }
+      skipped: SkippedSheet[] // 미인식 시트 경고(오타 방지 — 통일양식 작성안내 5번)
     }
   | { success: false; duplicate: true; conflicts: UploadConflict[]; message: string }
   | { success: false; error: string }
@@ -210,10 +217,20 @@ export async function uploadPurchaseOrder(
     const buffer = Buffer.from(await file.arrayBuffer())
     const parsed = parsePurchaseOrder(buffer, file.name)
     const incomingOrders = parsed.sheets.flatMap((s) =>
-      s.orders.map((o) => ({ ...o, channel: s.channel })),
+      s.orders.map((o) => ({ ...o, channel: s.channel, orderDate: s.orderDate })),
     )
     if (incomingOrders.length === 0) {
-      return { success: false, error: '발주 데이터가 없습니다(빈 발주서).' }
+      const hint = parsed.skipped.length > 0
+        ? ` 인식하지 못한 시트: ${parsed.skipped.map((s) => s.sheetName).join(', ')}`
+        : ''
+      return { success: false, error: `발주 데이터가 없습니다(빈 발주서).${hint}` }
+    }
+    // 파일 1개 = 채널 1개(#26). 섞이면 묶음의 채널이 모호해지므로 거부한다.
+    if (parsed.channel === null) {
+      return {
+        success: false,
+        error: `한 파일에 채널이 섞여 있습니다(${parsed.channels.join(', ')}). 채널별로 파일을 나눠 올려주세요.`,
+      }
     }
 
     // 중복 감지(#16): 같은 파일명으로 적재된 (발주처+수령인) 겹침 → 경고(강제진행 가능)
@@ -226,7 +243,11 @@ export async function uploadPurchaseOrder(
         prior.map((o) => orderDuplicateKey(o.orderDate, o.vendor, o.recipient)),
       )
       const dups = detectDuplicateOrders(
-        incomingOrders.map((o) => ({ vendor: o.vendor, recipient: o.recipient })),
+        incomingOrders.map((o) => ({
+          orderDate: o.orderDate,
+          vendor: o.vendor,
+          recipient: o.recipient,
+        })),
         existingKeys,
       )
       if (dups.length > 0) {
@@ -245,6 +266,7 @@ export async function uploadPurchaseOrder(
       const upload = await tx.purchaseOrderUpload.create({
         data: {
           fileName: file.name,
+          orderDate: toDateOrNull(parsed.orderDate),
           uploadedById: session.user?.id,
           uploadedName: session.user?.name ?? undefined,
         },
@@ -257,6 +279,7 @@ export async function uploadPurchaseOrder(
           data: {
             uploadId: upload.id,
             channel: o.channel,
+            orderDate: toDateOrNull(o.orderDate),
             vendor: o.vendor,
             recipient: o.recipient,
             status: 'PENDING',
@@ -307,6 +330,7 @@ export async function uploadPurchaseOrder(
         matched: result.matched,
         failed: result.itemCount - result.matched,
       },
+      skipped: parsed.skipped,
     }
   } catch (error) {
     console.error('[uploadPurchaseOrder] failed:', error)
@@ -368,7 +392,7 @@ export async function listPurchaseUploads(): Promise<
 
 export type OrderRow = {
   id: number
-  channel: 'DELIVERY' | 'EMART'
+  channel: PurchaseChannel
   vendor: string
   recipient: string
   status: 'PENDING' | 'PARTIAL' | 'COMPLETED'
@@ -421,7 +445,7 @@ export type DetailLine = {
 
 export type OrderDetail = {
   id: number
-  channel: 'DELIVERY' | 'EMART'
+  channel: PurchaseChannel
   vendor: string
   recipient: string
   status: 'PENDING' | 'PARTIAL' | 'COMPLETED'

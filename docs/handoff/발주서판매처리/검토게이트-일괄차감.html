@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>검토 게이트 — 컴팩트 v2 (확정안)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#2563eb'}}}}};</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.win{width:1440px;height:900px;background:#f8fafc;border-radius:16px;box-shadow:0 30px 80px rgba(15,23,42,.28);overflow:hidden;display:flex;border:1px solid #e2e8f0;position:relative}
+.phone{width:390px;height:844px;background:#fff;border-radius:44px;box-shadow:0 30px 80px rgba(15,23,42,.28);overflow:hidden;position:relative;border:1px solid #e2e8f0;display:flex;flex-direction:column}
+.frame-label{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.frame-label .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.nav{width:100%;display:flex;align-items:center;gap:12px;padding:8px 12px;font-size:13.5px;font-weight:500;border-radius:9px;color:#475569}
+.nav.on{background:#eff6ff;color:#2563eb;font-weight:600}
+/* 컴팩트 행: 26px */
+.r{display:grid;grid-template-columns:86px 1fr 78px 14px;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:11.5px;border-top:1px solid #f5f7fa;cursor:pointer}
+.r:hover{background:#f8fafc}
+.r .who{font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r .what{color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r .num{text-align:right;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px}
+.r .ch{color:#cbd5e1;font-size:11px;text-align:right}
+.gh{display:flex;align-items:center;gap:7px;height:28px;padding:0 12px;font-size:11px;font-weight:700}
+.mr{display:grid;grid-template-columns:1fr 62px;align-items:center;gap:8px;min-height:34px;padding:5px 12px;font-size:11.5px;border-top:1px solid #f5f7fa}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:36px;width:1440px">
+  <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">검토 게이트 — 컴팩트 v2 <span style="font-size:12px;font-weight:700;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:middle">확정안</span></h1>
+  <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.65;max-width:1280px">
+    v1과 같은 기능, 절반 높이. <b>성격이 다른 수치를 같은 카드 4개로 늘어놓던 구조를 3단 위계로 교체</b>했습니다 —
+    ① <b>차감 예정(kg)</b>은 이 행위의 결과값이므로 단독 최상위, ② <b>정상 89 / 부분 4 / 제외 3</b>은 96라인을 나눈 비율이므로 카드가 아니라 <b>스택 바 하나</b>,
+    ③ 그중 <b>제외(매칭실패)만 유일한 차단 사유</b>라서 해소 버튼이 붙은 배너로 격상, <b>부분 차감</b>은 진행은 되되 덜 채워지는 것이라 부족 수량만 나열.
+    <a href="_이전시안/검토게이트-일괄차감-v1넓은버전.html">v1(넓은 버전)과 비교 →</a>
+  </p>
+</div>
+
+<!-- ═════ 데스크탑 컴팩트 ═════ -->
+<div style="position:absolute;left:40px;top:190px">
+  <div class="frame-label"><span class="pill">데스크탑 v2</span> 검토 게이트 · 컴팩트 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">760px 모달 · 이슈 7건이 스크롤 없이 들어감</span></div>
+  <div class="win">
+    <aside class="w-60 bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <div class="px-5 py-5 flex items-center"><img src="assets/logo-full.png" alt="MILL LOG" class="h-9 w-auto object-contain" /></div>
+      <div class="px-3 flex-1">
+        <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
+        <div class="space-y-0.5">
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="flex-1">홈</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span class="flex-1">원물재고</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg><span class="flex-1">도정관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85M7 16.5v5M7 16.5l4.74-2.85M17 16.5l5-3M17 16.5 12 13.5M17 16.5v5"/><path d="M12 13.5 17 10.5 12 7.5 7 10.5Z"/></svg><span class="flex-1">제품재고</span></div>
+          <div class="nav on"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="flex-1">판매관리</span></div>
+        </div>
+      </div>
+    </aside>
+    <div class="flex-1 min-w-0 flex flex-col">
+      <div class="h-14 bg-white border-b border-slate-200 flex items-center px-6 shrink-0">
+        <div class="flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span class="text-[15px] font-bold text-slate-900">판매관리</span><span class="text-[13px] text-slate-300">/</span><span class="text-[13px] font-medium text-slate-600">제품판매</span></div>
+      </div>
+      <div class="flex-1 px-7 pt-6"><div class="h-7 w-64 rounded bg-slate-200/70 mb-4"></div><div class="bg-white rounded-xl border border-slate-200 h-80 opacity-50"></div></div>
+    </div>
+
+    <div class="absolute inset-0 bg-slate-900/45"></div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="w-[760px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- 헤더: 한 줄 -->
+        <div class="px-5 h-12 flex items-center gap-2 border-b border-slate-100">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="text-[14px] font-extrabold text-slate-900">차감 전 검토</span>
+          <span class="text-[11.5px] text-slate-400">택배_260619.xlsx · 38개 수령처</span>
+          <span class="ml-auto text-[10.5px] text-slate-400">업로드 <b class="text-slate-600 font-semibold">이수민</b> → 확정 <b class="text-primary font-semibold">김도정</b></span>
+          <button class="w-7 h-7 -mr-1 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+
+        <!-- ① 결과값 + ② 구성 바 -->
+        <div class="px-5 pt-4 pb-3.5 flex items-end gap-7">
+          <div class="shrink-0">
+            <div class="text-[10.5px] font-semibold text-slate-400 leading-none">차감 예정</div>
+            <div class="text-[30px] font-extrabold text-slate-900 mono leading-none mt-1.5 tracking-[-.02em]">1,320.5<span class="text-[14px] font-bold text-slate-400 ml-1">kg</span></div>
+            <div class="text-[10.5px] text-slate-400 mt-1.5">포장 1,046개 · 로트 9개</div>
+          </div>
+          <div class="flex-1 min-w-0 pb-1">
+            <div class="flex items-baseline gap-1.5 mb-1.5">
+              <span class="text-[10.5px] font-semibold text-slate-400">96라인 구성</span>
+              <span class="text-[10.5px] text-slate-300">— 제외 3라인은 이번 차감에 포함되지 않습니다</span>
+            </div>
+            <div class="flex h-[9px] rounded-full overflow-hidden gap-px bg-slate-100">
+              <div style="width:92.7%;background:#34d399"></div>
+              <div style="width:4.2%;background:#fbbf24"></div>
+              <div style="width:3.1%;background:#fb7185"></div>
+            </div>
+            <div class="flex items-center gap-4 mt-2">
+              <span class="flex items-center gap-1.5 text-[11.5px]"><span class="w-2 h-2 rounded-sm bg-emerald-400"></span><b class="mono text-slate-800">89</b><span class="text-slate-500">정상 · 전량</span></span>
+              <span class="flex items-center gap-1.5 text-[11.5px]"><span class="w-2 h-2 rounded-sm bg-amber-400"></span><b class="mono text-amber-700">4</b><span class="text-slate-500">부분 · 재고부족</span></span>
+              <span class="flex items-center gap-1.5 text-[11.5px]"><span class="w-2 h-2 rounded-sm bg-rose-400"></span><b class="mono text-rose-600">3</b><span class="text-slate-500">제외 · 매칭실패</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ 차단 배너 -->
+        <div class="mx-5 rounded-lg border border-rose-200 bg-rose-50/70 px-3.5 py-2.5 flex items-center gap-2.5">
+          <svg width="15" height="15" class="shrink-0" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <div class="min-w-0 text-[11.5px] text-rose-900 leading-snug"><b>3라인은 SKU가 매칭되지 않아 차감할 수 없습니다.</b> 지금 지정하지 않으면 이 묶음은 완료 상태가 되지 않습니다.</div>
+          <button class="ml-auto shrink-0 h-7 px-2.5 rounded-md bg-rose-600 text-white text-[11.5px] font-semibold">SKU 지정하러 가기</button>
+        </div>
+
+        <!-- 이슈 목록 -->
+        <div class="mt-3 mx-5 rounded-lg border border-slate-200 overflow-hidden">
+          <div class="gh bg-rose-50/60 text-rose-700"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>제외 · 매칭실패<span class="font-semibold text-rose-400">3</span><span class="ml-auto font-medium text-slate-400">행을 누르면 매트릭스 해당 셀로 이동</span></div>
+          <div class="r" style="border-top-color:#fecdd3"><span class="who">박순애</span><span class="what">유기농 귀리 1kg · 일치하는 SKU 없음</span><span class="num text-slate-500">7개</span><span class="ch">›</span></div>
+          <div class="r"><span class="who">이정훈</span><span class="what">유기농 찰흑미 2kg · 규격 2kg 미등록</span><span class="num text-slate-500">3개</span><span class="ch">›</span></div>
+          <div class="r"><span class="who">최민경</span><span class="what">혼합 잡곡 세트 · 품목명 해석 불가</span><span class="num text-slate-500">2개</span><span class="ch">›</span></div>
+          <div class="gh bg-amber-50/60 text-amber-700 border-t border-amber-100"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 차감 · 재고부족<span class="font-semibold text-amber-400">4</span><span class="ml-auto font-medium text-slate-400">가능한 만큼 차감하고 부분 상태로 남습니다 · 합 7개 부족</span></div>
+          <div class="r" style="border-top-color:#fde68a"><span class="who">강혜진</span><span class="what">유기농 찹쌀 5kg · 주문 6 / 가용 4</span><span class="num text-amber-700 font-semibold">2개 부족</span><span class="ch">›</span></div>
+          <div class="r"><span class="who">윤재호</span><span class="what">유기농 팥 500g · 주문 5 / 가용 3</span><span class="num text-amber-700 font-semibold">2개 부족</span><span class="ch">›</span></div>
+          <div class="r"><span class="who">서지원</span><span class="what">유기농 차조 1kg · 주문 4 / 가용 2</span><span class="num text-amber-700 font-semibold">2개 부족</span><span class="ch">›</span></div>
+          <div class="r"><span class="who">한동석</span><span class="what">유기농 흑미 1kg · 주문 9 / 가용 8</span><span class="num text-amber-700 font-semibold">1개 부족</span><span class="ch">›</span></div>
+          <div class="gh bg-slate-50 border-t border-slate-100 text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>정상 89라인은 확인할 것이 없습니다<span class="ml-auto font-medium text-primary cursor-pointer">펼쳐 보기</span></div>
+        </div>
+
+        <!-- 확정 -->
+        <div class="mt-3.5 px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="w-4 h-4 rounded border-[1.5px] border-primary bg-primary flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <span class="text-[11.5px] text-slate-600">확인했습니다 — 되돌리려면 <b class="text-slate-800">라인마다 개별 취소</b>해야 합니다.</span>
+          </label>
+          <div class="ml-auto flex items-center gap-2">
+            <button class="h-8 px-3 rounded-md border border-slate-300 bg-white text-[12.5px] font-medium text-slate-600">돌아가 수정</button>
+            <button class="h-8 px-3.5 rounded-md bg-primary text-white text-[12.5px] font-semibold flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>93라인 차감 확정</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ 모바일 컴팩트 ═════ -->
+<div style="position:absolute;left:1560px;top:190px">
+  <div class="frame-label"><span class="pill">모바일 v2</span> 검토 게이트 · 컴팩트 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">스크롤 없이 한 화면</span></div>
+  <div class="phone">
+    <div class="h-12 flex items-center justify-between px-6 pt-1.5 shrink-0"><span class="text-[13px] font-semibold text-slate-900">9:41</span><div class="flex items-center gap-1"><svg width="16" height="11" viewBox="0 0 16 11" fill="#0f172a"><rect x="0" y="7" width="3" height="4" rx=".5"/><rect x="4.5" y="5" width="3" height="6" rx=".5"/><rect x="9" y="2.5" width="3" height="8.5" rx=".5"/><rect x="13.5" y="0" width="2.5" height="11" rx=".5"/></svg><svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x=".5" y=".5" width="20" height="10" rx="2.5" stroke="#0f172a" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="7" rx="1.5" fill="#0f172a"/><path d="M22 4v3a2 2 0 0 0 0-3z" fill="#0f172a" fill-opacity=".4"/></svg></div></div>
+    <div class="px-4 pb-2 flex items-center gap-2 border-b border-slate-100 shrink-0">
+      <button class="w-8 h-8 -ml-1 rounded-lg flex items-center justify-center text-slate-500"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="min-w-0"><div class="text-[14.5px] font-extrabold text-slate-900 leading-tight">차감 전 검토</div><div class="text-[10.5px] text-slate-400">택배_260619 · 38개 수령처 · 96라인</div></div>
+    </div>
+
+    <div class="flex-1 min-h-0 overflow-y-auto px-4 pt-3.5">
+      <!-- ① 결과값 -->
+      <div class="text-[10.5px] font-semibold text-slate-400">차감 예정</div>
+      <div class="text-[32px] font-extrabold text-slate-900 mono leading-none mt-1 tracking-[-.02em]">1,320.5<span class="text-[15px] font-bold text-slate-400 ml-1">kg</span></div>
+      <div class="text-[10.5px] text-slate-400 mt-1">포장 1,046개 · 로트 9개</div>
+
+      <!-- ② 구성 바 -->
+      <div class="mt-3.5 flex h-[9px] rounded-full overflow-hidden gap-px bg-slate-100">
+        <div style="width:92.7%;background:#34d399"></div><div style="width:4.2%;background:#fbbf24"></div><div style="width:3.1%;background:#fb7185"></div>
+      </div>
+      <div class="mt-2 flex items-center justify-between text-[11px]">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-emerald-400"></span><b class="mono text-slate-800">89</b><span class="text-slate-500">정상</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-amber-400"></span><b class="mono text-amber-700">4</b><span class="text-slate-500">부분</span></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-rose-400"></span><b class="mono text-rose-600">3</b><span class="text-slate-500">제외</span></span>
+      </div>
+
+      <!-- ③ 차단 배너 -->
+      <div class="mt-3.5 rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5">
+        <div class="text-[11.5px] text-rose-900 leading-snug"><b>3라인은 매칭실패로 차감 불가</b> — 지정 전엔 묶음이 완료되지 않습니다.</div>
+        <button class="mt-2 w-full h-9 rounded-lg bg-rose-600 text-white text-[12.5px] font-bold">SKU 지정하러 가기</button>
+      </div>
+
+      <!-- 목록 -->
+      <div class="mt-3 rounded-xl border border-slate-200 overflow-hidden">
+        <div class="gh bg-rose-50/60 text-rose-700"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>제외<span class="font-semibold text-rose-400">3</span></div>
+        <div class="mr" style="border-top-color:#fecdd3"><div class="min-w-0"><b class="text-slate-800">박순애</b> <span class="text-slate-500">귀리 1kg · SKU 없음</span></div><span class="mono text-[11px] text-right text-slate-500">7개</span></div>
+        <div class="mr"><div class="min-w-0"><b class="text-slate-800">이정훈</b> <span class="text-slate-500">찰흑미 2kg · 규격 미등록</span></div><span class="mono text-[11px] text-right text-slate-500">3개</span></div>
+        <div class="mr"><div class="min-w-0"><b class="text-slate-800">최민경</b> <span class="text-slate-500">잡곡 세트 · 해석 불가</span></div><span class="mono text-[11px] text-right text-slate-500">2개</span></div>
+        <div class="gh bg-amber-50/60 text-amber-700 border-t border-amber-100"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 차감<span class="font-semibold text-amber-400">4</span><span class="ml-auto font-medium text-slate-400">합 7개 부족</span></div>
+        <div class="mr" style="border-top-color:#fde68a"><div class="min-w-0"><b class="text-slate-800">강혜진</b> <span class="text-slate-500">찹쌀 5kg · 6 / 4</span></div><span class="text-[11px] text-right font-bold text-amber-700">2 부족</span></div>
+        <div class="mr"><div class="min-w-0"><b class="text-slate-800">윤재호</b> <span class="text-slate-500">팥 500g · 5 / 3</span></div><span class="text-[11px] text-right font-bold text-amber-700">2 부족</span></div>
+        <div class="mr"><div class="min-w-0"><b class="text-slate-800">서지원</b> <span class="text-slate-500">차조 1kg · 4 / 2</span></div><span class="text-[11px] text-right font-bold text-amber-700">2 부족</span></div>
+        <div class="mr"><div class="min-w-0"><b class="text-slate-800">한동석</b> <span class="text-slate-500">흑미 1kg · 9 / 8</span></div><span class="text-[11px] text-right font-bold text-amber-700">1 부족</span></div>
+      </div>
+      <div class="mt-2.5 px-1 text-[10.5px] text-slate-400 leading-relaxed">업로드 <b class="text-slate-600">이수민</b> 06.19 09:12 → 확정 <b class="text-primary">김도정</b></div>
+      <div class="h-3"></div>
+    </div>
+
+    <div class="shrink-0 px-4 pt-2.5 pb-6 bg-white border-t border-slate-200">
+      <label class="flex items-center gap-2 mb-2">
+        <span class="w-4 h-4 rounded border-[1.5px] border-primary bg-primary flex items-center justify-center shrink-0"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+        <span class="text-[11px] text-slate-600">확인했습니다 — 취소는 라인 단위만 가능</span>
+      </label>
+      <div class="flex gap-2">
+        <button class="h-11 px-4 rounded-xl border border-slate-300 bg-white text-[13px] font-medium text-slate-600 shrink-0">수정</button>
+        <button class="flex-1 h-11 rounded-xl bg-primary text-white text-[13.5px] font-bold flex items-center justify-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>93라인 차감 확정</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════ 비교 노트 ═════ -->
+<div style="position:absolute;left:2040px;top:190px;width:500px">
+  <div class="frame-label"><span class="pill">비교</span> v1 → v2 무엇이 달라졌나</div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f8fafc"><th style="text-align:left;padding:9px 13px;font-size:10.5px;font-weight:800;color:#64748b;width:104px">항목</th><th style="text-align:left;padding:9px 13px;font-size:10.5px;font-weight:800;color:#64748b">v1 → v2</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">수치 위계</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">동일한 카드 4개(차감예정·불가·부분·정상) → <b>결과값 1개 + 구성 바 1개</b>. kg은 행위의 결과, 나머지 셋은 96라인을 나눈 비율이라 성격이 다릅니다.</td></tr>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">차단 vs 열화</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">둘 다 섹션 헤더로 동급 취급 → <b>매칭실패만 배너로 격상</b>(해소 버튼 포함). 재고부족은 막지 않고 부분으로 진행되므로 목록에만 둡니다.</td></tr>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">정상 라인</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">카드에 89를 크게 표시 → <b>바의 초록 구간 + 접힌 한 줄</b>. 확인할 것이 없는 항목에 시선을 쓰지 않게.</td></tr>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">밀도</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">전체 페이지(높이 900 전부) → <b>760×547 모달</b>. 행 높이 36→26px, 이슈 7건이 스크롤 없이 들어갑니다.</td></tr>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">인수인계</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">우측 2줄 블록 → 헤더 우측 <b>「이수민 → 김도정」</b> 한 줄.</td></tr>
+        <tr><td style="padding:9px 13px;font-weight:700;color:#0f172a;border-top:1px solid #f1f5f9;vertical-align:top">유지</td><td style="padding:9px 13px;color:#475569;border-top:1px solid #f1f5f9;line-height:1.55">필수 게이트, 행 탭 → 매트릭스 이동, 라인 단위 롤백 경고, 확정 버튼의 <b>93라인</b>(96−제외 3) 표기.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 19px;margin-top:14px">
+    <div style="font-size:12.5px;font-weight:800;color:#0f172a">이슈가 없을 때</div>
+    <p style="font-size:11.5px;color:#475569;line-height:1.6;margin-top:5px">배너와 목록이 사라지고 결과값 + 초록 100% 바 + 확정 버튼만 남습니다. v1처럼 별도 프레임을 두지 않고 <b>같은 모달이 축약</b>되는 구조라 화면이 하나로 유지됩니다.</p>
+  </div>
+</div>
+
+</body>
+</html>

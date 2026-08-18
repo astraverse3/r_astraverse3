@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>로트 배분 시트 — 출력 포맷 (필드 확정판)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#2563eb'}}}}};</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.frame-label{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.frame-label .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.sheet{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 18px 46px rgba(15,23,42,.13);overflow:hidden}
+.xl{border-collapse:collapse;table-layout:fixed;width:100%}
+.xl th,.xl td{border:1px solid #e2e8f0;height:26px;padding:0 7px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xl thead th{background:#f1f5f9;color:#475569;font-weight:700;font-size:11px;text-align:center}
+.xl td.n{text-align:right}
+.xl td.c{text-align:center}
+.rowhead{background:#f8fafc}
+.grp td{background:#eff6ff;font-weight:700;color:#1d4ed8;font-size:11.5px}
+.grpP td{background:#f5f3ff;font-weight:700;color:#6d28d9;font-size:11.5px}
+.tot td{background:#f8fafc;font-weight:700;color:#0f172a}
+.colref{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.colref th,.colref td{border-bottom:1px solid #f1f5f9;padding:7px 12px;font-size:12px;text-align:left;vertical-align:top}
+.colref thead th{background:#f8fafc;font-size:10.5px;font-weight:700;color:#64748b;letter-spacing:.02em}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px}
+.src{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;color:#7c3aed;background:#f5f3ff;padding:0 4px;border-radius:3px}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:36px;width:1400px">
+  <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">로트 배분 시트 — 출력 포맷 <span style="font-size:12px;font-weight:700;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:middle">필드 확정 (스키마 확인 완료)</span></h1>
+  <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.65;max-width:1300px">
+    엑셀 내보내기 모달의 <b>「로트 배분 시트 추가」</b> 옵션 산출물. 차감 확정 시 남는 <span class="src">PackageMovement</span>(로트별 출고 기록)를 펼친 것으로,
+    <b>주문 1라인이 로트 2개로 나뉘면 2행</b>이 됩니다. <b>A안(수령처 기준)</b>은 증빙·클레임 추적용, <b>B안(로트 기준)</b>은 창고 피킹용 — <b>두 시트 모두 포함</b>을 권장합니다.
+    보류했던 4개 필드는 실제 스키마로 확정했습니다(우측 참조). 가장 중요한 변경: <b>외부매입 잡곡은 로트번호가 존재하지 않습니다.</b>
+  </p>
+</div>
+
+<!-- A안 -->
+<div style="position:absolute;left:40px;top:190px;width:1400px">
+  <div class="frame-label"><span class="pill">A안 · 권장 기본</span> 수령처 기준 플랫 시트 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">시트명 「로트배분」 · 발주서 시트와 같은 행 순서</span></div>
+  <div class="sheet">
+    <div class="px-4 py-3 border-b border-slate-100 flex items-baseline gap-2">
+      <span class="text-[13px] font-bold text-slate-900">발주서(서울급식) 6-4</span>
+      <span class="text-[11.5px] text-slate-500">26/06/16 · 발주처 서울급식 · 수령처 2 · <span id="hdA"></span></span>
+      <span class="ml-auto text-[11px] text-slate-400 mono">발주서_서울급식_260616.xlsx · 시트 2/6</span>
+    </div>
+    <div class="p-4">
+      <table class="xl">
+        <colgroup><col style="width:32px"><col style="width:76px"><col style="width:112px"><col style="width:64px"><col style="width:52px"><col style="width:50px"><col style="width:50px"><col style="width:72px"><col style="width:158px"><col style="width:60px"><col style="width:74px"><col style="width:54px"><col style="width:92px"><col style="width:58px"><col></colgroup>
+        <thead><tr>
+          <th>No</th><th>수령처</th><th>품목</th><th>생산자</th><th>규격</th><th>주문<br>(개)</th><th>배분<br>(개)</th><th>배분<br>(kg)</th><th>로트번호</th><th>입고일</th><th>도정/매입일</th><th>상태</th><th>차감일시</th><th>처리자</th><th>비고</th>
+        </tr></thead>
+        <tbody id="tbA"></tbody>
+      </table>
+      <p class="text-[10.5px] text-slate-400 mt-2.5 leading-relaxed">· 로트번호가 없는 행은 <b class="text-violet-700">외부매입 잡곡</b>(<span class="src">source=PURCHASED</span> → <span class="src">lotNo</span>는 항상 null). 매입처·매입일로 식별합니다.<br />· 대기·실패 라인은 배분 0으로 회색 표기해 <b>왜 빠지지 않았는지</b>를 같은 시트에서 설명합니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- B안 -->
+<div style="position:absolute;left:40px;top:930px;width:1400px">
+  <div class="frame-label"><span class="pill">B안</span> 로트 기준 그룹 시트 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">시트명 「로트별출고」 · 창고 피킹 순서(오래된 입고분부터)</span></div>
+  <div class="sheet">
+    <div class="px-4 py-3 border-b border-slate-100 flex items-baseline gap-2">
+      <span class="text-[13px] font-bold text-slate-900">로트별 출고 요약</span>
+      <span class="text-[11.5px] text-slate-500"><span id="hdB"></span> · FIFO(입고일 오름차순)</span>
+      <span class="ml-auto text-[11px] text-slate-400 mono">A안과 동일 데이터 · 정렬만 다름</span>
+    </div>
+    <div class="p-4">
+      <table class="xl">
+        <colgroup><col style="width:158px"><col style="width:60px"><col style="width:112px"><col style="width:96px"><col style="width:120px"><col style="width:54px"><col style="width:60px"><col style="width:62px"><col style="width:72px"><col style="width:74px"><col></colgroup>
+        <thead><tr>
+          <th>로트번호</th><th>입고일</th><th>품목</th><th>생산자 / 매입처</th><th>수령처</th><th>규격</th><th>출고<br>(개)</th><th>출고<br>(kg)</th><th>로트 잔량<br>(kg)</th><th>차감일시</th><th>피킹 확인</th>
+        </tr></thead>
+        <tbody id="tbB"></tbody>
+      </table>
+      <p class="text-[10.5px] text-slate-400 mt-2.5 leading-relaxed">· <b class="text-slate-600">보관위치 열 삭제</b> — 스키마에 위치 필드가 없습니다. 대신 인쇄 시 수기 체크용 <b>「피킹 확인」</b> 빈 칸을 마지막 열로 둡니다.<br />· 매입 잡곡 그룹(연보라)은 로트번호가 없어 <b>매입처 + 매입일 + 품목</b>이 그룹 키입니다. · 로트 잔량은 <b>차감 직후 스냅샷</b>(출력 시점 아님).</p>
+    </div>
+  </div>
+</div>
+
+<!-- 컬럼 정의 -->
+<div style="position:absolute;left:1490px;top:190px;width:560px">
+  <div class="frame-label"><span class="pill">핸드오프</span> 컬럼 정의 · 실제 필드 매핑</div>
+  <div class="colref">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr><th style="width:104px">컬럼</th><th>값 / 출처 필드</th></tr></thead>
+      <tbody id="tbC"></tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+    <div class="text-[12px] font-bold text-emerald-900 mb-2">보류 4건 → 스키마 확인 후 확정</div>
+    <ol class="text-[11.5px] text-emerald-900/90 leading-relaxed list-decimal pl-4 space-y-2">
+      <li><b>미차감·실패 라인 포함 → 포함(기본 켜짐).</b> 데이터는 이미 있고, 발주처에 "왜 이건 안 나갔나"를 설명하는 것이 시트의 주 용도라 회색 행으로 함께 출력합니다.</li>
+      <li><b>도정일 → 있음. 단 「도정/매입일」로 통합.</b> 도정품은 <span class="src">MillingBatch.date</span>, 외부매입 잡곡은 batch가 없어 <span class="src">MillingOutputPackage.incomingDate</span>(매입일).</li>
+      <li><b>보관위치 → 열 삭제.</b> 스키마에 위치·창고 필드가 없습니다(<span class="src">Stock.bagNo</span>는 벼 원물 톤백 번호로 제품 포장 단위와 다릅니다). 대신 인쇄용 「피킹 확인」 빈 칸.</li>
+      <li><b>로트번호 → 전체 노출.</b> 화면(팝오버)은 좁아 뒤 4자리만 쓰지만, 시트는 증빙용이므로 <span class="src">lotNo</span> 전체. <b>매입품은 null이므로</b> 「매입 · {매입처}」로 대체 표기합니다.</li>
+    </ol>
+  </div>
+
+  <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+    <div class="text-[12px] font-bold text-amber-900 mb-1.5">개발 주의</div>
+    <ul class="text-[11.5px] text-amber-900/90 leading-relaxed list-disc pl-4 space-y-1.5">
+      <li><span class="src">lotNo</span>는 <b>nullable + 매입품은 항상 null</b>. 로트번호를 그룹 키나 정렬 키로 그냥 쓰면 매입 잡곡이 한 덩어리로 뭉칩니다 — 그룹 키는 <b>packageId</b>로, 표시만 로트번호/매입처로 하세요.</li>
+      <li>입고일도 출처가 갈립니다 — 도정품은 <span class="src">Stock.incomingDate</span>(원물 입고일), 매입품은 <span class="src">incomingDate</span>(매입일). FIFO 정렬은 <b>실제 배분에 쓰는 기준과 동일한 키</b>를 쓰세요.</li>
+      <li>처리자는 <span class="src">createdName</span> 스냅샷(relation 없음) — 사용자명이 나중에 바뀌어도 시트는 당시 이름을 보여줍니다. 의도된 동작.</li>
+      <li>금액·단가 필드는 스키마에 없습니다(수량 차감만). 시트에 단가·매출 열을 넣을 수 없습니다.</li>
+    </ul>
+  </div>
+
+  <div class="mt-3 rounded-xl border border-slate-200 bg-white p-4">
+    <div class="text-[12px] font-bold text-slate-800 mb-1.5">인쇄 시</div>
+    <p class="text-[11.5px] text-slate-600 leading-relaxed">B안은 그대로 <b>공장 피킹 리스트</b>가 됩니다 — 그룹 헤더 반복 + 「피킹 확인」 칸이 이미 있어 A4 세로 1~2장. 필요하면 별도 인쇄 시안으로 뽑겠습니다.</p>
+  </div>
+</div>
+
+<script>
+const S={d:{t:'완료',bg:'#ecfdf5',fg:'#047857'},p:{t:'부분',bg:'#fffbeb',fg:'#b45309'},w:{t:'대기',bg:'#f8fafc',fg:'#94a3b8'},e:{t:'실패',bg:'#fef2f6',fg:'#be123c'}};
+// [수령처, 품목, 생산자/매입처, 규격, kg, 주문, 배분, 로트, 입고일, 도정/매입일, 상태, 시각, 비고, 매입여부]
+const A=[
+['은평구','유기농 새청무','신승철','1kg',1,19,19,'250608-11-0042-5521','06.08','06.10','d','06.16 14:22','',0],
+['은평구','유기농 새청무','신승철','5kg',5,5,5,'250608-11-0042-5521','06.08','06.10','d','06.16 14:22','',0],
+['은평구','유기농 새청무','신승철','10kg',10,112,60,'250608-11-0042-5521','06.08','06.10','d','06.16 14:22','로트 소진',0],
+['은평구','유기농 새청무','신승철','10kg',10,'',52,'250615-11-0051-9034','06.15','06.16','d','06.16 14:22','이월 배분',0],
+['은평구','유기농 찹쌀','임정옥','1kg',1,60,60,'250602-24-0033-3180','06.02','06.05','d','06.16 14:22','',0],
+['은평구','유기농 찹쌀','임정옥','5kg',5,4,4,'250602-24-0033-3180','06.02','06.05','d','06.16 14:22','',0],
+['은평구','유기농 흑미','오점기','1kg',1,4,4,'250521-31-0018-7742','05.21','05.24','d','06.16 14:22','',0],
+['은평구','유기농 차조','임정옥','1kg',1,3,3,'250521-31-0018-7742','05.21','05.24','d','06.16 14:22','',0],
+['은평구','유기농 수수','한들영농','1kg',1,5,5,'매입 · 한들영농','06.10','06.10','d','06.16 14:22','외부매입 · 로트번호 없음',1],
+['은평구','유기농 팥','한들영농','500g',0.5,9,9,'매입 · 한들영농','06.10','06.10','d','06.16 14:22','외부매입 · 로트번호 없음',1],
+['서대문구','유기농 새청무','신승철','1kg',1,1,1,'250615-11-0051-9034','06.15','06.16','d','06.16 14:31','',0],
+['서대문구','유기농 새청무','신승철','5kg',5,5,5,'250615-11-0051-9034','06.15','06.16','d','06.16 14:31','',0],
+['서대문구','유기농 새청무','신승철','10kg',10,68,68,'250615-11-0051-9034','06.15','06.16','d','06.16 14:31','',0],
+['서대문구','유기농 현미','박오주','1kg',1,9,7,'250528-11-0021-4067','05.28','05.30','p','06.16 14:31','재고부족 2 미차감',0],
+['서대문구','유기농 찹쌀','임정옥','1kg',1,18,18,'250602-24-0033-3180','06.02','06.05','d','06.16 14:31','',0],
+['서대문구','유기농 흑미','오점기','1kg',1,4,4,'250521-31-0018-7742','05.21','05.24','d','06.16 14:31','',0],
+['은평구','유기농 발아현미','박오주','1kg',1,4,0,'—','—','—','w','—','미차감',0],
+['서대문구','유기농 귀리','—','1kg',1,7,0,'—','—','—','e','—','SKU 매칭실패',0],
+];
+let tA='',no=0,tk=0,tp=0,nConf=0;
+A.forEach(r=>{
+  const[w,it,pr,sp,kg,ord,alloc,lot,inb,mill,st,at,memo,buy]=r;const s=S[st];
+  const cont=ord==='';if(!cont)no++;const akg=alloc*kg;tk+=akg;tp+=alloc;
+  if(st==='d'||st==='p')nConf++;
+  const off=st==='w'||st==='e';
+  tA+=`<tr style="${off?'color:#94a3b8;':''}">
+   <td class="c mono" style="color:#cbd5e1">${cont?'':no}</td>
+   <td class="rowhead" style="font-weight:600">${cont?'<span style="color:#cbd5e1">〃</span>':w}</td>
+   <td>${it}</td><td style="color:${buy?'#7c3aed':'#64748b'}">${pr}</td><td class="c mono">${sp}</td>
+   <td class="n mono">${cont?'':ord}</td>
+   <td class="n mono" style="font-weight:700">${alloc||0}</td>
+   <td class="n mono" style="color:#475569">${akg?akg.toLocaleString():'0'}</td>
+   <td class="mono" style="font-size:10.5px;${off?'color:#cbd5e1':(buy?'color:#7c3aed;background:#faf9ff':'color:#334155')}">${lot}</td>
+   <td class="c mono" style="color:#64748b">${inb}</td><td class="c mono" style="color:#94a3b8">${mill}</td>
+   <td class="c"><span class="tag" style="background:${s.bg};color:${s.fg}">${s.t}</span></td>
+   <td class="c mono" style="color:#64748b;font-size:10.5px">${at}</td>
+   <td class="c" style="color:#64748b">${off?'—':'김도정'}</td>
+   <td style="color:#94a3b8;font-size:10.5px">${memo}</td></tr>`;
+});
+document.getElementById('hdA').textContent=`차감 라인 ${nConf} · 배분 행 ${A.length}`;
+tA+=`<tr class="tot"><td colspan="6" class="c">합계 · 배분 행 ${A.length}</td><td class="n mono">${tp}</td><td class="n mono">${tk.toLocaleString()}</td><td colspan="7" style="font-weight:500;color:#94a3b8;font-size:10.5px">대기·실패 라인은 배분 0으로 포함</td></tr>`;
+document.getElementById('tbA').innerHTML=tA;
+
+// B안: 로트/매입 단위 그룹 (그룹 키 = packageId, 표시만 로트번호/매입처)
+const B=[
+ {lot:'250521-31-0018-7742',inb:'05.21',it:'유기농 흑미 / 차조',pr:'오점기·임정옥',rest:118,rows:[['은평구','1kg',4,4,'06.16 14:22'],['은평구','1kg',3,3,'06.16 14:22'],['서대문구','1kg',4,4,'06.16 14:31']]},
+ {lot:'250528-11-0021-4067',inb:'05.28',it:'유기농 현미',pr:'박오주',rest:0,rows:[['서대문구','1kg',7,7,'06.16 14:31']],warn:'로트 소진 · 잔여 주문 2개 대기'},
+ {lot:'250602-24-0033-3180',inb:'06.02',it:'유기농 찹쌀',pr:'임정옥',rest:42,rows:[['은평구','1kg',60,60,'06.16 14:22'],['은평구','5kg',4,20,'06.16 14:22'],['서대문구','1kg',18,18,'06.16 14:31']]},
+ {lot:'250608-11-0042-5521',inb:'06.08',it:'유기농 새청무',pr:'신승철',rest:0,rows:[['은평구','1kg',19,19,'06.16 14:22'],['은평구','5kg',5,25,'06.16 14:22'],['은평구','10kg',60,600,'06.16 14:22']],warn:'로트 소진'},
+ {lot:'매입 · 한들영농',inb:'06.10',it:'유기농 수수 / 팥',pr:'한들영농 (매입)',rest:31,buy:1,rows:[['은평구','1kg',5,5,'06.16 14:22'],['은평구','500g',9,4.5,'06.16 14:22']]},
+ {lot:'250615-11-0051-9034',inb:'06.15',it:'유기농 새청무',pr:'신승철',rest:184,rows:[['은평구','10kg',52,520,'06.16 14:22'],['서대문구','1kg',1,1,'06.16 14:31'],['서대문구','5kg',5,25,'06.16 14:31'],['서대문구','10kg',68,680,'06.16 14:31']]},
+];
+let tB='';
+B.forEach(g=>{
+  const sum=g.rows.reduce((t,r)=>t+r[3],0);
+  tB+=`<tr class="${g.buy?'grpP':'grp'}"><td class="mono" style="font-size:11px">${g.lot}</td><td class="c mono">${g.inb}</td><td>${g.it}</td><td style="font-weight:500">${g.pr}</td>
+   <td colspan="2" style="font-weight:500;opacity:.6">수령처 ${g.rows.length}건</td>
+   <td class="c" style="opacity:.35">·</td>
+   <td class="n mono">${sum.toLocaleString()}</td>
+   <td class="n mono" style="color:${g.rest?'inherit':'#be123c'}">${g.rest?g.rest.toLocaleString():'0'}</td>
+   <td colspan="2" style="font-weight:500;color:${g.warn?'#b45309':'inherit'};opacity:${g.warn?1:.45};font-size:10.5px">${g.warn||''}</td></tr>`;
+  g.rows.forEach(r=>{
+    tB+=`<tr><td colspan="4" style="background:#fbfdff"></td>
+     <td style="padding-left:16px">${r[0]}</td><td class="c mono">${r[1]}</td>
+     <td class="n mono" style="font-weight:600">${r[2]}</td><td class="n mono" style="color:#475569">${r[3].toLocaleString()}</td>
+     <td class="c" style="color:#cbd5e1">·</td><td class="c mono" style="color:#64748b;font-size:10.5px">${r[4]}</td><td style="background:#fcfdfe"></td></tr>`;
+  });
+});
+document.getElementById('tbB').innerHTML=tB;
+const bKg=B.reduce((t,g)=>t+g.rows.reduce((s,r)=>s+r[3],0),0);
+document.getElementById('hdB').textContent=`그룹 ${B.length}개(로트 ${B.filter(g=>!g.buy).length} + 매입 ${B.filter(g=>g.buy).length}) · 총 출고 ${bKg.toLocaleString()}kg`;
+
+const C=[
+['No','수령처 기준 일련번호. 로트 분할 2행째는 공란(〃)'],
+['수령처','발주서 원본의 받는사람·지점명 <span class="src">PurchaseOrder.recipient</span>(수령인). 발주처는 <span class="src">vendor</span> — 택배·기업별은 받는사람 칸이 빈칸이면 파서가 vendor를 복사하므로 <b>둘이 다를 때만</b> 「vendor → recipient」 표기'],
+['품목 · 생산자','매칭된 SKU <span class="src">ProductType → Variety</span>, 실패 라인은 원본 <span class="src">PurchaseOrderItem.rawItemName</span> / 생산자 <span class="src">Stock.farmer</span>, 매입품은 <span class="src">purchaseVendor</span>'],
+['규격','매칭 성공 시 <span class="src">MillingOutputPackage.packageType</span>, 실패 라인은 파싱 원본 <span class="src">PurchaseOrderItem.packageType</span>'],
+['주문(개)','<span class="src">PurchaseOrderItem.orderedQty</span>. 로트 분할 시 첫 행에만'],
+['배분(개) / (kg)','<span class="src">PackageMovement.count</span> · kg = count × <span class="src">weightPerUnit</span>'],
+['로트번호','<span class="src">MillingOutputPackage.lotNo</span> 전체 표기. <b>매입품은 null</b> → 「매입 · 매입처」'],
+['입고일','도정품 <span class="src">Stock.incomingDate</span> / 매입품 <span class="src">incomingDate</span>'],
+['도정/매입일','도정품 <span class="src">MillingBatch.date</span> / 매입품은 매입일 동일 값'],
+['상태','완료 · 부분(재고부족) · 대기(미차감) · 실패(매칭실패) — 라인 차감량 vs <span class="src">orderedQty</span> 파생, 건 상태는 <span class="src">PurchaseOrder.status</span>로 집계'],
+['차감일시','<span class="src">PackageMovement.occurredAt</span> (MM.dd HH:mm)'],
+['처리자','<span class="src">createdName</span> 스냅샷'],
+['비고','로트 소진 / 재고부족 n개 미차감 / 외부매입 등 시스템 생성 문구'],
+];
+document.getElementById('tbC').innerHTML=C.map(([k,v])=>`<tr><td style="font-weight:700;color:#0f172a">${k}</td><td style="color:#475569;line-height:1.6">${v}</td></tr>`).join('');
+</script>
+</body>
+</html>

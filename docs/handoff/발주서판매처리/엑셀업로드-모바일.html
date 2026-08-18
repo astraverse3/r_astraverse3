@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>엑셀 업로드 — 모바일</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#2563eb' } } } } };</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html, body { font-family: 'Pretendard Variable', -apple-system, system-ui, sans-serif; }
+.mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+.screen { width:390px; height:800px; background:#f8fafc; border-radius:30px; box-shadow:0 24px 60px rgba(15,23,42,.22); overflow:hidden; display:flex; flex-direction:column; border:1px solid #e2e8f0; position:relative; }
+.frame-label { font-size:13px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.frame-label .pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:99px; background:#fff; border:1px solid #cbd5e1; color:#475569; }
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute; left:40px; top:36px; width:920px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">엑셀 업로드 — 모바일 <span style="font-size:13px; font-weight:600; color:#2563eb; vertical-align:2px;">(전달사항 입력)</span></h1>
+  <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:880px;">
+    묶음 목록 「엑셀 업로드」 → 바텀시트. 데스크탑 모달과 동일 구조: 파일 1개 = 묶음 1건, <b>채널·날짜는 시트명에서 자동 인식</b>,
+    파싱 요약 확인 후 <b>전달사항</b>(보관 요청·여유 물량 등 예외 메모)을 남기면 작업 화면 상단 배너로 표시.
+  </p>
+</div>
+
+<!-- ════════ ① 파일 선택 ════════ -->
+<div style="position:absolute; left:40px; top:140px;">
+  <div class="frame-label"><span class="pill">1</span> 파일 선택</div>
+  <div class="screen">
+    <div class="flex-1 bg-slate-50"></div>
+    <div class="absolute inset-0 bg-slate-900/45"></div>
+    <div class="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl">
+      <div class="flex justify-center pt-2.5 pb-1"><span class="w-9 h-1 rounded-full bg-slate-200"></span></div>
+      <div class="px-5 pt-1.5 pb-3 border-b border-slate-100 flex items-start gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg></div>
+        <div class="min-w-0">
+          <div class="text-[15px] font-bold text-slate-900">엑셀 업로드</div>
+          <div class="text-[11.5px] text-slate-500 mt-0.5">발주서 파일 1개 = 묶음 1건 · 채널·날짜 자동 인식</div>
+        </div>
+      </div>
+      <div class="px-4 py-4">
+        <button class="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 py-8 flex flex-col items-center gap-2.5">
+          <span class="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+          <span class="text-[13.5px] font-bold text-slate-800">발주서 파일 선택</span>
+          <span class="text-[11px] text-slate-400">.xlsx · 시트명 예: 이마트_260619</span>
+        </button>
+      </div>
+      <div class="px-4 pb-6 pt-1"><button class="w-full h-12 rounded-xl bg-slate-100 text-[14px] font-semibold text-slate-600">닫기</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ② 요약 + 전달사항 ════════ -->
+<div style="position:absolute; left:490px; top:140px;">
+  <div class="frame-label"><span class="pill">2</span> 파싱 요약 · 전달사항 입력</div>
+  <div class="screen">
+    <div class="flex-1 bg-slate-50"></div>
+    <div class="absolute inset-0 bg-slate-900/45"></div>
+    <div class="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl flex flex-col" style="max-height:88%;">
+      <div class="flex justify-center pt-2.5 pb-1 shrink-0"><span class="w-9 h-1 rounded-full bg-slate-200"></span></div>
+      <div class="px-5 pt-1 pb-3 border-b border-slate-100 shrink-0 flex items-start gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg></div>
+        <div class="min-w-0">
+          <div class="text-[15px] font-bold text-slate-900">엑셀 업로드</div>
+          <div class="text-[11.5px] text-slate-500 mt-0.5">파싱 결과를 확인하고 등록하세요</div>
+        </div>
+      </div>
+      <div class="min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+        <div class="rounded-xl border border-slate-200 overflow-hidden">
+          <div class="flex items-center gap-3 px-3.5 py-3 bg-slate-50 border-b border-slate-200">
+            <div class="w-8 h-9 rounded bg-[#1d6f42] text-white text-[9px] font-bold flex items-center justify-center shrink-0">XLS</div>
+            <div class="flex-1 min-w-0"><div class="text-[13px] font-bold text-slate-900 mono truncate">이마트_260619.xlsx</div><div class="text-[11px] text-slate-400">142 KB · 방금 선택</div></div>
+            <button class="h-8 px-2.5 rounded-md border border-slate-200 text-slate-500 text-[11.5px] font-semibold">다시 선택</button>
+          </div>
+          <div class="px-3.5 py-3.5 grid grid-cols-2 gap-x-4 gap-y-2.5">
+            <div class="flex items-center justify-between"><span class="text-[11.5px] text-slate-400">채널</span><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-[11px] font-bold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"></path><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"></path><path d="M3 9h18"></path></svg>이마트</span></div>
+            <div class="flex items-center justify-between"><span class="text-[11.5px] text-slate-400">날짜</span><span class="text-[12.5px] font-bold text-slate-800 mono">26/06/19 (금)</span></div>
+            <div class="flex items-center justify-between"><span class="text-[11.5px] text-slate-400">수령처</span><span class="text-[12.5px] font-bold text-slate-800 mono">3</span></div>
+            <div class="flex items-center justify-between"><span class="text-[11.5px] text-slate-400">라인</span><span class="text-[12.5px] font-bold text-slate-800 mono">9</span></div>
+            <div class="flex items-center justify-between col-span-2"><span class="text-[11.5px] text-slate-400">매칭 실패</span><span class="inline-flex items-center gap-1 text-[11.5px] font-bold text-emerald-600"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>0</span></div>
+          </div>
+        </div>
+        <div>
+          <label class="text-[13px] font-bold text-slate-800">전달사항 <span class="font-medium text-slate-400">(선택)</span></label>
+          <p class="text-[11.5px] text-slate-500 mt-0.5 mb-2 leading-relaxed">보관 요청·여유 물량 등 예외 메모 — 작업 화면 상단 배너로 표시돼요.</p>
+          <div class="rounded-xl border border-slate-200 focus-within:border-blue-300 overflow-hidden">
+            <textarea rows="3" class="w-full px-3.5 py-3 text-[13px] text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none" placeholder="예) 해남고 백미 50포는 창고 보관분에서 출고 (신규 발주 아님)"></textarea>
+            <div class="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-t border-slate-100">
+              <span class="text-[10.5px] text-slate-400">⋮ 메뉴 「비고 수정」으로 나중에 고칠 수 있어요</span>
+              <span class="text-[10.5px] text-slate-400 mono">0 / 200</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="px-4 pb-6 pt-3 border-t border-slate-100 shrink-0 flex items-center gap-2">
+        <button class="h-12 px-5 rounded-xl bg-slate-100 text-[14px] font-semibold text-slate-600">취소</button>
+        <button class="flex-1 h-12 rounded-xl bg-primary text-white text-[14px] font-semibold flex items-center justify-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>업로드 등록</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>
