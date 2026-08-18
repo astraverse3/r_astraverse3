@@ -1,5 +1,21 @@
 # 작업일지
 
+## 2026-08-18
+
+### 도정관리 엑셀 다운로드 필터 버그 수정 + 수율 필터 구현 `fix` `refactor` `feat`
+
+**배경**: 도정관리 목록에서 품종 5개를 골라 엑셀을 받으면 빈 파일이 나옴(전체 다운은 정상).
+
+1. **멀티값 필터 버그** `501cd63` — [app/actions/milling-excel.ts](<app/actions/milling-excel.ts>): MultiSelect(품종·도정구분·생산자명)를 여러 개 고르면 URL에 콤마 조인 문자열로 들어오는데, 엑셀 export만 split 없이 통째로 `contains` 비교 → 0건 매칭 → 빈 파일. 목록 조회(`getMillingLogs`)와 동일하게 split 후 `{ in }`/OR 조건으로 처리. (전수조사 결과 재고·잡곡·제품·출고 등 다른 목록은 공유 헬퍼/재호출 구조라 동일 버그 없음)
+2. **`daa`→`data` 오타 정리** `3536028` — export 액션 3곳(milling·release·farmers)의 반환 필드가 오타(daa), 수신 버튼 3곳도 같은 오타로 받아 동작은 했으나 혼란 유발. 반환·수신 6곳 모두 `data`로 통일.
+3. **수율 필터 구현** `56a2dc5` — 수율 필터가 UI만 있고 로직이 통째로 미구현이라 화면 목록에서도 안 걸러졌고 엑셀에도 미반영. 수율은 outputs 합산 계산값이라 DB where로 못 걸러 post-query 필터로 구현. [lib/milling-yield.ts](<lib/milling-yield.ts>) 공유 헬퍼 `matchesYieldFilter` 신규(미마감 배치 제외, 경계 이하≤/이상≥) → `getMillingLogs`/`exportMillingLogs`가 동일 헬퍼 사용해 화면·엑셀 결과 통일. 부수 효과로 화면 목록 수율 필터도 처음으로 실제 동작.
+
+**검증**: `npx tsc --noEmit` 통과. 수율 헬퍼 로직 9케이스(미마감 제외·경계 70% 양쪽 포함·각 구간) 직접 실행 확인.
+
+**참고(범위 밖·미변경)**: 생산자 목록 export(`exportFarmers`)는 화면 필터를 무시하고 전체 출력 — 데이터가 적어 전체 백업 의도로 판단, 그대로 유지.
+
+---
+
 ## 2026-07-22
 
 ### 포장 기록 관리 다이얼로그 — 입력 편의성 3종 개선 `feat`
