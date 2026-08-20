@@ -216,8 +216,17 @@ export async function uploadPurchaseOrder(
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const parsed = parsePurchaseOrder(buffer, file.name)
+    // TODO(D1b): 시트 선택 2단계 업로드(#30·#31)로 교체한다.
+    // 현재는 파서가 추측한 채널·발주일을 그대로 쓰는 임시 경로다.
+    const unresolved = parsed.sheets.filter((s) => s.suggestedChannel === null)
     const incomingOrders = parsed.sheets.flatMap((s) =>
-      s.orders.map((o) => ({ ...o, channel: s.channel, orderDate: s.orderDate })),
+      s.suggestedChannel === null
+        ? []
+        : s.orders.map((o) => ({
+            ...o,
+            channel: s.suggestedChannel as PurchaseChannel,
+            orderDate: s.suggestedOrderDate,
+          })),
     )
     if (incomingOrders.length === 0) {
       const hint = parsed.skipped.length > 0
@@ -225,13 +234,18 @@ export async function uploadPurchaseOrder(
         : ''
       return { success: false, error: `발주 데이터가 없습니다(빈 발주서).${hint}` }
     }
-    // 파일 1개 = 채널 1개(#26). 섞이면 묶음의 채널이 모호해지므로 거부한다.
-    if (parsed.channel === null) {
+    if (unresolved.length > 0) {
       return {
         success: false,
-        error: `한 파일에 채널이 섞여 있습니다(${parsed.channels.join(', ')}). 채널별로 파일을 나눠 올려주세요.`,
+        error: `시트명에서 채널을 알 수 없습니다(${unresolved.map((s) => s.sheetName).join(', ')}). 시트명을 \`채널_YYMMDD\`로 맞춰주세요.`,
       }
     }
+    // 대표 발주일 = 가장 이른 시트 날짜(묶음 단위 발주일은 D1a 스키마에서 시트별로 갖는다)
+    const uploadOrderDate =
+      parsed.sheets
+        .map((s) => s.suggestedOrderDate)
+        .filter((d): d is string => d !== null)
+        .sort()[0] ?? null
 
     // 중복 감지(#16): 같은 파일명으로 적재된 (발주처+수령인) 겹침 → 경고(강제진행 가능)
     if (!opts?.force) {
@@ -266,7 +280,7 @@ export async function uploadPurchaseOrder(
       const upload = await tx.purchaseOrderUpload.create({
         data: {
           fileName: file.name,
-          orderDate: toDateOrNull(parsed.orderDate),
+          orderDate: toDateOrNull(uploadOrderDate),
           uploadedById: session.user?.id,
           uploadedName: session.user?.name ?? undefined,
         },
