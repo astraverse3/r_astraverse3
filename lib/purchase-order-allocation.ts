@@ -82,8 +82,21 @@ export function computeOrderStatus(
 }
 
 // ------------------------------------------------------
-// 재업로드 중복 감지 (#16) — 발주일+발주처+수령인 조합 키
+// 재업로드 중복 감지 (#16)
+//   현행 키(#16 개정) = 파일명+시트명+발주일 — 묶음 단위가 시트라서(#30) DB unique와 같은 키.
+//   구 키(발주일+발주처+수령인)는 아래 orderDuplicateKey로 남겨둔다. 같은 파일 안에서도
+//   시트가 다르면 같은 수령처가 정상적으로 겹치기 때문에 묶음 판정에는 쓰지 않는다.
 // ------------------------------------------------------
+
+/** 묶음(시트 1장)의 중복 비교 키. 발주일은 날짜(yyyy-mm-dd)까지만 비교. */
+export function bundleDuplicateKey(
+  fileName: string,
+  sheetName: string,
+  orderDate: Date | string | null | undefined,
+): string {
+  const d = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : ''
+  return `${fileName.trim()}|${sheetName.trim()}|${d}`
+}
 
 /** 한 발주 건(행)의 중복 비교 키. 발주일은 날짜(yyyy-mm-dd)까지만 비교. */
 export function orderDuplicateKey(

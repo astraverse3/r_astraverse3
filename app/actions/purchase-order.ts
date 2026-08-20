@@ -16,7 +16,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { validateExcelUpload } from '@/lib/file-validation'
-import { parsePurchaseOrder } from '@/lib/purchase-order-parser'
+import { parsePurchaseOrder, type ParsedSheet } from '@/lib/purchase-order-parser'
 import {
   matchPurchaseOrderItem,
   normalizeItemName,
@@ -27,8 +27,7 @@ import {
   suggestAllocation,
   computeLineStatus,
   computeOrderStatus,
-  orderDuplicateKey,
-  detectDuplicateOrders,
+  bundleDuplicateKey,
   type AvailablePackage,
   type Allocation,
   type LineStatus,
@@ -43,11 +42,10 @@ function toDateOrNull(iso: string | null): Date | null {
   return iso ? new Date(`${iso}T00:00:00Z`) : null
 }
 
+type MatcherMasters = { varieties: MatcherVariety[]; productTypes: MatcherProductType[] }
+
 /** 매칭에 쓸 마스터(품종·SKU) 로드 — 순수 매처에 주입. */
-async function loadMatcherMasters(): Promise<{
-  varieties: MatcherVariety[]
-  productTypes: MatcherProductType[]
-}> {
+async function loadMatcherMasters(): Promise<MatcherMasters> {
   const [vs, pts] = await Promise.all([
     prisma.variety.findMany({
       select: { id: true, name: true, category: true, aliases: true },
@@ -192,22 +190,108 @@ async function applyAllocations(
 // 업로드 + 적재 + 자동매칭 (#15·#16·#23)
 // ======================================================
 
-export type UploadConflict = { vendor: string; recipient: string }
+export type UploadConflict = { sheetName: string; orderDate: string | null }
 export type SkippedSheet = { sheetName: string; reason: string }
+/** 적재된 묶음 1건 = 시트 1장 (#30). */
+export type UploadedBundle = {
+  uploadId: number
+  sheetName: string
+  channel: PurchaseChannel
+  orderDate: string | null
+  orderCount: number
+  itemCount: number
+  matched: number
+}
 export type UploadResult =
   | {
       success: true
-      uploadId: number
-      summary: { orderCount: number; itemCount: number; matched: number; failed: number }
+      bundles: UploadedBundle[] // 시트 1장 = 묶음 1건(#30)
+      summary: {
+        bundleCount: number
+        orderCount: number
+        itemCount: number
+        matched: number
+        failed: number
+      }
       skipped: SkippedSheet[] // 미인식 시트 경고(오타 방지 — 통일양식 작성안내 5번)
+      warnings: string[] // 파서 경고(음수·소계 불일치·단위 누락 #28·#29·#33)
     }
   | { success: false; duplicate: true; conflicts: UploadConflict[]; message: string }
   | { success: false; error: string }
 
-export async function uploadPurchaseOrder(
-  formData: FormData,
-  opts?: { force?: boolean },
-): Promise<UploadResult> {
+/** 시트 1장 적재 — 묶음 + 건 + 라인. 트랜잭션 안에서만 호출한다. */
+async function insertSheetBundle(
+  tx: Prisma.TransactionClient,
+  args: {
+    fileName: string
+    sheet: ParsedSheet
+    channel: PurchaseChannel
+    orderDate: string | null
+    uploadedById?: string
+    uploadedName?: string
+    masters: MatcherMasters
+  },
+): Promise<UploadedBundle> {
+  const { fileName, sheet, channel, orderDate, masters } = args
+  const upload = await tx.purchaseOrderUpload.create({
+    data: {
+      fileName,
+      sheetName: sheet.sheetName,
+      channel,
+      orderDate: toDateOrNull(orderDate),
+      orderCount: sheet.orders.length,
+      uploadedById: args.uploadedById,
+      uploadedName: args.uploadedName,
+    },
+  })
+
+  let itemCount = 0
+  let matched = 0
+  for (const o of sheet.orders) {
+    const order = await tx.purchaseOrder.create({
+      data: {
+        uploadId: upload.id,
+        channel,
+        orderDate: toDateOrNull(orderDate),
+        vendor: o.vendor,
+        recipient: o.recipient,
+        status: 'PENDING',
+      },
+    })
+    for (const item of o.items) {
+      const m = matchPurchaseOrderItem(
+        { rawItemName: item.rawItemName, packageType: item.packageType, rawPackaging: item.rawPackaging },
+        masters.varieties,
+        masters.productTypes,
+      )
+      await tx.purchaseOrderItem.create({
+        data: {
+          orderId: order.id,
+          rawItemName: item.rawItemName,
+          packageType: item.packageType,
+          rawPackaging: item.rawPackaging,
+          orderedQty: item.orderedQty,
+          unitWeightKg: item.unitWeightKg, // 톤백류만 값이 있다(#34)
+          productTypeId: m.matched ? m.productTypeId : null,
+        },
+      })
+      itemCount++
+      if (m.matched) matched++
+    }
+  }
+
+  return {
+    uploadId: upload.id,
+    sheetName: sheet.sheetName,
+    channel,
+    orderDate,
+    orderCount: sheet.orders.length,
+    itemCount,
+    matched,
+  }
+}
+
+export async function uploadPurchaseOrder(formData: FormData): Promise<UploadResult> {
   const session = await requirePermission('OPERATION_MANAGE')
   try {
     const file = formData.get('file') as File | null
@@ -216,135 +300,91 @@ export async function uploadPurchaseOrder(
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const parsed = parsePurchaseOrder(buffer, file.name)
-    // TODO(D1b): 시트 선택 2단계 업로드(#30·#31)로 교체한다.
-    // 현재는 파서가 추측한 채널·발주일을 그대로 쓰는 임시 경로다.
-    const unresolved = parsed.sheets.filter((s) => s.suggestedChannel === null)
-    const incomingOrders = parsed.sheets.flatMap((s) =>
-      s.suggestedChannel === null
-        ? []
-        : s.orders.map((o) => ({
-            ...o,
-            channel: s.suggestedChannel as PurchaseChannel,
-            orderDate: s.suggestedOrderDate,
-          })),
-    )
-    if (incomingOrders.length === 0) {
-      const hint = parsed.skipped.length > 0
-        ? ` 인식하지 못한 시트: ${parsed.skipped.map((s) => s.sheetName).join(', ')}`
-        : ''
+    // TODO(D1b): 시트 선택 2단계 업로드(#31)로 교체한다.
+    // 현재는 파서가 추측한 채널·발주일을 사용자 확인 없이 그대로 쓰는 임시 경로다.
+    const usable = parsed.sheets.filter((s) => s.orders.length > 0)
+    if (usable.length === 0) {
+      const hint =
+        parsed.skipped.length > 0
+          ? ` 인식하지 못한 시트: ${parsed.skipped.map((s) => s.sheetName).join(', ')}`
+          : ''
       return { success: false, error: `발주 데이터가 없습니다(빈 발주서).${hint}` }
     }
+    const unresolved = usable.filter((s) => s.suggestedChannel === null)
     if (unresolved.length > 0) {
       return {
         success: false,
         error: `시트명에서 채널을 알 수 없습니다(${unresolved.map((s) => s.sheetName).join(', ')}). 시트명을 \`채널_YYMMDD\`로 맞춰주세요.`,
       }
     }
-    // 대표 발주일 = 가장 이른 시트 날짜(묶음 단위 발주일은 D1a 스키마에서 시트별로 갖는다)
-    const uploadOrderDate =
-      parsed.sheets
-        .map((s) => s.suggestedOrderDate)
-        .filter((d): d is string => d !== null)
-        .sort()[0] ?? null
 
-    // 중복 감지(#16): 같은 파일명으로 적재된 (발주처+수령인) 겹침 → 경고(강제진행 가능)
-    if (!opts?.force) {
-      const prior = await prisma.purchaseOrder.findMany({
-        where: { upload: { fileName: file.name } },
-        select: { orderDate: true, vendor: true, recipient: true },
-      })
-      const existingKeys = new Set(
-        prior.map((o) => orderDuplicateKey(o.orderDate, o.vendor, o.recipient)),
-      )
-      const dups = detectDuplicateOrders(
-        incomingOrders.map((o) => ({
-          orderDate: o.orderDate,
-          vendor: o.vendor,
-          recipient: o.recipient,
-        })),
-        existingKeys,
-      )
-      if (dups.length > 0) {
-        return {
-          success: false,
-          duplicate: true,
-          conflicts: dups.map((d) => ({ vendor: d.vendor, recipient: d.recipient })),
-          message: `같은 파일(${file.name})에서 이미 적재된 발주 ${dups.length}건이 있습니다. 그대로 진행하면 중복 적재됩니다.`,
-        }
+    // 중복 감지(#16 개정): 묶음 키 = 파일명+시트명+발주일. DB unique와 같은 키라 강제진행이 없다.
+    const prior = await prisma.purchaseOrderUpload.findMany({
+      where: { fileName: file.name },
+      select: { sheetName: true, orderDate: true },
+    })
+    const priorKeys = new Set(
+      prior.map((b) => bundleDuplicateKey(file.name, b.sheetName, b.orderDate)),
+    )
+    const dups = usable.filter((s) =>
+      priorKeys.has(bundleDuplicateKey(file.name, s.sheetName, s.suggestedOrderDate)),
+    )
+    if (dups.length > 0) {
+      return {
+        success: false,
+        duplicate: true,
+        conflicts: dups.map((s) => ({ sheetName: s.sheetName, orderDate: s.suggestedOrderDate })),
+        message: `이미 적재된 시트입니다(${dups.map((s) => s.sheetName).join(', ')}). 다시 올리려면 묶음 목록에서 기존 묶음을 삭제해 주세요.`,
       }
     }
 
     const masters = await loadMatcherMasters()
 
-    const result = await prisma.$transaction(async (tx) => {
-      const upload = await tx.purchaseOrderUpload.create({
-        data: {
-          fileName: file.name,
-          orderDate: toDateOrNull(uploadOrderDate),
-          uploadedById: session.user?.id,
-          uploadedName: session.user?.name ?? undefined,
-        },
-      })
-
-      let itemCount = 0
-      let matched = 0
-      for (const o of incomingOrders) {
-        const order = await tx.purchaseOrder.create({
-          data: {
-            uploadId: upload.id,
-            channel: o.channel,
-            orderDate: toDateOrNull(o.orderDate),
-            vendor: o.vendor,
-            recipient: o.recipient,
-            status: 'PENDING',
-          },
-        })
-        for (const item of o.items) {
-          const m = matchPurchaseOrderItem(
-            { rawItemName: item.rawItemName, packageType: item.packageType, rawPackaging: item.rawPackaging },
-            masters.varieties,
-            masters.productTypes,
-          )
-          await tx.purchaseOrderItem.create({
-            data: {
-              orderId: order.id,
-              rawItemName: item.rawItemName,
-              packageType: item.packageType,
-              rawPackaging: item.rawPackaging,
-              orderedQty: item.orderedQty,
-              productTypeId: m.matched ? m.productTypeId : null,
-            },
-          })
-          itemCount++
-          if (m.matched) matched++
-        }
+    const bundles = await prisma.$transaction(async (tx) => {
+      const created: UploadedBundle[] = []
+      for (const sheet of usable) {
+        created.push(
+          await insertSheetBundle(tx, {
+            fileName: file.name,
+            sheet,
+            channel: sheet.suggestedChannel as PurchaseChannel,
+            orderDate: sheet.suggestedOrderDate,
+            uploadedById: session.user?.id,
+            uploadedName: session.user?.name ?? undefined,
+            masters,
+          }),
+        )
       }
+      return created
+    })
 
-      await tx.purchaseOrderUpload.update({
-        where: { id: upload.id },
-        data: { orderCount: incomingOrders.length },
+    const summary = bundles.reduce(
+      (acc, b) => ({
+        bundleCount: acc.bundleCount + 1,
+        orderCount: acc.orderCount + b.orderCount,
+        itemCount: acc.itemCount + b.itemCount,
+        matched: acc.matched + b.matched,
+        failed: acc.failed + (b.itemCount - b.matched),
+      }),
+      { bundleCount: 0, orderCount: 0, itemCount: 0, matched: 0, failed: 0 },
+    )
+
+    for (const b of bundles) {
+      await recordAuditLog({
+        action: 'IMPORT',
+        entity: 'PurchaseOrderUpload',
+        entityId: b.uploadId,
+        description: `발주서 업로드: ${file.name} [${b.sheetName}] (${b.orderCount}건 / ${b.itemCount}라인, 매칭 ${b.matched})`,
       })
-      return { uploadId: upload.id, itemCount, matched }
-    })
-
-    await recordAuditLog({
-      action: 'IMPORT',
-      entity: 'PurchaseOrderUpload',
-      entityId: result.uploadId,
-      description: `발주서 업로드: ${file.name} (${incomingOrders.length}건 / ${result.itemCount}라인, 매칭 ${result.matched})`,
-    })
+    }
     revalidatePath('/sales')
 
     return {
       success: true,
-      uploadId: result.uploadId,
-      summary: {
-        orderCount: incomingOrders.length,
-        itemCount: result.itemCount,
-        matched: result.matched,
-        failed: result.itemCount - result.matched,
-      },
+      bundles,
+      summary,
       skipped: parsed.skipped,
+      warnings: usable.flatMap((s) => s.warnings.map((w) => `[${s.sheetName}] ${w}`)),
     }
   } catch (error) {
     console.error('[uploadPurchaseOrder] failed:', error)
@@ -359,7 +399,10 @@ export async function uploadPurchaseOrder(
 export type UploadSummaryRow = {
   id: number
   fileName: string
+  sheetName: string // 묶음 = 시트 1장(#30)
+  channel: PurchaseChannel // 묶음 단위 채널(G5 해소)
   orderDate: string | null
+  note: string | null // 묶음 비고
   orderCount: number
   uploadedName: string | null
   createdAt: string
@@ -389,7 +432,10 @@ export async function listPurchaseUploads(): Promise<
       return {
         id: u.id,
         fileName: u.fileName,
+        sheetName: u.sheetName,
+        channel: u.channel,
         orderDate: u.orderDate ? u.orderDate.toISOString().slice(0, 10) : null,
+        note: u.note,
         orderCount: u.orderCount,
         uploadedName: u.uploadedName,
         createdAt: u.createdAt.toISOString().slice(0, 10),

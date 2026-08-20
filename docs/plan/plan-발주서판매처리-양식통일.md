@@ -278,7 +278,7 @@ model ProductType {
 | 단계 | 내용 | 검증 |
 |---|---|---|
 | ~~**D0**~~ ✅ | 파서 — #27~#29 · #32(시아스 구조) · #33(규격 정규화) · #34(톤백 분리) · 시트 인식/채널 추측 분리 | **완료 2026-08-20** — `npm test` 39개 통과 · 새 템플릿 5시트 전부 인식 · 구 양식 실파일 20시트 전부 미인식. 보고서 `docs/report/report-발주서판매처리-D0파서재구성-2026-08-20.md` |
-| **D1a** | 스키마 `sheetName`·`channel`·`note`·`unitWeightKg`·**`ProductType.unitsPerBox`**(#35) + unique + 마이그레이션(Neon 실DB) | 백필 불필요(0건 확인). `unitsPerBox`는 nullable이라 기존 SKU 57건 영향 없음 |
+| ~~**D1a**~~ ✅ | 스키마 `sheetName`·`channel`·`note`·`unitWeightKg`·**`ProductType.unitsPerBox`**(#35) + unique + 마이그레이션(Neon 실DB) | **완료 2026-08-20** — 마이그레이션 `20260820000000_purchase_order_sheet_bundle` Neon 적용, 백필 불필요(0건 재확인), `npm test` 40개 통과. 보고서 `docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md` |
 | **D1b** | 액션 2단계(`previewPurchaseOrder` 신설 / `uploadPurchaseOrder` 개정) | 실파일로 다채널 2시트 선택 → 묶음 2건 |
 | **D1c** | 업로드 모달 + 묶음 목록 + **`/admin/product-types` 입수 입력칸**(#35) | 화면 업로드 → 묶음 목록 수치 일치 / 이마트 SKU 입수 입력 |
 | D2 | 매트릭스 + 셀 배분 — **톤백 수동 지정 팝오버 포함**(#34) | 시아스 톤백 차감 → `/packages` 확인 |

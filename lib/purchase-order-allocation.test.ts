@@ -4,6 +4,7 @@ import {
   suggestAllocation,
   computeLineStatus,
   computeOrderStatus,
+  bundleDuplicateKey,
   orderDuplicateKey,
   detectDuplicateOrders,
   type AvailablePackage,
@@ -103,6 +104,23 @@ test('computeOrderStatus: 라인 집계 파생', () => {
 // ------------------------------------------------------
 // 중복 감지
 // ------------------------------------------------------
+test('bundleDuplicateKey: 파일명+시트명+발주일(날짜까지)로 묶음을 식별', () => {
+  assert.equal(
+    bundleDuplicateKey('발주서.xlsx', '택배_260818', '2026-08-18T00:00:00Z'),
+    '발주서.xlsx|택배_260818|2026-08-18',
+  )
+  // 발주일을 못 뽑은 시트는 빈 문자열 — 같은 파일에서 시트명이 다르면 별개 묶음
+  assert.notEqual(
+    bundleDuplicateKey('발주서.xlsx', '택배_260818', null),
+    bundleDuplicateKey('발주서.xlsx', '이마트_260818', null),
+  )
+  // 같은 시트명이라도 파일이 다르면 별개 묶음
+  assert.notEqual(
+    bundleDuplicateKey('8월.xlsx', '택배_260818', '2026-08-18'),
+    bundleDuplicateKey('9월.xlsx', '택배_260818', '2026-08-18'),
+  )
+})
+
 test('orderDuplicateKey: 발주일 날짜까지만 비교', () => {
   assert.equal(
     orderDuplicateKey('2026-05-22T09:30:00Z', '하나로', '홍길동'),

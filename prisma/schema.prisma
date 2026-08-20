@@ -195,6 +195,7 @@ model ProductType {
   packagingId Int // NOT NULL ('매입포장' sentinel 허용)
   packaging   Packaging              @relation(fields: [packagingId], references: [id])
   isDefault   Boolean                @default(false) // (품종+도정+규격)당 기본 포장지 추천
+  unitsPerBox Int? // 박스 입수(개/박스) (#35). 미입력이면 박스 환산 칸 빈칸 + 경고
   active      Boolean                @default(true)
   packages    MillingOutputPackage[]
   orderItems  PurchaseOrderItem[] // 발주서 라인이 이 SKU로 매칭됨 (결정 #1·#23)
@@ -360,11 +361,14 @@ model AuditLog {
 //     PurchaseOrderUpload(묶음) → PurchaseOrder(건) → PurchaseOrderItem(라인) → PackageMovement(차감)
 // ------------------------------------------------------
 
-// 11.1 업로드 묶음 — 한 파일 업로드 = 1건. 중복감지(#16)·묶음목록·감사·일괄삭제 앵커
+// 11.1 업로드 묶음 — 시트 1장 = 묶음 1건 (#30). 중복감지(#16)·묶음목록·감사·일괄삭제 앵커
 model PurchaseOrderUpload {
   id           Int             @id @default(autoincrement())
   fileName     String // 원본 파일명 (중복감지 키의 일부)
-  orderDate    DateTime? // 발주서 대표 발주일 (없으면 업로드일)
+  sheetName    String // 시트명 '택배_260818' — 묶음 단위가 시트라서 키의 일부 (#30)
+  channel      PurchaseChannel // 묶음 단위 채널 (#30 — 업로드 때 사용자가 확정, #31)
+  orderDate    DateTime? // 시트별 발주일 (시트명·제목에서 추측 후 사용자 확정)
+  note         String? // 묶음 비고 — 묶음목록 ⋮ 메뉴에서 수정
   orderCount   Int             @default(0) // 적재된 PurchaseOrder 수 (요약·검증)
   uploadedById String? // 업로더 (User.id, relation 미설정 — 단순 저장)
   uploadedName String? // 업로더명 (탈퇴 대비)
@@ -372,7 +376,7 @@ model PurchaseOrderUpload {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  @@index([fileName, orderDate]) // 재업로드 중복 감지 조회(#16)
+  @@unique([fileName, sheetName, orderDate]) // 재업로드 중복 감지 (#16 개정 — 파일+시트+발주일)
 }
 
 // 11.2 주문 1건 = 발주처 + 수령인 = 엑셀 한 행 (결정 #11)
@@ -404,6 +408,7 @@ model PurchaseOrderItem {
   packageType  String // 규격(중량) '10kg' — 파싱에서 직접 추출
   rawPackaging String? // 포장지 원본('자연주의' 등). 빈칸이면 null → 기본 포장지 적용(#21)
   orderedQty   Int // 주문 수량(셀 값)
+  unitWeightKg Float? // 톤백류 요구 자루중량 kg (#34). 일반 규격은 null
 
   // --- 매칭 결과 ---
   productTypeId Int? // 매칭 성공 시 SKU 1:1. 실패=null(=매칭실패, 포장담당 수동, #18)

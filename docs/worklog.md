@@ -2,6 +2,26 @@
 
 ## 2026-08-20
 
+### 발주서 판매처리 D1a — 묶음=시트 스키마 + Neon 마이그레이션 `feat` `test` `docs`
+
+**배경**: D0 파서가 「시트 1장 = 묶음 1개」(#30)로 재구성됐는데 스키마는 아직 「파일 1개 = 묶음 1개」라, 파서 결과를 저장할 자리가 없었다.
+
+1. **스키마 4필드 + unique** — [prisma/schema.prisma](<prisma/schema.prisma>): `PurchaseOrderUpload.sheetName`·`.channel`(둘 다 NOT NULL)·`.note`, `PurchaseOrderItem.unitWeightKg`(#34 톤백), `ProductType.unitsPerBox`(#35 박스 입수). 중복 감지 키를 `@@index([fileName, orderDate])` → `@@unique([fileName, sheetName, orderDate])`로 교체(#16 개정).
+2. **마이그레이션** `20260820000000_purchase_order_sheet_bundle` — `prisma migrate diff` 생성 SQL + 주석. **Neon 실DB 적용 완료**. 적재 전 3테이블 0건 재확인해 백필 없이 NOT NULL 추가.
+3. **중복 감지 키 교체** — [lib/purchase-order-allocation.ts](<lib/purchase-order-allocation.ts>): `bundleDuplicateKey()` 신규. 구 `orderDuplicateKey`(발주처+수령인)는 **같은 파일 다른 시트에 같은 거래처가 정상적으로 겹쳐** 오탐이 나므로 묶음 판정에서 뺐다(함수·테스트는 유지).
+4. **액션 시트 단위화** — [app/actions/purchase-order.ts](<app/actions/purchase-order.ts>): `insertSheetBundle()` 헬퍼 신규, 인식된 시트마다 묶음 1건 적재(단일 트랜잭션). `UploadResult`가 `uploadId` 단수 → `bundles[]`+합산 `summary`+파서 `warnings`로. 라인에 `unitWeightKg` 저장 연결(D0에서 파서가 넘기기만 하고 버리던 값). `listPurchaseUploads()`에 `sheetName`·`channel`·`note` 추가(G5 해소). 화면 호출부가 0건이라 깨진 곳 없음.
+5. **묶음 중복 force 제거** — DB unique와 같은 키라 강제진행이 성립하지 않는다. 「기존 묶음 삭제 후 재업로드」 안내로 변경, `opts.force` 파라미터 삭제. 모달에서 삭제를 대행할지는 D1c에서 결정.
+
+**검증**: `npm test` **40 pass / 0 fail**(`bundleDuplicateKey` 케이스 추가), `npx tsc --noEmit` 통과, `npx eslint`(변경 3파일) 경고 없음.
+- 실DB에서 컬럼 5개·UNIQUE 인덱스 존재 확인, 구 인덱스 제거 확인.
+- unique 실동작 확인 — 같은 (파일명, 시트명, 발주일) 2건 insert 시 두 번째 차단. **일부러 롤백하는 트랜잭션**에서 돌려 실데이터 0건 유지.
+
+**⚠️ 남는 구멍**: `orderDate`가 null인 시트는 PostgreSQL NULL 특성상 **DB unique가 안 잡는다**(앱의 `bundleDuplicateKey`가 방어 중). D1b에서 발주일을 사용자가 확정하게 하면 닫힌다.
+
+**다음**: D1b — `previewPurchaseOrder` 신설 + `uploadPurchaseOrder`를 「선택 시트 + 확정 채널·발주일」 수신형으로 개정(#31). 🔴 **미결 = 재고 분할 차감**(D2 착수 전 결정). 상세: [docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md](<docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md>)
+
+---
+
 ### 발주서 판매처리 D0 재구성 — 통일양식 #27~#34 파서 대응 `e397f48` `feat` `test` `docs`
 
 **배경**: 8/19 양식 협의로 결정 #27~#34가 확정(계획서 [plan-발주서판매처리-양식통일.md](<docs/plan/plan-발주서판매처리-양식통일.md>))되면서, 8/18 D0에서 맞춘 파서를 재구성. 8/18 미결이던 「표준 양식 미확정」이 해소됐다.
