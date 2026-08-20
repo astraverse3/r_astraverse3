@@ -59,3 +59,9 @@ memory/
 
 # Claude Design 핸드오프 번들 (일회성 참고자료 — 구현 완료 후 삭제)
 /docs/handoff/잡곡재고관리/
+
+# PWA 빌드 산출물 (next-pwa 가 build 때 생성 — 배포 시 재생성되므로 추적하지 않음)
+/public/sw.js
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
