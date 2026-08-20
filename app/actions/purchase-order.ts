@@ -31,6 +31,13 @@ import { loadMatcherMasters } from '@/lib/purchase-order-masters'
 // 내부 헬퍼
 // ======================================================
 
+/** 업로드 일시 표시 문자열 'MM.DD HH:mm' (KST 고정 — 서버 타임존에 좌우되지 않게). */
+function formatUploadedAt(d: Date): string {
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${p(kst.getUTCMonth() + 1)}.${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`
+}
+
 /** 특정 SKU의 가용 패키지(FIFO 정렬 키 포함). available>0만. */
 async function loadAvailablePackages(
   tx: Prisma.TransactionClient,
@@ -155,9 +162,10 @@ export type UploadSummaryRow = {
   note: string | null // 묶음 비고
   orderCount: number
   uploadedName: string | null
-  createdAt: string
+  createdAt: string // 표시용 'MM.DD HH:mm' (KST). 서버에서 포맷해 hydration 불일치를 피한다
   statusCount: { pending: number; partial: number; completed: number }
   unmatched: number // 매칭실패 라인 수
+  deletable: boolean // 차감된 라인이 하나도 없어야 삭제 가능(#15)
 }
 
 export async function listPurchaseUploads(): Promise<
@@ -167,17 +175,26 @@ export async function listPurchaseUploads(): Promise<
     const uploads = await prisma.purchaseOrderUpload.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        orders: { select: { status: true, items: { select: { productTypeId: true } } } },
+        orders: {
+          select: {
+            status: true,
+            items: {
+              select: { productTypeId: true, _count: { select: { movements: true } } },
+            },
+          },
+        },
       },
     })
     const data: UploadSummaryRow[] = uploads.map((u) => {
       const statusCount = { pending: 0, partial: 0, completed: 0 }
       let unmatched = 0
+      let movements = 0
       for (const o of u.orders) {
         if (o.status === 'COMPLETED') statusCount.completed++
         else if (o.status === 'PARTIAL') statusCount.partial++
         else statusCount.pending++
         unmatched += o.items.filter((i) => i.productTypeId === null).length
+        movements += o.items.reduce((n, i) => n + i._count.movements, 0)
       }
       return {
         id: u.id,
@@ -188,9 +205,10 @@ export async function listPurchaseUploads(): Promise<
         note: u.note,
         orderCount: u.orderCount,
         uploadedName: u.uploadedName,
-        createdAt: u.createdAt.toISOString().slice(0, 10),
+        createdAt: formatUploadedAt(u.createdAt),
         statusCount,
         unmatched,
+        deletable: movements === 0,
       }
     })
     return { success: true, data }

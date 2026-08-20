@@ -28,6 +28,7 @@ export type ProductTypeEdit = {
     packageType: string
     packagingId: number
     isDefault: boolean
+    unitsPerBox: number | null
 }
 
 interface Props {
@@ -47,6 +48,10 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
     const [packageType, setPackageType] = useState(productType?.packageType ?? '')
     const [packagingId, setPackagingId] = useState<number | ''>(productType?.packagingId ?? '')
     const [isDefault, setIsDefault] = useState(productType?.isDefault ?? false)
+    // 박스 입수(#35) — 이마트 박스 환산표 생성용. 빈칸이면 null로 저장하고 환산 칸은 비운다
+    const [unitsPerBox, setUnitsPerBox] = useState(
+        productType?.unitsPerBox != null ? String(productType.unitsPerBox) : '',
+    )
 
     // 수정 시 비활성 포장지가 현재 SKU에 묶여 있으면 옵션에 포함되도록 유지
     const packagingOptions = packagings.filter(
@@ -70,12 +75,18 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
         setPackageType('')
         setPackagingId('')
         setIsDefault(false)
+        setUnitsPerBox('')
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (varietyId === '' || packagingId === '' || !packageType.trim()) {
             toast.error('품종·규격·포장지를 모두 입력해주세요.')
+            return
+        }
+        const boxes = unitsPerBox.trim()
+        if (boxes !== '' && (!/^\d+$/.test(boxes) || Number(boxes) < 1)) {
+            toast.error('박스 입수는 1 이상의 정수로 입력해주세요.')
             return
         }
         setLoading(true)
@@ -87,6 +98,7 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
             packageType: packageType.trim(),
             packagingId: Number(packagingId),
             isDefault,
+            unitsPerBox: boxes === '' ? null : Number(boxes),
         })
 
         if (result.success) {
@@ -187,6 +199,26 @@ export function ProductTypeDialog({ mode, varieties, packagings, productType }: 
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    {/* 3행: 박스 입수 (#35) — 이마트 박스 환산표 생성용 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="pt-units-per-box">
+                            박스 입수 <span className="font-normal text-slate-400">(선택)</span>
+                        </Label>
+                        <Input
+                            id="pt-units-per-box"
+                            type="number"
+                            min={1}
+                            step={1}
+                            inputMode="numeric"
+                            value={unitsPerBox}
+                            onChange={(e) => setUnitsPerBox(e.target.value)}
+                            placeholder="예: 16 (1박스에 들어가는 개수)"
+                        />
+                        <p className="text-[11.5px] text-slate-400 leading-relaxed">
+                            발주서 박스 환산표를 시스템이 계산할 때 씁니다. 비워두면 박스 칸이 빈칸으로 남아요.
+                        </p>
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer pt-1">

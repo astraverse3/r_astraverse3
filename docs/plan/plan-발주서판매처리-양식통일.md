@@ -281,7 +281,7 @@ model ProductType {
 | ~~**D0**~~ ✅ | 파서 — #27~#29 · #32(시아스 구조) · #33(규격 정규화) · #34(톤백 분리) · 시트 인식/채널 추측 분리 | **완료 2026-08-20** — `npm test` 39개 통과 · 새 템플릿 5시트 전부 인식 · 구 양식 실파일 20시트 전부 미인식. 보고서 `docs/report/report-발주서판매처리-D0파서재구성-2026-08-20.md` |
 | ~~**D1a**~~ ✅ | 스키마 `sheetName`·`channel`·`note`·`unitWeightKg`·**`ProductType.unitsPerBox`**(#35) + unique + 마이그레이션(Neon 실DB) | **완료 2026-08-20** — 마이그레이션 `20260820000000_purchase_order_sheet_bundle` Neon 적용, 백필 불필요(0건 재확인), `npm test` 40개 통과. 보고서 `docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md` |
 | ~~**D1b**~~ ✅ | 액션 2단계(`previewPurchaseOrder` 신설 / `uploadPurchaseOrder` 개정) + `updateUploadNote` | **완료 2026-08-20** — `npm test` 40개 통과 · tsc · eslint. ⚠️**실왕복 검증은 화면이 없어 D1c로 이월**(「다채널 2시트 선택 → 묶음 2건」). 보고서 `docs/report/report-발주서판매처리-D1b액션-2026-08-20.md` |
-| **D1c** | 업로드 모달 + 묶음 목록 + **`/admin/product-types` 입수 입력칸**(#35) | 화면 업로드 → 묶음 목록 수치 일치 / 이마트 SKU 입수 입력 |
+| **D1c** 🔵 | 업로드 모달 + 묶음 목록 + **`/admin/product-types` 입수 입력칸**(#35) | **구현 완료 2026-08-20**(시안 `엑셀업로드-2단계-데스크탑.html` 기준, tsc·eslint·`next build` 통과). **실왕복 검증은 사용자 브라우저 확인 대기** — 실파일 다채널 2시트 → 묶음 2건 |
 | D2 | 매트릭스 + 셀 배분 — **톤백 수동 지정 팝오버 포함**(#34) | 시아스 톤백 차감 → `/packages` 확인 |
 | D3~ | 기존 단계6 계획 그대로(검토게이트·모바일·엑셀). **D5 엑셀에 이마트 박스 환산표 재생성**(#35) | 이마트 내보내기 → 박스 수·합계가 손계산과 일치 |
 

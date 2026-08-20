@@ -28,6 +28,7 @@ type ProductTypeRow = {
     packageType: string
     packagingId: number
     isDefault: boolean
+    unitsPerBox: number | null
     active: boolean
     variety: { name: string; category: string; type: string }
     packaging: { name: string; active: boolean }
@@ -142,6 +143,7 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                         packageType: row.packageType,
                         packagingId: row.packagingId,
                         isDefault: row.isDefault,
+                        unitsPerBox: row.unitsPerBox,
                     }}
                 />
                 <button
@@ -284,7 +286,12 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                                                             className={`border-b border-slate-50 last:border-0 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
                                                         >
                                                             <td className="py-2 px-3 text-slate-700 font-medium whitespace-nowrap">{getDisplayMillingType(row.millingType, g.type)}</td>
-                                                            <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{row.packageType}</td>
+                                                            <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
+                                                                {row.packageType}
+                                                                {row.unitsPerBox != null && (
+                                                                    <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
+                                                                )}
+                                                            </td>
                                                             <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
                                                             <td className="py-2 px-2 text-center">
                                                                 {row.isDefault && (
@@ -332,7 +339,12 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                                             className={`border-b border-slate-50 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
                                         >
                                             <td className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</td>
-                                            <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packageType}</td>
+                                            <td className="py-2 px-2 text-slate-600 whitespace-nowrap">
+                                                {row.packageType}
+                                                {row.unitsPerBox != null && (
+                                                    <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
+                                                )}
+                                            </td>
                                             <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
                                             <td className="py-2 px-2 text-center">
                                                 {row.isDefault && (

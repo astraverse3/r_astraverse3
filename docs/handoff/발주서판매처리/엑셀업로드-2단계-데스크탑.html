@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>엑셀 업로드 2단계 — 데스크탑</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#2563eb'}}}}};</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.win{width:1440px;height:900px;background:#f8fafc;border-radius:16px;box-shadow:0 30px 80px rgba(15,23,42,.28);overflow:hidden;display:flex;border:1px solid #e2e8f0;position:relative}
+.scrollbody::-webkit-scrollbar{width:8px;height:8px}.scrollbody::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+.frame-label{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.frame-label .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.nav{width:100%;display:flex;align-items:center;gap:12px;padding:8px 12px;font-size:13.5px;font-weight:500;border-radius:9px;color:#475569}
+.nav.on{background:#eff6ff;color:#2563eb;font-weight:600}
+.ch{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.ut{display:grid;grid-template-columns:112px minmax(0,1fr) 60px 224px 88px 132px 40px;align-items:center}
+.ut>div{padding-left:8px;padding-right:8px}
+.st{display:grid;grid-template-columns:34px minmax(0,1fr) 132px 112px 74px minmax(0,196px);align-items:center}
+.st>div{padding-left:9px;padding-right:9px}
+.cb{width:15px;height:15px;border-radius:4px;border:1.5px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb.on{background:#2563eb;border-color:#2563eb}
+.cb.off{background:#f1f5f9;border-color:#e2e8f0}
+.sel{height:29px;display:flex;align-items:center;gap:5px;padding:0 7px 0 8px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-size:12px;font-weight:600;color:#334155}
+.sel.empty{border-color:#f59e0b;background:#fffbeb;color:#b45309;font-weight:500}
+.sel.dim{border-color:#e2e8f0;background:#f8fafc;color:#cbd5e1}
+.warn{display:inline-flex;align-items:center;gap:3px;padding:1.5px 6px;border-radius:5px;background:#fffbeb;color:#b45309;font-size:10.5px;font-weight:600;border:1px solid #fde68a}
+.txt{font-size:12.5px;color:#334155}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:36px;width:1500px">
+  <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">엑셀 업로드 — 2단계 시트 선택 <span style="font-size:13px;font-weight:600;color:#2563eb;vertical-align:2px">D1c 시안 갱신</span></h1>
+  <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.65;max-width:1420px">
+    결정 <b>#30·#31</b> 반영 — <b>묶음 = 시트</b>, 업로드는 2단계. 이전 시안의 「파싱 요약 1블록」을 <b>시트 표</b>로 교체했습니다.
+    시각 언어(파일 카드 → 요약 → 비고 → 푸터)와 배치는 유지. 대표 시나리오는 <b>한 파일 6시트 중 2개만 골라 등록</b>.
+    비고 상한은 액션에 맞춰 <b class="mono">500</b>자로 통일.
+  </p>
+</div>
+
+<!-- ═══════ 1단계 ═══════ -->
+<div style="position:absolute;left:40px;top:154px">
+  <div class="frame-label"><span class="pill">1단계</span> 파일 선택 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">previewPurchaseOrder 호출 전</span></div>
+  <div style="width:560px;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.22);border:1px solid #e2e8f0;overflow:hidden">
+    <div class="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start gap-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-[16px] font-bold text-slate-900">엑셀 업로드</div>
+        <div class="text-[12.5px] text-slate-500 mt-0.5">시트 1개 = 묶음 1건 · 파일을 올리면 시트 목록을 보여드립니다</div>
+      </div>
+      <button class="w-7 h-7 -mr-1 -mt-0.5 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center shrink-0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+    </div>
+    <div class="px-6 py-6">
+      <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center gap-3" style="height:196px">
+        <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-300"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6M9 15l3-3 3 3M12 12v6"></path></svg></div>
+        <div class="text-center">
+          <div class="text-[13.5px] font-bold text-slate-700">발주서 파일을 여기로 끌어다 놓으세요</div>
+          <div class="text-[11.5px] text-slate-400 mt-1">.xlsx · 여러 시트가 담긴 파일 그대로 올리면 됩니다</div>
+        </div>
+        <button class="h-8 px-3.5 rounded-md border border-slate-300 bg-white text-slate-700 text-[12.5px] font-semibold">파일 선택</button>
+      </div>
+      <p class="text-[11.5px] text-slate-400 mt-3 leading-relaxed">다음 단계에서 <b>어느 시트를 올릴지</b> 고르고, 시트별로 채널·발주일·비고를 확정합니다.</p>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex items-center gap-2">
+      <a href="업로드양식-헤더행-개선.html" class="text-[11.5px] font-semibold">양식 내려받기</a>
+      <button class="ml-auto h-9 px-4 rounded-md text-slate-600 text-[13px] font-semibold hover:bg-slate-100">취소</button>
+      <button class="h-9 px-5 rounded-md bg-slate-200 text-slate-400 text-[13px] font-semibold cursor-not-allowed">다음</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 2단계 ═══════ -->
+<div style="position:absolute;left:660px;top:154px">
+  <div class="frame-label"><span class="pill">2단계 · 핵심</span> 시트 선택 + 채널·발주일·비고 확정 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">6시트 중 2개 선택 → 묶음 2건</span></div>
+  <div style="width:880px;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.22);border:1px solid #e2e8f0;overflow:hidden">
+
+    <div class="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start gap-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-[16px] font-bold text-slate-900">올릴 시트 선택</div>
+        <div class="text-[12.5px] text-slate-500 mt-0.5">체크한 시트마다 묶음 1건이 생성됩니다</div>
+      </div>
+      <div class="flex items-center gap-1.5 mr-1 mt-0.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span><span class="w-5 h-1.5 rounded-full bg-primary"></span>
+      </div>
+      <button class="w-7 h-7 -mr-1 -mt-0.5 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center shrink-0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+    </div>
+
+    <div class="px-6 py-5 flex flex-col gap-4 scrollbody" style="max-height:720px;overflow-y:auto">
+
+      <!-- 파일 카드 -->
+      <div class="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+        <div class="w-8 h-9 rounded bg-[#1d6f42] text-white text-[9px] font-bold flex items-center justify-center shrink-0">XLS</div>
+        <div class="flex-1 min-w-0"><div class="text-[13px] font-bold text-slate-900 mono truncate">발주서_260818.xlsx</div><div class="text-[11px] text-slate-400">318 KB · 방금 선택 · 시트 6개 (인식 4 · 제외 2)</div></div>
+        <button class="h-7 px-2.5 rounded-md border border-slate-200 bg-white text-slate-500 text-[11.5px] font-semibold">다시 선택</button>
+      </div>
+
+      <!-- 시트 표 -->
+      <div class="rounded-xl border border-slate-200 overflow-hidden shrink-0">
+        <div class="st bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2">
+          <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+          <div>시트명</div><div>채널</div><div>발주일</div><div class="text-right">건 / 라인</div><div>확인 필요</div>
+        </div>
+
+        <!-- ① 정상 · 선택됨 -->
+        <div class="border-b border-slate-100 bg-blue-50/40">
+          <div class="st py-2.5">
+            <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+            <div class="text-[13px] font-bold text-slate-900 mono truncate">이마트_260818</div>
+            <div><span class="sel"><span class="ch bg-violet-50 text-violet-700 !px-1.5">이마트</span><svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+            <div class="text-[12.5px] font-semibold text-slate-800 mono">2026-08-18</div>
+            <div class="text-right text-[12.5px] mono text-slate-700">3 / 9</div>
+            <div><span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>이상 없음</span></div>
+          </div>
+          <div class="pl-[43px] pr-[9px] pb-3">
+            <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <textarea rows="2" class="w-full px-3 py-2 text-[12px] text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none" placeholder="비고 — 보관 요청·여유 물량·배차 등 사람이 알아둘 점 (작업 화면 상단 배너로 노출)"></textarea>
+              <div class="flex items-center justify-between px-3 py-1 bg-slate-50 border-t border-slate-100">
+                <span class="text-[10.5px] text-slate-400">이 묶음 작업 화면 상단에 그대로 표시</span><span class="text-[10.5px] text-slate-400 mono">0 / 500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② 경고 있음 · 선택됨 -->
+        <div class="border-b border-slate-100 bg-blue-50/40">
+          <div class="st py-2.5">
+            <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+            <div class="text-[13px] font-bold text-slate-900 mono truncate">택배_260818</div>
+            <div><span class="sel"><span class="ch bg-blue-50 text-blue-700 !px-1.5">택배</span><svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+            <div class="text-[12.5px] font-semibold text-slate-800 mono">2026-08-18</div>
+            <div class="text-right text-[12.5px] mono text-slate-700">12 / 31</div>
+            <div class="flex flex-wrap gap-1"><span class="warn">음수 수량 2줄 제외</span><span class="warn">소계 불일치</span></div>
+          </div>
+          <div class="pl-[43px] pr-[9px] pb-3">
+            <div class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <textarea rows="2" class="w-full px-3 py-2 text-[12px] text-slate-700 resize-none focus:outline-none">신정동 40포는 창고 보관분에서 출고 — 신규 발주 아님</textarea>
+              <div class="flex items-center justify-between px-3 py-1 bg-slate-50 border-t border-slate-100">
+                <span class="text-[10.5px] text-slate-400">이 묶음 작업 화면 상단에 그대로 표시</span><span class="text-[10.5px] text-slate-400 mono">36 / 500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ 채널 미확정 -->
+        <div class="st py-2.5 border-b border-slate-100">
+          <div class="flex justify-center"><div class="cb"></div></div>
+          <div class="text-[13px] font-bold text-slate-900 mono truncate">시아스_260818</div>
+          <div><span class="sel empty">채널 선택<svg class="ml-auto" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+          <div class="text-[12.5px] font-semibold text-slate-800 mono">2026-08-18</div>
+          <div class="text-right text-[12.5px] mono text-slate-700">1 / 4</div>
+          <div><span class="warn">시트명에서 채널을 못 찾음 — 직접 선택</span></div>
+        </div>
+
+        <!-- ④ 날짜 불일치 경고 -->
+        <div class="st py-2.5 border-b border-slate-100">
+          <div class="flex justify-center"><div class="cb"></div></div>
+          <div class="text-[13px] font-bold text-slate-900 mono truncate">해남급식_260817</div>
+          <div><span class="sel"><span class="ch bg-cyan-50 text-cyan-700 !px-1.5">해남급식</span><svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+          <div class="text-[12.5px] font-semibold text-slate-800 mono">2026-08-17</div>
+          <div class="text-right text-[12.5px] mono text-slate-700">2 / 7</div>
+          <div><span class="warn">시트명 260817 ↔ 제목 26/08/18</span></div>
+        </div>
+
+        <!-- ⑤ 이미 적재됨 -->
+        <div class="st py-2.5 border-b border-slate-100 bg-slate-50/70">
+          <div class="flex justify-center"><div class="cb off"></div></div>
+          <div class="text-[13px] font-semibold text-slate-400 mono truncate">서울급식_260817</div>
+          <div><span class="sel dim"><span class="ch bg-slate-100 text-slate-400 !px-1.5">서울급식</span></span></div>
+          <div class="text-[12.5px] font-medium text-slate-400 mono">2026-08-17</div>
+          <div class="text-right text-[12.5px] mono text-slate-400">3 / 11</div>
+          <div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 text-[10.5px] font-bold"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>이미 적재됨</span></div>
+        </div>
+
+        <!-- ⑥ 미인식 -->
+        <div class="st py-2.5 bg-slate-50/70">
+          <div class="flex justify-center"><div class="cb off"></div></div>
+          <div class="text-[13px] font-semibold text-slate-400 mono truncate">작성안내</div>
+          <div><span class="text-[12px] text-slate-300">—</span></div>
+          <div><span class="text-[12px] text-slate-300">—</span></div>
+          <div class="text-right"><span class="text-[12px] text-slate-300">—</span></div>
+          <div><span class="text-[11px] text-slate-400 leading-tight">발주처 라벨 행을 못 찾음</span></div>
+        </div>
+      </div>
+
+      <p class="text-[11.5px] text-slate-400 leading-relaxed -mt-1">
+        회색 행은 <b>체크 불가</b> — 미인식(양식 아님)·이미 적재됨(같은 파일명+시트명+발주일 묶음 존재). 경고는 <b>등록을 막지 않습니다</b>. 채널 미선택 시트를 체크하면 등록 버튼이 비활성됩니다.
+      </p>
+    </div>
+
+    <div class="px-6 py-4 border-t border-slate-100 flex items-center gap-2">
+      <span class="text-[12px] text-slate-500"><b class="text-slate-900 mono">2</b>개 시트 선택 → 묶음 <b class="text-slate-900 mono">2</b>건 · 라인 <b class="text-slate-900 mono">40</b></span>
+      <button class="ml-auto h-9 px-3.5 rounded-md border border-slate-200 text-slate-600 text-[13px] font-semibold">이전</button>
+      <button class="h-9 px-4 rounded-md text-slate-600 text-[13px] font-semibold hover:bg-slate-100">취소</button>
+      <button class="h-9 px-5 rounded-md bg-primary text-white text-[13px] font-semibold flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>2건 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 등록 불가 상태 ═══════ -->
+<div style="position:absolute;left:40px;top:640px">
+  <div class="frame-label"><span class="pill">상태</span> 채널 미선택 시트를 체크한 경우</div>
+  <div style="width:560px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 24px rgba(15,23,42,.1);overflow:hidden">
+    <div class="st py-2.5 bg-amber-50/50 border-b border-amber-100" style="grid-template-columns:34px minmax(0,1fr) 132px 74px">
+      <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+      <div class="text-[13px] font-bold text-slate-900 mono truncate">시아스_260818</div>
+      <div><span class="sel empty">채널 선택<svg class="ml-auto" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+      <div class="text-right text-[12.5px] mono text-slate-700">1 / 4</div>
+    </div>
+    <div class="px-4 py-3 flex items-center gap-2 bg-white">
+      <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-amber-700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>채널을 선택하지 않은 시트가 1개 있습니다</span>
+      <button class="ml-auto h-9 px-5 rounded-md bg-slate-200 text-slate-400 text-[13px] font-semibold cursor-not-allowed">3건 등록</button>
+    </div>
+  </div>
+  <p class="text-[11.5px] text-slate-500 mt-3 leading-relaxed" style="width:560px">
+    채널은 <b>필수</b>, 발주일은 <b>비워도 등록 가능</b>(추후 매트릭스에서 지정). 경고만 있는 시트는 그대로 등록됩니다.
+  </p>
+</div>
+
+<!-- ═══════ 묶음 목록 ═══════ -->
+<div style="position:absolute;left:660px;top:1080px">
+  <div class="frame-label"><span class="pill">데스크탑</span> 묶음 목록 — 시트 단위 <span style="font-size:11.5px;font-weight:500;color:#64748b;margin-left:6px">upload-table.tsx</span></div>
+  <div class="win">
+    <aside class="w-60 bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <div class="px-5 py-5 flex items-center"><img src="assets/logo-full.png" alt="MILL LOG" class="h-9 w-auto object-contain"></div>
+      <div class="px-3 flex-1">
+        <p class="px-3 text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Main Menu</p>
+        <div class="space-y-0.5">
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg><span class="flex-1">홈</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"></path></svg><span class="flex-1">원물재고</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M9 12h6M9 16h6"></path></svg><span class="flex-1">도정관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13.5 17 10.5 12 7.5 7 10.5Z"></path><path d="M7 16.5v5M17 16.5v5M12 13.5V19"></path></svg><span class="flex-1">제품재고</span></div>
+          <div class="nav on"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg><span class="flex-1">판매관리</span></div>
+          <div class="nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><rect x="7" y="10" width="3" height="7"></rect><rect x="13" y="6" width="3" height="11"></rect></svg><span class="flex-1">통계</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <div class="h-14 bg-white border-b border-slate-200 flex items-center px-6 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+          <span class="text-[15px] font-bold text-slate-900">판매관리</span><span class="text-[13px] text-slate-300">·</span>
+          <span class="text-[12px] text-slate-500">출고 및 판매 내역을 관리합니다.</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-slate-800 text-white text-[12px] font-bold flex items-center justify-center">관</div></div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto scrollbody px-7 pt-6 pb-7">
+        <div class="flex items-center justify-between mb-4">
+          <div class="inline-flex p-0.5 bg-slate-100 rounded-lg">
+            <button class="h-9 px-4 rounded-md bg-white shadow-sm text-[13px] font-bold text-slate-900">제품판매</button>
+            <button class="h-9 px-4 rounded-md text-[13px] font-medium text-slate-500">원물출고</button>
+          </div>
+          <button class="h-9 px-4 rounded-md bg-primary text-white text-[13px] font-semibold flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>엑셀 업로드</button>
+        </div>
+
+        <div class="flex items-center gap-1.5 mb-4">
+          <button class="h-8 px-3 rounded-full text-[12.5px] font-semibold bg-slate-900 text-white">전체</button>
+          <button class="h-8 px-3 rounded-full text-[12.5px] font-medium bg-white text-slate-600 border border-slate-200">급식</button>
+          <button class="h-8 px-3 rounded-full text-[12.5px] font-medium bg-white text-slate-600 border border-slate-200">택배</button>
+          <button class="h-8 px-3 rounded-full text-[12.5px] font-medium bg-white text-slate-600 border border-slate-200">이마트</button>
+          <button class="h-8 px-3 rounded-full text-[12.5px] font-medium bg-white text-slate-600 border border-slate-200">기업별</button>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="ut bg-slate-50 border-b border-slate-200 text-[11.5px] font-bold text-slate-400 py-2.5">
+            <div>채널</div><div>시트명</div><div class="text-right">수령처</div><div>진행</div><div>매칭실패</div><div>업로드</div><div></div>
+          </div>
+
+          <div class="ut py-2.5 border-b border-slate-100">
+            <div><span class="ch bg-violet-50 text-violet-700">이마트</span></div>
+            <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">이마트_260818</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260818.xlsx</div></div>
+            <div class="text-right text-[13px] mono text-slate-700">3</div>
+            <div><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 3</span></div>
+            <div class="text-[12px] text-slate-300">—</div>
+            <div class="text-[12px] text-slate-500 mono">08.20 09:14</div>
+            <div class="text-slate-300 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+          </div>
+
+          <!-- ⋮ 열린 행 -->
+          <div class="border-b border-slate-100 relative bg-slate-50/60">
+            <div class="ut py-2.5">
+              <div><span class="ch bg-blue-50 text-blue-700">택배</span></div>
+              <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">택배_260818</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260818.xlsx</div></div>
+              <div class="text-right text-[13px] mono text-slate-700">12</div>
+              <div class="flex items-center gap-1 flex-wrap">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료 4</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 1</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 7</span>
+              </div>
+              <div><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[10.5px] font-bold border border-red-200">2</span></div>
+              <div class="text-[12px] text-slate-500 mono">08.20 09:14</div>
+              <div class="text-slate-500 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+            </div>
+            <div class="absolute right-3 top-11 z-20 w-52 bg-white rounded-lg border border-slate-200 shadow-xl py-1">
+              <div class="px-3 py-2 flex items-center gap-2 text-[12.5px] text-slate-300 cursor-not-allowed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>엑셀 다운로드<span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100">D5</span></div>
+              <div class="px-3 py-2 flex items-center gap-2 text-[12.5px] text-slate-700 hover:bg-slate-50"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>비고 수정</div>
+              <div class="h-px bg-slate-100 my-1"></div>
+              <div class="px-3 py-2 flex items-center gap-2 text-[12.5px] text-slate-300 cursor-not-allowed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg>묶음 삭제</div>
+              <p class="px-3 pt-1 pb-1.5 text-[10.5px] text-slate-400 leading-snug">차감된 라인이 있어 삭제할 수 없습니다</p>
+            </div>
+          </div>
+
+          <div class="ut py-2.5">
+            <div><span class="ch bg-cyan-50 text-cyan-700">해남급식</span></div>
+            <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">해남급식_260817</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260817.xlsx</div></div>
+            <div class="text-right text-[13px] mono text-slate-700">2</div>
+            <div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>전체 완료</span></div>
+            <div class="text-[12px] text-slate-300">—</div>
+            <div class="text-[12px] text-slate-500 mono">08.19 14:03</div>
+            <div class="text-slate-300 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+          </div>
+        </div>
+
+        <p class="text-[11.5px] text-slate-400 mt-3 px-1">
+          <b>행 클릭은 이번 단계에서 비활성</b> — 매트릭스(D2) 연결 후 활성화. 같은 파일에서 온 시트는 파일명 서브라벨로 묶어 보입니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 메모 -->
+<div style="position:absolute;left:40px;top:1080px;width:580px">
+  <div style="background:#0f172a;border-radius:14px;padding:18px 20px">
+    <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px">이전 시안에서 바뀐 것</div>
+    <ul style="font-size:12px;color:#cbd5e1;line-height:1.75;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px">
+      <li><b style="color:#93c5fd">파싱 요약 1블록 → 시트 표.</b> 파일 1개 = 묶음 1건 전제가 사라져 「채널·날짜·발주처」를 한 덩어리로 보여줄 수 없음.</li>
+      <li><b style="color:#93c5fd">전달사항 1개 → 시트별 비고.</b> 체크한 시트 아래로 펼쳐지는 인라인 textarea. 상한 200 → <span class="mono">500</span>.</li>
+      <li><b style="color:#93c5fd">목록 1열이 파일명 → 시트명.</b> 파일명은 서브라벨로 내려 같은 파일 출신을 알아볼 수 있게.</li>
+      <li><b style="color:#93c5fd">행 링크 제거.</b> D2까지 비활성 — 커서·호버 배경도 함께 뺐습니다.</li>
+      <li style="color:#94a3b8;padding-top:2px;border-top:1px solid #1e293b">경고는 <b style="color:#fbbf24">등록을 막지 않는다</b>는 규칙이 표에서 읽히도록, 경고(노랑 칩)와 체크 불가(회색 행)를 다른 시각 언어로 분리했습니다.</li>
+    </ul>
+  </div>
+</div>
+
+</body></html>

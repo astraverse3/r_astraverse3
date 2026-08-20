@@ -128,6 +128,7 @@ export type UpsertProductTypeInput = {
   packagingId: number
   isDefault?: boolean
   active?: boolean
+  unitsPerBox?: number | null // 박스 입수(#35). 미입력이면 null → 박스 환산 칸 빈칸
 }
 
 /**
@@ -141,6 +142,10 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
     if (!packageType) return { success: false, error: '규격을 입력해주세요.' }
     if (!input.varietyId || !input.packagingId) {
       return { success: false, error: '품종과 포장지를 선택해주세요.' }
+    }
+    const unitsPerBox = input.unitsPerBox ?? null
+    if (unitsPerBox !== null && (!Number.isInteger(unitsPerBox) || unitsPerBox < 1)) {
+      return { success: false, error: '박스 입수는 1 이상의 정수로 입력해주세요.' }
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -180,6 +185,7 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
         packagingId: input.packagingId,
         isDefault: input.isDefault ?? false,
         active: input.active ?? true,
+        unitsPerBox,
       }
 
       return input.id

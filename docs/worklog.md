@@ -2,6 +2,25 @@
 
 ## 2026-08-20
 
+### 발주서 판매처리 D1c — 업로드 2단계 모달 + 묶음 목록 + 박스 입수 `feat` `docs`
+
+**배경**: 사용자가 결정 #30·#31에 맞춰 시안을 갱신(`docs/handoff/발주서판매처리/엑셀업로드-2단계-데스크탑.html`) — 구 시안의 「파싱 요약 1블록」이 **시트 표**로 바뀌었다.
+
+1. **업로드 2단계 모달** — [upload-dialog.tsx](<app/(dashboard)/sales/upload-dialog.tsx>). ① 드롭존 → `previewPurchaseOrder` ② 시트 표(체크·채널 select·발주일·건/라인·확인 필요) + 체크한 시트 아래 인라인 비고(500자) → `uploadPurchaseOrder`. 상태 4종을 시안대로 구분: 정상 / 경고(등록 가능) / **채널 미확정**(체크 시 등록 버튼 비활성) / 체크 불가(미인식·이미 적재됨).
+2. **묶음 목록** — [upload-table.tsx](<app/(dashboard)/sales/upload-table.tsx>)(채널 필터칩 + 테이블, 1열=시트명·파일명은 서브라벨) + [upload-row-menu.tsx](<app/(dashboard)/sales/upload-row-menu.tsx>)(⋮ = 엑셀 다운로드[D5 비활성] / 비고 수정 / 묶음 삭제). 채널 라벨·색은 [lib/purchase-channel.ts](<lib/purchase-channel.ts>) 공용 상수. **행 클릭은 D2까지 비활성**.
+3. **액션 보강** — `listPurchaseUploads`에 **`deletable`**(묶음에 movement 0건일 때만 true, `_count` 집계라 추가 쿼리 없음) + `createdAt`을 표시용 `MM.DD HH:mm`(KST 고정, hydration 불일치 회피)로.
+4. **박스 입수(#35)** — `upsertProductType`에 `unitsPerBox`(1 이상 정수 또는 null, 서버·클라 검증) + `/admin/product-types` 다이얼로그 입력칸 + 목록 규격 셀 옆 `16개/박스` 보조 표기(열 추가 없이).
+
+**검증**: `npx tsc --noEmit` 통과, `npx eslint`(신규·수정 10파일) 경고 없음, **`npx next build --webpack` 빌드 성공**, `npm test` 40 pass.
+
+**🔴 브라우저 확인 대기**: D1b에서 이월된 **「실파일 다채널 2시트 → 묶음 2건」 왕복**을 여기서 확인해야 한다. 중복 재업로드 「이미 적재됨」·비고 수정·묶음 삭제·박스 입수 저장까지 7가지 확인 항목은 보고서 §4 참고.
+
+**미구현 1건**: 시안 1단계 푸터의 **「양식 내려받기」** — 링크 대상 파일이 없고 양식 배포 기능이 계획에 없어 뺐다(별도 결정 필요).
+
+**다음**: D2 매트릭스 + 셀 FIFO 배분. **착수 전 🔴재고 분할 차감 결정 선행 필요.** 상세: [docs/report/report-발주서판매처리-D1c화면-2026-08-20.md](<docs/report/report-발주서판매처리-D1c화면-2026-08-20.md>)
+
+---
+
 ### 발주서 판매처리 D1b — 업로드 액션 2단계 + 파일 분리 `ca9c4fd` `feat` `refactor` `docs`
 
 **배경**: #31 「업로드 2단계 + 시트 선택 UI」의 서버 쪽. D1a까지는 파서 추측값을 그대로 쓰는 임시 경로(`TODO(D1b)`)였다.
