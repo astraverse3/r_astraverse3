@@ -1,11 +1,12 @@
 'use server'
 
-// 발주서 판매처리 — 적재·매칭·차감 액션 (계획서 §8.3.1)
+// 발주서 판매처리 — 조회·매칭·차감 액션 (계획서 §8.3.1)
 //
 // 흐름: 엑셀 업로드 → 파싱(§8.2.2) → 중복감지(#16) → 적재(Upload+Order+Item) →
 //       라인 자동매칭(§8.2.3, productTypeId) → 차감확정(FIFO #3, PackageMovement type=SALE) →
 //       라인/건 status 파생(#12).
 //
+// **업로드(미리보기·적재·비고)는 `purchase-order-upload.ts`로 분리**했다(D1b, 800줄 상한).
 // export(원본 양식 복원 + 생산자·로트 채움)는 별도 단계.
 // 모든 write = OPERATION_MANAGE(2026-06-22 권한 단순화), 조회(list*/get*) = 공개.
 
@@ -15,65 +16,20 @@ import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
-import { validateExcelUpload } from '@/lib/file-validation'
-import { parsePurchaseOrder, type ParsedSheet } from '@/lib/purchase-order-parser'
-import {
-  matchPurchaseOrderItem,
-  normalizeItemName,
-  type MatcherVariety,
-  type MatcherProductType,
-} from '@/lib/purchase-order-matcher'
+import { matchPurchaseOrderItem, normalizeItemName } from '@/lib/purchase-order-matcher'
 import {
   suggestAllocation,
   computeLineStatus,
   computeOrderStatus,
-  bundleDuplicateKey,
   type AvailablePackage,
   type Allocation,
   type LineStatus,
 } from '@/lib/purchase-order-allocation'
+import { loadMatcherMasters } from '@/lib/purchase-order-masters'
 
 // ======================================================
 // 내부 헬퍼
 // ======================================================
-
-/** 'yyyy-mm-dd'(시트명 유래) → Date. 없으면 null. */
-function toDateOrNull(iso: string | null): Date | null {
-  return iso ? new Date(`${iso}T00:00:00Z`) : null
-}
-
-type MatcherMasters = { varieties: MatcherVariety[]; productTypes: MatcherProductType[] }
-
-/** 매칭에 쓸 마스터(품종·SKU) 로드 — 순수 매처에 주입. */
-async function loadMatcherMasters(): Promise<MatcherMasters> {
-  const [vs, pts] = await Promise.all([
-    prisma.variety.findMany({
-      select: { id: true, name: true, category: true, aliases: true },
-    }),
-    prisma.productType.findMany({
-      where: { active: true },
-      include: { packaging: { select: { name: true } } },
-    }),
-  ])
-  return {
-    varieties: vs.map((v) => ({
-      id: v.id,
-      name: v.name,
-      category: v.category,
-      aliases: v.aliases,
-    })),
-    productTypes: pts.map((p) => ({
-      id: p.id,
-      varietyId: p.varietyId,
-      millingType: p.millingType,
-      packageType: p.packageType,
-      packagingId: p.packagingId,
-      packagingName: p.packaging.name,
-      isDefault: p.isDefault,
-      active: p.active,
-    })),
-  }
-}
 
 /** 특정 SKU의 가용 패키지(FIFO 정렬 키 포함). available>0만. */
 async function loadAvailablePackages(
@@ -184,212 +140,6 @@ async function applyAllocations(
     })
   }
   return addQty
-}
-
-// ======================================================
-// 업로드 + 적재 + 자동매칭 (#15·#16·#23)
-// ======================================================
-
-export type UploadConflict = { sheetName: string; orderDate: string | null }
-export type SkippedSheet = { sheetName: string; reason: string }
-/** 적재된 묶음 1건 = 시트 1장 (#30). */
-export type UploadedBundle = {
-  uploadId: number
-  sheetName: string
-  channel: PurchaseChannel
-  orderDate: string | null
-  orderCount: number
-  itemCount: number
-  matched: number
-}
-export type UploadResult =
-  | {
-      success: true
-      bundles: UploadedBundle[] // 시트 1장 = 묶음 1건(#30)
-      summary: {
-        bundleCount: number
-        orderCount: number
-        itemCount: number
-        matched: number
-        failed: number
-      }
-      skipped: SkippedSheet[] // 미인식 시트 경고(오타 방지 — 통일양식 작성안내 5번)
-      warnings: string[] // 파서 경고(음수·소계 불일치·단위 누락 #28·#29·#33)
-    }
-  | { success: false; duplicate: true; conflicts: UploadConflict[]; message: string }
-  | { success: false; error: string }
-
-/** 시트 1장 적재 — 묶음 + 건 + 라인. 트랜잭션 안에서만 호출한다. */
-async function insertSheetBundle(
-  tx: Prisma.TransactionClient,
-  args: {
-    fileName: string
-    sheet: ParsedSheet
-    channel: PurchaseChannel
-    orderDate: string | null
-    uploadedById?: string
-    uploadedName?: string
-    masters: MatcherMasters
-  },
-): Promise<UploadedBundle> {
-  const { fileName, sheet, channel, orderDate, masters } = args
-  const upload = await tx.purchaseOrderUpload.create({
-    data: {
-      fileName,
-      sheetName: sheet.sheetName,
-      channel,
-      orderDate: toDateOrNull(orderDate),
-      orderCount: sheet.orders.length,
-      uploadedById: args.uploadedById,
-      uploadedName: args.uploadedName,
-    },
-  })
-
-  let itemCount = 0
-  let matched = 0
-  for (const o of sheet.orders) {
-    const order = await tx.purchaseOrder.create({
-      data: {
-        uploadId: upload.id,
-        channel,
-        orderDate: toDateOrNull(orderDate),
-        vendor: o.vendor,
-        recipient: o.recipient,
-        status: 'PENDING',
-      },
-    })
-    for (const item of o.items) {
-      const m = matchPurchaseOrderItem(
-        { rawItemName: item.rawItemName, packageType: item.packageType, rawPackaging: item.rawPackaging },
-        masters.varieties,
-        masters.productTypes,
-      )
-      await tx.purchaseOrderItem.create({
-        data: {
-          orderId: order.id,
-          rawItemName: item.rawItemName,
-          packageType: item.packageType,
-          rawPackaging: item.rawPackaging,
-          orderedQty: item.orderedQty,
-          unitWeightKg: item.unitWeightKg, // 톤백류만 값이 있다(#34)
-          productTypeId: m.matched ? m.productTypeId : null,
-        },
-      })
-      itemCount++
-      if (m.matched) matched++
-    }
-  }
-
-  return {
-    uploadId: upload.id,
-    sheetName: sheet.sheetName,
-    channel,
-    orderDate,
-    orderCount: sheet.orders.length,
-    itemCount,
-    matched,
-  }
-}
-
-export async function uploadPurchaseOrder(formData: FormData): Promise<UploadResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
-  try {
-    const file = formData.get('file') as File | null
-    if (!file) return { success: false, error: '파일이 없습니다.' }
-    validateExcelUpload(file)
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const parsed = parsePurchaseOrder(buffer, file.name)
-    // TODO(D1b): 시트 선택 2단계 업로드(#31)로 교체한다.
-    // 현재는 파서가 추측한 채널·발주일을 사용자 확인 없이 그대로 쓰는 임시 경로다.
-    const usable = parsed.sheets.filter((s) => s.orders.length > 0)
-    if (usable.length === 0) {
-      const hint =
-        parsed.skipped.length > 0
-          ? ` 인식하지 못한 시트: ${parsed.skipped.map((s) => s.sheetName).join(', ')}`
-          : ''
-      return { success: false, error: `발주 데이터가 없습니다(빈 발주서).${hint}` }
-    }
-    const unresolved = usable.filter((s) => s.suggestedChannel === null)
-    if (unresolved.length > 0) {
-      return {
-        success: false,
-        error: `시트명에서 채널을 알 수 없습니다(${unresolved.map((s) => s.sheetName).join(', ')}). 시트명을 \`채널_YYMMDD\`로 맞춰주세요.`,
-      }
-    }
-
-    // 중복 감지(#16 개정): 묶음 키 = 파일명+시트명+발주일. DB unique와 같은 키라 강제진행이 없다.
-    const prior = await prisma.purchaseOrderUpload.findMany({
-      where: { fileName: file.name },
-      select: { sheetName: true, orderDate: true },
-    })
-    const priorKeys = new Set(
-      prior.map((b) => bundleDuplicateKey(file.name, b.sheetName, b.orderDate)),
-    )
-    const dups = usable.filter((s) =>
-      priorKeys.has(bundleDuplicateKey(file.name, s.sheetName, s.suggestedOrderDate)),
-    )
-    if (dups.length > 0) {
-      return {
-        success: false,
-        duplicate: true,
-        conflicts: dups.map((s) => ({ sheetName: s.sheetName, orderDate: s.suggestedOrderDate })),
-        message: `이미 적재된 시트입니다(${dups.map((s) => s.sheetName).join(', ')}). 다시 올리려면 묶음 목록에서 기존 묶음을 삭제해 주세요.`,
-      }
-    }
-
-    const masters = await loadMatcherMasters()
-
-    const bundles = await prisma.$transaction(async (tx) => {
-      const created: UploadedBundle[] = []
-      for (const sheet of usable) {
-        created.push(
-          await insertSheetBundle(tx, {
-            fileName: file.name,
-            sheet,
-            channel: sheet.suggestedChannel as PurchaseChannel,
-            orderDate: sheet.suggestedOrderDate,
-            uploadedById: session.user?.id,
-            uploadedName: session.user?.name ?? undefined,
-            masters,
-          }),
-        )
-      }
-      return created
-    })
-
-    const summary = bundles.reduce(
-      (acc, b) => ({
-        bundleCount: acc.bundleCount + 1,
-        orderCount: acc.orderCount + b.orderCount,
-        itemCount: acc.itemCount + b.itemCount,
-        matched: acc.matched + b.matched,
-        failed: acc.failed + (b.itemCount - b.matched),
-      }),
-      { bundleCount: 0, orderCount: 0, itemCount: 0, matched: 0, failed: 0 },
-    )
-
-    for (const b of bundles) {
-      await recordAuditLog({
-        action: 'IMPORT',
-        entity: 'PurchaseOrderUpload',
-        entityId: b.uploadId,
-        description: `발주서 업로드: ${file.name} [${b.sheetName}] (${b.orderCount}건 / ${b.itemCount}라인, 매칭 ${b.matched})`,
-      })
-    }
-    revalidatePath('/sales')
-
-    return {
-      success: true,
-      bundles,
-      summary,
-      skipped: parsed.skipped,
-      warnings: usable.flatMap((s) => s.warnings.map((w) => `[${s.sheetName}] ${w}`)),
-    }
-  } catch (error) {
-    console.error('[uploadPurchaseOrder] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '발주서 업로드에 실패했습니다.') }
-  }
 }
 
 // ======================================================

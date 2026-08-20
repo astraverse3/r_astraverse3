@@ -2,6 +2,26 @@
 
 ## 2026-08-20
 
+### 발주서 판매처리 D1b — 업로드 액션 2단계 + 파일 분리 `feat` `refactor` `docs`
+
+**배경**: #31 「업로드 2단계 + 시트 선택 UI」의 서버 쪽. D1a까지는 파서 추측값을 그대로 쓰는 임시 경로(`TODO(D1b)`)였다.
+
+1. **신규 [app/actions/purchase-order-upload.ts](<app/actions/purchase-order-upload.ts>)** — `previewPurchaseOrder`(파싱만, DB 무변경) / `uploadPurchaseOrder(formData, selections)`(선택 시트만 확정 채널·발주일로 적재) / `updateUploadNote`(묶음 비고).
+   - **파싱 결과 클라이언트 왕복 없음**(#31 조작 방지) — 적재 때 파일을 다시 받아 **서버 재파싱**하고, 클라이언트가 보내는 건 「어떤 시트를 어떤 채널·발주일로」뿐.
+   - `selections` zod 검증(채널 enum 5종·발주일 `yyyy-mm-dd`·비고 500자) + `validateSelections()`가 **같은 시트 2회 선택 / 파일에 없는 시트 / 발주 없는 시트**를 사용자 문구로 차단.
+   - 미인식 시트도 미리보기에 `recognized:false`+`reason`으로 함께 반환(시트명 오타로 조용히 빠지는 것 방지).
+   - 중복은 preview에서 `alreadyUploaded` 플래그로 예고, upload에서 실제 차단(강제진행 없음 — DB unique와 같은 키).
+2. **파일 분리(800줄 상한)** — `app/actions/purchase-order.ts` 831 → **581줄**(조회·매칭·차감만), 신규 upload 액션 **365줄**, 공용 헬퍼 **[lib/purchase-order-masters.ts](<lib/purchase-order-masters.ts>)** 46줄(`loadMatcherMasters`·`toDateOrNull`). `'use server'` 파일은 async 함수만 export할 수 있어 헬퍼를 액션 파일에 둔 채로는 공유가 안 된다.
+3. **계획서 표기 정정** — 반환 필드는 `uploads`가 아니라 `bundles`(D1a에서 이미 그렇게 만들었고 도메인 용어와 일치).
+
+**검증**: `npx tsc --noEmit` 통과, `npm test` **40 pass / 0 fail**, `npx eslint`(3파일) 경고 없음.
+
+**🔴 미검증**: 계획서의 D1b 기준인 **「실파일 다채널 2시트 선택 → 묶음 2건」 실왕복은 못 했다.** 이 액션을 부르는 화면이 아직 없고, 액션은 세션·권한을 요구해 스크립트로 대신 호출할 수 없다. **D1c 업로드 모달을 붙이는 즉시 검증한다.**
+
+**다음**: D1c — 업로드 모달(드롭존 → 시트 표) + 묶음 목록 테이블 + `/admin/product-types` `unitsPerBox` 입력칸(#35). 상세: [docs/report/report-발주서판매처리-D1b액션-2026-08-20.md](<docs/report/report-발주서판매처리-D1b액션-2026-08-20.md>)
+
+---
+
 ### 발주서 판매처리 D1a — 묶음=시트 스키마 + Neon 마이그레이션 `0ada585` `feat` `test` `docs`
 
 **배경**: D0 파서가 「시트 1장 = 묶음 1개」(#30)로 재구성됐는데 스키마는 아직 「파일 1개 = 묶음 1개」라, 파서 결과를 저장할 자리가 없었다.
