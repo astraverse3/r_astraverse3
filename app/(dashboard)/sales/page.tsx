@@ -1,8 +1,7 @@
-import { SalesTabs, DEFAULT_SALES_TAB, type SalesTabValue } from './sales-tabs'
+import { SalesTabs } from './sales-tabs'
+import { resolveSalesTab } from './sales-tab-constants'
 import { ReleaseSection } from './release-section'
 import { ProductSalesSection } from './product-sales-section'
-
-const VALID_TABS: SalesTabValue[] = ['product', 'release']
 
 export default async function SalesPage({
     searchParams,
@@ -10,10 +9,9 @@ export default async function SalesPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const sp = await searchParams
-    const rawTab = typeof sp.tab === 'string' ? sp.tab : DEFAULT_SALES_TAB
-    const tab: SalesTabValue = (VALID_TABS as string[]).includes(rawTab)
-        ? (rawTab as SalesTabValue)
-        : DEFAULT_SALES_TAB
+    // 탭 상수는 'use client'가 아닌 sales-tab-constants에서 가져온다 —
+    // 클라이언트 모듈에서 가져오면 서버에서 값이 함수 참조로 바뀐다(§파일 주석 참고)
+    const tab = resolveSalesTab(sp.tab)
 
     return (
         <div className="flex flex-col gap-3">

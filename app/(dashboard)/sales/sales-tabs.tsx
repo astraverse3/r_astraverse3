@@ -2,18 +2,17 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Package, Truck } from 'lucide-react'
+import { SALES_TABS, DEFAULT_SALES_TAB, type SalesTabValue } from './sales-tab-constants'
 
 // 제품판매 / 원물출고 2탭 (결정 #13). 제품판매=제품재고(MillingOutputPackage) 차감(발주서),
-// 원물출고=원물(Stock) 차감(기존 출고). 구 벼·잡곡 '준비중' placeholder는 제거.
-const TABS = [
-    { value: 'product', label: '제품판매', icon: Package },
-    { value: 'release', label: '원물출고', icon: Truck },
-] as const
-
-export type SalesTabValue = (typeof TABS)[number]['value']
-
-// 기본 탭 = product(제품판매). tab 파라미터 없으면 제품판매.
-export const DEFAULT_SALES_TAB: SalesTabValue = 'product'
+// 원물출고=원물(Stock) 차감(기존 출고).
+// ⚠️ 탭 값·기본값은 sales-tab-constants.ts에 있다 — 여기(클라이언트 모듈)에서 export하면
+//    서버 컴포넌트가 import할 때 값이 함수 참조로 바뀐다.
+const ICONS: Record<SalesTabValue, typeof Package> = {
+    product: Package,
+    release: Truck,
+}
+const TABS = SALES_TABS.map((t) => ({ ...t, icon: ICONS[t.value] }))
 
 export function SalesTabs({ activeTab }: { activeTab: SalesTabValue }) {
     const router = useRouter()
