@@ -2,6 +2,20 @@
 
 ## 2026-08-20
 
+### 버그 수정 2건 — 판매관리 탭 미렌더 + dev 서비스워커 캐시 `af8e7c9` `3c5458a` `7f8d339` `fix` `chore`
+
+**배경**: D1c 화면을 붙였는데 `/sales` 본문이 통째로 빈 화면. 추적 과정에서 **기존 버그 2개**가 드러났다(D1c와 무관, 단계5부터 잠재).
+
+1. **판매관리 탭이 통째로 렌더 안 되던 버그** `af8e7c9` — `DEFAULT_SALES_TAB`·`SalesTabValue`가 `'use client'` 파일([sales-tabs.tsx](<app/(dashboard)/sales/sales-tabs.tsx>))에 있었고 서버 컴포넌트 `page.tsx`가 그걸 import. **Next.js는 클라이언트 모듈의 export를 서버에서 가져갈 때 실제 값이 아니라 클라이언트 참조(함수)로 바꾼다** → `tab`이 함수가 되어 `tab === 'product'`·`'release'` 비교가 **모두 false** → 두 탭 다 아무것도 안 그려졌다. 진단은 `page.tsx`에 임시 로그를 심어 `tab = [Function (anonymous)]` 확인(로그는 제거). **신규 [sales-tab-constants.ts](<app/(dashboard)/sales/sales-tab-constants.ts>)**(`'use client'` 아님)로 상수·`resolveSalesTab()` 분리, 아이콘 매핑만 클라이언트에 유지.
+2. **dev에서 서비스워커가 캐시를 물고 있던 문제** `3c5458a` — `next.config`의 next-pwa는 `disable: NODE_ENV === 'development'`인데 [sw-register.tsx](<components/sw-register.tsx>)가 **환경 구분 없이 `/sw.js`를 등록**해 우회. `public/sw.js`가 저장소에 커밋돼 있어 dev 서버가 **6월 빌드본을 그대로 서빙**했고, 그 sw가 JS 청크를 StaleWhileRevalidate로, `/api/*`를 NetworkFirst로 캐싱했다. → 프로덕션에서만 등록 + dev에서는 기존 등록분 `unregister`.
+3. **PWA 산출물 추적 해제** `7f8d339` — `public/sw.js`·`workbox-*.js`를 `.gitignore`로. 배포 시 `build`가 재생성하므로 서비스 영향 없음. 커밋본이 6월에 멈춰 있어(`/admin/product-types` 등 이후 화면이 precache 목록에 없었음) 로컬 빌드마다 무의미한 dirty만 생기고 있었다.
+
+**교훈**: dev 서버가 떠 있는 동안 `next build`를 돌리면 같은 `.next`를 건드려 dev가 깨진다. 앞으로 검증은 tsc·eslint까지만, 빌드가 필요하면 dev를 멈추거나 별도 `distDir`로.
+
+**검증**: `/sales` 제품판매 탭 정상 렌더 확인(헤더 · 엑셀 업로드 버튼 · 빈 상태), `tsc`·`eslint` 통과.
+
+---
+
 ### 발주서 판매처리 D1c — 업로드 2단계 모달 + 묶음 목록 + 박스 입수 `2dc5177` `feat` `docs`
 
 **배경**: 사용자가 결정 #30·#31에 맞춰 시안을 갱신(`docs/handoff/발주서판매처리/엑셀업로드-2단계-데스크탑.html`) — 구 시안의 「파싱 요약 1블록」이 **시트 표**로 바뀌었다.
