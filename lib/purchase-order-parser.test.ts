@@ -142,7 +142,7 @@ test('실파일: 5시트 전부 인식 + 미인식 시트 없음', () => {
   const parsed = template()
   assert.deepEqual(
     parsed.sheets.map((s) => s.sheetName),
-    ['이마트_260819', '택배_260818', '서울급식_060818', '해남급식_260821', '시아스_260811'],
+    ['이마트_260819', '택배_260818', '서울급식_260818', '해남급식_260821', '시아스_260811'],
   )
   assert.deepEqual(parsed.skipped, [])
 })
@@ -179,15 +179,17 @@ test('실파일 택배: 중간 빈 행 뒤 발주도 끝까지 읽는다', () =>
   assert.deepEqual(delivery.warnings, [])
 })
 
-test('실파일 서울급식: 서식에 든 단위(1 kg) 정규화 + 시트명 오타 경고 (#33·#31)', () => {
-  const seoul = sheet('서울급식_060818')
+test('실파일 서울급식: 서식에 든 단위(1 kg) 정규화 (#33)', () => {
+  const seoul = sheet('서울급식_260818')
   // 중량 셀 원시값은 숫자 1, 서식이 `0\ "kg"` → cell.w로 읽어야 단위가 산다
   const specs = [...new Set(seoul.orders.flatMap((o) => o.items).map((i) => i.packageType))]
   assert.deepEqual(specs.sort(), ['10kg', '1kg', '500g', '5kg'])
   assert.ok(seoul.warnings.every((w) => !/단위\(kg·g\)가 없습니다/.test(w)))
 
-  assert.equal(seoul.suggestedOrderDate, '2006-08-18')
-  assert.ok(seoul.warnings.some((w) => /시트명 날짜/.test(w)))
+  // 시트명 오타(`서울급식_060818`)는 2026-08-20에 수정됨 → 이제 경고 없음.
+  // 오타 감지 자체는 suggestOrderDate 단위 테스트가 지킨다.
+  assert.equal(seoul.suggestedOrderDate, '2026-08-18')
+  assert.deepEqual(seoul.warnings, [])
 
   assert.ok(seoul.orders.every((o) => o.recipient === '행복플러스'))
   assert.deepEqual(
