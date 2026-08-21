@@ -1,4 +1,4 @@
-import { Package, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { listPurchaseUploads } from '@/app/actions/purchase-order'
 import { UploadDialog } from './upload-dialog'
 import { UploadTable } from './upload-table'
@@ -11,11 +11,7 @@ export async function ProductSalesSection() {
 
     return (
         <div className="px-3 sm:px-0 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-slate-500" strokeWidth={1.8} />
-                    <h2 className="text-sm font-bold text-slate-900">발주서 판매처리</h2>
-                </div>
+            <div className="flex items-center justify-end">
                 <UploadDialog />
             </div>
 

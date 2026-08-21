@@ -5,7 +5,7 @@
 //   2단계: 시트 표에서 올릴 시트 체크 + 채널·발주일·비고 확정 → uploadPurchaseOrder
 // 파싱 결과는 표시용일 뿐이고, 적재는 같은 파일을 다시 보내 서버가 재파싱한다(조작 방지).
 
-import { useRef, useState } from 'react'
+import { useRef, useState, type DragEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -37,14 +37,31 @@ type SheetDraft = {
     note: string
 }
 
-function initialDraft(s: SheetPreview): SheetDraft {
-    return {
-        // 인식됐고 아직 안 올라간 시트는 기본 체크 — 채널을 못 뽑았으면 사람이 고르게 두고 체크 해제
-        checked: s.recognized && !s.alreadyUploaded && s.suggestedChannel !== null,
-        channel: s.suggestedChannel ?? '',
-        orderDate: s.suggestedOrderDate ?? '',
-        note: '',
-    }
+/**
+ * 한 번에 한 장만 올리는 게 대부분이라, 발주일이 가장 늦은 시트 하나만 기본 체크한다.
+ * 발주일은 시트명에서 뽑은 값이라 비어 있을 수 있고, 그때는 목록에서 뒤에 오는 시트를 최신으로 본다.
+ * 채널을 못 뽑은 시트는 어차피 그대로는 등록할 수 없어 후보에서 뺀다.
+ */
+function buildDrafts(sheets: SheetPreview[]): Record<string, SheetDraft> {
+    const candidates = sheets.filter(
+        (s) => s.recognized && !s.alreadyUploaded && s.suggestedChannel !== null,
+    )
+    const latest = candidates.reduce<SheetPreview | null>(
+        (best, s) => (best === null || (s.suggestedOrderDate ?? '') >= (best.suggestedOrderDate ?? '') ? s : best),
+        null,
+    )
+
+    return Object.fromEntries(
+        sheets.map((s) => [
+            s.sheetName,
+            {
+                checked: s.sheetName === latest?.sheetName,
+                channel: s.suggestedChannel ?? '',
+                orderDate: s.suggestedOrderDate ?? '',
+                note: '',
+            },
+        ]),
+    )
 }
 
 export function UploadDialog() {
@@ -83,7 +100,7 @@ export function UploadDialog() {
         }
         setFile(picked)
         setSheets(res.sheets)
-        setDrafts(Object.fromEntries(res.sheets.map((s) => [s.sheetName, initialDraft(s)])))
+        setDrafts(buildDrafts(res.sheets))
     }
 
     const patch = (sheetName: string, next: Partial<SheetDraft>) =>
@@ -134,12 +151,22 @@ export function UploadDialog() {
             <DialogTrigger asChild>
                 <Button size="sm" className="px-2.5 sm:px-4">
                     <Upload className="w-4 h-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">엑셀 업로드</span>
+                    <span className="hidden sm:inline">발주서 등록</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className={sheets ? 'sm:max-w-[880px]' : 'sm:max-w-[560px]'}>
-                <DialogHeader>
-                    <DialogTitle>{sheets ? '올릴 시트 선택' : '엑셀 업로드'}</DialogTitle>
+            {/* 시트 선택 중 바깥을 클릭해 닫히면 채널·발주일 입력이 통째로 날아간다 — X·취소로만 닫는다 */}
+            <DialogContent
+                className={`flex flex-col overflow-hidden ${
+                    sheets
+                        ? 'sm:max-w-[880px] max-h-[calc(100dvh-4rem)]'
+                        : 'sm:max-w-[560px]'
+                }`}
+                onInteractOutside={(e) => {
+                    if (sheets) e.preventDefault()
+                }}
+            >
+                <DialogHeader className="shrink-0">
+                    <DialogTitle>{sheets ? '올릴 시트 선택' : '발주서 등록'}</DialogTitle>
                     <DialogDescription>
                         {sheets
                             ? '체크한 시트마다 묶음 1건이 생성됩니다.'
@@ -159,16 +186,20 @@ export function UploadDialog() {
                 />
 
                 {!sheets ? (
-                    <DropZone busy={busy === 'preview'} onPick={() => fileInputRef.current?.click()} />
+                    <DropZone
+                        busy={busy === 'preview'}
+                        onPick={() => fileInputRef.current?.click()}
+                        onFile={(picked) => void runPreview(picked)}
+                    />
                 ) : (
-                    <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto py-1">
+                    <>
                         <FileCard
                             file={file}
                             sheets={sheets}
                             onReselect={() => fileInputRef.current?.click()}
                         />
-                        <div className="rounded-xl border border-slate-200 overflow-hidden">
-                            <div className="hidden sm:grid grid-cols-[34px_minmax(0,1fr)_132px_128px_74px_minmax(0,180px)] bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2 px-2 gap-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-slate-200">
+                            <div className="hidden sm:grid grid-cols-[34px_minmax(0,1fr)_132px_128px_74px_minmax(0,180px)] sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2 px-2 gap-2">
                                 <div />
                                 <div>시트명</div>
                                 <div>채널</div>
@@ -186,14 +217,14 @@ export function UploadDialog() {
                                 />
                             ))}
                         </div>
-                        <p className="text-[11.5px] text-slate-400 leading-relaxed px-1">
+                        <p className="text-[11.5px] text-slate-400 leading-relaxed px-1 shrink-0">
                             회색 행은 체크할 수 없어요 — 미인식(발주서 양식 아님)이거나 이미 적재된 시트예요.
                             경고는 등록을 막지 않아요. 채널은 필수, 발주일은 비워도 등록됩니다.
                         </p>
-                    </div>
+                    </>
                 )}
 
-                <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-100 shrink-0">
                     {sheets && (
                         <span className="text-[12px] text-slate-500">
                             {missingChannel.length > 0 ? (
@@ -235,10 +266,46 @@ export function UploadDialog() {
     )
 }
 
-function DropZone({ busy, onPick }: { busy: boolean; onPick: () => void }) {
+function DropZone({
+    busy,
+    onPick,
+    onFile,
+}: {
+    busy: boolean
+    onPick: () => void
+    onFile: (file: File) => void
+}) {
+    const [dragging, setDragging] = useState(false)
+
+    // 드롭 영역 밖에 떨어뜨리면 브라우저가 파일을 열어버리므로, 영역 안에서는 기본 동작을 막는다
+    const accept = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
     return (
         <div className="py-2">
-            <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center gap-3 h-48">
+            <div
+                onDragOver={(e) => {
+                    accept(e)
+                    if (!busy) setDragging(true)
+                }}
+                onDragEnter={accept}
+                onDragLeave={(e) => {
+                    accept(e)
+                    setDragging(false)
+                }}
+                onDrop={(e) => {
+                    accept(e)
+                    setDragging(false)
+                    if (busy) return
+                    const picked = e.dataTransfer.files?.[0]
+                    if (picked) onFile(picked)
+                }}
+                className={`rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-3 h-48 transition-colors ${
+                    dragging ? 'border-blue-400 bg-blue-50/60' : 'border-slate-200 bg-slate-50/60'
+                }`}
+            >
                 {busy ? (
                     <>
                         <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
@@ -279,7 +346,7 @@ function FileCard({
 }) {
     const recognized = sheets.filter((s) => s.recognized).length
     return (
-        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shrink-0">
             <div className="w-8 h-9 rounded bg-[#1d6f42] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
                 XLS
             </div>

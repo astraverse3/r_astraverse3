@@ -106,7 +106,7 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
                         </div>
                         <p className="text-sm text-slate-500">
                             {rows.length === 0
-                                ? '아직 올린 발주서가 없어요. 엑셀 업로드로 시작해 보세요.'
+                                ? '아직 올린 발주서가 없어요. 발주서 등록으로 시작해 보세요.'
                                 : '이 채널의 묶음이 없어요.'}
                         </p>
                     </div>

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>배송·상차 정보 — 입력과 목록 노출</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#2563eb'}}}}};</script>
+<link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.frame-label{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.frame-label .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.frame-label .pill.key{background:#2563eb;border-color:#2563eb;color:#fff}
+.note{font-size:12px;color:#475569;line-height:1.7}
+.ch{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.sel{height:32px;display:flex;align-items:center;gap:6px;padding:0 8px 0 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-size:12.5px;font-weight:600;color:#1e293b}
+.sel.auto{border-color:#bfdbfe;background:#eff6ff}
+.sel.none{border-style:dashed;border-color:#cbd5e1;color:#94a3b8;font-weight:500}
+.tk{height:28px;padding:0 10px;border-radius:7px;border:1px solid #cbd5e1;background:#fff;font-size:12px;font-weight:600;color:#475569;display:inline-flex;align-items:center;gap:4px}
+.tk.on{background:#1e293b;border-color:#1e293b;color:#fff}
+.tk.ghost{border-style:dashed;color:#94a3b8;font-weight:500}
+.fl{font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;display:block}
+.cb{width:15px;height:15px;border-radius:4px;border:1.5px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb.on{background:#2563eb;border-color:#2563eb}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.st{display:grid;grid-template-columns:34px minmax(0,1fr) 120px 96px 68px;align-items:center}
+.st>div{padding-left:9px;padding-right:9px}
+.ut{display:grid;grid-template-columns:100px minmax(0,1fr) 190px 52px 118px 116px 36px;align-items:center}
+.ut>div{padding-left:8px;padding-right:8px}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:36px;width:1560px">
+  <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">배송·상차 정보 — 입력과 목록 노출</h1>
+  <p class="note" style="margin-top:6px;max-width:1500px">
+    답변에서 나온 세 가지 사실이 설계를 결정합니다 —
+    <b>① 날짜는 알지만 시각은 대개 미정</b> → 시각을 필수 입력칸으로 만들면 안 됨.
+    <b>② 배송방법은 90% 이상 채널과 함께 고정</b> → 채널 설정값으로 자동 채우고, 드문 예외만 고침.
+    <b>③ 실제 전달은 구두</b> → 화면이 구두를 대체하려 들지 않음. 목록에서 <b>무엇이 언제 나가는지</b>만 한눈에 보이면 충분.
+  </p>
+</div>
+
+<div style="position:absolute;left:40px;top:150px">
+  <div class="frame-label"><span class="pill key">입력</span> 발주서 등록 2단계 — 시트 행에 배송 블록 추가</div>
+  <div style="width:880px;background:#fff;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 20px 50px rgba(15,23,42,.18);overflow:hidden">
+    <div class="st bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2">
+      <div></div><div>시트명</div><div>채널</div><div>발주일</div><div class="text-right">건/라인</div>
+    </div>
+
+    <div class="border-b border-slate-100 bg-blue-50/40">
+      <div class="st py-2.5">
+        <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+        <div class="text-[13px] font-bold text-slate-900 mono truncate">택배_260818</div>
+        <div><span class="sel"><span class="ch bg-blue-50 text-blue-700 !px-1.5">택배</span><svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+        <div class="text-[12.5px] font-semibold text-slate-800 mono">08-18</div>
+        <div class="text-right text-[12.5px] mono text-slate-700">12 / 31</div>
+      </div>
+
+      <div class="pl-[43px] pr-3 pb-3.5">
+        <div class="flex items-end gap-3">
+          <div style="width:190px">
+            <span class="fl">배송 방법</span>
+            <span class="sel auto w-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>화물택배<svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="width:132px">
+            <span class="fl">상차일</span>
+            <span class="sel w-full mono">2026-08-19<svg class="ml-auto text-slate-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span>
+          </div>
+          <div class="flex-1">
+            <span class="fl">상차 시각 <span class="font-medium text-slate-400">— 몰라도 됩니다</span></span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="tk on">시간 미정</span><span class="tk">오전</span><span class="tk">오후</span><span class="tk ghost">직접 입력<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-blue-50/40">
+      <div class="st py-2.5">
+        <div class="flex justify-center"><div class="cb on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div></div>
+        <div class="text-[13px] font-bold text-slate-900 mono truncate">서울급식_260818</div>
+        <div><span class="sel"><span class="ch bg-emerald-50 text-emerald-700 !px-1.5">서울급식</span><svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span></div>
+        <div class="text-[12.5px] font-semibold text-slate-800 mono">08-18</div>
+        <div class="text-right text-[12.5px] mono text-slate-700">3 / 11</div>
+      </div>
+      <div class="pl-[43px] pr-3 pb-3.5">
+        <div class="flex items-end gap-3">
+          <div style="width:190px">
+            <span class="fl">배송 방법</span>
+            <span class="sel auto w-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>개인 용달<svg class="ml-auto text-slate-400" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="width:132px">
+            <span class="fl">상차일</span>
+            <span class="sel none w-full">미정<svg class="ml-auto" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span>
+          </div>
+          <div class="flex-1 pb-1">
+            <span class="inline-flex items-center gap-1.5 text-[11.5px] text-slate-500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>상차일은 비워도 등록됩니다 — 목록에 <b class="text-amber-700">배차 미정</b>으로 표시되고, 나중에 채우면 됩니다</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-5 py-3.5 border-t border-slate-100 flex items-center gap-2 bg-white">
+      <span class="text-[12px] text-slate-500"><b class="text-slate-900 mono">2</b>개 시트 · 라인 <b class="text-slate-900 mono">42</b></span>
+      <button class="ml-auto h-9 px-4 rounded-md border border-slate-200 text-slate-600 text-[13px] font-semibold">이전</button>
+      <button class="h-9 px-5 rounded-md bg-primary text-white text-[13px] font-semibold">2건 등록</button>
+    </div>
+  </div>
+  <p class="note" style="width:880px;margin-top:11px">
+    <b>필수 아님</b>이 핵심입니다. 필수로 만들면 배차 안 정해진 날 「기타」로 채워두고 끝까지 안 고칩니다.
+    비워두면 <b class="text-amber-700">배차 미정</b>이라 눈에 남아서 오히려 채워집니다.
+    시각은 <b>「시간 미정」이 기본 선택</b> — 대개 미정이니 기본값이 진실이어야 합니다.
+    배송방법은 <b>채널 설정값이 이미 들어와 있어</b> 대개 손댈 일이 없습니다.
+  </p>
+</div>
+
+<div style="position:absolute;left:970px;top:150px">
+  <div class="frame-label"><span class="pill key">목록</span> 묶음 목록에 「상차」 열 — 임박 순 정렬</div>
+  <div style="width:920px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 20px 50px rgba(15,23,42,.18);overflow:hidden">
+    <div class="ut bg-slate-50 border-b border-slate-200 text-[11.5px] font-bold text-slate-400 py-2.5">
+      <div>채널</div><div>시트명</div><div class="flex items-center gap-1 text-slate-700">상차<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg></div><div class="text-right">수령처</div><div>진행</div><div>업로드</div><div></div>
+    </div>
+
+    <div class="ut py-2.5 border-b border-slate-100 bg-red-50/40">
+      <div><span class="ch bg-violet-50 text-violet-700">이마트</span></div>
+      <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">이마트_260818</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260818.xlsx</div></div>
+      <div><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-600 text-white text-[11.5px] font-bold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>오늘 14:00 · 5톤</span></div>
+      <div class="text-right text-[13px] mono text-slate-700">3</div>
+      <div><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분 2</span></div>
+      <div class="text-[12px] text-slate-500 mono">08.20 09:14</div>
+      <div class="text-slate-300 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+    </div>
+
+    <div class="ut py-2.5 border-b border-slate-100">
+      <div><span class="ch bg-blue-50 text-blue-700">택배</span></div>
+      <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">택배_260818</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260818.xlsx</div></div>
+      <div><span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>내일 · 화물택배</span></div>
+      <div class="text-right text-[13px] mono text-slate-700">12</div>
+      <div><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 7</span></div>
+      <div class="text-[12px] text-slate-500 mono">08.20 09:14</div>
+      <div class="text-slate-300 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+    </div>
+
+    <div class="ut py-2.5 border-b border-slate-100">
+      <div><span class="ch bg-emerald-50 text-emerald-700">서울급식</span></div>
+      <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">서울급식_260818</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260818.xlsx</div></div>
+      <div><button class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-700 text-[11.5px] font-bold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>배차 미정</button></div>
+      <div class="text-right text-[13px] mono text-slate-700">3</div>
+      <div><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10.5px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기 3</span></div>
+      <div class="text-[12px] text-slate-500 mono">08.20 09:12</div>
+      <div class="text-slate-300 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+    </div>
+
+    <div class="ut py-2.5 opacity-60">
+      <div><span class="ch bg-cyan-50 text-cyan-700">해남급식</span></div>
+      <div class="min-w-0"><div class="text-[13.5px] font-bold text-slate-900 mono truncate">해남급식_260817</div><div class="text-[10.5px] text-slate-400 mono truncate">발주서_260817.xlsx</div></div>
+      <div><span class="inline-flex items-center gap-1.5 text-[12px] font-medium text-slate-400"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>8/18 상차 완료</span></div>
+      <div class="text-right text-[13px] mono text-slate-500">2</div>
+      <div><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold">전체 완료</span></div>
+      <div class="text-[12px] text-slate-400 mono">08.19 14:03</div>
+      <div class="text-slate-200 flex justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></div>
+    </div>
+  </div>
+  <p class="note" style="width:920px;margin-top:11px">
+    기본 정렬을 <b>상차 임박 순</b>으로. 업로드 시각 순은 사람이 신경 쓰는 순서가 아닙니다 — <b>먼저 나가는 것이 먼저 포장돼야</b> 합니다.
+    <b class="text-amber-700">배차 미정</b>은 그 자리에서 눌러 채우는 버튼입니다(모달 재방문 불필요). 시각이 정해진 건은 <b class="text-red-600">빨강</b>으로 앞당겨 보이고, 상차 끝난 건은 흐려집니다.
+  </p>
+</div>
+
+<div style="position:absolute;left:40px;top:590px;width:1850px">
+  <div style="background:#0f172a;border-radius:14px;padding:20px 24px">
+    <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:12px">정리 — 무엇을 하고, 무엇을 안 하는가</div>
+    <div style="display:flex;gap:34px">
+      <div style="flex:1">
+        <div class="text-[11.5px] font-bold text-blue-300 mb-2">필드 3개 추가</div>
+        <p class="note" style="color:#cbd5e1">
+          <span class="mono text-slate-100">shippingMethod</span> (enum 7종, nullable) ·
+          <span class="mono text-slate-100">loadingDate</span> (date, nullable) ·
+          <span class="mono text-slate-100">loadingTimeSlot</span> (<span class="mono">UNKNOWN</span>|<span class="mono">AM</span>|<span class="mono">PM</span>|<span class="mono">HH:mm</span>).
+          셋 다 <b style="color:#e2e8f0">nullable</b> — 모르는 걸 적게 만들면 거짓이 들어옵니다.
+        </p>
+      </div>
+      <div style="flex:1">
+        <div class="text-[11.5px] font-bold text-blue-300 mb-2">채널 설정값 하나로 끝</div>
+        <p class="note" style="color:#cbd5e1">
+          90% 이상 고정이라면 <b style="color:#e2e8f0">채널 설정에 기본 배송방법 1개</b>가 사실상 정답입니다. 등록 시 항상 채워져 있고, 예외인 날만 바로잡으면 됩니다.
+          최근 이력에서 자동 추론하는 건 예외 한 번에 기본값이 오염되니 하지 않습니다.
+        </p>
+      </div>
+      <div style="flex:1">
+        <div class="text-[11.5px] font-bold text-red-300 mb-2">이건 안 함</div>
+        <p class="note" style="color:#cbd5e1">
+          기사 연락처·차량번호·하차지 주소 필드를 지금 만들지 않습니다. 발주서에 없는 값이라 <b style="color:#e2e8f0">손으로 채워야 하고, 손으로 채우는 칸은 비어 있게</b> 됩니다.
+          필요해지면 비고에 적히는 걸 보고 그때 필드로 올리면 됩니다.
+        </p>
+      </div>
+      <div style="flex:1">
+        <div class="text-[11.5px] font-bold text-red-300 mb-2">A1 원문도 안 보여줌</div>
+        <p class="note" style="color:#cbd5e1">
+          A1의 배송 문구(<span class="mono">"화물 배차 예정"</span> 등)는 <b style="color:#e2e8f0">파싱 힌트로만 쓰고 화면에 노출하지 않습니다.</b>
+          올리는 사람이 담당자라 이미 사실을 알고 있고, 원문을 같이 보여주면 확인할 것이 두 개로 늘어납니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>
