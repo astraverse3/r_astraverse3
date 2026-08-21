@@ -21,6 +21,22 @@ D1c 화면을 브라우저에서 처음 돌려보며 나온 문제들.
 **결정 #36~#41 확정**: 배송방법은 enum이 아니라 **마스터 테이블 + 관리자 CRUD**(수출건은 그때그때 업체를 먼저 등록해 쓴다) · 상차 정보 전부 nullable · 채널 기본값은 `SystemConfig` key-value 재사용 · 삭제 대신 비활성 · 설정 화면은 `/admin/settings`에 섹션으로 쌓기 · 차량 톤수 미도입.
 D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼저 진행 가능.
 
+협의 중 **결정 #38이 뒤집혔다**. 처음엔 채널별 기본 배송업체를 `SystemConfig`에 저장하고 관리화면에서 설정하는 안이었는데,
+사용자가 "관리화면은 업체 목록만 관리하는 것 아니냐"고 짚었고 시안이 금지한 **이력 자동 추론** 쪽을 택했다.
+시안의 경고는 **직전 1건을 그대로 쓰는 방식**을 겨눈 것이라(예외 한 번이 곧 기본값), **최근 3건 최빈값**이면 예외가 다수에 묻히고
+업체를 실제로 바꾸면 두 건 만에 따라온다. 이 방식이면 저장할 곳도, 채널 설정 UI도, 초기 시드도 전부 사라진다.
+용어도 배송방법 → **배송업체**로 통일(`ShippingVendor`).
+
+### 배송·상차 S1 — 스키마 + Neon 마이그레이션 + 업체 7종 `feat`
+
+1. **스키마** — `ShippingVendor`(name unique·sortOrder·active) + `LoadingTimeSlot` enum(UNKNOWN|AM|PM|EXACT) + `PurchaseOrderUpload`에 `shippingVendorId`·`loadingDate`·`loadingTimeSlot`·`loadingTime`. **전부 nullable 또는 DEFAULT라 기존 묶음 백필 불필요**(결정 #37).
+2. **인덱스 2개** — `loadingDate`(묶음목록 상차 임박순), `channel+createdAt`(최근 3건 최빈값 추천 조회, 결정 #38).
+3. **마이그레이션** `20260821000000_shipping_vendor_and_loading` — SQL은 손으로 쓰지 않고 `prisma migrate diff --from-schema-datasource`로 실 DB와 비교해 생성, 헤더 주석만 붙였다. `migrate deploy`로 **Neon 적용 완료**. FK는 `ON DELETE SET NULL`(결정 #39 — 업체는 삭제 대신 비활성이라 과거 묶음이 끊기면 안 된다).
+4. **시드** [seed-shipping-vendors.ts](scripts/seed-shipping-vendors.ts) — 경동/대신/전국/해남원형화물·롯데택배·직접배송·방문수령 7건, sortOrder 10단위. 재실행 대비 `upsert`이되 **`update: {}`** — 관리화면에서 순서를 바꿔놨을 수 있어 덮지 않는다.
+
+**검증**: `tsc`·`eslint` 통과, `npm test` 40 pass, 시드 실행 결과 7건 확인.
+**다음**: S2 관리화면(`/admin/settings`에 배송업체 섹션) → S3 등록 모달 배송 블록 → S4 목록 상차 열.
+
 ---
 
 ## 2026-08-20

@@ -361,15 +361,41 @@ model AuditLog {
 //     PurchaseOrderUpload(묶음) → PurchaseOrder(건) → PurchaseOrderItem(라인) → PackageMovement(차감)
 // ------------------------------------------------------
 
+// 11.0 배송업체 마스터 — 화물사·직접배송·방문수령. 수출건 임시 업체도 관리화면에서 등록해 쓴다 (결정 #36)
+model ShippingVendor {
+  id        Int                   @id @default(autoincrement())
+  name      String                @unique // '경동화물'
+  sortOrder Int                   @default(0) // 목록 표시 순서
+  active    Boolean               @default(true) // 안 쓰는 업체는 숨김 — 과거 묶음은 유지 (결정 #39)
+  uploads   PurchaseOrderUpload[]
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+}
+
+// 상차 시각 — 날짜는 알아도 시각은 대개 미정이라 UNKNOWN이 기본값 (결정 #37)
+enum LoadingTimeSlot {
+  UNKNOWN
+  AM
+  PM
+  EXACT // loadingTime에 'HH:mm'이 들어있을 때만
+}
+
 // 11.1 업로드 묶음 — 시트 1장 = 묶음 1건 (#30). 중복감지(#16)·묶음목록·감사·일괄삭제 앵커
 model PurchaseOrderUpload {
-  id           Int             @id @default(autoincrement())
-  fileName     String // 원본 파일명 (중복감지 키의 일부)
-  sheetName    String // 시트명 '택배_260818' — 묶음 단위가 시트라서 키의 일부 (#30)
-  channel      PurchaseChannel // 묶음 단위 채널 (#30 — 업로드 때 사용자가 확정, #31)
-  orderDate    DateTime? // 시트별 발주일 (시트명·제목에서 추측 후 사용자 확정)
-  note         String? // 묶음 비고 — 묶음목록 ⋮ 메뉴에서 수정
-  orderCount   Int             @default(0) // 적재된 PurchaseOrder 수 (요약·검증)
+  id               Int             @id @default(autoincrement())
+  fileName         String // 원본 파일명 (중복감지 키의 일부)
+  sheetName        String // 시트명 '택배_260818' — 묶음 단위가 시트라서 키의 일부 (#30)
+  channel          PurchaseChannel // 묶음 단위 채널 (#30 — 업로드 때 사용자가 확정, #31)
+  orderDate        DateTime? // 시트별 발주일 (시트명·제목에서 추측 후 사용자 확정)
+  note             String? // 묶음 비고 — 묶음목록 ⋮ 메뉴에서 수정
+  orderCount       Int             @default(0) // 적재된 PurchaseOrder 수 (요약·검증)
+  // 배송·상차 (결정 #37 — 전부 nullable. 비면 목록에 「배차 미정」으로 남아 오히려 채워진다)
+  shippingVendorId Int?
+  shippingVendor   ShippingVendor? @relation(fields: [shippingVendorId], references: [id])
+  loadingDate      DateTime? // 상차일
+  loadingTimeSlot  LoadingTimeSlot @default(UNKNOWN)
+  loadingTime      String? // 'HH:mm' — slot이 EXACT일 때만
+
   uploadedById String? // 업로더 (User.id, relation 미설정 — 단순 저장)
   uploadedName String? // 업로더명 (탈퇴 대비)
   orders       PurchaseOrder[]
@@ -377,6 +403,8 @@ model PurchaseOrderUpload {
   updatedAt    DateTime        @updatedAt
 
   @@unique([fileName, sheetName, orderDate]) // 재업로드 중복 감지 (#16 개정 — 파일+시트+발주일)
+  @@index([loadingDate]) // 묶음목록 상차 임박순 정렬
+  @@index([channel, createdAt]) // 채널별 최근 3건 — 추천 배송업체 조회 (결정 #38)
 }
 
 // 11.2 주문 1건 = 발주처 + 수령인 = 엑셀 한 행 (결정 #11)
