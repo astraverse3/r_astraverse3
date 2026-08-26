@@ -18,6 +18,13 @@ import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { matchPurchaseOrderItem, normalizeItemName } from '@/lib/purchase-order-matcher'
 import {
+  compareLoading,
+  describeLoading,
+  todayIsoKst,
+  type LoadingDisplay,
+  type LoadingInfo,
+} from '@/lib/loading-schedule'
+import {
   suggestAllocation,
   computeLineStatus,
   computeOrderStatus,
@@ -166,15 +173,22 @@ export type UploadSummaryRow = {
   statusCount: { pending: number; partial: number; completed: number }
   unmatched: number // 매칭실패 라인 수
   deletable: boolean // 차감된 라인이 하나도 없어야 삭제 가능(#15)
+  // 배송·상차(S4) — 목록에서 그 자리에 채울 수 있어야 해서 원본 값도 함께 내려보낸다
+  loading: LoadingInfo
+  loadingDisplay: LoadingDisplay // '오늘 14:00' 같은 표시 라벨. 오늘 판정이 KST라 서버에서 만든다
+  shippingVendorId: number | null
 }
 
 export async function listPurchaseUploads(): Promise<
   { success: true; data: UploadSummaryRow[] } | { success: false; error: string }
 > {
   try {
+    const todayIso = todayIsoKst()
     const uploads = await prisma.purchaseOrderUpload.findMany({
+      // 정렬은 아래에서 상차 임박순으로 다시 잡는다. 여기서는 동순위를 이을 업로드 최신순만 정해둔다
       orderBy: { createdAt: 'desc' },
       include: {
+        shippingVendor: { select: { name: true } },
         orders: {
           select: {
             status: true,
@@ -196,12 +210,21 @@ export async function listPurchaseUploads(): Promise<
         unmatched += o.items.filter((i) => i.productTypeId === null).length
         movements += o.items.reduce((n, i) => n + i._count.movements, 0)
       }
+      const loading: LoadingInfo = {
+        loadingDate: u.loadingDate ? u.loadingDate.toISOString().slice(0, 10) : null,
+        loadingTimeSlot: u.loadingTimeSlot,
+        loadingTime: u.loadingTime,
+        vendorName: u.shippingVendor?.name ?? null,
+      }
       return {
         id: u.id,
         fileName: u.fileName,
         sheetName: u.sheetName,
         channel: u.channel,
         orderDate: u.orderDate ? u.orderDate.toISOString().slice(0, 10) : null,
+        loading,
+        loadingDisplay: describeLoading(loading, todayIso),
+        shippingVendorId: u.shippingVendorId,
         note: u.note,
         orderCount: u.orderCount,
         uploadedName: u.uploadedName,
@@ -211,6 +234,9 @@ export async function listPurchaseUploads(): Promise<
         deletable: movements === 0,
       }
     })
+    // 상차 임박순 — 먼저 나갈 것이 먼저 포장돼야 한다(계획서 §4-S4).
+    // findMany가 이미 업로드 최신순이므로, 동순위는 그 순서가 그대로 남는다(Array.sort는 안정 정렬)
+    data.sort((a, b) => compareLoading(a.loading, b.loading, todayIso))
     return { success: true, data }
   } catch (error) {
     console.error('[listPurchaseUploads] failed:', error)

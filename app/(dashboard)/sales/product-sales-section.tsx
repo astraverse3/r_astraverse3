@@ -1,5 +1,6 @@
 import { AlertCircle } from 'lucide-react'
 import { listPurchaseUploads } from '@/app/actions/purchase-order'
+import { listShippingVendors } from '@/app/actions/shipping-vendor'
 import { UploadDialog } from './upload-dialog'
 import { UploadTable } from './upload-table'
 
@@ -7,7 +8,9 @@ import { UploadTable } from './upload-table'
 // 매트릭스 차감 화면은 D2에서 연결한다.
 
 export async function ProductSalesSection() {
-    const res = await listPurchaseUploads()
+    // 배송업체는 목록의 「배차 미정」을 그 자리에서 채울 때 쓴다(S4) — 클릭할 때마다 왕복하지 않도록 미리 내려보낸다
+    const [res, vendorRes] = await Promise.all([listPurchaseUploads(), listShippingVendors()])
+    const vendors = (vendorRes.success ? (vendorRes.data ?? []) : []).filter((v) => v.active)
 
     return (
         <div className="px-3 sm:px-0 flex flex-col gap-3">
@@ -21,7 +24,7 @@ export async function ProductSalesSection() {
                     {res.error}
                 </div>
             ) : (
-                <UploadTable rows={res.data} />
+                <UploadTable rows={res.data} vendors={vendors} />
             )}
         </div>
     )

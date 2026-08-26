@@ -5,15 +5,23 @@
 // 행 클릭은 매트릭스(D2) 연결 전까지 비활성 — 커서·호버 배경도 두지 않는다.
 
 import { useState } from 'react'
-import { Package, MessageSquareText } from 'lucide-react'
+import { Package, MessageSquareText, ChevronUp } from 'lucide-react'
 import { CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
 import { UploadRowMenu } from './upload-row-menu'
+import { LoadingCell } from './loading-cell'
 import type { UploadSummaryRow } from '@/app/actions/purchase-order'
+import type { ShippingVendorOption } from '@/app/actions/purchase-order-upload'
 import type { PurchaseChannel } from '@prisma/client'
 
-const GRID = 'grid grid-cols-[92px_minmax(0,1fr)_56px_44px] sm:grid-cols-[104px_minmax(0,1fr)_60px_216px_84px_112px_40px] items-center gap-2 px-3'
+const GRID = 'grid grid-cols-[92px_minmax(0,1fr)_56px_44px] sm:grid-cols-[104px_minmax(0,1fr)_176px_60px_180px_72px_100px_40px] items-center gap-2 px-3'
 
-export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
+export function UploadTable({
+    rows,
+    vendors,
+}: {
+    rows: UploadSummaryRow[]
+    vendors: ShippingVendorOption[]
+}) {
     const [channel, setChannel] = useState<PurchaseChannel | 'ALL'>('ALL')
     const filtered = channel === 'ALL' ? rows : rows.filter((r) => r.channel === channel)
     const usedChannels = PURCHASE_CHANNELS.filter((c) => rows.some((r) => r.channel === c))
@@ -39,6 +47,11 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
                 >
                     <div>채널</div>
                     <div>시트명</div>
+                    {/* 기본 정렬이 상차 임박순이라는 걸 열 제목에서 알 수 있게 한다 */}
+                    <div className="hidden sm:flex items-center gap-1 text-slate-700">
+                        상차
+                        <ChevronUp className="w-3 h-3" strokeWidth={2.6} />
+                    </div>
                     <div className="text-right">수령처</div>
                     <div className="hidden sm:block">진행</div>
                     <div className="hidden sm:block">매칭실패</div>
@@ -47,7 +60,16 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
                 </div>
 
                 {filtered.map((r) => (
-                    <div key={r.id} className="border-b border-slate-100 last:border-b-0">
+                    <div
+                        key={r.id}
+                        className={`border-b border-slate-100 last:border-b-0 ${
+                            r.loadingDisplay.tone === 'today'
+                                ? 'bg-red-50/40'
+                                : r.loadingDisplay.tone === 'done'
+                                  ? 'opacity-60'
+                                  : ''
+                        }`}
+                    >
                         <div className={`${GRID} py-2.5`}>
                             <div>
                                 <span
@@ -59,6 +81,15 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
                             <div className="min-w-0">
                                 <p className="text-[13.5px] font-bold text-slate-900 truncate">{r.sheetName}</p>
                                 <p className="text-[10.5px] text-slate-400 truncate">{r.fileName}</p>
+                            </div>
+                            <div className="hidden sm:block min-w-0">
+                                <LoadingCell
+                                    uploadId={r.id}
+                                    loading={r.loading}
+                                    display={r.loadingDisplay}
+                                    shippingVendorId={r.shippingVendorId}
+                                    vendors={vendors}
+                                />
                             </div>
                             <div className="text-right text-[13px] text-slate-700">{r.orderCount}</div>
                             <div className="hidden sm:flex items-center gap-1 flex-wrap">
@@ -81,6 +112,13 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
 
                         {/* 모바일에서 접힌 컬럼 요약 + 비고 */}
                         <div className="sm:hidden px-3 pb-2.5 flex items-center gap-1.5 flex-wrap">
+                            <LoadingCell
+                                uploadId={r.id}
+                                loading={r.loading}
+                                display={r.loadingDisplay}
+                                shippingVendorId={r.shippingVendorId}
+                                vendors={vendors}
+                            />
                             <ProgressBadges row={r} />
                             {r.unmatched > 0 && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[10.5px] font-bold border border-red-200">
@@ -114,7 +152,7 @@ export function UploadTable({ rows }: { rows: UploadSummaryRow[] }) {
             </div>
 
             <p className="text-[11.5px] text-slate-400 px-1">
-                묶음 1건 = 시트 1장 · 매트릭스 차감 화면은 다음 단계에서 연결됩니다.
+                묶음 1건 = 시트 1장 · 상차 임박순으로 정렬돼요 — 먼저 나갈 것이 먼저 포장되도록. 매트릭스 차감 화면은 다음 단계에서 연결됩니다.
             </p>
         </div>
     )

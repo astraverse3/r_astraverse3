@@ -18,31 +18,30 @@ import {
     DialogDescription,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
 import {
     previewPurchaseOrder,
     uploadPurchaseOrder,
     type SheetPreview,
+    type ShippingVendorOption,
     type UploadSelection,
 } from '@/app/actions/purchase-order-upload'
+import { SheetRow, type SheetDraft } from './sheet-row'
 import type { PurchaseChannel } from '@prisma/client'
 
-const NOTE_MAX = 500
-
-/** 시트별 사용자 입력 — 체크 여부 + 확정할 채널·발주일·비고 */
-type SheetDraft = {
-    checked: boolean
-    channel: PurchaseChannel | ''
-    orderDate: string // 'yyyy-mm-dd' 또는 ''
-    note: string
-}
+/** 채널별 추천 배송업체 — 고정 패턴이 없는 채널은 키가 없다(결정 #38) */
+type Recommendations = Partial<Record<PurchaseChannel, number>>
 
 /**
  * 한 번에 한 장만 올리는 게 대부분이라, 발주일이 가장 늦은 시트 하나만 기본 체크한다.
  * 발주일은 시트명에서 뽑은 값이라 비어 있을 수 있고, 그때는 목록에서 뒤에 오는 시트를 최신으로 본다.
  * 채널을 못 뽑은 시트는 어차피 그대로는 등록할 수 없어 후보에서 뺀다.
+ *
+ * 배송업체는 채널 추천값으로 미리 채워둔다 — 90% 이상 채널과 함께 고정이라 대개 손댈 일이 없다.
  */
-function buildDrafts(sheets: SheetPreview[]): Record<string, SheetDraft> {
+function buildDrafts(
+    sheets: SheetPreview[],
+    recommended: Recommendations,
+): Record<string, SheetDraft> {
     const candidates = sheets.filter(
         (s) => s.recognized && !s.alreadyUploaded && s.suggestedChannel !== null,
     )
@@ -59,6 +58,11 @@ function buildDrafts(sheets: SheetPreview[]): Record<string, SheetDraft> {
                 channel: s.suggestedChannel ?? '',
                 orderDate: s.suggestedOrderDate ?? '',
                 note: '',
+                shippingVendorId: (s.suggestedChannel ? recommended[s.suggestedChannel] : undefined) ?? '',
+                vendorTouched: false,
+                loadingDate: '',
+                loadingTimeSlot: 'UNKNOWN' as const,
+                loadingTime: '',
             },
         ]),
     )
@@ -71,12 +75,16 @@ export function UploadDialog() {
     const [file, setFile] = useState<File | null>(null)
     const [sheets, setSheets] = useState<SheetPreview[] | null>(null)
     const [drafts, setDrafts] = useState<Record<string, SheetDraft>>({})
+    const [vendors, setVendors] = useState<ShippingVendorOption[]>([])
+    const [recommended, setRecommended] = useState<Recommendations>({})
     const [busy, setBusy] = useState<'preview' | 'upload' | null>(null)
 
     const reset = () => {
         setFile(null)
         setSheets(null)
         setDrafts({})
+        setVendors([])
+        setRecommended({})
         setBusy(null)
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -100,17 +108,33 @@ export function UploadDialog() {
         }
         setFile(picked)
         setSheets(res.sheets)
-        setDrafts(buildDrafts(res.sheets))
+        setVendors(res.vendors)
+        setRecommended(res.recommendedVendorByChannel)
+        setDrafts(buildDrafts(res.sheets, res.recommendedVendorByChannel))
     }
 
     const patch = (sheetName: string, next: Partial<SheetDraft>) =>
-        setDrafts((prev) => ({ ...prev, [sheetName]: { ...prev[sheetName], ...next } }))
+        setDrafts((prev) => {
+            const current = prev[sheetName]
+            const merged = { ...current, ...next }
+            // 채널을 바꾸면 배송업체도 그 채널 추천값으로 따라간다.
+            // 사용자가 직접 고른 뒤에는 건드리지 않는다 — 고쳐놓은 값이 채널 변경으로 되돌아가면 안 된다
+            if (next.channel !== undefined && next.channel !== current.channel && !merged.vendorTouched) {
+                merged.shippingVendorId = (next.channel === '' ? undefined : recommended[next.channel]) ?? ''
+            }
+            return { ...prev, [sheetName]: merged }
+        })
 
     const selectable = (s: SheetPreview) => s.recognized && !s.alreadyUploaded
     const checkedSheets = (sheets ?? []).filter((s) => drafts[s.sheetName]?.checked)
     const missingChannel = checkedSheets.filter((s) => drafts[s.sheetName].channel === '')
+    // 상차 시각을 「직접 입력」으로 두고 시각을 안 채운 시트 — 서버 검증에 걸리므로 여기서 막는다
+    const missingTime = checkedSheets.filter(
+        (s) => drafts[s.sheetName].loadingTimeSlot === 'EXACT' && drafts[s.sheetName].loadingTime === '',
+    )
     const totalLines = checkedSheets.reduce((n, s) => n + s.itemCount, 0)
-    const canSubmit = checkedSheets.length > 0 && missingChannel.length === 0 && busy === null
+    const canSubmit =
+        checkedSheets.length > 0 && missingChannel.length === 0 && missingTime.length === 0 && busy === null
 
     const handleSubmit = async () => {
         if (!file || !canSubmit) return
@@ -121,6 +145,11 @@ export function UploadDialog() {
                 channel: d.channel as PurchaseChannel,
                 orderDate: d.orderDate === '' ? null : d.orderDate,
                 note: d.note.trim() === '' ? null : d.note.trim(),
+                shippingVendorId: d.shippingVendorId === '' ? null : d.shippingVendorId,
+                loadingDate: d.loadingDate === '' ? null : d.loadingDate,
+                loadingTimeSlot: d.loadingTimeSlot,
+                // 「직접 입력」일 때만 의미가 있다. 값이 비어 있으면 canSubmit이 이미 막았다
+                loadingTime: d.loadingTimeSlot === 'EXACT' ? d.loadingTime : null,
             }
         })
 
@@ -213,6 +242,7 @@ export function UploadDialog() {
                                     sheet={s}
                                     draft={drafts[s.sheetName]}
                                     selectable={selectable(s)}
+                                    vendors={vendors}
                                     onPatch={(next) => patch(s.sheetName, next)}
                                 />
                             ))}
@@ -231,6 +261,11 @@ export function UploadDialog() {
                                 <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700">
                                     <AlertTriangle className="w-3.5 h-3.5" />
                                     채널을 선택하지 않은 시트가 {missingChannel.length}개 있어요
+                                </span>
+                            ) : missingTime.length > 0 ? (
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    상차 시각을 안 채운 시트가 {missingTime.length}개 있어요
                                 </span>
                             ) : (
                                 <>
@@ -363,146 +398,3 @@ function FileCard({
         </div>
     )
 }
-
-function SheetRow({
-    sheet,
-    draft,
-    selectable,
-    onPatch,
-}: {
-    sheet: SheetPreview
-    draft: SheetDraft
-    selectable: boolean
-    onPatch: (next: Partial<SheetDraft>) => void
-}) {
-    const noChannel = draft.checked && draft.channel === ''
-    return (
-        <div
-            className={`border-b border-slate-100 last:border-b-0 ${
-                !selectable ? 'bg-slate-50/70' : draft.checked ? 'bg-blue-50/40' : ''
-            }`}
-        >
-            <div className="grid grid-cols-[34px_minmax(0,1fr)] sm:grid-cols-[34px_minmax(0,1fr)_132px_128px_74px_minmax(0,180px)] items-center gap-2 py-2.5 px-2">
-                <div className="flex justify-center">
-                    <input
-                        type="checkbox"
-                        className="w-4 h-4 accent-blue-600 disabled:opacity-40"
-                        checked={draft.checked}
-                        disabled={!selectable}
-                        onChange={(e) => onPatch({ checked: e.target.checked })}
-                    />
-                </div>
-                <div className="min-w-0">
-                    <p
-                        className={`text-[13px] font-bold truncate ${
-                            selectable ? 'text-slate-900' : 'text-slate-400'
-                        }`}
-                    >
-                        {sheet.sheetName}
-                    </p>
-                    {/* 모바일에서는 컬럼이 접히므로 요약을 한 줄로 */}
-                    <p className="sm:hidden text-[11px] text-slate-400">
-                        {sheet.recognized
-                            ? `${sheet.orderCount}건 / ${sheet.itemCount}라인`
-                            : sheet.reason}
-                    </p>
-                </div>
-
-                <div className="col-start-2 sm:col-start-auto">
-                    {sheet.recognized ? (
-                        <select
-                            value={draft.channel}
-                            disabled={!selectable}
-                            onChange={(e) => onPatch({ channel: e.target.value as PurchaseChannel | '' })}
-                            className={`w-full h-8 rounded-md border px-2 text-[12px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:text-slate-300 ${
-                                draft.channel === ''
-                                    ? 'border-amber-300 bg-amber-50 text-amber-700'
-                                    : 'border-slate-300 bg-white text-slate-700'
-                            }`}
-                        >
-                            <option value="">채널 선택</option>
-                            {PURCHASE_CHANNELS.map((c) => (
-                                <option key={c} value={c}>
-                                    {CHANNEL_META[c].label}
-                                </option>
-                            ))}
-                        </select>
-                    ) : (
-                        <span className="text-[12px] text-slate-300">—</span>
-                    )}
-                </div>
-
-                <div className="col-start-2 sm:col-start-auto">
-                    {sheet.recognized ? (
-                        <input
-                            type="date"
-                            value={draft.orderDate}
-                            disabled={!selectable}
-                            onChange={(e) => onPatch({ orderDate: e.target.value })}
-                            className="w-full h-8 rounded-md border border-slate-300 bg-white px-2 text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:text-slate-300"
-                        />
-                    ) : (
-                        <span className="text-[12px] text-slate-300">—</span>
-                    )}
-                </div>
-
-                <div className="hidden sm:block text-right text-[12.5px] text-slate-700">
-                    {sheet.recognized ? `${sheet.orderCount} / ${sheet.itemCount}` : '—'}
-                </div>
-
-                <div className="col-start-2 sm:col-start-auto flex flex-wrap gap-1">
-                    {sheet.alreadyUploaded ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 text-[10.5px] font-bold">
-                            <Check className="w-3 h-3" />
-                            이미 적재됨
-                        </span>
-                    ) : !sheet.recognized ? (
-                        <span className="hidden sm:inline text-[11px] text-slate-400 leading-tight">
-                            {sheet.reason}
-                        </span>
-                    ) : noChannel ? (
-                        <Warn>시트명에서 채널을 못 찾음 — 직접 선택</Warn>
-                    ) : sheet.warnings.length > 0 ? (
-                        sheet.warnings.map((w, i) => <Warn key={i}>{w}</Warn>)
-                    ) : (
-                        <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-600">
-                            <Check className="w-3 h-3" />
-                            이상 없음
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {draft.checked && (
-                <div className="pl-[42px] pr-2 pb-3">
-                    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                        <textarea
-                            rows={2}
-                            maxLength={NOTE_MAX}
-                            value={draft.note}
-                            onChange={(e) => onPatch({ note: e.target.value })}
-                            placeholder="비고 — 보관 요청·여유 물량·배차 등 사람이 알아둘 점"
-                            className="w-full px-3 py-2 text-[12px] text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none"
-                        />
-                        <div className="flex items-center justify-between px-3 py-1 bg-slate-50 border-t border-slate-100">
-                            <span className="text-[10.5px] text-slate-400">이 묶음에 그대로 저장됩니다</span>
-                            <span className="text-[10.5px] text-slate-400">
-                                {draft.note.length} / {NOTE_MAX}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
-
-function Warn({ children }: { children: React.ReactNode }) {
-    return (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[10.5px] font-semibold">
-            <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
-            {children}
-        </span>
-    )
-}
-
