@@ -2,6 +2,43 @@
 
 ## 2026-08-26
 
+### 재고 재포장 R1 — 스키마 + 순수 검증 + 액션 `feat`
+
+계획서 [plan-재고재포장.md](docs/plan/plan-재고재포장.md) §4-R1.
+
+**왜 새 작업으로 갈라졌나** — D2 매트릭스 착수 전에 남아 있던 🔴 미결 「재고 분할 차감」(양식통일 계획서 §7)을 파다가, **분할과 병합이 같은 기능**임이 드러나 독립 작업으로 분리했다.
+
+실측이 방향을 정했다.
+- **분할이 필요한 건 톤백뿐** — 톤백 199행 중 자루중량 **124종**, 100kg 배수는 **29행**. 「1,000kg 주문에 1,004kg 자루」는 예외가 아니라 기본값이다. 반면 일반 규격(1·3·4·5·8·10·20kg)은 낱개라 `PackageMovement.count` 정수로 이미 전부 표현된다.
+- **잔량이 7,006kg 쌓여 있다** — 96행 전부 가용(도입 이래 소진 0건). `milling.ts:15`가 잔량을 「재포장 소진」으로 정의해 놓고 **그 수단이 없었던** 것.
+- **병합 대상이 널려 있다** — 같은 로트에 규격 2종 이상 공존이 **86/115 로트**. 로트 `251119-11-15100914-391`은 잔량만 10행 84kg.
+
+**결정 #43 — 가용재고 공식을 건드리지 않는다**
+
+`PackageMovement`에 중량(kg) 필드를 더하는 안을 버렸다. `available = count - SUM(movements.count)`가 [packages.ts:189](app/actions/packages.ts#L189)·[purchase-order.ts:66](app/actions/purchase-order.ts#L66)·[:140](app/actions/purchase-order.ts#L140)·[:331](app/actions/purchase-order.ts#L331) 네 곳에 박혀 있어, kg 차감을 얹으면 가용재고가 「개수」와 「kg」 두 갈래로 갈라지고 비판매 차감·통계까지 재작성해야 한다.
+
+대신 **소스 소진을 movement로 표현**한다 — `MovementType.REPACK` 1개 추가로 그 네 곳이 자동으로 재포장을 반영한다.
+```
+소스 소진 = PackageMovement(type=REPACK)  →  결과 생성 = MillingOutputPackage(repackId)  →  Repack이 둘을 묶는다
+```
+
+**로트 제약은 실무를 따랐다** — 원칙은 동일 로트지만 도정 때 같은 품종이면 실제로 섞이고, 로트 다른 잔량을 합쳐 하나의 로트로 지정해 파는 일이 있다(사용자 확인). 그래서 **로트는 달라도 되고**, 결과 줄이 승계할 로트를 사람이 고른다. 품종·도정유형·출처(MILLED/PURCHASED)·분류(벼/잡곡)만 같아야 한다.
+이건 새 개념이 아니다 — 도정 포장 입력 [add-packaging-dialog.tsx:62](<app/(dashboard)/milling/add-packaging-dialog.tsx#L62>) `computeLotGroups`가 이미 같은 결로 동작한다(비율 자동배분은 `9defc62`에서 제거됨).
+
+**손실은 허용한다** — 실물이라 오차가 존재한다. 결과 합이 소스를 **초과하면 차단**, 부족분은 `Repack.lossKg`로 기록하고 1%를 넘을 때만 확인을 한 번 받는다.
+
+**변경 파일**
+- `prisma/schema.prisma` + 마이그레이션 `20260826000000_repack` — **Neon 실DB 적용 완료**. enum append + nullable 컬럼 + 신규 테이블이라 전부 비파괴
+- [lib/repack.ts](lib/repack.ts) — `validateRepack`(동질성·가용·중량보존·손실) / `buildLotOptions`(같은 로트는 묶고, lotNo 없는 매입 잡곡은 행마다 별개) / 중량 합산. DB 접근 없음
+- [lib/repack.test.ts](lib/repack.test.ts) — 22개. 세 행위(병합 84kg → 20kg×4+잔량4kg · 분할 1,004 → 1,000+4 · 규격변경 4kg → 1kg×4)를 그대로 케이스로
+- [app/actions/repack.ts](app/actions/repack.ts) — `getRepackSources`(동질성을 **서버가** 판정) / `createRepack` / `cancelRepack`(결과에 차감 없을 때만). 전부 `OPERATION_MANAGE` + 감사로그
+
+⚠️ **트랜잭션 왕복 4회 고정 + `timeout: 30초`** — 같은 날 배송·상차에서 겪은 적재 타임아웃(Neon 왕복 250~300ms × N > 기본 5초)의 교훈을 처음부터 적용했다. 결과 줄의 SKU는 **고유 (규격+포장지) 조합 수**만큼만 `findOrCreateProductType`을 호출한다.
+
+**검증** — `npm test` **84/84**(기존 62 + 신규 22) · `tsc --noEmit` 0 · `eslint` 0 · 실DB에서 `MovementType`에 REPACK 존재·`repackId` 컬럼 2곳·`Repack` 조회 확인.
+
+---
+
 ### 배송·상차 S3·S4 — 등록 모달 배송 블록 + 목록 상차 열 `feat` `fix`
 
 계획서 [plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S3·S4. 보고서 [report-배송상차-S3S4-2026-08-26.md](docs/report/report-배송상차-S3S4-2026-08-26.md).

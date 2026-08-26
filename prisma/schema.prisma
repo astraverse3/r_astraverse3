@@ -164,11 +164,17 @@ model MillingOutputPackage {
   productTypeId Int?
   productType   ProductType? @relation(fields: [productTypeId], references: [id])
 
-  // 제품재고 차감 이력 (판매·증정·분실·파손·기타 — 결정 #19. 가용재고 = count - SUM(movements.count))
+  // 제품재고 차감 이력 (판매·증정·분실·파손·재포장·기타 — 결정 #19. 가용재고 = count - SUM(movements.count))
   movements PackageMovement[]
+
+  // 재포장으로 생겨난 행이면 그 Repack (결정 #43). 원래부터 있던 행은 null
+  repackId Int?
+  repack   Repack? @relation(fields: [repackId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([repackId])
 }
 
 // ------------------------------------------------------
@@ -247,6 +253,7 @@ enum MovementType {
   GIFT // 증정
   LOST // 분실
   DAMAGED // 파손
+  REPACK // 재포장으로 소진 (결정 #43 — 판매 아님. Repack.sources)
   OTHER // 기타
 }
 
@@ -457,10 +464,13 @@ model PackageMovement {
   packageId Int
   package   MillingOutputPackage @relation(fields: [packageId], references: [id])
   count     Int // 차감 개수(양수)
-  type      MovementType // SALE | GIFT | LOST | DAMAGED | OTHER (판매=SALE)
+  type      MovementType // SALE | GIFT | LOST | DAMAGED | REPACK | OTHER (판매=SALE)
 
   orderItemId Int? // 발주서 경로만. 개별판매·비판매차감은 null
   orderItem   PurchaseOrderItem? @relation(fields: [orderItemId], references: [id])
+
+  repackId Int? // 재포장 경로만(type=REPACK). 그 외는 null (결정 #43)
+  repack   Repack? @relation(fields: [repackId], references: [id])
 
   customer   String? // 개별판매 거래처(자유 텍스트). 발주서는 order에서 파생되므로 null
   note       String? // 비판매 사유 메모 등
@@ -473,4 +483,30 @@ model PackageMovement {
   // ※ 금액(단가·매출액) 필드 없음 — 수량 차감만 (결정 #25)
   @@index([packageId]) // 가용재고 SUM 조회 핵심 인덱스
   @@index([orderItemId])
+  @@index([repackId])
+}
+
+// ------------------------------------------------------
+// 11.5 재포장 (결정 #43) — 분할·병합·규격변경을 하나로
+//      소스 행 N개를 소진(sources: type=REPACK movement)하고 결과 행 M개를 만든다.
+//      가용재고 공식(count - SUM(movements.count))은 그대로 두고 그 위에 얹힌다.
+//        분할   톤백 1,004kg×1 → 1,000kg×1 + 4kg×1
+//        규격변경 잔량 4kg×1    → 1kg×4
+//        병합   잔량 10행 84kg → 20kg×4 + 잔량 4kg
+// ------------------------------------------------------
+model Repack {
+  id         Int      @id @default(autoincrement())
+  occurredAt DateTime @default(now()) // 실제 작업일(사용자 입력 가능)
+  note       String?
+  lossKg     Float    @default(0) // 소스 합 - 결과 합 (0 이상. 실물 오차 허용)
+
+  createdById String? // 작업자 (감사 보강 — relation 미설정)
+  createdName String?
+
+  sources PackageMovement[] // 소진된 소스 (type=REPACK)
+  results MillingOutputPackage[] // 새로 생긴 결과 행
+
+  createdAt DateTime @default(now())
+
+  @@index([occurredAt])
 }
