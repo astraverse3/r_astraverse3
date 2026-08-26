@@ -1,5 +1,36 @@
 # 작업일지
 
+## 2026-08-26
+
+### 배송·상차 S2 — 배송업체 관리화면 + 설정 2단 레이아웃 `feat`
+
+[plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S2. 보고서 [report-배송상차-S2관리화면-2026-08-26.md](docs/report/report-배송상차-S2관리화면-2026-08-26.md).
+
+1. **서버 액션** [shipping-vendor.ts](app/actions/shipping-vendor.ts) — `list`(requireSession) / `create`·`rename`·`move`·`toggleActive`(requireAdmin) 5종.
+   감사로그는 create·rename·toggle 3종에만(`move`는 표시 순서일 뿐). **삭제 없음**(결정 #39 — 과거 묶음이 참조).
+   권한을 `OPERATION_MANAGE`가 아니라 `requireAdmin`으로 둔 건 [middleware.ts:14](middleware.ts#L14)에서 `/admin/settings`가 이미 ADMIN 전용이기 때문.
+2. **관리화면** [shipping-vendor-section.tsx](<app/(dashboard)/admin/settings/shipping-vendor-section.tsx>) — 인라인 이름수정(Enter 저장/Esc 취소) · ↑↓ 순서 · 사용 토글 · 추가 폼.
+   미사용 업체는 관리화면에서 **숨기지 않고** 구분선 아래로 — 결정 #39의 "목록에서 숨긴다"는 등록 화면 드롭다운 이야기라, 관리화면에서까지 사라지면 되돌릴 방법이 없다.
+   순서 조정은 사용중 목록에서만(미사용은 드롭다운에 안 뜨니 순서가 의미 없다).
+3. **순서 swap 로직을 구현 중 한 번 고쳤다** — 처음엔 `findFirst` + `sortOrder: { lte/gte }`로 이웃을 찾았는데,
+   그 쿼리의 동순위 tie-break(`id`)가 목록 정렬의 tie-break(`name`)와 달라 **화면에 보이는 이웃과 실제 맞바꾸는 대상이 어긋날 수** 있었다.
+   → 목록과 같은 정렬로 형제 전체를 뽑아 `findIndex`로 인접 항목을 고른다.
+4. **설정 화면 A안(2단 컬럼)** — Claude Design 핸드오프 가이드 수령 후 적용.
+   컨테이너 `space-y-4` → `columns-1 xl:columns-2 gap-4`(긴 카드인 배송업체를 앞에), `SettingSection`을 [setting-section.tsx](<app/(dashboard)/admin/settings/setting-section.tsx>)로 분리하며 헤더 우측 `action` 슬롯 추가,
+   수율 저장 버튼을 카드 하단 → 헤더로, 행 높이 축소(`py-2` → `h-[30px]`/`h-8`).
+   ⚠️ `columns-*`와 `space-y-*`는 같이 못 쓴다(컬럼 경계에서 마진이 어긋남) → 세로 간격은 카드의 `mb-4`가 담당.
+5. **순서 이동을 낙관적 처리로** — 사용자가 「↑↓ 누를 때마다 쿼리하는 것 같다」고 지적. 맞았다.
+   `sortOrder`를 즉시 확정하고 `router.refresh()`로 페이지를 다시 읽어 **클릭당 쿼리 6번**이 돌았다.
+   → 목록을 로컬 상태로 들고 배열에서 맞바꿔 즉시 반영, 저장은 뒤에서. **6 → 3**으로.
+   연타는 `saveQueue` ref 프로미스 체인으로 **직렬화**(병렬로 나가면 sortOrder 맞바꾸기가 서로를 덮는다),
+   실패 시 부분 롤백 대신 `router.refresh()`로 서버 상태를 다시 읽는다.
+   props 재동기화는 `useEffect` 대신 **렌더 중 동기화**(옛 목록이 한 프레임 비치지 않게).
+
+**검증**: `tsc`·`eslint` 통과, `npm test` 40 pass. 브라우저에서 순서 이동·업체 추가 2건 확인 완료.
+**다음**: S3 등록 모달 배송 블록(`upload-dialog.tsx` 441줄 → `SheetRow` 분리 동반) → S4 목록 상차 열.
+
+---
+
 ## 2026-08-21
 
 ### 발주서 등록 모달 UX 수정 5건 + 문구 정리 `fix`
