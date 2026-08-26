@@ -17,6 +17,7 @@ import { EditMiscPackageDialog } from './edit-misc-package-dialog'
 import { MiscPurchaseDialog } from './misc-purchase-dialog'
 import { EditMiscPurchaseDialog } from './edit-misc-purchase-dialog'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { RepackToggleButton } from './repack-toggle-button'
 
 interface Props {
     items: PackageItem[]
@@ -43,6 +44,8 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
 
     const [packageOpen, setPackageOpen] = useState(false)
     const [purchaseOpen, setPurchaseOpen] = useState(false)
+    // 재포장도 포장 작업이라 canMill과 같은 권한 (결정 #43 §3.7)
+    const [selectMode, setSelectMode] = useState(false)
     const [editPackageId, setEditPackageId] = useState<number | null>(null)
     const [editOpen, setEditOpen] = useState(false)
     const [editPurchaseId, setEditPurchaseId] = useState<number | null>(null)
@@ -116,13 +119,20 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
             <section className="flex items-center justify-end gap-2 px-1">
-                <PackageExcelButtons filters={filters} />
-                <PackageSearchDialog category="MISC_GRAIN" varieties={varieties} />
+                <PackageExcelButtons filters={filters} disabled={selectMode} />
+                <PackageSearchDialog
+                    category="MISC_GRAIN"
+                    varieties={varieties}
+                    disabled={selectMode}
+                />
+                <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
+                {canMill && <RepackToggleButton active={selectMode} onToggle={setSelectMode} />}
                 {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
                 {canMill && (
                     <Button
                         size="sm"
                         variant="outline"
+                        disabled={selectMode}
                         onClick={() => setPackageOpen(true)}
                         className="h-8 px-3 font-semibold rounded-md"
                     >
@@ -132,6 +142,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 {canPurchase && (
                     <Button
                         size="sm"
+                        disabled={selectMode}
                         onClick={() => setPurchaseOpen(true)}
                         className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
                     >
@@ -180,6 +191,8 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 emptyHint="상단 [+ 포장하기]로 잡곡 원물재고를 포장해 등록하세요."
                 onEditRow={canAnyRow ? handleEditRow : undefined}
                 onDeleteRow={canAnyRow ? handleDeleteRow : undefined}
+                selectMode={selectMode}
+                onExitSelectMode={() => setSelectMode(false)}
             />
         </div>
     )

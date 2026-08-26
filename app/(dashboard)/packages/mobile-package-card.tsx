@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '@/app/actions/packages'
-import type { PackageRowActions } from './package-row'
+import type { PackageRowActions, PackageSelection } from './package-row'
 
 /**
  * 모바일 품종 카드 — 핸드오프 §4.3 + §4.2.7.
@@ -41,6 +41,25 @@ function LotOrSourceCell({ lot, source }: { lot: string | null; source: PackageR
     if (lot) return <LotChip lot={lot} />
     if (source === 'PURCHASED') return <PurchasedChip />
     return <span className="text-[10px] text-slate-300">—</span>
+}
+
+// 재포장 선택 체크박스 (결정 #43 R2) — 터치 영역을 44px로 넓힌다.
+function RowCheckbox({ row, selection }: { row: PackageRowData; selection: PackageSelection }) {
+    const disabled = selection.isDisabled(row)
+    return (
+        <span className="relative flex items-center shrink-0">
+            <span aria-hidden className="absolute -inset-2.5" />
+            <input
+                type="checkbox"
+                checked={selection.selectedIds.has(row.id)}
+                disabled={disabled}
+                onChange={() => selection.onToggleRow(row)}
+                onClick={e => e.stopPropagation()}
+                aria-label={`${row.variety} ${row.spec} 선택`}
+                className="h-4 w-4 accent-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+            />
+        </span>
+    )
 }
 
 // 모바일 행 액션 메뉴 — 콜백 있으면 활성. MILLED/PURCHASED 모두 패널에서 source로 분기.
@@ -78,12 +97,26 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
 }
 
 // 펼친 그룹의 한 서브 카드 (§4.2.7) — 2줄, 3-col grid
-function RowDetail({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
+function RowDetail({
+    row,
+    actions,
+    selection,
+}: {
+    row: PackageRowData
+    actions?: PackageRowActions
+    selection?: PackageSelection
+}) {
+    const selected = selection?.selectedIds.has(row.id)
     return (
-        <div className="flex flex-col gap-1 px-3 py-2 bg-white border border-slate-200/80 rounded-md">
+        <div
+            className={`flex flex-col gap-1 px-3 py-2 border rounded-md ${selected ? 'bg-primary/5 border-primary/40' : 'bg-white border-slate-200/80'}`}
+        >
             <div className={`${ROW_GRID} text-[12.5px]`}>
-                <span className="font-bold text-slate-900 shrink-0">
-                    {row.spec} × <span className="tabular-nums">{row.qty}</span>개
+                <span className="font-bold text-slate-900 shrink-0 flex items-center gap-2">
+                    {selection && <RowCheckbox row={row} selection={selection} />}
+                    <span>
+                        {row.spec} × <span className="tabular-nums">{row.qty}</span>개
+                    </span>
                 </span>
                 <span className="text-slate-600 truncate min-w-0">{row.producer}</span>
                 <span className="flex items-center gap-1 justify-end">
@@ -95,7 +128,10 @@ function RowDetail({ row, actions }: { row: PackageRowData; actions?: PackageRow
             </div>
             <div className={ROW_GRID}>
                 <LotOrSourceCell lot={row.lot} source={row.source} />
-                <span />
+                {/* 비어 있던 가운데 칸에 도정구분 — 줄을 늘리지 않고 정보만 채운다 */}
+                <span className="truncate text-[11px] text-slate-500">
+                    {row.millingTypeLabel === '—' ? '' : row.millingTypeLabel}
+                </span>
                 <span className="text-[11px] text-slate-500 tabular-nums">{row.date}</span>
             </div>
         </div>
@@ -103,14 +139,26 @@ function RowDetail({ row, actions }: { row: PackageRowData; actions?: PackageRow
 }
 
 // 낱개 카드 — 헤더(품종+합계) 1줄 + 본문 2줄을 모두 같은 3-col grid로 정렬
-export function MobilePackageSingleCard({ item, actions }: { item: PackageSingle; actions?: PackageRowActions }) {
+export function MobilePackageSingleCard({
+    item,
+    actions,
+    selection,
+}: {
+    item: PackageSingle
+    actions?: PackageRowActions
+    selection?: PackageSelection
+}) {
     const row: PackageRowData = item
+    const selected = selection?.selectedIds.has(item.id)
     return (
-        <div className="flex flex-col gap-1 px-3 py-2.5 bg-white border border-slate-200 rounded-lg">
+        <div
+            className={`flex flex-col gap-1 px-3 py-2.5 border rounded-lg ${selected ? 'bg-primary/5 border-primary/40' : 'bg-white border-slate-200'}`}
+        >
             {/* 헤더: 품종 + 합계+메뉴 */}
             <div className={ROW_GRID}>
-                <span className="text-[13px] font-bold text-slate-900 truncate">
-                    {item.variety}
+                <span className="text-[13px] font-bold text-slate-900 truncate flex items-center gap-2">
+                    {selection && <RowCheckbox row={row} selection={selection} />}
+                    <span className="truncate">{item.variety}</span>
                 </span>
                 <span />
                 <span className="flex items-center gap-1 justify-end">
@@ -128,10 +176,12 @@ export function MobilePackageSingleCard({ item, actions }: { item: PackageSingle
                 <span className="text-slate-600 truncate min-w-0">{item.producer}</span>
                 <span />
             </div>
-            {/* 본문 2: LOT/매입칩 / (빈) / 날짜 */}
+            {/* 본문 2: LOT/매입칩 / 도정구분 / 날짜 */}
             <div className={ROW_GRID}>
                 <LotOrSourceCell lot={item.lot} source={item.source} />
-                <span />
+                <span className="truncate text-[11px] text-slate-500">
+                    {item.millingTypeLabel === '—' ? '' : item.millingTypeLabel}
+                </span>
                 <span className="text-[11px] text-slate-500 tabular-nums">{item.date}</span>
             </div>
         </div>
@@ -144,11 +194,14 @@ export function MobilePackageGroupCard({
     isOpen,
     onToggle,
     actions,
+    selection,
 }: {
     item: PackageGroup
     isOpen: boolean
     onToggle: () => void
     actions?: PackageRowActions
+    /** 그룹 자체는 고를 수 없다 — 펼친 안쪽 행에만 체크박스가 붙는다 */
+    selection?: PackageSelection
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
 
@@ -186,7 +239,7 @@ export function MobilePackageGroupCard({
             {isOpen && (
                 <div className="flex flex-col gap-1.5 px-2 pb-2">
                     {item.rows.map(row => (
-                        <RowDetail key={row.id} row={row} actions={actions} />
+                        <RowDetail key={row.id} row={row} actions={actions} selection={selection} />
                     ))}
                 </div>
             )}

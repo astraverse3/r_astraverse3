@@ -82,6 +82,8 @@ export type RepackSourceInfo = {
     packageId: number
     varietyId: number
     varietyName: string
+    /** MILLED=농가명 / PURCHASED=매입처. 로트만으로는 어느 건지 못 고른다 */
+    producer: string
     millingType: string
     source: 'MILLED' | 'PURCHASED'
     category: 'RICE' | 'MISC_GRAIN'
@@ -91,12 +93,15 @@ export type RepackSourceInfo = {
     available: number
 }
 
+/** 로트 후보 + 생산자 — 로트번호는 (입고일+제품코드+인증+농가)라 사람이 보고 고르기 어렵다 */
+export type RepackLotOption = LotOption & { producer: string }
+
 export type GetRepackSourcesResult =
     | {
           success: true
           sources: RepackSourceInfo[]
           /** 결과 줄이 승계할 로트 후보 (전량 소진 기준). 1개면 UI가 자동 선택 */
-          lotOptions: LotOption[]
+          lotOptions: RepackLotOption[]
           /** 전량 소진 시 총 중량(kg) — 다이얼로그 상단 요약 */
           totalKg: number
       }
@@ -113,7 +118,13 @@ export async function getRepackSources(packageIds: number[]): Promise<GetRepackS
             include: {
                 ...PACKAGE_IDENTITY_INCLUDE,
                 variety: { select: { name: true } },
-                stock: { select: { varietyId: true, variety: { select: { name: true } } } },
+                stock: {
+                    select: {
+                        varietyId: true,
+                        variety: { select: { name: true } },
+                        farmer: { select: { name: true } },
+                    },
+                },
             },
         })
         if (rows.length !== ids.length) {
@@ -134,6 +145,11 @@ export async function getRepackSources(packageIds: number[]): Promise<GetRepackS
                 packageId: r.id,
                 varietyId,
                 varietyName: r.stock?.variety?.name ?? r.variety?.name ?? '',
+                // packages.ts와 같은 규칙: PURCHASED=매입처, MILLED=농가명
+                producer:
+                    r.source === 'PURCHASED'
+                        ? (r.purchaseVendor ?? '—')
+                        : (r.stock?.farmer?.name ?? '—'),
                 millingType: deriveMillingType(r as unknown as PackageWithIdentity),
                 source: r.source,
                 category: r.category,
@@ -162,7 +178,12 @@ export async function getRepackSources(packageIds: number[]): Promise<GetRepackS
             }
         }
 
-        const lotOptions = buildLotOptions(probe)
+        // 로트 후보에 대표 소스의 생산자를 붙인다 — 로트번호만으론 고르기 어렵다
+        const producerByPackageId = new Map(sources.map(s => [s.packageId, s.producer]))
+        const lotOptions: RepackLotOption[] = buildLotOptions(probe).map(o => ({
+            ...o,
+            producer: producerByPackageId.get(o.packageId) ?? '—',
+        }))
         const totalKg = probe.reduce((s, p) => s + p.weightPerUnit * p.takeCount, 0)
 
         return { success: true, sources, lotOptions, totalKg: Math.round(totalKg * 1000) / 1000 }

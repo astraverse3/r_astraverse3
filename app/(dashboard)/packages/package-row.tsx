@@ -15,11 +15,54 @@ import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '
  * 같은 그리드를 공유해 그룹·낱개 정렬이 어긋나지 않게 함.
  */
 
-// 컬럼 비율: 품종 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자 / 액션
+// 컬럼 비율: 품종 / 도정구분 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자 / 액션
 //  - 사용자 결정 순서 (핸드오프 §4.2.3 대비 순서·라벨 재정의)
+//  - 도정구분은 재포장 도입(결정 #43)과 함께 추가. 잡곡·sentinel은 '—'
 //  - 액션 셀(36px 고정): 콜백 prop이 있을 때만 메뉴 노출 (벼 탭은 콜백 미전달 → 빈 셀)
 export const PKG_GRID =
-    'grid grid-cols-[0.7fr_0.85fr_1.5fr_0.55fr_0.6fr_0.9fr_0.85fr_36px]'
+    'grid grid-cols-[0.65fr_0.5fr_0.75fr_1.4fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+
+// 재포장 선택 모드 — 맨 앞에 체크박스 열을 덧댄다 (결정 #43 R2).
+// 평소엔 쓰지 않아 기존 레이아웃은 그대로다.
+export const PKG_GRID_SELECT =
+    'grid grid-cols-[28px_0.65fr_0.5fr_0.75fr_1.4fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+
+/**
+ * 재포장 선택 상태 — list-client 한 곳에서만 관리하고 하위는 prop으로 받는다.
+ * `selectable`이 없으면 선택 모드가 아니다(평소 화면).
+ */
+export interface PackageSelection {
+    selectedIds: Set<number>
+    onToggleRow: (row: PackageRowData) => void
+    /** 이미 고른 것과 품종·도정유형·출처가 달라 함께 재포장할 수 없는 행 */
+    isDisabled: (row: PackageRowData) => boolean
+    disabledReason: string
+}
+
+// 행 체크박스 — 선택 모드일 때만 렌더된다.
+function RowCheckbox({
+    row,
+    selection,
+}: {
+    row: PackageRowData
+    selection: PackageSelection
+}) {
+    const disabled = selection.isDisabled(row)
+    return (
+        <span className="flex items-center justify-center">
+            <input
+                type="checkbox"
+                checked={selection.selectedIds.has(row.id)}
+                disabled={disabled}
+                onChange={() => selection.onToggleRow(row)}
+                onClick={e => e.stopPropagation()}
+                title={disabled ? selection.disabledReason : undefined}
+                aria-label={`${row.variety} ${row.spec} 선택`}
+                className="h-3.5 w-3.5 accent-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
+            />
+        </span>
+    )
+}
 
 // 행 액션 콜백 — 콜백 흐름: panel → list-client → row.
 // 콜백 없으면 메뉴 안 보임 (벼 탭).
@@ -30,10 +73,12 @@ export interface PackageRowActions {
 }
 
 // -- 컬럼 헤더 (정렬은 데이터 셀과 동일) --
-export function PackageColumnHeader() {
+export function PackageColumnHeader({ selectMode = false }: { selectMode?: boolean }) {
     return (
-        <div className={`${PKG_GRID} text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-slate-50/60 border-b border-slate-200`}>
+        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2.5 bg-slate-50/60 border-b border-slate-200`}>
+            {selectMode && <span />}
             <span>품종</span>
+            <span>도정구분</span>
             <span>생산자</span>
             <span className="text-center">로트번호</span>
             <span className="text-right pr-2">규격</span>
@@ -103,17 +148,39 @@ function LotChip({ lot }: { lot: string }) {
     )
 }
 
+// -- 도정구분 셀 — 잡곡·sentinel은 '—' (표시 변환은 서버에서 끝냈다) --
+function MillingTypeCell({ label }: { label: string }) {
+    return label === '—' ? (
+        <span className="text-slate-300">—</span>
+    ) : (
+        <span className="text-slate-600 truncate">{label}</span>
+    )
+}
+
 // -- 낱개 행 --
 // 셀 순서: 품종 / 생산자 / 로트 / 규격 / 개수 / 총량 / 포장일자 / 액션
-export function PackageSingleRow({ item, actions }: { item: PackageSingle; actions?: PackageRowActions }) {
+export function PackageSingleRow({
+    item,
+    actions,
+    selection,
+}: {
+    item: PackageSingle
+    actions?: PackageRowActions
+    selection?: PackageSelection
+}) {
     // PackageSingle은 PackageRow + { type: 'single' } 형태 — 액션 메뉴엔 row 형식만 필요
     const row: PackageRowData = item
+    const selected = selection?.selectedIds.has(item.id)
     return (
-        <div className={`${PKG_GRID} text-[12.5px] text-slate-700 px-4 py-2.5 items-center hover:bg-slate-50/70`}>
+        <div
+            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] text-slate-700 px-4 py-3 items-center ${selected ? 'bg-primary/5' : 'hover:bg-slate-50/70'}`}
+        >
+            {selection && <RowCheckbox row={row} selection={selection} />}
             <span className="font-semibold text-slate-900 flex items-center gap-2 truncate">
                 <span className="w-3.5 inline-block shrink-0" />
                 <span className="truncate">{item.variety}</span>
             </span>
+            <MillingTypeCell label={item.millingTypeLabel} />
             <span className="text-slate-600 truncate">{item.producer}</span>
             <span className="flex items-center justify-center">
                 {item.lot ? (
@@ -136,12 +203,25 @@ export function PackageSingleRow({ item, actions }: { item: PackageSingle; actio
 }
 
 // -- 서브행 (group 펼침 시) --
-function PackageSubRow({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
+function PackageSubRow({
+    row,
+    actions,
+    selection,
+}: {
+    row: PackageRowData
+    actions?: PackageRowActions
+    selection?: PackageSelection
+}) {
+    const selected = selection?.selectedIds.has(row.id)
     return (
-        <div className={`${PKG_GRID} text-[12.5px] text-slate-600 px-4 py-2 items-center border-t border-slate-200/60`}>
+        <div
+            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] text-slate-600 px-4 py-2.5 items-center border-t border-slate-200/60 ${selected ? 'bg-primary/5' : ''}`}
+        >
+            {selection && <RowCheckbox row={row} selection={selection} />}
             <span className="flex items-center pl-5">
                 <span className="w-2 h-px bg-slate-300 shrink-0" />
             </span>
+            <MillingTypeCell label={row.millingTypeLabel} />
             <span className="text-slate-600 truncate">{row.producer}</span>
             <span className="flex items-center justify-center">
                 {row.lot ? (
@@ -169,11 +249,13 @@ export function PackageGroupRow({
     isOpen,
     onToggle,
     actions,
+    selection,
 }: {
     item: PackageGroup
     isOpen: boolean
     onToggle: () => void
     actions?: PackageRowActions
+    selection?: PackageSelection
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
 
@@ -182,18 +264,22 @@ export function PackageGroupRow({
             <button
                 type="button"
                 onClick={onToggle}
-                className={`w-full ${PKG_GRID} text-[12.5px] px-4 py-2.5 items-center text-left transition-colors hover:bg-slate-50/70`}
+                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] px-4 py-3 items-center text-left transition-colors hover:bg-slate-50/70`}
             >
+                {/* 그룹은 품종 묶음이라 그 자체를 재포장할 수 없다 — 안의 행만 고른다 */}
+                {selection && <span />}
                 <span className="font-bold text-slate-900 flex items-center gap-2 truncate">
                     <ChevronRight
                         className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? 'rotate-90 text-slate-700' : 'text-slate-400'}`}
                     />
                     <span className="truncate">{item.variety}</span>
                 </span>
+                {/* 그룹은 도정구분·생산자·로트가 섞일 수 있어 비운다 */}
+                <span className="text-slate-300">—</span>
                 <span className="text-slate-300">—</span>
                 <span className="text-slate-300 text-center">—</span>
-                <span className="text-slate-400 text-[11.5px] text-right pr-2">{item.rows.length}종 규격</span>
-                <span className="tabular-nums text-slate-400 text-[11.5px] text-right pr-12">{totalQty.toLocaleString()}개</span>
+                <span className="text-slate-400 text-[12px] text-right pr-2">{item.rows.length}종 규격</span>
+                <span className="tabular-nums text-slate-400 text-[12px] text-right pr-12">{totalQty.toLocaleString()}개</span>
                 <span className="tabular-nums font-bold text-slate-900 text-right">
                     {item.total.toLocaleString()}kg
                 </span>
@@ -202,7 +288,9 @@ export function PackageGroupRow({
             </button>
 
             {isOpen &&
-                item.rows.map(row => <PackageSubRow key={row.id} row={row} actions={actions} />)}
+                item.rows.map(row => (
+                    <PackageSubRow key={row.id} row={row} actions={actions} selection={selection} />
+                ))}
         </div>
     )
 }

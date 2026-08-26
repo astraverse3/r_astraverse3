@@ -12,7 +12,14 @@ import { toast } from 'sonner'
  * 벼/잡곡 양쪽 패널에서 동일 컴포넌트 사용. category prop으로 분기.
  * 업로드는 본 단계 범위 외.
  */
-export function PackageExcelButtons({ filters }: { filters: GetPackagesParams }) {
+export function PackageExcelButtons({
+    filters,
+    disabled = false,
+}: {
+    filters: GetPackagesParams
+    /** 재포장 선택 모드 동안 조회 도구를 잠근다 — 필터가 바뀌면 골라둔 선택이 날아간다 */
+    disabled?: boolean
+}) {
     const [exporting, setExporting] = useState(false)
 
     const handleExport = async () => {
@@ -50,7 +57,7 @@ export function PackageExcelButtons({ filters }: { filters: GetPackagesParams })
                 size="sm"
                 className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
                 onClick={handleExport}
-                disabled={exporting}
+                disabled={exporting || disabled}
                 title="엑셀 다운로드"
             >
                 <Download className="w-4 h-4" />

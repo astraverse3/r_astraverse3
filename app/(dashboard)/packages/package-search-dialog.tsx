@@ -44,6 +44,8 @@ const SORT_OPTIONS: { value: PackageSort; label: string }[] = [
 interface Props {
     category: PackageCategory
     varieties: { id: number; name: string }[]
+    /** 재포장 선택 모드 동안 잠근다 — 필터가 바뀌면 골라둔 선택이 날아간다 */
+    disabled?: boolean
 }
 
 /**
@@ -52,7 +54,7 @@ interface Props {
  *  - source 필터는 잡곡 탭에서만 노출 (벼는 사실상 MILLED만)
  *  - 정렬은 일단 본 다이얼로그 안. 윤곽 본 후 헤더로 분리 검토
  */
-export function PackageSearchDialog({ category, varieties }: Props) {
+export function PackageSearchDialog({ category, varieties, disabled = false }: Props) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [isPending, startTransition] = useTransition()
@@ -129,6 +131,7 @@ export function PackageSearchDialog({ category, varieties }: Props) {
                         variant="outline"
                         size="sm"
                         className="h-8 px-2 sm:pl-3 sm:pr-2 gap-1.5 bg-blue-50 border-blue-200 text-primary font-semibold hover:bg-blue-100 hover:text-primary"
+                        disabled={disabled}
                     >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">검색</span>

@@ -15,6 +15,22 @@ export const PACKAGE_TYPE_TONBAG = '톤백'
 /** 손실이 소스 합의 이 비율을 넘으면 경고(차단은 아님). 실물이라 오차는 존재한다. */
 export const LOSS_WARN_RATIO = 0.01
 
+/**
+ * 재포장 결과로 고를 수 있는 규격 — 실DB에 존재하는 규격 그대로(2026-08-26 실측).
+ * 톤백·잔량은 단위 중량이 건마다 달라 사람이 직접 입력한다(weight=null).
+ */
+export const REPACK_SPECS: { label: string; weight: number | null }[] = [
+  { label: PACKAGE_TYPE_TONBAG, weight: null },
+  { label: '20kg', weight: 20 },
+  { label: '10kg', weight: 10 },
+  { label: '8kg', weight: 8 },
+  { label: '5kg', weight: 5 },
+  { label: '4kg', weight: 4 },
+  { label: '3kg', weight: 3 },
+  { label: '1kg', weight: 1 },
+  { label: PACKAGE_TYPE_REMAINDER, weight: null },
+]
+
 // ------------------------------------------------------
 // 입력 타입
 // ------------------------------------------------------

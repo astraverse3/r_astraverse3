@@ -8,6 +8,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
+import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { findOrCreateProductType } from '@/lib/product-type'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
@@ -38,6 +39,17 @@ export type PackageRow = {
     variety: string
     spec: string // packageType ('5kg', '1kg', '500g', '톤백', …)
     weightPerUnit: number // kg 단위. 그룹 내부 정렬(FIFO) 키
+    /**
+     * 도정유형 — 재포장 동질성 판정 키 (결정 #43 §3.2).
+     * MILLED+batch(벼)=batch.millingType / 잡곡 도정산·매입=`'기타'` sentinel.
+     * 잔량은 productTypeId가 null이라 SKU로 판정할 수 없어 이 경로로 파생한다.
+     */
+    millingType: string
+    /**
+     * 화면 표시용 도정구분. 찰벼는 찹쌀/찰현미로 바꿔 보여준다(`lib/milling-type-display.ts`).
+     * 잡곡·sentinel('기타')은 '—'. 판정에는 쓰지 말 것 — 그건 위 millingType.
+     */
+    millingTypeLabel: string
     qty: number // count (총 포장 개수)
     available: number // 가용 개수 = count - SUM(PackageMovement.count). 차감 도입(#19) 후 표시 기준
     producer: string // MILLED: farmer.name (+ "외 N명") / PURCHASED: purchaseVendor
@@ -150,13 +162,14 @@ export async function getPackages(
         const rows = await prisma.millingOutputPackage.findMany({
             where,
             include: {
-                variety: { select: { id: true, name: true } },
+                variety: { select: { id: true, name: true, type: true } },
                 stock: {
                     include: {
-                        variety: { select: { id: true, name: true } },
+                        variety: { select: { id: true, name: true, type: true } },
                         farmer: { select: { name: true } },
                     },
                 },
+                batch: { select: { millingType: true } }, // 재포장 동질성 판정용 (결정 #43)
                 movements: { select: { count: true } }, // 가용수량 계산용(차감 합산, #19)
             },
             orderBy,
@@ -196,6 +209,15 @@ export async function getPackages(
                 variety: varietyName,
                 spec: r.packageType,
                 weightPerUnit: r.weightPerUnit,
+                // 벼는 batch.millingType, 잡곡(도정산·매입)은 '기타' sentinel (결정 #43 §3.2)
+                millingType: r.batch?.millingType ?? MISC_MILLING_SENTINEL,
+                // 표시용: 찰벼는 찹쌀/찰현미로. 잡곡·sentinel은 표시할 도정구분이 없다
+                millingTypeLabel: r.batch?.millingType
+                    ? getDisplayMillingType(
+                          r.batch.millingType,
+                          r.stock?.variety.type ?? r.variety?.type ?? null,
+                      )
+                    : '—',
                 qty: r.count,
                 available,
                 producer,
