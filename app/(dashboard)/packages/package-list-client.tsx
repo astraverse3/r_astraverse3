@@ -191,8 +191,8 @@ export function PackageListClient({
                 128px 어긋나고 마지막 행을 덮는다. sticky는 콘텐츠 열 안이라 정렬 계산이 없다.
                 ⚠️ 조상에 overflow-hidden이 있으면 sticky가 죽는다 — 테이블 <section> 밖에 둘 것 */}
             {selectMode && selected.size > 0 && (
-                <div className="hidden sm:block sticky bottom-4 z-40">
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/25 bg-white px-4 py-2.5 shadow-[0_-2px_12px_rgba(15,23,42,.07),0_6px_18px_rgba(15,23,42,.08)]">
+                <div className="hidden sm:flex sticky bottom-4 z-40 justify-end">
+                    <div className="flex w-fit items-center gap-3 rounded-xl border border-primary/25 bg-white px-4 py-2.5 shadow-[0_-2px_12px_rgba(15,23,42,.07),0_6px_18px_rgba(15,23,42,.08)]">
                         <div className="flex items-baseline gap-2.5">
                             <span className="text-[13px] text-slate-700">
                                 <b className="text-slate-900">{selected.size}건</b> 선택
