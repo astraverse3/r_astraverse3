@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import { GetMillingLogsParams } from './milling'
 import { requireSession } from '@/lib/auth-guard'
 import { matchesYieldFilter } from '@/lib/milling-yield'
+import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
@@ -110,7 +111,8 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
                         }
                     }
                 },
-                outputs: true
+                // 화면(getMillingLogs)과 같은 필터여야 엑셀 수율이 어긋나지 않는다 (결정 #61)
+                outputs: MILLED_OUTPUTS
             },
             orderBy: [
                 { date: 'desc' },

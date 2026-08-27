@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { format, startOfWeek } from 'date-fns'
 import { requireSession } from '@/lib/auth-guard'
+import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
 
 export type GroupBy = 'day' | 'week' | 'month'
 
@@ -197,7 +198,9 @@ export async function getMillingStatistics(
   const batches = await prisma.millingBatch.findMany({
     where,
     include: {
-      outputs: true,
+      // 재포장 결과는 batchId를 승계할 뿐 도정 산출이 아니다 — 섞이면
+      // totalOutputKg·avgYieldRate가 같은 쌀을 두 번 센다 (결정 #61)
+      outputs: MILLED_OUTPUTS,
       stocks: { include: { variety: true, farmer: { include: { group: true } } } },
     },
     orderBy: { date: 'asc' },
@@ -333,7 +336,8 @@ export async function getMillingStatsByVariety(params: {
 
   const batches = await prisma.millingBatch.findMany({
     where,
-    include: { outputs: true, stocks: { include: { variety: true } } },
+    // outputs: 재포장 결과 제외 — 버킷 × 품종별 집계가 부푼다 (결정 #61)
+    include: { outputs: MILLED_OUTPUTS, stocks: { include: { variety: true } } },
     orderBy: { date: 'asc' },
   })
 
@@ -448,7 +452,8 @@ export async function getMillingStatsByMillingType(params: {
 
   const batches = await prisma.millingBatch.findMany({
     where,
-    include: { outputs: true },
+    // outputs: 재포장 결과 제외 (결정 #61)
+    include: { outputs: MILLED_OUTPUTS },
     orderBy: { date: 'asc' },
   })
 

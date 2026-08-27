@@ -16,6 +16,12 @@ import { findOrCreateProductType } from '@/lib/product-type'
 const MISC_MILLING_SENTINEL = '기타'
 const MISC_PURCHASE_PACKAGING = '매입포장'
 
+// 재포장 결과 행을 일반 삭제로 지우면 원본의 REPACK movement가 남아 원본이 영원히 소진
+// 상태가 된다 — 결과도 원본도 없어 재고가 증발한다 (결정 #59).
+// 되돌리기 화면은 만들지 않기로 했으므로(결정 #57) 역방향 재포장이 정식 경로다.
+const REPACK_DELETE_BLOCKED =
+    '재포장으로 만든 재고는 삭제할 수 없어요. 되돌리려면 이 재고를 다시 재포장해 원래 규격으로 합쳐주세요.'
+
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
  *
@@ -660,11 +666,15 @@ export async function deleteMiscPackage(
                     packageType: true,
                     count: true,
                     totalWeight: true,
+                    repackId: true,
                     stock: { select: { variety: { select: { name: true } } } },
                 },
             })
             if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
             if (pkg.category !== 'MISC_GRAIN') throw new Error('잡곡 포장이 아닙니다.')
+            // 재포장 결과를 이 경로로 지우면 원본의 REPACK movement가 남아 원본이 영원히
+            // 소진 상태가 된다 — 결과도 원본도 없어 재고가 증발한다 (결정 #59).
+            if (pkg.repackId !== null) throw new Error(REPACK_DELETE_BLOCKED)
 
             await tx.millingOutputPackage.delete({ where: { id } })
 
@@ -995,11 +1005,15 @@ export async function deleteMiscPurchase(
     try {
         const existing = await prisma.millingOutputPackage.findUnique({
             where: { id },
-            select: { source: true, category: true, purchaseVendor: true, packageType: true, count: true },
+            select: { source: true, category: true, purchaseVendor: true, packageType: true, count: true, repackId: true },
         })
         if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
         if (existing.source !== 'PURCHASED' || existing.category !== 'MISC_GRAIN') {
             return { success: false, error: '잡곡 매입 레코드만 삭제할 수 있습니다.' }
+        }
+        // 재포장 결과는 이 경로로 지울 수 없다 — 원본이 소진된 채 남아 재고가 증발한다 (결정 #59)
+        if (existing.repackId !== null) {
+            return { success: false, error: REPACK_DELETE_BLOCKED }
         }
 
         await prisma.millingOutputPackage.delete({ where: { id } })

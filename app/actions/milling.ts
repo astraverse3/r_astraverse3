@@ -10,6 +10,7 @@ import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { findOrCreateProductType } from '@/lib/product-type'
 import { matchesYieldFilter } from '@/lib/milling-yield'
+import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -290,7 +291,14 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                     ]
                 },
                 // productType.packagingId는 다이얼로그 재진입 시 라인별 포장지 복원에 사용.
-                outputs: { include: { productType: { select: { packagingId: true } } } }
+                // MILLED_OUTPUTS — 도정관리는 「이 배치에서 도정해 포장한 것」만 다룬다.
+                // 재포장 결과가 섞이면 다이얼로그에 도정 포장인 척 복원되고, 수율 필터도
+                // 오판정한다. 아래 updatePackagingLogs의 deleteMany와 반드시 같은 필터여야
+                // 한다 — 한쪽만 걸면 안 보이는 행을 지우게 된다. (결정 #61)
+                outputs: {
+                    ...MILLED_OUTPUTS,
+                    include: { productType: { select: { packagingId: true } } },
+                }
             },
             orderBy: [
                 { date: 'desc' },
@@ -437,8 +445,13 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
             const primaryStock = batch.stocks[0];
 
             // 2. Delete existing outputs
+            // MILLED_OUTPUT_ONLY — 재포장 결과는 이 배치의 batchId를 승계했을 뿐
+            // 도정 포장이 아니다. 걸러내지 않으면 PackageMovement의 FK(Restrict)에 걸려
+            // 포장 수정이 통째로 실패하거나, movement가 없는 경우 재포장 결과가 조용히
+            // 삭제돼 원본이 소진된 채 남는다(재고 증발). 위 getMillingLogs의 로드 필터와
+            // 짝이 맞아야 한다. (결정 #61)
             await tx.millingOutputPackage.deleteMany({
-                where: { batchId }
+                where: { batchId, ...MILLED_OUTPUT_ONLY }
             });
 
             // 톤백 포장지 sentinel id는 톤백 라인이 있을 때만 lazy 조회.
@@ -603,6 +616,10 @@ export async function deleteMillingBatch(batchId: number) {
             });
 
             // 3. Delete outputs first (cascade might handle, but explicit is safer)
+            // ⚠️ 여기는 일부러 MILLED_OUTPUT_ONLY를 쓰지 않는다 (결정 #61).
+            // 배치를 통째로 없애는 자리라 재포장 결과만 남기면 batch 없는 고아가 된다.
+            // 재포장 결과가 있으면 원본에 REPACK movement가 붙어 있어 PackageMovement의
+            // FK(Restrict)가 이 삭제를 막는다 — 그 차단이 올바른 동작이다.
             await tx.millingOutputPackage.deleteMany({
                 where: { batchId }
             });
@@ -645,6 +662,11 @@ export async function deleteMillingBatches(ids: number[]) {
                 select: {
                     id: true,
                     date: true,
+                    // ⚠️ 여기는 일부러 MILLED_OUTPUTS를 쓰지 않는다 (결정 #61).
+                    // 이 카운트는 「포장이 하나라도 있으면 배치 삭제 금지」 판정이고,
+                    // 통과하면 아래에서 batchId로 outputs를 통째로 지운다.
+                    // 재포장 결과를 카운트에서 빼면 그것만 남은 배치가 삭제를 통과해
+                    // 재포장 결과가 함께 지워진다 — 거르지 않는 쪽이 안전하다.
                     _count: {
                         select: { outputs: true }
                     }

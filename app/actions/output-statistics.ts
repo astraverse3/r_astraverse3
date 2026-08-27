@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
+import { MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -94,8 +95,14 @@ export async function getOutputStatistics(
   // 생산 데이터
   // 잡곡 매입(source=PURCHASED, batch=null)은 `where: { batch: { ... } }`로 자동 제외됨.
   // 판매관리 단계에서 OR 분기로 매입품 포함 재설계 예정 (research-판매관리-참고사항.md §2.1)
+  //
+  // MILLED_OUTPUT_ONLY — 재포장 결과는 생산이 아니라 재배치다 (결정 #58·#61).
+  // 결과 행은 원본의 batchId를 승계하므로(repack.ts) 이 조건이 없으면 같은 쌀이 두 번 세어진다.
+  // 톤백 1,004kg을 1,000+4로 재포장하면 생산 2,008kg이 된다. 체인이 길수록 배로 커진다.
+  // 원본은 소진돼도 남는다 — 실제로 생산했으니 맞다.
   const packages = await prisma.millingOutputPackage.findMany({
     where: {
+      ...MILLED_OUTPUT_ONLY,
       batch: {
         date: { gte: filters.from, lte: filters.to },
         ...varietyFilter,

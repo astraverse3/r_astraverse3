@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
+import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 
 export async function getDashboardStats() {
     await requireSession()
@@ -29,9 +30,13 @@ export async function getDashboardStats() {
             prisma.millingBatch.count(),
             // 3. Total output production weight (KG) - Filtered by closed and latestYear
             //    source=MILLED 명시(잡곡 매입품 제외 보장)
+            //    repackId: null — 재포장 결과는 생산이 아니라 재배치다 (결정 #58).
+            //    결과 행이 원본의 batchId를 승계하므로 이 조건이 없으면 산출이 부푼다.
+            //    (이 값은 카드의 총 생산량 전용이다. 수율 분자는 아래 9번 쿼리의 outputs다)
             prisma.millingOutputPackage.aggregate({
                 where: {
                     source: 'MILLED',
+                    ...MILLED_OUTPUT_ONLY,
                     batch: {
                         isClosed: true,
                         stocks: { some: { category: 'RICE', productionYear: latestYear } }
@@ -56,7 +61,9 @@ export async function getDashboardStats() {
                 take: 10,
                 orderBy: { date: 'desc' },
                 include: {
+                    // 최근 도정 목록 — 그 배치에서 도정해 포장한 것만 보여준다 (결정 #61)
                     outputs: {
+                        ...MILLED_OUTPUTS,
                         select: {
                             id: true,
                             packageType: true,
@@ -114,7 +121,9 @@ export async function getDashboardStats() {
                     millingType: true,
                     totalInputKg: true,
                     stocks: { select: { weightKg: true, variety: { select: { name: true, type: true } } } },
-                    outputs: { select: { totalWeight: true } }
+                    // ⚠️ 수율의 분자는 여기다 (위 3번 totalOutputWeight가 아니다).
+                    // 실측(2026-08-27): 배치 #145 63.50% → 62.67%. 결정 #61
+                    outputs: { ...MILLED_OUTPUTS, select: { totalWeight: true } }
                 }
             })
         ]);
