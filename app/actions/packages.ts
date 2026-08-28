@@ -10,17 +10,38 @@ import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { findOrCreateProductType } from '@/lib/product-type'
+import {
+    guardDelete,
+    guardUpdate,
+    guardCountChange,
+    guardIdentityChange,
+    deleteBlockedMessage,
+    identityBlockedMessage,
+    type GuardedPackage,
+} from '@/lib/package-guard'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
 const MISC_MILLING_SENTINEL = '기타'
 const MISC_PURCHASE_PACKAGING = '매입포장'
 
-// 재포장 결과 행을 일반 삭제로 지우면 원본의 REPACK movement가 남아 원본이 영원히 소진
-// 상태가 된다 — 결과도 원본도 없어 재고가 증발한다 (결정 #59).
-// 되돌리기 화면은 만들지 않기로 했으므로(결정 #57) 역방향 재포장이 정식 경로다.
-const REPACK_DELETE_BLOCKED =
-    '재포장으로 만든 재고는 삭제할 수 없어요. 되돌리려면 이 재고를 다시 재포장해 원래 규격으로 합쳐주세요.'
+// 차감 보호(삭제·축소·품종/규격 변경·재포장 결과)의 규칙과 문구는 `lib/package-guard.ts`가
+// 단일 원천이다 (결정 #66). 벼 포장 수정(`lib/packaging-diff.ts`)도 같은 것을 쓴다.
+
+/** movement 합계를 세어 guard가 볼 수 있는 모양으로 만든다. */
+const toGuarded = (row: {
+    id: number
+    packageType: string
+    count: number
+    repackId: number | null
+    movements: { count: number }[]
+}): GuardedPackage => ({
+    id: row.id,
+    packageType: row.packageType,
+    count: row.count,
+    movedCount: row.movements.reduce((s, m) => s + m.count, 0),
+    repackId: row.repackId,
+})
 
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
@@ -568,12 +589,29 @@ export async function updateMiscPackage(
                     category: true,
                     stockId: true,
                     totalWeight: true,
+                    packageType: true,
+                    count: true,
+                    repackId: true,
+                    movements: { select: { count: true } },
                 },
             })
             if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
             if (pkg.category !== 'MISC_GRAIN') throw new Error('잡곡 포장이 아닙니다.')
             if (pkg.source !== 'MILLED') throw new Error('도정산 포장만 본 화면에서 수정할 수 있습니다.')
             if (pkg.stockId == null) throw new Error('연결된 원물재고가 없습니다.')
+
+            // 차감 보호 (#68·#69·#70). UPDATE는 FK가 막아주지 않아 여기서 걸러야 한다 —
+            // 차감량 밑으로 줄이면 가용재고가 음수가 되고, 그러면 목록 필터(available <= 0)에
+            // 걸려 **깨진 행이 화면에서 사라진다.**
+            const guarded = toGuarded(pkg)
+            const editable = guardUpdate(guarded)
+            if (!editable.ok) throw new Error(editable.reason)
+
+            const shrink = guardCountChange(guarded, data.count)
+            if (!shrink.ok) throw new Error(shrink.reason)
+
+            const identity = guardIdentityChange(guarded, { packageType: data.packageType }, {})
+            if (!identity.ok) throw new Error(identityBlockedMessage(guarded))
 
             const stock = await tx.stock.findUnique({
                 where: { id: pkg.stockId },
@@ -668,13 +706,22 @@ export async function deleteMiscPackage(
                     totalWeight: true,
                     repackId: true,
                     stock: { select: { variety: { select: { name: true } } } },
+                    movements: { select: { count: true } },
                 },
             })
             if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
             if (pkg.category !== 'MISC_GRAIN') throw new Error('잡곡 포장이 아닙니다.')
-            // 재포장 결과를 이 경로로 지우면 원본의 REPACK movement가 남아 원본이 영원히
-            // 소진 상태가 된다 — 결과도 원본도 없어 재고가 증발한다 (결정 #59).
-            if (pkg.repackId !== null) throw new Error(REPACK_DELETE_BLOCKED)
+
+            // 차감된 행은 FK(Restrict)가 어차피 막지만 「삭제 실패」밖에 못 말한다.
+            // 그 앞에서 **이유가 적힌 메시지**로 막는다 (결정 #67). FK는 최후 방어선으로 남는다.
+            const removable = guardDelete(toGuarded(pkg))
+            if (!removable.ok) {
+                throw new Error(
+                    pkg.repackId !== null
+                        ? removable.reason
+                        : deleteBlockedMessage(toGuarded(pkg)),
+                )
+            }
 
             await tx.millingOutputPackage.delete({ where: { id } })
 
@@ -951,12 +998,22 @@ export async function updateMiscPurchase(
 
         const existing = await prisma.millingOutputPackage.findUnique({
             where: { id },
-            select: { source: true, category: true },
+            select: {
+                id: true, source: true, category: true, packageType: true,
+                count: true, varietyId: true, repackId: true,
+                movements: { select: { count: true } },
+            },
         })
         if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
         if (existing.source !== 'PURCHASED' || existing.category !== 'MISC_GRAIN') {
             return { success: false, error: '잡곡 매입 레코드만 수정할 수 있습니다.' }
         }
+
+        // 재포장 결과는 원본 소진량과 짝이라 여기서 못 고친다 (#69).
+        // 검사 자체가 없어 삭제만 막히고 수정은 열려 있었다.
+        const guarded = toGuarded(existing)
+        const editable = guardUpdate(guarded)
+        if (!editable.ok) return { success: false, error: editable.reason }
 
         const lookup = await findOrCreatePurchaseVariety(varietyName)
         if (!lookup.ok) return { success: false, error: lookup.error }
@@ -964,17 +1021,43 @@ export async function updateMiscPurchase(
         const totalWeight = +(weightPerUnit * count).toFixed(3)
         const incoming = new Date(`${incomingDate}T00:00:00`)
 
-        await prisma.millingOutputPackage.update({
-            where: { id },
-            data: {
-                varietyId: lookup.varietyId,
-                purchaseVendor,
-                incomingDate: incoming,
-                packageType,
-                weightPerUnit,
-                count,
-                totalWeight,
-            },
+        // 조회 → 검사 → 수정을 한 트랜잭션에. 차감량은 그 사이에도 늘 수 있다.
+        await prisma.$transaction(async (tx) => {
+            const fresh = await tx.millingOutputPackage.findUnique({
+                where: { id },
+                select: {
+                    id: true, packageType: true, count: true, varietyId: true,
+                    repackId: true, movements: { select: { count: true } },
+                },
+            })
+            if (!fresh) throw new Error('매입 레코드를 찾을 수 없습니다.')
+            const now = toGuarded(fresh)
+
+            // 이미 나간 것보다 적게 남길 수 없다 (#68)
+            const shrink = guardCountChange(now, count)
+            if (!shrink.ok) throw new Error(shrink.reason)
+
+            // 이미 나간 물건의 정체는 못 바꾼다 — 품종·규격만 (#70 A안).
+            // 매입처·매입일·수량 증가는 그대로 정정할 수 있다.
+            const identity = guardIdentityChange(
+                now,
+                { packageType, varietyId: lookup.varietyId },
+                { varietyId: fresh.varietyId },
+            )
+            if (!identity.ok) throw new Error(identityBlockedMessage(now))
+
+            await tx.millingOutputPackage.update({
+                where: { id },
+                data: {
+                    varietyId: lookup.varietyId,
+                    purchaseVendor,
+                    incomingDate: incoming,
+                    packageType,
+                    weightPerUnit,
+                    count,
+                    totalWeight,
+                },
+            })
         })
 
         await recordAuditLog({
@@ -1003,20 +1086,32 @@ export async function deleteMiscPurchase(
 ): Promise<{ success: true } | { success: false; error: string }> {
     await requirePermission('SUPPLY_MANAGE')
     try {
-        const existing = await prisma.millingOutputPackage.findUnique({
-            where: { id },
-            select: { source: true, category: true, purchaseVendor: true, packageType: true, count: true, repackId: true },
-        })
-        if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
-        if (existing.source !== 'PURCHASED' || existing.category !== 'MISC_GRAIN') {
-            return { success: false, error: '잡곡 매입 레코드만 삭제할 수 있습니다.' }
-        }
-        // 재포장 결과는 이 경로로 지울 수 없다 — 원본이 소진된 채 남아 재고가 증발한다 (결정 #59)
-        if (existing.repackId !== null) {
-            return { success: false, error: REPACK_DELETE_BLOCKED }
-        }
+        // 조회 → 검사 → 삭제를 한 트랜잭션에 둔다. 밖에 두면 그 사이 차감이 끼어들 수 있다.
+        const existing = await prisma.$transaction(async (tx) => {
+            const row = await tx.millingOutputPackage.findUnique({
+                where: { id },
+                select: {
+                    id: true, source: true, category: true, purchaseVendor: true,
+                    packageType: true, count: true, repackId: true,
+                    movements: { select: { count: true } },
+                },
+            })
+            if (!row) throw new Error('매입 레코드를 찾을 수 없습니다.')
+            if (row.source !== 'PURCHASED' || row.category !== 'MISC_GRAIN') {
+                throw new Error('잡곡 매입 레코드만 삭제할 수 있습니다.')
+            }
 
-        await prisma.millingOutputPackage.delete({ where: { id } })
+            // 차감·재포장 결과는 이유를 적어 막는다 (결정 #67·#59)
+            const removable = guardDelete(toGuarded(row))
+            if (!removable.ok) {
+                throw new Error(
+                    row.repackId !== null ? removable.reason : deleteBlockedMessage(toGuarded(row)),
+                )
+            }
+
+            await tx.millingOutputPackage.delete({ where: { id } })
+            return row
+        })
 
         await recordAuditLog({
             action: 'DELETE',

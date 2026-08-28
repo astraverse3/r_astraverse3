@@ -13,6 +13,17 @@
 //
 // DB 접근은 하지 않는다. 액션(app/actions/milling.ts)이 조회 결과를 넣어 호출하고
 // 그 결과를 트랜잭션으로 실행만 한다.
+//
+// 차감 규칙과 문구 자체는 `lib/package-guard.ts`가 정한다 — 잡곡 단건 액션도 같은 것을
+// 쓴다(#66). 여기서는 그 판정을 **배열 diff에 얹기만** 한다.
+
+import {
+  guardDelete,
+  guardCountChange,
+  DELETE_BLOCKED_HEADER,
+  DEDUCTION_HINT,
+  blockedMessage,
+} from './package-guard'
 
 /** 부동소수 비교 허용 오차 — totalWeight가 클라 계산값이라 필요하다. */
 const EPSILON = 1e-6
@@ -83,10 +94,6 @@ export type PackagingDiffResult =
     }
   | { ok: false; errors: PackagingDiffError[] }
 
-/** 「20kg × 3」 — 사람이 어느 줄인지 알아볼 수 있게. */
-const describeRow = (row: ExistingPackagingRow): string =>
-  `${row.packageType} × ${row.count}`
-
 const sameNumber = (a: number, b: number): boolean => Math.abs(a - b) < EPSILON
 
 /**
@@ -139,13 +146,10 @@ export function diffPackaging(
 
     kept.add(row.id)
 
-    // 이미 나간 것보다 적게 남길 수는 없다 — 가용 재고가 음수가 된다
-    if (line.count < row.movedCount) {
-      errors.push({
-        code: 'COUNT_BELOW_MOVED',
-        message: `${describeRow(row)} → ${line.count}개로 줄일 수 없어요. 이미 ${row.movedCount}개가 판매·재포장됐습니다.`,
-        rowId: row.id,
-      })
+    // 이미 나간 것보다 적게 남길 수는 없다 — 가용 재고가 음수가 된다 (#68)
+    const shrink = guardCountChange(row, line.count)
+    if (!shrink.ok) {
+      errors.push({ code: 'COUNT_BELOW_MOVED', message: shrink.reason, rowId: row.id })
       continue
     }
 
@@ -170,12 +174,9 @@ export function diffPackaging(
   const toDelete: number[] = []
   for (const row of existing) {
     if (kept.has(row.id)) continue
-    if (row.movedCount > 0) {
-      errors.push({
-        code: 'DELETE_BLOCKED',
-        message: `${describeRow(row)} (${row.count}개 중 ${row.movedCount}개 차감됨)`,
-        rowId: row.id,
-      })
+    const removable = guardDelete(row)
+    if (!removable.ok) {
+      errors.push({ code: 'DELETE_BLOCKED', message: removable.reason, rowId: row.id })
       continue
     }
     toDelete.push(row.id)
@@ -231,11 +232,11 @@ export function formatPackagingDiffErrors(errors: PackagingDiffError[]): string 
 
   if (blocked.length > 0) {
     blocks.push(
-      [
-        '이미 판매·재포장된 포장은 지울 수 없어요.',
-        ...blocked.map((e) => `  · ${e.message}`),
-        '포장을 되돌리려면 판매를 취소하거나 재포장을 정리해 주세요.',
-      ].join('\n'),
+      blockedMessage(
+        DELETE_BLOCKED_HEADER,
+        blocked.map((e) => e.message),
+        DEDUCTION_HINT,
+      ),
     )
   }
 
