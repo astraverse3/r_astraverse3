@@ -215,7 +215,11 @@ export function AddPackagingDialog({
     }
 
     const handleCloseBatch = async () => {
-        const hasUnsavedChanges = JSON.stringify(outputs) !== JSON.stringify(initialOutputs)
+        // `outputs`는 restoreOutputs를 거친 값이라 원본(initialOutputs)과 직접 비교하면
+        // packagingId 키 하나 때문에 **아무것도 안 고쳐도 항상 「변경됨」**이 됐다.
+        // 같은 가공을 거친 값끼리 맞대야 뜻이 맞는다.
+        const hasUnsavedChanges =
+            JSON.stringify(outputs) !== JSON.stringify(restoreOutputs(initialOutputs))
         if (hasUnsavedChanges) {
             const validOutputs = outputs.filter(o => o.count > 0)
             if (validOutputs.length === 0) {
