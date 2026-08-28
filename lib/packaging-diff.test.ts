@@ -281,6 +281,19 @@ test('그 줄을 실제로 고치려 하면 그때 막는다', () => {
   assert.match(r.errors[0].message, /단위 중량을 입력해 주세요/)
 })
 
+test('유효성 메시지는 규격을 함께 낸다 (로트별로 쪼개진 화면에서 줄 번호만으론 못 찾는다)', () => {
+  const r = fail(
+    diffPackaging([], [line({ packageType: '20kg' }), line({ packageType: '톤백', weightPerUnit: 0 })]),
+  )
+  assert.equal(r.errors.length, 1)
+  assert.match(r.errors[0].message, /^2번째 줄\(톤백\): 단위 중량을 입력해 주세요\.$/)
+})
+
+test('규격 자체가 비면 괄호를 붙이지 않는다', () => {
+  const r = fail(diffPackaging([], [line({ packageType: '  ' })]))
+  assert.match(r.errors[0].message, /^1번째 줄: 규격을 선택해 주세요\.$/)
+})
+
 test('값이 잘못된 줄도 삭제는 막지 않는다 (정리 경로)', () => {
   const existing = [row(10, { packageType: '잔량', weightPerUnit: 0, totalWeight: 0, count: 5 })]
   const r = ok(diffPackaging(existing, []))

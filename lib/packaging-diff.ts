@@ -188,19 +188,23 @@ export function diffPackaging(
   // 그 배치의 다른 포장을 고치는 것조차 막혔다. 잘못된 값은 그 줄을 실제로
   // 고치거나 지울 때만 문제 삼는다 — 삭제는 막지 않으니 정리 경로도 열려 있다.
   for (const { line, no } of written) {
+    // 화면은 로트(생산자)별로 쪼개져 있어 줄 번호만으로는 못 찾는다 —
+    // 22줄·생산자 5명짜리 배치(#73)가 실제로 있다. 규격을 함께 낸다.
+    const where = line.packageType?.trim() ? `${no}번째 줄(${line.packageType})` : `${no}번째 줄`
+
     if (!line.packageType?.trim()) {
-      errors.push({ code: 'INVALID_LINE', message: `${no}번째 줄: 규격을 선택해 주세요.` })
+      errors.push({ code: 'INVALID_LINE', message: `${where}: 규격을 선택해 주세요.` })
     }
     if (!(line.weightPerUnit > 0)) {
       errors.push({
         code: 'INVALID_LINE',
-        message: `${no}번째 줄: 단위 중량을 입력해 주세요.`,
+        message: `${where}: 단위 중량을 입력해 주세요.`,
       })
     }
     if (!Number.isInteger(line.count) || line.count <= 0) {
       errors.push({
         code: 'INVALID_LINE',
-        message: `${no}번째 줄: 개수는 1개 이상의 정수여야 합니다.`,
+        message: `${where}: 개수는 1개 이상의 정수여야 합니다.`,
       })
     }
   }
