@@ -96,6 +96,9 @@ function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
 }
 
 // 다이얼로그 재진입 시 기존 라인의 포장지(packagingId)를 productType에서 평탄화 복원.
+// 서버 행 id(`o.id`)도 이때 함께 실려 온다 — 저장이 그 행을 「고칠지 새로 만들지」를
+// 가르는 열쇠라 잃어버리면 안 된다 (결정 #62). 아래 편집 함수들은 모두 `{ ...o }`로
+// 기존 필드를 이어받으므로 id가 유지되고, 새로 추가하는 줄만 id가 없다.
 function restoreOutputs(raw: MillingOutputInput[]): MillingOutputInput[] {
     return (raw ?? []).map(o => ({
         ...o,
@@ -104,6 +107,14 @@ function restoreOutputs(raw: MillingOutputInput[]): MillingOutputInput[] {
             (o as { productType?: { packagingId?: number | null } }).productType?.packagingId ??
             null,
     }))
+}
+
+// 저장이 막힌 이유는 여러 줄로 온다(어느 줄이 · 몇 개 차감됐는지 · 어떻게 풀는지 — 결정 #63).
+// toast는 개행을 접어버리므로 whitespace를 살려 보여준다.
+function toastBlocked(result: unknown, fallback: string) {
+    const error = (result as { error?: unknown } | null)?.error
+    const text = typeof error === 'string' && error.trim() ? error : fallback
+    toast.error(<span className="whitespace-pre-line">{text}</span>)
 }
 
 export function AddPackagingDialog({
@@ -216,7 +227,7 @@ export function AddPackagingDialog({
             const saveResult = await updatePackagingLogs(batchId, validOutputs)
             if (!saveResult.success) {
                 setIsLoading(false)
-                toast.error('포장 기록 저장 실패: ' + ((saveResult as any).error || ''))
+                toastBlocked(saveResult, '포장 기록 저장에 실패했습니다.')
                 return
             }
         } else {
@@ -244,7 +255,7 @@ export function AddPackagingDialog({
             triggerDataUpdate()
             router.refresh()
         } else {
-            toast.error('포장 기록 삭제 실패')
+            toastBlocked(result, '포장 기록 삭제에 실패했습니다.')
         }
     }
 
@@ -356,7 +367,7 @@ export function AddPackagingDialog({
             setOutputs([])
             router.refresh()
         } else {
-            toast.error((result as any).error || '저장 실패')
+            toastBlocked(result, '포장 기록 저장에 실패했습니다.')
         }
     }
 

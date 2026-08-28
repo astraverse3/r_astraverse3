@@ -1,6 +1,6 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
@@ -11,6 +11,7 @@ import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { findOrCreateProductType } from '@/lib/product-type'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
+import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/lib/packaging-diff'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -30,6 +31,11 @@ export type MillingBatchFormData = {
 }
 
 export type MillingOutputInput = {
+    /**
+     * 서버 행(MillingOutputPackage) id. 다이얼로그가 기존 행을 복원하면 실려 온다.
+     * 있으면 그 행을 고치고, 없으면 새로 만든다 — 전부 지웠다 다시 만들지 않는다 (결정 #62).
+     */
+    id?: number
     packageType: string
     weightPerUnit: number
     count: number
@@ -427,7 +433,13 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
     }
 }
 
-// Update multiple packaging logs (Replace all for batch)
+// 포장 내역 수정 — 입력에 실려온 행 id로 diff를 내어 create·update·delete로 반영한다 (결정 #62).
+//
+// 예전에는 deleteMany 후 전부 재생성했다. PackageMovement(판매·재포장)·Repack이 이 행을
+// 참조하기 시작하면서 FK(onDelete 기본 Restrict)에 걸려 저장이 통째로 실패했고(실측 16/181 배치),
+// 성공하더라도 행 id와 createdAt이 매번 새로 잡혀 이력과 참조가 우연에 기댔다.
+//
+// 판정·검증은 lib/packaging-diff.ts(순수 함수 · 단위테스트)가 하고, 여기서는 실행만 한다.
 export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
     await requirePermission('OPERATION_MANAGE')
     try {
@@ -443,81 +455,162 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
             });
             if (!batch || !batch.stocks.length) throw new Error('Batch or stocks not found');
             const primaryStock = batch.stocks[0];
+            const resolveStock = (stockId?: number | null) =>
+                (stockId ? batch.stocks.find(s => s.id === stockId) : undefined) ?? primaryStock;
 
-            // 2. Delete existing outputs
-            // MILLED_OUTPUT_ONLY — 재포장 결과는 이 배치의 batchId를 승계했을 뿐
-            // 도정 포장이 아니다. 걸러내지 않으면 PackageMovement의 FK(Restrict)에 걸려
-            // 포장 수정이 통째로 실패하거나, movement가 없는 경우 재포장 결과가 조용히
-            // 삭제돼 원본이 소진된 채 남는다(재고 증발). 위 getMillingLogs의 로드 필터와
-            // 짝이 맞아야 한다. (결정 #61)
-            await tx.millingOutputPackage.deleteMany({
-                where: { batchId, ...MILLED_OUTPUT_ONLY }
+            // 2. 톤백 포장지 sentinel — 톤백 라인이 있을 때만 조회.
+            // diff 전에 정규화해야 기존 행의 productType.packagingId와 같은 값끼리 맞댈 수 있다.
+            let tonbagPackagingId: number | null = null;
+            if (outputs.some(o => o.packageType === PACKAGE_TYPE_TONBAG)) {
+                const pkg = await tx.packaging.findUnique({
+                    where: { name: TONBAG_PACKAGING },
+                    select: { id: true },
+                });
+                if (!pkg) throw new Error("'톤백' 포장지 마스터가 없습니다. 제품유형 시드를 확인해주세요.");
+                tonbagPackagingId = pkg.id;
+            }
+
+            // 잔량=SKU 미부여(null), 톤백='톤백' 포장지 강제, 그 외=라인 포장지(미선택 허용).
+            const normalizePackagingId = (o: MillingOutputInput): number | null => {
+                if (o.packageType === PACKAGE_TYPE_REMAINDER) return null;
+                if (o.packageType === PACKAGE_TYPE_TONBAG) return tonbagPackagingId;
+                return o.packagingId ?? null;
+            };
+
+            const lines: PackagingLine[] = outputs.map(o => ({
+                id: o.id,
+                packageType: o.packageType,
+                weightPerUnit: o.weightPerUnit,
+                count: o.count,
+                totalWeight: o.totalWeight,
+                stockId: resolveStock(o.stockId).id,
+                packagingId: normalizePackagingId(o),
+            }));
+
+            // 3. 기존 행 + 차감량.
+            // MILLED_OUTPUT_ONLY — 재포장 결과는 이 배치의 batchId를 승계했을 뿐 도정 포장이 아니다.
+            // 위 getMillingLogs의 로드 필터와 반드시 짝이 맞아야 한다 — 한쪽만 걸면
+            // 화면에 없는 행을 지우거나 고치게 된다. (결정 #61)
+            const rows = await tx.millingOutputPackage.findMany({
+                where: { batchId, ...MILLED_OUTPUT_ONLY },
+                select: {
+                    id: true,
+                    packageType: true,
+                    weightPerUnit: true,
+                    count: true,
+                    totalWeight: true,
+                    stockId: true,
+                    productType: { select: { packagingId: true } },
+                    movements: { select: { count: true } },
+                },
             });
 
-            // 톤백 포장지 sentinel id는 톤백 라인이 있을 때만 lazy 조회.
-            let tonbagPackagingId: number | null = null;
+            const diff = diffPackaging(
+                rows.map(r => ({
+                    id: r.id,
+                    packageType: r.packageType,
+                    weightPerUnit: r.weightPerUnit,
+                    count: r.count,
+                    totalWeight: r.totalWeight,
+                    stockId: r.stockId,
+                    packagingId: r.productType?.packagingId ?? null,
+                    movedCount: r.movements.reduce((sum, m) => sum + m.count, 0),
+                })),
+                lines,
+            );
 
-            // 3. Create new outputs
-            for (const output of outputs) {
-                const targetStock = output.stockId
-                    ? (batch.stocks.find(s => s.id === output.stockId) ?? batch.stocks[0])
-                    : batch.stocks[0];
-                const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
+            // 차단은 도메인 규칙이지 장애가 아니다 — 아직 아무것도 쓰지 않았으므로
+            // 그대로 돌려보내 사용자에게 「왜 막혔는지」를 보여준다. (결정 #63)
+            if (!diff.ok) {
+                return { success: false as const, error: formatPackagingDiffErrors(diff.errors) };
+            }
 
+            // 파생 필드 계산 — create·update가 공유한다 (#65)
+            const deriveLot = (stockId: number) => {
+                const stock = resolveStock(stockId);
                 // 관행(일반) 생산자는 로트번호 없음
-                const isConventional = targetStock.farmer.group?.certType === '일반';
-                const lotNo = isConventional ? null : generateLotNo({
-                    incomingDate: targetStock.incomingDate,
-                    varietyType: targetStock.variety.type,
-                    varietyName: targetStock.variety.name,
+                const isConventional = stock.farmer.group?.certType === '일반';
+                return {
+                    productCode: getProductCode(stock.variety.type, stock.variety.name, batch.millingType),
+                    lotNo: isConventional ? null : generateLotNo({
+                        incomingDate: stock.incomingDate,
+                        varietyType: stock.variety.type,
+                        varietyName: stock.variety.name,
+                        millingType: batch.millingType,
+                        certNo: stock.farmer.group?.certNo || '00',
+                        farmerGroupCode: stock.farmer.group?.code || '00',
+                        farmerNo: stock.farmer.farmerNo || '00'
+                    }),
+                };
+            };
+
+            // 한 배치는 대개 품종·도정유형이 같고 규격만 다르다 — 조합별로 한 번만 찾아
+            // 왕복이 줄 수만큼 늘지 않게 한다.
+            const productTypeCache = new Map<string, number | null>();
+            const resolveProductType = async (line: PackagingLine): Promise<number | null> => {
+                if (line.packageType === PACKAGE_TYPE_REMAINDER) return null;
+                // 포장지가 정해진 라인만 SKU 연동(미선택 일반 라인은 null 허용).
+                if (line.packagingId === null) return null;
+                const stock = resolveStock(line.stockId);
+                const key = `${stock.varietyId}|${line.packageType}|${line.packagingId}`;
+                const cached = productTypeCache.get(key);
+                if (cached !== undefined) return cached;
+                const productTypeId = await findOrCreateProductType(tx, {
+                    varietyId: stock.varietyId,
                     millingType: batch.millingType,
-                    certNo: targetStock.farmer.group?.certNo || '00',
-                    farmerGroupCode: targetStock.farmer.group?.code || '00',
-                    farmerNo: targetStock.farmer.farmerNo || '00'
+                    packageType: line.packageType,
+                    packagingId: line.packagingId,
+                    promoteDefaultIfNone: true,
                 });
+                productTypeCache.set(key, productTypeId);
+                return productTypeId;
+            };
 
-                // ProductType(SKU) 결정: 잔량=미부여(null), 톤백='톤백' 포장지 강제, 그 외=라인 포장지.
-                let productTypeId: number | null = null;
-                if (output.packageType !== PACKAGE_TYPE_REMAINDER) {
-                    let packagingId = output.packagingId ?? null;
-                    if (output.packageType === PACKAGE_TYPE_TONBAG) {
-                        if (tonbagPackagingId === null) {
-                            const pkg = await tx.packaging.findUnique({
-                                where: { name: TONBAG_PACKAGING },
-                                select: { id: true },
-                            });
-                            if (!pkg) throw new Error("'톤백' 포장지 마스터가 없습니다. 제품유형 시드를 확인해주세요.");
-                            tonbagPackagingId = pkg.id;
-                        }
-                        packagingId = tonbagPackagingId;
-                    }
-                    // 포장지가 정해진 라인만 SKU 연동(미선택 일반 라인은 null 허용).
-                    if (packagingId !== null) {
-                        productTypeId = await findOrCreateProductType(tx, {
-                            varietyId: targetStock.varietyId,
-                            millingType: batch.millingType,
-                            packageType: output.packageType,
-                            packagingId,
-                            promoteDefaultIfNone: true,
-                        });
-                    }
-                }
-
-                await tx.millingOutputPackage.create({
-                    data: {
-                        batchId,
-                        packageType: output.packageType,
-                        weightPerUnit: output.weightPerUnit,
-                        count: output.count,
-                        totalWeight: output.totalWeight,
-                        productCode,
-                        lotNo,
-                        stockId: targetStock.id,
-                        productTypeId
-                    }
+            // 4. 삭제 — 차감이 없는 행만 diff가 넘긴다. 왕복 1회.
+            if (diff.toDelete.length > 0) {
+                await tx.millingOutputPackage.deleteMany({
+                    where: { id: { in: diff.toDelete }, batchId, ...MILLED_OUTPUT_ONLY },
                 });
             }
-            return { success: true };
+
+            // 5. 수정 — 바뀐 줄만 온다. 안 바뀐 줄은 id·createdAt이 그대로 남는다 (#65).
+            for (const update of diff.toUpdate) {
+                const data: Prisma.MillingOutputPackageUncheckedUpdateInput = {
+                    packageType: update.line.packageType,
+                    weightPerUnit: update.line.weightPerUnit,
+                    count: update.line.count,
+                    totalWeight: update.line.totalWeight,
+                };
+                if (update.recalcLot) {
+                    data.stockId = update.line.stockId;
+                    Object.assign(data, deriveLot(update.line.stockId));
+                }
+                if (update.recalcProductType) {
+                    data.productTypeId = await resolveProductType(update.line);
+                }
+                await tx.millingOutputPackage.update({ where: { id: update.id }, data });
+            }
+
+            // 6. 추가 — INSERT는 왕복 1회로 묶는다.
+            // (배송·상차 D1b 교훈: Neon 왕복 250~300ms라 루프 안 INSERT는 20줄에서 타임아웃)
+            if (diff.toCreate.length > 0) {
+                const created: Prisma.MillingOutputPackageCreateManyInput[] = [];
+                for (const line of diff.toCreate) {
+                    created.push({
+                        batchId,
+                        packageType: line.packageType,
+                        weightPerUnit: line.weightPerUnit,
+                        count: line.count,
+                        totalWeight: line.totalWeight,
+                        stockId: line.stockId,
+                        ...deriveLot(line.stockId),
+                        productTypeId: await resolveProductType(line),
+                    });
+                }
+                await tx.millingOutputPackage.createMany({ data: created });
+            }
+
+            return { success: true as const };
         }, { timeout: 30000 });
 
         revalidatePath('/milling')
