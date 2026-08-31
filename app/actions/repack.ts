@@ -19,6 +19,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { findOrCreateProductType } from '@/lib/product-type'
+import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 import {
     validateRepack,
     buildLotOptions,
@@ -43,7 +44,7 @@ const TRANSACTION_TIMEOUT_MS = 30_000
 // ------------------------------------------------------
 
 const PACKAGE_IDENTITY_INCLUDE = {
-    movements: { select: { count: true } },
+    ...MOVEMENT_COUNT_SELECT,
     batch: { select: { millingType: true } },
     stock: { select: { varietyId: true } },
 } as const
@@ -70,9 +71,7 @@ function deriveMillingType(pkg: PackageWithIdentity): string {
     return pkg.batch?.millingType ?? MISC_MILLING_SENTINEL
 }
 
-function availableOf(pkg: PackageWithIdentity): number {
-    return pkg.count - pkg.movements.reduce((s, m) => s + m.count, 0)
-}
+// 가용 계산은 `lib/package-available.ts`가 단일 원천이다 (§20). 여기 있던 로컬 정의는 승격했다.
 
 // ------------------------------------------------------
 // 1. 소스 조회 — 다이얼로그가 열릴 때 선택된 행들의 동질성·가용을 서버가 판정
@@ -137,7 +136,7 @@ export async function getRepackSources(packageIds: number[]): Promise<GetRepackS
             if (varietyId === null) {
                 return { success: false, error: `품종을 알 수 없는 재고가 있습니다. (재고 #${r.id})` }
             }
-            const available = availableOf(r as unknown as PackageWithIdentity)
+            const available = availableOf(r)
             if (available <= 0) {
                 return { success: false, error: `이미 소진된 재고가 포함돼 있습니다. (재고 #${r.id})` }
             }

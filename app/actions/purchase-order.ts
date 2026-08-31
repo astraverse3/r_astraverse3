@@ -17,6 +17,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { matchPurchaseOrderItem, normalizeItemName } from '@/lib/purchase-order-matcher'
+import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 import {
   compareLoading,
   describeLoading,
@@ -58,16 +59,15 @@ async function loadAvailablePackages(
       source: true,
       createdAt: true,
       incomingDate: true,
-      movements: { select: { count: true } },
+      ...MOVEMENT_COUNT_SELECT,
     },
   })
   return pkgs
     .map((p) => {
-      const used = p.movements.reduce((s, m) => s + m.count, 0)
       // FIFO: MILLED=createdAt(도정일), PURCHASED=incomingDate(입고일)
       const sortKey =
         p.source === 'PURCHASED' && p.incomingDate ? p.incomingDate : p.createdAt
-      return { packageId: p.id, available: p.count - used, sortKey }
+      return { packageId: p.id, available: availableOf(p), sortKey }
     })
     .filter((p) => p.available > 0)
 }
@@ -133,6 +133,8 @@ async function applyAllocations(
     if (pkg.productTypeId !== args.productTypeId) {
       throw new Error('해당 제품유형의 재고가 아닙니다.')
     }
+    // 🔴 DB 집계 — `lib/package-available.ts`로 합치지 않는다 (#73).
+    //    행을 로드하지 않고 DB에서 합을 낸다. 공식(count - SUM)은 같으니 고칠 땐 함께 봐야 한다.
     const used = await tx.packageMovement.aggregate({
       where: { packageId: a.packageId },
       _sum: { count: true },

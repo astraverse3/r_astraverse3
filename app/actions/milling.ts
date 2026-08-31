@@ -12,6 +12,7 @@ import { findOrCreateProductType } from '@/lib/product-type'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/lib/packaging-diff'
+import { movedCountOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -501,7 +502,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     totalWeight: true,
                     stockId: true,
                     productType: { select: { packagingId: true } },
-                    movements: { select: { count: true } },
+                    ...MOVEMENT_COUNT_SELECT,
                 },
             });
 
@@ -514,7 +515,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     totalWeight: r.totalWeight,
                     stockId: r.stockId,
                     packagingId: r.productType?.packagingId ?? null,
-                    movedCount: r.movements.reduce((sum, m) => sum + m.count, 0),
+                    movedCount: movedCountOf(r),
                 })),
                 lines,
             );

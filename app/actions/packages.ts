@@ -17,8 +17,8 @@ import {
     guardIdentityChange,
     deleteBlockedMessage,
     identityBlockedMessage,
-    type GuardedPackage,
 } from '@/lib/package-guard'
+import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
@@ -27,21 +27,6 @@ const MISC_PURCHASE_PACKAGING = '매입포장'
 
 // 차감 보호(삭제·축소·품종/규격 변경·재포장 결과)의 규칙과 문구는 `lib/package-guard.ts`가
 // 단일 원천이다 (결정 #66). 벼 포장 수정(`lib/packaging-diff.ts`)도 같은 것을 쓴다.
-
-/** movement 합계를 세어 guard가 볼 수 있는 모양으로 만든다. */
-const toGuarded = (row: {
-    id: number
-    packageType: string
-    count: number
-    repackId: number | null
-    movements: { count: number }[]
-}): GuardedPackage => ({
-    id: row.id,
-    packageType: row.packageType,
-    count: row.count,
-    movedCount: row.movements.reduce((s, m) => s + m.count, 0),
-    repackId: row.repackId,
-})
 
 /**
  * 제품재고 페이지 (`/packages`) 데이터 액션
@@ -197,7 +182,7 @@ export async function getPackages(
                     },
                 },
                 batch: { select: { millingType: true } }, // 재포장 동질성 판정용 (결정 #43)
-                movements: { select: { count: true } }, // 가용수량 계산용(차감 합산, #19)
+                ...MOVEMENT_COUNT_SELECT, // 가용수량 계산용(차감 합산, #19)
             },
             orderBy,
         })
@@ -226,8 +211,7 @@ export async function getPackages(
                     : toIsoDate(r.createdAt)
 
             // 가용수량 = count - SUM(movement.count). 0 이하면 목록 제외(차감 완료분)
-            const used = r.movements.reduce((s, m) => s + m.count, 0)
-            const available = r.count - used
+            const available = availableOf(r)
             if (available <= 0) return []
 
             return [{
@@ -592,7 +576,7 @@ export async function updateMiscPackage(
                     packageType: true,
                     count: true,
                     repackId: true,
-                    movements: { select: { count: true } },
+                    ...MOVEMENT_COUNT_SELECT,
                 },
             })
             if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
@@ -706,7 +690,7 @@ export async function deleteMiscPackage(
                     totalWeight: true,
                     repackId: true,
                     stock: { select: { variety: { select: { name: true } } } },
-                    movements: { select: { count: true } },
+                    ...MOVEMENT_COUNT_SELECT,
                 },
             })
             if (!pkg) throw new Error('포장을 찾을 수 없습니다.')
@@ -1001,7 +985,7 @@ export async function updateMiscPurchase(
             select: {
                 id: true, source: true, category: true, packageType: true,
                 count: true, varietyId: true, repackId: true,
-                movements: { select: { count: true } },
+                ...MOVEMENT_COUNT_SELECT,
             },
         })
         if (!existing) return { success: false, error: '매입 레코드를 찾을 수 없습니다.' }
@@ -1027,7 +1011,7 @@ export async function updateMiscPurchase(
                 where: { id },
                 select: {
                     id: true, packageType: true, count: true, varietyId: true,
-                    repackId: true, movements: { select: { count: true } },
+                    repackId: true, ...MOVEMENT_COUNT_SELECT,
                 },
             })
             if (!fresh) throw new Error('매입 레코드를 찾을 수 없습니다.')
@@ -1093,7 +1077,7 @@ export async function deleteMiscPurchase(
                 select: {
                     id: true, source: true, category: true, purchaseVendor: true,
                     packageType: true, count: true, repackId: true,
-                    movements: { select: { count: true } },
+                    ...MOVEMENT_COUNT_SELECT,
                 },
             })
             if (!row) throw new Error('매입 레코드를 찾을 수 없습니다.')
