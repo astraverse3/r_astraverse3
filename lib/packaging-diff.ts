@@ -20,13 +20,13 @@
 import {
   guardDelete,
   guardCountChange,
+  guardIdentityChange,
   DELETE_BLOCKED_HEADER,
+  IDENTITY_BLOCKED_HEADER,
   DEDUCTION_HINT,
   blockedMessage,
+  EPSILON,
 } from './package-guard'
-
-/** 부동소수 비교 허용 오차 — totalWeight가 클라 계산값이라 필요하다. */
-const EPSILON = 1e-6
 
 /**
  * 저장 요청 1줄. 액션이 `MillingOutputInput`을 정규화해 넣는다
@@ -76,6 +76,7 @@ export type PackagingDiffErrorCode =
   | 'DUPLICATE_ID'
   | 'DELETE_BLOCKED'
   | 'COUNT_BELOW_MOVED'
+  | 'IDENTITY_BLOCKED'
 
 export type PackagingDiffError = {
   code: PackagingDiffErrorCode
@@ -166,6 +167,26 @@ export function diffPackaging(
 
     if (unchanged) continue
 
+    // 이미 나간 물건의 정체는 못 바꾼다 — 규격·단중·포장지 (백로그 §19 / #72).
+    //
+    // 🔴 **`unchanged` 판정 뒤**에 둔다. 안 건드리는 줄까지 검사하면 기존 데이터가
+    // 인질이 된다 — `d18487e` 때 「전 줄 유효성」이 배치 #73을 통째로 잠갔다.
+    // 차감된 벼 16개 배치가 전부 `잔량`이고 잔량은 화면에 단중 입력칸이 열려 있어,
+    // 이 순서가 어긋나면 그 배치들이 통째로 저장 불가가 된다.
+    const identity = guardIdentityChange(
+      row,
+      {
+        packageType: line.packageType,
+        weightPerUnit: line.weightPerUnit,
+        packagingId: line.packagingId,
+      },
+      {},
+    )
+    if (!identity.ok) {
+      errors.push({ code: 'IDENTITY_BLOCKED', message: identity.reason, rowId: row.id })
+      continue
+    }
+
     toUpdate.push({ id: row.id, line, recalcLot, recalcProductType })
     written.push({ line, no: i + 1 })
   }
@@ -223,9 +244,13 @@ export function diffPackaging(
  */
 export function formatPackagingDiffErrors(errors: PackagingDiffError[]): string {
   const blocked = errors.filter((e) => e.code === 'DELETE_BLOCKED')
+  const identity = errors.filter((e) => e.code === 'IDENTITY_BLOCKED')
   const shrunk = errors.filter((e) => e.code === 'COUNT_BELOW_MOVED')
   const rest = errors.filter(
-    (e) => e.code !== 'DELETE_BLOCKED' && e.code !== 'COUNT_BELOW_MOVED',
+    (e) =>
+      e.code !== 'DELETE_BLOCKED' &&
+      e.code !== 'COUNT_BELOW_MOVED' &&
+      e.code !== 'IDENTITY_BLOCKED',
   )
 
   const blocks: string[] = []
@@ -235,6 +260,17 @@ export function formatPackagingDiffErrors(errors: PackagingDiffError[]): string 
       blockedMessage(
         DELETE_BLOCKED_HEADER,
         blocked.map((e) => e.message),
+        DEDUCTION_HINT,
+      ),
+    )
+  }
+
+  // 삭제·축소와 **문구가 달라야** 사용자가 무엇을 되돌릴지 안다 (#77).
+  if (identity.length > 0) {
+    blocks.push(
+      blockedMessage(
+        IDENTITY_BLOCKED_HEADER,
+        identity.map((e) => e.message),
         DEDUCTION_HINT,
       ),
     )

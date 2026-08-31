@@ -148,7 +148,7 @@ test('삭제 차단 메시지는 헤더·목록·해결안내를 갖춘다', () 
 
 test('품종·규격 차단 메시지는 해결안내를 붙이지 않는다 (되돌릴 일이 아니다)', () => {
   const text = identityBlockedMessage(pkg({ movedCount: 3 }))
-  assert.match(text, /^이미 판매·재포장된 포장은 품종·규격을 바꿀 수 없어요\./)
+  assert.match(text, /^이미 판매·재포장된 포장은 품종·규격·중량·포장지를 바꿀 수 없어요./)
   assert.ok(!text.includes('판매를 취소하거나'))
 })
 
@@ -157,4 +157,77 @@ test('describeDeduction은 규격·전체·차감을 함께 낸다', () => {
     describeDeduction(pkg({ packageType: '잔량', count: 1, movedCount: 1 })),
     '잔량 × 1 (1개 중 1개 차감됨)',
   )
+})
+
+// ------------------------------------------------------
+// 정체 — 단중·포장지 축 (백로그 §19 / #72·#74·#75)
+// ------------------------------------------------------
+
+test('차감이 있으면 단중 변경을 막는다 — 팔린 물건의 중량이 소급해 바뀐다', () => {
+  const r = guardIdentityChange(
+    pkg({ movedCount: 3, packageType: '잔량', weightPerUnit: 3 }),
+    { weightPerUnit: 10 },
+    {},
+  )
+  assert.equal(r.ok, false)
+  assert.match((r as { reason: string }).reason, /10개 중 3개 차감됨/)
+})
+
+test('차감이 있으면 포장지 변경을 막는다 — 팔린 물건의 SKU가 바뀐다', () => {
+  const r = guardIdentityChange(pkg({ movedCount: 1, packagingId: 3 }), { packagingId: 7 }, {})
+  assert.equal(r.ok, false)
+})
+
+test('포장지를 null(잔량)로 떼는 것도 변경이다 — null은 유효값이다', () => {
+  const r = guardIdentityChange(pkg({ movedCount: 1, packagingId: 3 }), { packagingId: null }, {})
+  assert.equal(r.ok, false)
+})
+
+test('원래 포장지가 없던 행에 포장지를 붙이는 것도 변경이다', () => {
+  const r = guardIdentityChange(pkg({ movedCount: 1, packagingId: null }), { packagingId: 3 }, {})
+  assert.equal(r.ok, false)
+})
+
+test('차감이 없으면 단중·포장지 모두 자유롭다', () => {
+  const r = guardIdentityChange(
+    pkg({ movedCount: 0, weightPerUnit: 3, packagingId: 3 }),
+    { weightPerUnit: 10, packagingId: 7 },
+    {},
+  )
+  assert.deepEqual(r, { ok: true })
+})
+
+test('단중이 같으면 부동소수 오차로 막지 않는다 (#75)', () => {
+  // 화면에서 온 값은 계산을 거쳐 1004 !== 1004.0000000001 이 될 수 있다.
+  const r = guardIdentityChange(
+    pkg({ movedCount: 3, weightPerUnit: 1004 }),
+    { weightPerUnit: 1004 + 1e-9 },
+    {},
+  )
+  assert.deepEqual(r, { ok: true })
+})
+
+test('EPSILON보다 큰 차이는 변경으로 본다', () => {
+  const r = guardIdentityChange(
+    pkg({ movedCount: 3, weightPerUnit: 1004 }),
+    { weightPerUnit: 1004.001 },
+    {},
+  )
+  assert.equal(r.ok, false)
+})
+
+test('행에 단중이 없으면(축 미제공) 그 축은 검사하지 않는다 (#74)', () => {
+  // 잡곡 매입처럼 포장지 개념이 없는 경로를 억지로 맞추지 않는다.
+  const r = guardIdentityChange(pkg({ movedCount: 3 }), { weightPerUnit: 99 }, {})
+  assert.deepEqual(r, { ok: true })
+})
+
+test('네 축이 함께 걸려도 이유는 한 줄 — 사용자가 할 일은 어느 축이든 같다 (#76)', () => {
+  const r = guardIdentityChange(
+    pkg({ movedCount: 3, packageType: '5kg', weightPerUnit: 5, packagingId: 3 }),
+    { packageType: '10kg', varietyId: 9, weightPerUnit: 10, packagingId: 7 },
+    { varietyId: 1 },
+  )
+  assert.equal(r.ok, false)
+  assert.equal((r as { reason: string }).reason, describeDeduction(pkg({ movedCount: 3 })))
 })

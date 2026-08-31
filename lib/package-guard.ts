@@ -24,6 +24,10 @@ export type GuardedPackage = {
   movedCount: number
   /** 재포장으로 생겨난 행이면 그 Repack id. 원래부터 있던 행은 null */
   repackId?: number | null
+  /** 단위 중량. 넣은 경우에만 정체 검사에 들어간다 (#74) */
+  weightPerUnit?: number
+  /** 포장지(→SKU). 넣은 경우에만 정체 검사에 들어간다. 잔량·미지정은 null */
+  packagingId?: number | null
 }
 
 export type GuardResult =
@@ -89,12 +93,37 @@ export function guardCountChange(pkg: GuardedPackage, nextCount: number): GuardR
 }
 
 /**
- * 이미 나간 물건의 정체는 바꿀 수 없다 (결정 #70 A안).
+ * 부동소수 비교 허용 오차 — `weightPerUnit`·`totalWeight`에는 클라이언트 계산값이 섞인다.
+ * `lib/packaging-diff.ts`가 이것을 import해 쓴다 — 두 곳에 두면 반드시 어긋난다 (#75).
+ */
+export const EPSILON = 1e-6
+
+const sameNumber = (a: number, b: number): boolean => Math.abs(a - b) < EPSILON
+
+/**
+ * 이미 나간 물건의 정체는 바꿀 수 없다 (결정 #70 A안 · #72로 축 확장).
+ *
+ * **정체 = 품종 · 규격 · 단중 · 포장지** 네 축이다.
+ * 처음엔 품종·규격 둘만 봤다. 백로그 §19에서 나머지 둘이 열려 있는 게 드러났다 —
+ * 1kg × 100을 10개 판 뒤 단중을 10kg으로 바꾸면 **팔린 물건의 중량이 소급해 바뀌고**,
+ * 포장지를 바꾸면 **이미 팔린 물건의 SKU가 바뀐다.**
+ * §19는 벼만 지적했지만 잡곡 수정 액션 둘도 `weightPerUnit`을 받고 있었다.
+ * 벼(`packaging-diff`)·잡곡(`packages.ts`) 어느 쪽에서 들어와도 같은 규칙이다.
+ *
+ * `next`에 **넣은 축만** 검사한다 (#74) — 잡곡 매입처럼 포장지 개념이 없는 경로를
+ * 억지로 맞추지 않기 위해서다. `packagingId`는 null이 유효값(잔량)이라
+ * 「축을 넣었는가」는 `undefined` 여부로만 가린다.
+ *
  * 수량 증가·매입처·매입일 정정은 이 검사에 걸리지 않는다 — 오타 하나 못 고칠 이유는 없다.
  */
 export function guardIdentityChange(
   pkg: GuardedPackage,
-  next: { packageType?: string; varietyId?: number },
+  next: {
+    packageType?: string
+    varietyId?: number
+    weightPerUnit?: number
+    packagingId?: number | null
+  },
   current: { varietyId?: number | null },
 ): GuardResult {
   if (pkg.movedCount === 0) return { ok: true }
@@ -104,8 +133,16 @@ export function guardIdentityChange(
     next.varietyId !== undefined &&
     current.varietyId != null &&
     next.varietyId !== current.varietyId
+  const weightChanged =
+    next.weightPerUnit !== undefined &&
+    pkg.weightPerUnit !== undefined &&
+    !sameNumber(next.weightPerUnit, pkg.weightPerUnit)
+  const packagingChanged =
+    next.packagingId !== undefined &&
+    pkg.packagingId !== undefined &&
+    next.packagingId !== pkg.packagingId
 
-  if (specChanged || varietyChanged) {
+  if (specChanged || varietyChanged || weightChanged || packagingChanged) {
     return { ok: false, reason: describeDeduction(pkg) }
   }
   return { ok: true }
@@ -124,7 +161,8 @@ export function blockedMessage(header: string, reasons: string[], hint?: string)
 }
 
 export const DELETE_BLOCKED_HEADER = '이미 판매·재포장된 포장은 지울 수 없어요.'
-export const IDENTITY_BLOCKED_HEADER = '이미 판매·재포장된 포장은 품종·규격을 바꿀 수 없어요.'
+export const IDENTITY_BLOCKED_HEADER =
+  '이미 판매·재포장된 포장은 품종·규격·중량·포장지를 바꿀 수 없어요.'
 export const DEDUCTION_HINT = '포장을 되돌리려면 판매를 취소하거나 재포장을 정리해 주세요.'
 
 /** 단건 액션용 — 한 행이 삭제로 막혔을 때. */
@@ -132,7 +170,7 @@ export function deleteBlockedMessage(pkg: GuardedPackage): string {
   return blockedMessage(DELETE_BLOCKED_HEADER, [describeDeduction(pkg)], DEDUCTION_HINT)
 }
 
-/** 단건 액션용 — 한 행이 품종·규격 변경으로 막혔을 때. */
+/** 단건 액션용 — 한 행이 정체(품종·규격·중량·포장지) 변경으로 막혔을 때. */
 export function identityBlockedMessage(pkg: GuardedPackage): string {
   return blockedMessage(IDENTITY_BLOCKED_HEADER, [describeDeduction(pkg)])
 }

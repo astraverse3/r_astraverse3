@@ -25,7 +25,7 @@ import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-ava
 const MISC_MILLING_SENTINEL = '기타'
 const MISC_PURCHASE_PACKAGING = '매입포장'
 
-// 차감 보호(삭제·축소·품종/규격 변경·재포장 결과)의 규칙과 문구는 `lib/package-guard.ts`가
+// 차감 보호(삭제·축소·정체 변경·재포장 결과)의 규칙과 문구는 `lib/package-guard.ts`가
 // 단일 원천이다 (결정 #66). 벼 포장 수정(`lib/packaging-diff.ts`)도 같은 것을 쓴다.
 
 /**
@@ -575,6 +575,7 @@ export async function updateMiscPackage(
                     totalWeight: true,
                     packageType: true,
                     count: true,
+                    weightPerUnit: true,
                     repackId: true,
                     ...MOVEMENT_COUNT_SELECT,
                 },
@@ -594,7 +595,13 @@ export async function updateMiscPackage(
             const shrink = guardCountChange(guarded, data.count)
             if (!shrink.ok) throw new Error(shrink.reason)
 
-            const identity = guardIdentityChange(guarded, { packageType: data.packageType }, {})
+            // 정체 = 규격 + 단중. 단중이 열려 있던 게 백로그 §19였다 — 1kg×100을 10개 판 뒤
+            // 10kg으로 바꾸면 팔린 물건의 중량이 소급해 바뀐다 (#72).
+            const identity = guardIdentityChange(
+                guarded,
+                { packageType: data.packageType, weightPerUnit: data.weightPerUnit },
+                {},
+            )
             if (!identity.ok) throw new Error(identityBlockedMessage(guarded))
 
             const stock = await tx.stock.findUnique({
@@ -1011,7 +1018,7 @@ export async function updateMiscPurchase(
                 where: { id },
                 select: {
                     id: true, packageType: true, count: true, varietyId: true,
-                    repackId: true, ...MOVEMENT_COUNT_SELECT,
+                    weightPerUnit: true, repackId: true, ...MOVEMENT_COUNT_SELECT,
                 },
             })
             if (!fresh) throw new Error('매입 레코드를 찾을 수 없습니다.')
@@ -1021,11 +1028,11 @@ export async function updateMiscPurchase(
             const shrink = guardCountChange(now, count)
             if (!shrink.ok) throw new Error(shrink.reason)
 
-            // 이미 나간 물건의 정체는 못 바꾼다 — 품종·규격만 (#70 A안).
+            // 이미 나간 물건의 정체는 못 바꾼다 — 품종·규격·단중 (#70 A안 · §19로 단중 추가).
             // 매입처·매입일·수량 증가는 그대로 정정할 수 있다.
             const identity = guardIdentityChange(
                 now,
-                { packageType, varietyId: lookup.varietyId },
+                { packageType, varietyId: lookup.varietyId, weightPerUnit },
                 { varietyId: fresh.varietyId },
             )
             if (!identity.ok) throw new Error(identityBlockedMessage(now))

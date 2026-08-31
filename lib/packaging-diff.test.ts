@@ -329,3 +329,78 @@ test('종류가 다른 에러는 문단으로 나눠 낸다', () => {
   assert.match(text, /1개로 줄일 수 없어요/)
   assert.ok(text.includes('\n\n'), '문단 구분')
 })
+
+// ------------------------------------------------------
+// 정체 변경 차단 — 규격·단중·포장지 (백로그 §19 / #72·#77)
+// ------------------------------------------------------
+
+test('차감된 행의 단중은 못 바꾼다 — 중량 보존이 깨진다', () => {
+  // 실제 사고 경로: 차감된 벼 16개 배치가 전부 `잔량`이고, 잔량은 단중 입력칸이 열려 있다.
+  const existing = [row(1, { packageType: '잔량', weightPerUnit: 3, totalWeight: 3, count: 1, movedCount: 1 })]
+  const r = diffPackaging(existing, [
+    line({ id: 1, packageType: '잔량', weightPerUnit: 10, totalWeight: 10, count: 1 }),
+  ])
+  assert.equal(r.ok, false)
+  const errors = (r as { errors: { code: string }[] }).errors
+  assert.equal(errors[0].code, 'IDENTITY_BLOCKED')
+})
+
+test('차감된 행의 포장지는 못 바꾼다 — 팔린 물건의 SKU가 바뀐다', () => {
+  const r = diffPackaging([row(1, { movedCount: 1 })], [line({ id: 1, packagingId: 9 })])
+  assert.equal(r.ok, false)
+  assert.equal((r as { errors: { code: string }[] }).errors[0].code, 'IDENTITY_BLOCKED')
+})
+
+test('차감된 행의 규격은 못 바꾼다 (화면 경로는 없지만 서버는 함께 막는다)', () => {
+  const r = diffPackaging([row(1, { movedCount: 1 })], [line({ id: 1, packageType: '10kg' })])
+  assert.equal(r.ok, false)
+  assert.equal((r as { errors: { code: string }[] }).errors[0].code, 'IDENTITY_BLOCKED')
+})
+
+test('차감이 없으면 단중·포장지 모두 자유롭다', () => {
+  const r = diffPackaging(
+    [row(1, { packageType: '잔량', weightPerUnit: 3, totalWeight: 3, count: 1 })],
+    [line({ id: 1, packageType: '잔량', weightPerUnit: 10, totalWeight: 10, count: 1, packagingId: 9 })],
+  )
+  assert.equal(r.ok, true)
+})
+
+test('🔴 안 건드리는 줄은 검사에 닿지도 않는다 — 기존 데이터가 인질이 되면 안 된다', () => {
+  // `d18487e` 회귀 재발 방지. 차감된 잔량 줄을 그대로 되보내면서
+  // **같은 배치의 다른 줄**을 고치는 건 통과해야 한다.
+  const deducted = row(1, { packageType: '잔량', weightPerUnit: 3, totalWeight: 3, count: 1, movedCount: 1 })
+  const other = row(2, { packageType: '10kg', weightPerUnit: 10, totalWeight: 100, count: 10 })
+  const r = diffPackaging(
+    [deducted, other],
+    [echo(deducted), line({ id: 2, packageType: '10kg', weightPerUnit: 10, count: 11, totalWeight: 110 })],
+  )
+  assert.equal(r.ok, true)
+  assert.deepEqual((r as { toUpdate: { id: number }[] }).toUpdate.map((u) => u.id), [2])
+})
+
+test('차감된 행도 수량 증가는 정체 변경이 아니다', () => {
+  const r = diffPackaging(
+    [row(1, { movedCount: 1 })],
+    [line({ id: 1, count: 5, totalWeight: 100 })],
+  )
+  assert.equal(r.ok, true)
+})
+
+test('축소가 정체 검사보다 먼저 걸린다 — 더 구체적인 이유를 낸다', () => {
+  const r = diffPackaging(
+    [row(1, { movedCount: 2 })],
+    [line({ id: 1, count: 1, totalWeight: 20, packagingId: 9 })],
+  )
+  assert.equal(r.ok, false)
+  assert.equal((r as { errors: { code: string }[] }).errors[0].code, 'COUNT_BELOW_MOVED')
+})
+
+test('정체 차단 메시지는 삭제와 다른 문단으로 나온다 (#77)', () => {
+  const text = formatPackagingDiffErrors([
+    { code: 'DELETE_BLOCKED', message: '20kg × 3 (3개 중 1개 차감됨)', rowId: 1 },
+    { code: 'IDENTITY_BLOCKED', message: '잔량 × 1 (1개 중 1개 차감됨)', rowId: 2 },
+  ])
+  assert.match(text, /지울 수 없어요/)
+  assert.match(text, /품종·규격·중량·포장지를 바꿀 수 없어요/)
+  assert.equal(text.split('\n\n').length, 2)
+})
