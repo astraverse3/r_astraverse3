@@ -1,5 +1,39 @@
 # 작업일지
 
+## 2026-08-31
+
+### 백로그 §19·§20 — 차감된 포장의 정체 보호 + 가용재고 단일화 `fix` `refactor`
+
+계획서 [plan-백로그19-20.md](docs/plan/plan-백로그19-20.md) (결정 #72~#78) · 보고서 [report-백로그19-20-2026-08-31.md](docs/report/report-백로그19-20-2026-08-31.md).
+
+**§20 먼저 — 가용재고 계산을 한 곳으로** (`63dc6c3`). `가용 = count - SUM(movements.count)`가 **6곳**에 손으로 쓰여 있었다(백로그는 4곳이라 적었는데, `packages.ts`의 로컬 `toGuarded`와 `repack.ts`의 로컬 `availableOf`가 더 있었다). `lib/batch-outputs.ts`(#61)와 같은 냄새다 — 그때도 지점마다 붙이다 두 번 놓쳤고 수율·통계가 이중 계상됐다. **`lib/package-available.ts` 신설** + select 조각(`MOVEMENT_COUNT_SELECT`)을 계산 함수와 짝으로 뒀다.
+
+**#73 DB 집계 3곳은 합치지 않았다.** `purchase-order.ts`의 aggregate 2곳·`package-movement.ts`의 before/after는 행을 로드하지 않고 **DB에서** 합을 낸다. 공식은 같지만 계산 위치가 달라 메모리 헬퍼로 바꾸면 왕복이 늘거나 전 행을 끌어와야 한다 — 주석으로 연결만 했다.
+
+**증거: 기존 테스트 138개를 한 줄도 안 고치고 통과** = 리팩터가 동작을 안 바꿨다. 순수 치환과 규칙 변경을 **커밋으로 나눈** 이유이기도 하다.
+
+**§19 — 정체(identity)를 네 축으로** (`55555a7`). 포장수정 diff(#62~#65)가 삭제·축소는 막았지만 차감된 행의 **단중·포장지**는 열려 있었다. 재포장이 3kg를 소진해 간 잔량 행의 중량을 10kg으로 바꿀 수 있었다(중량 보존 파괴).
+
+**🔴 백로그가 또 절반만 맞았다.** §19는 「벼만」이라고 적혀 있었는데 **잡곡도 같은 구멍**이었다 — `updateMiscPackage`·`updateMiscPurchase` 스키마가 둘 다 `weightPerUnit`을 받는다. **결정 #70(A안)이 「품종·규격」이라 부른 정체에 단중이 빠져 있었던 것**이다. → **#72 정체 = 품종·규격·단중·포장지**, 벼·잡곡이 한 함수를 쓴다.
+
+**#74** 넣은 축만 검사(`packagingId`는 null이 유효값이라 `undefined`로만 축 제공 여부를 가린다). **#75** `EPSILON`을 guard로 옮기고 diff가 import — 두 곳에 두면 어긋난다. **#76** 헤더만 「품종·규격·중량·포장지」로. 행별 이유는 그대로(할 일은 어느 축이든 같다). **#77** diff에 `IDENTITY_BLOCKED` — 삭제·축소와 문단이 달라야 뭘 되돌릴지 안다.
+
+**🔴 검사 순서가 이 작업의 핵심이었다.** 정체 검사를 `unchanged` 판정 **뒤**에 뒀다. 앞에 두면 `d18487e` 때 「전 줄 유효성」이 배치 #73을 통째로 잠근 일이 그대로 재현된다 — 차감된 16개 배치가 전부 `잔량`이라 **그 배치들이 통째로 저장 불가**가 됐을 것이다. 테스트로 고정했다.
+
+- `lib/package-available.ts`, `lib/package-available.test.ts` — 신규(9개)
+- `scripts/check-identity-guard.ts` — 신규, 실DB 노출 현황(읽기 전용)
+- `lib/package-guard.ts` — `GuardedPackage` 2필드 · 4축 검사 · `EPSILON` · 문구
+- `lib/packaging-diff.ts` — `IDENTITY_BLOCKED` · guard 호출 · `EPSILON` import
+- `app/actions/` — `packages.ts`·`milling.ts`·`repack.ts`·`purchase-order.ts` 치환 + 잡곡 2곳 축 연결
+- `docs/리팩토링-백로그.md` — §19·§20 해소 표시
+
+검증: guard 30 / diff 41 / available 9 / **전체 164 통과** · `tsc` 통과 · eslint 신규 0건(기존 `any` 4건은 부채) · `next build` 미실행. **실DB: 차감 17행(잔량 16·1kg 1) / 16개 배치 전부 echo 통과(인질 없음) · 단중 변경 16/16 차단.** 브라우저 확인 대기.
+
+**남은 백로그**: §21(포장 규격 목록 5곳 불일치) — SKU 생성·발주서 매칭(#33)에 파급돼 **D2 이후가 안전**. 후속 후보로 §22(차감된 행의 `stockId` 변경 = 로트 소급 변경, 화면 경로 없어 실질 노출 0)를 보고서에 적어뒀다.
+
+---
+
+
 ## 2026-08-28
 
 ### 잡곡 제품재고 수정·삭제에 차감 보호 `fix`
