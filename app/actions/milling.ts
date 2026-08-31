@@ -302,8 +302,13 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
                 // 재포장 결과가 섞이면 다이얼로그에 도정 포장인 척 복원되고, 수율 필터도
                 // 오판정한다. 아래 updatePackagingLogs의 deleteMany와 반드시 같은 필터여야
                 // 한다 — 한쪽만 걸면 안 보이는 행을 지우게 된다. (결정 #61)
+                // 🔴 orderBy 필수 — 없으면 Postgres가 heap 물리 순서를 준다.
+                // UPDATE는 MVCC라 새 튜플을 heap 끝에 쓰므로 **고친 줄만 맨 아래로 밀린다.**
+                // 포장수정을 diff로 바꾸기 전(`d18487e`)에는 매 저장마다 전 행을 재생성해
+                // 우연히 순서가 맞아 보였을 뿐이다. 만든 순서로 고정한다.
                 outputs: {
                     ...MILLED_OUTPUTS,
+                    orderBy: { id: 'asc' as const },
                     include: { productType: { select: { packagingId: true } } },
                 }
             },

@@ -62,8 +62,11 @@ export async function getDashboardStats() {
                 orderBy: { date: 'desc' },
                 include: {
                     // 최근 도정 목록 — 그 배치에서 도정해 포장한 것만 보여준다 (결정 #61)
+                    // orderBy: 포장내역 팝업이 이 순서 그대로 나열한다. 없으면 수정한 줄이
+                    // heap 끝으로 밀려 순서가 흔들린다 (getMillingLogs와 같은 이유)
                     outputs: {
                         ...MILLED_OUTPUTS,
+                        orderBy: { id: 'asc' as const },
                         select: {
                             id: true,
                             packageType: true,
