@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>제품재고 재포장 — UI 점검 4건</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+h1{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
+.fl{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fl .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.fl .pill.n{background:#0f172a;border-color:#0f172a;color:#fff}
+.note{font-size:12px;color:#475569;line-height:1.7}
+.note b{color:#0f172a}
+.shell{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 16px 40px rgba(15,23,42,.13);overflow:hidden}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:5px;display:inline-flex;align-items:center;gap:4px}
+.tag.bad{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.tag.good{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px}
+/* --- 공용 컨트롤 --- */
+.b{height:32px;padding:0 11px;border-radius:8px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.b-out{background:#fff;border:1px solid #e2e8f0;color:#475569}
+.b-pri{background:#2563eb;color:#fff;font-weight:700;box-shadow:0 1px 2px rgba(37,99,235,.35)}
+.b-act{background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;font-weight:700}
+.b-ghost{background:transparent;color:#64748b}
+.b-quiet{background:transparent;border:1px solid transparent;color:#64748b;font-weight:600}
+.b-icon{width:32px;padding:0;justify-content:center}
+.seg{display:flex;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.seg>*{height:32px;padding:0 11px;font-size:12.5px;font-weight:600;color:#475569;display:inline-flex;align-items:center;gap:6px}
+.seg>*+*{border-left:1px solid #e2e8f0}
+.inp{height:32px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-size:12.5px;color:#0f172a;display:flex;align-items:center;padding:0 9px}
+.inp.ph{color:#94a3b8}
+.sel{height:32px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:12.5px;color:#0f172a;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 9px}
+.lbl{font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.02em}
+.chip{border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;font-size:11.5px;color:#475569;background:#fff}
+.chip.on{border-color:#2563eb;background:rgba(37,99,235,.1);color:#2563eb;font-weight:700}
+.lot{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px}
+.cbx{width:14px;height:14px;border:1.5px solid #cbd5e1;border-radius:3px;background:#fff;display:block}
+.cbx.on{background:#2563eb;border-color:#2563eb}
+/* --- 목록 그리드 --- */
+.hd{display:grid;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#94a3b8;text-transform:uppercase;background:rgba(248,250,252,.6);border-bottom:1px solid #e2e8f0;padding:8px 16px}
+.rw{display:grid;align-items:center;padding:0 16px;border-top:1px solid #f1f5f9}
+.gr{grid-template-columns:.65fr .5fr .75fr 1.4fr .5fr .55fr .8fr .8fr 36px}
+.gr-s{grid-template-columns:28px .65fr .5fr .75fr 1.4fr .5fr .55fr .8fr .8fr 36px}
+.r{text-align:right}.c{text-align:center}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:34px;width:1240px">
+  <h1>제품재고 재포장 — UI 점검 4건</h1>
+  <p class="note" style="margin-top:6px">
+    스크린샷 3장에서 지적한 네 가지를 각각 <b>현재 / 제안</b>으로 나란히 뒀습니다. 콘텐츠 폭 1216px(사이드바 256px 제외) 기준.
+  </p>
+</div>
+
+<!-- ══════════ 1. 액션 라인 ══════════ -->
+<div style="position:absolute;left:40px;top:130px;width:1240px">
+  <div class="fl"><span class="pill n">1</span> 재포장 버튼 — <b style="color:#b91c1c">시각 비중을 낮춥니다</b> (사용빈도·중요도가 낮은데 지금은 등록 버튼과 같은 무게)</div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <div class="mb-2"><span class="tag bad">현재</span></div>
+      <div class="shell p-4 bg-white">
+        <div class="flex justify-end items-center gap-1.5">
+          <div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div>
+          <div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div>
+          <div class="b b-out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장</div>
+          <div class="b b-out">+ 포장 하기</div>
+          <div class="b b-pri">+ 매입 등록</div>
+        </div>
+      </div>
+      <ul class="note mt-2.5 list-disc pl-4 space-y-1">
+        <li>보내주신 실제 버튼(테두리 없는 엑셀 아이콘 / 흰 outline 재포장 / 파랑 틴트 검색)로 다시 그렸습니다.</li>
+        <li><b>튀는 이유는 하나입니다</b> — 재포장이 「+ 포장 하기」와 <b>똑같은 흰 outline 버튼</b>이라, 사용빈도는 훨씬 낮은데 생김새는 등록 버튼과 동급입니다.</li>
+        <li>순서도 미묘합니다. 재포장은 가진 재고를 다시 나누는 <b>도구</b>인데, 도구(엑셀·검색)와 등록 버튼 <b>사이에 끼어</b> 있어 어느 그룹인지 안 읽힙니다.</li>
+        <li>모드가 켜지면 회색 ghost 「재포장 취소」로 <b>바뀌면서 폭까지 달라져 버튼이 움직입니다</b> — 모드에 들어갔다는 신호가 오히려 약해집니다.</li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="mb-2 flex items-center gap-2"><span class="tag good">A안 · 권장</span><span class="text-[11.5px] font-semibold text-slate-500">테두리를 벗겨 도구 그룹으로 내림</span></div>
+      <div class="shell p-4 bg-white">
+        <div class="flex justify-end items-center gap-1.5">
+          <div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div>
+          <div class="b b-quiet" style="min-width:96px;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장</div>
+          <div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div>
+          <span style="width:1px;height:20px;background:#e2e8f0;margin:0 5px"></span>
+          <div class="b b-out">+ 포장 하기</div>
+          <div class="b b-pri">+ 매입 등록</div>
+        </div>
+      </div>
+      <ul class="note mt-2.5 list-disc pl-4 space-y-1">
+        <li><b>테두리·배경을 없애고</b>(<span class="mono">ghost</span>) 글자를 <span class="mono">slate-500</span>으로 내립니다. 아이콘은 남겨 위치를 기억하기 쉽게 — 무게만 한 단 내려갑니다.</li>
+        <li>이러면 줄이 <b>「도구(엑셀·재포장·검색) │ 등록(포장하기·매입등록)」</b> 두 덩어리로 읽힙니다. 재포장은 새 데이터를 만드는 게 아니라 <b>가진 재고를 다시 나누는 도구</b>라 도구 쪽이 맞습니다.</li>
+        <li>ghost는 이미 앱에 있는 어휘입니다(현재 「재포장 취소」가 ghost) — <b>새 스타일을 만들지 않습니다.</b></li>
+        <li><b>고정 폭(min-w 96px)</b>으로 모드 전환 때 줄이 안 흔들리게 합니다.</li>
+      </ul>
+
+      <div class="mt-3.5 mb-2 flex items-center gap-2"><span class="tag good">A안</span><span class="text-[11.5px] font-semibold text-slate-500">모드 켜진 상태</span></div>
+      <div class="shell p-4 bg-white">
+        <div class="flex justify-end items-center gap-1.5">
+          <div class="b b-icon" style="color:#cbd5e1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div>
+          <div class="b b-act" style="min-width:96px;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장 중<span style="width:1px;height:13px;background:rgba(37,99,235,.35);margin:0 1px"></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"></path></svg></div>
+          <div class="b b-act" style="opacity:.35"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div>
+          <span style="width:1px;height:20px;background:#e2e8f0;margin:0 5px"></span>
+          <div class="b b-out" style="opacity:.35">+ 포장 하기</div>
+          <div class="b b-pri" style="opacity:.35">+ 매입 등록</div>
+        </div>
+      </div>
+      <ul class="note mt-2.5 list-disc pl-4 space-y-1">
+        <li>파랑 틴트(<span class="mono">bg-primary/10 border-primary/30</span>)는 이 앱이 이미 <b>「활성」에 쓰는 어휘</b>입니다(검색에 필터 걸렸을 때). 새 어휘를 만들지 않고 그대로 재사용 — 이게 형평성 면에서 가장 안전합니다.</li>
+        <li>모드 중엔 <b>나머지 버튼을 모두 disabled</b>로 내립니다 — 파랑 틴트 하나만 살아있으니 재포장을 primary로 올리지 않아도 모드가 분명합니다.</li>
+        <li>지금은 모드 중에 검색을 눌러 필터를 바꾸면 골라둔 것이 사라집니다.</li>
+      </ul>
+
+      <div class="mt-3.5 mb-2 flex items-center gap-2"><span class="tag bad">B안 · 비권장</span><span class="text-[11.5px] font-semibold text-slate-500">처음 제안 (primary 승격) — 지금 문제의 반대 방향</span></div>
+      <div class="shell p-4 bg-white">
+        <div class="flex justify-end items-center gap-2.5">
+          <div class="seg">
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></span>
+            <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</span>
+          </div>
+          <div class="b b-pri"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장</div>
+        </div>
+      </div>
+      <ul class="note mt-2.5 list-disc pl-4 space-y-1">
+        <li><b>형평성 문제 ①</b> 잡곡 탭엔 같은 줄에 이미 <span class="mono">+매입 등록</span>이 primary로 있습니다 → <b>한 줄에 primary 2개.</b> 코드 주석(핸드오프 §3.4)에 「추가 버튼은 primary」가 명시돼 있어 규칙과 정면충돌합니다.</li>
+        <li><b>형평성 문제 ②</b> 세그먼트 컨트롤은 이 앱에 <b>아직 없는 어휘</b>입니다. 도입하면 원물재고·잡곡재고·판매관리·도정관리 액션 라인 <b>4곳을 같이 바꿔야</b> 형평성이 맞습니다.</li>
+        <li>무엇보다 <b>사용빈도가 가장 낮은 버튼을 가장 강한 스타일로</b> 올리는 게 됩니다 — 지금 지적하신 문제의 반대 방향입니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 비중 낮추기 단계 -->
+  <div class="card mt-4 overflow-hidden">
+    <div class="px-4 py-2.5 border-b border-slate-100 flex items-baseline gap-2">
+      <span class="text-[13px] font-bold text-slate-800">비중 낮추기 4단계 — 어디까지 내릴까요?</span>
+      <span class="text-[11.5px] text-slate-400">잡곡 탭 액션 라인 기준. ②가 A안입니다</span>
+    </div>
+    <div style="display:grid;grid-template-columns:150px 1fr 380px">
+      <div class="lbl px-4 py-2" style="background:#fafbfc">단계</div>
+      <div class="lbl px-4 py-2" style="background:#fafbfc">액션 라인</div>
+      <div class="lbl px-4 py-2" style="background:#fafbfc">의견</div>
+
+      <div class="px-4 py-3 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">① 현재<div class="text-[11px] font-normal text-slate-400 mt-0.5">흰 outline + 아이콘</div></div>
+      <div class="px-4 py-3 border-t border-slate-100"><div class="flex items-center gap-1.5"><div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div><div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div><div class="b b-out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장</div><div class="b b-out">+ 포장 하기</div><div class="b b-pri">+ 매입 등록</div></div></div>
+      <div class="px-4 py-3 text-[12px] border-t border-slate-100" style="color:#b91c1c">「+ 포장 하기」와 <b>테두리·높이·글자 무게가 완전히 동일</b>해서 같은 급 액션으로 보입니다. 게다가 도구와 등록 사이에 끼어 그룹도 안 읽힙니다.</div>
+
+      <div class="px-4 py-3 text-[12.5px] font-semibold border-t border-slate-100" style="color:#047857">② ghost<div class="text-[11px] font-normal text-slate-400 mt-0.5">테두리 제거 + 도구 그룹</div></div>
+      <div class="px-4 py-3 border-t border-slate-100" style="background:#fbfffd"><div class="flex items-center gap-1.5"><div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div><div class="b b-quiet"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장</div><div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div><span style="width:1px;height:20px;background:#e2e8f0;margin:0 5px"></span><div class="b b-out">+ 포장 하기</div><div class="b b-pri">+ 매입 등록</div></div></div>
+      <div class="px-4 py-3 text-[12px] text-slate-600 border-t border-slate-100"><b class="text-slate-900">권장.</b> 무게는 확실히 내려가는데 <b>글자가 남아 찾기 쉽습니다.</b> 구분선 덕에 「도구 │ 등록」이 한눈에 갈립니다. 코드는 클래스 한 줄 + 순서 한 줄.</div>
+
+      <div class="px-4 py-3 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">③ 텍스트만<div class="text-[11px] font-normal text-slate-400 mt-0.5">아이콘까지 제거</div></div>
+      <div class="px-4 py-3 border-t border-slate-100"><div class="flex items-center gap-1.5"><div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div><div class="b b-quiet">재포장</div><div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div><span style="width:1px;height:20px;background:#e2e8f0;margin:0 5px"></span><div class="b b-out">+ 포장 하기</div><div class="b b-pri">+ 매입 등록</div></div></div>
+      <div class="px-4 py-3 text-[12px] text-slate-600 border-t border-slate-100">더 조용합니다. 다만 아이콘이 없으면 <b>「재포장 중」 모드로 바뀔 때 붙일 자리</b>가 사라져 상태 표현이 약해집니다. 조용함을 더 원하시면 이걸로.</div>
+
+      <div class="px-4 py-3 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">④ 아이콘 전용<div class="text-[11px] font-normal text-slate-400 mt-0.5">툴팁으로 이름</div></div>
+      <div class="px-4 py-3 border-t border-slate-100"><div class="flex items-center gap-1.5"><div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg></div><div class="b b-icon" style="color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg></div><div class="b b-act"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>검색</div><span style="width:1px;height:20px;background:#e2e8f0;margin:0 5px"></span><div class="b b-out">+ 포장 하기</div><div class="b b-pri">+ 매입 등록</div></div></div>
+      <div class="px-4 py-3 text-[12px] border-t border-slate-100" style="color:#b45309">가장 조용하지만 <b>너무 내려갑니다</b> — 아이콘만으로 「재포장」을 알 수 없고, 모바일엔 툴팁이 없습니다. 매일 쓰는 기능은 아니어도 <b>월 몇 번은 반드시 쓰는</b> 기능이라 권하지 않습니다.</div>
+    </div>
+  </div>
+
+  <!-- 형평성 대조표 -->
+  <div class="card mt-4 overflow-hidden">
+    <div class="px-4 py-2.5 border-b border-slate-100 flex items-baseline gap-2">
+      <span class="text-[13px] font-bold text-slate-800">앱 전체 액션 라인 규칙</span>
+      <span class="text-[11.5px] text-slate-400">코드에서 확인한 실제 배치 — A안은 이 규칙을 그대로 따릅니다</span>
+    </div>
+    <div style="display:grid;grid-template-columns:160px 1fr 200px">
+      <div class="lbl px-4 py-2" style="background:#fafbfc">화면</div>
+      <div class="lbl px-4 py-2" style="background:#fafbfc">액션 라인 (좌 → 우)</div>
+      <div class="lbl px-4 py-2" style="background:#fafbfc">primary</div>
+
+      <div class="px-4 py-2 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">원물재고 · 잡곡</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">엑셀 · 검색 <span class="text-slate-300">│</span> +재고 등록</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">등록 1개</div>
+
+      <div class="px-4 py-2 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">제품재고 · 잡곡</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">엑셀 · <b class="text-slate-400">재포장(ghost)</b> · 검색 <span class="text-slate-300">│</span> +포장하기(outline) · +매입 등록</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">등록 1개</div>
+
+      <div class="px-4 py-2 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">판매관리</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">엑셀 · 검색 <span class="text-slate-300">│</span> 발주서 등록</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">등록 1개</div>
+
+      <div class="px-4 py-2 text-[12.5px] font-semibold text-slate-700 border-t border-slate-100">제품재고 · 벼</div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-600 border-t border-slate-100">엑셀 · <b class="text-slate-400">재포장(ghost)</b> · 검색 <span class="text-[11.5px] text-slate-400">— 등록 버튼이 없는 탭이라 도구 그룹만 남습니다. 지금은 흰 outline 하나만 떠 있어 더 튑니다</span></div>
+      <div class="px-4 py-2 text-[12.5px] text-slate-400 border-t border-slate-100">없음 (등록 버튼 자체가 없는 탭)</div>
+    </div>
+  </div>
+  <p class="note mt-2.5">
+    <b>정리:</b> 재포장을 primary로 올리는 건 <b>지적하신 문제의 반대 방향</b>이고, <b>잡곡 탭과 어긋납니다.</b>
+    A안은 재포장을 <b>ghost로 한 단 내리고 도구 그룹으로 보내</b> 두 탭 모두 「도구 │ 등록」 한 규칙으로 맞춥니다 — <span class="mono">repack-toggle-button.tsx</span> 클래스 한 줄 + 두 패널의 순서 한 줄.
+  </p>
+</div>
+
+<!-- ══════════ 2. 행 높이 ══════════ -->
+<div style="position:absolute;left:40px;top:1580px;width:1240px">
+  <div class="fl"><span class="pill n">2</span> 목록 행 높이 — <b style="color:#0f172a">줄바꿈이 아니라 여백 문제입니다</b></div>
+  <p class="note mb-3" style="max-width:1000px">
+    2줄로 넘치는 걸 가정한 게 아닙니다. 셀은 전부 <span class="mono">truncate</span> 한 줄 고정이고, <b>위아래 패딩만 다릅니다</b> — 도정관리 <span class="mono">py-3</span> vs 제품재고 <span class="mono">py-2.5</span>.
+    폰트 13px에서도 가장 빡빡한 셀(총량 <span class="mono">162,425kg</span> ≈ 72px / 할당 154px)이 넉넉해 줄바꿈은 안 생깁니다.
+    폰트를 아예 안 건드리고 <b>패딩만 py-3으로 올려도 44px</b>이 되니, 보수적으로 가려면 그 쪽도 됩니다.
+  </p>
+
+  <div class="card p-3 mb-3 flex items-center gap-6">
+    <div class="text-[11.5px]"><span class="lbl">도정관리</span><div class="mono text-[13px] font-bold text-slate-800">py-3 · 14px → 행 44px</div></div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    <div class="text-[11.5px]"><span class="lbl">제품재고 (현재)</span><div class="mono text-[13px] font-bold text-red-600">py-2.5 · 12.5px → 행 36px</div></div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    <div class="text-[11.5px]"><span class="lbl">제안</span><div class="mono text-[13px] font-bold text-emerald-700">py-3 · 13px → 행 44px</div></div>
+    <p class="note ml-auto max-w-[400px]">제품재고는 컬럼이 9개라 글자를 12.5px로 줄였는데, 행 높이까지 같이 줄어 <b>도정관리·판매관리와 다른 밀도</b>가 됐습니다. 폰트는 13px까지만 올리고(컬럼 안 깨짐) <b>행 높이는 44px로 맞춥니다.</b></p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <div class="mb-2"><span class="tag bad">현재 · 행 36px</span></div>
+      <div class="shell" style="background:#fff">
+        <div class="hd gr"><span>품종</span><span>도정구분</span><span>생산자</span><span class="c">로트번호</span><span class="r pr-2">규격</span><span class="r" style="padding-right:20px">개수</span><span class="r">총량</span><span class="r">포장일자</span><span></span></div>
+        <div class="rw gr" style="padding-top:10px;padding-bottom:10px;font-size:12.5px;color:#334155;border-top:none"><span class="font-bold text-slate-900 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>새청무</span><span class="text-slate-300">—</span><span class="text-slate-300 c">—</span><span class="r pr-2 text-slate-400 text-[11.5px]">122종 규격</span><span class="r num text-slate-400 text-[11.5px]" style="padding-right:20px">3,812개</span><span class="r num font-bold text-slate-900">162,425kg</span><span class="r text-slate-300">—</span><span></span></div>
+        <div class="rw gr" style="padding-top:10px;padding-bottom:10px;font-size:12.5px;color:#334155"><span class="font-bold text-slate-900 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>천지향1세</span><span class="text-slate-300">—</span><span class="text-slate-300 c">—</span><span class="r pr-2 text-slate-400 text-[11.5px]">117종 규격</span><span class="r num text-slate-400 text-[11.5px]" style="padding-right:20px">24,807개</span><span class="r num font-bold text-slate-900">159,057kg</span><span class="r text-slate-300">—</span><span></span></div>
+        <div class="rw gr" style="padding-top:10px;padding-bottom:10px;font-size:12.5px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>삼광</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">20kg</span><span class="r num" style="padding-right:20px">86개</span><span class="r num font-semibold">1,720kg</span><span class="r num text-slate-500">2026-03-25</span><span></span></div>
+        <div class="rw gr" style="padding-top:10px;padding-bottom:10px;font-size:12.5px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>신길</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">20kg</span><span class="r num" style="padding-right:20px">84개</span><span class="r num font-semibold">1,680kg</span><span class="r num text-slate-500">2026-03-25</span><span></span></div>
+        <div class="rw gr" style="padding-top:10px;padding-bottom:10px;font-size:12.5px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>아미향</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">톤백</span><span class="r num" style="padding-right:20px">1개</span><span class="r num font-semibold">865kg</span><span class="r num text-slate-500">2026-07-23</span><span></span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="mb-2"><span class="tag good">제안 · 행 44px</span></div>
+      <div class="shell" style="background:#fff">
+        <div class="hd gr" style="padding-top:9px;padding-bottom:9px"><span>품종</span><span>도정구분</span><span>생산자</span><span class="c">로트번호</span><span class="r pr-2">규격</span><span class="r" style="padding-right:20px">개수</span><span class="r">총량</span><span class="r">포장일자</span><span></span></div>
+        <div class="rw gr" style="padding-top:13px;padding-bottom:13px;font-size:13px;color:#334155;border-top:none"><span class="font-bold text-slate-900 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>새청무</span><span class="text-slate-300">—</span><span class="text-slate-300 c">—</span><span class="r pr-2 text-slate-400 text-[12px]">122종 규격</span><span class="r num text-slate-400 text-[12px]" style="padding-right:20px">3,812개</span><span class="r num font-bold text-slate-900">162,425kg</span><span class="r text-slate-300">—</span><span></span></div>
+        <div class="rw gr" style="padding-top:13px;padding-bottom:13px;font-size:13px;color:#334155"><span class="font-bold text-slate-900 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>천지향1세</span><span class="text-slate-300">—</span><span class="text-slate-300 c">—</span><span class="r pr-2 text-slate-400 text-[12px]">117종 규격</span><span class="r num text-slate-400 text-[12px]" style="padding-right:20px">24,807개</span><span class="r num font-bold text-slate-900">159,057kg</span><span class="r text-slate-300">—</span><span></span></div>
+        <div class="rw gr" style="padding-top:13px;padding-bottom:13px;font-size:13px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>삼광</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">20kg</span><span class="r num" style="padding-right:20px">86개</span><span class="r num font-semibold">1,720kg</span><span class="r num text-slate-500">2026-03-25</span><span></span></div>
+        <div class="rw gr" style="padding-top:13px;padding-bottom:13px;font-size:13px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>신길</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">20kg</span><span class="r num" style="padding-right:20px">84개</span><span class="r num font-semibold">1,680kg</span><span class="r num text-slate-500">2026-03-25</span><span></span></div>
+        <div class="rw gr" style="padding-top:13px;padding-bottom:13px;font-size:13px;color:#334155"><span class="font-semibold text-slate-900 flex items-center gap-2"><span style="width:14px"></span>아미향</span><span class="text-slate-600">백미</span><span class="text-slate-600">윤영식</span><span class="c"><span class="text-slate-300">—</span></span><span class="r pr-2">톤백</span><span class="r num" style="padding-right:20px">1개</span><span class="r num font-semibold">865kg</span><span class="r num text-slate-500">2026-07-23</span><span></span></div>
+      </div>
+    </div>
+  </div>
+  <p class="note mt-2.5">
+    <b>바뀌는 것 3줄:</b> 그룹행·낱개행 <span class="mono">py-2.5 → py-3</span>, 서브행 <span class="mono">py-2 → py-2.5</span>, 본문 <span class="mono">text-[12.5px] → text-[13px]</span>(부가 수치 11.5 → 12px).
+    컬럼 그리드는 그대로라 정렬이 안 깨집니다.
+  </p>
+</div>
+
+<!-- ══════════ 3. 선택 바 위치 ══════════ -->
+<div style="position:absolute;left:1340px;top:130px;width:1300px">
+  <div class="fl"><span class="pill n">3</span> 선택 바 — 윈도우 가운데라서 콘텐츠 기준으로 왼쪽으로 밀려 보인다</div>
+
+  <div class="mb-2 flex items-center gap-2"><span class="tag bad">현재</span><span class="note"><span class="mono">fixed inset-x-0 sm:justify-center</span> → 사이드바 256px을 포함한 <b>윈도우 전체 폭의 중앙</b></span></div>
+  <div class="shell" style="width:1300px;position:relative;overflow:visible">
+    <div class="flex" style="height:300px;border-radius:12px;overflow:hidden">
+      <div style="width:256px;background:#fff;border-right:1px solid #e2e8f0" class="p-3">
+        <div class="lbl mb-2">MAIN MENU</div>
+        <div class="h-7 rounded-md bg-slate-100 mb-1.5"></div><div class="h-7 rounded-md bg-slate-100 mb-1.5"></div>
+        <div class="h-7 rounded-md" style="background:#eff6ff"></div>
+      </div>
+      <div class="flex-1 relative p-4" style="background:#f8fafc">
+        <div class="card h-full" style="opacity:.55">
+          <div class="hd gr-s" style="border-radius:9px 9px 0 0"><span></span><span>품종</span><span>도정구분</span><span>생산자</span><span class="c">로트번호</span><span class="r">규격</span><span class="r">개수</span><span class="r">총량</span><span class="r">포장일자</span><span></span></div>
+          <div class="p-3 space-y-2.5"><div class="h-3 bg-slate-100 rounded"></div><div class="h-3 bg-slate-100 rounded"></div><div class="h-3 bg-slate-100 rounded"></div><div class="h-3 bg-slate-100 rounded"></div><div class="h-3 bg-slate-100 rounded"></div><div class="h-3 bg-slate-100 rounded"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- 윈도우 중앙 기준 pill (1300/2 = 650) -->
+    <div style="position:absolute;left:650px;bottom:16px;transform:translateX(-50%)">
+      <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-lg" style="min-width:380px;justify-content:space-between">
+        <span class="text-[12.5px] text-slate-600"><b class="text-slate-900">3건</b> 선택 · <span class="num">최대 21kg</span></span>
+        <div class="b b-pri">재포장하기</div>
+      </div>
+    </div>
+    <!-- 기준선 -->
+    <div style="position:absolute;left:650px;top:0;bottom:0;width:1px;background:rgba(185,28,28,.5)"></div>
+    <div style="position:absolute;left:778px;top:0;bottom:0;width:1px;background:rgba(4,120,87,.55)"></div>
+    <div style="position:absolute;left:656px;top:8px;font-size:10px;font-weight:700;color:#b91c1c">윈도우 중앙</div>
+    <div style="position:absolute;left:784px;top:8px;font-size:10px;font-weight:700;color:#047857">콘텐츠 중앙</div>
+  </div>
+  <p class="note mt-2.5">두 기준선이 <b>128px(=사이드바 절반)</b> 어긋납니다. 스크린샷에서 바가 왼쪽으로 치우쳐 보이는 이유가 정확히 이것입니다. 게다가 fixed라 <b>마지막 두 행을 덮습니다.</b></p>
+
+  <div class="mt-5 mb-2 flex items-center gap-2"><span class="tag good">제안</span><span class="note">목록 바로 아래 <span class="mono">sticky bottom-4</span> — 콘텐츠 열 안에 들어가니 <b>정렬을 계산할 필요가 없다</b></span></div>
+  <div class="shell" style="width:1300px">
+    <div class="flex" style="height:320px">
+      <div style="width:256px;background:#fff;border-right:1px solid #e2e8f0" class="p-3">
+        <div class="lbl mb-2">MAIN MENU</div>
+        <div class="h-7 rounded-md bg-slate-100 mb-1.5"></div><div class="h-7 rounded-md bg-slate-100 mb-1.5"></div>
+        <div class="h-7 rounded-md" style="background:#eff6ff"></div>
+      </div>
+      <div class="flex-1 p-4 flex flex-col gap-2.5" style="background:#f8fafc">
+        <div class="card flex-1">
+          <div class="hd gr-s" style="border-radius:9px 9px 0 0"><span></span><span>품종</span><span>도정구분</span><span>생산자</span><span class="c">로트번호</span><span class="r">규격</span><span class="r">개수</span><span class="r">총량</span><span class="r">포장일자</span><span></span></div>
+          <div class="rw gr-s" style="padding:12px 16px;font-size:13px;border-top:none;background:rgba(37,99,235,.05)"><span class="flex justify-center"><span class="cbx on"></span></span><span class="pl-5"><span style="display:block;width:8px;height:1px;background:#cbd5e1"></span></span><span class="text-slate-600">백미</span><span class="text-slate-600">김진옥</span><span class="c"><span class="lot">251119-11-15103885-415</span></span><span class="r font-medium">잔량</span><span class="r num">1개</span><span class="r num font-semibold">8kg</span><span class="r num text-slate-500">2026-03-17</span><span></span></div>
+          <div class="rw gr-s" style="padding:12px 16px;font-size:13px;background:rgba(37,99,235,.05)"><span class="flex justify-center"><span class="cbx on"></span></span><span class="pl-5"><span style="display:block;width:8px;height:1px;background:#cbd5e1"></span></span><span class="text-slate-600">백미</span><span class="text-slate-600">장웅</span><span class="c"><span class="lot">251119-11-15103885-4134</span></span><span class="r font-medium">잔량</span><span class="r num">1개</span><span class="r num font-semibold">9kg</span><span class="r num text-slate-500">2026-04-21</span><span></span></div>
+          <div class="rw gr-s" style="padding:12px 16px;font-size:13px"><span class="flex justify-center"><span class="cbx"></span></span><span class="pl-5"><span style="display:block;width:8px;height:1px;background:#cbd5e1"></span></span><span class="text-slate-600">백미</span><span class="text-slate-600">이승관</span><span class="c"><span class="lot">251119-11-15103885-411</span></span><span class="r font-medium">10kg</span><span class="r num">226개</span><span class="r num font-semibold">2,260kg</span><span class="r num text-slate-500">2026-02-23</span><span></span></div>
+          <div class="rw gr-s" style="padding:12px 16px;font-size:13px"><span class="flex justify-center"><span class="cbx"></span></span><span class="pl-5"><span style="display:block;width:8px;height:1px;background:#cbd5e1"></span></span><span class="text-slate-600">백미</span><span class="text-slate-600">박주광</span><span class="c"><span class="lot">251119-11-15103885-412</span></span><span class="r font-medium">10kg</span><span class="r num">188개</span><span class="r num font-semibold">1,880kg</span><span class="r num text-slate-500">2026-02-23</span><span></span></div>
+        </div>
+        <!-- sticky bar -->
+        <div class="flex items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2.5" style="border-color:rgba(37,99,235,.25);box-shadow:0 -2px 12px rgba(15,23,42,.07),0 6px 18px rgba(15,23,42,.08)">
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[13px] text-slate-700"><b class="text-slate-900">3건</b> 선택</span>
+            <span class="text-slate-200">|</span>
+            <span class="text-[12.5px] text-slate-500">최대 <b class="num text-slate-800">21kg</b></span>
+            <span class="text-[11.5px] text-slate-400">새청무 · 백미 · 도정산</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="b b-ghost">선택 해제</div>
+            <div class="b b-pri"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg>재포장하기</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="note mt-2.5 list-disc pl-4 space-y-1">
+    <li><b>콘텐츠 폭에 딱 맞는 바</b>로 바뀌므로 중앙 정렬을 맞출 필요가 없다 — 사이드바가 접혀도 자동으로 따라간다.</li>
+    <li>목록 아래에 붙어 <b>행을 덮지 않는다.</b> 스크롤하면 화면 하단에 고정.</li>
+    <li>바 안에 <b>동질성 기준(새청무 · 백미 · 도정산)</b>을 적어둔다 — 지금은 왜 다른 행이 눌리지 않는지 툴팁을 봐야 안다.</li>
+    <li>모바일은 지금 그대로: 하단 탭바 위 floating pill(<span class="mono">bottom-16</span>).</li>
+  </ul>
+</div>
+
+<!-- ══════════ 4. 다이얼로그 ══════════ -->
+<div style="position:absolute;left:2700px;top:130px;width:1160px">
+  <div class="fl"><span class="pill n">4</span> 재포장 다이얼로그 — 720px 폭에 한 줄로 쌓아서 세로로 넘친다</div>
+
+  <ul class="note mb-3 list-disc pl-4 space-y-1" style="max-width:1160px">
+    <li><b>세로 스크롤이 생기는 구조.</b> 폭 720px을 한 열로만 쓰면서 「쓸 재고 → 계기판 → 만들 규격 → 비고 → 저장」을 전부 쌓아, 3건만 골라도 90dvh를 넘긴다. → <b>좌우 2열</b>(왼쪽 = 쓸 재고, 오른쪽 = 만들 규격)로 나누면 높이가 거의 절반.</li>
+    <li><b>가장 중요한 숫자가 회색 띠에 묻혀 있다.</b> 「남음 21kg」이 회색이라 정상인지 미완인지 안 읽힌다 → 값 자체를 크게 하고 상태 문구를 붙인다.</li>
+    <li><b>오류가 하단에만 문장으로 뜬다.</b> 「1번째 줄: 규격을 골라주세요」인데 그 줄엔 표시가 없다 → 해당 줄·필드에 인라인 표시.</li>
+    <li><b>닫기 X가 primary 저장 버튼과 시각적으로 경쟁</b>한다(파란 테두리 사각형) → 회색 ghost로.</li>
+    <li>가용이 1개뿐인 잔량 행에 <b>「1 / 1개」 숫자 입력</b>이 있다 → 고를 게 없으면 입력을 없애고 값만 표시.</li>
+  </ul>
+
+  <div class="mb-2"><span class="tag good">제안 · 940px 2열</span></div>
+  <div class="shell" style="width:940px;background:#fff;border-radius:14px">
+    <!-- 헤더 -->
+    <div class="flex items-start justify-between px-5 pt-4 pb-3.5 border-b border-slate-100">
+      <div class="flex items-start gap-2.5">
+        <span style="width:30px;height:30px;border-radius:8px;background:rgba(37,99,235,.1);display:flex;align-items:center;justify-content:center;color:#2563eb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg></span>
+        <div>
+          <div class="text-[15px] font-bold text-slate-900">재포장</div>
+          <div class="text-[12px] text-slate-500 mt-0.5">새청무 · 백미 · 도정산 <span class="text-slate-300">|</span> 3건 21kg을 다시 나눠 담습니다</div>
+        </div>
+      </div>
+      <span class="b b-ghost b-icon" style="height:28px;width:28px;color:#94a3b8"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+    </div>
+
+    <!-- 2열 본문 -->
+    <div class="grid" style="grid-template-columns:340px minmax(0,1fr)">
+      <!-- 좌: 쓸 재고 -->
+      <div class="p-4 border-r border-slate-100" style="background:#fafbfc">
+        <div class="flex items-center justify-between mb-2">
+          <span class="lbl">쓸 재고 3건</span>
+          <span class="text-[11px] text-slate-400">전량 사용 중</span>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="card px-2.5 py-2 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[12.5px] font-semibold text-slate-800">잔량 · 8kg <span class="font-normal text-slate-500">김진옥</span></div>
+              <div class="mono text-[10.5px] text-slate-400 truncate">251119-11-15103885-415</div>
+            </div>
+            <span class="text-[11.5px] font-semibold text-slate-500 shrink-0">1개 전부</span>
+          </div>
+          <div class="card px-2.5 py-2 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[12.5px] font-semibold text-slate-800">잔량 · 9kg <span class="font-normal text-slate-500">장웅</span></div>
+              <div class="mono text-[10.5px] text-slate-400 truncate">251119-11-15103885-4134</div>
+            </div>
+            <span class="text-[11.5px] font-semibold text-slate-500 shrink-0">1개 전부</span>
+          </div>
+          <div class="card px-2.5 py-2 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[12.5px] font-semibold text-slate-800">10kg <span class="font-normal text-slate-500">이승관</span></div>
+              <div class="mono text-[10.5px] text-slate-400 truncate">251119-11-15103885-411</div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div class="inp num" style="width:52px;justify-content:flex-end;height:28px">2</div>
+              <span class="text-[11.5px] text-slate-400">/ 226개</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 계기판 -->
+        <div class="mt-3.5 rounded-lg border p-3" style="border-color:#a7f3d0;background:#ecfdf5">
+          <div class="flex items-baseline justify-between">
+            <span class="text-[11.5px] font-bold" style="color:#047857">딱 맞음</span>
+            <span class="num text-[22px] font-extrabold leading-none" style="color:#047857">0<span class="text-[13px] font-bold">kg</span></span>
+          </div>
+          <div class="mt-2 pt-2 border-t text-[11.5px] num flex justify-between" style="border-color:rgba(4,120,87,.2);color:#065f46">
+            <span>쓸 양 41kg</span><span>만들 양 41kg</span>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">남는 양은 손실로 기록됩니다. 저장할 때 한 번 더 확인해요.</p>
+      </div>
+
+      <!-- 우: 만들 규격 -->
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="lbl">만들 규격</span>
+          <span class="b b-ghost" style="height:26px;padding:0 8px;font-size:11.5px;color:#2563eb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"></path></svg>줄 추가</span>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <!-- 줄 1 (완성) -->
+          <div class="card p-2.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-slate-400">1번째 줄</span>
+              <div class="flex items-center gap-2">
+                <span class="num text-[11.5px] font-semibold text-slate-600">20kg</span>
+                <span style="color:#cbd5e1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg></span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1 mb-2">
+              <span class="chip">톤백</span><span class="chip">20kg</span><span class="chip on">10kg</span><span class="chip">8kg</span><span class="chip">5kg</span><span class="chip">4kg</span><span class="chip">3kg</span><span class="chip">1kg</span><span class="chip">잔량</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+              <label class="flex flex-col gap-1"><span class="lbl">자루당 kg</span><div class="inp num" style="justify-content:flex-end">10</div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">개수</span><div class="inp num" style="justify-content:flex-end">2</div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">포장지</span><div class="sel">10kg 크라프트<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">로트 승계</span><div class="sel">김진옥 · …415<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+            </div>
+          </div>
+
+          <!-- 줄 2 (오류 인라인) -->
+          <div class="card p-2.5" style="border-color:#fecaca;background:#fffbfb">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold" style="color:#b91c1c">2번째 줄</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-semibold" style="color:#b91c1c">규격을 골라주세요</span>
+                <span style="color:#cbd5e1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg></span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1 mb-2">
+              <span class="chip" style="border-color:#fca5a5">톤백</span><span class="chip" style="border-color:#fca5a5">20kg</span><span class="chip" style="border-color:#fca5a5">10kg</span><span class="chip" style="border-color:#fca5a5">8kg</span><span class="chip" style="border-color:#fca5a5">5kg</span><span class="chip" style="border-color:#fca5a5">4kg</span><span class="chip" style="border-color:#fca5a5">3kg</span><span class="chip" style="border-color:#fca5a5">1kg</span><span class="chip" style="border-color:#fca5a5">잔량</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2" style="opacity:.55">
+              <label class="flex flex-col gap-1"><span class="lbl">자루당 kg</span><div class="inp ph">직접 입력</div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">개수</span><div class="inp num" style="justify-content:flex-end">1</div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">포장지</span><div class="sel"><span class="text-slate-400">선택</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+              <label class="flex flex-col gap-1"><span class="lbl">로트 승계</span><div class="sel"><span class="text-slate-400">선택</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex flex-col gap-1 mt-3">
+          <span class="lbl">비고 (선택)</span>
+          <div class="inp ph">예) 톤백 열어 소분</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100" style="background:#fafbfc;border-radius:0 0 13px 13px">
+      <span class="text-[12px] font-semibold" style="color:#b91c1c">2번째 줄을 채워야 저장할 수 있어요</span>
+      <div class="flex items-center gap-2">
+        <div class="b b-ghost">취소</div>
+        <div class="b b-pri" style="opacity:.45">재포장하기</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note mt-3" style="max-width:940px">
+    <b>구현 범위:</b> <span class="mono">repack-dialog.tsx</span>의 <span class="mono">DialogContent</span>를 <span class="mono">sm:max-w-[940px]</span> + 본문을 <span class="mono">grid sm:grid-cols-[340px_minmax(0,1fr)]</span>로,
+    잔여 계기판을 좌열 하단으로 이동, 푸터를 <span class="mono">sticky bottom-0</span> 바로 분리.
+    <span class="mono">blockingReason</span>은 이미 줄 번호를 알고 있으니 <span class="mono">{ rowIndex, field, message }</span> 형태로 바꿔 <span class="mono">RepackResultRow</span>에 내려주면 인라인 표시가 됩니다.
+    모바일(sm 미만)은 1열로 떨어집니다 — <b>단 계기판은 좌열이 아니라 푸터로 옮기는 게 맞습니다. 오른쪽 4-M 프레임 참고.</b>
+  </p>
+</div>
+
+<!-- ══════════ 4-M. 모바일 ══════════ -->
+<div style="position:absolute;left:3920px;top:130px;width:820px">
+  <div class="fl"><span class="pill n">4-M</span> 모바일 적용 — 2열은 1열로 떨어지지만, <b style="color:#0f172a">계기판을 푸터로 옮겨야 성립합니다</b></div>
+
+  <div class="grid" style="grid-template-columns:390px 1fr;gap:24px">
+    <div>
+      <div class="mb-2"><span class="tag good">제안 · 390px</span></div>
+      <div class="shell" style="width:390px;background:#fff;border-radius:14px;display:flex;flex-direction:column;height:660px">
+        <div class="flex items-start justify-between px-3.5 pt-3.5 pb-3 border-b border-slate-100 shrink-0">
+          <div class="flex items-start gap-2">
+            <span style="width:26px;height:26px;border-radius:7px;background:rgba(37,99,235,.1);display:flex;align-items:center;justify-content:center;color:#2563eb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16h6M2 8h6m6 0h8M2 16h6"></path><circle cx="11" cy="8" r="2.5"></circle><circle cx="12" cy="16" r="2.5"></circle></svg></span>
+            <div>
+              <div class="text-[14px] font-bold text-slate-900">재포장</div>
+              <div class="text-[11.5px] text-slate-500 mt-0.5">새청무 · 백미 · 3건 21kg</div>
+            </div>
+          </div>
+          <span class="b b-ghost b-icon" style="height:26px;width:26px;color:#94a3b8"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+        </div>
+
+        <div class="flex-1 overflow-hidden p-3.5 flex flex-col gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1.5"><span class="lbl">쓸 재고 3건</span><span class="text-[11px] text-slate-400">전량 사용 중</span></div>
+            <div class="flex flex-col gap-1.5">
+              <div class="card px-2.5 py-2 flex items-center justify-between gap-2">
+                <div class="min-w-0"><div class="text-[12.5px] font-semibold text-slate-800">잔량 · 8kg <span class="font-normal text-slate-500">김진옥</span></div><div class="mono text-[10.5px] text-slate-400 truncate">251119-11-15103885-415</div></div>
+                <span class="text-[11.5px] font-semibold text-slate-500 shrink-0">1개 전부</span>
+              </div>
+              <div class="card px-2.5 py-2 flex items-center justify-between gap-2">
+                <div class="min-w-0"><div class="text-[12.5px] font-semibold text-slate-800">10kg <span class="font-normal text-slate-500">이승관</span></div><div class="mono text-[10.5px] text-slate-400 truncate">251119-11-15103885-411</div></div>
+                <div class="flex items-center gap-1.5 shrink-0"><div class="inp num" style="width:48px;justify-content:flex-end;height:30px">2</div><span class="text-[11.5px] text-slate-400">/226</span></div>
+              </div>
+              <div class="text-[11px] text-slate-400 text-center py-0.5">+ 1건 더</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5"><span class="lbl">만들 규격</span><span class="b b-ghost" style="height:26px;padding:0 8px;font-size:11.5px;color:#2563eb"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"></path></svg>줄 추가</span></div>
+            <div class="card p-2.5">
+              <div class="flex items-center justify-between mb-2"><span class="text-[11px] font-bold text-slate-400">1번째 줄</span><span class="num text-[11.5px] font-semibold text-slate-600">20kg</span></div>
+              <div class="flex flex-wrap gap-1 mb-2"><span class="chip">톤백</span><span class="chip">20kg</span><span class="chip on">10kg</span><span class="chip">8kg</span><span class="chip">5kg</span><span class="chip">4kg</span><span class="chip">3kg</span><span class="chip">1kg</span><span class="chip">잔량</span></div>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex flex-col gap-1"><span class="lbl">자루당 kg</span><div class="inp num" style="height:40px;justify-content:flex-end">10</div></label>
+                <label class="flex flex-col gap-1"><span class="lbl">개수</span><div class="inp num" style="height:40px;justify-content:flex-end">2</div></label>
+                <label class="flex flex-col gap-1"><span class="lbl">포장지</span><div class="sel" style="height:40px">10kg 크라프트<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+                <label class="flex flex-col gap-1"><span class="lbl">로트 승계</span><div class="sel" style="height:40px">김진옥 · …415<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></div></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- sticky 푸터 = 계기판 + 액션 -->
+        <div class="shrink-0 border-t px-3.5 py-3" style="border-color:#a7f3d0;background:#ecfdf5;border-radius:0 0 13px 13px">
+          <div class="flex items-baseline justify-between mb-2.5">
+            <div>
+              <div class="text-[11px] font-bold" style="color:#047857">딱 맞음</div>
+              <div class="num text-[11.5px] mt-0.5" style="color:#065f46">쓸 양 41kg − 만들 양 41kg</div>
+            </div>
+            <span class="num text-[26px] font-extrabold leading-none" style="color:#047857">0<span class="text-[14px] font-bold">kg</span></span>
+          </div>
+          <div class="flex gap-2">
+            <div class="b b-out" style="height:44px;flex:0 0 88px;justify-content:center;background:#fff">취소</div>
+            <div class="b b-pri" style="height:44px;flex:1;justify-content:center;font-size:14px">재포장하기</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <ul class="note list-disc pl-4 space-y-2">
+        <li><b>2열 자체는 문제없습니다</b> — <span class="mono">grid sm:grid-cols-[340px_minmax(0,1fr)]</span> 라 sm 미만에서 자동으로 1열이 됩니다.</li>
+        <li><b>다만 그대로 두면 모바일이 더 나빠집니다.</b> 1열이 되면 「쓸 재고 → <span style="color:#b91c1c;font-weight:700">계기판</span> → 만들 규격 → 저장」 순서가 되어, <b>규격을 입력하는 동안 잔여 kg이 화면 위로 스크롤돼 사라집니다.</b> 재포장은 잔여 kg을 보면서 개수를 맞추는 작업이라 치명적입니다.</li>
+        <li>그래서 <b>계기판을 sticky 푸터로 합칩니다</b> — 잔여 kg + 취소/재포장하기를 한 덩어리로. 데스크탑도 같은 구조로 통일하면(좌열에서 푸터로 이동) 규칙이 하나가 됩니다.</li>
+        <li>모바일 터치 규격: 하단 버튼 <b>44px</b>, 입력 필드 <span class="mono">h-8 → h-10</span>, 규격 칩은 지금 <span class="mono">py-1</span>(약 26px)이라 <b>py-2로 올려 34px</b>. 규격 그리드는 <span class="mono">grid-cols-2</span>(이미 그렇게 돼 있음).</li>
+        <li>본문은 <span class="mono">flex-1 overflow-y-auto</span>로 한 군데만 스크롤 — 지금은 다이얼로그 전체(<span class="mono">max-h-[90dvh]</span>)와 쓸 재고 목록(<span class="mono">max-h-[30dvh]</span>) 이 <b>이중 스크롤</b>이라 모바일에서 특히 헷갈립니다.</li>
+      </ul>
+      <div class="card p-3 mt-3.5" style="background:#0f172a;border-color:#0f172a">
+        <div class="text-[12.5px] font-bold text-white mb-1.5">한 줄 답</div>
+        <p class="note" style="color:#cbd5e1">적용 가능합니다. 단 <b style="color:#fff">계기판을 푸터로 옮기는 것</b>이 모바일 성립 조건이고, 이건 데스크탑에도 같이 적용하는 게 맞습니다.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>

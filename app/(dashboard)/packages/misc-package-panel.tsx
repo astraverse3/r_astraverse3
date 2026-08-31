@@ -120,13 +120,15 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
         <div className="grid grid-cols-1 gap-2 px-1">
             <section className="flex items-center justify-end gap-2 px-1">
                 <PackageExcelButtons filters={filters} disabled={selectMode} />
+                {/* 재포장은 도구 그룹(구분선 왼쪽) — 가진 재고를 다시 나누는 도구라
+                    등록 버튼과 같은 편에 두지 않는다 */}
+                {canMill && <RepackToggleButton active={selectMode} onToggle={setSelectMode} />}
                 <PackageSearchDialog
                     category="MISC_GRAIN"
                     varieties={varieties}
                     disabled={selectMode}
                 />
                 <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
-                {canMill && <RepackToggleButton active={selectMode} onToggle={setSelectMode} />}
                 {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
                 {canMill && (
                     <Button

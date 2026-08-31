@@ -28,16 +28,13 @@ export function RicePackagePanel({ items, varieties, filters }: Props) {
 
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
-            {/* 조회 도구(엑셀·검색) │ 액션(재포장). 재포장 모드 동안 조회 도구는 잠근다 */}
+            {/* 도구 그룹(엑셀·재포장·검색). 재포장은 새 데이터를 만드는 게 아니라 가진 재고를
+                다시 나누는 도구라 여기 둔다. 벼 탭은 등록 버튼이 없어 구분선도 없다.
+                재포장 모드 동안 나머지 도구는 잠근다 — 필터를 바꿔 선택이 날아가는 사고를 막는다 */}
             <section className="flex items-center justify-end gap-2 px-1">
                 <PackageExcelButtons filters={filters} disabled={selectMode} />
+                {canRepack && <RepackToggleButton active={selectMode} onToggle={setSelectMode} />}
                 <PackageSearchDialog category="RICE" varieties={varieties} disabled={selectMode} />
-                {canRepack && (
-                    <>
-                        <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
-                        <RepackToggleButton active={selectMode} onToggle={setSelectMode} />
-                    </>
-                )}
             </section>
 
             <ActivePackageFilters totalCount={totalCount} varieties={varieties} />
