@@ -49,6 +49,15 @@ export const REPACK_DELETE_BLOCKED =
 export const REPACK_UPDATE_BLOCKED =
   '재포장으로 만든 재고는 수정할 수 없어요. 고치려면 이 재고를 다시 재포장해 주세요.'
 
+/**
+ * 재포장 소진분(type=REPACK)의 차감을 취소하면 **원본만 복원되고 결과 행은 그대로 남는다** —
+ * 같은 물건이 두 번 세어진다. `REPACK_DELETE_BLOCKED`가 반대편에서 막으려던 것과 같은 사고다.
+ * 위쪽 두 상수는 「재포장으로 만든 행」을, 이것은 「재포장으로 나간 차감」을 막는다.
+ * 되돌리는 정식 경로는 역방향 재포장이다 (결정 #57).
+ */
+export const REPACK_CANCEL_BLOCKED =
+  '재포장으로 나간 차감은 취소할 수 없어요. 되돌리려면 재포장으로 만든 재고를 다시 재포장해 원래 규격으로 합쳐주세요.'
+
 /** 「20kg × 3 (3개 중 3개 차감됨)」 — 사람이 어느 줄인지 알아볼 수 있게. */
 export function describeDeduction(pkg: GuardedPackage): string {
   return `${pkg.packageType} × ${pkg.count} (${pkg.count}개 중 ${pkg.movedCount}개 차감됨)`

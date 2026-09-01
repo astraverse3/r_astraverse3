@@ -1,5 +1,23 @@
 # 작업일지
 
+## 2026-09-01
+
+### 재고차감 서버 3단계 (D1~D3) `feat`
+
+계획서 [plan-재고차감.md](plan/plan-재고차감.md)의 서버 파트. 화면(D4~D6)은 시안 수령 후.
+
+**D1 — `createBulkMovements`** (`app/actions/package-movement.ts`): 일괄 차감 액션.
+왕복을 행 수와 무관하게 **3회 고정**(`findMany` → 메모리 `availableOf` 검증 → `createMany` → 사후 `groupBy` 롤백 검증) + timeout 30초 — 배송·상차 적재에서 터뜨린 루프 INSERT 재발 방지. 같은 packageId 중복은 합산 검증, 거래처는 SALE만 저장, 감사로그 1건 요약 + details 전체. 사유 라벨은 `MOVEMENT_LABEL` 단일화(`NON_SALE_LABEL` 흡수).
+
+**D2 — 재포장 차감 취소 차단** 🔴기존 결함: `cancelMovement`가 `repackId`를 안 봤다. 문구는 `REPACK_CANCEL_BLOCKED`로 `lib/package-guard.ts`에(규칙·문구 단일 원천). **같은 뿌리 하나 더** — `MovementRow.type`이 REPACK을 숨기고 있었다(실제 데이터엔 나옴). `REPACK` 추가 + `fromRepack`·`cancellable` 필드 — 화면은 `cancellable`만 보면 되고 서버가 같은 규칙으로 거부.
+
+**D3 — `getPackages`에 `includeDeducted`** (`app/actions/packages.ts`): 켜면 가용 0 이하 행 포함 + 차감 요약(`deductedAt`·`deductedTypes`), 끄면 종전과 완전 동일. select는 `MOVEMENT_SUMMARY_SELECT`(신규, `lib/package-available.ts`) 조건부. 그룹 합계에서 차감 완료 행 제외 — 보기 켰다고 합계가 튀지 않게.
+
+검증: tsc 통과 · test 164/164 · lint 새 에러 0. DB 실왕복은 화면 없어 D4~D6 때 함께.
+다음: `docs/handoff/재고차감/` 스펙 → 시안 2개 → 화면 구현.
+
+---
+
 ## 2026-08-31
 
 ### 제품재고 「재고차감」 협의 + 계획서 `plan`

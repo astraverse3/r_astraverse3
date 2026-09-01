@@ -18,7 +18,7 @@ import {
     deleteBlockedMessage,
     identityBlockedMessage,
 } from '@/lib/package-guard'
-import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
+import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT, MOVEMENT_SUMMARY_SELECT } from '@/lib/package-available'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
@@ -69,6 +69,13 @@ export type PackageRow = {
     date: string // ISO yyyy-mm-dd
     sub: number // totalWeight (kg)
     source: PackageSource
+    /**
+     * 마지막 차감일(ISO). `includeDeducted`로 조회했을 때만 채워진다 — 평소엔 항상 null.
+     * 차감 완료 행인지는 `available <= 0`으로 판정한다(별도 플래그를 두지 않는다).
+     */
+    deductedAt: string | null
+    /** 이 행에 걸린 차감 사유들(중복 제거). `includeDeducted`일 때만 채워진다. */
+    deductedTypes: string[]
 }
 
 export type PackageGroup = {
@@ -96,6 +103,11 @@ export interface GetPackagesParams {
     /** 콤마 구분 다중값 가능 (예: "MILLED,PURCHASED") */
     source?: string
     sort?: PackageSort
+    /**
+     * 「차감된 재고 보기」 — 켜면 가용 0 이하 행도 포함하고 차감 요약을 함께 싣는다.
+     * 끄면(기본) 동작·왕복 모두 종전과 동일하다.
+     */
+    includeDeducted?: boolean
 }
 
 // -----------------------------
@@ -117,7 +129,7 @@ export async function getPackages(
     params: GetPackagesParams,
 ): Promise<{ success: true; data: PackageItem[] } | { success: false; error: string }> {
     try {
-        const { category, varietyId, productionYear, source, sort = 'weight_desc' } = params
+        const { category, varietyId, productionYear, source, sort = 'weight_desc', includeDeducted = false } = params
 
         const splitMulti = (s: string | undefined): string[] =>
             s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
@@ -182,7 +194,8 @@ export async function getPackages(
                     },
                 },
                 batch: { select: { millingType: true } }, // 재포장 동질성 판정용 (결정 #43)
-                ...MOVEMENT_COUNT_SELECT, // 가용수량 계산용(차감 합산, #19)
+                // 가용수량 계산용(차감 합산, #19). 「차감된 재고 보기」일 때만 사유·일자까지 함께.
+                ...(includeDeducted ? MOVEMENT_SUMMARY_SELECT : MOVEMENT_COUNT_SELECT),
             },
             orderBy,
         })
@@ -210,9 +223,18 @@ export async function getPackages(
                     ? toIsoDate(r.incomingDate)
                     : toIsoDate(r.createdAt)
 
-            // 가용수량 = count - SUM(movement.count). 0 이하면 목록 제외(차감 완료분)
+            // 가용수량 = count - SUM(movement.count). 0 이하면 목록 제외(차감 완료분).
+            // 「차감된 재고 보기」를 켜면 그 행들이 되돌리기 대상이라 남긴다.
             const available = availableOf(r)
-            if (available <= 0) return []
+            if (available <= 0 && !includeDeducted) return []
+
+            // 차감 요약 — MOVEMENT_SUMMARY_SELECT로 조회했을 때만 type·occurredAt이 들어 있다.
+            const movements = r.movements as { count: number; type?: string; occurredAt?: Date }[]
+            const lastOccurredAt = movements[0]?.occurredAt
+            const deductedAt = lastOccurredAt ? toIsoDate(lastOccurredAt) : null
+            const deductedTypes = [
+                ...new Set(movements.map(m => m.type).filter((t): t is string => Boolean(t))),
+            ]
 
             return [{
                 id: r.id,
@@ -236,6 +258,8 @@ export async function getPackages(
                 date,
                 sub: r.totalWeight,
                 source: r.source as PackageSource,
+                deductedAt,
+                deductedTypes,
             }]
         })
 
@@ -260,7 +284,9 @@ export async function getPackages(
                         a.weightPerUnit - b.weightPerUnit ||
                         a.date.localeCompare(b.date),
                 )
-                const total = sortedRows.reduce((s, r) => s + r.sub, 0)
+                // 차감 완료 행은 합계에서 뺀다 — 「차감된 재고 보기」를 켰다고 재고 합계가 튀면 안 된다.
+                // 끈 상태에선 그런 행이 애초에 없어 종전과 같은 값이다.
+                const total = sortedRows.reduce((s, r) => (r.available > 0 ? s + r.sub : s), 0)
                 items.push({
                     type: 'group',
                     varietyId: vid,

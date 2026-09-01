@@ -27,6 +27,20 @@ import type { GuardedPackage } from './package-guard'
  */
 export const MOVEMENT_COUNT_SELECT = { movements: { select: { count: true } } } as const
 
+/**
+ * 「차감된 재고 보기」처럼 **언제·무슨 사유로** 나갔는지까지 필요할 때 쓰는 확장판.
+ * `count`가 그대로 들어 있어 `availableOf`가 이 모양에도 그대로 먹는다.
+ * 최근 차감이 앞에 오도록 정렬해 둔다 — 호출부가 `movements[0]`을 최근으로 읽는다.
+ *
+ * 평소 목록은 위의 `MOVEMENT_COUNT_SELECT`를 쓴다. 이쪽은 열이 3배라 기본으로 삼지 않는다.
+ */
+export const MOVEMENT_SUMMARY_SELECT = {
+  movements: {
+    select: { count: true, type: true, occurredAt: true },
+    orderBy: { occurredAt: 'desc' },
+  },
+} as const
+
 /** 차감 이력만 있으면 되는 행 */
 export type WithMovements = { movements: { count: number }[] }
 
