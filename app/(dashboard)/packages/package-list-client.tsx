@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Inbox, PackageOpen } from 'lucide-react'
+import { Inbox, PackageMinus, PackageOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { PackageItem, PackageRow as PackageRowData } from '@/app/actions/packages'
 import {
@@ -17,17 +17,23 @@ import {
     MobilePackageSingleCard,
 } from './mobile-package-card'
 import { RepackDialog } from './repack-dialog'
+import { DeductDialog } from './deduct-dialog'
+
+/** 선택 모드 — 재포장·차감이 같은 체크박스 인프라를 나눠 쓴다 (계획서 D4). */
+export type PackageSelectMode = 'repack' | 'deduct' | null
 
 interface Props {
     items: PackageItem[]
     emptyMessage?: string
     emptyHint?: string
-    /** 행 액션 콜백 — 미전달 시 메뉴 안 보임 (벼 탭은 미전달, 잡곡 탭은 전달) */
+    /** 행 액션 콜백 — 미전달 시 메뉴 안 보임 (벼 탭은 이력만 전달, 잡곡 탭은 전부 전달) */
     onEditRow?: (row: PackageRowData) => void
     onDeleteRow?: (row: PackageRowData) => void
-    /** 재포장 선택 모드 — 토글 버튼은 패널 상단 액션 라인(검색 버튼 옆)에 있다 */
-    selectMode?: boolean
-    /** 재포장이 끝나거나 취소될 때 패널의 selectMode를 내린다 */
+    /** 차감 이력 다이얼로그 열기 — 차감 이력이 있는 행에만 메뉴가 붙는다 (D6) */
+    onHistoryRow?: (row: PackageRowData) => void
+    /** 선택 모드 — 토글 버튼은 패널 상단 액션 라인(검색 버튼 옆)에 있다 */
+    mode?: PackageSelectMode
+    /** 재포장·차감이 끝나거나 취소될 때 패널의 mode를 내린다 */
     onExitSelectMode?: () => void
 }
 
@@ -47,44 +53,51 @@ export function PackageListClient({
     emptyHint,
     onEditRow,
     onDeleteRow,
-    selectMode = false,
+    onHistoryRow,
+    mode = null,
     onExitSelectMode,
 }: Props) {
     const router = useRouter()
+    const selectMode = mode !== null
     // 선택 모드에서도 그룹은 접힌 채로 시작한다 — 품종이 많아 전부 펼치면
     // 오히려 찾기 어렵다. 필요한 그룹만 펼쳐서 고른다.
     const [openGroups, setOpenGroups] = useState<Set<number>>(new Set())
     const actions: PackageRowActions | undefined =
-        onEditRow || onDeleteRow ? { onEdit: onEditRow, onDelete: onDeleteRow } : undefined
+        onEditRow || onDeleteRow || onHistoryRow
+            ? { onEdit: onEditRow, onDelete: onDeleteRow, onHistory: onHistoryRow }
+            : undefined
 
-    // -- 재포장 선택 --
+    // -- 재포장·차감 선택 --
     const [selected, setSelected] = useState<Map<number, PackageRowData>>(new Map())
     const [dialogOpen, setDialogOpen] = useState(false)
 
     // 모드가 바뀌면 골라둔 것을 비운다. effect도 리마운트 key도 쓰지 않는다 —
     // effect는 lint(set-state-in-effect)에 걸리고, key로 리마운트하면 펼쳐둔 그룹까지 닫힌다.
     // React 공식 "prop이 바뀔 때 state 조정" 패턴(렌더 중 setState).
-    const [lastSelectMode, setLastSelectMode] = useState(selectMode)
-    if (lastSelectMode !== selectMode) {
-        setLastSelectMode(selectMode)
+    const [lastMode, setLastMode] = useState(mode)
+    if (lastMode !== mode) {
+        setLastMode(mode)
         setSelected(new Map())
     }
 
     // 먼저 고른 행이 기준이 된다. 아직 아무것도 안 골랐으면 전부 고를 수 있다.
+    // 동질성 제약은 **재포장 전용** — 차감은 아무 행이나 함께 고를 수 있다 (D4).
     const anchorKey = useMemo(() => {
+        if (mode !== 'repack') return null
         const first = selected.values().next()
         return first.done ? null : identityKey(first.value)
-    }, [selected])
+    }, [mode, selected])
 
     // 선택 바에 표시할 동질성 기준 라벨 — 지금은 왜 다른 행이 안 눌리는지 툴팁을 봐야 안다
     const anchorLabel = useMemo(() => {
+        if (mode !== 'repack') return null
         const first = selected.values().next()
         if (first.done) return null
         const r = first.value
         return [r.variety, r.millingTypeLabel, r.source === 'PURCHASED' ? '매입' : '도정산']
             .filter(v => v && v !== '—')
             .join(' · ')
-    }, [selected])
+    }, [mode, selected])
 
     const selection: PackageSelection | undefined = selectMode
         ? {
@@ -96,9 +109,14 @@ export function PackageListClient({
                       else next.set(row.id, row)
                       return next
                   }),
+              // 차감 완료 행(가용 0)은 두 모드 모두 금지 — 뺄 것도 나눌 것도 없다.
               isDisabled: row =>
-                  anchorKey !== null && identityKey(row) !== anchorKey && !selected.has(row.id),
-              disabledReason: '품종·도정유형·출처가 같은 재고끼리만 함께 재포장할 수 있어요.',
+                  row.available <= 0 ||
+                  (anchorKey !== null && identityKey(row) !== anchorKey && !selected.has(row.id)),
+              disabledReason:
+                  mode === 'repack'
+                      ? '품종·도정유형·출처가 같은 재고끼리만 함께 재포장할 수 있어요.'
+                      : '이미 전량 차감된 재고예요.',
           }
         : undefined
 
@@ -128,12 +146,15 @@ export function PackageListClient({
     const selectedRows = Array.from(selected.values())
     // 전량 소진 기준 최대치 — 실제로 몇 개를 쓸지는 다이얼로그에서 정한다
     const maxKg = selectedRows.reduce((s, r) => s + r.weightPerUnit * r.available, 0)
+    const maxCount = selectedRows.reduce((s, r) => s + r.available, 0)
 
     return (
         <>
             {selectMode && (
                 <p className="px-1 text-[11.5px] text-slate-500">
-                    합칠·나눌 재고를 고르세요. 품종·도정유형·출처가 같아야 해요.
+                    {mode === 'repack'
+                        ? '합칠·나눌 재고를 고르세요. 품종·도정유형·출처가 같아야 해요.'
+                        : '재고에서 뺄 항목을 고르세요. 사유와 발생일은 다음 단계에서 정합니다.'}
                 </p>
             )}
 
@@ -198,12 +219,24 @@ export function PackageListClient({
                                 <b className="text-slate-900">{selected.size}건</b> 선택
                             </span>
                             <span className="text-slate-200">|</span>
-                            <span className="text-[12.5px] text-slate-500">
-                                최대{' '}
-                                <b className="tabular-nums text-slate-800">
-                                    {maxKg.toLocaleString()}kg
-                                </b>
-                            </span>
+                            {mode === 'repack' ? (
+                                <span className="text-[12.5px] text-slate-500">
+                                    최대{' '}
+                                    <b className="tabular-nums text-slate-800">
+                                        {maxKg.toLocaleString()}kg
+                                    </b>
+                                </span>
+                            ) : (
+                                <span className="text-[12.5px] text-slate-500">
+                                    <b className="tabular-nums text-slate-800">
+                                        {maxCount.toLocaleString()}개
+                                    </b>{' '}
+                                    · 총{' '}
+                                    <span className="tabular-nums">
+                                        {maxKg.toLocaleString()}kg
+                                    </span>
+                                </span>
+                            )}
                             {anchorLabel && (
                                 <span className="text-[11.5px] text-slate-400">{anchorLabel}</span>
                             )}
@@ -218,8 +251,12 @@ export function PackageListClient({
                                 선택 해제
                             </Button>
                             <Button size="sm" className="h-8 gap-1.5" onClick={() => setDialogOpen(true)}>
-                                <PackageOpen className="h-3.5 w-3.5" />
-                                재포장하기
+                                {mode === 'repack' ? (
+                                    <PackageOpen className="h-3.5 w-3.5" />
+                                ) : (
+                                    <PackageMinus className="h-3.5 w-3.5" />
+                                )}
+                                {mode === 'repack' ? '재포장하기' : '차감하기'}
                             </Button>
                         </div>
                     </div>
@@ -232,27 +269,49 @@ export function PackageListClient({
                     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-lg">
                         <span className="text-[12.5px] text-slate-600">
                             <b className="text-slate-900">{selected.size}건</b> 선택 ·{' '}
-                            <span className="tabular-nums">최대 {maxKg.toLocaleString()}kg</span>
+                            {mode === 'repack' ? (
+                                <span className="tabular-nums">최대 {maxKg.toLocaleString()}kg</span>
+                            ) : (
+                                <span className="tabular-nums">{maxCount.toLocaleString()}개</span>
+                            )}
                         </span>
                         <Button size="sm" className="h-8 gap-1.5" onClick={() => setDialogOpen(true)}>
-                            <PackageOpen className="h-3.5 w-3.5" />
-                            재포장하기
+                            {mode === 'repack' ? (
+                                <PackageOpen className="h-3.5 w-3.5" />
+                            ) : (
+                                <PackageMinus className="h-3.5 w-3.5" />
+                            )}
+                            {mode === 'repack' ? '재포장하기' : '차감하기'}
                         </Button>
                     </div>
                 </div>
             )}
 
-            <RepackDialog
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-                packageIds={selectedRows.map(r => r.id)}
-                onDone={() => {
-                    setDialogOpen(false)
-                    setSelected(new Map())
-                    onExitSelectMode?.()
-                    router.refresh()
-                }}
-            />
+            {mode === 'deduct' ? (
+                <DeductDialog
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    rows={selectedRows}
+                    onDone={() => {
+                        setDialogOpen(false)
+                        setSelected(new Map())
+                        onExitSelectMode?.()
+                        router.refresh()
+                    }}
+                />
+            ) : (
+                <RepackDialog
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                    packageIds={selectedRows.map(r => r.id)}
+                    onDone={() => {
+                        setDialogOpen(false)
+                        setSelected(new Map())
+                        onExitSelectMode?.()
+                        router.refresh()
+                    }}
+                />
+            )}
         </>
     )
 }

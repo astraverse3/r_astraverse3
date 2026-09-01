@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>재고차감 — 차감 다이얼로그 · 이력 · 차감된 행</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.num{font-variant-numeric:tabular-nums}
+h1{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
+.fl{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fl .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#0f172a;border:1px solid #0f172a;color:#fff}
+.fl .sub{font-weight:500;color:#64748b;font-size:12px}
+.note{font-size:12px;color:#475569;line-height:1.7}
+.note b{color:#0f172a}
+.dlg{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 18px 44px rgba(15,23,42,.16);overflow:hidden}
+.shell{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,.09);overflow:hidden}
+.tile{width:30px;height:30px;border-radius:8px;background:rgba(37,99,235,.1);color:#2563eb;display:flex;align-items:center;justify-content:center;flex:none}
+.b{height:32px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.b-out{background:#fff;border:1px solid #e2e8f0;color:#475569}
+.b-pri{background:#2563eb;color:#fff;font-weight:700;box-shadow:0 1px 2px rgba(37,99,235,.35)}
+.b-pri.off{background:#93b4f7;box-shadow:none}
+.b-ghost{background:transparent;color:#64748b}
+.b-sm{height:26px;padding:0 9px;font-size:11.5px;border-radius:7px}
+.inp{height:32px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-size:12.5px;color:#0f172a;display:flex;align-items:center;padding:0 9px}
+.inp.ph{color:#94a3b8}
+.lbl{font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.03em;text-transform:uppercase}
+.chip{border:1px solid #e2e8f0;border-radius:8px;padding:0 12px;height:30px;font-size:12.5px;color:#475569;background:#fff;display:inline-flex;align-items:center;font-weight:600}
+.chip.on{border-color:rgba(37,99,235,.35);background:rgba(37,99,235,.1);color:#2563eb;font-weight:700}
+.lot{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px}
+.badge{font-size:10px;font-weight:600;border-radius:4px;padding:1px 6px;display:inline-flex;align-items:center;gap:3px}
+.bg-buy{color:#b45309;background:#fffbeb;border:1px solid #fde68a}
+.bg-out{color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0}
+.bg-line{color:#64748b;background:#fff;border:1px solid #e2e8f0;font-weight:500;font-size:11px;padding:1px 7px;border-radius:5px}
+.cbx{width:14px;height:14px;border:1.5px solid #cbd5e1;border-radius:3px;background:#fff;display:block;flex:none}
+.cbx.on{background:#2563eb;border-color:#2563eb}
+.cbx.dis{background:#f8fafc;border-color:#e2e8f0;opacity:.5}
+.sw{width:34px;height:20px;border-radius:99px;background:#cbd5e1;position:relative;flex:none}
+.sw.on{background:#2563eb}
+.sw i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:99px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw.on i{left:16px}
+.hd{display:grid;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#94a3b8;text-transform:uppercase;background:rgba(248,250,252,.6);border-bottom:1px solid #e2e8f0;padding:10px 16px}
+.rw{display:grid;align-items:center;padding:12px 16px;font-size:13px;color:#334155;border-top:1px solid #f1f5f9}
+.gr-s{grid-template-columns:28px .65fr .5fr .75fr 1.4fr .5fr .55fr .8fr .8fr 36px}
+.r{text-align:right}.c{text-align:center}
+.dead{color:#94a3b8}
+.dl{display:grid;grid-template-columns:1fr .5fr 74px 158px 42px 96px;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #f1f5f9;font-size:13px}
+.lotf{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.dlh{position:sticky;top:0;background:#fff;z-index:1;border-top:0;font-size:10.5px;font-weight:700;color:#94a3b8;letter-spacing:.03em;text-transform:uppercase;padding:0 0 5px;border-bottom:1px solid #e2e8f0}
+.sub2{font-size:11px;color:#94a3b8;margin-top:2px}
+.callout{border:1px solid #fde68a;background:#fffbeb;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#78350f;line-height:1.6}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+</style>
+</head>
+<body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:28px;width:1200px">
+  <h1>재고차감 — 시안 2건</h1>
+  <p class="note" style="margin-top:6px">기준: <b>docs/handoff/재고차감/README.md</b> (커밋 <b>47b77ad</b>) · 서버 D1~D3 반영본. 목록·체크박스·선택 바는 재포장 인프라 그대로라 <b>새로 그리지 않았습니다</b> — 시안 #2의 목록은 「차감된 행」이 어떻게 보이는지만 보여주는 발췌입니다.</p>
+</div>
+
+<!-- ================= 시안 #1 ================= -->
+<div style="position:absolute;left:40px;top:104px;width:1480px">
+  <div class="fl"><span class="pill">시안 #1</span> 차감 다이얼로그 <span class="sub">720px · 데스크탑 / 재포장 다이얼로그 관습(§4.1) 그대로</span></div>
+</div>
+
+<!-- A. 입력 -->
+<div style="position:absolute;left:40px;top:140px;width:720px">
+  <div class="dlg">
+    <div class="flex items-start gap-2.5 border-b border-slate-100 px-5 py-4">
+      <span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 16h6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/><path d="m7.5 4.27 9 5.15"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></span>
+      <div class="min-w-0">
+        <div style="font-size:15px;font-weight:700;color:#0f172a">재고차감</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">고른 <b class="num" style="color:#334155">5건 51개</b>를 재고에서 빼고 이력에 남깁니다</div>
+      </div>
+    </div>
+
+    <!-- 설정 영역 (shrink-0) -->
+    <div class="border-b border-slate-100 px-5 py-3.5" style="background:rgba(248,250,252,.6)">
+      <div class="lbl" style="margin-bottom:7px">사유</div>
+      <div class="flex" style="gap:6px">
+        <span class="chip on">판매</span><span class="chip">증정</span><span class="chip">분실</span><span class="chip">파손</span><span class="chip">기타</span>
+      </div>
+      <div class="grid mt-3" style="grid-template-columns:190px 1fr;gap:10px">
+        <label class="flex flex-col" style="gap:5px">
+          <span class="lbl">발생일</span>
+          <span class="inp num justify-between">2026-03-14<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+        </label>
+        <label class="flex flex-col" style="gap:5px">
+          <span class="lbl">거래처 <span style="color:#2563eb;font-weight:600">· 판매일 때만</span></span>
+          <span class="inp">한살림 서울</span>
+        </label>
+      </div>
+      <p class="mt-2 flex items-center" style="gap:5px;font-size:11.5px;color:#b45309">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+        오늘(2026-09-01)이 아닌 <b>과거 날짜</b>로 기록됩니다. 묶음 하나에 날짜 하나예요 — 시기가 다르면 나눠서 실행하세요.
+      </p>
+      <label class="flex flex-col mt-3" style="gap:5px">
+        <span class="lbl">메모</span>
+        <span class="inp ph">예) 2~3월 출고분 소급 정리</span>
+      </label>
+    </div>
+
+    <!-- 본문: 선택 행 (스크롤 영역) -->
+    <div class="px-5 py-3">
+      <div class="flex items-center justify-between">
+        <span class="lbl">차감할 재고 <span class="num" style="color:#334155">5건</span></span>
+        <span class="b b-ghost b-sm">전량으로 초기화</span>
+      </div>
+      <div class="mt-1" style="max-height:300px;overflow:hidden">
+        <div class="dl dlh">
+          <span>품종 · 규격</span><span>생산자</span><span class="r">포장일</span><span>로트</span><span class="r">가용</span><span class="r" style="padding-right:2px">차감 개수</span>
+        </div>
+        <div class="dl">
+          <span class="min-w-0 truncate"><b style="color:#0f172a">새청무</b> · 5kg <span style="color:#94a3b8">백미</span></span>
+          <span class="min-w-0 truncate" style="color:#475569">김진오</span>
+          <span class="r num" style="font-size:12px;color:#94a3b8">04-13</span>
+          <span><span class="lotf">251119-11-15103885-415</span></span>
+          <span class="r num" style="color:#64748b">3</span>
+          <span class="flex items-center justify-end" style="gap:5px"><span class="inp num" style="width:56px;justify-content:flex-end">3</span><span style="font-size:11px;color:#94a3b8">개</span></span>
+        </div>
+        <div class="dl">
+          <span class="min-w-0 truncate"><b style="color:#0f172a">새청무</b> · 5kg <span style="color:#94a3b8">백미</span></span>
+          <span class="min-w-0 truncate" style="color:#475569">박지훈</span>
+          <span class="r num" style="font-size:12px;color:#94a3b8">06-09</span>
+          <span><span class="lotf">251119-11-15103885-4118</span></span>
+          <span class="r num" style="color:#64748b">37</span>
+          <span class="flex items-center justify-end" style="gap:5px"><span class="inp num" style="width:56px;justify-content:flex-end">37</span><span style="font-size:11px;color:#94a3b8">개</span></span>
+        </div>
+        <div class="dl">
+          <span class="min-w-0 truncate"><b style="color:#0f172a">새청무</b> · 5kg <span style="color:#94a3b8">백미</span></span>
+          <span class="min-w-0 truncate" style="color:#475569">박병천</span>
+          <span class="r num" style="font-size:12px;color:#94a3b8">06-22</span>
+          <span><span class="lotf">251119-11-15103885-4113</span></span>
+          <span class="r num" style="color:#64748b">1</span>
+          <span class="r" style="font-size:11.5px;font-weight:600;color:#64748b;padding-right:2px">1개 전부</span>
+        </div>
+        <div class="dl">
+          <span class="min-w-0 truncate"><b style="color:#0f172a">삼광</b> · 4kg <span style="color:#94a3b8">현미</span></span>
+          <span class="min-w-0 truncate" style="color:#475569">김정호</span>
+          <span class="r num" style="font-size:12px;color:#94a3b8">04-11</span>
+          <span><span class="badge bg-buy">매입</span></span>
+          <span class="r num" style="color:#64748b">2</span>
+          <span class="flex items-center justify-end" style="gap:5px"><span class="inp num" style="width:56px;justify-content:flex-end">2</span><span style="font-size:11px;color:#94a3b8">개</span></span>
+        </div>
+        <div class="dl" style="opacity:.55">
+          <span class="min-w-0 truncate"><b style="color:#0f172a">찰벼</b> · 5kg <span style="color:#94a3b8">7분도</span></span>
+          <span class="min-w-0 truncate" style="color:#475569">이상철</span>
+          <span class="r num" style="font-size:12px;color:#94a3b8">03-02</span>
+          <span><span class="lotf">251119-11-15103885-4113</span></span>
+          <span class="r num" style="color:#64748b">8</span>
+          <span class="flex items-center justify-end" style="gap:5px"><span class="inp num" style="width:56px;justify-content:flex-end;color:#94a3b8">0</span><span class="badge bg-out">제외</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 푸터 = 계기판 자리에 차감 요약 -->
+    <div class="border-t border-slate-200 px-5 py-3" style="background:#f8fafc">
+      <div class="flex items-center justify-between" style="gap:16px">
+        <div class="flex items-baseline" style="gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#475569">판매로 차감</div>
+            <div class="num" style="font-size:11.5px;color:#64748b;margin-top:2px">4행 · 2026-03-14 · 한살림 서울</div>
+          </div>
+          <span class="num" style="font-size:22px;font-weight:800;line-height:1;color:#0f172a">43개</span>
+        </div>
+        <div class="flex" style="gap:8px">
+          <span class="b b-out">취소</span><span class="b b-pri">차감하기</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px;width:700px">🔴 <b>같은 품종·규격이 여러 행 오는 것이 기본</b>입니다(실측: 새청무 5kg 9행). 그래서 <b>목록 테이블과 같은 컬럼 어회</b>로 한 행을 <b>한 줄에</b> 폴칩니다 — 품종·규격 / 생산자 / 포장일 / 로트 / 가용 / 차감 개수. 생산자·포장일을 보조줄로 내리면 왼쪽만 2줄이 되어 오른쪽에 빈 공간이 생깁니다. 컬럼 헤더는 스크롤에 고정합니다.<br><b>로트는 자르지 않습니다</b> — 158px 열 + 10.5px mono면 전체가 들어갑니다(데스크톱 한정, 모바일은 품종 아래 유지). 본문은 <b>13px</b> — 목록 행과 같은 톤으로 올렸습니다(12.5px는 입력 폼의 관습이고 이건 표입니다).<br>가용 1개 행은 입력 대신 「1개 전부」(재포장 §4.1) · 0으로 두면 <b>제외</b> 배지가 붙고 요약 건수에서 빠집니다(<b>5건 선택 → 4행 43개 차감</b>). 푸터 계기판 자리는 재포장의 잔여kg 대신 <b>차감 요약</b>이 차지합니다.</p>
+</div>
+
+<!-- B. 확인 단계 -->
+<div style="position:absolute;left:800px;top:140px;width:720px">
+  <div class="dlg">
+    <div class="flex items-start gap-2.5 border-b border-slate-100 px-5 py-4">
+      <span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 16h6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/><path d="m7.5 4.27 9 5.15"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></span>
+      <div class="min-w-0">
+        <div style="font-size:15px;font-weight:700;color:#0f172a">재고차감</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">고른 <b class="num" style="color:#334155">5건 51개</b>를 재고에서 빼고 이력에 남깁니다</div>
+      </div>
+    </div>
+    <!-- 확인 중에는 입력부를 잠근다 -->
+    <div class="border-b border-slate-100 px-5 py-3.5" style="background:rgba(248,250,252,.6);opacity:.5;pointer-events:none">
+      <div class="lbl" style="margin-bottom:7px">사유</div>
+      <div class="flex" style="gap:6px"><span class="chip on">판매</span><span class="chip">증정</span><span class="chip">분실</span><span class="chip">파손</span><span class="chip">기타</span></div>
+      <div class="grid mt-3" style="grid-template-columns:190px 1fr;gap:10px">
+        <label class="flex flex-col" style="gap:5px"><span class="lbl">발생일</span><span class="inp num">2026-03-14</span></label>
+        <label class="flex flex-col" style="gap:5px"><span class="lbl">거래처</span><span class="inp">한살림 서울</span></label>
+      </div>
+    </div>
+    <div class="px-5 py-3" style="opacity:.5">
+      <div class="flex items-center justify-between"><span class="lbl">차감할 재고 <span class="num" style="color:#334155">5건</span></span></div>
+      <div class="mt-1">
+        <div class="dl"><span class="truncate"><b style="color:#0f172a">새청무</b> · 5kg</span><span class="truncate" style="color:#475569">김진오</span><span class="r num" style="font-size:12px;color:#94a3b8">04-13</span><span><span class="lotf">251119-11-15103885-415</span></span><span class="r num" style="color:#64748b">3</span><span class="r num" style="padding-right:2px">3개</span></div>
+        <div class="dl"><span class="truncate"><b style="color:#0f172a">새청무</b> · 5kg</span><span class="truncate" style="color:#475569">박지훈</span><span class="r num" style="font-size:12px;color:#94a3b8">06-09</span><span><span class="lotf">251119-11-15103885-4118</span></span><span class="r num" style="color:#64748b">37</span><span class="r num" style="padding-right:2px">37개</span></div>
+        <div class="dl"><span class="truncate"><b style="color:#0f172a">새청무</b> · 5kg</span><span class="truncate" style="color:#475569">박병천</span><span class="r num" style="font-size:12px;color:#94a3b8">06-22</span><span><span class="lotf">251119-11-15103885-4113</span></span><span class="r num" style="color:#64748b">1</span><span class="r num" style="padding-right:2px">1개</span></div>
+        <div class="dl"><span class="truncate"><b style="color:#0f172a">삼광</b> · 4kg</span><span class="truncate" style="color:#475569">김정호</span><span class="r num" style="font-size:12px;color:#94a3b8">04-11</span><span><span class="badge bg-buy">매입</span></span><span class="r num" style="color:#64748b">2</span><span class="r num" style="padding-right:2px">2개</span></div>
+        <div class="dl" style="opacity:.55"><span class="truncate"><b style="color:#0f172a">찰벼</b> · 5kg</span><span class="truncate" style="color:#475569">이상철</span><span class="r num" style="font-size:12px;color:#94a3b8">03-02</span><span><span class="lotf">251119-11-15103885-4113</span></span><span class="r num" style="color:#64748b">8</span><span class="r" style="padding-right:2px"><span class="badge bg-out">제외</span></span></div>
+      </div>
+    </div>
+    <!-- 인라인 확인 (손실 인정 패턴 그대로) -->
+    <div class="px-5 pb-3">
+      <div class="callout">
+        <div class="flex items-start" style="gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none;margin-top:1px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span><b class="num">4행 43개</b>를 <b>판매</b>로 차감합니다. 발생일 <b class="num">2026-03-14</b> · 거래처 한살림 서울.<br>차감한 재고는 목록에서 사라지고, 「차감된 재고 보기」를 켜야 다시 보입니다.</span>
+        </div>
+        <div class="flex justify-end mt-2.5" style="gap:8px">
+          <span class="b b-out b-sm" style="height:32px;padding:0 12px;font-size:12.5px">다시 고치기</span>
+          <span class="b b-pri" style="background:#b45309;box-shadow:none">확인하고 차감</span>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-200 px-5 py-3" style="background:#f8fafc">
+      <div class="flex items-center justify-between" style="gap:16px">
+        <div class="flex items-baseline" style="gap:12px">
+          <div><div style="font-size:11px;font-weight:700;color:#475569">확인을 기다리는 중</div><div class="num" style="font-size:11.5px;color:#64748b;margin-top:2px">4행 · 2026-03-14 · 한살림 서울</div></div>
+          <span class="num" style="font-size:22px;font-weight:800;line-height:1;color:#0f172a">43개</span>
+        </div>
+        <div class="flex" style="gap:8px"><span class="b b-out">취소</span><span class="b b-pri off">차감하기</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px;width:700px">확인은 <b>항상</b>(N5) 뜨지만 별도 confirm 창을 띄우지 않고 <b>다이얼로그 안에서 해결</b>합니다 — 재포장의 「손실 인정하고 진행」과 같은 패턴. 확인이 떠 있는 동안 입력부는 잠기고 「차감하기」는 비활성, 되돌아갈 길은 「다시 고치기」입니다.</p>
+</div>
+
+<!-- ================= 시안 #2 ================= -->
+<div style="position:absolute;left:40px;top:1060px;width:1480px">
+  <div class="fl"><span class="pill">시안 #2</span> 차감된 행 표시 + 차감 이력 <span class="sub">목록 폭 1216px(사이드바 제외) 기준 발췌</span></div>
+</div>
+
+<div style="position:absolute;left:40px;top:1096px;width:1216px">
+  <!-- 필터 줄 -->
+  <div class="flex items-center justify-between px-1 py-1" style="gap:8px">
+    <span class="num" style="font-size:12px;font-weight:500;color:#475569">검색결과 605건 <span style="color:#94a3b8">· 차감 24건</span></span>
+    <div class="flex items-center" style="gap:8px">
+      <label class="flex items-center" style="gap:7px;font-size:12px;color:#334155;font-weight:500"><span class="sw on"><i></i></span>차감된 재고 보기</label>
+      <span class="bg-line">2026년</span><span class="bg-line">최신순</span>
+    </div>
+  </div>
+  <div class="shell mt-1">
+    <div class="hd gr-s"><span></span><span>품종</span><span>도정구분</span><span>생산자</span><span class="c">로트번호</span><span class="r" style="padding-right:8px">규격</span><span class="r" style="padding-right:48px">개수</span><span class="r">총량</span><span class="r">포장일자</span><span></span></div>
+    <div class="rw gr-s">
+      <span class="flex justify-center"><span class="cbx"></span></span>
+      <span class="flex items-center" style="gap:8px;font-weight:600;color:#0f172a"><span style="width:14px"></span>새청무</span>
+      <span style="color:#475569">백미</span><span style="color:#475569">김진오</span>
+      <span class="c"><span class="lotf">251119-11-15103885-415</span></span>
+      <span class="r" style="padding-right:8px">5kg</span><span class="r num" style="padding-right:48px">3개</span>
+      <span class="r num" style="font-weight:600">15kg</span><span class="r num" style="color:#64748b">2026-04-13</span><span></span>
+    </div>
+    <!-- 차감된 행 -->
+    <div class="rw gr-s dead" style="background:rgba(248,250,252,.7)">
+      <span class="flex justify-center"><span class="cbx dis"></span></span>
+      <span class="flex items-center" style="gap:6px"><span style="width:14px"></span><span style="font-weight:600">새청무</span><span class="badge bg-out">차감됨</span></span>
+      <span>백미</span><span>박지훈</span>
+      <span class="c"><span class="lotf" style="opacity:.6">251119-11-15103885-4118</span></span>
+      <span class="r" style="padding-right:8px">5kg</span><span class="r num" style="padding-right:48px">0개</span>
+      <span class="r num">0kg</span>
+      <span class="r num" style="font-size:11.5px;color:#64748b">03-14 판매</span>
+      <span class="flex justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div class="rw gr-s dead" style="background:rgba(248,250,252,.7)">
+      <span class="flex justify-center"><span class="cbx dis"></span></span>
+      <span class="flex items-center" style="gap:6px"><span style="width:14px"></span><span style="font-weight:600">삼광</span><span class="badge bg-out">차감됨</span></span>
+      <span>현미</span><span>김정호</span>
+      <span class="c"><span class="badge bg-buy" style="opacity:.6">매입</span></span>
+      <span class="r" style="padding-right:8px">4kg</span><span class="r num" style="padding-right:48px">0개</span>
+      <span class="r num">0kg</span>
+      <span class="r num" style="font-size:11.5px;color:#64748b">06-01 재포장</span>
+      <span class="flex justify-center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div class="rw gr-s">
+      <span class="flex justify-center"><span class="cbx on"></span></span>
+      <span class="flex items-center" style="gap:8px;font-weight:600;color:#0f172a"><span style="width:14px"></span>찰벼</span>
+      <span style="color:#475569">7분도</span><span style="color:#475569">이상철</span>
+      <span class="c"><span class="lotf">251119-11-15103885-4113</span></span>
+      <span class="r" style="padding-right:8px">5kg</span><span class="r num" style="padding-right:48px">8개</span>
+      <span class="r num" style="font-weight:600">40kg</span><span class="r num" style="color:#64748b">2026-03-02</span><span></span>
+    </div>
+  </div>
+  <!-- ⋮ 메뉴 -->
+  <div style="position:absolute;right:14px;top:186px;width:132px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 10px 24px rgba(15,23,42,.14);padding:4px">
+    <div class="flex items-center" style="gap:8px;font-size:12.5px;color:#334155;padding:7px 8px;border-radius:6px;background:#f1f5f9">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>차감 이력
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px;width:1000px">차감 완료 판정은 <b>available ≤ 0</b>. 흐린 회색 + <b>「차감됨」 회색 배지</b>(매입=amber, LOT=mono와 구별) · 체크박스 비활성 · 개수·총량은 0. <b>포장일자 자리에 마지막 차감일·사유</b>를 넣었습니다 — 소진된 재고에선 포장일자보다 언제 왜 나갔는지가 알고 싶은 값이라, 열을 새로 만들지 않고 자리만 바꿉니다. ⋮ 메뉴에 「차감 이력」이 붙습니다(🔴 벼 탭은 지금 콜백 미전달로 메뉴가 없으므로 <b>이력 콜백만 전달해 메뉴를 살려야</b> 합니다 — 수정·삭제는 계속 미전달).</p>
+</div>
+
+<!-- 이력 다이얼로그 -->
+<div style="position:absolute;left:1296px;top:1096px;width:600px">  <p class="note" style="margin-bottom:8px;width:580px">🔴 이력은 <b>행(packageId) 하나</b>에 대해 열리고, 실제로는 <b>1건인 경우가 대부분</b>입니다(한 번에 전량 차감). 아래는 한 행을 <b>여러 번 나눠 차감한 드문 경우</b> — 되돌리기 가능·불가 두 상태를 한 화면에 담기 위해 세웠습니다.</p>
+  <div class="dlg">
+    <div class="flex items-start gap-2.5 border-b border-slate-100 px-5 py-4">
+      <span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></span>
+      <div class="min-w-0">
+        <div style="font-size:15px;font-weight:700;color:#0f172a">차감 이력</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">새청무 · 5kg · <span class="lotf">251119-11-15103885-4118</span> · 30개 중 <b class="num" style="color:#334155">30개</b> 차감</div>
+      </div>
+    </div>
+    <div class="px-5 py-2">
+      <div class="dl" style="grid-template-columns:1fr auto;border-top:0;padding:10px 0">
+        <div class="min-w-0">
+          <div class="flex items-center" style="gap:7px"><span class="bg-line">판매</span><b class="num" style="font-size:13px;color:#0f172a">20개</b><span class="num" style="font-size:12px;color:#64748b">2026-03-14</span></div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:4px">한살림 서울 · 2~3월 출고분 소급 정리 <span style="color:#cbd5e1">|</span> 김도정</div>
+        </div>
+        <span class="b b-out">되돌리기</span>
+      </div>
+      <div class="dl" style="grid-template-columns:1fr auto;padding:10px 0">
+        <div class="min-w-0">
+          <div class="flex items-center" style="gap:7px"><span class="bg-line">증정</span><b class="num" style="font-size:13px;color:#0f172a">2개</b><span class="num" style="font-size:12px;color:#64748b">2026-05-02</span></div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:4px">거래처 시식용 <span style="color:#cbd5e1">|</span> 김도정</div>
+        </div>
+        <span class="b b-out">되돌리기</span>
+      </div>
+      <div class="dl" style="grid-template-columns:1fr;padding:10px 0">
+        <div class="flex items-center" style="gap:7px"><span class="bg-line">재포장</span><b class="num" style="font-size:13px;color:#0f172a">8개</b><span class="num" style="font-size:12px;color:#64748b">2026-06-01</span><span style="font-size:11.5px;color:#94a3b8">김도정</span></div>
+        <div class="mt-2 flex items-start" style="gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11.5px;color:#475569;line-height:1.6">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="flex:none;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>재포장으로 나간 차감은 취소할 수 없어요. 되돌리려면 재포장으로 만든 재고를 다시 재포장해 원래 규격으로 합쳐주세요.</span>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-200 px-5 py-3 flex justify-end" style="background:#f8fafc"><span class="b b-out">닫기</span></div>
+  </div>
+  <p class="note" style="margin-top:10px;width:580px"><b>일반적인 모습은 항목 1개짜리</b>입니다 — 재포장으로 소진된 행이면 잠금 문구만, 판매로 빠진 행이면 되돌리기 버튼만 보입니다. 화면은 <b>cancellable 값만</b> 봅니다 — false면 되돌리기 버튼 자리에 서버와 <b>같은 문구</b>가 들어갑니다(재포장=자물쇠 회색 박스, 발주서=「발주서 상세에서 취소해주세요」). 되돌리기 확인은 공용 <b>confirmDialog()</b>, destructive 아님(복원 동작).</p>
+</div>
+
+<!-- ================= 모바일 ================= -->
+<div style="position:absolute;left:40px;top:1680px;width:1480px">
+  <div class="fl"><span class="pill">모바일</span> 390px <span class="sub">폰트 키우지 않음 — 줄 넘침이 더 큰 문제</span></div>
+</div>
+
+<!-- 모바일 차감 다이얼로그 -->
+<div style="position:absolute;left:40px;top:1716px;width:390px">
+  <div class="shell" style="border-radius:14px">
+    <div class="flex items-start gap-2.5 border-b border-slate-100 px-4 py-3.5">
+      <span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 16h6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></span>
+      <div class="min-w-0"><div style="font-size:15px;font-weight:700;color:#0f172a">재고차감</div><div style="font-size:12px;color:#64748b;margin-top:2px">5건 51개를 뺍니다</div></div>
+    </div>
+    <div class="border-b border-slate-100 px-4 py-3" style="background:rgba(248,250,252,.6)">
+      <div class="lbl" style="margin-bottom:7px">사유</div>
+      <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:5px">
+        <span class="chip on" style="padding:0;justify-content:center;height:34px">판매</span><span class="chip" style="padding:0;justify-content:center;height:34px">증정</span><span class="chip" style="padding:0;justify-content:center;height:34px">분실</span><span class="chip" style="padding:0;justify-content:center;height:34px">파손</span><span class="chip" style="padding:0;justify-content:center;height:34px">기타</span>
+      </div>
+      <label class="flex flex-col mt-2.5" style="gap:5px"><span class="lbl">발생일</span><span class="inp num" style="height:38px">2026-03-14</span></label>
+      <label class="flex flex-col mt-2" style="gap:5px"><span class="lbl">거래처</span><span class="inp" style="height:38px">한살림 서울</span></label>
+      <label class="flex flex-col mt-2" style="gap:5px"><span class="lbl">메모</span><span class="inp ph" style="height:38px">예) 2~3월 출고분 정리</span></label>
+    </div>
+    <div class="px-4 py-2.5">
+      <div class="flex items-center justify-between"><span class="lbl">차감할 재고 5건</span><span class="b b-ghost b-sm">전량으로</span></div>
+      <div class="mt-1.5 flex flex-col" style="gap:6px">
+        <div class="flex items-center justify-between" style="gap:8px;border:1px solid #e2e8f0;border-radius:9px;padding:8px 10px">
+          <div class="min-w-0"><div style="font-size:12.5px;font-weight:700;color:#0f172a">새청무 · 5kg <span style="font-weight:500;color:#94a3b8">박지훈</span></div><div style="margin-top:3px"><span class="lotf" style="font-size:10px">251119-11-15103885-4118</span> <span class="num" style="font-size:11px;color:#94a3b8">가용 37 · 06-09</span></div></div>
+          <div class="flex items-center" style="gap:5px"><span class="inp num" style="width:58px;height:38px;justify-content:flex-end">37</span><span style="font-size:11px;color:#94a3b8">개</span></div>
+        </div>
+        <div class="flex items-center justify-between" style="gap:8px;border:1px solid #e2e8f0;border-radius:9px;padding:8px 10px">
+          <div class="min-w-0"><div style="font-size:12.5px;font-weight:700;color:#0f172a">삼광 · 4kg <span style="font-weight:500;color:#94a3b8">김정호</span></div><div style="margin-top:3px"><span class="badge bg-buy">매입</span> <span class="num" style="font-size:11px;color:#94a3b8">가용 1 · 04-11</span></div></div>
+          <span style="font-size:11.5px;font-weight:600;color:#64748b">1개 전부</span>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-200 px-4 py-3" style="background:#f8fafc">
+      <div class="flex items-baseline justify-between"><span style="font-size:11.5px;color:#475569;font-weight:600">판매 · 4행 · 03-14</span><span class="num" style="font-size:20px;font-weight:800;color:#0f172a">43개</span></div>
+      <div class="flex mt-2.5" style="gap:8px"><span class="b b-out" style="height:44px;flex:none;width:88px">취소</span><span class="b b-pri" style="height:44px;flex:1">차감하기</span></div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px;width:390px">버튼 높이 <b>h-11 / sm:h-8</b> 관습 유지. 입력칸도 모바일만 38px.</p>
+</div>
+
+<!-- 모바일 목록 -->
+<div style="position:absolute;left:480px;top:1716px;width:390px">
+  <div class="flex items-center justify-between px-1 pb-1.5" style="gap:8px">
+    <span class="num" style="font-size:12px;color:#475569;font-weight:500">605건</span>
+    <label class="flex items-center" style="gap:6px;font-size:11.5px;color:#334155;font-weight:500"><span class="sw on"><i></i></span>차감된 재고 보기</label>
+  </div>
+  <div class="flex flex-col" style="gap:8px">
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">
+      <div class="flex items-center justify-between"><span class="flex items-center" style="gap:8px"><span class="cbx"></span><b style="font-size:13px;color:#0f172a">새청무</b></span><span class="num" style="font-size:12.5px;font-weight:700;color:#0f172a">15kg</span></div>
+      <div class="flex items-center justify-between mt-1" style="font-size:12px;color:#334155"><span>5kg × <span class="num">3</span>개</span><span style="color:#64748b">김진오</span><span></span></div>
+      <div class="flex items-center justify-between mt-1"><span class="lotf" style="font-size:10px">251119-11-15103885-415</span><span style="font-size:11px;color:#64748b">백미</span><span class="num" style="font-size:11px;color:#64748b">2026-04-13</span></div>
+    </div>
+    <div style="background:rgba(248,250,252,.8);border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px" class="dead">
+      <div class="flex items-center justify-between"><span class="flex items-center" style="gap:8px"><span class="cbx dis"></span><b style="font-size:13px">새청무</b><span class="badge bg-out">차감됨</span></span><span class="num" style="font-size:12.5px;font-weight:700">0kg</span></div>
+      <div class="flex items-center justify-between mt-1" style="font-size:12px"><span>5kg × <span class="num">0</span>개</span><span>박지훈</span><span></span></div>
+      <div class="flex items-center justify-between mt-1"><span class="lotf" style="font-size:10px;opacity:.6">251119-11-15103885-4118</span><span style="font-size:11px">백미</span><span class="num" style="font-size:11px;color:#64748b">03-14 판매</span></div>
+    </div>
+    <div style="background:rgba(248,250,252,.8);border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px" class="dead">
+      <div class="flex items-center justify-between"><span class="flex items-center" style="gap:8px"><span class="cbx dis"></span><b style="font-size:13px">삼광</b><span class="badge bg-out">차감됨</span></span><span class="num" style="font-size:12.5px;font-weight:700">0kg</span></div>
+      <div class="flex items-center justify-between mt-1" style="font-size:12px"><span>4kg × <span class="num">0</span>개</span><span>김정호</span><span></span></div>
+      <div class="flex items-center justify-between mt-1"><span class="badge bg-buy" style="opacity:.6">매입</span><span style="font-size:11px">현미</span><span class="num" style="font-size:11px;color:#64748b">06-01 재포장</span></div>
+    </div>
+  </div>
+  <!-- floating pill -->
+  <div class="flex items-center justify-between" style="margin-top:12px;gap:10px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px 14px;box-shadow:0 8px 20px rgba(15,23,42,.12)">
+    <span style="font-size:12.5px;color:#475569"><b style="color:#0f172a">4건</b> 선택 · <span class="num">47개</span></span>
+    <span class="b b-pri" style="gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 16h6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>차감하기</span>
+  </div>
+  <p class="note" style="margin-top:10px;width:390px">모바일 카드는 마지막 줄 <b>날짜 자리</b>가 차감일·사유로 바뀝니다(데스크탑과 동일 규칙). 선택 바 문구는 재포장의 「최대 N kg」 대신 <b>「N건 · M개」</b>.</p>
+</div>
+
+<!-- 모바일 이력 -->
+<div style="position:absolute;left:920px;top:1716px;width:390px">
+  <div class="shell" style="border-radius:14px">
+    <div class="flex items-start gap-2.5 border-b border-slate-100 px-4 py-3.5">
+      <span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></span>
+      <div class="min-w-0"><div style="font-size:15px;font-weight:700;color:#0f172a">차감 이력</div><div style="font-size:12px;color:#64748b;margin-top:2px">새청무 · 5kg · 30개 중 30개</div></div>
+    </div>
+    <div class="px-4 py-1.5">
+      <div style="padding:10px 0;border-top:1px solid #f1f5f9">
+        <div class="flex items-center justify-between"><span class="flex items-center" style="gap:7px"><span class="bg-line">판매</span><b class="num" style="font-size:13px;color:#0f172a">20개</b></span><span class="num" style="font-size:12px;color:#64748b">2026-03-14</span></div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:4px">한살림 서울 · 소급 정리 <span style="color:#cbd5e1">|</span> 김도정</div>
+        <div class="flex justify-end mt-2"><span class="b b-out" style="height:36px">되돌리기</span></div>
+      </div>
+      <div style="padding:10px 0;border-top:1px solid #f1f5f9">
+        <div class="flex items-center justify-between"><span class="flex items-center" style="gap:7px"><span class="bg-line">재포장</span><b class="num" style="font-size:13px;color:#0f172a">8개</b></span><span class="num" style="font-size:12px;color:#64748b">2026-06-01</span></div>
+        <div class="mt-2 flex items-start" style="gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11.5px;color:#475569;line-height:1.6">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="flex:none;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>재포장으로 나간 차감은 취소할 수 없어요. 되돌리려면 재포장으로 만든 재고를 다시 재포장해 합쳐주세요.</span>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-200 px-4 py-3 flex justify-end" style="background:#f8fafc"><span class="b b-out" style="height:44px;width:100%">닫기</span></div>
+  </div>
+</div>
+
+<div style="position:absolute;left:1360px;top:1716px;width:420px">
+  <div class="dlg" style="box-shadow:none;padding:16px 18px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">확인이 필요한 것</div>
+    <ol class="note" style="margin-top:8px;padding-left:16px;list-style:decimal">
+      <li><b>포장일자 자리에 차감일·사유</b>를 넣는 방식 — 열을 늘리지 않는 대신 포장일자가 가려집니다. 그대로 갈지, 「차감됨」 배지만 두고 날짜는 이력에서 보게 할지.</li>
+      <li>확인 버튼 색 — <b>amber</b>(경고 톤)로 뒀습니다. 삭제가 아니라 되돌릴 수 있는 동작이라 red는 과합니다.</li>
+      <li>벼 탭 ⋮ 메뉴 — 지금은 없습니다. <b>「차감 이력」 하나만</b> 있는 메뉴를 벼 탭에 새로 띄우는 것이 맞는지.</li>
+      <li>차감 개수 기본값 = <b>전량</b>. 605행 소급 정리가 첫 사용례라 전량이 맞다고 봤습니다.</li>
+    </ol>
+  </div>
+</div>
+
+<div style="position:absolute;left:1360px;top:1960px;width:420px">
+  <div class="dlg" style="box-shadow:none;padding:16px 18px;border-color:#fde68a;background:#fffbeb">
+    <div style="font-size:13px;font-weight:700;color:#78350f">R1 · R2 — 구현본 점검 후 수정분</div>
+    <ol class="note" style="margin-top:8px;padding-left:16px;list-style:decimal;color:#78350f">
+      <li><b>행 구분 불가</b>(실 데이터에서 발견) — 같은 품종·규격이 9행씩 오고 로트 앞부분이 전부 같습니다. ① 컬럼 헤더를 스크롤에 고정, ② 품종 줄 아래 <b>생산자 · 포장일자</b> 보조줄, ③ 로트 <b>앞말줄임</b>(뒷자리 보존).</li>
+      <li><b>컬럼 헤더 누락</b> — 구현본에 헤더 줄이 빠져 가용 숫자가 무엇인지 알 수 없었습니다.</li>
+      <li>이력 헤더 <code>— N개 중 M개</code> → <b><code>· N개 중 M개</code></b> (em dash 제거).</li>
+      <li><b>R2 · 로트 전체 표시</b> — 데스크톱은 720px에 여유가 있습니다. 158px 열 + 10.5px mono로 자르지 않음(앞말줄임·title 불필요).</li>
+      <li><b>R2 · 한 줄 컬럼 배치 + 본문 13px</b> — 보조줄을 없애고 생산자·포장일을 컬럼으로. 폰트는 목록 행과 같은 13px.</li>
+      <li>이력 다이얼로그 <b>오버레이가 옅음</b> — 차감 다이얼로그와 같은 dim으로.</li>
+    </ol>
+  </div>
+</div>
+
+</body></html>

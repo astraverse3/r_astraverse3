@@ -362,7 +362,9 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {/* p-0 + 헤더/요약/본문/푸터. 스크롤은 본문 한 군데만 (이중 스크롤 회피) */}
-            <DialogContent className="sm:max-w-[720px] max-h-[92dvh] gap-0 overflow-hidden p-0 [&>button]:text-slate-400">
+            {/* 기본 grid를 flex로 — grid는 행이 92dvh에 맞춰 줄지 않아 결과 행이 많으면
+                푸터가 overflow-hidden에 잘려나간다(재고차감 브라우저 검증에서 발견된 같은 결함). */}
+            <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[720px] [&>button]:text-slate-400">
                 {/* 헤더 */}
                 <DialogHeader className="shrink-0 flex-row items-start gap-2.5 space-y-0 border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
                     <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, History, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -9,7 +9,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { PackageGroup, PackageRow as PackageRowData, PackageSingle } from '@/app/actions/packages'
-import type { PackageRowActions, PackageSelection } from './package-row'
+import {
+    DeductedBadge,
+    deductionSummary,
+    hasDeductionHistory,
+    isDeducted,
+    type PackageRowActions,
+    type PackageSelection,
+} from './package-row'
 
 /**
  * 모바일 품종 카드 — 핸드오프 §4.3 + §4.2.7.
@@ -63,8 +70,11 @@ function RowCheckbox({ row, selection }: { row: PackageRowData; selection: Packa
 }
 
 // 모바일 행 액션 메뉴 — 콜백 있으면 활성. MILLED/PURCHASED 모두 패널에서 source로 분기.
+// 「차감 이력」은 이력이 있는 행에만 (데스크탑 package-row와 같은 규칙, D6).
 function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: PackageRowActions }) {
-    if (!actions || (!actions.onEdit && !actions.onDelete)) return null
+    const showHistory = Boolean(actions?.onHistory) && hasDeductionHistory(row)
+    const showEditDelete = Boolean(actions?.onEdit || actions?.onDelete)
+    if (!actions || (!showEditDelete && !showHistory)) return null
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -75,22 +85,35 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[120px]">
-                <DropdownMenuItem
-                    onClick={() => actions.onEdit?.(row)}
-                    disabled={!actions.onEdit}
-                    className="gap-2 cursor-pointer"
-                >
-                    <Pencil className="h-4 w-4 text-slate-500" />
-                    <span>수정</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => actions.onDelete?.(row)}
-                    disabled={!actions.onDelete}
-                    className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
-                >
-                    <Trash2 className="h-4 w-4" />
-                    <span>삭제</span>
-                </DropdownMenuItem>
+                {showEditDelete && (
+                    <>
+                        <DropdownMenuItem
+                            onClick={() => actions.onEdit?.(row)}
+                            disabled={!actions.onEdit}
+                            className="gap-2 cursor-pointer"
+                        >
+                            <Pencil className="h-4 w-4 text-slate-500" />
+                            <span>수정</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => actions.onDelete?.(row)}
+                            disabled={!actions.onDelete}
+                            className="gap-2 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            <span>삭제</span>
+                        </DropdownMenuItem>
+                    </>
+                )}
+                {showHistory && (
+                    <DropdownMenuItem
+                        onClick={() => actions.onHistory?.(row)}
+                        className="gap-2 cursor-pointer"
+                    >
+                        <History className="h-4 w-4 text-slate-500" />
+                        <span>차감 이력</span>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     )
@@ -107,32 +130,46 @@ function RowDetail({
     selection?: PackageSelection
 }) {
     const selected = selection?.selectedIds.has(row.id)
+    const deducted = isDeducted(row)
     return (
         <div
-            className={`flex flex-col gap-1 px-3 py-2 border rounded-md ${selected ? 'bg-primary/5 border-primary/40' : 'bg-white border-slate-200/80'}`}
+            className={`flex flex-col gap-1 px-3 py-2 border rounded-md ${
+                deducted
+                    ? 'bg-slate-50/80 border-slate-200/80 text-slate-400'
+                    : selected
+                      ? 'bg-primary/5 border-primary/40'
+                      : 'bg-white border-slate-200/80'
+            }`}
         >
             <div className={`${ROW_GRID} text-[12.5px]`}>
-                <span className="font-bold text-slate-900 shrink-0 flex items-center gap-2">
+                <span className={`font-bold shrink-0 flex items-center gap-2 ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
                     {selection && <RowCheckbox row={row} selection={selection} />}
                     <span>
-                        {row.spec} × <span className="tabular-nums">{row.qty}</span>개
+                        {row.spec} ×{' '}
+                        <span className="tabular-nums">{deducted ? row.available : row.qty}</span>개
                     </span>
+                    {deducted && <DeductedBadge />}
                 </span>
-                <span className="text-slate-600 truncate min-w-0">{row.producer}</span>
+                <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{row.producer}</span>
                 <span className="flex items-center gap-1 justify-end">
-                    <span className="font-bold text-slate-900 tabular-nums">
-                        {row.sub.toLocaleString()}kg
+                    <span className={`font-bold tabular-nums ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
+                        {deducted ? '0kg' : `${row.sub.toLocaleString()}kg`}
                     </span>
                     <RowActionMenu row={row} actions={actions} />
                 </span>
             </div>
-            <div className={ROW_GRID}>
-                <LotOrSourceCell lot={row.lot} source={row.source} />
+            <div className={deducted ? `${ROW_GRID} opacity-80` : ROW_GRID}>
+                <span className={deducted ? 'opacity-60' : ''}>
+                    <LotOrSourceCell lot={row.lot} source={row.source} />
+                </span>
                 {/* 비어 있던 가운데 칸에 도정구분 — 줄을 늘리지 않고 정보만 채운다 */}
                 <span className="truncate text-[11px] text-slate-500">
                     {row.millingTypeLabel === '—' ? '' : row.millingTypeLabel}
                 </span>
-                <span className="text-[11px] text-slate-500 tabular-nums">{row.date}</span>
+                {/* 차감된 행은 날짜 자리에 「03-14 판매」 (데스크탑과 동일 규칙, 미결 A) */}
+                <span className="text-[11px] text-slate-500 tabular-nums">
+                    {deducted ? deductionSummary(row) : row.date}
+                </span>
             </div>
         </div>
     )
@@ -150,39 +187,52 @@ export function MobilePackageSingleCard({
 }) {
     const row: PackageRowData = item
     const selected = selection?.selectedIds.has(item.id)
+    const deducted = isDeducted(row)
     return (
         <div
-            className={`flex flex-col gap-1 px-3 py-2.5 border rounded-lg ${selected ? 'bg-primary/5 border-primary/40' : 'bg-white border-slate-200'}`}
+            className={`flex flex-col gap-1 px-3 py-2.5 border rounded-lg ${
+                deducted
+                    ? 'bg-slate-50/80 border-slate-200 text-slate-400'
+                    : selected
+                      ? 'bg-primary/5 border-primary/40'
+                      : 'bg-white border-slate-200'
+            }`}
         >
             {/* 헤더: 품종 + 합계+메뉴 */}
             <div className={ROW_GRID}>
-                <span className="text-[13px] font-bold text-slate-900 truncate flex items-center gap-2">
+                <span className={`text-[13px] font-bold truncate flex items-center gap-2 ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
                     {selection && <RowCheckbox row={row} selection={selection} />}
                     <span className="truncate">{item.variety}</span>
+                    {deducted && <DeductedBadge />}
                 </span>
                 <span />
                 <span className="flex items-center gap-1 justify-end">
-                    <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
-                        {item.sub.toLocaleString()}kg
+                    <span className={`text-[12.5px] font-bold tabular-nums ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
+                        {deducted ? '0kg' : `${item.sub.toLocaleString()}kg`}
                     </span>
                     <RowActionMenu row={row} actions={actions} />
                 </span>
             </div>
             {/* 본문 1: 규격×수량 / 생산자 / (빈) */}
-            <div className={`${ROW_GRID} text-[12px] text-slate-700`}>
+            <div className={`${ROW_GRID} text-[12px] ${deducted ? '' : 'text-slate-700'}`}>
                 <span className="shrink-0">
-                    {item.spec} × <span className="tabular-nums">{item.qty}</span>개
+                    {item.spec} ×{' '}
+                    <span className="tabular-nums">{deducted ? item.available : item.qty}</span>개
                 </span>
-                <span className="text-slate-600 truncate min-w-0">{item.producer}</span>
+                <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{item.producer}</span>
                 <span />
             </div>
-            {/* 본문 2: LOT/매입칩 / 도정구분 / 날짜 */}
+            {/* 본문 2: LOT/매입칩 / 도정구분 / 날짜(차감된 행은 「03-14 판매」) */}
             <div className={ROW_GRID}>
-                <LotOrSourceCell lot={item.lot} source={item.source} />
+                <span className={deducted ? 'opacity-60' : ''}>
+                    <LotOrSourceCell lot={item.lot} source={item.source} />
+                </span>
                 <span className="truncate text-[11px] text-slate-500">
                     {item.millingTypeLabel === '—' ? '' : item.millingTypeLabel}
                 </span>
-                <span className="text-[11px] text-slate-500 tabular-nums">{item.date}</span>
+                <span className="text-[11px] text-slate-500 tabular-nums">
+                    {deducted ? deductionSummary(row) : item.date}
+                </span>
             </div>
         </div>
     )

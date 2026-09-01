@@ -1,7 +1,8 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 
 const SOURCE_LABEL: Record<string, string> = {
     MILLED: '도정산',
@@ -17,10 +18,23 @@ const SORT_LABEL: Record<string, string> = {
 interface Props {
     totalCount: number
     varieties: { id: number; name: string }[]
+    /** 「차감된 재고 보기」가 켜졌을 때 목록에 포함된 차감 완료 행 수 (D6) */
+    deductedCount?: number
 }
 
-export function ActivePackageFilters({ totalCount, varieties }: Props) {
+export function ActivePackageFilters({ totalCount, varieties, deductedCount = 0 }: Props) {
     const searchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
+
+    // 「차감된 재고 보기」 — URL 파라미터로 유지해 새로고침에 생존한다 (N6·D6)
+    const includeDeducted = searchParams.get('includeDeducted') === '1'
+    const toggleDeducted = (next: boolean) => {
+        const params = new URLSearchParams(searchParams.toString())
+        if (next) params.set('includeDeducted', '1')
+        else params.delete('includeDeducted')
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }
 
     const yearParam = searchParams.get('productionYear') || ''
     const varietyParam = searchParams.get('varietyId') || ''
@@ -46,8 +60,15 @@ export function ActivePackageFilters({ totalCount, varieties }: Props) {
     return (
         <div className="flex items-center justify-between gap-2 overflow-x-auto py-1 px-1 scrollbar-hide">
             <span className="text-xs text-slate-600 font-medium whitespace-nowrap tabular-nums">
-                검색결과 {totalCount.toLocaleString()}건
+                검색결과 {(totalCount - deductedCount).toLocaleString()}건
+                {includeDeducted && deductedCount > 0 && (
+                    <span className="text-slate-400"> · 차감 {deductedCount.toLocaleString()}건</span>
+                )}
             </span>
+            <label className="ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs font-medium text-slate-700">
+                <Switch size="sm" checked={includeDeducted} onCheckedChange={toggleDeducted} />
+                차감된 재고 보기
+            </label>
             {activeFilterCount > 0 && (
                 <div className="flex gap-2 flex-wrap justify-end">
                     {years.map(y => (

@@ -18,25 +18,17 @@ import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { MOVEMENT_COUNT_SELECT, availableOf } from '@/lib/package-available'
 import { REPACK_CANCEL_BLOCKED, blockedMessage } from '@/lib/package-guard'
+import {
+  MANUAL_MOVEMENT_TYPES,
+  MOVEMENT_TYPE_LABEL,
+  type ManualMovementType,
+} from '@/lib/movement-label'
 
 type MutationResult =
   | { success: true; id: number }
   | { success: false; error: string }
 
 const NON_SALE_TYPES = ['GIFT', 'LOST', 'DAMAGED', 'OTHER'] as const
-
-/** 사람이 직접 만드는 차감 사유. REPACK은 재포장 흐름 전용이라 여기 없다. */
-const MANUAL_TYPES = ['SALE', ...NON_SALE_TYPES] as const
-type ManualType = (typeof MANUAL_TYPES)[number]
-
-/** 사유 표시 문구의 단일 원천 — 감사로그·에러 문구가 함께 쓴다. */
-const MOVEMENT_LABEL: Record<ManualType, string> = {
-  SALE: '판매',
-  GIFT: '증정',
-  LOST: '분실',
-  DAMAGED: '파손',
-  OTHER: '기타',
-}
 
 // -----------------------------
 // 가용 재검증 + movement 생성 (트랜잭션 내부 공용)
@@ -180,7 +172,7 @@ export async function createNonSaleMovement(
       entity: 'PackageMovement',
       entityId: created.id,
       details: data,
-      description: `제품재고 비판매차감(${MOVEMENT_LABEL[data.type]}) #${data.packageId} ${created.packageType} × ${data.count}개`,
+      description: `제품재고 비판매차감(${MOVEMENT_TYPE_LABEL[data.type]}) #${data.packageId} ${created.packageType} × ${data.count}개`,
     })
 
     revalidatePath('/packages')
@@ -208,7 +200,7 @@ const BulkItemSchema = z.object({
 
 const CreateBulkSchema = z.object({
   items: z.array(BulkItemSchema).min(1).max(500),
-  type: z.enum(MANUAL_TYPES), // REPACK 불가 — 재포장 흐름 전용이다
+  type: z.enum(MANUAL_MOVEMENT_TYPES), // REPACK 불가 — 재포장 흐름 전용이다
   customer: z.string().trim().min(1).max(100).optional(),
   note: z.string().trim().max(500).optional(),
   occurredAt: z.coerce.date().optional(),
@@ -289,7 +281,7 @@ export async function createBulkMovements(
       action: 'CREATE',
       entity: 'PackageMovement',
       details: { ...data, customer, occurredAt }, // 전체 배열은 여기 남는다
-      description: `재고차감(${MOVEMENT_LABEL[data.type]}) ${data.items.length}행 · ${totalCount.toLocaleString()}개`,
+      description: `재고차감(${MOVEMENT_TYPE_LABEL[data.type]}) ${data.items.length}행 · ${totalCount.toLocaleString()}개`,
     })
 
     revalidatePath('/packages')
@@ -347,7 +339,7 @@ export type MovementRow = {
   id: number
   count: number
   /** REPACK도 나온다 — 재포장 소진분이 같은 테이블에 있다. */
-  type: ManualType | 'REPACK'
+  type: ManualMovementType | 'REPACK'
   customer: string | null
   note: string | null
   occurredAt: string // ISO yyyy-mm-dd

@@ -16,9 +16,12 @@ import { cn } from '@/lib/utils'
  */
 export function RepackToggleButton({
     active,
+    disabled = false,
     onToggle,
 }: {
     active: boolean
+    /** 차감 모드 동안 잠근다 — 두 선택 모드는 배타 (D4) */
+    disabled?: boolean
     onToggle: (next: boolean) => void
 }) {
     return (
@@ -27,6 +30,7 @@ export function RepackToggleButton({
             size="sm"
             onClick={() => onToggle(!active)}
             aria-pressed={active}
+            disabled={disabled}
             className={cn(
                 'h-8 min-w-[96px] justify-center gap-1.5 px-3 font-semibold',
                 active

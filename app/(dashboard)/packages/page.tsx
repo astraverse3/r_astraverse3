@@ -56,6 +56,8 @@ async function RicePanelLoader({
         productionYear: pickStr(resolvedParams.productionYear),
         source: pickStr(resolvedParams.source),
         sort: parseSort(resolvedParams.sort),
+        // 「차감된 재고 보기」 (D6) — URL로 유지되는 스위치
+        includeDeducted: resolvedParams.includeDeducted === '1',
     }
 
     const [packagesResult, varietiesResult] = await Promise.all([
@@ -79,6 +81,8 @@ async function MiscPanelLoader({
         productionYear: pickStr(resolvedParams.productionYear),
         source: pickStr(resolvedParams.source),
         sort: parseSort(resolvedParams.sort),
+        // 「차감된 재고 보기」 (D6) — URL로 유지되는 스위치
+        includeDeducted: resolvedParams.includeDeducted === '1',
     }
 
     const [packagesResult, varietiesResult] = await Promise.all([

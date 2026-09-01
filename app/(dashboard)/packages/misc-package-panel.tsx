@@ -18,6 +18,9 @@ import { MiscPurchaseDialog } from './misc-purchase-dialog'
 import { EditMiscPurchaseDialog } from './edit-misc-purchase-dialog'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { RepackToggleButton } from './repack-toggle-button'
+import { DeductToggleButton } from './deduct-toggle-button'
+import { MovementHistoryDialog } from './movement-history-dialog'
+import type { PackageSelectMode } from './package-list-client'
 
 interface Props {
     items: PackageItem[]
@@ -44,17 +47,20 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
 
     const [packageOpen, setPackageOpen] = useState(false)
     const [purchaseOpen, setPurchaseOpen] = useState(false)
-    // 재포장도 포장 작업이라 canMill과 같은 권한 (결정 #43 §3.7)
-    const [selectMode, setSelectMode] = useState(false)
+    // 재포장·차감도 포장 작업이라 canMill과 같은 권한 (결정 #43 §3.7 · N4).
+    // 두 선택 모드는 배타 — 하나로 관리한다 (D4)
+    const [mode, setMode] = useState<PackageSelectMode>(null)
     const [editPackageId, setEditPackageId] = useState<number | null>(null)
     const [editOpen, setEditOpen] = useState(false)
     const [editPurchaseId, setEditPurchaseId] = useState<number | null>(null)
     const [editPurchaseOpen, setEditPurchaseOpen] = useState(false)
+    // 차감 이력 다이얼로그 (D6)
+    const [historyRow, setHistoryRow] = useState<PackageRow | null>(null)
+    const [historyOpen, setHistoryOpen] = useState(false)
 
-    const totalCount = items.reduce(
-        (sum, it) => sum + (it.type === 'group' ? it.rows.length : 1),
-        0,
-    )
+    const allRows = items.flatMap(it => (it.type === 'group' ? it.rows : [it]))
+    const totalCount = allRows.length
+    const deductedCount = allRows.filter(r => r.available <= 0).length
 
     const handleEditRow = (row: PackageRow) => {
         if (row.source === 'MILLED') {
@@ -119,14 +125,27 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
             <section className="flex items-center justify-end gap-2 px-1">
-                <PackageExcelButtons filters={filters} disabled={selectMode} />
-                {/* 재포장은 도구 그룹(구분선 왼쪽) — 가진 재고를 다시 나누는 도구라
-                    등록 버튼과 같은 편에 두지 않는다 */}
-                {canMill && <RepackToggleButton active={selectMode} onToggle={setSelectMode} />}
+                <PackageExcelButtons filters={filters} disabled={mode !== null} />
+                {/* 재포장·차감은 도구 그룹(구분선 왼쪽) — 가진 재고를 다루는 도구라
+                    등록 버튼과 같은 편에 두지 않는다. 두 토글은 배타 (D4) */}
+                {canMill && (
+                    <RepackToggleButton
+                        active={mode === 'repack'}
+                        disabled={mode === 'deduct'}
+                        onToggle={next => setMode(next ? 'repack' : null)}
+                    />
+                )}
+                {canMill && (
+                    <DeductToggleButton
+                        active={mode === 'deduct'}
+                        disabled={mode === 'repack'}
+                        onToggle={next => setMode(next ? 'deduct' : null)}
+                    />
+                )}
                 <PackageSearchDialog
                     category="MISC_GRAIN"
                     varieties={varieties}
-                    disabled={selectMode}
+                    disabled={mode !== null}
                 />
                 <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
                 {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
@@ -134,7 +153,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                     <Button
                         size="sm"
                         variant="outline"
-                        disabled={selectMode}
+                        disabled={mode !== null}
                         onClick={() => setPackageOpen(true)}
                         className="h-8 px-3 font-semibold rounded-md"
                     >
@@ -144,7 +163,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 {canPurchase && (
                     <Button
                         size="sm"
-                        disabled={selectMode}
+                        disabled={mode !== null}
                         onClick={() => setPurchaseOpen(true)}
                         className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
                     >
@@ -185,7 +204,11 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 onSuccess={() => router.refresh()}
             />
 
-            <ActivePackageFilters totalCount={totalCount} varieties={varieties} />
+            <ActivePackageFilters
+                totalCount={totalCount}
+                varieties={varieties}
+                deductedCount={deductedCount}
+            />
 
             <PackageListClient
                 items={items}
@@ -193,8 +216,22 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 emptyHint="상단 [+ 포장하기]로 잡곡 원물재고를 포장해 등록하세요."
                 onEditRow={canAnyRow ? handleEditRow : undefined}
                 onDeleteRow={canAnyRow ? handleDeleteRow : undefined}
-                selectMode={selectMode}
-                onExitSelectMode={() => setSelectMode(false)}
+                onHistoryRow={row => {
+                    setHistoryRow(row)
+                    setHistoryOpen(true)
+                }}
+                mode={mode}
+                onExitSelectMode={() => setMode(null)}
+            />
+
+            <MovementHistoryDialog
+                open={historyOpen}
+                onOpenChange={o => {
+                    setHistoryOpen(o)
+                    if (!o) setHistoryRow(null)
+                }}
+                row={historyRow}
+                canCancel={canMill}
             />
         </div>
     )
