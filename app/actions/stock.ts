@@ -328,6 +328,14 @@ export type GetStocksParams = {
     sort?: string // 'newest' | 'oldest' | 'weight_desc' | 'weight_asc'
     // certType filter becomes complex. Need to filter by farmer.group.certType
     certType?: string
+    weightKg?: string // 중량 정확 일치 (톤백번호 미기재 톤백을 무게로 찾기 위함)
+}
+
+// 중량 검색값 파싱: 콤마 제거 후 숫자화, 숫자가 아니면 필터 미적용
+function parseWeightFilter(value?: string): number | null {
+    if (!value) return null
+    const weight = parseFloat(value.replace(/,/g, ''))
+    return isNaN(weight) ? null : weight
 }
 
 export async function getStocks(params?: GetStocksParams) {
@@ -394,6 +402,10 @@ export async function getStocks(params?: GetStocksParams) {
                 andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
             }
         }
+
+        // weightKg: 중량 정확 일치
+        const weightFilter = parseWeightFilter(params?.weightKg)
+        if (weightFilter !== null) where.weightKg = weightFilter
 
         if (andConditions.length > 0) {
             where.AND = andConditions
@@ -488,6 +500,10 @@ export async function getStockGroups(params?: GetStocksParams) {
                 andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
             }
         }
+        // weightKg: 중량 정확 일치
+        const weightFilter = parseWeightFilter(params?.weightKg)
+        if (weightFilter !== null) where.weightKg = weightFilter
+
         if (andConditions.length > 0) {
             where.AND = andConditions
         }
@@ -612,6 +628,10 @@ export async function getStocksByGroup(
                 andConditions.push({ OR: names.map(nameOr) })
             }
         }
+
+        // 전역 필터: 중량 정확 일치
+        const weightFilter = parseWeightFilter(params?.weightKg)
+        if (weightFilter !== null) andConditions.push({ weightKg: weightFilter })
 
         const stocks = await prisma.stock.findMany({
             where: { AND: andConditions },

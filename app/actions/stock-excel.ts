@@ -61,6 +61,12 @@ export async function exportStocks(params?: GetStocksParams) {
                     andConditions.push({ OR: certList.map(c => ({ farmer: { group: { certType: c } } })) })
                 }
             }
+
+            // weightKg: 중량 정확 일치 (목록 필터와 동일 조건으로 내보내기)
+            if (params.weightKg) {
+                const weight = parseFloat(params.weightKg.replace(/,/g, ''))
+                if (!isNaN(weight)) where.weightKg = weight
+            }
         }
 
         if (andConditions.length > 0) where.AND = andConditions

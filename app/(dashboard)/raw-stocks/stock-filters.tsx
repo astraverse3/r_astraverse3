@@ -62,6 +62,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [certs, setCerts] = useState<string[]>(() => parseMulti(searchParams.get('certType')))
     const [status, setStatus] = useState(searchParams.get('status') || 'ALL')
+    const [weight, setWeight] = useState(searchParams.get('weightKg') || '')
 
     // Sync from URL when opening
     useEffect(() => {
@@ -72,6 +73,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
             setFarmerName(searchParams.get('farmerName') || '')
             setCerts(parseMulti(searchParams.get('certType')))
             setStatus(searchParams.get('status') || 'ALL')
+            setWeight(searchParams.get('weightKg') || '')
         }
     }, [open, searchParams, defaultYear])
 
@@ -80,7 +82,8 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         varieties2.length > 0,
         farmerName.trim() !== '',
         certs.length > 0,
-        status !== 'ALL'
+        status !== 'ALL',
+        weight.trim() !== ''
     ].filter(Boolean).length
 
     // Auto-open on mobile if no filters are applied (Search First strategy)
@@ -107,6 +110,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         if (farmerName.trim()) params.set('farmerName', farmerName.trim())
         if (certs.length > 0) params.set('certType', certs.join(','))
         if (status && status !== 'ALL') params.set('status', status)
+        if (weight.trim()) params.set('weightKg', weight.trim())
 
         startTransition(() => {
             router.push(`/raw-stocks?${params.toString()}`)
@@ -120,6 +124,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         setFarmerName('')
         setCerts([])
         setStatus('ALL')
+        setWeight('')
 
         startTransition(() => {
             router.push(`/raw-stocks?productionYear=${defaultYear}`)
@@ -202,18 +207,34 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="farmerNameSearch">생산자 / 농가명</Label>
-                            <Input
-                                id="farmerNameSearch"
-                                name="farmerNameSearch"
-                                placeholder="예: 홍길동, 김영희(농가명)"
-                                value={farmerName}
-                                onChange={(e) => setFarmerName(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleApply()
-                                }}
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="farmerNameSearch">생산자 / 농가명</Label>
+                                <Input
+                                    id="farmerNameSearch"
+                                    name="farmerNameSearch"
+                                    placeholder="예: 홍길동, 김영희"
+                                    value={farmerName}
+                                    onChange={(e) => setFarmerName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleApply()
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="weightSearch">중량 (kg)</Label>
+                                <Input
+                                    id="weightSearch"
+                                    name="weightSearch"
+                                    inputMode="decimal"
+                                    placeholder="예: 1004"
+                                    value={weight}
+                                    onChange={(e) => setWeight(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleApply()
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter className="flex flex-row justify-between items-center sm:justify-between w-full mt-2">

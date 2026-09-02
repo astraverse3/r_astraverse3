@@ -16,6 +16,7 @@ export function ActiveStockFilters({ totalCount, varieties }: ActiveStockFilters
     const farmer = searchParams.get('farmerName') || ''
     const certParam = searchParams.get('certType') || ''
     const status = searchParams.get('status')
+    const weight = searchParams.get('weightKg') || ''
     const sort = searchParams.get('sort') || 'newest'
 
     const years = yearParam ? yearParam.split(',').map(s => s.trim()).filter(Boolean) : []
@@ -30,7 +31,8 @@ export function ActiveStockFilters({ totalCount, varieties }: ActiveStockFilters
         varietyIds.length > 0,
         farmer !== '',
         certs.length > 0,
-        status && status !== 'ALL'
+        status && status !== 'ALL',
+        weight !== ''
     ].filter(Boolean).length
 
     if (activeFilterCount === 0 && sort === 'newest') return null
@@ -49,6 +51,9 @@ export function ActiveStockFilters({ totalCount, varieties }: ActiveStockFilters
                 ))}
                 {farmer && (
                     <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{farmer}</Badge>
+                )}
+                {weight && (
+                    <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{isNaN(Number(weight)) ? weight : Number(weight).toLocaleString()}kg</Badge>
                 )}
                 {certs.map(c => (
                     <Badge key={c} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">{c}</Badge>

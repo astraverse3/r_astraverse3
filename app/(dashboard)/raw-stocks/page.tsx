@@ -79,6 +79,7 @@ async function RiceStockPanel({
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+        weightKg: typeof resolvedParams.weightKg === 'string' ? resolvedParams.weightKg : undefined,
     }
 
     const stockGroupsResult = await getStockGroups({
@@ -88,6 +89,7 @@ async function RiceStockPanel({
         farmerName: typeof resolvedParams.farmerName === 'string' ? resolvedParams.farmerName : undefined,
         status: typeof resolvedParams.status === 'string' ? resolvedParams.status : undefined,
         certType: typeof resolvedParams.certType === 'string' ? resolvedParams.certType : undefined,
+        weightKg: typeof resolvedParams.weightKg === 'string' ? resolvedParams.weightKg : undefined,
         sort: typeof resolvedParams.sort === 'string' ? resolvedParams.sort : undefined,
     })
 
