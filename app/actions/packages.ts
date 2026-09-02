@@ -19,6 +19,12 @@ import {
     identityBlockedMessage,
 } from '@/lib/package-guard'
 import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT, MOVEMENT_SUMMARY_SELECT } from '@/lib/package-available'
+import {
+    buildPackageWhere,
+    type PackageFilterParams,
+    type PackageSource as PkgSource,
+    type PackageCategory as PkgCategory,
+} from '@/lib/package-where'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
@@ -42,8 +48,9 @@ const MISC_PURCHASE_PACKAGING = '매입포장'
 // 타입
 // -----------------------------
 
-export type PackageSource = 'MILLED' | 'PURCHASED'
-export type PackageCategory = 'RICE' | 'MISC_GRAIN'
+// 필터 타입의 단일 원천은 `lib/package-where.ts` — 클라이언트 import 경로는 여기 그대로 둔다
+export type PackageSource = PkgSource
+export type PackageCategory = PkgCategory
 
 export type PackageRow = {
     id: number
@@ -94,14 +101,7 @@ export type PackageItem = PackageGroup | PackageSingle
 
 export type PackageSort = 'latest' | 'oldest' | 'weight_desc'
 
-export interface GetPackagesParams {
-    category: PackageCategory
-    /** 콤마 구분 다중값 가능 (예: "1,2,3") */
-    varietyId?: string
-    /** 콤마 구분 다중값 가능 (예: "2025,2024") */
-    productionYear?: string
-    /** 콤마 구분 다중값 가능 (예: "MILLED,PURCHASED") */
-    source?: string
+export interface GetPackagesParams extends PackageFilterParams {
     sort?: PackageSort
     /**
      * 「차감된 재고 보기」 — 켜면 가용 0 이하 행도 포함하고 차감 요약을 함께 싣는다.
@@ -129,51 +129,10 @@ export async function getPackages(
     params: GetPackagesParams,
 ): Promise<{ success: true; data: PackageItem[] } | { success: false; error: string }> {
     try {
-        const { category, varietyId, productionYear, source, sort = 'weight_desc', includeDeducted = false } = params
+        const { sort = 'weight_desc', includeDeducted = false } = params
 
-        const splitMulti = (s: string | undefined): string[] =>
-            s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
-
-        // -- where 조립 --
-        const where: any = { category }
-
-        const sourceList = splitMulti(source).filter((s): s is PackageSource => s === 'MILLED' || s === 'PURCHASED')
-        if (sourceList.length === 1) where.source = sourceList[0]
-        else if (sourceList.length > 1) where.source = { in: sourceList }
-
-        // 판매처리 도입(#9·#19)으로 1달 cutoff 임시블록 제거 → 가용수량(count-SUM(movement)) 0 제외로 대체.
-        // 차감된 재고는 available=0이 되어 목록에서 자연히 빠진다(백로그 §13 종료).
-
-        const varietyIdList = splitMulti(varietyId)
-            .map(v => parseInt(v, 10))
-            .filter(n => !Number.isNaN(n))
-        if (varietyIdList.length > 0) {
-            where.AND = [
-                ...(where.AND ?? []),
-                {
-                    OR: [
-                        { varietyId: { in: varietyIdList } },
-                        { stock: { varietyId: { in: varietyIdList } } },
-                    ],
-                },
-            ]
-        }
-
-        const yearList = splitMulti(productionYear)
-            .map(y => parseInt(y, 10))
-            .filter(n => !Number.isNaN(n))
-        if (yearList.length > 0) {
-            where.AND = [
-                ...(where.AND ?? []),
-                {
-                    OR: yearList.flatMap(py => [
-                        { stock: { productionYear: py } },
-                        // PURCHASED는 productionYear 개념 없음 → incomingDate 연도 비교
-                        { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
-                    ]),
-                },
-            ]
-        }
+        // where 조립은 엑셀(`exportPackages`)과 공유한다 — `lib/package-where.ts`
+        const where = buildPackageWhere(params)
 
         // 정렬은 1차 DB orderBy. weight_desc는 행 단위 정렬이라 group total 정렬은 후처리.
         const orderBy =
@@ -1174,46 +1133,10 @@ export async function exportPackages(
 > {
     await requireSession()
     try {
-        const { category, varietyId, productionYear, source } = params
+        const { category } = params
 
-        const splitMulti = (s: string | undefined): string[] =>
-            s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
-
-        const where: any = { category }
-
-        const sourceList = splitMulti(source).filter((s): s is PackageSource => s === 'MILLED' || s === 'PURCHASED')
-        if (sourceList.length === 1) where.source = sourceList[0]
-        else if (sourceList.length > 1) where.source = { in: sourceList }
-
-        const varietyIdList = splitMulti(varietyId)
-            .map(v => parseInt(v, 10))
-            .filter(n => !Number.isNaN(n))
-        if (varietyIdList.length > 0) {
-            where.AND = [
-                ...(where.AND ?? []),
-                {
-                    OR: [
-                        { varietyId: { in: varietyIdList } },
-                        { stock: { varietyId: { in: varietyIdList } } },
-                    ],
-                },
-            ]
-        }
-
-        const yearList = splitMulti(productionYear)
-            .map(y => parseInt(y, 10))
-            .filter(n => !Number.isNaN(n))
-        if (yearList.length > 0) {
-            where.AND = [
-                ...(where.AND ?? []),
-                {
-                    OR: yearList.flatMap(py => [
-                        { stock: { productionYear: py } },
-                        { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
-                    ]),
-                },
-            ]
-        }
+        // where 조립은 목록(`getPackages`)과 공유한다 — 화면과 엑셀이 어긋나면 안 된다
+        const where = buildPackageWhere(params)
 
         const packages = await prisma.millingOutputPackage.findMany({
             where,

@@ -26,6 +26,7 @@ import {
 } from '@/app/actions/misc-stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { defaultProductionYear } from '@/lib/production-year'
 
 interface Farmer {
     id: number
@@ -102,8 +103,8 @@ export function AddMiscStockDialog({
     const isEdit = !!editTarget
     const [isLoading, setIsLoading] = useState(false)
 
-    const today = new Date()
-    const defaultYear = today.getMonth() + 1 >= 11 ? today.getFullYear() : today.getFullYear() - 1
+    // 잡곡은 6월부터 당해년도분이 들어온다 (`lib/production-year.ts`)
+    const defaultYear = defaultProductionYear('MISC_GRAIN')
 
     const [productionYear, setProductionYear] = useState<number>(defaultYear)
     const [certType, setCertType] = useState<string>('유기농')

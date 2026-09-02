@@ -39,14 +39,31 @@ export function ActivePackageFilters({ totalCount, varieties, deductedCount = 0 
     const yearParam = searchParams.get('productionYear') || ''
     const varietyParam = searchParams.get('varietyId') || ''
     const sourceParam = searchParams.get('source') || ''
+    const certParam = searchParams.get('certType') || ''
+    const farmerName = searchParams.get('farmerName') || ''
+    const packedFrom = searchParams.get('packedFrom') || ''
+    const packedTo = searchParams.get('packedTo') || ''
     const sort = searchParams.get('sort') || ''
 
     const years = yearParam ? yearParam.split(',').map(s => s.trim()).filter(Boolean) : []
     const varietyIds = varietyParam ? varietyParam.split(',').map(s => s.trim()).filter(Boolean) : []
     const sources = sourceParam ? sourceParam.split(',').map(s => s.trim()).filter(Boolean) : []
+    const certs = certParam ? certParam.split(',').map(s => s.trim()).filter(Boolean) : []
 
     const varietyNameMap = new Map(varieties.map(v => [v.id.toString(), v.name]))
     const varietyLabels = varietyIds.map(id => varietyNameMap.get(id) ?? id)
+
+    // 기간 배지 — 같은 해면 월-일만, 해를 걸치면 연도까지 보여준다.
+    // 한쪽만 넣었을 때 "06-01~"인지 "~06-01"인지가 방향을 말해준다
+    const periodLabel = (() => {
+        if (!packedFrom && !packedTo) return ''
+        const sameYear = packedFrom.slice(0, 4) === packedTo.slice(0, 4)
+        const short = (d: string) => d.slice(5)
+        if (packedFrom && packedTo) {
+            return sameYear ? `${short(packedFrom)}~${short(packedTo)}` : `${packedFrom}~${packedTo}`
+        }
+        return packedFrom ? `${packedFrom}~` : `~${packedTo}`
+    })()
 
     const sortIsCustom = sort && sort !== 'weight_desc'
 
@@ -54,6 +71,9 @@ export function ActivePackageFilters({ totalCount, varieties, deductedCount = 0 
         years.length > 0,
         varietyIds.length > 0,
         sources.length > 0,
+        certs.length > 0,
+        farmerName !== '',
+        periodLabel !== '',
         sortIsCustom,
     ].filter(Boolean).length
 
@@ -86,6 +106,21 @@ export function ActivePackageFilters({ totalCount, varieties, deductedCount = 0 
                             {SOURCE_LABEL[s] ?? s}
                         </Badge>
                     ))}
+                    {farmerName && (
+                        <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">
+                            {farmerName}
+                        </Badge>
+                    )}
+                    {certs.map(c => (
+                        <Badge key={c} variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">
+                            {c}
+                        </Badge>
+                    ))}
+                    {periodLabel && (
+                        <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal tabular-nums">
+                            {periodLabel}
+                        </Badge>
+                    )}
                     {sortIsCustom && (
                         <Badge variant="outline" className="whitespace-nowrap bg-transparent text-slate-500 border-slate-200 font-normal">
                             {SORT_LABEL[sort] ?? sort}

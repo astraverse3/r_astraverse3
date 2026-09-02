@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
     Dialog,
@@ -21,6 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { defaultProductionYears } from '@/lib/production-year'
 import type { PackageCategory, PackageSort } from '@/app/actions/packages'
 
 const YEAR_OPTIONS = [
@@ -33,6 +35,13 @@ const YEAR_OPTIONS = [
 const SOURCE_OPTIONS = [
     { label: '도정산', value: 'MILLED' },
     { label: '매입', value: 'PURCHASED' },
+]
+
+// 원물재고 탭과 같은 값 (`raw-stocks/stock-filters.tsx`)
+const CERT_OPTIONS = [
+    { label: '유기농', value: '유기농' },
+    { label: '무농약', value: '무농약' },
+    { label: '일반', value: '일반' },
 ]
 
 const SORT_OPTIONS: { value: PackageSort; label: string }[] = [
@@ -52,6 +61,8 @@ interface Props {
  * 제품재고 검색 다이얼로그 — 핸드오프 §4.6.
  *  - 카테고리(category)는 URL 쿼리에 노출하지 않고, 탭 전환에서 결정
  *  - source 필터는 잡곡 탭에서만 노출 (벼는 사실상 MILLED만)
+ *  - 인증구분은 **벼 탭에서만** 노출 — 잡곡 매입(PURCHASED)은 stock이 없어 인증 정보가 아예 없다.
+ *    잡곡에 걸면 매입 재고가 통째로 빠져 재고가 사라진 것처럼 보인다
  *  - 정렬은 일단 본 다이얼로그 안. 윤곽 본 후 헤더로 분리 검토
  */
 export function PackageSearchDialog({ category, varieties, disabled = false }: Props) {
@@ -60,29 +71,47 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
 
+    // 기본 생산연도 — 규칙의 단일 원천은 `lib/production-year.ts`.
+    // 벼는 수확기(10~12월)에 두 해, 잡곡은 늘 두 해를 본다.
+    // useMemo가 필수다 — 배열은 렌더마다 새 참조라 아래 useEffect가 무한히 돈다.
+    const defaultYears = useMemo(() => defaultProductionYears(category), [category])
+
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
 
     const [years, setYears] = useState<string[]>([])
     const [varietyIds, setVarietyIds] = useState<string[]>([])
     const [sources, setSources] = useState<string[]>([])
+    const [certs, setCerts] = useState<string[]>([])
+    const [farmerName, setFarmerName] = useState('')
+    const [packedFrom, setPackedFrom] = useState('')
+    const [packedTo, setPackedTo] = useState('')
     const [sort, setSort] = useState<PackageSort>('weight_desc')
 
     // URL → 위젯 sync. open 시점뿐 아니라 URL 변경 시에도 동기화.
     // useState 초기값은 빈 값 — SSR/CSR hydration 안전성 + 단일 진실 원천(URL).
     useEffect(() => {
-        setYears(parseMulti(searchParams.get('productionYear')))
+        const yearParam = searchParams.get('productionYear')
+        setYears(yearParam ? parseMulti(yearParam) : defaultYears)
         setVarietyIds(parseMulti(searchParams.get('varietyId')))
         setSources(parseMulti(searchParams.get('source')))
+        setCerts(parseMulti(searchParams.get('certType')))
+        setFarmerName(searchParams.get('farmerName') ?? '')
+        setPackedFrom(searchParams.get('packedFrom') ?? '')
+        setPackedTo(searchParams.get('packedTo') ?? '')
         const raw = searchParams.get('sort')
         const isValid = SORT_OPTIONS.some(o => o.value === raw)
         setSort(isValid ? (raw as PackageSort) : 'weight_desc')
-    }, [searchParams, open])
+    }, [searchParams, open, defaultYears])
 
+    // 기간은 시작·종료를 합쳐 한 개로 센다 — 배지도 하나로 보여준다
     const activeFilterCount = [
         years.length > 0,
         varietyIds.length > 0,
         category === 'MISC_GRAIN' && sources.length > 0,
+        category === 'RICE' && certs.length > 0,
+        farmerName.trim() !== '',
+        packedFrom !== '' || packedTo !== '',
         sort !== 'weight_desc',
     ].filter(Boolean).length
 
@@ -96,18 +125,28 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         if (years.length > 0) params.set('productionYear', years.join(','))
         if (varietyIds.length > 0) params.set('varietyId', varietyIds.join(','))
         if (category === 'MISC_GRAIN' && sources.length > 0) params.set('source', sources.join(','))
+        if (category === 'RICE' && certs.length > 0) params.set('certType', certs.join(','))
+        if (farmerName.trim()) params.set('farmerName', farmerName.trim())
+        if (packedFrom) params.set('packedFrom', packedFrom)
+        if (packedTo) params.set('packedTo', packedTo)
         if (sort !== 'weight_desc') params.set('sort', sort)
         startTransition(() => router.push(buildUrl(params)))
         setOpen(false)
     }
 
     const handleReset = () => {
-        setYears([])
+        // 완전히 비우지 않고 기본 생산연도로 되돌린다 — 원물재고 탭과 같은 동작
+        setYears(defaultYears)
         setVarietyIds([])
         setSources([])
+        setCerts([])
+        setFarmerName('')
+        setPackedFrom('')
+        setPackedTo('')
         setSort('weight_desc')
 
         const params = new URLSearchParams()
+        params.set('productionYear', defaultYears.join(','))
         startTransition(() => router.push(buildUrl(params)))
         setOpen(false)
     }
@@ -193,8 +232,54 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                                     />
                                 </div>
                             ) : (
-                                <div /> /* 벼 탭은 출처 분기 없음 — 좌측 절반만 사용 */
+                                <div className="space-y-2">
+                                    <Label>인증구분</Label>
+                                    <MultiSelect
+                                        options={CERT_OPTIONS}
+                                        value={certs}
+                                        onValueChange={setCerts}
+                                        placeholder="전체"
+                                    />
+                                </div>
                             )}
+                        </div>
+
+                        {/* 이름을 여러 개 넣는 일이 잦아 한 줄을 통째로 쓴다 */}
+                        <div className="space-y-2">
+                            <Label htmlFor="packageFarmerSearch">생산자 / 농가명</Label>
+                            <Input
+                                id="packageFarmerSearch"
+                                name="packageFarmerSearch"
+                                placeholder="예: 홍길동, 김영희"
+                                value={farmerName}
+                                onChange={(e) => setFarmerName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleApply()
+                                }}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>포장일자</Label>
+                            <div className="flex items-center gap-1.5">
+                                <Input
+                                    type="date"
+                                    aria-label="포장일자 시작"
+                                    className="flex-1 min-w-0"
+                                    value={packedFrom}
+                                    max={packedTo || undefined}
+                                    onChange={(e) => setPackedFrom(e.target.value)}
+                                />
+                                <span className="shrink-0 text-sm text-slate-400">~</span>
+                                <Input
+                                    type="date"
+                                    aria-label="포장일자 종료"
+                                    className="flex-1 min-w-0"
+                                    value={packedTo}
+                                    min={packedFrom || undefined}
+                                    onChange={(e) => setPackedTo(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter className="flex flex-row justify-between items-center sm:justify-between w-full mt-2">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { defaultProductionYears } from '@/lib/production-year'
 
 const CERT_OPTIONS = [
     { label: '유기농', value: '유기농' },
@@ -53,15 +54,16 @@ export function MiscStockFilters({ varieties }: Props) {
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
 
-    const today = new Date()
-    const defaultYear = ((today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1).toString()
+    // 기본 생산연도 — 규칙의 단일 원천은 `lib/production-year.ts`.
+    // useMemo가 필수다 — 배열은 렌더마다 새 참조라 아래 useEffect가 무한히 돈다.
+    const defaultYears = useMemo(() => defaultProductionYears('MISC_GRAIN'), [])
 
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
 
     const [years, setYears] = useState<string[]>(() => {
         const param = searchParams.get('productionYear')
-        return param ? parseMulti(param) : [defaultYear]
+        return param ? parseMulti(param) : defaultYears
     })
     const [varietyIds, setVarietyIds] = useState<string[]>(() => parseMulti(searchParams.get('varietyId')))
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
@@ -72,14 +74,14 @@ export function MiscStockFilters({ varieties }: Props) {
     useEffect(() => {
         if (open) {
             const yearParam = searchParams.get('productionYear')
-            setYears(yearParam ? parseMulti(yearParam) : [defaultYear])
+            setYears(yearParam ? parseMulti(yearParam) : defaultYears)
             setVarietyIds(parseMulti(searchParams.get('varietyId')))
             setFarmerName(searchParams.get('farmerName') || '')
             setCerts(parseMulti(searchParams.get('certType')))
             setSourceTypes(parseMulti(searchParams.get('sourceType')))
             setStatus(searchParams.get('status') || 'ALL')
         }
-    }, [open, searchParams, defaultYear])
+    }, [open, searchParams, defaultYears])
 
     const activeFilterCount = [
         years.length > 0,
@@ -110,7 +112,7 @@ export function MiscStockFilters({ varieties }: Props) {
     }
 
     const handleReset = () => {
-        setYears([defaultYear])
+        setYears(defaultYears)
         setVarietyIds([])
         setFarmerName('')
         setCerts([])
@@ -118,7 +120,7 @@ export function MiscStockFilters({ varieties }: Props) {
         setStatus('ALL')
 
         const params = new URLSearchParams()
-        params.set('productionYear', defaultYear)
+        params.set('productionYear', defaultYears.join(','))
         startTransition(() => router.push(buildUrl(params)))
         setOpen(false)
     }

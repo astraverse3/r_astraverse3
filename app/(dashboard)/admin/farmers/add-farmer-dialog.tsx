@@ -22,6 +22,7 @@ import { createFarmer, updateFarmer, getProducerGroups, updateProducerGroup, typ
 import { triggerDataUpdate } from '@/components/last-updated'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { defaultProductionYear } from '@/lib/production-year'
 
 // Extended Farmer type to match list
 interface Farmer {
@@ -65,14 +66,8 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     const [editedGroupName, setEditedGroupName] = useState<string>('')
     const [producesMiscGrain, setProducesMiscGrain] = useState<boolean>(farmer?.producesMiscGrain ?? false)
 
-    // Helper for default crop year
-    const getDefaultCropYear = () => {
-        const now = new Date()
-        const month = now.getMonth() + 1 // 0-indexed
-        const year = now.getFullYear()
-        // If Nov(11) or Dec(12), use current year. Else use previous year.
-        return month >= 11 ? year : year - 1
-    }
+    // 작목반 cropYear 기본값 — 규칙은 `lib/production-year.ts`
+    const getDefaultCropYear = () => defaultProductionYear('RICE')
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen

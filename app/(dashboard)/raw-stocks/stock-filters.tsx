@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal } from 'lucide-react'
+import { defaultProductionYears } from '@/lib/production-year'
 
 const CERT_OPTIONS = [
     { label: '유기농', value: '유기농' },
@@ -46,9 +47,9 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     const [open, setOpen] = useState(false)
     const [hasAttemptedAutoOpen, setHasAttemptedAutoOpen] = useState(false)
 
-    // Default Year Logic: Previous Year until Oct, Current Year from Nov
-    const today = new Date()
-    const defaultYear = ((today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1).toString()
+    // 기본 생산연도 — 규칙의 단일 원천은 `lib/production-year.ts`.
+    // useMemo가 필수다 — 배열은 렌더마다 새 참조라 아래 useEffect가 무한히 돈다.
+    const defaultYears = useMemo(() => defaultProductionYears('RICE'), [])
 
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
@@ -56,7 +57,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     // Filter States
     const [years, setYears] = useState<string[]>(() => {
         const param = searchParams.get('productionYear')
-        return param ? parseMulti(param) : [defaultYear]
+        return param ? parseMulti(param) : defaultYears
     })
     const [varieties2, setVarieties2] = useState<string[]>(() => parseMulti(searchParams.get('varietyId')))
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
@@ -68,14 +69,14 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     useEffect(() => {
         if (open) {
             const yearParam = searchParams.get('productionYear')
-            setYears(yearParam ? parseMulti(yearParam) : [defaultYear])
+            setYears(yearParam ? parseMulti(yearParam) : defaultYears)
             setVarieties2(parseMulti(searchParams.get('varietyId')))
             setFarmerName(searchParams.get('farmerName') || '')
             setCerts(parseMulti(searchParams.get('certType')))
             setStatus(searchParams.get('status') || 'ALL')
             setWeight(searchParams.get('weightKg') || '')
         }
-    }, [open, searchParams, defaultYear])
+    }, [open, searchParams, defaultYears])
 
     const activeFilterCount = [
         years.length > 0,
@@ -91,7 +92,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         if (!hasAttemptedAutoOpen && typeof window !== 'undefined') {
             const isMobile = window.innerWidth < 768
             const hasNoFilters = Array.from(searchParams.entries()).filter(([key, val]) => {
-                if (key === 'productionYear' && val === defaultYear) return false
+                if (key === 'productionYear' && val === defaultYears.join(',')) return false
                 return true
             }).length === 0
 
@@ -100,7 +101,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
             }
             setHasAttemptedAutoOpen(true)
         }
-    }, [searchParams, defaultYear, hasAttemptedAutoOpen])
+    }, [searchParams, defaultYears, hasAttemptedAutoOpen])
 
     const handleApply = () => {
         const params = new URLSearchParams()
@@ -119,7 +120,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     }
 
     const handleReset = () => {
-        setYears([defaultYear])
+        setYears(defaultYears)
         setVarieties2([])
         setFarmerName('')
         setCerts([])
@@ -127,7 +128,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
         setWeight('')
 
         startTransition(() => {
-            router.push(`/raw-stocks?productionYear=${defaultYear}`)
+            router.push(`/raw-stocks?productionYear=${defaultYears.join(',')}`)
         })
         setOpen(false)
     }

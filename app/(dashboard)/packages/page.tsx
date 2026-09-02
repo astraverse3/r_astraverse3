@@ -55,6 +55,10 @@ async function RicePanelLoader({
         varietyId: pickStr(resolvedParams.varietyId),
         productionYear: pickStr(resolvedParams.productionYear),
         source: pickStr(resolvedParams.source),
+        farmerName: pickStr(resolvedParams.farmerName),
+        packedFrom: pickStr(resolvedParams.packedFrom),
+        packedTo: pickStr(resolvedParams.packedTo),
+        certType: pickStr(resolvedParams.certType),
         sort: parseSort(resolvedParams.sort),
         // 「차감된 재고 보기」 (D6) — URL로 유지되는 스위치
         includeDeducted: resolvedParams.includeDeducted === '1',
@@ -80,6 +84,9 @@ async function MiscPanelLoader({
         varietyId: pickStr(resolvedParams.varietyId),
         productionYear: pickStr(resolvedParams.productionYear),
         source: pickStr(resolvedParams.source),
+        farmerName: pickStr(resolvedParams.farmerName),
+        packedFrom: pickStr(resolvedParams.packedFrom),
+        packedTo: pickStr(resolvedParams.packedTo),
         sort: parseSort(resolvedParams.sort),
         // 「차감된 재고 보기」 (D6) — URL로 유지되는 스위치
         includeDeducted: resolvedParams.includeDeducted === '1',

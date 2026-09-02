@@ -5,15 +5,15 @@ import { ReleasePageWrapper } from './release/release-page-wrapper'
 import { ReleaseFilters } from './release/release-filters'
 import { ReleaseExcelButton } from './release/release-excel-button'
 import { SectionLoader } from '@/components/ui/section-loader'
+import { defaultProductionYear } from '@/lib/production-year'
 
 export async function ReleaseSection({
     searchParams,
 }: {
     searchParams: { [key: string]: string | string[] | undefined }
 }) {
-    // Default Year: 11월 이후 currentYear, 그 외 currentYear-1
-    const today = new Date()
-    const defaultYear = today.getMonth() + 1 >= 11 ? today.getFullYear() : today.getFullYear() - 1
+    // 조회 기간 시작 = 그해 1월 1일. 연도 규칙은 `lib/production-year.ts`
+    const defaultYear = defaultProductionYear('RICE')
 
     const startDate = searchParams.startDate
         ? new Date(searchParams.startDate as string)

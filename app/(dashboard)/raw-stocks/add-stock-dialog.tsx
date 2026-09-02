@@ -24,6 +24,7 @@ import { createStock, type StockFormData } from '@/app/actions/stock'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { defaultProductionYear } from '@/lib/production-year'
 
 interface Farmer {
     id: number
@@ -47,9 +48,8 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
     const [isLoading, setIsLoading] = useState(false)
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
 
-    // Default Year Logic: Previous Year until Oct, Current Year from Nov
-    const today = new Date()
-    const defaultYear = (today.getMonth() + 1) >= 11 ? today.getFullYear() : today.getFullYear() - 1
+    // 벼는 11월부터 당해년도분이 들어온다 (`lib/production-year.ts`)
+    const defaultYear = defaultProductionYear('RICE')
 
     const [productionYear, setProductionYear] = useState<number>(defaultYear)
     const [certType, setCertType] = useState<string>('유기농')
