@@ -43,6 +43,17 @@ type Packaging = { id: number; name: string; active: boolean }
 const round3 = (n: number) => Math.round(n * 1000) / 1000
 
 /**
+ * 규격 · 단중 표기 — 규격 라벨에 이미 무게가 들어 있으면 겹쳐 쓰지 않는다(「5kg · 5kg」 방지).
+ *
+ * 톤백·잔량은 라벨만으로 무게를 알 수 없어 병기가 필요하고,
+ * 규격이 `5kg`인데 단중이 4.8이면 어긋난 것이니 그대로 드러내는 편이 낫다.
+ */
+function formatSpec(packageType: string, weightPerUnit: number): string {
+    const kg = weightPerUnit.toLocaleString()
+    return packageType === `${kg}kg` ? packageType : `${packageType} · ${kg}kg`
+}
+
+/**
  * 재포장 다이얼로그 (결정 #43 R2 · UI 개편 #44~#48).
  *   위 = 쓸 재고 요약(접힘) · 가운데 = 규격 버튼과 만들 줄 · 아래 = 잔여 계기판
  *   잔여(소스 − 결과)가 0이 되면 딱 맞는다. 음수면 저장이 막힌다.
@@ -430,8 +441,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                         >
                                             <div className="flex min-w-0 flex-col">
                                                 <span className="truncate text-[12px] font-semibold text-slate-800">
-                                                    {s.packageType} ·{' '}
-                                                    {s.weightPerUnit.toLocaleString()}kg
+                                                    {formatSpec(s.packageType, s.weightPerUnit)}
                                                     <span className="ml-1.5 font-normal text-slate-500">
                                                         {s.producer}
                                                     </span>
