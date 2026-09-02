@@ -114,7 +114,7 @@ packedFrom/To → AND [ OR[ {source: MILLED,    createdAt: 범위},
 
 | 파일 | 함수 | 값 변화 |
 |:---|:---|:---|
-| `packages/package-search-dialog.tsx` | `defaultProductionYears(category)` | ✅ |
+| ~~`packages/package-search-dialog.tsx`~~ | **적용 취소** (아래 재검토) | 기본값 없음 |
 | `raw-stocks/stock-filters.tsx` | `defaultProductionYears('RICE')` | ✅ |
 | `raw-stocks/misc/misc-stock-filters.tsx` | `defaultProductionYears('MISC_GRAIN')` | ✅ |
 | `raw-stocks/misc/add-misc-stock-dialog.tsx` | `defaultProductionYear('MISC_GRAIN')` | ✅ 6월 기준 |
@@ -124,6 +124,21 @@ packedFrom/To → AND [ OR[ {source: MILLED,    createdAt: 범위},
 
 🔴 **`useMemo` 필수** — 기본값이 문자열에서 **배열**로 바뀌었다. 렌더마다 새 참조가 만들어져
 URL 동기화 `useEffect`의 의존성에 그대로 넣으면 무한 루프에 빠진다.
+
+### 재검토 — 제품재고는 기본 생산연도를 두지 않는다 (사용자 지적)
+
+「작년 재고가 남았는데 목록에 안 보이면 묻힌다」. 맞는 지적이라 제품재고에서만 걷어냈다.
+
+**판단 근거는 데이터 분포가 아니라 구조다.** 제품재고 목록은 가용 0인 행이 **이미 자동으로
+빠진다**(소진분 제외). 그래서 목록에 남은 건 정의상 전부 **실재 재고**이고, 거기에 연도를
+기본으로 걸면 **팔아야 할 물건이 숨는다.** 오래된 재고일수록 먼저 나가야 하는데 필터는
+정확히 그걸 가린다.
+
+원물재고는 반대다 — 도정하면 `CONSUMED`로 빠지고 작업 대상이 당해년도 위주라 기본값이
+실제로 쓸모가 있다. **그래서 원물재고 벼·잡곡 탭은 그대로 둔다.**
+
+※ 조회해 본 현재 데이터(목록 608행이 전부 2025년산)는 근거로 쓰지 않았다 —
+아직 과거 데이터가 다 들어오지 않은 상태라 미래를 말해주지 못한다(사용자 지적).
 
 ## 확인 필요 / 범위 밖
 
