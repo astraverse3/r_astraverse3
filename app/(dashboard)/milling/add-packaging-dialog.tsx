@@ -12,8 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
-import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
+import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
+import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { generateLotNo } from '@/lib/lot-generation'
 import { getYieldRate } from '@/app/actions/settings'
 import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants'
@@ -132,6 +133,15 @@ export function AddPackagingDialog({
     const [internalOpen, setInternalOpen] = useState(false)
     const [outputs, setOutputs] = useState<MillingOutputInput[]>(() => restoreOutputs(initialOutputs))
     const [isLoading, setIsLoading] = useState(false)
+    // 열릴 때의 서버 재조회 상태 (P3). 최신을 못 받은 동안에는 쓰기를 막는다 —
+    // 낡은 값으로 저장하면 서버 diff가 화면에 없던 행을 지운다.
+    const [outputsLoading, setOutputsLoading] = useState(false)
+    const [outputsFailed, setOutputsFailed] = useState(false)
+    // 마지막으로 서버에서 받은 = 「내가 본」 상태. baseline(P4)과 변경 여부 판정의 기준이다.
+    const [serverOutputs, setServerOutputs] = useState<MillingOutputInput[]>([])
+    // 충돌로 거부돼 남의 줄을 합친 뒤 띄우는 배너와, 그 줄들의 강조 표시
+    const [conflictNotice, setConflictNotice] = useState<string | null>(null)
+    const [incomingIds, setIncomingIds] = useState<Set<number>>(new Set())
     const [customWeights, setCustomWeights] = useState<Record<string, string>>({})
     const [customInputs, setCustomInputs] = useState<Record<string, boolean>>({})
     // 활성 포장지 목록 (라인별 드롭다운 옵션)
@@ -142,6 +152,79 @@ export function AddPackagingDialog({
     const { data: session } = useSession()
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
+
+    // 저장·마감·초기화를 막는 조건. 재조회가 끝나기 전이거나 실패했으면 쓰기를 열지 않는다.
+    const writeBlocked = isLoading || outputsLoading || outputsFailed
+
+    // 「내가 본 행」 집합 — 서버가 이걸로 「내가 지운 행」과 「못 본 행」을 가른다 (P4).
+    const baselineIds = serverOutputs
+        .map(o => o.id)
+        .filter((id): id is number => id !== undefined)
+
+    /**
+     * 저장에 보낼 줄만 고른다 (P5 · 2026-09-01 사고).
+     *
+     * 예전엔 `outputs.filter(o => o.count > 0)` 한 줄이었다. 수량이 안 채워진 줄은
+     * **경고 없이** payload에서 빠졌고, 그게 기존 행이면 서버 diff가 「지운 것」으로 읽어
+     * 삭제까지 갔다. 조용히 지우느니 저장을 막는다.
+     *
+     * 막을 수 없으면 null. 호출부는 그대로 돌아간다.
+     */
+    const collectValidOutputs = async (): Promise<MillingOutputInput[] | null> => {
+        const emptyExisting = outputs.filter(o => o.id !== undefined && o.count <= 0)
+        if (emptyExisting.length > 0) {
+            toast.warning(
+                `${emptyExisting.map(o => o.packageType).join(', ')} 줄의 개수를 입력해 주세요. 지우려면 휴지통을 눌러 주세요.`
+            )
+            return null
+        }
+        // 새로 추가만 하고 수량을 안 넣은 줄 — 버리는 건 맞지만 말은 해준다.
+        const dropped = outputs.filter(o => o.id === undefined && o.count <= 0)
+        if (dropped.length > 0) {
+            toast.info(`개수가 없는 ${dropped.length}줄은 저장하지 않았습니다.`)
+        }
+        const valid = outputs.filter(o => o.count > 0)
+        if (valid.length === 0) {
+            // 서버에도 아무것도 없으면 저장할 게 없다.
+            if (serverOutputs.length === 0) {
+                toast.warning('포장 내역을 입력해주세요.')
+                return null
+            }
+            // 🔴 서버엔 있는데 화면을 다 비웠다 = 「전부 지우겠다」는 뜻이다.
+            // 예전엔 이때 저장 버튼이 비활성이라 **마지막 한 줄은 휴지통으로 지울 방법이
+            // 아예 없었다**(2026-09-02 실사용 중 발견). 확인 한 번으로 길을 열어준다.
+            const okToClear = await confirmDialog({
+                description: '포장 기록을 모두 지웁니다. 계속할까요?',
+                destructive: true,
+                confirmText: '모두 삭제',
+            })
+            if (!okToClear) return null
+        }
+        return valid
+    }
+
+    /**
+     * 저장 실패 공통 처리 (P4).
+     *
+     * 🔴 충돌이면 **내 입력을 그대로 둔 채** 남의 줄만 합쳐 보여주고 baseline을 갱신한다.
+     * 다시 저장을 누르면 통과한다 — 거부는 한 번뿐인 확인 단계여야 하고,
+     * 재입력을 요구해선 안 된다(2026-09-01 사고 후반부가 정확히 그것이었다).
+     */
+    const handleSaveFailure = (
+        result: { error?: string; conflict?: unknown[] },
+        fallback: string,
+    ) => {
+        if (!result.conflict) {
+            toastBlocked(result, fallback)
+            return
+        }
+        const fresh = restoreOutputs(result.conflict as MillingOutputInput[])
+        const { merged, incomingIds: ids } = mergeUnseenRows(outputs, fresh)
+        setOutputs(merged)
+        setIncomingIds(new Set(ids))
+        setServerOutputs(fresh)
+        setConflictNotice(result.error || '다른 사람이 포장을 추가했습니다. 확인 후 다시 저장해 주세요.')
+    }
 
     const lotGroups = computeLotGroups(stocks, millingType)
     const isMultiGroup = lotGroups.length > 1
@@ -161,9 +244,41 @@ export function AddPackagingDialog({
         else setInternalOpen(newOpen)
     }
 
+    // 🔴 열릴 때마다 **서버에서 최신 행을 다시 읽는다** (P3 · 2026-09-01 사고).
+    //
+    // 예전엔 페이지가 로드될 때 받은 스냅샷(`initialOutputs`)만 봤다. 그래서 탭을 켜둔 채
+    // 두면 화면이 낡고, 그 상태로 저장하면 화면에 없던 행을 서버 diff가 「지운 것」으로 읽어
+    // 조용히 삭제했다. 동시에 열어둘 필요도 없이 탭 하나만 오래 켜두면 성립한다.
+    //
+    // ⚠️ deps에서 `initialOutputs`를 일부러 뺐다 — 열려 있는 동안 prop이 갱신되면
+    // **입력 중인 값을 덮어써서** 그게 또 「입력 날림」이 된다. 열리는 순간에만 맞춘다.
     useEffect(() => {
-        if (open) setOutputs(restoreOutputs(initialOutputs))
-    }, [open, initialOutputs])
+        if (!open) return
+        // 서버 응답 전까지는 스냅샷을 보여준다(빈 화면 깜빡임 방지). 곧 최신으로 교체된다.
+        setOutputs(restoreOutputs(initialOutputs))
+        setConflictNotice(null)
+        setIncomingIds(new Set())
+        let cancelled = false
+        setOutputsLoading(true)
+        setOutputsFailed(false)
+        getBatchOutputs(batchId).then(res => {
+            if (cancelled) return
+            setOutputsLoading(false)
+            // 🔴 조용히 넘어가지 않는다. 못 읽은 채로 저장하면 남의 행을 지운다.
+            if (!res.success) {
+                setOutputsFailed(true)
+                toast.error('포장 내역을 불러오지 못했습니다. 창을 닫고 다시 열어 주세요.')
+                return
+            }
+            const fresh = restoreOutputs(res.data as MillingOutputInput[])
+            setOutputs(fresh)
+            setServerOutputs(fresh)
+        })
+        return () => {
+            cancelled = true
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, batchId])
 
     // outputs 변경 후, 대기 중인 포커스 대상 입력칸을 화면에 보이게 하고 포커스+전체선택
     useEffect(() => {
@@ -194,8 +309,8 @@ export function AddPackagingDialog({
         }
     }, [open])
 
+    // 초기화는 위 재조회 effect가 맡는다 — 여기서 낡은 prop으로 다시 채우면 그걸 덮어쓴다.
     const handleOpenChange = (newOpen: boolean) => {
-        if (newOpen) setOutputs(restoreOutputs(initialOutputs))
         setOpen(newOpen)
     }
 
@@ -206,7 +321,8 @@ export function AddPackagingDialog({
         setIsLoading(false)
         if (result.success) {
             triggerDataUpdate()
-            setOutputs(restoreOutputs(initialOutputs))
+            // 닫힌 상태에서 눌렀으면 아래 setOpen(true)가 재조회 effect를 깨운다.
+            // 낡은 initialOutputs로 채우던 줄은 뺐다 — 그게 최신 조회를 덮어썼다.
             setOpen(true)
             router.refresh()
         } else {
@@ -218,20 +334,18 @@ export function AddPackagingDialog({
         // `outputs`는 restoreOutputs를 거친 값이라 원본(initialOutputs)과 직접 비교하면
         // packagingId 키 하나 때문에 **아무것도 안 고쳐도 항상 「변경됨」**이 됐다.
         // 같은 가공을 거친 값끼리 맞대야 뜻이 맞는다.
-        const hasUnsavedChanges =
-            JSON.stringify(outputs) !== JSON.stringify(restoreOutputs(initialOutputs))
+        // 기준은 **서버에서 마지막으로 받은 값**이다. 낡은 prop(initialOutputs)과 맞대면
+        // 재조회(P3)로 화면이 갱신된 것만으로 「변경됨」이 돼 불필요한 저장이 돈다.
+        const hasUnsavedChanges = JSON.stringify(outputs) !== JSON.stringify(serverOutputs)
         if (hasUnsavedChanges) {
-            const validOutputs = outputs.filter(o => o.count > 0)
-            if (validOutputs.length === 0) {
-                toast.warning('포장 내역을 입력해주세요.')
-                return
-            }
+            const validOutputs = await collectValidOutputs()
+            if (!validOutputs) return
             if (!(await confirmDialog('포장 데이터를 저장하고 마감하시겠습니까?'))) return
             setIsLoading(true)
-            const saveResult = await updatePackagingLogs(batchId, validOutputs)
+            const saveResult = await updatePackagingLogs(batchId, validOutputs, baselineIds)
             if (!saveResult.success) {
                 setIsLoading(false)
-                toastBlocked(saveResult, '포장 기록 저장에 실패했습니다.')
+                handleSaveFailure(saveResult, '포장 기록 저장에 실패했습니다.')
                 return
             }
         } else {
@@ -252,14 +366,15 @@ export function AddPackagingDialog({
     const handleClearPackaging = async () => {
         if (!(await confirmDialog({ description: '포장 기록을 모두 삭제하시겠습니까?', destructive: true, confirmText: '삭제' }))) return
         setIsLoading(true)
-        const result = await updatePackagingLogs(batchId, [])
+        const result = await updatePackagingLogs(batchId, [], baselineIds)
         setIsLoading(false)
         if (result.success) {
             setOutputs([])
+            setServerOutputs([])
             triggerDataUpdate()
             router.refresh()
         } else {
-            toastBlocked(result, '포장 기록 삭제에 실패했습니다.')
+            handleSaveFailure(result, '포장 기록 삭제에 실패했습니다.')
         }
     }
 
@@ -357,13 +472,10 @@ export function AddPackagingDialog({
     }
 
     async function handleSubmit() {
-        const validOutputs = outputs.filter(o => o.count > 0)
-        if (validOutputs.length === 0) {
-            toast.warning('포장 내역을 입력해주세요.')
-            return
-        }
+        const validOutputs = await collectValidOutputs()
+        if (!validOutputs) return
         setIsLoading(true)
-        const result = await updatePackagingLogs(batchId, validOutputs)
+        const result = await updatePackagingLogs(batchId, validOutputs, baselineIds)
         setIsLoading(false)
         if (result.success) {
             triggerDataUpdate()
@@ -371,7 +483,7 @@ export function AddPackagingDialog({
             setOutputs([])
             router.refresh()
         } else {
-            toastBlocked(result, '포장 기록 저장에 실패했습니다.')
+            handleSaveFailure(result, '포장 기록 저장에 실패했습니다.')
         }
     }
 
@@ -438,6 +550,15 @@ export function AddPackagingDialog({
                         </span>
                     </div>
                 </DialogHeader>
+
+                {/* 충돌 배너 (P4) — 내가 못 본 행을 합쳤을 때. 토스트가 아니라 **안 사라지는 배너**다:
+                    현장에서 몇 초 뒤 사라지는 알림은 놓친다. 모달도 아니다 — 무엇이 들어왔는지
+                    가려버리기 때문이다. 아래 목록에서 합쳐진 줄이 강조돼 보인다. */}
+                {conflictNotice && (
+                    <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                        <p className="text-[12px] font-semibold text-amber-800 whitespace-pre-line">{conflictNotice}</p>
+                    </div>
+                )}
 
                 {/* 규격별 합계 밴드 — 헤더 고정, 여러 생산자 투입 시 규격별 총 수량·중량 한눈에 */}
                 {showSpecSummary && (
@@ -575,7 +696,9 @@ export function AddPackagingDialog({
                                         </div>
                                     )}
                                     {groupOutputs.map(({ o, i }) => (
-                                        <div key={i} className="px-2 sm:px-3 py-1.5">
+                                        // 충돌로 합쳐 들어온 줄은 배경으로 짚어준다 — 어느 줄이 남의 것인지
+                                        // 보이지 않으면 배너만으로는 확인이 되지 않는다 (P4).
+                                        <div key={i} className={`px-2 sm:px-3 py-1.5 ${o.id !== undefined && incomingIds.has(o.id) ? 'bg-amber-50' : ''}`}>
                                           {/* 모바일: 36/1fr/64/58/22 — 데스크탑: 40/140/1fr/64/24 (반응형 1행 유지) */}
                                           <div className="grid grid-cols-[36px_1fr_88px_58px_22px] sm:grid-cols-[40px_120px_1fr_64px_24px] items-center gap-1">
                                             {/* 1. 규격 badge (잔량=노랑) */}
@@ -692,13 +815,16 @@ export function AddPackagingDialog({
                                     {outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg
                                 </span>
                             </div>
+                            {/* 저장 버튼은 화면에도 서버에도 아무것도 없을 때만 막는다 —
+                                화면만 비었다면 「전부 지우겠다」는 뜻이라 저장이 열려 있어야 한다.
+                                (예전엔 화면이 비면 무조건 막혀 마지막 한 줄을 지울 방법이 없었다) */}
                             {isClosed ? (
                                 <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
                                     <Lock className="mr-1 h-3 w-3" /> 마감 해제
                                 </Button>
                             ) : (
-                                <Button onClick={handleSubmit} disabled={isLoading || outputs.length === 0}>
-                                    {isLoading ? '저장 중...' : '기록 저장'}
+                                <Button onClick={handleSubmit} disabled={writeBlocked || (outputs.length === 0 && serverOutputs.length === 0)}>
+                                    {isLoading ? '저장 중...' : outputsLoading ? '불러오는 중...' : '기록 저장'}
                                 </Button>
                             )}
                         </div>
@@ -710,7 +836,7 @@ export function AddPackagingDialog({
                                     variant="ghost"
                                     size="sm"
                                     className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1 text-[12px] font-semibold"
-                                    disabled={isLoading}
+                                    disabled={writeBlocked}
                                     onClick={handleCloseBatch}
                                 >
                                     <Lock className="mr-1 h-3 w-3" /> 작업 마감
@@ -720,7 +846,7 @@ export function AddPackagingDialog({
                                     variant="ghost"
                                     size="sm"
                                     className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto text-[12px] font-semibold"
-                                    disabled={isLoading || outputs.length === 0}
+                                    disabled={writeBlocked || serverOutputs.length === 0}
                                     onClick={handleClearPackaging}
                                 >
                                     <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화

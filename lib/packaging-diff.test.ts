@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   diffPackaging,
   formatPackagingDiffErrors,
+  mergeUnseenRows,
   type ExistingPackagingRow,
   type PackagingLine,
 } from './packaging-diff'
@@ -403,4 +404,79 @@ test('정체 차단 메시지는 삭제와 다른 문단으로 나온다 (#77)',
   assert.match(text, /지울 수 없어요/)
   assert.match(text, /품종·규격·중량·포장지를 바꿀 수 없어요/)
   assert.equal(text.split('\n\n').length, 2)
+})
+
+// ------------------------------------------------------
+// baseline 충돌 감지 (P4 · 2026-09-01 사고)
+//
+// 「화면에서 지운 행」과 「열린 뒤 남이 추가해 뜬 적 없는 행」은 서버 입장에서
+// 둘 다 「입력에 없는 행」이다. baseline이 그 둘을 가른다.
+// ------------------------------------------------------
+
+test('baseline에 없는 기존 행이 있으면 저장을 막는다 — 내가 못 본 행은 안 지운다', () => {
+  const mine = row(1)
+  const 남이추가 = row(2, { packageType: '톤백', weightPerUnit: 550, count: 1, totalWeight: 550 })
+  // 화면은 #1만 보고 열렸다. #2는 그 뒤에 생겨 화면에 뜬 적이 없다.
+  const r = fail(diffPackaging([mine, 남이추가], [echo(mine)], [1]))
+  assert.equal(r.errors.length, 1)
+  assert.equal(r.errors[0].code, 'STALE_BASELINE')
+  assert.equal(r.errors[0].rowId, 2)
+})
+
+test('baseline이 최신이면 통과한다 — 안 보낸 행은 지운 것이 맞다', () => {
+  const keep = row(1)
+  const 내가지운행 = row(2)
+  // 둘 다 화면에 떠 있었고, 사용자가 #2를 지웠다 → 삭제가 맞다.
+  const r = ok(diffPackaging([keep, 내가지운행], [echo(keep)], [1, 2]))
+  assert.deepEqual(r.toDelete, [2])
+})
+
+test('빈 baseline + 기존 행 없음 = 신규 입력이라 통과', () => {
+  const r = ok(diffPackaging([], [line()], []))
+  assert.equal(r.toCreate.length, 1)
+})
+
+test('빈 baseline인데 서버에 행이 있으면 막는다 — 최신을 못 받은 화면이다', () => {
+  const r = fail(diffPackaging([row(1)], [line()], []))
+  assert.equal(r.errors[0].code, 'STALE_BASELINE')
+})
+
+test('충돌이면 다른 검사보다 먼저 끊는다 — 낡은 기준으로 낸 판정은 뜻이 없다', () => {
+  // 차감된 행을 지우려는 입력이지만(DELETE_BLOCKED 감), 화면 자체가 낡았다.
+  const moved = row(1, { movedCount: 3 })
+  const unseen = row(2)
+  const r = fail(diffPackaging([moved, unseen], [], [1]))
+  assert.equal(r.errors.every(e => e.code === 'STALE_BASELINE'), true)
+})
+
+test('baseline을 안 넘기면 검사하지 않는다 — 기존 호출 호환', () => {
+  const r = ok(diffPackaging([row(1)], [echo(row(1))]))
+  assert.deepEqual(r.toDelete, [])
+})
+
+test('충돌 문구는 「합쳤으니 확인하고 다시 저장」으로 읽힌다 — 재입력 요구가 아니다', () => {
+  const r = fail(diffPackaging([row(1), row(2, { packageType: '톤백' })], [echo(row(1))], [1]))
+  const text = formatPackagingDiffErrors(r.errors)
+  assert.match(text, /다른 사람이 포장을 추가했어요/)
+  assert.match(text, /확인한 뒤 다시 저장/)
+  assert.match(text, /톤백/)
+})
+
+// ------------------------------------------------------
+// mergeUnseenRows — 거부 뒤 화면 병합 (P4)
+// ------------------------------------------------------
+
+test('내가 못 본 서버 행만 뒤에 붙고, 내 입력은 그대로다', () => {
+  const 내입력 = [{ id: 1, count: 9 }, { count: 5 }]
+  const 서버 = [{ id: 1, count: 3 }, { id: 2, count: 1 }]
+  const { merged, incomingIds } = mergeUnseenRows(내입력, 서버)
+  assert.deepEqual(incomingIds, [2])
+  // 내 줄은 값도 순서도 그대로 — 특히 #1은 서버값(3)이 아니라 내가 고친 값(9)이다
+  assert.deepEqual(merged, [{ id: 1, count: 9 }, { count: 5 }, { id: 2, count: 1 }])
+})
+
+test('합칠 게 없으면 아무것도 안 붙는다', () => {
+  const { merged, incomingIds } = mergeUnseenRows([{ id: 1 }], [{ id: 1 }])
+  assert.deepEqual(incomingIds, [])
+  assert.equal(merged.length, 1)
 })

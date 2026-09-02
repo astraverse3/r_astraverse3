@@ -25,8 +25,16 @@ import {
   IDENTITY_BLOCKED_HEADER,
   DEDUCTION_HINT,
   blockedMessage,
+  describePackage,
   EPSILON,
 } from './package-guard'
+
+/**
+ * 충돌 안내 문구. 「막혔다」가 아니라 「합쳤으니 확인하고 다시 저장하라」로 읽혀야 한다 —
+ * 거부가 재입력 강요가 되면 그게 2026-09-01 사고의 후반부다.
+ */
+export const STALE_BASELINE_HEADER = '이 창을 연 뒤에 다른 사람이 포장을 추가했어요.'
+export const STALE_BASELINE_HINT = '아래에 합쳐 두었습니다. 확인한 뒤 다시 저장해 주세요.'
 
 /**
  * 저장 요청 1줄. 액션이 `MillingOutputInput`을 정규화해 넣는다
@@ -77,6 +85,8 @@ export type PackagingDiffErrorCode =
   | 'DELETE_BLOCKED'
   | 'COUNT_BELOW_MOVED'
   | 'IDENTITY_BLOCKED'
+  /** 화면이 열린 뒤 남이 추가한 행이 있다 — 「내가 못 본 행」은 지우지 않는다 */
+  | 'STALE_BASELINE'
 
 export type PackagingDiffError = {
   code: PackagingDiffErrorCode
@@ -107,8 +117,33 @@ const sameNumber = (a: number, b: number): boolean => Math.abs(a - b) < EPSILON
 export function diffPackaging(
   existing: ExistingPackagingRow[],
   lines: PackagingLine[],
+  baselineIds?: number[],
 ): PackagingDiffResult {
   const errors: PackagingDiffError[] = []
+
+  // -- 「내가 못 본 행」은 지우지 않는다 (P4 · 2026-09-01 사고) --
+  //
+  // 화면에서 지운 행과, 화면이 열린 뒤 남이 추가해 **애초에 뜬 적 없는** 행은
+  // 서버 입장에서 둘 다 그냥 「입력에 없는 행」이라 구분할 수 없다.
+  // 다이얼로그가 열릴 때 받은 행 id 집합(baseline)이 그 둘을 가르는 유일한 정보다.
+  //
+  // baseline에 없는 기존 행 = 사용자가 볼 기회조차 없었던 행 → 저장을 거부한다.
+  // ⚠️ 호출자(액션)는 **반드시 넘긴다**. 선택 인자인 것은 기존 단위테스트 호환 때문이다.
+  if (baselineIds !== undefined) {
+    const seenByUser = new Set(baselineIds)
+    const unseen = existing.filter((row) => !seenByUser.has(row.id))
+    if (unseen.length > 0) {
+      for (const row of unseen) {
+        errors.push({
+          code: 'STALE_BASELINE',
+          message: `${describePackage(row)}이(가) 새로 추가되었습니다.`,
+          rowId: row.id,
+        })
+      }
+      // 다른 검사를 더 해봐야 낡은 화면 기준이라 뜻이 없다. 여기서 끊는다.
+      return { ok: false, errors }
+    }
+  }
 
   // -- 같은 행을 두 줄이 가리키면 어느 쪽을 반영할지 정할 수 없다 --
   const seen = new Set<number>()
@@ -237,12 +272,42 @@ export function diffPackaging(
 }
 
 /**
+ * 충돌로 거부됐을 때, **내가 못 본 서버 행만** 내 입력 뒤에 덧붙인다 (P4).
+ *
+ * 🔴 내 줄은 손대지 않는다 — 값도, 순서도, 개수도. 거부가 재입력 강요가 되면
+ * 그게 2026-09-01 사고의 후반부다. 합친 뒤 사용자가 저장을 다시 누르면 통과한다.
+ *
+ * 같은 id가 양쪽에 있으면 **내 쪽을 남긴다** — 내가 편집 중인 값이기 때문이다.
+ */
+export function mergeUnseenRows<T extends { id?: number }>(
+  mine: T[],
+  server: T[],
+): { merged: T[]; incomingIds: number[] } {
+  const mineIds = new Set(mine.map((o) => o.id).filter((id): id is number => id !== undefined))
+  const incoming = server.filter((r) => r.id !== undefined && !mineIds.has(r.id))
+  return {
+    merged: [...mine, ...incoming],
+    incomingIds: incoming.map((r) => r.id as number),
+  }
+}
+
+/**
  * 에러를 사용자에게 보여줄 한 덩어리 문장으로 만든다.
  *
  * FK 에러(원인 불명)를 **차단 이유가 적힌 메시지**로 바꾸는 게 결정 #63의 핵심이라,
  * 「무엇이 · 몇 개가 걸렸는지 · 어떻게 풀 수 있는지」를 함께 낸다.
  */
 export function formatPackagingDiffErrors(errors: PackagingDiffError[]): string {
+  // 낡은 화면은 단독으로 온다(diff가 거기서 끊는다) — 먼저, 그리고 혼자 보여준다.
+  const stale = errors.filter((e) => e.code === 'STALE_BASELINE')
+  if (stale.length > 0) {
+    return blockedMessage(
+      STALE_BASELINE_HEADER,
+      stale.map((e) => e.message),
+      STALE_BASELINE_HINT,
+    )
+  }
+
   const blocked = errors.filter((e) => e.code === 'DELETE_BLOCKED')
   const identity = errors.filter((e) => e.code === 'IDENTITY_BLOCKED')
   const shrunk = errors.filter((e) => e.code === 'COUNT_BELOW_MOVED')

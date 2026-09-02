@@ -439,6 +439,104 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
     }
 }
 
+/**
+ * 배치 하나의 도정 포장 행을 **지금 시점으로** 다시 읽는다 (2026-09-02, P3).
+ *
+ * 포장 다이얼로그는 원래 페이지가 로드될 때 받은 스냅샷(`initialOutputs`)만 보고 있었다.
+ * 그래서 탭을 켜둔 채 두면 화면이 낡고, 그 상태로 저장하면 화면에 없던 행을
+ * `diffPackaging`이 「사용자가 지운 것」으로 읽어 조용히 삭제했다 — 2026-09-01 사고의 원인이다.
+ * 동시에 열어둘 필요도 없다. 탭 하나만 오래 켜두면 성립한다.
+ *
+ * 🔴 select·필터·정렬은 `getMillingLogs`의 `outputs`와 **정확히 같아야 한다**.
+ * 어긋나면 화면에 없는 행을 지우게 된다 (결정 #61이 경고한 그것).
+ */
+export async function getBatchOutputs(batchId: number) {
+    await requireSession()
+    try {
+        const outputs = await prisma.millingOutputPackage.findMany({
+            where: { batchId, ...MILLED_OUTPUT_ONLY },
+            orderBy: { id: 'asc' },
+            select: {
+                id: true,
+                packageType: true,
+                weightPerUnit: true,
+                count: true,
+                totalWeight: true,
+                stockId: true,
+                productType: { select: { packagingId: true } },
+            },
+        })
+        return { success: true as const, data: outputs }
+    } catch (error) {
+        console.error('Failed to get batch outputs:', error)
+        return { success: false as const, error: '포장 내역을 불러오지 못했습니다.' }
+    }
+}
+
+/** 감사 스냅샷에 필요한 필드만. 실제 조회 결과는 이보다 넓다(구조적 타입). */
+type PackagingAuditRow = {
+    id: number
+    packageType: string
+    weightPerUnit: number
+    count: number
+    totalWeight: number
+    stockId: number | null
+    lotNo: string | null
+    productCode: string | null
+    productTypeId: number | null
+}
+
+/**
+ * 포장 줄 하나를 로그에 남길 만큼만 추린다.
+ * 입력 줄(`PackagingLine`)과 기존 행(`PackagingAuditRow`)을 함께 받는다 —
+ * 기존 행의 stockId는 nullable이라 `PackagingLine`을 그대로 쓸 수 없다.
+ */
+const auditLine = (l: {
+    packageType: string
+    weightPerUnit: number
+    count: number
+    totalWeight: number
+    stockId: number | null
+}) => ({
+    packageType: l.packageType,
+    weightPerUnit: l.weightPerUnit,
+    count: l.count,
+    totalWeight: l.totalWeight,
+    stockId: l.stockId,
+})
+
+/**
+ * 포장 수정 감사 스냅샷을 만든다 — **삭제를 실행하기 전에** 불러야 한다.
+ *
+ * 2026-09-01 사고: 배치 #222에서 저장된 포장 행이 사라졌는데 `updatePackagingLogs`가
+ * 로그를 하나도 남기지 않아 누가·언제·무엇을 지웠는지 흔적이 0이었다. 결번(id 시퀀스)으로
+ * 역추적하는 것 말곤 방법이 없었다.
+ * → 삭제 행은 **되살릴 수 있을 만큼** 통째로 남긴다(lotNo·productCode·productTypeId 포함).
+ */
+function buildPackagingAudit(
+    rows: PackagingAuditRow[],
+    diff: { toCreate: PackagingLine[]; toUpdate: { id: number; line: PackagingLine }[]; toDelete: number[] },
+) {
+    const deleteSet = new Set(diff.toDelete)
+    const byId = new Map(rows.map(r => [r.id, r]))
+    return {
+        created: diff.toCreate.map(auditLine),
+        updated: diff.toUpdate.map(u => ({
+            id: u.id,
+            before: byId.has(u.id) ? auditLine(byId.get(u.id)!) : null,
+            after: auditLine(u.line),
+        })),
+        // 🔴 복구용 — 규격·단중·개수·총중량뿐 아니라 로트까지 남겨야 되살릴 수 있다.
+        deleted: rows.filter(r => deleteSet.has(r.id)).map(r => ({
+            ...auditLine(r),
+            id: r.id,
+            lotNo: r.lotNo,
+            productCode: r.productCode,
+            productTypeId: r.productTypeId,
+        })),
+    }
+}
+
 // 포장 내역 수정 — 입력에 실려온 행 id로 diff를 내어 create·update·delete로 반영한다 (결정 #62).
 //
 // 예전에는 deleteMany 후 전부 재생성했다. PackageMovement(판매·재포장)·Repack이 이 행을
@@ -446,7 +544,10 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
 // 성공하더라도 행 id와 createdAt이 매번 새로 잡혀 이력과 참조가 우연에 기댔다.
 //
 // 판정·검증은 lib/packaging-diff.ts(순수 함수 · 단위테스트)가 하고, 여기서는 실행만 한다.
-export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[]) {
+// baselineIds — 다이얼로그가 **열릴 때 받은** 행 id 집합 (P4 · 2026-09-01 사고).
+// 「화면에서 지운 행」과 「열린 뒤 남이 추가해 뜬 적 없는 행」을 가르는 유일한 정보다.
+// 🔴 선택 인자로 두지 않는다 — undefined면 옛 동작으로 빠져 구멍이 그대로 남는다.
+export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[], baselineIds: number[]) {
     await requirePermission('OPERATION_MANAGE')
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -460,6 +561,24 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 }
             });
             if (!batch || !batch.stocks.length) throw new Error('Batch or stocks not found');
+
+            // 마감된 배치는 고칠 수 없다. 다른 액션들은 이미 막고 있는데(:65 · :340 · :857)
+            // 여기만 체크가 없었다 — 2026-09-01 결번 `1368`은 마감(16:02:56) **이후**에
+            // 발급됐다. 즉 마감된 배치에 저장이 들어갔다는 뜻이다.
+            //
+            // ⚠️ 마감 흐름(handleCloseBatch)은 「저장 → 마감」 순서라 저장 시점엔 아직
+            // 미마감이다. 마감 해제 후 수정도 isClosed=false라 통과한다. 둘 다 영향 없다.
+            //
+            // throw가 아니라 이유를 돌려준다 — 도메인 차단은 장애가 아니다 (결정 #63).
+            if (batch.isClosed) {
+                return {
+                    success: false as const,
+                    error: '마감된 작업입니다. 마감을 해제한 뒤 수정해 주세요.',
+                    errors: [],
+                    conflict: undefined,
+                };
+            }
+
             const primaryStock = batch.stocks[0];
             const resolveStock = (stockId?: number | null) =>
                 (stockId ? batch.stocks.find(s => s.id === stockId) : undefined) ?? primaryStock;
@@ -508,6 +627,11 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     stockId: true,
                     productType: { select: { packagingId: true } },
                     ...MOVEMENT_COUNT_SELECT,
+                    // 아래 3개는 diff가 쓰지 않는다 — **삭제 감사로그의 복구용 스냅샷**이다.
+                    // 지우기 전에 남겨두지 않으면 되살릴 근거가 없다 (2026-09-01 사고).
+                    lotNo: true,
+                    productCode: true,
+                    productTypeId: true,
                 },
             });
 
@@ -523,12 +647,33 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                     movedCount: movedCountOf(r),
                 })),
                 lines,
+                baselineIds,
             );
 
             // 차단은 도메인 규칙이지 장애가 아니다 — 아직 아무것도 쓰지 않았으므로
             // 그대로 돌려보내 사용자에게 「왜 막혔는지」를 보여준다. (결정 #63)
             if (!diff.ok) {
-                return { success: false as const, error: formatPackagingDiffErrors(diff.errors) };
+                // errors는 감사로그용이다 — 「저장이 안 된다」 제보를 다음엔 로그로 확인하려면
+                // 무엇이 막았는지가 남아 있어야 한다. 밖에서 벗겨내고 클라이언트엔 안 준다.
+                //
+                // conflict — 낡은 화면이면 **서버 최신 행을 함께 돌려준다** (P4).
+                // 🔴 화면이 이걸로 남의 줄을 합쳐 보여줘야 「한 번 확인」으로 끝난다.
+                //    이게 없으면 거부가 곧 재입력 강요가 되고, 그게 2026-09-01 사고 후반부다.
+                const stale = diff.errors.some(e => e.code === 'STALE_BASELINE');
+                return {
+                    success: false as const,
+                    error: formatPackagingDiffErrors(diff.errors),
+                    errors: diff.errors,
+                    conflict: stale ? rows.map(r => ({
+                        id: r.id,
+                        packageType: r.packageType,
+                        weightPerUnit: r.weightPerUnit,
+                        count: r.count,
+                        totalWeight: r.totalWeight,
+                        stockId: r.stockId,
+                        productType: r.productType,
+                    })) : undefined,
+                };
             }
 
             // 파생 필드 계산 — create·update가 공유한다 (#65)
@@ -571,6 +716,9 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 productTypeCache.set(key, productTypeId);
                 return productTypeId;
             };
+
+            // 🔴 감사 스냅샷은 **지우기 전에** 뜬다 — 지운 뒤엔 되살릴 근거가 없다.
+            const audit = buildPackagingAudit(rows, diff);
 
             // 4. 삭제 — 차감이 없는 행만 diff가 넘긴다. 왕복 1회.
             if (diff.toDelete.length > 0) {
@@ -616,11 +764,37 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 await tx.millingOutputPackage.createMany({ data: created });
             }
 
-            return { success: true as const };
+            return { success: true as const, audit };
         }, { timeout: 30000 });
 
+        // 감사로그 — 커밋된 뒤, 트랜잭션 **밖**에서 남긴다(lib/audit.ts는 자체 prisma를 쓴다).
+        // 변경 0건도 남긴다 — 「저장했는데 아무것도 안 바뀌었다」 자체가 추적에 필요한 사실이다.
+        if (result.success) {
+            const { created, updated, deleted } = result.audit
+            await recordAuditLog({
+                action: 'UPDATE',
+                entity: 'MillingOutputPackage',
+                entityId: batchId,
+                details: { batchId, created, updated, deleted },
+                description: `도정 포장 수정: ${batchId}번 작업 — 추가 ${created.length} · 수정 ${updated.length} · 삭제 ${deleted.length}`,
+            })
+        } else {
+            // 차단도 남긴다 — 2026-09-01 「저장이 반복 실패했다」를 다음엔 로그로 확인한다.
+            await recordAuditLog({
+                action: 'UPDATE',
+                entity: 'MillingOutputPackage',
+                entityId: batchId,
+                details: { batchId, error: result.error, errors: result.errors },
+                // 차단 사유는 여러 줄로 온다(결정 #63). 전문은 details에 있으니 요약만 남긴다.
+                description: `도정 포장 수정 차단: ${batchId}번 작업 — ${result.error.split('\n')[0]}`,
+            })
+        }
+
         revalidatePath('/milling')
-        return result
+        // audit·errors는 로그용이라 클라이언트로 내보내지 않는다. conflict는 화면이 쓴다.
+        return result.success
+            ? { success: true as const }
+            : { success: false as const, error: result.error, conflict: result.conflict }
     } catch (error) {
         console.error('Failed to update packaging logs:', error)
         return { success: false, error: sanitizeErrorMessage(error, '포장 기록 수정에 실패했습니다.') }
