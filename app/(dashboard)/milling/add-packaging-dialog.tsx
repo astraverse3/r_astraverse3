@@ -15,6 +15,8 @@ import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
+import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
+import { SpecSummaryBand } from './spec-summary'
 import { generateLotNo } from '@/lib/lot-generation'
 import { getYieldRate } from '@/app/actions/settings'
 import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants'
@@ -43,22 +45,6 @@ type LotGroup = {
     varietyName: string
     totalInputKg: number
 }
-
-// SKU 특례: 잔량=포장지 없음(SKU 미부여), 톤백=포장지 '톤백' 고정.
-const PKG_REMAINDER = '잔량'
-const PKG_TONBAG = '톤백'
-
-const PACKAGE_TEMPLATES = [
-    { label: '톤백', weight: 0 },
-    { label: '20kg', weight: 20 },
-    { label: '10kg', weight: 10 },
-    { label: '8kg', weight: 8 },
-    { label: '5kg', weight: 5 },
-    { label: '4kg', weight: 4 },
-    { label: '3kg', weight: 3 },
-    { label: '1kg', weight: 1 },
-    { label: '잔량', weight: 0 },
-]
 
 function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
     const map = new Map<string, LotGroup>()
@@ -501,27 +487,6 @@ export function AddPackagingDialog({
         ? lotGroups
         : [{ lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
-    // 규격별 합계 — 전체 생산자 합산 (여러 투입건 계산용). 템플릿 순서 우선 정렬.
-    const specSummary = (() => {
-        const map = new Map<string, { count: number; weight: number }>()
-        for (const o of outputs) {
-            if (!o.count && !o.totalWeight) continue
-            const cur = map.get(o.packageType) ?? { count: 0, weight: 0 }
-            cur.count += o.count || 0
-            cur.weight += o.totalWeight || 0
-            map.set(o.packageType, cur)
-        }
-        const order = PACKAGE_TEMPLATES.map(t => t.label)
-        return [...map.entries()]
-            .map(([packageType, v]) => ({ packageType, ...v }))
-            .sort((a, b) => {
-                const ia = order.indexOf(a.packageType), ib = order.indexOf(b.packageType)
-                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
-            })
-    })()
-    // 다중 생산자거나 규격이 2종 이상일 때만 노출(단일 생산자·단일 규격은 중복이라 생략)
-    const showSpecSummary = specSummary.length > 0 && (isMultiGroup || specSummary.length >= 2)
-
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             {trigger !== undefined ? trigger : (
@@ -560,28 +525,8 @@ export function AddPackagingDialog({
                     </div>
                 )}
 
-                {/* 규격별 합계 밴드 — 헤더 고정, 여러 생산자 투입 시 규격별 총 수량·중량 한눈에 */}
-                {showSpecSummary && (
-                    <div className="mt-2 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/60 shadow-sm px-3 py-2.5">
-                        <div className="text-[10.5px] font-semibold text-slate-400 tracking-wide mb-1.5">규격별 합계</div>
-                        <div className="flex flex-wrap gap-1.5">
-                            {specSummary.map(s => (
-                                <div key={s.packageType} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
-                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${s.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700' : 'bg-stone-100 text-stone-600'}`}>
-                                        {s.packageType}
-                                    </span>
-                                    <span className="text-[12px] font-bold text-slate-600 font-mono tabular-nums">
-                                        {s.count.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">개</span>
-                                    </span>
-                                    <span className="text-slate-200">|</span>
-                                    <span className="text-[12px] font-black text-slate-800 font-mono tabular-nums">
-                                        {s.weight.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">kg</span>
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* 규격별 합계 밴드 — 노출 조건은 컴포넌트가 스스로 판단한다 */}
+                <SpecSummaryBand outputs={outputs} isMultiGroup={isMultiGroup} />
 
                 <div ref={scrollRef} className="py-4 space-y-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                     {displayGroups.map((group) => {
