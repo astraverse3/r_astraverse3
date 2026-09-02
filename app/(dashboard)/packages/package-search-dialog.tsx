@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,6 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
-import { defaultProductionYears } from '@/lib/production-year'
 import type { PackageCategory, PackageSort } from '@/app/actions/packages'
 
 const YEAR_OPTIONS = [
@@ -71,11 +70,6 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
 
-    // 기본 생산연도 — 규칙의 단일 원천은 `lib/production-year.ts`.
-    // 벼는 수확기(10~12월)에 두 해, 잡곡은 늘 두 해를 본다.
-    // useMemo가 필수다 — 배열은 렌더마다 새 참조라 아래 useEffect가 무한히 돈다.
-    const defaultYears = useMemo(() => defaultProductionYears(category), [category])
-
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
 
@@ -91,8 +85,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     // URL → 위젯 sync. open 시점뿐 아니라 URL 변경 시에도 동기화.
     // useState 초기값은 빈 값 — SSR/CSR hydration 안전성 + 단일 진실 원천(URL).
     useEffect(() => {
-        const yearParam = searchParams.get('productionYear')
-        setYears(yearParam ? parseMulti(yearParam) : defaultYears)
+        setYears(parseMulti(searchParams.get('productionYear')))
         setVarietyIds(parseMulti(searchParams.get('varietyId')))
         setSources(parseMulti(searchParams.get('source')))
         setCerts(parseMulti(searchParams.get('certType')))
@@ -102,7 +95,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         const raw = searchParams.get('sort')
         const isValid = SORT_OPTIONS.some(o => o.value === raw)
         setSort(isValid ? (raw as PackageSort) : 'weight_desc')
-    }, [searchParams, open, defaultYears])
+    }, [searchParams, open])
 
     // 기간은 시작·종료를 합쳐 한 개로 센다 — 배지도 하나로 보여준다
     const activeFilterCount = [
@@ -135,8 +128,10 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     }
 
     const handleReset = () => {
-        // 완전히 비우지 않고 기본 생산연도로 되돌린다 — 원물재고 탭과 같은 동작
-        setYears(defaultYears)
+        // 🔴 제품재고는 기본 생산연도를 두지 않는다 — 목록에 뜨는 행은 이미 가용>0인
+        // **실재 재고**뿐이라(소진분은 자동으로 빠진다), 연도로 가리면 오래된 재고가
+        // 그대로 묻힌다. 먼저 팔아야 할 것일수록 숨는 셈이라 원물재고와 반대로 간다.
+        setYears([])
         setVarietyIds([])
         setSources([])
         setCerts([])
@@ -146,7 +141,6 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         setSort('weight_desc')
 
         const params = new URLSearchParams()
-        params.set('productionYear', defaultYears.join(','))
         startTransition(() => router.push(buildUrl(params)))
         setOpen(false)
     }
