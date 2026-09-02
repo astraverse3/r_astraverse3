@@ -187,7 +187,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                     )}
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden bg-white">
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 overflow-hidden">
                 <DialogHeader className="p-4 sm:p-6 pb-2">
                     <DialogTitle className="text-[15px] sm:text-lg font-bold text-slate-900">
                         투입 상세 내역

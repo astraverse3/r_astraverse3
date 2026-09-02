@@ -149,11 +149,8 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {/* 🔴 기본 grid를 flex로 — grid는 행이 92dvh에 맞춰 줄지 않아 행이 많으면
-                푸터가 overflow-hidden에 잘려나간다(브라우저 검증에서 발견).
-                🔴 bg-white 필수 — 이 프로젝트는 `--background: #f1f5f9`(회색)라
-                shadcn 기본 `bg-background`를 그대로 두면 **다이얼로그 바탕이 회색**이 된다.
-                표가 들어가는 다이얼로그는 흰 바탕을 명시하는 게 관습(add-packaging·stock-list). */}
-            <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden bg-white p-0 sm:max-w-[720px] [&>button]:text-slate-400">
+                푸터가 overflow-hidden에 잘려나간다(브라우저 검증에서 발견). */}
+            <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[720px] [&>button]:text-slate-400">
                 {/* 헤더 */}
                 <DialogHeader className="shrink-0 flex-row items-start gap-2.5 space-y-0 border-b border-slate-100 px-4 py-3.5 sm:px-6 sm:py-4">
                     <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

@@ -100,9 +100,8 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            {/* 기본 grid를 flex로 + bg-white 명시 — 이유는 deduct-dialog 주석 참조
-                (`--background`가 회색이라 두면 다이얼로그 바탕이 회색이 된다) */}
-            <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden bg-white p-0 sm:max-w-[600px] [&>button]:text-slate-400">
+            {/* 기본 grid를 flex로 — 이유는 deduct-dialog 주석 참조 */}
+            <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[600px] [&>button]:text-slate-400">
                 <DialogHeader className="shrink-0 flex-row items-start gap-2.5 space-y-0 border-b border-slate-100 px-4 py-3.5 sm:px-5 sm:py-4">
                     <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <History className="h-4 w-4" />

@@ -501,7 +501,7 @@ export function AddPackagingDialog({
                 )
             )}
 
-            <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90dvh] px-4 sm:px-6 bg-white">
+            <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90dvh] px-4 sm:px-6">
                 <DialogHeader>
                     <DialogTitle>포장 기록 관리</DialogTitle>
                     <div className="flex items-center gap-2 mt-1.5">

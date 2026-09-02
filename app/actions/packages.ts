@@ -1108,7 +1108,7 @@ export async function deleteMiscPurchase(
 
 // -----------------------------
 // 제품재고 엑셀 다운로드 (#10)
-// 카테고리(RICE/MISC_GRAIN) + 활성 필터 적용. getPackages의 1달 cutoff는 적용 X (전체 노출).
+// 카테고리(RICE/MISC_GRAIN) + 활성 필터 적용 — where 조립은 `lib/package-where.ts`를 화면과 공유한다.
 // -----------------------------
 
 const PACKAGE_EXPORT_HEADERS = [

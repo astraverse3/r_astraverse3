@@ -426,7 +426,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                     {sources.map(s => (
                                         <div
                                             key={s.packageId}
-                                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5"
+                                            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5"
                                         >
                                             <div className="flex min-w-0 flex-col">
                                                 <span className="truncate text-[12px] font-semibold text-slate-800">
