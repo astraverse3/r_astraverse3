@@ -2,6 +2,25 @@
 
 ## 2026-09-02
 
+### 배포 실패 P1002 — advisory lock 타임아웃 (일시적, 재배포로 복구) `ops`
+
+**아침 푸시(`4820f66`)의 Vercel 빌드가 실패해 있었다.** §22 작업 중 사용자가 발견 — 그 사이 실서버는 이전 버전에 멈춰 있었다.
+
+```
+Error: P1002 ... Timed out trying to acquire a postgres advisory lock
+(SELECT pg_advisory_lock(72707369)). Elapsed: 10000ms
+```
+
+마이그레이션 **내용이 아니라 잠금을 거는 단계**에서 죽었다. 로그가 「13 migrations found」까지만 나오고 적용은 시작도 못 했고, 확인해보니 **적용할 마이그레이션은 0건**이었다(`migrate status` = up to date). 할 일이 없는데 문 여는 데서 멈춘 셈.
+
+🔴 **구조적 원인** — `schema.prisma`의 `datasource db`가 `url` 하나뿐인데 그 값이 Neon **pooler 주소**다. pooler는 PgBouncer라 연결을 매 쿼리마다 돌려쓰는데 `pg_advisory_lock`은 **세션에 붙는 잠금**이라 원래 맞지 않는 조합이다. **지금까지는 우연히 통과해온 것.** 방아쇠는 Neon scale-to-zero 콜드 스타트(10초 초과) 또는 동시 배포 락 경합으로 추정.
+
+**조치** — 사용자 결정 A안(재배포). §22 커밋 3개를 푸시해 새 빌드를 띄웠고 **성공**(`bb6edfb`, 1m 4s, Ready). 아침에 막혔던 작업분도 함께 반영됐다. 근본 대책(`directUrl` 분리)은 첫 발생이라 미루고 **백로그 §27**에 조치 순서까지 적어뒀다 — 🔴환경변수를 먼저 넣지 않고 스키마부터 고치면 빌드가 확실히 깨진다.
+
+**빌드 로그 경고 1건 → 백로그 §28** — `middleware` 규약이 deprecated(Next 16.1.3), `proxy`로 이전 필요. 다만 `middleware.ts`가 **`/admin/*` 권한 게이트**라 즉흥적으로 손댈 자리가 아니다(`next-auth` `withAuth` 호환성 확인 선행). 나머지 `npm warn allow-scripts`는 정보성이라 조치 불요.
+
+---
+
 ### 다이얼로그 바탕 회색 정리 (백로그 §22) `fix` `c55ff8c`
 
 계획서 [plan-다이얼로그배경정리.md](plan/plan-다이얼로그배경정리.md) · 보고서 [report-다이얼로그배경정리-20260902.md](report-다이얼로그배경정리-20260902.md).
