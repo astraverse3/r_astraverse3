@@ -110,7 +110,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 onClick={handleRowClick}
             >
                 {/* Checkbox */}
-                <TableCell className="py-3 px-3 w-[50px] text-center">
+                <TableCell className="px-1 text-center">
                     <Checkbox
                         checked={selected}
                         onCheckedChange={onSelect}
@@ -119,12 +119,12 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 1. Date (yyMMdd) */}
-                <TableCell className="py-3 px-3 text-center text-sm font-mono font-medium text-slate-500 w-[90px] tracking-tight">
+                <TableCell className="text-center font-mono tabular-nums text-slate-500">
                     {format(new Date(log.date), 'yyMMdd')}
                 </TableCell>
 
                 {/* 2. Variety - Clickable for Input History */}
-                <TableCell className="py-3 px-3 text-sm font-bold text-slate-800 md:w-[140px]">
+                <TableCell className="truncate font-semibold text-slate-900">
                     <div className="flex items-center gap-2">
                         <div className="group hover:text-primary hover:underline cursor-pointer flex items-center gap-1.5" title={varietiesFull}>
                             <span className="font-bold text-slate-900 line-clamp-1 break-all">
@@ -135,28 +135,28 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 3. Producer */}
-                <TableCell className="py-3 px-3 text-sm text-slate-600 md:w-[100px] truncate" title={farmersFull}>
+                <TableCell className="truncate text-slate-600" title={farmersFull}>
                     {farmersSummary}
                 </TableCell>
 
                 {/* 4. Classification */}
-                <TableCell className="py-3 px-3 text-center text-sm font-bold text-slate-700 w-[80px]">
+                <TableCell className="text-center font-semibold text-slate-700">
                     {classification}
                 </TableCell>
 
                 {/* 5. Tonbag Count */}
-                <TableCell className="py-3 px-3 text-right text-sm font-mono text-slate-500 w-[70px]">
+                <TableCell className="text-right font-mono tabular-nums text-slate-400">
                     <span className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-bold text-slate-600 mr-1">{tonbagCount}</span>
                     <span className="text-xs text-slate-400">백</span>
                 </TableCell>
 
                 {/* 6. Input Weight */}
-                <TableCell className="py-3 px-3 text-right text-sm font-bold text-slate-700 w-[90px]">
+                <TableCell className="text-right font-mono tabular-nums font-semibold text-slate-900">
                     {log.totalInputKg.toLocaleString()}
                 </TableCell>
 
                 {/* 7. Output Weight - Clickable to open packaging */}
-                <TableCell className="py-3 px-3 text-right text-sm font-bold text-primary w-[90px]">
+                <TableCell className="text-right font-mono tabular-nums font-semibold text-primary">
                     <span
                         className="cursor-pointer underline decoration-dashed decoration-primary/40 underline-offset-2 hover:decoration-primary hover:text-primary transition-colors"
                         onClick={(e) => { e.stopPropagation(); setPackagingOpen(true) }}
@@ -167,7 +167,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 8. Yield */}
-                <TableCell className="py-3 px-3 text-center text-sm font-mono font-bold w-[60px]">
+                <TableCell className="text-center font-mono tabular-nums font-semibold">
                     {totalRiceKg > 0 ? (
                         <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-primary/10 text-primary' : 'bg-slate-50 text-slate-500'}`}>
                             {Math.round(yieldRate)}%
@@ -176,14 +176,14 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 </TableCell>
 
                 {/* 9. Remarks (Truncated on mobile, Full on PC) */}
-                <TableCell className="py-3 px-3 text-left text-sm text-slate-500 md:max-w-[300px]">
+                <TableCell className="truncate text-left text-slate-500">
                     <div className="line-clamp-1 text-slate-400" title={log.remarks || ''}>
                         {log.remarks || '-'}
                     </div>
                 </TableCell>
 
                 {/* 10. Status - Clickable for Packaging */}
-                <TableCell className="py-3 px-3 text-center w-[60px]">
+                <TableCell className="text-center">
                     <button onClick={handleStatusClick} className="inline-block transition-transform hover:scale-105 active:scale-95 cursor-pointer">
                         <MillingStatusBadge isClosed={log.isClosed} hasOutputs={(log.outputs?.length ?? 0) > 0} size="sm" />
                     </button>

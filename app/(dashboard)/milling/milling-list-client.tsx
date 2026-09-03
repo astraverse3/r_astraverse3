@@ -58,25 +58,32 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
 
             {/* Desktop Table View */}
             <section className="hidden sm:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <Table>
+                <Table className="table-fixed">
+                    {/* 컬럼 폭 % (합 100). 로트 컬럼이 없는 표라 24% 규칙은 해당 없음 */}
+                    <colgroup>
+                        <col className="w-[5%]" /><col className="w-[9%]" /><col className="w-[15%]" />
+                        <col className="w-[11%]" /><col className="w-[8%]" /><col className="w-[7%]" />
+                        <col className="w-[9%]" /><col className="w-[9%]" /><col className="w-[7%]" />
+                        <col className="w-[14%]" /><col className="w-[6%]" />
+                    </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
-                            <TableHead className="w-[50px] py-3 px-3 text-center">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead className="px-1 text-center">
                                 <Checkbox
                                     checked={selectedIds.size === logs.length && logs.length > 0}
                                     onCheckedChange={handleSelectAll}
                                 />
                             </TableHead>
-                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[90px]">날짜</TableHead>
-                            <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[140px]">품종(원료)</TableHead>
-                            <TableHead className="py-3 px-3 text-sm font-bold text-slate-500 md:w-[100px]">생산자</TableHead>
-                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[80px]">구분</TableHead>
-                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[70px]">톤백</TableHead>
-                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">투입</TableHead>
-                            <TableHead className="py-3 px-3 text-right text-sm font-bold text-slate-500 w-[90px]">생산</TableHead>
-                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">수율</TableHead>
-                            <TableHead className="py-3 px-3 text-left text-sm font-bold text-slate-500 w-[50px] md:w-auto">비고</TableHead>
-                            <TableHead className="py-3 px-3 text-center text-sm font-bold text-slate-500 w-[60px]">상태</TableHead>
+                            <TableHead className="text-center">날짜</TableHead>
+                            <TableHead>품종(원료)</TableHead>
+                            <TableHead>생산자</TableHead>
+                            <TableHead className="text-center">구분</TableHead>
+                            <TableHead className="text-right">톤백</TableHead>
+                            <TableHead className="text-right">투입</TableHead>
+                            <TableHead className="text-right">생산</TableHead>
+                            <TableHead className="text-center">수율</TableHead>
+                            <TableHead className="text-left">비고</TableHead>
+                            <TableHead className="text-center">상태</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

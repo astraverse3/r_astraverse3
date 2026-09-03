@@ -308,15 +308,27 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                 )}
 
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 custom-scrollbar">
-                    <Table>
-                        <TableHeader className="sticky top-0 bg-white z-10">
-                            <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                <TableHead className="w-[60px] px-2 text-center text-xs font-bold text-slate-500">번호</TableHead>
-                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">생산자명</TableHead>
-                                <TableHead className="w-[80px] px-1 text-center text-xs font-bold text-slate-500">품종</TableHead>
-                                <TableHead className="px-1 text-center text-xs font-bold text-slate-500">인증</TableHead>
-                                <TableHead className="text-right px-2 text-xs font-bold text-slate-500">중량</TableHead>
-                                {canDelete && <TableHead className="w-[40px] px-0"></TableHead>}
+                    <Table className="table-fixed">
+                        {canDelete ? (
+                            <colgroup>
+                                <col className="w-[12%]" /><col className="w-[28%]" /><col className="w-[16%]" />
+                                <col className="w-[14%]" /><col className="w-[20%]" /><col className="w-[10%]" />
+                            </colgroup>
+                        ) : (
+                            <colgroup>
+                                <col className="w-[13%]" /><col className="w-[32%]" /><col className="w-[18%]" />
+                                <col className="w-[15%]" /><col className="w-[22%]" />
+                            </colgroup>
+                        )}
+                        {/* sticky 헤더는 유지. 배경은 §22에 따라 bg-card */}
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                            <TableRow className="bg-slate-50 hover:bg-transparent">
+                                <TableHead className="text-center">번호</TableHead>
+                                <TableHead className="text-center">생산자명</TableHead>
+                                <TableHead className="text-center">품종</TableHead>
+                                <TableHead className="text-center">인증</TableHead>
+                                <TableHead className="text-right">중량</TableHead>
+                                {canDelete && <TableHead className="px-1" />}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -324,9 +336,9 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                 <Fragment key={g.farmer}>
                                     {g.items.map((stock) => (
                                         <TableRow key={stock.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                            <TableCell className="px-2 text-center font-mono text-xs text-slate-500">#{stock.bagNo}</TableCell>
-                                            <TableCell className="px-1 text-center font-bold text-xs text-slate-900 truncate max-w-[60px]" title={stock.farmerName}>{stock.farmerName}</TableCell>
-                                            <TableCell className="px-1 text-center text-xs text-slate-800">
+                                            <TableCell className="text-center font-mono tabular-nums text-slate-400">#{stock.bagNo}</TableCell>
+                                            <TableCell className="text-center truncate font-semibold text-slate-900" title={stock.farmerName}>{stock.farmerName}</TableCell>
+                                            <TableCell className="text-center truncate">
                                                 <div className="truncate" title={stock.variety.name}>{stock.variety.name}</div>
                                             </TableCell>
                                             <TableCell className="px-1 text-center">
@@ -334,11 +346,11 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                                     {stock.certType}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="px-2 text-right font-mono font-bold text-xs text-slate-700">
+                                            <TableCell className="text-right font-mono tabular-nums font-semibold text-slate-900">
                                                 {stock.weightKg.toLocaleString()}
                                             </TableCell>
                                             {canDelete && (
-                                                <TableCell className="px-0 text-center">
+                                                <TableCell className="px-1 text-center">
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -355,10 +367,10 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                                     {showSubtotal && (
                                         <TableRow className="bg-primary/[0.04] border-y border-primary/10 hover:bg-primary/[0.04]">
                                             <TableCell />
-                                            <TableCell className="px-1 text-[10.5px] font-bold text-primary/60 tracking-wide">소계</TableCell>
-                                            <TableCell className="px-1 text-center text-[11px] text-slate-400">{g.items.length}개</TableCell>
+                                            <TableCell className="truncate text-[11.5px] font-semibold text-primary/70">소계</TableCell>
+                                            <TableCell className="text-center text-[11.5px] text-slate-400">{g.items.length}개</TableCell>
                                             <TableCell />
-                                            <TableCell className="px-2 text-right font-mono font-black text-xs text-slate-900 tabular-nums">
+                                            <TableCell className="text-right font-mono font-bold text-slate-900 tabular-nums">
                                                 {g.kg.toLocaleString()}<span className="text-[9px] font-bold text-slate-400 ml-px">kg</span>
                                             </TableCell>
                                             {canDelete && <TableCell />}

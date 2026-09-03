@@ -122,22 +122,28 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
 
             {/* Desktop View */}
             <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <Table>
+                <Table className="table-fixed">
+                    {/* 컬럼 폭 % (합 100) */}
+                    <colgroup>
+                        <col className="w-[5%]" /><col className="w-[5%]" /><col className="w-[13%]" />
+                        <col className="w-[24%]" /><col className="w-[24%]" /><col className="w-[9%]" />
+                        <col className="w-[13%]" /><col className="w-[7%]" />
+                    </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200">
-                            <TableHead className="w-[40px] text-center">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead className="px-1 text-center">
                                 <Checkbox
                                     checked={selectedIds.size === logs.length && logs.length > 0}
                                     onCheckedChange={handleSelectAll}
                                 />
                             </TableHead>
-                            <TableHead className="w-[40px] text-center"></TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500 w-[110px] text-center">출고일자</TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500">출고처</TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500">비고</TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500 w-[80px] text-right">수량</TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500 w-[110px] text-right">총 중량</TableHead>
-                            <TableHead className="py-2 text-xs font-bold text-slate-500 w-[60px] text-center">수정</TableHead>
+                            <TableHead className="px-1 text-center" />
+                            <TableHead className="text-center">출고일자</TableHead>
+                            <TableHead>출고처</TableHead>
+                            <TableHead>비고</TableHead>
+                            <TableHead className="text-right">수량</TableHead>
+                            <TableHead className="text-right">총 중량</TableHead>
+                            <TableHead className="text-center">수정</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -207,31 +213,35 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
                                                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">상세 톤백 내역</p>
                                                     </div>
                                                     <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm">
-                                                        <Table>
+                                                        <Table className="table-fixed">
+                                                            <colgroup>
+                                                                <col className="w-[9%]" /><col className="w-[16%]" /><col className="w-[38%]" />
+                                                                <col className="w-[12%]" /><col className="w-[16%]" /><col className="w-[9%]" />
+                                                            </colgroup>
                                                             <TableHeader>
-                                                                <TableRow className="bg-slate-50 h-9">
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500 w-[60px] text-center">년도</TableHead>
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500 w-[100px]">품종</TableHead>
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500">생산자 (작목반)</TableHead>
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500 w-[80px] text-center">톤백번호</TableHead>
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500 w-[100px] text-right">중량(kg)</TableHead>
-                                                                    <TableHead className="text-[11px] font-bold text-slate-500 w-[60px] text-center">취소</TableHead>
+                                                                <TableRow className="bg-slate-50 hover:bg-transparent">
+                                                                    <TableHead className="text-center">년도</TableHead>
+                                                                    <TableHead>품종</TableHead>
+                                                                    <TableHead>생산자 (작목반)</TableHead>
+                                                                    <TableHead className="text-center">톤백번호</TableHead>
+                                                                    <TableHead className="text-right">중량(kg)</TableHead>
+                                                                    <TableHead className="text-center">취소</TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
                                                             <TableBody>
                                                                 {log.stocks.map((stock) => (
-                                                                    <TableRow key={stock.id} className="hover:bg-slate-50 group/row h-10 border-slate-100">
-                                                                        <TableCell className="py-1 text-xs text-center text-slate-500 font-mono">{stock.productionYear}</TableCell>
-                                                                        <TableCell className="py-1 text-xs font-bold text-slate-800">{stock.variety.name}</TableCell>
-                                                                        <TableCell className="py-1 text-xs text-slate-700">
+                                                                    <TableRow key={stock.id} className="hover:bg-slate-50 group/row border-slate-100">
+                                                                        <TableCell className="text-center text-slate-400 font-mono tabular-nums">{stock.productionYear}</TableCell>
+                                                                        <TableCell className="truncate font-semibold text-slate-900">{stock.variety.name}</TableCell>
+                                                                        <TableCell className="truncate text-slate-700">
                                                                             <span className="font-medium">{stock.farmer.name}</span>
                                                                             <span className="text-slate-400 ml-1.5 text-[10px]">
                                                                                 {stock.farmer.group?.name || '작목반 없음'}
                                                                             </span>
                                                                         </TableCell>
-                                                                        <TableCell className="py-1 text-xs text-center font-bold text-slate-700">{stock.bagNo}번</TableCell>
-                                                                        <TableCell className="py-1 text-xs text-right font-mono font-bold text-slate-600">{stock.weightKg.toLocaleString()}</TableCell>
-                                                                        <TableCell className="py-1 text-center">
+                                                                        <TableCell className="text-center font-semibold text-slate-700 tabular-nums">{stock.bagNo}번</TableCell>
+                                                                        <TableCell className="text-right font-mono tabular-nums font-semibold text-slate-900">{stock.weightKg.toLocaleString()}</TableCell>
+                                                                        <TableCell className="text-center">
                                                                             {canManage && (
                                                                                 <Button
                                                                                     variant="ghost"
