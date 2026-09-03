@@ -62,8 +62,8 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
         <>
             <TableRow
                 className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0
-                    ${isAvailable ? `cursor-pointer hover:bg-primary/10 ${inExpandedGroup ? 'bg-slate-100' : ''}` : 'opacity-60 bg-slate-50'}
-                    ${selected ? 'bg-gradient-to-r from-primary/10 via-primary/5 to-white border-primary/20 shadow-sm' : ''}
+                    ${isAvailable ? `cursor-pointer ${selected ? '' : `hover:bg-primary/10 ${inExpandedGroup ? 'bg-slate-100' : ''}`}` : 'opacity-60 bg-slate-50'}
+                    ${selected ? 'bg-primary/20 hover:bg-primary/25 border-primary/30 shadow-sm' : ''}
                     ${isInCart ? 'bg-slate-50 opacity-50 cursor-not-allowed' : ''}
                 `}
                 onClick={() => isAvailable && onSelect(!selected)}
