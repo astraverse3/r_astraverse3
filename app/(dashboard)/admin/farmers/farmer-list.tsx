@@ -77,11 +77,26 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
         <>
             {/* Desktop View */}
             <div className="hidden sm:block rounded-md border bg-white shadow-sm overflow-hidden">
-                <Table>
+                <Table className="table-fixed">
+                    {/* 컬럼 폭은 % 비율(합 100). 체크박스·수정 컬럼은 권한에 따라 함께 빠진다 */}
+                    {canManageFromParent ? (
+                        <colgroup>
+                            <col className="w-[4%]" /><col className="w-[6%]" /><col className="w-[8%]" />
+                            <col className="w-[13%]" /><col className="w-[11%]" /><col className="w-[8%]" />
+                            <col className="w-[11%]" /><col className="w-[9%]" /><col className="w-[14%]" />
+                            <col className="w-[10%]" /><col className="w-[6%]" />
+                        </colgroup>
+                    ) : (
+                        <colgroup>
+                            <col className="w-[6%]" /><col className="w-[8%]" /><col className="w-[15%]" />
+                            <col className="w-[11%]" /><col className="w-[8%]" /><col className="w-[13%]" />
+                            <col className="w-[9%]" /><col className="w-[20%]" /><col className="w-[10%]" />
+                        </colgroup>
+                    )}
                     <TableHeader>
-                        <TableRow className="bg-slate-50">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
                             {canManageFromParent && (
-                                <TableHead className="w-[40px]">
+                                <TableHead>
                                     <Checkbox
                                         checked={selectedIds.size === farmers.length && farmers.length > 0}
                                         onCheckedChange={handleSelectAll}
@@ -105,7 +120,7 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
                     <TableBody>
                         {farmers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={11} className="text-center py-8 text-slate-500">
+                                <TableCell colSpan={canManageFromParent ? 11 : 9} className="h-32 text-center text-slate-400">
                                     등록된 생산자가 없습니다.
                                 </TableCell>
                             </TableRow>
@@ -362,47 +377,51 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
             {sortedGroups.map((group) => {
                 const isMultiFarmer = group.items.length > 1
                 const isExpanded = expandedGroups.has(group.key)
+                // 작목반이 없는 묶음은 그룹 헤더를 못 만든다 → 펼칠 손잡이가 없으므로 항상 낱개로 편다.
+                // (이 구분이 없으면 무소속 농가가 2명 이상일 때 데스크탑에서 아예 안 보였다)
+                const hasHeader = isMultiFarmer && !!group.group
+                // 헤더 아래 묶인 상태에서만 묶음톤을 입히고 반복 컬럼을 비운다
+                const inGroup = hasHeader && isExpanded
 
                 return (
                     <Fragment key={group.key}>
                         {/* Group Header (Only if > 1 items) */}
-                        {isMultiFarmer && group.group && (
+                        {hasHeader && (
                             <TableRow
-                                className={`group hover:bg-[#00a2e8]/16 border-y border-slate-200 font-bold text-slate-800 cursor-pointer transition-colors ${isExpanded ? 'bg-[#00a2e8]/20' : 'bg-white'}`}
+                                className={`cursor-pointer font-bold text-slate-800 transition-colors ${isExpanded
+                                    ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+                                    : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'}`}
                                 onClick={() => toggleGroup(group.key)}
                             >
-                                <TableCell></TableCell>
-                                <TableCell className="text-center text-sm">
+                                {canManage && <TableCell />}
+                                <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-1">
                                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                         {group.group.cropYear}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center text-sm">{group.group.code}</TableCell>
-                                <TableCell className="text-sm">{group.group.name}</TableCell>
+                                <TableCell className="text-center">{group.group.code}</TableCell>
+                                <TableCell className="truncate">{group.group.name}</TableCell>
                                 <TableCell>
                                     <Badge variant="secondary" className="font-normal border-slate-300 bg-white">
                                         {group.group.certType} {group.group.certNo}
                                     </Badge>
                                 </TableCell>
                                 <TableCell></TableCell>
-                                <TableCell className="text-sm text-[#008cc9] font-bold">
-                                    <div className="flex items-center gap-2">
-                                        <span className="underline decoration-[#00a2e8]/40 underline-offset-4">
-                                            총 {group.items.length}명
-                                        </span>
-                                        <span className="text-[10px] font-normal text-[#00a2e8] bg-[#00a2e8]/10 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:inline-block">
-                                            클릭해서 {isExpanded ? '접기' : '펼치기'}
-                                        </span>
-                                    </div>
+                                <TableCell className="font-semibold text-slate-900">
+                                    <span className="underline decoration-slate-300 underline-offset-4">
+                                        총 {group.items.length}명
+                                    </span>
                                 </TableCell>
-                                <TableCell colSpan={4}></TableCell>
+                                <TableCell colSpan={canManage ? 4 : 3} />
                             </TableRow>
                         )}
 
                         {/* Farmer Rows */}
-                        {(!isMultiFarmer || isExpanded) && group.items.map((farmer: Farmer) => (
-                            <TableRow key={farmer.id} className={`hover:bg-slate-50 ${isExpanded && isMultiFarmer ? 'bg-[#00a2e8]/7' : 'bg-white'}`}>
+                        {(!hasHeader || isExpanded) && group.items.map((farmer: Farmer) => (
+                            <TableRow key={farmer.id} className={inGroup
+                                ? 'bg-slate-100 hover:bg-slate-200/70 border-b-0'
+                                : 'bg-white hover:bg-slate-50'}>
                                 {canManage && (
                                     <TableCell>
                                         <Checkbox
@@ -412,60 +431,62 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                                         />
                                     </TableCell>
                                 )}
-                                <TableCell className="font-mono text-center text-slate-500 text-xs">
-                                    {farmer.group?.cropYear || '-'}
+                                <TableCell className="font-mono text-center text-slate-400">
+                                    {inGroup ? null : farmer.group?.cropYear || '-'}
                                 </TableCell>
-                                <TableCell className="font-mono text-center text-xs">
-                                    {farmer.group?.code || '-'}
+                                <TableCell className="font-mono text-center">
+                                    {inGroup ? null : farmer.group?.code || '-'}
                                 </TableCell>
-                                <TableCell className="text-xs">
-                                    <span className={farmer.group ? 'text-slate-700' : 'text-slate-500'}>
-                                        {farmer.group?.name || '(작목반 없음)'}
-                                    </span>
+                                <TableCell className="truncate">
+                                    {inGroup ? null : (
+                                        <span className={farmer.group ? 'text-slate-700' : 'text-slate-400'}>
+                                            {farmer.group?.name || '(작목반 없음)'}
+                                        </span>
+                                    )}
                                 </TableCell>
-                                <TableCell className="text-xs">
-                                    {farmer.group ? `${farmer.group.certType} ${farmer.group.certNo}` : '-'}
+                                <TableCell className="truncate">
+                                    {inGroup ? null : farmer.group ? `${farmer.group.certType} ${farmer.group.certNo}` : '-'}
                                 </TableCell>
-                                <TableCell className="font-mono text-center text-sm font-bold text-slate-700">{farmer.farmerNo}</TableCell>
-                                <TableCell className="font-bold text-slate-900">{farmer.name}</TableCell>
-                                <TableCell className="text-xs">
-                                    <span className={`inline-flex items-center font-medium px-1.5 py-0.5 rounded-md border ${farmer.producesMiscGrain ? 'text-amber-700 border-amber-200 bg-amber-50' : 'text-emerald-700 border-emerald-200 bg-emerald-50'}`}>
+                                <TableCell className="font-mono text-center font-semibold text-slate-700">{farmer.farmerNo}</TableCell>
+                                <TableCell className="truncate font-semibold text-slate-900">{farmer.name}</TableCell>
+                                <TableCell>
+                                    <span className={`inline-flex items-center text-[11.5px] font-semibold px-1.5 py-0.5 rounded-md border ${farmer.producesMiscGrain ? 'text-amber-700 border-amber-200 bg-amber-50' : 'text-emerald-700 border-emerald-200 bg-emerald-50'}`}>
                                         {farmer.producesMiscGrain ? '벼,잡곡' : '벼'}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-xs">
+                                <TableCell>
                                     {farmer.items ? (
                                         <span
-                                            className="inline-flex items-center font-medium px-2 py-0.5 rounded-full border text-violet-600 border-violet-200 bg-violet-50 max-w-[160px] truncate cursor-help"
+                                            className="inline-flex items-center max-w-full text-[11.5px] font-semibold px-2 py-0.5 rounded-full border text-violet-600 border-violet-200 bg-violet-50 truncate cursor-help"
                                             title={farmer.items}
                                         >
                                             {farmer.items}
                                         </span>
                                     ) : null}
                                 </TableCell>
-                                <TableCell className="text-xs">
+                                <TableCell>
                                     {farmer.phone ? (
                                         <a
                                             href={`tel:${farmer.phone}`}
-                                            className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full border text-[#00a2e8] border-[#00a2e8]/30 bg-[#00a2e8]/10 hover:bg-[#00a2e8]/20"
+                                            className="inline-flex items-center gap-1 max-w-full truncate text-[11.5px] font-semibold px-2 py-0.5 rounded-full border text-[#00a2e8] border-[#00a2e8]/30 bg-[#00a2e8]/10 hover:bg-[#00a2e8]/20"
                                             title={farmer.phone}
                                         >
                                             <Phone className="h-3 w-3" />{farmer.phone}
                                         </a>
                                     ) : null}
                                 </TableCell>
-                                <TableCell className="text-center">
-                                    {canManage && (
+                                {canManage && (
+                                    <TableCell className="text-center">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8"
+                                            className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-primary/10"
                                             onClick={() => setEditingFarmer(farmer)}
                                         >
                                             <Edit className="h-4 w-4" />
                                         </Button>
-                                    )}
-                                </TableCell>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </Fragment>
