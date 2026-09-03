@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { Download, Search, RefreshCcw, ChevronLeft, ChevronRight, Activity, CalendarClock, User as UserIcon, Monitor, Smartphone, Globe, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
     Select,
     SelectContent,
@@ -302,51 +303,56 @@ export function LogList() {
 
             {/* Desktop Table View */}
             <div className="hidden lg:block bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                            <th className="text-center px-5 py-3 w-[160px]">일시</th>
-                            <th className="text-center px-5 py-3 border-l border-slate-100 w-[120px]">작업자</th>
-                            <th className="text-center px-5 py-3 border-l border-slate-100 w-[100px]">구분</th>
-                            <th className="text-center px-5 py-3 border-l border-slate-100 w-[120px]">대상</th>
-                            <th className="text-left px-5 py-3 border-l border-slate-100">내역</th>
-                            <th className="text-center px-5 py-3 border-l border-slate-100 w-[150px]">IP</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
+                <Table className="table-fixed">
+                    {/* 컬럼 폭 % (합 100) */}
+                    <colgroup>
+                        <col className="w-[16%]" /><col className="w-[12%]" /><col className="w-[10%]" />
+                        <col className="w-[12%]" /><col className="w-[35%]" /><col className="w-[15%]" />
+                    </colgroup>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead className="text-center">일시</TableHead>
+                            <TableHead className="text-center">작업자</TableHead>
+                            <TableHead className="text-center">구분</TableHead>
+                            <TableHead className="text-center">대상</TableHead>
+                            <TableHead className="text-left">내역</TableHead>
+                            <TableHead className="text-center">IP</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {loading ? (
-                            <tr>
-                                <td colSpan={6} className="text-center py-16 text-slate-400 text-sm">
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-16 text-slate-400 text-sm">
                                     <div className="flex items-center justify-center gap-2">
                                         <Activity className="w-4 h-4 animate-pulse" />
                                         <span>로그 불러오는 중...</span>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ) : logs.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="text-center py-16">
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-16">
                                     <div className="flex flex-col items-center justify-center gap-2">
                                         <Search className="w-8 h-8 text-slate-200" />
                                         <span className="text-sm font-medium text-slate-400">조회된 로그가 없습니다.</span>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ) : (
                             logs.map((log) => {
                                 const ua = parseUserAgent(log.userAgent);
                                 const UAIcon = ua.icon;
                                 return (
-                                <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                <TableRow key={log.id}>
+                                    <TableCell className="text-center">
                                         <span className="text-[13px] font-bold text-slate-700">
                                             {format(new Date(log.createdAt), 'yyyy.MM.dd')}{' '}
                                         </span>
                                         <span className="text-[11px] text-slate-400 font-medium">
                                             {format(new Date(log.createdAt), 'HH:mm:ss')}
                                         </span>
-                                    </td>
-                                    <td className="px-5 py-3.5 border-l border-slate-100">
+                                    </TableCell>
+                                    <TableCell className="truncate">
                                         <div className="flex items-center justify-center gap-2">
                                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 shadow-sm shrink-0">
                                                 <UserIcon className="w-3.5 h-3.5 text-slate-500" />
@@ -355,18 +361,18 @@ export function LogList() {
                                                 <span className="text-xs font-bold text-slate-700 truncate leading-tight">{log.userName}</span>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-5 py-3.5 border-l border-slate-100 text-center">
+                                    </TableCell>
+                                    <TableCell className="text-center">
                                         <Badge variant="outline" className={`text-[10px] py-0 px-2 h-5 font-bold uppercase rounded border shadow-sm ${getActionColor(log.action)}`}>
                                             {log.action}
                                         </Badge>
-                                    </td>
-                                    <td className="px-5 py-3.5 border-l border-slate-100 text-center">
+                                    </TableCell>
+                                    <TableCell className="text-center">
                                         <span className="text-[13px] font-bold text-slate-700">
                                             {ENTITY_NAMES[log.entity] || log.entity}
                                         </span>
-                                    </td>
-                                    <td className="px-5 py-3.5 border-l border-slate-100 text-[13px] text-slate-600 leading-relaxed font-medium text-left">
+                                    </TableCell>
+                                    <TableCell className="text-left text-slate-600 whitespace-normal">
                                         <div className="flex items-center gap-2">
                                             <span className="flex-1">{log.description}</span>
                                             {log.details && Object.keys(log.details).length > 0 && (
@@ -385,8 +391,8 @@ export function LogList() {
                                                 </Popover>
                                             )}
                                         </div>
-                                    </td>
-                                    <td className="px-5 py-3.5 border-l border-slate-100 text-left">
+                                    </TableCell>
+                                    <TableCell className="text-left">
                                         <div className="flex items-center justify-start gap-1.5">
                                             <div title={ua.type} className="flex items-center justify-center">
                                                 <UAIcon className="w-3.5 h-3.5 text-slate-400" />
@@ -395,12 +401,12 @@ export function LogList() {
                                                 {log.ip === '::1' ? 'localhost' : (log.ip || 'INTERNAL')}
                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             )})
                         )}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Pagination Controls */}

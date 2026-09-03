@@ -7,6 +7,7 @@ import { Plus, Trash2, Star, ChevronDown, Wheat, Sprout } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { hasPermission } from '@/lib/permissions'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
@@ -268,42 +269,42 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                                     {/* 하위 SKU 테이블 (품종 컬럼 없음, 도정 컬럼 O) */}
                                     {open && (
                                         <div className="overflow-x-auto">
-                                            <table className="w-full text-sm border-collapse">
-                                                <thead>
-                                                    <tr className="text-left text-[10px] text-slate-400 border-b border-slate-100 bg-white">
-                                                        <th className="py-1.5 px-3 font-medium">도정</th>
-                                                        <th className="py-1.5 px-3 font-medium">규격</th>
-                                                        <th className="py-1.5 px-2 font-medium">포장지</th>
-                                                        <th className="py-1.5 px-2 font-medium text-center">기본</th>
-                                                        <th className="py-1.5 px-2 font-medium text-center">상태</th>
-                                                        <th className="py-1.5 px-3 font-medium text-right">관리</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
+                                            <Table className="w-full text-sm border-collapse">
+                                                <TableHeader>
+                                                    <TableRow className="text-left text-[10px] text-slate-400 border-b border-slate-100 bg-white">
+                                                        <TableHead className="text-left">도정</TableHead>
+                                                        <TableHead className="text-left">규격</TableHead>
+                                                        <TableHead className="py-1.5 px-2 font-medium">포장지</TableHead>
+                                                        <TableHead className="py-1.5 px-2 font-medium text-center">기본</TableHead>
+                                                        <TableHead className="py-1.5 px-2 font-medium text-center">상태</TableHead>
+                                                        <TableHead className="py-1.5 px-3 font-medium text-right">관리</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
                                                     {g.rows.map((row) => (
-                                                        <tr
+                                                        <TableRow
                                                             key={row.id}
                                                             className={`border-b border-slate-50 last:border-0 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
                                                         >
-                                                            <td className="py-2 px-3 text-slate-700 font-medium whitespace-nowrap">{getDisplayMillingType(row.millingType, g.type)}</td>
-                                                            <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
+                                                            <TableCell className="py-2 px-3 text-slate-700 font-medium whitespace-nowrap">{getDisplayMillingType(row.millingType, g.type)}</TableCell>
+                                                            <TableCell className="py-2 px-3 text-slate-600 whitespace-nowrap">
                                                                 {row.packageType}
                                                                 {row.unitsPerBox != null && (
                                                                     <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
                                                                 )}
-                                                            </td>
-                                                            <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
-                                                            <td className="py-2 px-2 text-center">
+                                                            </TableCell>
+                                                            <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</TableCell>
+                                                            <TableCell className="py-2 px-2 text-center">
                                                                 {row.isDefault && (
                                                                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
                                                                 )}
-                                                            </td>
-                                                            <td className="py-2 px-2 text-center">{statusButton(row)}</td>
-                                                            <td className="py-2 px-3 text-right whitespace-nowrap">{actionButtons(row)}</td>
-                                                        </tr>
+                                                            </TableCell>
+                                                            <TableCell className="py-2 px-2 text-center">{statusButton(row)}</TableCell>
+                                                            <TableCell className="py-2 px-3 text-right whitespace-nowrap">{actionButtons(row)}</TableCell>
+                                                        </TableRow>
                                                     ))}
-                                                </tbody>
-                                            </table>
+                                                </TableBody>
+                                            </Table>
                                         </div>
                                     )}
                                 </div>
@@ -319,51 +320,51 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                 {/* 잡곡 탭 — 평면 테이블 (그룹화 X, 품종 컬럼 O, 도정 컬럼 X) */}
                 {tab === 'misc' && (
                     <div className="overflow-x-auto -mx-1">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="text-left text-[11px] text-slate-400 border-b border-slate-200">
-                                    <th className="py-2 px-2 font-medium">품종</th>
-                                    <th className="py-2 px-2 font-medium">규격</th>
-                                    <th className="py-2 px-2 font-medium">포장지</th>
-                                    <th className="py-2 px-2 font-medium text-center">기본</th>
-                                    <th className="py-2 px-2 font-medium text-center">상태</th>
-                                    <th className="py-2 px-2 font-medium text-right">관리</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table className="w-full text-sm border-collapse">
+                            <TableHeader>
+                                <TableRow className="text-left text-[11px] text-slate-400 border-b border-slate-200">
+                                    <TableHead >품종</TableHead>
+                                    <TableHead >규격</TableHead>
+                                    <TableHead >포장지</TableHead>
+                                    <TableHead className="py-2 px-2 font-medium text-center">기본</TableHead>
+                                    <TableHead className="py-2 px-2 font-medium text-center">상태</TableHead>
+                                    <TableHead className="py-2 px-2 font-medium text-right">관리</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {[...visibleTypes]
                                     .sort((a, b) => a.variety.name.localeCompare(b.variety.name, 'ko'))
                                     .map((row) => (
-                                        <tr
+                                        <TableRow
                                             key={row.id}
                                             className={`border-b border-slate-50 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
                                         >
-                                            <td className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</td>
-                                            <td className="py-2 px-2 text-slate-600 whitespace-nowrap">
+                                            <TableCell className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</TableCell>
+                                            <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">
                                                 {row.packageType}
                                                 {row.unitsPerBox != null && (
                                                     <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
                                                 )}
-                                            </td>
-                                            <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</td>
-                                            <td className="py-2 px-2 text-center">
+                                            </TableCell>
+                                            <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</TableCell>
+                                            <TableCell className="py-2 px-2 text-center">
                                                 {row.isDefault && (
                                                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
                                                 )}
-                                            </td>
-                                            <td className="py-2 px-2 text-center">{statusButton(row)}</td>
-                                            <td className="py-2 px-2 text-right whitespace-nowrap">{actionButtons(row)}</td>
-                                        </tr>
+                                            </TableCell>
+                                            <TableCell className="py-2 px-2 text-center">{statusButton(row)}</TableCell>
+                                            <TableCell className="py-2 px-2 text-right whitespace-nowrap">{actionButtons(row)}</TableCell>
+                                        </TableRow>
                                     ))}
                                 {visibleTypes.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="py-8 text-center text-xs text-slate-400">
                                             등록된 제품유형이 없어요.
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
                 )}
             </section>

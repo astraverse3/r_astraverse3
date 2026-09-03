@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow as UiTableRow } from '@/components/ui/table'
 import {
   useReactTable,
   getCoreRowModel,
@@ -270,48 +271,48 @@ export function MillingTable({ data }: Props) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
+          <Table className="w-full text-sm">
+            <TableHeader>
               {table.getHeaderGroups().map(hg => (
-                <tr key={hg.id} className="bg-slate-50">
+                <UiTableRow key={hg.id} className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
                   {hg.headers.map(header => (
-                    <th
+                    <TableHead
                       key={header.id}
-                      className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide cursor-pointer select-none whitespace-nowrap"
+                      className="text-left cursor-pointer select-none"
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       <div className="flex items-center gap-1">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         <SortIcon sorted={header.column.getIsSorted()} />
                       </div>
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
+                </UiTableRow>
               ))}
-            </thead>
-            <tbody>
+            </TableHeader>
+            <TableBody>
               {table.getRowModel().rows.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-12 text-slate-400 text-sm">
+                <UiTableRow>
+                  <TableCell colSpan={columns.length} className="h-32 text-center text-slate-400">
                     조회된 데이터가 없습니다
-                  </td>
-                </tr>
+                  </TableCell>
+                </UiTableRow>
               ) : (
                 table.getRowModel().rows.map(row => (
-                  <tr
+                  <UiTableRow
                     key={row.id}
-                    className="border-t border-slate-50 hover:bg-primary/5 transition-colors"
+                    className="hover:bg-primary/5"
                   >
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
+                      <TableCell key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </UiTableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* 페이지네이션 */}

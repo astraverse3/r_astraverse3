@@ -4,6 +4,7 @@ import type {
   VarietyStockRow,
 } from '@/app/actions/stock-statistics'
 import { formatKg } from './utils'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 // ── 재고율 뱃지 ───────────────────────────────────────────────────────────
 
@@ -58,39 +59,39 @@ export function ChartLegend() {
 export function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '560px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">생산자명</th>
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">작목반</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-xs" style={{ minWidth: '560px' }}>
+        <TableHeader>
+          <TableRow className="border-b border-slate-200 bg-slate-50">
+            <TableHead className="text-left">생산자명</TableHead>
+            <TableHead className="text-left">작목반</TableHead>
+            <TableHead className="text-right">총 입고 (kg)</TableHead>
+            <TableHead className="text-right">도정완료 (kg)</TableHead>
+            <TableHead className="text-right">직접출고 (kg)</TableHead>
+            <TableHead className="text-right">미처리 (kg)</TableHead>
+            <TableHead className="text-right">재고율</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r, i) => (
-            <tr key={r.farmerId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.farmerName}</td>
-              <td className="py-2.5 px-3 text-slate-500 text-xs whitespace-nowrap">{r.groupName}</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
+            <TableRow key={r.farmerId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
+              <TableCell className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.farmerName}</TableCell>
+              <TableCell className="py-2.5 px-3 text-slate-500 text-xs whitespace-nowrap">{r.groupName}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap">
                 <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
           {rows.length === 0 && (
-            <tr>
-              <td colSpan={7} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
+            <TableRow>
+              <TableCell colSpan={7} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
+            </TableRow>
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
@@ -100,43 +101,43 @@ export function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
 export function GroupTable({ rows }: { rows: GroupStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '620px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">작목반명</th>
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">인증</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">생산자수</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-xs" style={{ minWidth: '620px' }}>
+        <TableHeader>
+          <TableRow className="border-b border-slate-200 bg-slate-50">
+            <TableHead className="text-left">작목반명</TableHead>
+            <TableHead className="text-left">인증</TableHead>
+            <TableHead className="text-right">생산자수</TableHead>
+            <TableHead className="text-right">총 입고 (kg)</TableHead>
+            <TableHead className="text-right">도정완료 (kg)</TableHead>
+            <TableHead className="text-right">직접출고 (kg)</TableHead>
+            <TableHead className="text-right">미처리 (kg)</TableHead>
+            <TableHead className="text-right">재고율</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r, i) => (
-            <tr key={r.groupId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.groupName}</td>
-              <td className="py-2.5 px-3 whitespace-nowrap">
+            <TableRow key={r.groupId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
+              <TableCell className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.groupName}</TableCell>
+              <TableCell className="py-2.5 px-3 whitespace-nowrap">
                 <CertBadge certType={r.certType} />
-              </td>
-              <td className="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">{r.farmerCount}명</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
+              </TableCell>
+              <TableCell className="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">{r.farmerCount}명</TableCell>
+              <TableCell className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap">
                 <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
           {rows.length === 0 && (
-            <tr>
-              <td colSpan={8} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
+            <TableRow>
+              <TableCell colSpan={8} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
+            </TableRow>
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
@@ -146,37 +147,37 @@ export function GroupTable({ rows }: { rows: GroupStockRow[] }) {
 export function VarietyTable({ rows }: { rows: VarietyStockRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: '480px' }}>
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
-            <th className="text-left py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">품종명</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">총 입고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">도정완료 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">직접출고 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">미처리 (kg)</th>
-            <th className="text-right py-2.5 px-3 font-semibold text-slate-500 text-xs whitespace-nowrap">재고율</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-xs" style={{ minWidth: '480px' }}>
+        <TableHeader>
+          <TableRow className="border-b border-slate-200 bg-slate-50">
+            <TableHead className="text-left">품종명</TableHead>
+            <TableHead className="text-right">총 입고 (kg)</TableHead>
+            <TableHead className="text-right">도정완료 (kg)</TableHead>
+            <TableHead className="text-right">직접출고 (kg)</TableHead>
+            <TableHead className="text-right">미처리 (kg)</TableHead>
+            <TableHead className="text-right">재고율</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r, i) => (
-            <tr key={r.varietyId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
-              <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.varietyName}</td>
-              <td className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</td>
-              <td className="py-2.5 px-3 text-right whitespace-nowrap">
+            <TableRow key={r.varietyId} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
+              <TableCell className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">{r.varietyName}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right font-medium text-slate-700 whitespace-nowrap">{formatKg(r.totalKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7db037' }}>{formatKg(r.consumedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#7c3aed' }}>{formatKg(r.releasedKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap" style={{ color: '#cc7b0c' }}>{formatKg(r.availableKg)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-right whitespace-nowrap">
                 <StockRateBadge rate={r.stockRate} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
           {rows.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</td>
-            </tr>
+            <TableRow>
+              <TableCell colSpan={6} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
+            </TableRow>
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   )
 }
