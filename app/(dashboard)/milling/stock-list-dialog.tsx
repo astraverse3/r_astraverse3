@@ -58,14 +58,15 @@ interface Props {
     date: Date | string
     remarks: string | null
     stocks: Stock[]
-    varieties: string
+    /** 호출부 3곳이 넘기지만 이 화면은 쓰지 않는다 — prop 제거는 호출부 동반 수정이 필요해 별건으로 둔다 */
+    varieties?: string
     trigger?: React.ReactNode
     canDelete?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
 }
 
-export function MillingStockListDialog({ batchId, millingType, date, remarks, stocks, varieties, trigger, canDelete = false, open, onOpenChange }: Props) {
+export function MillingStockListDialog({ batchId, millingType, date, remarks, stocks, trigger, canDelete = false, open, onOpenChange }: Props) {
     const router = useRouter()
     const { startEditing } = useMillingCart()
     const [isLoading, setIsLoading] = useState(false)
@@ -170,7 +171,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
         setIsLoading(false)
 
         if (!result.success) {
-            toast.error((result as any).error || '삭제 실패')
+            toast.error(('error' in result && result.error) || '삭제 실패')
         }
     }
 

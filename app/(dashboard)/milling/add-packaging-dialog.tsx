@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Plus, Minus, Package, Trash2, Lock, Check, X } from 'lucide-react'
+import { Plus, Minus, Package, Trash2, Lock, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
@@ -27,13 +27,37 @@ import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 
+/**
+ * `computeLotGroups`가 실제로 읽는 필드만 추린 구조 타입.
+ * Prisma `Stock` 페이로드(`variety` · `farmer.group` include)와,
+ * 호출부가 평탄화해 넘기는 변형(`farmerName`)을 모두 받아야 해서
+ * 관계 필드는 전부 선택적이다. 필드 오타·스키마 변경은 여기서 걸린다.
+ */
+export type PackagingStock = {
+    id: number
+    weightKg: number
+    incomingDate?: Date | string | null
+    varietyId?: number | null
+    farmerName?: string | null
+    variety?: { id?: number; name?: string | null; type?: string | null } | null
+    farmer?: {
+        name?: string | null
+        farmerNo?: string | null
+        group?: {
+            certType?: string | null
+            certNo?: string | null
+            code?: string | null
+        } | null
+    } | null
+}
+
 interface Props {
     batchId: number
     millingType?: string
     totalInputKg?: number
     isClosed?: boolean
     initialOutputs?: MillingOutputInput[]
-    stocks?: any[]
+    stocks?: PackagingStock[]
 }
 
 type LotGroup = {
@@ -46,7 +70,7 @@ type LotGroup = {
     totalInputKg: number
 }
 
-function computeLotGroups(stocks: any[], millingType: string): LotGroup[] {
+function computeLotGroups(stocks: PackagingStock[], millingType: string): LotGroup[] {
     const map = new Map<string, LotGroup>()
     for (const stock of stocks) {
         const isConventional = stock.farmer?.group?.certType === '일반'
@@ -136,7 +160,6 @@ export function AddPackagingDialog({
     // 규격 버튼 클릭 후 방금 추가/증가한 행의 입력칸으로 포커스 이동(맨아래 스크롤 대신)
     const pendingFocus = useRef<{ index: number; field: 'count' | 'weight' } | null>(null)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     // 저장·마감·초기화를 막는 조건. 재조회가 끝나기 전이거나 실패했으면 쓰기를 열지 않는다.
@@ -312,7 +335,7 @@ export function AddPackagingDialog({
             setOpen(true)
             router.refresh()
         } else {
-            toast.error((result as any).error || '마감 해제 실패')
+            toast.error(('error' in result && result.error) || '마감 해제 실패')
         }
     }
 
@@ -345,7 +368,7 @@ export function AddPackagingDialog({
             setOpen(false)
             router.refresh()
         } else {
-            toast.error((result as any).error || '마감 실패')
+            toast.error(('error' in result && result.error) || '마감 실패')
         }
     }
 
