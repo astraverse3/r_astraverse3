@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>목록 표준규격</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Pretendard,system-ui,sans-serif;background:#f1f5f9;color:#0f172a;-webkit-font-smoothing:antialiased;padding:36px 28px 80px}
+.page{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}
+.hd h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.hd p{font-size:14px;color:#64748b;margin-top:6px;max-width:68ch;text-wrap:pretty;line-height:1.65}
+.hd .meta{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hd .meta span{font-size:11.5px;font-weight:600;color:#475569;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:4px 9px}
+section{display:flex;flex-direction:column;gap:14px}
+.sh{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid #cbd5e1;padding-bottom:8px}
+.sh h2{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.sh p{font-size:12.5px;color:#64748b}
+.tok{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.tk{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:13px 14px;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.tk .k{font-size:11.5px;font-weight:600;color:#94a3b8}
+.tk .v{font-size:15px;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#0f172a}
+.tk .n{font-size:11.5px;color:#64748b;line-height:1.55;text-wrap:pretty}
+.cls{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.cls .cr{display:grid;grid-template-columns:124px 1fr;gap:14px;padding:11px 14px;border-bottom:1px solid #f1f5f9;align-items:start}
+.cls .cr:last-child{border-bottom:0}
+.cls .cr>b{font-size:13px;font-weight:600;color:#334155}
+.cls .cr>div{font-size:13px;color:#475569;line-height:1.75}
+code{font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;display:inline-block;word-break:break-all}
+.ex{display:flex;flex-direction:column;gap:9px}
+.ex .lbl{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ex .lbl b{font-size:14px;font-weight:600}
+.ex .lbl span{font-size:11.5px;color:#94a3b8}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead tr{background:#f8fafc;border-bottom:1px solid #e2e8f0}
+th{height:40px;padding:0 12px;font-size:14px;font-weight:500;color:#0f172a;white-space:nowrap;text-align:left}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .12s}
+tbody tr:hover{background:#f8fafc}
+td{height:44px;padding:0 12px;font-size:14px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.ar{text-align:right}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.dim{color:#94a3b8}.bold{font-weight:600;color:#0f172a}.sub2{color:#64748b}
+.lot{font-size:12.5px;color:#64748b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.ch{font-style:normal;font-size:11px;display:inline-block;width:15px;color:#475569}
+.sp{display:inline-block;width:15px}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid}
+.org{color:#3f6212;border-color:#d9f99d;background:#f7fee7}
+.nop{color:#075985;border-color:#bae6fd;background:#f0f9ff}
+.bdg{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px}
+.s1{color:#0369a1;background:#e0f2fe}.s2{color:#b45309;background:#fef3c7}.s3{color:#475569;background:#f1f5f9}
+tr.gh td{background:rgba(248,250,252,.75);border-top:1px solid rgba(226,232,240,.8);border-bottom:0}
+tr.gh:hover td{background:rgba(241,245,249,.85)}
+tr.gs td{background:rgba(248,250,252,.75);border-bottom:0}
+tr.gs.last td{border-bottom:1px solid rgba(226,232,240,.8)}
+tr.gs:hover td{background:rgba(241,245,249,.85)}
+tr.gc td{background:#f8fafc;border-top:1px solid rgba(226,232,240,.8);border-bottom:1px solid rgba(226,232,240,.8)}
+tr.gc:hover td{background:#f1f5f9}
+tr.solo td{background:#fff}
+.audit{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto}
+.audit table{table-layout:auto;min-width:740px}
+.audit th{height:36px;font-size:13px}
+.audit td{height:auto;padding:9px 12px;font-size:13px;white-space:normal;background:#fff}
+.audit tbody tr:hover td{background:#f8fafc}
+.audit td.was{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:#b91c1c;line-height:1.5}
+.audit td.now{font-size:12.5px;color:#15803d;font-weight:600}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;font-size:13px;color:#78350f;line-height:1.75;text-wrap:pretty}
+.note b{font-weight:700}
+.warn{background:#fef2f2;border-color:#fecaca;color:#7f1d1d}
+</style></head><body><div class="page">
+
+<div class="hd">
+<h1>목록 표준규격</h1>
+<p>목록 테이블 11곳의 헤더·행 스펙과 펼침 그룹 표현이 전부 달라 화면을 옮길 때마다 밀도와 색이 튑니다. 헤더·본문은 <b>생산자 관리</b>의 <code>TableHead</code> 기본값을, 펼침 그룹은 <b>원물재고 잡곡</b>의 slate 묶음톤을 정본으로 삼아 통일합니다.</p>
+<div class="meta"><span>헤더 40px · 14px / 500 / slate-900</span><span>모든 행 44px · 본문 14px</span><span>좌우 12px · 헤더 배경 slate-50</span><span>컬럼 폭 % · 가로 스크롤 없음</span><span>펼침 그룹 slate 묶음톤</span><span>정렬은 페이지별 현행 유지</span><span>데스크탑 먼저</span></div>
+</div>
+
+<div class="note warn"><b>기존 문서와의 충돌.</b> <code>handoff.md §4.2.3</code>은 테이블 헤더를 <code>text-[10.5px] uppercase tracking-wider text-slate-400 font-bold</code>, 본문을 12.5px·<code>px-4 py-2.5</code>로 지정하고 있습니다. 그 값은 Typography의 <b>Micro Bold(섹션 그룹 헤더)</b> 토큰 — 영문 라벨("MAIN MENU")용입니다. 한글 헤더("품종", "생산자")에 <code>uppercase</code>·<code>tracking-wider</code>는 아무 효과가 없고 글자만 작아집니다. <b>이 문서를 정본으로 하고 §4.2.3을 개정</b>하는 것을 전제로 작성했습니다 (개정안은 작업지시 R5).</div>
+
+<section>
+<div class="sh"><h2>1. 표준 토큰</h2><p>모든 목록 테이블이 공유하는 값</p></div>
+<div class="tok"><div class="tk"><span class="k">헤더 행 높이</span><span class="v">40px</span><span class="n">h-10 — 생산자관리 현행값</span></div><div class="tk"><span class="k">헤더 텍스트</span><span class="v">14px / 500</span><span class="n">text-sm font-medium text-slate-900 · 좌측정렬</span></div><div class="tk"><span class="k">헤더 배경</span><span class="v">slate-50</span><span class="n">bg-slate-50 + 하단 border-slate-200. 호버 없음</span></div><div class="tk"><span class="k">본문 행 높이</span><span class="v">44px</span><span class="n">h-11. 그룹 헤더 행도 동일. 2줄 셀 행만 예외</span></div><div class="tk"><span class="k">본문 텍스트</span><span class="v">14px</span><span class="n">text-sm text-slate-700</span></div><div class="tk"><span class="k">좌우 패딩</span><span class="v">12px</span><span class="n">th·td 공통 px-3. 체크박스·아이콘 컬럼만 px-1</span></div><div class="tk"><span class="k">행 구분</span><span class="v">구분선만</span><span class="n">border-b border-slate-100 · 호버 bg-slate-50. 짝수행 음영 없음</span></div><div class="tk"><span class="k">컬럼 폭</span><span class="v">% 비율</span><span class="n">colgroup에 % 지정. table-layout:fixed. 가로 스크롤 없음</span></div><div class="tk"><span class="k">컨테이너</span><span class="v">r8 · slate-200</span><span class="n">rounded-lg border shadow-sm overflow-hidden</span></div><div class="tk"><span class="k">숫자</span><span class="v">tabular-nums</span><span class="n">수량·중량·로트·번호는 font-mono tabular-nums</span></div><div class="tk"><span class="k">펼침 그룹</span><span class="v">slate 묶음톤</span><span class="n">헤더+서브행 같은 bg-slate-50/75. 시안톤 금지</span></div><div class="tk"><span class="k">단일 건 그룹</span><span class="v">낱개 행</span><span class="n">하위 1건이면 그룹 헤더를 만들지 않고 흰 행으로</span></div><div class="tk"><span class="k">헤더 고정</span><span class="v">다이얼로그·장문만</span><span class="n">sticky top-0 z-10 + bg-slate-50. 일반 목록 미적용</span></div></div>
+</section>
+
+<section>
+<div class="sh"><h2>2. 셀 클래스 규약</h2><p>성격별로 이 조합만 쓴다</p></div>
+<div class="cls"><div class="cr"><b>텍스트</b><div><code>text-sm text-slate-700</code> · 대표값(생산자명·품종명)만 <code>font-semibold text-slate-900</code></div></div><div class="cr"><b>숫자·수량</b><div><code>text-right font-mono tabular-nums</code> · 합계·중량은 <code>font-semibold text-slate-900</code></div></div><div class="cr"><b>보조 숫자</b><div>년도·번호처럼 참고값은 <code>text-slate-400</code></div></div><div class="cr"><b>로트번호</b><div><code>text-[12.5px] font-mono text-slate-500</code> · 컬럼 폭 24% 이상 배정</div></div><div class="cr"><b>인증 칩</b><div><code>text-[11.5px] font-semibold px-1.5 rounded-md border</code> · 유기=lime, 무농약=sky</div></div><div class="cr"><b>상태 배지</b><div><code>text-[11.5px] font-semibold px-2 rounded-full</code> · 테두리 없음, 배경 톤만</div></div><div class="cr"><b>액션</b><div>아이콘 버튼 <code>h-8 w-8 text-slate-400</code> · 호버 <code>text-primary bg-primary/10</code></div></div><div class="cr"><b>그룹 헤더 행</b><div><code>bg-slate-50/75</code> + 상단 <code>border-slate-200/80</code> · 하단 border 없음 · 토글 <code>▸/▾</code></div></div><div class="cr"><b>그룹 서브행</b><div>헤더와 <b>같은</b> <code>bg-slate-50/75</code> · 마지막 행에만 하단 border · 첫 컬럼 <code>└</code></div></div><div class="cr"><b>접힌 그룹 헤더</b><div><code>bg-slate-50</code> + 상하 <code>border-slate-200/80</code> — 흰 배경 금지(낱개와 구분 안 됨)</div></div><div class="cr"><b>빈 목록</b><div><code>h-32 text-center text-sm text-slate-400</code> · 문구는 "OOO이 없습니다."</div></div></div>
+</section>
+
+<section>
+<div class="sh"><h2>3. 평면 목록</h2><p>컬럼 폭은 % 비율 — 화면 폭에 따라 신축, 가로 스크롤 없음</p></div>
+<div class="ex">
+<div class="lbl"><b>원물재고 (벼) · 평면</b><span>기존 12px/700/slate-500 · px-1 → 14px/500/slate-900 · px-3</span></div>
+<div class="card"><table>
+<colgroup><col style="width:7%"><col style="width:11%"><col style="width:19%"><col style="width:10%"><col style="width:24%"><col style="width:8%"><col style="width:11%"><col style="width:10%"></colgroup>
+<thead><tr><th>년도</th><th>품종</th><th>생산자</th><th>인증</th><th>Lot No</th><th class="ar">톤백</th><th class="ar">중량(kg)</th><th>상태</th></tr></thead>
+<tbody><tr><td class="num dim">2025</td><td>신동진</td><td class="bold">윤영식</td><td><span class="chip org">유기</span></td><td class="lot">251119-11-15103885-4118</td><td class="ar num">3</td><td class="ar num bold">2,400</td><td><span class="bdg s1">입고</span></td></tr><tr><td class="num dim">2025</td><td>신동진</td><td class="bold">김판수</td><td><span class="chip org">유기</span></td><td class="lot">251119-14-15103885-4121</td><td class="ar num">2</td><td class="ar num bold">1,600</td><td><span class="bdg s2">도정</span></td></tr><tr><td class="num dim">2025</td><td>삼광</td><td class="bold">이재명</td><td><span class="chip nop">무농약</span></td><td class="lot">251120-22-15103885-4130</td><td class="ar num">4</td><td class="ar num bold">3,200</td><td><span class="bdg s1">입고</span></td></tr><tr><td class="num dim">2025</td><td>삼광</td><td class="bold">윤영식유기농영농조합법인</td><td><span class="chip org">유기</span></td><td class="lot">251120-11-15103885-4131</td><td class="ar num">1</td><td class="ar num bold">800</td><td><span class="bdg s3">완료</span></td></tr><tr><td class="num dim">2024</td><td>추청</td><td class="bold">박정호</td><td><span class="chip nop">무농약</span></td><td class="lot">241105-31-15103885-3902</td><td class="ar num">2</td><td class="ar num bold">1,600</td><td><span class="bdg s2">도정</span></td></tr></tbody></table></div>
+</div>
+</section>
+
+<section>
+<div class="sh"><h2>4. 펼침 그룹</h2><p>헤더와 서브행을 같은 톤으로 묶고, 단일 건은 그룹을 만들지 않는다</p></div>
+<div class="ex">
+<div class="lbl"><b>원물재고 · 품종 그룹</b><span>위 2그룹 = 펼침 / 추청 = 하위 1건이라 낱개 / 백진주 = 접힌 그룹</span></div>
+<div class="card"><table>
+<colgroup><col style="width:5%"><col style="width:12%"><col style="width:8%"><col style="width:20%"><col style="width:10%"><col style="width:24%"><col style="width:8%"><col style="width:13%"></colgroup>
+<thead><tr><th></th><th>품종</th><th>년도</th><th>생산자</th><th>인증</th><th>Lot No</th><th class="ar">톤백</th><th class="ar">중량(kg)</th></tr></thead>
+<tbody><tr class="gh"><td><i class="ch">▾</i></td><td class="bold">신동진</td><td class="num dim">2025</td><td class="sub2">3명</td><td></td><td></td><td class="ar num">9</td><td class="ar num bold">7,200</td></tr><tr class="gs"><td></td><td class="dim">└</td><td></td><td class="bold">윤영식</td><td><span class="chip org">유기</span></td><td class="lot">251119-11-15103885-4118</td><td class="ar num">3</td><td class="ar num bold">2,400</td></tr><tr class="gs"><td></td><td class="dim">└</td><td></td><td class="bold">김판수</td><td><span class="chip org">유기</span></td><td class="lot">251119-14-15103885-4121</td><td class="ar num">2</td><td class="ar num bold">1,600</td></tr><tr class="gs last"><td></td><td class="dim">└</td><td></td><td class="bold">이재명</td><td><span class="chip nop">무농약</span></td><td class="lot">251119-22-15103885-4124</td><td class="ar num">4</td><td class="ar num bold">3,200</td></tr><tr class="gh"><td><i class="ch">▾</i></td><td class="bold">삼광</td><td class="num dim">2025</td><td class="sub2">2명</td><td></td><td></td><td class="ar num">5</td><td class="ar num bold">4,000</td></tr><tr class="gs"><td></td><td class="dim">└</td><td></td><td class="bold">윤영식유기농영농조합법인</td><td><span class="chip org">유기</span></td><td class="lot">251120-11-15103885-4131</td><td class="ar num">1</td><td class="ar num bold">800</td></tr><tr class="gs last"><td></td><td class="dim">└</td><td></td><td class="bold">박정호</td><td><span class="chip nop">무농약</span></td><td class="lot">251120-31-15103885-4133</td><td class="ar num">4</td><td class="ar num bold">3,200</td></tr><tr class="solo"><td><i class="sp"></i></td><td class="bold">추청</td><td class="num dim">2024</td><td class="bold">최영식</td><td><span class="chip org">유기</span></td><td class="lot">241105-33-15103885-3905</td><td class="ar num">2</td><td class="ar num bold">1,600</td></tr><tr class="gc"><td><i class="ch">▸</i></td><td class="bold">백진주</td><td class="num dim">2024</td><td class="sub2">2명</td><td></td><td></td><td class="ar num">5</td><td class="ar num bold">4,000</td></tr></tbody></table></div>
+</div>
+<div class="note"><b>세 가지 상태가 서로 구분됩니다.</b> 펼친 그룹은 헤더+서브행이 <code>bg-slate-50/75</code> 한 덩어리, 접힌 그룹은 <code>bg-slate-50</code> 단독 행에 상하 border, 낱개는 흰 배경입니다. 접힌 그룹을 흰 배경으로 두면 낱개와 구분이 안 되므로 금지합니다. 그룹 헤더 행도 <b>44px</b> — 다른 행과 같은 높이로 리듬을 유지합니다.</div>
+</section>
+
+<section>
+<div class="sh"><h2>5. 현행 → 표준</h2><p>실제 코드와 handoff.md에서 확인한 스펙</p></div>
+<div class="audit"><table>
+<thead><tr><th style="width:210px">화면</th><th>현행</th><th style="width:150px">표준 적용 후</th></tr></thead>
+<tbody><tr><td><b>생산자 관리</b></td><td class="was">TableHead 기본값 — h-10 px-2 text-sm font-medium text-foreground</td><td class="now">헤더 정본 · px-3만</td></tr><tr><td><b>생산자 관리 · 펼침</b></td><td class="was">bg-[#00a2e8]/20 그룹 + /7 서브행 + 접힘 흰 배경</td><td class="now">시안톤 <b>삭제</b> → slate</td></tr><tr><td><b>원물재고 (벼)</b></td><td class="was">py-2 px-1 text-xs font-bold text-slate-500</td><td class="now">px-3 · 14px/500</td></tr><tr><td><b>원물재고 (벼) · 펼침</b></td><td class="was">그룹 h-12 · 서브행 톤 없음</td><td class="now">44px · 서브행 묶음톤</td></tr><tr><td><b>원물재고 (잡곡)</b></td><td class="was">py-2 px-1 text-xs font-bold text-slate-500</td><td class="now">px-3 · 14px/500</td></tr><tr><td><b>원물재고 (잡곡) · 펼침</b></td><td class="was">bg-slate-50/60 묶음 + 단일건 낱개</td><td class="now"><b>펼침 정본</b> · 유지</td></tr><tr><td><b>도정 목록</b></td><td class="was">py-3 px-3 text-sm font-bold text-slate-500</td><td class="now">h-10 · 500</td></tr><tr><td><b>도정 원물선택 다이얼로그</b></td><td class="was">px-1 text-xs font-bold text-slate-500 (sticky)</td><td class="now">px-3 · 14px/500</td></tr><tr><td><b>출고 이력</b></td><td class="was">py-2 text-xs font-bold text-slate-500</td><td class="now">px-3 · 14px/500</td></tr><tr><td><b>출고 이력 · 중첩표</b></td><td class="was">h-9 text-[11px] font-bold text-slate-500</td><td class="now">h-10 · 14px/500</td></tr><tr><td><b>품종 관리</b></td><td class="was">font-bold text-slate-500 (높이 기본값)</td><td class="now">h-10 명시 · 500</td></tr><tr><td><b>제품유형 관리</b></td><td class="was">py-1.5 / py-2 px-2 font-medium (생 th)</td><td class="now">공통 컴포넌트로</td></tr><tr><td><b>감사 로그</b></td><td class="was">px-5 py-3 + border-l 세로선 (생 th)</td><td class="now">px-3 · 세로선 제거</td></tr><tr><td><b>통계 표</b></td><td class="was">py-2.5 px-3 font-semibold text-slate-500 text-xs</td><td class="now">14px / 500</td></tr><tr><td><b>포장재고 펼침 (handoff.md §4.2)</b></td><td class="was">grid fr · 10.5px uppercase slate-400 헤더</td><td class="now">§4.2.3 개정 필요 (R5)</td></tr></tbody>
+</table></div>
+<div class="note"><b>정렬은 손대지 않습니다.</b> 같은 성격의 컬럼이 페이지마다 좌/중앙으로 갈리는 문제는 남아 있지만, 요청대로 현행을 유지했습니다. 나중에 정리할 때의 기준선(텍스트 좌 · 숫자 우 · 상태·코드 좌)은 <b>2. 셀 클래스 규약</b>에 기록해 뒀습니다. 모바일 카드도 성격이 달라 이번 범위에서 빼고, 다음에 함께 봅니다.</div>
+</section>
+
+</div></body></html>

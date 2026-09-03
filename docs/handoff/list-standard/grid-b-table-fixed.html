@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>B · table 고정폭</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>*{box-sizing:border-box;margin:0}
+body{font-family:Pretendard,system-ui,sans-serif;background:#f1f5f9;padding:28px;color:#0f172a;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto}
+.cap{margin-bottom:14px}
+.cap h1{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.cap p{font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.55}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.dim{color:#94a3b8}
+.lot{font-size:12.5px;color:#64748b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.foot{margin-top:12px;font-size:11.5px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap}
+.foot span{background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px}
+.pro{margin-top:14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:13px 15px;font-size:12.5px;color:#475569;line-height:1.7}
+.pro b{color:#0f172a;font-weight:600}
+.pro ul{margin:6px 0 0 16px;padding:0}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead tr{background:#f8fafc;border-bottom:1px solid #e2e8f0}
+th{height:40px;padding:0 12px;font-size:14px;font-weight:500;color:#0f172a;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid #f1f5f9}
+tbody tr:hover{background:#f8fafc}
+td{height:44px;padding:0 12px;font-size:14px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.ar{text-align:right}
+.bold{font-weight:600;color:#0f172a}
+.v{font-weight:600;color:#0f172a}
+.v i,.v2 i{vertical-align:middle;margin-right:7px}
+.ch{font-style:normal;color:#475569;font-size:11px;display:inline-block;width:14px}
+.sp{display:inline-block;width:14px}
+.v2{padding-left:32px!important}
+.dash{width:8px;height:1px;background:#cbd5e1;display:inline-block}
+.v2 em{font-style:normal;font-size:12px;color:#94a3b8}
+tr.gg td{background:rgba(248,250,252,.7);border-top:1px solid rgba(226,232,240,.8);border-bottom:0}
+tr.gg:hover td{background:rgba(241,245,249,.9)}
+tr.gs td{background:rgba(248,250,252,.5);color:#475569;border-top:1px solid rgba(226,232,240,.6)}
+tr.gs.last td{border-bottom:1px solid rgba(226,232,240,.8)}
+tbody tr.gs:hover td,tbody tr.gg:hover td{background:rgba(241,245,249,.8)}</style></head><body><div class="wrap">
+<div class="cap"><h1>B · &lt;table&gt; — px 고정폭 + 가로 스크롤</h1><p>다른 목록과 완전히 같은 마크업. 로트 컬럼에 214px를 확정 배정하고, 좁아지면 테이블 전체가 가로 스크롤된다.</p></div>
+<div class="card"><table style="min-width:920px"><colgroup><col style="width:150px"><col style="width:120px"><col style="width:80px"><col style="min-width:180px"><col style="width:214px"><col style="width:80px"><col style="width:96px"></colgroup><thead><tr><th>품종</th><th>규격</th><th>개수</th><th>생산자</th><th>로트</th><th>날짜</th><th class="ar">합계</th></tr></thead><tbody><tr class="gg"><td class="v"><i class="ch">▾</i>검정보리</td><td class="dim">2종 규격</td><td class="num dim">320포</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="num ar bold">260kg</td></tr><tr class="gs"><td class="v2"><i class="dash"></i><em>규격</em></td><td>500g × 120포</td><td class="num">120포</td><td>동일농산</td><td class="lot">251118-11-15103885-4102</td><td class="num dim">11-18</td><td class="num ar">60kg</td></tr><tr class="gs last"><td class="v2"><i class="dash"></i><em>규격</em></td><td>1kg × 200포</td><td class="num">200포</td><td>동일농산</td><td class="lot">251118-11-15103885-4103</td><td class="num dim">11-18</td><td class="num ar">200kg</td></tr><tr class="gg"><td class="v"><i class="ch">▾</i>귀리</td><td class="dim">2종 규격</td><td class="num dim">168포</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="num ar bold">108kg</td></tr><tr class="gs"><td class="v2"><i class="dash"></i><em>규격</em></td><td>500g × 120포</td><td class="num">120포</td><td>동일농산</td><td class="lot">251119-14-15103885-4118</td><td class="num dim">11-19</td><td class="num ar">60kg</td></tr><tr class="gs last"><td class="v2"><i class="dash"></i><em>규격</em></td><td>1kg × 48포</td><td class="num">48포</td><td>동일농산</td><td class="lot">251119-14-15103885-4119</td><td class="num dim">11-19</td><td class="num ar">48kg</td></tr><tr><td class="v"><i class="sp"></i>백태</td><td>2kg × 40포</td><td class="num">40포</td><td>윤영식유기농영농조합법인</td><td class="lot">251120-11-15103885-4131</td><td class="num dim">11-20</td><td class="num ar bold">80kg</td></tr><tr><td class="v"><i class="sp"></i>서리태</td><td>1kg × 60포</td><td class="num">60포</td><td>박정호</td><td class="lot">251120-31-15103885-4133</td><td class="num dim">11-20</td><td class="num ar bold">60kg</td></tr></tbody></table></div>
+<div class="foot"><span>colgroup px 고정</span><span>min-width 920px</span><span>좁으면 가로 스크롤</span></div>
+<div class="pro"><b>이 방식의 성격</b><ul><li>모든 목록이 하나의 <code>ui/table</code> 프리미티브를 공유한다 — 표준규격이 진짜로 한 곳에서 관리된다</li><li><b>로트번호가 절대 잘리지 않는다</b> (214px 확정)</li><li>펼침 그룹의 "한 덩어리" 표현은 <code>&lt;tr&gt;</code> 배경·상하 border로 처리 — grid의 ring보다 약간 투박하다</li><li>좁은 화면에서 가로 스크롤이 생긴다</li></ul></div>
+</div></body></html>

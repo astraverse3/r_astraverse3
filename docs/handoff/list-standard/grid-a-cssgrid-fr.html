@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>A · CSS grid (fr)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>*{box-sizing:border-box;margin:0}
+body{font-family:Pretendard,system-ui,sans-serif;background:#f1f5f9;padding:28px;color:#0f172a;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto}
+.cap{margin-bottom:14px}
+.cap h1{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.cap p{font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.55}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.dim{color:#94a3b8}
+.lot{font-size:12.5px;color:#64748b;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.foot{margin-top:12px;font-size:11.5px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap}
+.foot span{background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px}
+.pro{margin-top:14px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:13px 15px;font-size:12.5px;color:#475569;line-height:1.7}
+.pro b{color:#0f172a;font-weight:600}
+.pro ul{margin:6px 0 0 16px;padding:0}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.gh,.gr{display:grid;grid-template-columns:1.1fr .8fr .6fr 1fr 1.3fr .7fr .8fr;gap:0;align-items:center;padding:0 12px}
+.gh{height:40px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:14px;font-weight:500;color:#0f172a}
+.gr{height:44px;font-size:14px;color:#334155;border-bottom:1px solid #f1f5f9}
+.gr>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:10px}
+.gr:hover{background:#f8fafc}
+.ar{text-align:right;padding-right:0!important}
+.bold{font-weight:600;color:#0f172a}
+.v{display:flex;align-items:center;gap:7px;font-weight:600;color:#0f172a}
+.v2{display:flex;align-items:center;gap:7px;padding-left:20px}
+.ch{font-style:normal;color:#475569;font-size:11px;width:14px}
+.sp{width:14px;display:inline-block}
+.dash{width:8px;height:1px;background:#cbd5e1;display:inline-block}
+.v2 em{font-style:normal;font-size:12px;color:#94a3b8}
+.gwrap{background:rgba(248,250,252,.6);box-shadow:inset 0 0 0 1px rgba(226,232,240,.7)}
+.gg{border-bottom:0}
+.gs{border-top:1px solid rgba(226,232,240,.6);border-bottom:0;color:#475569}
+</style></head><body><div class="wrap">
+<div class="cap"><h1>A · CSS grid — fr 비율 컬럼</h1><p>handoff.md §4.2 현행 구조. 컬럼 폭이 <code>1.1fr .8fr .6fr 1fr 1.3fr .7fr .8fr</code> 비율로 화면 폭에 따라 늘어남.</p></div>
+<div class="card"><div class="gh"><span>품종</span><span>규격</span><span>개수</span><span>생산자</span><span>로트</span><span>날짜</span><span class="ar">합계</span></div><div class="gwrap"><div class="gr gg"><span class="v"><i class="ch">▾</i>검정보리</span><span class="dim">2종 규격</span><span class="num dim">320포</span><span class="dim">—</span><span class="dim">—</span><span class="dim">—</span><span class="num ar bold">260kg</span></div><div class="gr gs"><span class="v2"><i class="dash"></i><em>규격</em></span><span>500g × 120포</span><span class="num">120포</span><span>동일농산</span><span class="lot">251118-11-15103885-4102</span><span class="num dim">11-18</span><span class="num ar">60kg</span></div><div class="gr gs"><span class="v2"><i class="dash"></i><em>규격</em></span><span>1kg × 200포</span><span class="num">200포</span><span>동일농산</span><span class="lot">251118-11-15103885-4103</span><span class="num dim">11-18</span><span class="num ar">200kg</span></div></div><div class="gwrap"><div class="gr gg"><span class="v"><i class="ch">▾</i>귀리</span><span class="dim">2종 규격</span><span class="num dim">168포</span><span class="dim">—</span><span class="dim">—</span><span class="dim">—</span><span class="num ar bold">108kg</span></div><div class="gr gs"><span class="v2"><i class="dash"></i><em>규격</em></span><span>500g × 120포</span><span class="num">120포</span><span>동일농산</span><span class="lot">251119-14-15103885-4118</span><span class="num dim">11-19</span><span class="num ar">60kg</span></div><div class="gr gs"><span class="v2"><i class="dash"></i><em>규격</em></span><span>1kg × 48포</span><span class="num">48포</span><span>동일농산</span><span class="lot">251119-14-15103885-4119</span><span class="num dim">11-19</span><span class="num ar">48kg</span></div></div><div class="gr"><span class="v"><i class="sp"></i>백태</span><span>2kg × 40포</span><span class="num">40포</span><span>윤영식유기농영농조합법인</span><span class="lot">251120-11-15103885-4131</span><span class="num dim">11-20</span><span class="num ar bold">80kg</span></div><div class="gr"><span class="v"><i class="sp"></i>서리태</span><span>1kg × 60포</span><span class="num">60포</span><span>박정호</span><span class="lot">251120-31-15103885-4133</span><span class="num dim">11-20</span><span class="num ar bold">60kg</span></div></div>
+<div class="foot"><span>grid-template-columns fr</span><span>가로 스크롤 없음</span><span>화면 폭 따라 신축</span></div>
+<div class="pro"><b>이 방식의 성격</b><ul><li>펼침 그룹을 <code>&lt;div&gt;</code>로 감싸 배경·ring을 한 덩어리로 입힐 수 있다 — §4.2.6의 "일체감" 처리가 자연스럽다</li><li>화면이 좁아지면 컬럼이 같이 줄어든다 → <b>로트번호가 먼저 잘린다</b></li><li>다른 목록(<code>&lt;table&gt;</code>)과 마크업이 달라 공통 프리미티브를 공유할 수 없다</li></ul></div>
+</div></body></html>

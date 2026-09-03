@@ -1,74 +1,140 @@
 # 계획서 — 목록 표준규격 통일 (데스크탑)
 
-- 작성일: 2026-09-03
-- 핸드오프: `docs/handoff/list-standard/` (README + 작업지시 + 시안)
-- 상태: 승인 대기
+- 작성 2026-09-03 / **개정 2026-09-03 (시안 v2 수령)**
+- 핸드오프: `docs/handoff/list-standard/` (`README.md` → `list-spec-instructions.md` → `list-spec.html`)
+- 상태: **착수 — 블로커 A·B·C·D 2026-09-03 전부 결정됨(아래 2.7)**
+
+## 0. v1 대비 무엇이 바뀌었나
+
+시안이 갱신되며 **타이포가 정반대로 뒤집혔고** 범위가 R1~R3 → R1~R5로 늘었다.
+
+| 항목 | v1 (09-02) | v2 (09-03) |
+| --- | --- | --- |
+| 헤더 타이포 | 13px / **700** / slate-**500** | 14px / **500** / slate-**900** |
+| 본문 타이포 | 13.5px / slate-700 | 14px / slate-700 (`text-sm` 상속) |
+| 컬럼 폭 | 언급 없음 | `colgroup` **% 비율** + `table-layout:fixed`, 로트 ≥24% |
+| 펼침 그룹 | 범위 밖 | **R3 신설** — slate 묶음톤 통일, `#00a2e8` 제거 |
+| 문서 개정 | 없음 | **R5 신설** — `handoff.md` §4.2 |
+| 파일명 | `작업지시-…md` / `목록-표준규격-시안.html` | `list-spec-instructions.md` / `list-spec.html` |
+
+**v1 계획서의 색상 방향 결정(토큰 치환)은 무의미해졌다** — 아래 3절 참조.
 
 ## 1. 목표
 
-목록 테이블 11곳의 헤더·행 스펙이 제각각이라 화면 이동 시 밀도가 튀는 문제를 없앤다.
-`components/ui/table.tsx` 기본값을 표준으로 올리고, 각 목록에 흩어진 개별 클래스를 걷어낸다.
+목록 테이블 11곳의 헤더·행 스펙과 **펼침 그룹 표현**을 통일한다.
+`components/ui/table.tsx`를 정비하고, 각 목록의 개별 클래스·하드코딩 색을 걷어낸다.
 
-## 2. 사전 대조 결과 (구현 전 필수 절차)
+## 2. 사전 대조 결과
 
-시안이 낡은 스냅샷 기준인 사고가 과거 두 번 있었으므로 전수 대조를 먼저 했다.
+### 2.1 시안이 정확했던 것 (실물 일치 — 라인 번호까지)
 
-| 항목 | 결과 |
+| 주장 | 확인 |
 | --- | --- |
-| 대상 파일 11개 실존 | ✅ 전부 경로·이름 일치 |
-| 시안이 적은 「지금 붙어 있는 클래스」 | ✅ 실물과 일치 (grep 확인) |
-| 생 `<th>` 4개 파일 | ✅ `ui/table` import 0건 — 교체 필요 맞음 |
-| 짝수행 음영 | ⚠️ **이미 0건** — 검수항목 자동 통과, 작업 불필요 |
-| `log-list.tsx` 세로 구분선 | `border-l` 10건 — 제거 대상 맞음 |
-| `ui/table` 사용처 | ⚠️ **11개** — 작업지시가 지목한 7개 외 4개 추가 발견 (아래 참조) |
+| `TableCell`이 `p-2` | ✅ |
+| `farmer-list.tsx:371` 그룹헤더 `bg-[#00a2e8]/20`, hover `/16`, 접힘 `bg-white` | ✅ |
+| `farmer-list.tsx:405` 서브행 `bg-[#00a2e8]/7` | ✅ |
+| `farmer-list.tsx:395` "클릭해서 펼치기/접기" 안내 | ✅ |
+| `stock-list-client.tsx:234` 그룹헤더 `h-12` + `shadow-sm` | ✅ |
+| `misc-stock-list-client.tsx:211` `bg-slate-50/60` | ✅ |
+| `isMulti` · `inExpandedGroup` · `isMultiFarmer` 패턴 존재 | ✅ |
+| R4 헤더 클래스 7개 파일 | ✅ (v1에서 확인, 변동 없음) |
 
-### 시안과 실물의 불일치 1건
+### 2.2 🔴 블로커 A — R5 「이미 개정 완료」가 이 저장소에선 사실이 아니다
 
-README는 「기준 페이지 = 생산자 관리」라 적어 해당 화면은 안 바뀌는 것처럼 읽히지만,
-`farmer-list.tsx`의 헤더는 현재 shadcn 기본값(`text-sm` 14px / `font-medium` 500 / `text-foreground` slate-900 / `px-2`)이다.
-**기준으로 삼은 것은 여백감뿐이고 타이포·패딩은 기준 페이지도 함께 바뀐다.** (13px / 700 / slate-500 / px-3)
+지시서 R5와 README는 `handoff.md` §4.2가 **이미 개정됐으니 확인만 하면 된다**고 적었다. 실제로는:
 
-### 시안의 누락 2건 — 본문 행 파일이 통째로 빠져 있다
+| 확인 항목 | 결과 |
+| --- | --- |
+| `docs/handoff/디자인시스템/handoff.md:346` | `text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2` — **옛 값** |
+| `docs/handoff/잡곡재고관리/handoff.md:346` | 동일하게 옛 값 |
+| 새 값 `text-sm font-medium text-slate-900` 저장소 전체 검색 | **0건** |
+| git 이력 | `939795b`(2026-06-09 폴더 이동)가 마지막. 개정 커밋 없음 |
+| 미커밋 변경 | `list-standard/` 외 없음 |
 
-`ui/table`을 import하는 파일은 11개인데, 작업지시 R3 표는 그중 **헤더가 있는 7개만** 지목했다.
-목록 3곳은 본문 행이 별도 컴포넌트로 분리돼 있어 `TableHead`는 클라이언트 파일에, `TableCell`은 row 파일에 있다.
+→ 클로드디자인 워크스페이스에서만 고쳐졌고 저장소에 반영되지 않았다.
+**R5는 「확인만」이 아니라 실작업이다.** 추가로 `handoff.md`가 **2벌**이라 대상 지정이 필요하다.
 
-| 누락 파일 | TableCell | 현재 박혀 있는 것 |
+### 2.3 🔴 블로커 B — `#00a2e8` 체크리스트가 R3 범위와 모순
+
+검수 체크리스트: *"`#00a2e8`이 코드베이스에서 사라졌는가 (`grep -r "00a2e8"`)"*
+그러나 실제 **31건**이고 R3가 제거하는 것은 **2건**(그룹 헤더·서브행)뿐이다.
+
+나머지 29건은 그룹 표현과 무관한 **의미색**이다:
+
+| 위치 | 용도 |
+| --- | --- |
+| `farmer-list.tsx:196` | **무농약 인증 칩** (R2 규약은 무농약=sky — 별개 논의) |
+| `farmer-list.tsx:247·253·292·450` | 연락처 버튼·아이콘 호버 |
+| `farmer-filters.tsx:98·102` | 활성 필터 배지 |
+| `log-list.tsx:141·148·155·268·375` | 총건수 강조·포커스링·상세 버튼 |
+| `realtime-status.tsx:195·221` | 메벼 진행바 그래디언트·범례 |
+| `admin/users/page.tsx:20` · `excel-buttons.tsx:106` | 총건수·아이콘 호버 |
+
+체크리스트를 문자 그대로 만족시키면 **6개 파일에서 의미색까지 제거**해야 한다 → 범위 폭발.
+
+### 2.4 🔴 블로커 C — 「그룹 헤더 44px」와 「misc가 정본」이 충돌
+
+R3는 `misc-stock-list-client.tsx`를 **펼침 그룹 정본**으로 삼고 `/60`→`/75`만 맞추라고 한다.
+그런데 정본인 `misc-stock-list-client.tsx:210`도 **`h-12`(48px)** 를 갖고 있다.
+`stock-list-client.tsx`에서만 `h-12`를 빼라고 하므로, 지시대로 하면
+**정본이 자기 체크리스트(「본문·그룹 헤더 행이 모두 44px」)를 위반**한다.
+
+부수: 두 파일 모두 `border-slate-200/70`인데 스펙은 `/80`이다.
+
+### 2.5 여전한 누락 D — 본문 행 파일 3개 (v1에서 지적, v2에도 반영 안 됨)
+
+R4 표는 `ui/table`을 쓰는 11개 파일 중 **헤더가 있는 7개만** 지목한다.
+
+| 누락 파일 | TableCell | 문제 |
 | --- | --- | --- |
-| `milling/milling-table-row.tsx` | 23 | `py-3 px-3 text-sm font-mono text-slate-500`, `text-slate-800` |
-| `raw-stocks/misc/misc-stock-table-row.tsx` | 25 | `text-xs text-slate-400`, `text-xs tabular-nums` |
-| `raw-stocks/stock-table-row.tsx` | 21 | `py-2 px-1 text-xs font-medium text-slate-500`, `text-slate-800` |
+| `milling/milling-table-row.tsx` | 23 | `py-3 px-3 text-sm text-slate-500` |
+| `raw-stocks/stock-table-row.tsx` | 21 | `py-2 px-1 text-xs text-slate-500` |
+| `raw-stocks/misc/misc-stock-table-row.tsx` | 25 | `text-xs text-slate-400` |
 
-→ **헤더만 정리하면 「본문 행 44px / 13.5px」 스펙은 달성 불가**이고 검수 체크리스트 1번을 통과할 수 없다.
-R3a 대상을 7개 → **10개**로 확장한다.
+새 스펙은 `TableCell`을 `h-11 px-3 py-0`로 바꾸는데 이 파일들의 `py-2 px-1 text-xs`가 **그대로 덮어쓴다.**
+→ 「본문 행 44px」 달성 불가. **R4 대상을 7개 → 10개로 확장한다.**
 
-추가로 `components/admin/BackupManager.tsx`(TableCell 11)는 시안 범위 밖 화면이지만
-프리미티브 변경의 영향을 그대로 받는다. 클래스는 손대지 않되 **회귀 확인 대상에 포함**한다.
+추가로 `components/admin/BackupManager.tsx`(TableCell 11)는 시안 범위 밖이지만
+프리미티브 파급을 받는다. 클래스는 손대지 않되 **회귀 확인 대상**에 포함한다.
 
-## 3. 방향 결정 — 색상 표기는 토큰, 픽셀은 시안 그대로
+### 2.6 부수 — 옛 파일 3개가 폴더에 남아 있다
 
-시안은 `slate-500`/`slate-50`/`slate-700` 생색을 프리미티브에 박으라고 하지만,
-현행 `ui/table.tsx`는 시맨틱 토큰(`text-foreground`, `hover:bg-muted/50`) 기반이고
-백로그 §22(`bg-background`→`bg-card`)·벼탭 정렬(→`primary`)도 토큰 방향이었다.
+`작업지시-목록-표준규격.md` · `목록-표준규격-시안.html` · `density-{a,b,c}-*.html` (전부 09-02자).
+새 README는 `list-spec-instructions.md`·`list-spec.html`·`opt-*.html`을 가리키므로 **정본이 헷갈린다.**
+착수 전에 옛 파일을 지우거나 `_deprecated/`로 옮긴다.
 
-`app/globals.css`를 확인한 결과 **이 프로젝트의 토큰 값이 애초에 slate 팔레트**라, 둘은 충돌이 아니다.
+## 2.7 블로커 결정 (2026-09-03, 사용자·디자이너 확정)
 
-| 시안 표기 | 채택 토큰 | 실제 값 | 일치 |
-| --- | --- | --- | --- |
-| `text-slate-500` | `text-muted-foreground` | `#64748b` (slate-500) | 정확 |
-| `bg-slate-50` (헤더) | `bg-secondary` | `#f8fafc` (slate-50) | 정확 |
-| `text-slate-700` (본문) | `text-card-foreground` | `#334155` (slate-700) | 정확 |
-| `border-slate-200` (헤더 하단) | `border-border` | `#e2e8f0` (slate-200) | 정확 |
-| `text-slate-900` (대표값) | `text-foreground` | `#0f172a` (slate-900) | 정확 |
-| `hover:bg-slate-50` | `hover:bg-secondary` | `#f8fafc` | 정확 |
-| `border-slate-100` (행 구분) | `border-border/60` | 근사 | **근사** |
-| `text-slate-400` (보조 숫자) | `text-muted-foreground/70` | 근사 | **근사** |
+네 건 모두 대조 결과가 맞다는 확인을 받았고, 지시서·README도 이 결정대로 개정됐다.
 
-→ 시각 결과물은 시안과 동일. 표기만 토큰이라 §22 방향과도 어긋나지 않는다.
+| # | 결정 |
+| --- | --- |
+| **A** R5 | **실작업**(「완료」 표기는 지시서 오류). `docs/handoff/디자인시스템/` **1벌만** 개정. `잡곡재고관리/`엔 `> 정본은 docs/handoff/디자인시스템/ 입니다.` 한 줄만 추가 — 2벌 동기화가 불일치의 재발원 |
+| **B** `#00a2e8` | **체크리스트 축소**. `grep 0건` → 「`farmer-list.tsx` L371·L405에서 제거, 나머지 29건 의미색은 건드리지 않았는가」 |
+| **C** 그룹 높이 | **44px 규칙 우선**. 잡곡이 정본인 것은 **묶음톤·단일건 낱개 패턴**이고 행 높이는 아니다. misc도 `h-12`→`h-11`, `/70`→`/80` — 벼와 동일 조치 |
+| **D** R4 | **10파일 확장 채택**. `*-table-row.tsx` 3개 누락은 지시서 실수 |
 
-**전면 토큰화는 하지 않는다.** 앱 전체 slate 하드코딩 1,953건 / 토큰 328건으로,
-그건 이번 작업과 무관한 별도 대형 과제다. 이번엔 프리미티브 1개 파일에서만 토큰을 쓴다.
-호출부(R3)는 클래스를 **삭제**하는 작업이라 색 표기 논쟁이 발생하지 않는다.
+🔴 **R5 잔여 문제**: 지시서는 개정본이 「이 패키지에 이미 적용된 상태로 들어 있다」고 하나,
+`docs/handoff/list-standard/`에 `handoff/` 하위 폴더도 개정본도 **없다**(저장소 검색 0건).
+→ 복사가 아니라 지시서의 before→after 목록을 보고 **직접 작성**한다. §4.2.3은 값이 명시돼 있다.
+
+## 3. v1의 「색상 방향」 결정은 폐기 — 이제 쟁점이 아니다
+
+v1은 시안의 `text-slate-500`(헤더)이 프로젝트의 토큰 방향(§22)과 어긋난다고 보고
+토큰 치환(`text-muted-foreground`)을 결정했다. **v2에서 타이포가 뒤집히며 문제가 사라졌다.**
+
+| v2 스펙 | 현행 `table.tsx` 기본값 | 관계 |
+| --- | --- | --- |
+| `text-slate-900` | `text-foreground` = `#0f172a` | **같은 값** |
+| `font-medium` | `font-medium` | 동일 |
+| `h-10` | `h-10` | 동일 |
+| `text-sm`(14px) | `Table`의 `text-sm` 상속 | 동일 |
+| `px-3` | `px-2` | **여기만 다름** |
+
+→ **R1의 `TableHead` 변경은 실질적으로 `px-2` → `px-3` 하나뿐이다.**
+`text-slate-900`을 그대로 쓸지 `text-foreground`를 유지할지는 렌더 결과가 같으므로,
+**기존 토큰(`text-foreground`)을 유지**한다(§22 방향 보존, 값 동일).
+`TableCell`·`TableRow`는 실변경이 있다(`p-2` → `px-3 py-0 h-11`, 구분선·호버).
 
 ## 4. 변경 범위
 
@@ -77,86 +143,94 @@ R3a 대상을 7개 → **10개**로 확장한다.
 `components/ui/table.tsx`
 
 ```
-TableHead: h-10 px-3 text-[13px] font-bold text-muted-foreground whitespace-nowrap align-middle
-TableCell: h-11 px-3 text-[13.5px] text-card-foreground align-middle whitespace-nowrap
-TableRow:  border-b border-border/60 hover:bg-secondary transition-colors
+TableHead: h-10 px-3 text-left align-middle font-medium text-foreground whitespace-nowrap   (변경: px-2→px-3)
+TableCell: h-11 px-3 py-0 align-middle whitespace-nowrap text-slate-700                      (변경: p-2 → 전면)
+TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 ```
 
-- 정렬 기본값은 두지 않는다 — 호출부의 `text-left/center/right`가 결정 (현행 유지 원칙)
-- `TableHead`의 기존 `text-left` 기본값 제거 여부는 R3 진행 중 회귀 확인 후 판단 (기본값을 빼면 명시 안 한 헤더가 틀어질 수 있음 → **일단 유지**)
-- Tailwind 임의 값(`text-[13px]`)은 이 파일 안에서만 사용, 호출부로 퍼뜨리지 않는다
+- `Table`의 `text-sm` 유지 → 헤더·본문 14px 상속
+- 헤더 행: `bg-slate-50 border-b border-slate-200 hover:bg-transparent`
+- 체크박스·아이콘 전용 컬럼만 `px-1` 예외
+- 2줄 셀 행은 `h-11` 대신 `min-h-11 py-2`
 
-### R2 — 셀 클래스 규약
+### R1b — 컬럼 폭 `colgroup` % 이전
 
-작업지시 R2 표를 그대로 따르되 색만 토큰으로 치환. 코드 변경 없음(적용 기준).
+각 목록의 `<TableHead className="w-[..px]">`를 걷어내고 `<colgroup>`에 %로 옮긴다.
+합 100%, 로트 컬럼 **≥24%**.
+🔴 `w-[..]` 제거는 R4의 「정렬·폭 보존」 원칙과 충돌하므로 **R1b에서만 의도적으로 제거**한다.
 
-### R3a — 개별 클래스 삭제 (10파일)
+### R2 — 셀 클래스 규약 (문서 기준, 코드 변경 없음)
 
-| 파일 | 삭제 대상 |
+### R3 — 펼침 그룹 통일 (3파일) — **블로커 C 결정 후 착수**
+
+| 파일 | 조치 |
 | --- | --- |
-| `admin/farmers/farmer-list.tsx` | td의 `text-sm` 축소 클래스 |
-| `raw-stocks/stock-list-client.tsx` | `py-2 px-1 text-xs font-bold text-slate-500` |
-| `raw-stocks/misc/misc-stock-list-client.tsx` | 동일 |
-| `milling/milling-list-client.tsx` | `py-3 px-3 text-sm font-bold text-slate-500` |
-| `milling/stock-list-dialog.tsx` | `px-1 text-xs font-bold text-slate-500` (sticky 유지) |
-| `sales/release/release-history-list.tsx` | `py-2 text-xs font-bold text-slate-500`, 중첩표 `text-[11px]`·`h-9` |
-| `admin/varieties/variety-list-client.tsx` | `font-bold text-slate-500` |
-| `milling/milling-table-row.tsx` | **(시안 누락)** `py-3 px-3 text-sm text-slate-500`, `text-slate-800` |
-| `raw-stocks/misc/misc-stock-table-row.tsx` | **(시안 누락)** `text-xs text-slate-400` 등 |
-| `raw-stocks/stock-table-row.tsx` | **(시안 누락)** `py-2 px-1 text-xs text-slate-500`, `text-slate-800` |
+| `admin/farmers/farmer-list.tsx` L371·L405 | `#00a2e8` 계열 → slate 묶음톤. 접힘 `bg-white` → `bg-slate-50` |
+| `raw-stocks/stock-list-client.tsx` L234 | `h-12`·`shadow-sm` 제거, 서브행 묶음톤 추가 |
+| `raw-stocks/misc/misc-stock-list-client.tsx` L211 | `/60` → `/75` (+ **`h-12` 처리는 블로커 C 결정에 따름**) |
 
-`*-table-row.tsx` 3개는 본문 셀 담당이므로 헤더 파일과 **반드시 짝으로** 처리한다.
-`misc-stock-table-row.tsx`는 카드 모드도 함께 들어 있다 — **카드 모드 부분은 범위 밖이므로 건드리지 않는다.**
+- 단일 건 그룹은 잡곡 `isMulti` 패턴을 따른다 (그룹 헤더 미렌더)
+- `farmer-list`의 `isMultiFarmer` 분기도 동일 정리
+- L395 안내 문구는 **세 화면 모두 넣거나 모두 빼거나** — 한쪽만 남기지 않는다
 
-**보존 필수**: `text-left/center/right`, `w-[..]`, `hidden sm:table-cell` 등 반응형 표시 제어.
+### R4 — 화면별 클래스 제거 (**10파일**, v2 지시서의 7 + 누락 3)
 
-### R3b — 생 `<th>` → `ui/table` 교체 (4파일)
+7개는 지시서 표 그대로. 추가 3개는 2.5절의 `*-table-row.tsx`.
+**보존 필수**: `text-left/center/right`, `hidden sm:table-cell` 등 반응형 표시 제어.
+(단 `w-[..]`는 R1b에서 colgroup으로 이전되므로 예외)
 
-| 파일 | `<th>` | 비고 |
-| --- | --- | --- |
-| `admin/logs/log-list.tsx` | 7 | `border-l` 10건 제거, `px-5`→`px-3` |
-| `admin/product-types/product-type-page-client.tsx` | 14 | `py-1.5 px-3` / `py-2 px-2 font-medium` |
-| `statistics/stock/_parts/stock-tables.tsx` | 24 | `py-2.5 px-3 font-semibold text-slate-500 text-xs` |
-| `components/statistics/MillingTable.tsx` | 2 | 그룹 헤더 `<tr className="bg-slate-50">` 포함 |
+### R4b — 생 `<th>` → `ui/table` 교체 (4파일)
 
-### 부수 정리 1건
+`log-list.tsx`(7, `border-l` 10건 제거) · `product-type-page-client.tsx`(14) ·
+`stock-tables.tsx`(24) · `MillingTable.tsx`(2)
 
-`milling/stock-list-dialog.tsx:311` — sticky `TableHeader`의 `bg-white` → `bg-card` (§22 준수, 다이얼로그 배경 토큰 규칙)
+### R5 — 문서 개정 — **블로커 A 결정 후 착수**
+
+지시서는 「완료」라고 하나 **실제로는 미개정**이다. 대상 파일 선택 필요:
+`docs/handoff/디자인시스템/handoff.md` / `docs/handoff/잡곡재고관리/handoff.md` (2벌 존재).
+`design-system.html`도 같은 폴더에 2벌 있다.
 
 ## 5. 진행 순서
 
-1. **R1** 프리미티브 수정 → dev 화면에서 farmer-list 1곳만 눈으로 확인 (기준선 검증)
-2. **R3a** 7파일 클래스 삭제 → 화면별 회귀 확인
-3. **R3b** 4파일 컴포넌트 교체 → 화면별 회귀 확인
-4. 검수 체크리스트 → 커밋
-
-R1 직후 한 번 끊고 사용자 확인을 받는다. 프리미티브라 전 목록에 파급되므로 여기서 틀리면 전부 틀린다.
+0. **블로커 A·B·C 사용자 결정** ← 지금 여기
+1. 옛 핸드오프 파일 정리 (2.6)
+2. **R1 + R1b** → farmer-list 1곳만 눈으로 확인 (프리미티브라 여기서 틀리면 전부 틀린다)
+3. **R4 + R4b** (헤더·본문 짝으로)
+4. **R3** 펼침 그룹
+5. **R5** 문서
+6. 검수 체크리스트 → 커밋
 
 ## 6. 범위 밖
 
-- **컬럼 정렬** — 성격별 기준선(텍스트 좌·숫자 우·상태 중앙)은 시안 2절에 기록만, 이번엔 손대지 않음
-- **모바일 카드** — `mobile-package-card.tsx`, `misc-stock-table-row.tsx` 카드 모드, `farmer-list.tsx` 모바일 그룹, `stock-list-client.tsx` 모바일 카드
-- **앱 전체 slate → 토큰 전환** (1,953건, 별도 과제)
+- 컬럼 **정렬** 규칙 정리 (기준선만 시안 2절에 기록)
+- **모바일 카드** — `mobile-package-card.tsx`, `misc-stock-table-row.tsx` 카드 모드,
+  `farmer-list.tsx` 모바일 그룹, `stock-list-client.tsx` 모바일 카드
+- 앱 전체 slate → 토큰 전환 (1,953건, 별도 과제)
+- **`#00a2e8` 의미색 29건** (블로커 B — 별도 결정 없으면 범위 밖)
 
 ## 7. 검수 체크리스트
 
-- [ ] 헤더 40px / 본문 44px (2줄 셀 예외 제외)
-- [ ] 헤더 텍스트 13px / 700 / muted-foreground
-- [ ] 로트번호가 어느 목록에서도 잘리지 않음 (폭 ≥210px)
-- [x] 짝수행 음영 없음 — 사전 확인 완료 (0건)
+- [ ] 헤더 40px / 본문·그룹 헤더 44px
+- [ ] 헤더 14px · `font-medium` · slate-900 톤 (연한 회색 bold 잔존 없음)
+- [ ] 헤더 배경 `bg-slate-50`, 호버 무반응
+- [ ] 펼친 그룹 헤더와 서브행이 같은 톤
+- [ ] 접힌 그룹 헤더가 흰 배경이 아님
+- [ ] 하위 1건 그룹에 토글 없음
+- [ ] 로트번호 미절단 (컬럼 ≥24%)
+- [x] 짝수행 음영 — 사전 확인 완료 (전 코드베이스 0건)
 - [ ] **정렬이 기존과 동일** (바뀌면 회귀)
 - [ ] 감사 로그 세로 구분선 제거
-- [ ] `bg-white` 잔존 없음 (stock-list-dialog)
-- [ ] `BackupManager.tsx`(시안 범위 밖) 목록이 깨지지 않았는가
-- [ ] `misc-stock-table-row.tsx` 카드 모드가 그대로인가
+- [ ] `BackupManager.tsx`(범위 밖) 목록 미파손
+- [ ] `misc-stock-table-row.tsx` 카드 모드 그대로
 - [ ] `tsc` · `eslint` 통과 (dev 검증에 `next build` 금지)
+- [ ] ~~`grep -r "00a2e8"` 0건~~ → **블로커 B 결정에 따라 「그룹 표현 2건 제거」로 축소 제안**
 
 ## 8. 리스크
 
 | 리스크 | 대응 |
 | --- | --- |
-| 프리미티브 변경이 시안 범위 밖 화면에 파급 | 전수 grep 완료 — `components/admin/BackupManager.tsx` 1건. 클래스는 미변경, 회귀 확인만 |
-| 헤더/본문이 다른 파일에 있어 반쪽 적용 | R3a를 10파일로 확장, 헤더-row 짝 단위로 커밋 |
-| `misc-stock-table-row.tsx`의 카드 모드까지 건드림 | 카드 모드는 범위 밖 — 테이블 분기만 수정 |
-| 클래스 삭제 중 정렬·폭 동반 삭제 → 회귀 | 삭제는 색·크기·패딩 토큰만, `text-*`/`w-[..]`는 손대지 않음 |
-| `TableHead` 기본 `text-left` 제거 시 헤더 틀어짐 | 기본값 유지로 회피 |
+| 프리미티브 변경이 범위 밖 화면에 파급 | 전수 grep 완료 — `BackupManager.tsx` 1건, 회귀 확인만 |
+| 헤더/본문이 다른 파일이라 반쪽 적용 | R4를 10파일로 확장, 헤더-row 짝 단위 커밋 |
+| `w-[..]` 제거가 정렬 보존 원칙과 충돌 | R1b에서만 의도적으로 제거, 그 외 단계에선 보존 |
+| `misc-stock-table-row.tsx` 카드 모드 훼손 | 테이블 분기만 수정 |
+| 옛 시안 파일과 혼동 | 착수 전 정리(2.6) |

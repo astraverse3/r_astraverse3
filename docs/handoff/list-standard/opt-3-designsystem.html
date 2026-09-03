@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>3안 · 기존 디자인 시스템 §4.2.3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Pretendard,system-ui,sans-serif;background:#f1f5f9;padding:28px;color:#0f172a;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto}
+.cap{margin-bottom:14px}
+.cap h1{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.cap p{font-size:12.5px;color:#64748b;margin-top:4px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:880px}
+thead tr{background:rgba(248,250,252,.6);border-bottom:1px solid #e2e8f0}
+th{padding-top:8px;padding-bottom:8px;padding-left:16px;padding-right:16px;font-size:10.5px;font-weight:700;color:#94a3b8;white-space:nowrap;text-align:left;text-transform:uppercase;letter-spacing:.06em;}
+tbody tr{border-bottom:1px solid rgba(226,232,240,.6);transition:background .12s}
+tbody tr:last-child{border-bottom:0}
+tbody tr:hover{background:rgba(248,250,252,.7)}
+td{padding-top:10px;padding-bottom:10px;padding-left:16px;padding-right:16px;font-size:12.5px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.a-l{text-align:left}.a-r{text-align:right}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.dim{color:#94a3b8}.strong{font-weight:600;color:#0f172a}
+td b{font-weight:600;color:#0f172a}
+.lot{font-size:11px;color:#64748b}
+.chip{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid}
+.org{color:#3f6212;border-color:#d9f99d;background:#f7fee7}
+.nop{color:#075985;border-color:#bae6fd;background:#f0f9ff}
+.bdg{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 8px;border-radius:99px}
+.s1{color:#0369a1;background:#e0f2fe}.s2{color:#b45309;background:#fef3c7}.s3{color:#475569;background:#f1f5f9}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.foot{margin-top:12px;font-size:11.5px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap}
+.foot span{background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:3px 8px}
+</style></head><body><div class="wrap">
+<div class="cap"><h1>3안 · 기존 디자인 시스템 §4.2.3</h1><p>10.5px uppercase tracking-wider slate-400 헤더 · 본문 12.5px · px-4 py-2.5</p></div>
+<div class="card"><table><thead><tr><th class="a-l" style="width:68px">년도</th><th class="a-l" style="width:92px">품종</th><th class="a-l">생산자</th><th class="a-l" style="width:84px">인증</th><th class="a-l" style="width:210px">Lot No</th><th class="a-r" style="width:64px">톤백</th><th class="a-r" style="width:100px">중량(kg)</th><th class="a-l" style="width:76px">상태</th></tr></thead><tbody><tr><td class="a-l num dim">2025</td><td class="a-l">신동진</td><td class="a-l"><b>윤영식</b></td><td class="a-l"><span class="chip org">유기</span></td><td class="a-l num lot">251119-11-15103885-4118</td><td class="a-r num">3</td><td class="a-r num strong">2,400</td><td class="a-l"><span class="bdg s1">입고</span></td></tr><tr><td class="a-l num dim">2025</td><td class="a-l">신동진</td><td class="a-l"><b>김판수</b></td><td class="a-l"><span class="chip org">유기</span></td><td class="a-l num lot">251119-14-15103885-4121</td><td class="a-r num">2</td><td class="a-r num strong">1,600</td><td class="a-l"><span class="bdg s2">도정</span></td></tr><tr><td class="a-l num dim">2025</td><td class="a-l">삼광</td><td class="a-l"><b>이재명</b></td><td class="a-l"><span class="chip nop">무농약</span></td><td class="a-l num lot">251120-22-15103885-4130</td><td class="a-r num">4</td><td class="a-r num strong">3,200</td><td class="a-l"><span class="bdg s1">입고</span></td></tr><tr><td class="a-l num dim">2025</td><td class="a-l">삼광</td><td class="a-l"><b>윤영식유기농영농조합법인</b></td><td class="a-l"><span class="chip org">유기</span></td><td class="a-l num lot">251120-11-15103885-4131</td><td class="a-r num">1</td><td class="a-r num strong">800</td><td class="a-l"><span class="bdg s3">완료</span></td></tr><tr><td class="a-l num dim">2024</td><td class="a-l">추청</td><td class="a-l"><b>박정호</b></td><td class="a-l"><span class="chip nop">무농약</span></td><td class="a-l num lot">241105-31-15103885-3902</td><td class="a-r num">2</td><td class="a-r num strong">1,600</td><td class="a-l"><span class="bdg s2">도정</span></td></tr><tr><td class="a-l num dim">2024</td><td class="a-l">백진주</td><td class="a-l"><b>정만수</b></td><td class="a-l"><span class="chip org">유기</span></td><td class="a-l num lot">241108-41-15103885-3911</td><td class="a-r num">2</td><td class="a-r num strong">1,600</td><td class="a-l"><span class="bdg s1">입고</span></td></tr></tbody></table></div>
+<div class="foot"><span>헤더 10.5px / 700 / slate-400 / uppercase</span><span>본문 12.5px</span><span>좌우 16px</span><span>행 py-2.5</span></div>
+</div></body></html>
