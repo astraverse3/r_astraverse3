@@ -1,5 +1,56 @@
 # 작업일지
 
+## 2026-09-03
+
+### 모바일 점검 라운드 (§16 · §23 · §26) — 셋 중 하나만 실작업이었다 `refactor`
+
+커밋: `e6f3f94` (코드) · 보고서 `docs/report/report-모바일점검라운드-2026-09-03.md`
+
+라운드에 묶여 있던 3개 항목을 착수 전 전수 대조했더니 **실제 코드 작업은 §26 하나**였다.
+
+**§16(벼 포장 다이얼로그 모바일 잘림) = 이미 해결돼 있었다.** 신고일이 2026-05-06인데
+`27fbc30`(2026-05-07, **신고 다음날**)이 다농장 그룹 헤더를 `flex-wrap sm:flex-nowrap`+`hidden sm:flex`로
+재배치해 증상을 고쳤고, `614f2dd`(2026-06-22)가 모바일 반응형 1행을 더했다. 현재 코드는
+`flex flex-col max-h-[90dvh]` + `flex-1 min-h-0 overflow-y-auto`로 백로그 권장 조치가 전부 들어가 있다.
+**항목만 안 닫혀 있었다.**
+
+**§23(재고차감 모바일) = 정적으로는 결함 없음.** 대상 4파일 전부 반응형이 실제로 짜여 있다.
+처음에 `sm:hidden`만 grep해서 `repack-dialog`·`movement-history-dialog`를 "모바일 분기 0건"으로 잘못 봤는데,
+그 둘은 `sm:grid-cols-*` 방식이라 안 걸린 것이었다. 390px 폭 계산도 가용폭 안에 들어온다.
+**실기기 눈 확인만 남았다** — 정적 분석의 한계다.
+부수 발견: `deduct-dialog`는 로트를 `shortLot`+`truncate`로 줄이는데 `mobile-package-card`의 `LotChip`은
+전체 로트를 안 자른다. 넘침은 아니고 규칙 불일치라 별건.
+
+**§26(`any` 8건) = 전부 실존, 처리 완료.** `stocks: any[]` → `PackagingStock` 구조 타입,
+`(result as any).error` ×3 → `'error' in result` 내로잉, 안 쓰는 `Check` import·`varieties` 구조분해 제거.
+`tsc` 0 · `eslint` 0 · 사용자 실화면 확인 완료.
+
+🔴 **`@ts-ignore`는 억제할 대상이 없는 잔재였다** — 같은 `hasPermission(session?.user, …)` 호출이
+다른 **10곳**에서 억제 없이 통과한다(`permissions`가 optional이라 세션 타입과 구조적으로 맞고,
+`auth.ts:40`에서 런타임에도 채워진다). 권한 경로에 붙어 있어 위험해 보였지만 지우니 그대로 컴파일된다.
+
+`PackagingStock`은 Prisma 타입 대신 **구조 타입**으로 갔다 — `StockGetPayload`를 쓰면
+`recent-logs-list.tsx:196`처럼 평탄화해 넘기는 호출부가 깨진다.
+
+**뿌리는 안 건드리고 백로그 §29로 분리.** `as any`의 원인은 액션이 `{success:true}`/`{success:false,error}`를
+반환하는데 `success`가 `boolean`으로 넓어져 판별 유니온 내로잉이 안 되는 것. 고치려면 액션 파일이 필요해
+3파일 = HARD-GATE이고, 백로그가 §26을 「파일 2개」로 한정했다. 공용 `ActionResult<T>` 도입은 §29.
+
+### 목록 표준규격 핸드오프 검토 — 계획서만 쓰고 보류 `docs`
+
+`docs/handoff/list-standard/` 시안 검토. 계획서 `docs/plan/plan-목록표준규격.md`.
+**클로드디자인에서 작업 중이라 착수는 보류**(시안 갱신본 오면 재대조 필요).
+
+대조에서 나온 것:
+- 🔴 **시안이 본문 행 파일 3개를 통째로 누락** — `*-table-row.tsx`에 `TableCell` 69개.
+  헤더만 정리하면 「본문 행 44px」 스펙 달성 자체가 불가능하다. R3a 7파일 → **10파일**.
+- **색 충돌은 실은 충돌이 아니었다** — 시안이 요구한 `slate-500`/`slate-50`/`slate-700`/`slate-200`이
+  `globals.css`의 `muted-foreground`/`secondary`/`card-foreground`/`border` 토큰 값과 **정확히 일치**한다.
+  → 프리미티브는 토큰으로 쓰고 픽셀은 시안 그대로. 앱 전체 slate 전환(1,953건)은 별개 과제로 제외.
+- README의 「기준 페이지=생산자 관리」가 오해 소지 — farmer-list 타이포·패딩도 함께 바뀐다.
+- `BackupManager.tsx`가 시안 범위 밖인데 프리미티브 파급을 받는다(회귀 확인 대상).
+
+
 ## 2026-09-02
 
 ### 배포 실패 P1002 — advisory lock 타임아웃 (일시적, 재배포로 복구) `ops`
