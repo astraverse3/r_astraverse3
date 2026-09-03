@@ -68,21 +68,28 @@ export function StockListClient({
         <section className={`overflow-hidden md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-200 ${Object.keys(filters).length === 0 ? 'bg-transparent' : 'bg-white'}`}>
             {/* --- DESKTOP VIEW --- */}
             <div className="hidden md:block">
-                <Table>
+                <Table className="table-fixed">
+                    {/* 컬럼 폭 % (합 100). Lot No는 스펙상 24% 이상 */}
+                    <colgroup>
+                        <col className="w-[5%]" /><col className="w-[5%]" /><col className="w-[12%]" />
+                        <col className="w-[15%]" /><col className="w-[5%]" /><col className="w-[24%]" />
+                        <col className="w-[6%]" /><col className="w-[13%]" /><col className="w-[9%]" />
+                        <col className="w-[6%]" />
+                    </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200">
-                            <TableHead className="w-[40px] py-2 px-1 text-center">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead className="px-1 text-center">
                                 {/* Global Select All Removed */}
                             </TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[90px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[120px]">생산자</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden md:table-cell">인증</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[110px]">Lot No</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[50px]">톤백</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[80px]">중량(kg)</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[50px]">상태</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]">수정</TableHead>
+                            <TableHead className="text-center hidden sm:table-cell">년도</TableHead>
+                            <TableHead className="text-center">품종</TableHead>
+                            <TableHead className="text-center">생산자</TableHead>
+                            <TableHead className="text-center hidden md:table-cell">인증</TableHead>
+                            <TableHead className="text-center">Lot No</TableHead>
+                            <TableHead className="text-right">톤백</TableHead>
+                            <TableHead className="text-right">중량(kg)</TableHead>
+                            <TableHead className="text-center">상태</TableHead>
+                            <TableHead className="text-center">수정</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -231,11 +238,13 @@ function GroupedStockRows({
                     <Fragment key={group.key}>
                         {/* Summary Row */}
                         <TableRow
-                            className={`${isExpanded ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'bg-slate-50 hover:bg-slate-100'} cursor-pointer border-y border-slate-200/70 font-bold text-slate-800 shadow-sm h-12`}
+                            className={`${isExpanded
+                                ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+                                : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'} cursor-pointer font-bold text-slate-800`}
                             onClick={() => toggleGroup(group)}
                         >
                             {/* Checkbox Column */}
-                            <TableCell className="w-[40px] text-center">
+                            <TableCell className="text-center">
                                 {/* If loading, show spinner. Else checkbox. */}
                                 {isLoading ? (
                                     <Loader2 className="h-4 w-4 animate-spin mx-auto text-slate-500" />
@@ -251,7 +260,7 @@ function GroupedStockRows({
                             </TableCell>
 
                             {/* Year */}
-                            <TableCell className="text-center text-sm hidden sm:table-cell">
+                            <TableCell className="text-center hidden sm:table-cell">
                                 <div className="flex items-center justify-center gap-1">
                                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                     {group.year}
@@ -259,15 +268,15 @@ function GroupedStockRows({
                             </TableCell>
 
                             {/* Variety */}
-                            <TableCell className="text-center text-sm">{group.variety}</TableCell>
+                            <TableCell className="text-center truncate">{group.variety}</TableCell>
 
                             {/* Farmer Count */}
-                            <TableCell className="text-center text-sm text-slate-600">
+                            <TableCell className="text-center text-slate-600">
                                 {group.farmerSetSize}명
                             </TableCell>
 
                             {/* Cert */}
-                            <TableCell className="text-center text-sm font-medium hidden md:table-cell">
+                            <TableCell className="text-center font-medium hidden md:table-cell">
                                 <Badge variant="outline" className="font-normal">
                                     {group.certType}
                                 </Badge>
@@ -276,12 +285,12 @@ function GroupedStockRows({
                             <TableCell></TableCell>
 
                             {/* Bag Count */}
-                            <TableCell className="text-right text-sm">
+                            <TableCell className="text-right tabular-nums">
                                 {group.count}개
                             </TableCell>
 
                             {/* Total Weight */}
-                            <TableCell className="text-right text-sm text-slate-900">
+                            <TableCell className="text-right font-semibold tabular-nums text-slate-900">
                                 {group.totalWeight.toLocaleString()}
                             </TableCell>
 
@@ -293,6 +302,7 @@ function GroupedStockRows({
                         {isExpanded && items.map((stock: any) => (
                             <StockTableRow
                                 key={stock.id}
+                                inExpandedGroup
                                 stock={stock}
                                 farmers={farmers}
                                 varieties={varieties}

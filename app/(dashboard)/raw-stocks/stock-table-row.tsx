@@ -31,9 +31,11 @@ interface Props {
 
     hideCheckbox?: boolean
     isInCart?: boolean
+    /** 펼친 그룹 안의 행인가 — 묶음톤을 입히고 그룹 헤더가 이미 보여주는 컬럼을 비운다 */
+    inExpandedGroup?: boolean
 }
 
-export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart }: Props) {
+export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart, inExpandedGroup = false }: Props) {
     const [editOpen, setEditOpen] = useState(false)
     const isAvailable = stock.status === 'AVAILABLE' && !isInCart
     const { data: session } = useSession()
@@ -59,15 +61,15 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     return (
         <>
             <TableRow
-                className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0 text-xs 
-                    ${isAvailable ? 'cursor-pointer hover:bg-primary/10' : 'opacity-60 bg-slate-50'}
+                className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0
+                    ${isAvailable ? `cursor-pointer hover:bg-primary/10 ${inExpandedGroup ? 'bg-slate-100' : ''}` : 'opacity-60 bg-slate-50'}
                     ${selected ? 'bg-gradient-to-r from-primary/10 via-primary/5 to-white border-primary/20 shadow-sm' : ''}
                     ${isInCart ? 'bg-slate-50 opacity-50 cursor-not-allowed' : ''}
                 `}
                 onClick={() => isAvailable && onSelect(!selected)}
             >
                 {/* Checkbox */}
-                <TableCell className="py-2 px-1 w-[40px] text-center">
+                <TableCell className="px-1 text-center">
                     {!hideCheckbox && (
                         <Checkbox
                             checked={selected}
@@ -78,26 +80,24 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 </TableCell>
 
                 {/* 1. Year */}
-                <TableCell className="py-2 px-1 text-center text-xs font-medium text-slate-500 hidden sm:table-cell">
-                    {stock.productionYear.toString().slice(-2)}
+                <TableCell className="text-center text-slate-400 hidden sm:table-cell">
+                    {inExpandedGroup ? null : stock.productionYear.toString().slice(-2)}
                 </TableCell>
 
                 {/* 2. Variety */}
-                <TableCell className="py-2 px-1 text-center text-xs font-bold text-slate-800">
-                    <div className="truncate max-w-[70px] mx-auto" title={varietyName}>
-                        {varietyName}
-                    </div>
+                <TableCell className="text-center font-semibold text-slate-900">
+                    {inExpandedGroup ? null : (
+                        <div className="truncate" title={varietyName}>{varietyName}</div>
+                    )}
                 </TableCell>
 
                 {/* 3. Farmer */}
-                <TableCell className="py-2 px-1 text-center text-xs text-slate-600">
-                    <div className="truncate max-w-[120px] mx-auto" title={farmerDisplay}>
-                        {farmerDisplay}
-                    </div>
+                <TableCell className="text-center text-slate-600">
+                    <div className="truncate" title={farmerDisplay}>{farmerDisplay}</div>
                 </TableCell>
 
                 {/* 4. Cert */}
-                <TableCell className="py-2 px-1 text-center hidden md:table-cell">
+                <TableCell className="text-center hidden md:table-cell">
                     <span className={`text-[10px] font-bold px-1 py-0.5 rounded-md border ${certType === '유기농' ? 'text-emerald-700 border-emerald-200 bg-emerald-50' :
                         certType === '무농약' ? 'text-sky-700 border-sky-200 bg-sky-50' :
                             'text-slate-600 border-slate-200 bg-slate-50'
@@ -107,46 +107,46 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
                 </TableCell>
 
                 {/* 5. Lot No */}
-                <TableCell className="py-2 px-1 text-center">
+                <TableCell className="text-center">
                     {certType === '일반' ? (
-                        <div className="text-xs text-slate-400 font-mono mx-auto">관행</div>
+                        <div className="text-[12.5px] text-slate-400 font-mono">관행</div>
                     ) : (
-                        <div className="text-xs text-slate-500 font-mono tracking-tighter mx-auto" title={stock.lotNo || 'Not Generated'}>
+                        <div className="text-[12.5px] text-slate-500 font-mono" title={stock.lotNo || 'Not Generated'}>
                             {stock.lotNo || '-'}
                         </div>
                     )}
                 </TableCell>
 
                 {/* 6. Bag No */}
-                <TableCell className="py-2 px-1 text-right text-xs font-mono text-slate-400">
+                <TableCell className="text-right font-mono tabular-nums text-slate-400">
                     <span className="text-[10px]">#</span>{stock.bagNo}
                     {isInCart && <span className="ml-1 text-[10px] text-primary font-bold">(담김)</span>}
                 </TableCell>
 
                 {/* 7. Weight */}
-                <TableCell className="py-2 px-2 text-right text-xs font-bold text-slate-900">
+                <TableCell className="text-right font-mono tabular-nums font-semibold text-slate-900">
                     {stock.weightKg.toLocaleString()}
                 </TableCell>
 
                 {/* 8. Status */}
-                <TableCell className="py-2 px-1 text-center">
+                <TableCell className="text-center">
                     {stock.status === 'AVAILABLE' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-semibold bg-primary/10 text-primary">
                             보유
                         </span>
                     ) : stock.status === 'RELEASED' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-semibold bg-amber-100 text-amber-800">
                             출고
                         </span>
                     ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-semibold bg-slate-100 text-slate-500">
                             소진
                         </span>
                     )}
                 </TableCell>
 
                 {/* 9. Management */}
-                <TableCell className="py-2 px-1 text-center">
+                <TableCell className="text-center">
                     {canManage && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

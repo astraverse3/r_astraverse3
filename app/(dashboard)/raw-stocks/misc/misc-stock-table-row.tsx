@@ -81,58 +81,58 @@ export function MiscStockTableRow({ stock, canManage = false, canMill = false, i
     // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-50/60 (같은 톤 묶음).
     // 단일 건(낱개 행, §4.2.4)은 흰 배경.
     return (
-        <TableRow className={inExpandedGroup ? 'bg-slate-50/60 hover:bg-slate-100/60' : 'bg-white hover:bg-slate-50'}>
-            <TableCell className="text-center text-xs text-slate-400">—</TableCell>
+        <TableRow className={inExpandedGroup ? 'bg-slate-100 hover:bg-slate-200/70 border-b-0' : 'bg-white hover:bg-slate-50'}>
+            <TableCell className="px-1 text-center text-slate-400">—</TableCell>
             {/* 다중 그룹 서브행은 년도·품종 셀 비워 그룹 시각 구분 강화 (그리드 정렬은 유지) */}
-            <TableCell className="text-center text-xs tabular-nums hidden sm:table-cell">
+            <TableCell className="text-center tabular-nums text-slate-400 hidden sm:table-cell">
                 {inExpandedGroup ? null : stock.productionYear}
             </TableCell>
-            <TableCell className="text-center text-xs">
+            <TableCell className="text-center truncate">
                 {inExpandedGroup ? null : stock.variety.name}
             </TableCell>
-            <TableCell className="text-xs">
+            <TableCell className="truncate">
                 <div className="inline-flex items-center gap-1.5">
                     <span className="font-medium text-slate-700">{stock.farmer.name}</span>
                     {stock.actualFarmer && (
                         <span className="text-slate-400">({stock.actualFarmer})</span>
                     )}
                     {certType && (
-                        <span className={`inline-flex items-center font-medium px-1.5 py-0 rounded-md border text-[10px] ${CERT_BADGE_CLASS[certType] ?? CERT_BADGE_CLASS['일반']}`}>
+                        <span className={`inline-flex items-center font-semibold px-1.5 py-0 rounded-md border text-[11.5px] ${CERT_BADGE_CLASS[certType] ?? CERT_BADGE_CLASS['일반']}`}>
                             {certType}
                         </span>
                     )}
                 </div>
             </TableCell>
-            <TableCell className="text-center text-xs text-slate-500 tabular-nums hidden md:table-cell">
+            <TableCell className="text-center text-slate-500 tabular-nums hidden md:table-cell">
                 {formatYMD(stock.incomingDate)}
             </TableCell>
             <TableCell className="text-center px-2">
                 {stock.lotNo ? (
-                    <span className="inline-flex items-center font-mono text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums">
+                    <span className="inline-flex items-center font-mono text-[12.5px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px] tabular-nums">
                         {stock.lotNo}
                     </span>
                 ) : (
                     <span className="text-[11px] text-slate-400">-</span>
                 )}
             </TableCell>
-            <TableCell className="text-center text-xs">
+            <TableCell className="text-center">
                 {sourceConf && (
-                    <span className={`inline-flex items-center font-medium px-1.5 py-0.5 rounded-md border text-[10px] ${sourceConf.className}`}>
+                    <span className={`inline-flex items-center font-semibold px-1.5 py-0.5 rounded-md border text-[11.5px] ${sourceConf.className}`}>
                         {sourceConf.label}
                     </span>
                 )}
             </TableCell>
-            <TableCell className="text-right text-xs font-mono tabular-nums">{stock.bagNo}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums text-slate-400">{stock.bagNo}</TableCell>
             <TableCell
-                className={`text-right text-xs text-slate-500 tabular-nums ${showRaw && yieldText ? 'underline decoration-dotted decoration-slate-300 underline-offset-2 cursor-help' : ''}`}
+                className={`text-right text-slate-500 tabular-nums ${showRaw && yieldText ? 'underline decoration-dotted decoration-slate-300 underline-offset-2 cursor-help' : ''}`}
                 title={showRaw && yieldText ? `수율 ${yieldText}` : undefined}
             >
                 {showRaw ? stock.rawWeightKg?.toLocaleString() : '-'}
             </TableCell>
-            <TableCell className="text-right text-xs text-slate-500 tabular-nums">
+            <TableCell className="text-right text-slate-500 tabular-nums">
                 {stock.weightKg.toLocaleString()}
             </TableCell>
-            <TableCell className={`text-right text-xs tabular-nums ${isDepleted ? 'text-slate-400' : 'text-primary font-semibold'}`}>
+            <TableCell className={`text-right tabular-nums ${isDepleted ? 'text-slate-400' : 'text-primary font-semibold'}`}>
                 {Math.round(remainingKg).toLocaleString()}
             </TableCell>
             <TableCell className="text-center text-xs">
@@ -154,7 +154,7 @@ export function MiscStockTableRow({ stock, canManage = false, canMill = false, i
                     </Badge>
                 )}
             </TableCell>
-            <TableCell className="text-center w-[40px]">
+            <TableCell className="px-1 text-center">
                 {canManage && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

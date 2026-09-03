@@ -175,22 +175,30 @@ export function MiscStockListClient({
         <section className="overflow-hidden md:bg-white md:rounded-xl md:shadow-sm md:border md:border-slate-200">
             {/* Desktop */}
             <div className="hidden md:block">
-                <Table>
+                <Table className="table-fixed">
+                    {/* 컬럼 폭 % (합 100). Lot은 스펙상 24% 이상 */}
+                    <colgroup>
+                        <col className="w-[4%]" /><col className="w-[4%]" /><col className="w-[8%]" />
+                        <col className="w-[12%]" /><col className="w-[7%]" /><col className="w-[24%]" />
+                        <col className="w-[7%]" /><col className="w-[4%]" /><col className="w-[7%]" />
+                        <col className="w-[7%]" /><col className="w-[7%]" /><col className="w-[5%]" />
+                        <col className="w-[4%]" />
+                    </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200">
-                            <TableHead className="w-[40px] py-2 px-1 text-center"></TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px] hidden sm:table-cell">년도</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">품종</TableHead>
-                            <TableHead className="py-2 px-1 text-left text-xs font-bold text-slate-500 w-[140px]">생산자</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px] hidden md:table-cell">입고일</TableHead>
-                            <TableHead className="py-2 px-2 text-center text-xs font-bold text-slate-500 w-[110px]">Lot</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[80px]">유형</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[50px]">번호</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">원료(kg)</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">입고(kg)</TableHead>
-                            <TableHead className="py-2 px-1 text-right text-xs font-bold text-slate-500 w-[70px]">재고(kg)</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[60px]">상태</TableHead>
-                            <TableHead className="py-2 px-1 text-center text-xs font-bold text-slate-500 w-[40px]"></TableHead>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead className="px-1 text-center"></TableHead>
+                            <TableHead className="text-center hidden sm:table-cell">년도</TableHead>
+                            <TableHead className="text-center">품종</TableHead>
+                            <TableHead className="text-left">생산자</TableHead>
+                            <TableHead className="text-center hidden md:table-cell">입고일</TableHead>
+                            <TableHead className="text-center">Lot</TableHead>
+                            <TableHead className="text-center">유형</TableHead>
+                            <TableHead className="text-right">번호</TableHead>
+                            <TableHead className="text-right">원료(kg)</TableHead>
+                            <TableHead className="text-right">입고(kg)</TableHead>
+                            <TableHead className="text-right">재고(kg)</TableHead>
+                            <TableHead className="text-center">상태</TableHead>
+                            <TableHead className="px-1 text-center"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -207,10 +215,10 @@ export function MiscStockListClient({
                                             primary 액센트 사용 X (§4.2.6 NOTE). */}
                                         {isMulti && (
                                             <TableRow
-                                                className={`cursor-pointer font-bold text-slate-800 h-12 border-y border-slate-200/70 ${
+                                                className={`cursor-pointer font-bold text-slate-800 ${
                                                     isExpanded
-                                                        ? 'bg-slate-50/60 hover:bg-slate-100/60'
-                                                        : 'bg-slate-50 hover:bg-slate-100'
+                                                        ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+                                                        : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'
                                                 }`}
                                                 onClick={() => toggleGroup(group.key)}
                                             >
@@ -219,9 +227,9 @@ export function MiscStockListClient({
                                                         className={`w-3.5 h-3.5 mx-auto text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm tabular-nums hidden sm:table-cell">{group.year}</TableCell>
-                                                <TableCell className="text-center text-sm">{group.variety}</TableCell>
-                                                <TableCell className="text-sm text-slate-600 tabular-nums">
+                                                <TableCell className="text-center tabular-nums hidden sm:table-cell">{group.year}</TableCell>
+                                                <TableCell className="text-center truncate">{group.variety}</TableCell>
+                                                <TableCell className="truncate text-slate-600 tabular-nums">
                                                     <div className="inline-flex items-center gap-1.5">
                                                         <span>{group.farmerSetSize}명</span>
                                                         <span className={`inline-flex items-center font-medium px-1.5 py-0 rounded-md border text-[10px] ${CERT_BADGE_CLASS[group.certType] ?? CERT_BADGE_CLASS['일반']}`}>
@@ -232,12 +240,12 @@ export function MiscStockListClient({
                                                 <TableCell className="hidden md:table-cell"></TableCell>
                                                 <TableCell></TableCell>
                                                 <TableCell></TableCell>
-                                                <TableCell className="text-right text-sm tabular-nums">{group.count}개</TableCell>
+                                                <TableCell className="text-right tabular-nums">{group.count}개</TableCell>
                                                 <TableCell></TableCell>
-                                                <TableCell className="text-right text-sm text-slate-500 tabular-nums">
+                                                <TableCell className="text-right text-slate-500 tabular-nums">
                                                     {group.totalWeight.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell className="text-right text-sm text-primary font-semibold tabular-nums">
+                                                <TableCell className="text-right text-primary font-semibold tabular-nums">
                                                     {Math.round(group.remainingTotal).toLocaleString()}
                                                 </TableCell>
                                                 <TableCell></TableCell>
