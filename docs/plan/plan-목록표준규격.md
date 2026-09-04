@@ -184,7 +184,7 @@ TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 `log-list.tsx`(7, `border-l` 10건 제거) · `product-type-page-client.tsx`(14) ·
 `stock-tables.tsx`(24) · `MillingTable.tsx`(2)
 
-### R5 — 문서 개정 — **블로커 A 결정 후 착수**
+### R5 — 문서 개정 — ✅ **완료 (2026-09-04)** · `report-목록표준규격-R5-2026-09-04.md`
 
 지시서는 「완료」라고 하나 **실제로는 미개정**이다. 대상 파일 선택 필요:
 `docs/handoff/디자인시스템/handoff.md` / `docs/handoff/잡곡재고관리/handoff.md` (2벌 존재).

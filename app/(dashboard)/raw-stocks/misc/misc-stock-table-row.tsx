@@ -78,7 +78,7 @@ export function MiscStockTableRow({ stock, canManage = false, canMill = false, i
 
     const certType = stock.farmer.group?.certType
 
-    // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-50/60 (같은 톤 묶음).
+    // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-100 (같은 톤 묶음).
     // 단일 건(낱개 행, §4.2.4)은 흰 배경.
     return (
         <TableRow className={inExpandedGroup ? 'bg-slate-100 hover:bg-slate-200/70 border-b-0' : 'bg-white hover:bg-slate-50'}>

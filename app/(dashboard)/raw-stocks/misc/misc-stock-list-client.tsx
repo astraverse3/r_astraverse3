@@ -211,7 +211,7 @@ export function MiscStockListClient({
                                 return (
                                     <Fragment key={group.key}>
                                         {/* Summary Row — handoff §4.2.6 (단일 건은 헤더 안 보임)
-                                            펼침 시 헤더와 서브를 같은 bg-slate-50/60 톤으로 통일 → 한 묶음 시각화.
+                                            펼침 시 헤더와 서브를 같은 bg-slate-100 톤으로 통일 → 한 묶음 시각화.
                                             primary 액센트 사용 X (§4.2.6 NOTE). */}
                                         {isMulti && (
                                             <TableRow
@@ -254,7 +254,7 @@ export function MiscStockListClient({
                                         )}
 
                                         {/* Detail Rows — 단일 건 그룹은 무조건 표시, 다중은 isExpanded일 때만
-                                            inExpandedGroup: 다중 그룹의 서브행만 묶음 톤(slate-50/60). 단일 건은 흰 배경(낱개). */}
+                                            inExpandedGroup: 다중 그룹의 서브행만 묶음 톤(slate-100). 단일 건은 흰 배경(낱개). */}
                                         {isOpen && group.items.map((stock: any) => (
                                             <MiscStockTableRow
                                                 key={stock.id}

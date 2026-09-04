@@ -573,62 +573,88 @@ const [adminOpen, setAdminOpen] = useState(active.startsWith('/admin/'));`}>
       </Section>
 
       {/* 8. Variety Group Table */}
-      <Section id="table" title="8. 품종 그룹 펼침 테이블 (PC)" subtitle="품종 헤더 행 클릭 → 하위 LOT/규격 상세 행">
-        <Card title="Live Preview" code={`<tr onClick={toggle} className="bg-slate-50 hover:bg-slate-100 cursor-pointer">
-  <td className="px-3 py-2">
-    <ChevronRight className={open ? 'rotate-90' : ''} />
-  </td>
-  <td className="font-bold">{variety}</td>
-  <td className="text-xs text-slate-400">{rows.length}종</td>
-  <td className="text-right font-bold tabular-nums">{total}kg</td>
-</tr>`}>
+      <Section id="table" title="8. 품종 그룹 펼침 테이블 (PC)" subtitle="목록 표준규격 적용 · 헤더 40px / 행 44px / 14px · 펼친 묶음 bg-slate-100">
+        <Card title="Live Preview" code={`{/* 펼친 그룹 헤더 — 서브행과 같은 묶음톤, 내부 경계는 지운다 */}
+<tr onClick={toggle} className={isOpen
+  ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0 cursor-pointer'
+  : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80 cursor-pointer'}>
+  <TableCell className="text-center"><ChevronRight className={isOpen ? 'rotate-90' : ''} /></TableCell>
+  <TableCell className="font-bold text-slate-900">{variety}</TableCell>
+  <TableCell className="text-slate-400">{rows.length}종</TableCell>
+  <TableCell className="text-right font-bold tabular-nums">{total}kg</TableCell>
+</tr>
+
+{/* 서브행 — 그룹 키와 겹치는 컬럼은 비운다 */}
+<tr className="bg-slate-100 hover:bg-slate-200/70 border-b-0">…</tr>
+
+{/* 하위 1건 그룹은 헤더를 만들지 않고 낱개 흰 행으로 */}
+<tr className="bg-white hover:bg-slate-50">…</tr>`}>
           <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-            <table className="w-full text-[12.5px]">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50/80 text-slate-400 text-[11px] font-medium border-b border-slate-200">
-                  <th className="px-3 py-2 w-8"></th>
-                  <th className="px-3 py-2 text-left">품종 / 규격</th>
-                  <th className="px-3 py-2 text-left w-32">생산자</th>
-                  <th className="px-3 py-2 text-left w-36">LOT</th>
-                  <th className="px-3 py-2 text-right w-24">수량</th>
-                  <th className="px-3 py-2 text-right w-24">합계</th>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-3 h-10 w-8"></th>
+                  <th className="px-3 h-10 text-left font-medium text-slate-900">품종 / 규격</th>
+                  <th className="px-3 h-10 text-left font-medium text-slate-900 w-32">생산자</th>
+                  <th className="px-3 h-10 text-left font-medium text-slate-900 w-36">LOT</th>
+                  <th className="px-3 h-10 text-right font-medium text-slate-900 w-24">수량</th>
+                  <th className="px-3 h-10 text-right font-medium text-slate-900 w-24">합계</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <td className="px-3 py-2"><svg className="w-3 h-3 text-slate-400 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
-                  <td className="px-3 py-2 font-bold text-slate-900">검정보리 <span className="text-[10px] text-slate-400 font-normal">2종</span></td>
-                  <td className="px-3 py-2 text-slate-400">—</td>
-                  <td></td><td></td>
-                  <td className="px-3 py-2 text-right font-bold tabular-nums">260kg</td>
+                {/* 펼친 그룹 헤더 — 묶음톤, 위쪽에만 경계 */}
+                <tr className="bg-slate-100 border-t border-slate-200/80">
+                  <td className="px-3 h-11 text-center"><svg className="w-3.5 h-3.5 text-slate-400 rotate-90 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
+                  <td className="px-3 h-11 font-bold text-slate-900">검정보리 <span className="text-[11.5px] text-slate-400 font-normal">2종</span></td>
+                  <td className="px-3 h-11 text-slate-500">김재훈</td>
+                  <td className="px-3 h-11 text-slate-300">—</td>
+                  <td className="px-3 h-11 text-right text-slate-300">—</td>
+                  <td className="px-3 h-11 text-right font-bold tabular-nums text-slate-900">260kg</td>
                 </tr>
-                <tr className="border-b border-slate-50 border-l-2 border-l-blue-500/40 bg-slate-50/40">
-                  <td></td>
-                  <td className="px-3 py-2 text-slate-700">5kg × 40포</td>
-                  <td className="px-3 py-2 text-slate-500">김재훈</td>
-                  <td className="px-3 py-2 font-mono text-[11px] text-slate-500">25-MG-21-001</td>
-                  <td className="px-3 py-2 text-right tabular-nums">40포</td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums">200kg</td>
+                {/* 서브행 — 같은 묶음톤. 생산자는 그룹이 이미 말했으므로 비운다 */}
+                <tr className="bg-slate-100">
+                  <td className="px-3 h-11"></td>
+                  <td className="px-3 h-11 text-slate-700 pl-8">5kg × 40포</td>
+                  <td className="px-3 h-11"></td>
+                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-21-001</td>
+                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">40포</td>
+                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">200kg</td>
                 </tr>
-                <tr className="border-b border-slate-100 border-l-2 border-l-blue-500/40 bg-slate-50/40">
-                  <td></td>
-                  <td className="px-3 py-2 text-slate-700">1kg × 60포</td>
-                  <td className="px-3 py-2 text-slate-500">김재훈</td>
-                  <td className="px-3 py-2 font-mono text-[11px] text-slate-500">25-MG-21-004</td>
-                  <td className="px-3 py-2 text-right tabular-nums">60포</td>
-                  <td className="px-3 py-2 text-right font-semibold tabular-nums">60kg</td>
+                {/* 묶음의 마지막 서브행에만 아래 경계를 돌려준다 */}
+                <tr className="bg-slate-100 border-b border-slate-200/80">
+                  <td className="px-3 h-11"></td>
+                  <td className="px-3 h-11 text-slate-700 pl-8">1kg × 60포</td>
+                  <td className="px-3 h-11"></td>
+                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-21-004</td>
+                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">60포</td>
+                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">60kg</td>
                 </tr>
-                <tr>
-                  <td className="px-3 py-2"><svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
-                  <td className="px-3 py-2 font-bold text-slate-900">귀리 <span className="text-[10px] text-slate-400 font-normal">2종</span></td>
-                  <td className="px-3 py-2 text-slate-400">—</td>
-                  <td></td><td></td>
-                  <td className="px-3 py-2 text-right font-bold tabular-nums">108kg</td>
+                {/* 접힌 그룹 — 흰 배경 금지 */}
+                <tr className="bg-slate-50 border-y border-slate-200/80">
+                  <td className="px-3 h-11 text-center"><svg className="w-3.5 h-3.5 text-slate-400 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
+                  <td className="px-3 h-11 font-bold text-slate-900">귀리 <span className="text-[11.5px] text-slate-400 font-normal">2종</span></td>
+                  <td className="px-3 h-11 text-slate-500">오점기</td>
+                  <td className="px-3 h-11 text-slate-300">—</td>
+                  <td className="px-3 h-11 text-right text-slate-300">—</td>
+                  <td className="px-3 h-11 text-right font-bold tabular-nums text-slate-900">108kg</td>
+                </tr>
+                {/* 하위 1건 → 그룹을 만들지 않고 낱개 흰 행 */}
+                <tr className="bg-white border-b border-slate-100">
+                  <td className="px-3 h-11"></td>
+                  <td className="px-3 h-11 font-semibold text-slate-900">기장</td>
+                  <td className="px-3 h-11 text-slate-500">박태일</td>
+                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-33-002</td>
+                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">12포</td>
+                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">60kg</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </Card>
+        <p className="mt-3 text-[12.5px] text-slate-500 leading-relaxed">
+          🔴 값의 정본은 <code className="font-mono text-[11.5px] bg-slate-100 px-1 rounded">components/ui/table.tsx</code> 프리미티브다.
+          화면에서 헤더·셀 클래스를 덧붙이지 않는다. 펼친 묶음의 <b>primary 액센트·세로 컬러바는 쓰지 않는다</b>(§4.2.6 NOTE).
+        </p>
       </Section>
 
       {/* 9. Header Actions */}

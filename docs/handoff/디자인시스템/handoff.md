@@ -24,6 +24,7 @@
 #### Brand
 - `--brand`: **`#2563eb`** (Blue-600) — 주요 액션, active 상태, 브랜드 인디케이터
 - 레거시 `#00a2e8`은 **사용 금지**. 기존 코드에서 발견 시 모두 `--brand`로 교체.
+  - 단, **그룹 펼침 배경**의 `#00a2e8`은 `--brand`가 아니라 **slate 묶음톤으로 제거**한다 (§4.2.6 NOTE). 의미색으로 쓰인 나머지는 토큰 전환 과제로 남긴다.
 
 #### Semantic (shadcn 기준)
 
@@ -308,6 +309,27 @@ shadcn `Tabs` 컴포넌트의 `TabsList`/`TabsTrigger` 위에 **커스텀 스타
 
 ### 4.2 테이블 — 품종 그룹 펼침 패턴 (그룹 + 낱개 혼합)
 
+> **2026-09-03 「목록 표준규격」 적용본.** 앱 전체 목록 11곳의 헤더·행 스펙을 하나로 통일하면서
+> 이 절도 그 표준값으로 개정했다. 아래 값의 **단일 정본은 `components/ui/table.tsx` 프리미티브**이고,
+> 이 문서는 그것이 렌더되는 값을 기술한다. 개별 화면에서 헤더·셀 클래스를 덧붙이지 않는다.
+>
+> 🔴 **이 절의 CSS Grid 마크업 자체는 유지한다** — 펼침 포장재고는 `<table>`로 표현하기 어렵다.
+> 다만 **타이포·밀도는 `<table>` 목록과 같은 값**으로 맞춘다. 구조와 밀도는 분리 가능한 문제이고,
+> 화면을 옮길 때 글자 크기가 튀지 않는 것이 이 표준의 목적이다.
+> **현재 제품재고 화면(`PKG_GRID`)은 아직 옛 값이 남아 있다** → 백로그 §30.
+
+**표준값 요약** (`<table>` 목록과 공통)
+
+| 항목 | 값 |
+| --- | --- |
+| 헤더 | `h-10`(40px) · `px-3` · `text-sm`(14px) · `font-medium` · `text-foreground` · 좌측정렬 |
+| 헤더 배경 | `bg-slate-50` + `border-b border-slate-200` — **호버에 반응하지 않는다** |
+| 본문 셀 | `h-11`(44px) · `px-3 py-0` · `text-sm` · `text-slate-700` |
+| 본문 행 | `border-b border-slate-100` + 호버 `bg-slate-50`. **짝수행 음영 없음** |
+| 그룹 헤더 행 | 본문과 같은 **44px** (`h-12` 금지) |
+| 컬럼 폭 | `<table>`은 `colgroup` % + `table-layout:fixed`, grid는 `fr` 비율 유지. 로트 컬럼 **≥24%** 비중 |
+| 로트번호 | `font-mono text-[12.5px] text-slate-500` |
+
 #### 4.2.1 데이터 구조
 
 서버에서 **GROUP BY 결과 + 낱개 행이 섞인 형태**로 내려옴. 한 품종에 규격이 2개 이상이면 그룹으로 묶이고, 1개뿐이면 낱개 행으로 그대로 표시.
@@ -336,19 +358,35 @@ type InventoryRow = {
 
 - **단일 테이블**: 그룹 헤더·서브행·낱개 행을 모두 **하나의 그리드(같은 컬럼 배치)** 안에 흘림. 그룹과 낱개가 어색하게 분리되지 않도록.
 - **공통 그리드**: `grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]` (품종 / 규격 / 개수 / 생산자 / 로트 / 날짜 / 합계)
-- **낱개 행**과 **그룹 헤더 행**의 배경·높이는 동일 (흰 배경, py-2.5).
-- **펼쳐진 그룹은 한 덩어리**: 그룹 헤더 + 서브행을 묶어 옅은 `bg-slate-50/60` + 미세한 `ring-1 ring-inset ring-slate-200/70` 처리. 시안톤(primary) 강조 X — 낱개 행과 톤이 따로 놀지 않게.
-- **서브행의 첫 컬럼**은 들여쓰기 + 짧은 `─` 라인 + "규격" 라벨로 그룹 소속임을 표시. 토글 자리는 첫 컬럼 안에서만 비움 → 그리드는 깨지지 않음.
+- **행 높이 44px 고정**: 낱개 행 · 그룹 헤더 행 · 서브행이 **모두 같은 높이**. 그룹 헤더를 크게 만들지 않는다.
+- **펼쳐진 그룹은 한 덩어리**: 그룹 헤더 + 서브행에 **같은 `bg-slate-100`** 을 주고, 묶음 위쪽에만 `border-t border-slate-200/80`, 내부 경계는 `border-b-0`으로 지운다. 시안톤(primary) 강조 X.
+  > ⚠️ 초안의 `bg-slate-50/75`는 흰 배경과 **밝기 차이가 2%**라 실화면에서 묶음으로 읽히지 않았다.
+  > `bg-slate-100`(약 5.5%)으로 확정 — 실화면 확인을 거친 값이다.
+  > `ring-1 ring-inset ring-slate-200/70`은 쓰지 않는다 → `border-t`.
+- **접힌 그룹은 흰 배경 금지**: `bg-slate-50` + `border-y border-slate-200/80`. 낱개 행과 구분돼야 한다.
+- **단일 건 그룹은 그룹을 만들지 않는다**: 하위가 1건이면 헤더·토글 없이 낱개 흰 행(`bg-white hover:bg-slate-50`)으로 흘린다.
+- **서브행에서 그룹 키와 중복되는 컬럼은 비운다**: 그룹이 이미 말해 준 값(년도·작목반·인증번호 등)을 서브행에서 반복하지 않는다.
+  **묶음을 인지시키는 데는 배경색보다 이쪽이 훨씬 효과적이다.**
+- **서브행의 첫 컬럼**은 들여쓰기로 그룹 소속임을 표시. 토글 자리는 첫 컬럼 안에서만 비움 → 그리드는 깨지지 않음.
 
 #### 4.2.3 컬럼 헤더
 
 ```tsx
-<div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr] text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-slate-50/60 border-b border-slate-200">
+<div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
+                h-10 items-center px-3 text-sm font-medium text-foreground
+                bg-slate-50 border-b border-slate-200">
   <span>품종</span><span>규격</span><span>개수</span>
   <span>생산자</span><span>로트</span><span>날짜</span>
   <span className="text-right">합계</span>
 </div>
 ```
+
+> **옛 값** `text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-slate-50/60`은
+> Typography의 **Micro Bold(섹션 그룹 헤더)** 토큰이었다 — 영문 라벨("MAIN MENU")용을 한글 헤더에 쓰고 있었다.
+> `uppercase`·`tracking-wider`는 한글에 아무 효과가 없고 글자만 10.5px로 작아진다.
+>
+> **`text-slate-900`이 아니라 `text-foreground`인 이유**: 두 값은 같지만(#0f172a) 토큰 방향(§22)을 보존한다.
+> 스펙에 slate-900으로 적힌 것은 **렌더 값 표기**이며, 새 하드코딩을 넣으라는 뜻이 아니다.
 
 #### 4.2.4 낱개 행 (`type: 'single'`)
 
@@ -356,7 +394,8 @@ type InventoryRow = {
 
 ```tsx
 <div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
-                text-[12.5px] text-slate-700 px-4 py-2.5 items-center hover:bg-slate-50/70">
+                h-11 items-center px-3 text-sm text-slate-700
+                bg-white hover:bg-slate-50 border-b border-slate-100">
   <span className="font-semibold text-slate-900 flex items-center gap-2">
     <span className="w-3.5 inline-block" /> {/* 토글 자리 비움 */}
     {it.variety}
@@ -364,7 +403,7 @@ type InventoryRow = {
   <span>{it.spec}</span>
   <span className="tabular-nums">{it.qty}포</span>
   <span className="text-slate-600">{it.producer}</span>
-  <span className="font-mono text-[11px] text-slate-500">{it.lot}</span>
+  <span className="font-mono text-[12.5px] text-slate-500">{it.lot}</span>
   <span className="text-slate-500 tabular-nums">{it.date}</span>
   <span className="tabular-nums font-semibold text-right">{it.sub}kg</span>
 </div>
@@ -372,13 +411,17 @@ type InventoryRow = {
 
 #### 4.2.5 그룹 헤더 행 (`type: 'group'`)
 
-같은 그리드. 좌측에 `▶/▼` 토글, 합계만 굵게 강조. 규격·생산자·로트·날짜 컬럼은 `—` (그룹 단계에선 단일 값이 없음).
+같은 그리드·같은 높이(44px). 좌측에 `▶/▼` 토글, 합계만 굵게 강조. 규격·생산자·로트·날짜 컬럼은 `—` (그룹 단계에선 단일 값이 없음).
+
+접힘/펼침의 배경이 다르다 — 접힘은 `bg-slate-50`, 펼침은 묶음톤 `bg-slate-100`.
 
 ```tsx
 <button onClick={toggle}
-  className="w-full grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
-             text-[12.5px] px-4 py-2.5 items-center text-left transition-colors
-             hover:bg-slate-50/70">
+  className={`w-full grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
+             h-11 items-center px-3 text-sm text-left transition-colors cursor-pointer
+             ${isOpen
+               ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+               : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'}`}>
   <span className="font-bold text-slate-900 flex items-center gap-2">
     <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform
       ${isOpen ? 'rotate-90 text-slate-700' : 'text-slate-400'}`} />
@@ -395,34 +438,44 @@ type InventoryRow = {
 </button>
 ```
 
+> 하위가 **1건뿐이면 이 헤더를 렌더하지 않는다.** 토글할 것이 없는 그룹은 만들지 않고 §4.2.4 낱개 행으로 흘린다.
+
 #### 4.2.6 펼쳐진 그룹의 일체감 처리
 
-**그룹 헤더와 서브행을 같은 컨테이너로 감싸고**, 컨테이너 자체에 옅은 배경 + ring 을 입혀 "한 묶음"임을 표현. 서브행 사이는 `border-t border-slate-200/60` 으로 구분.
+**그룹 헤더와 서브행에 같은 `bg-slate-100`** 을 주어 "한 묶음"임을 표현한다.
+묶음 **위쪽에만** `border-t border-slate-200/80`을 두고 내부 행 경계는 `border-b-0`으로 지운다 —
+가로선이 남으면 묶음이 다시 잘려 보인다. 마지막 서브행에만 아래 경계를 돌려준다.
 
 ```tsx
-<div className={isOpen ? 'bg-slate-50/60 ring-1 ring-inset ring-slate-200/70' : ''}>
-  {/* 그룹 헤더 행 (위 4.2.5) */}
-  {/* ↓ 펼침 시 서브행 */}
-  {isOpen && it.rows.map((r, i) => (
-    <div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
-                    text-[12.5px] text-slate-600 px-4 py-2 items-center
-                    border-t border-slate-200/60">
-      <span className="flex items-center gap-2 pl-5">
-        <span className="w-2 h-px bg-slate-300" />
-        <span className="text-[11px] text-slate-400">규격</span>
-      </span>
-      <span className="font-medium text-slate-700">{r.spec}</span>
-      <span className="tabular-nums">{r.qty}포</span>
-      <span className="text-slate-600">{r.producer}</span>
-      <span className="font-mono text-[11px] text-slate-500">{r.lot}</span>
-      <span className="text-slate-500 tabular-nums">{r.date}</span>
-      <span className="tabular-nums font-semibold text-slate-700 text-right">{r.sub}kg</span>
-    </div>
-  ))}
-</div>
+{/* 그룹 헤더 행 (위 4.2.5, isOpen=true) */}
+{isOpen && it.rows.map((r, i) => (
+  <div className={`grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
+                  h-11 items-center px-3 text-sm text-slate-600
+                  bg-slate-100 hover:bg-slate-200/70 border-b-0
+                  ${i === it.rows.length - 1 ? 'border-b border-slate-200/80' : ''}`}>
+    <span className="flex items-center gap-2 pl-5">
+      <span className="w-2 h-px bg-slate-300" />
+      <span className="text-[12.5px] text-slate-400">규격</span>
+    </span>
+    <span className="font-medium text-slate-700">{r.spec}</span>
+    <span className="tabular-nums">{r.qty}포</span>
+    {/* 생산자·로트가 그룹 키와 같으면 비운다 — 반복하지 않는다 */}
+    <span className="text-slate-600">{r.producer}</span>
+    <span className="font-mono text-[12.5px] text-slate-500">{r.lot}</span>
+    <span className="text-slate-500 tabular-nums">{r.date}</span>
+    <span className="tabular-nums font-semibold text-slate-700 text-right">{r.sub}kg</span>
+  </div>
+))}
 ```
 
-> **NOTE — 이전 시안과의 차이**: 초기 시안에서는 펼친 그룹을 시안톤(`#e6f6fd` / `border-primary/40`)으로 강조했으나, 같은 테이블 안에 낱개 행이 섞이면 톤이 어긋나 보여 **slate-50 + ring**으로 톤다운**. primary 액센트는 사용하지 않음**.
+> **NOTE — 시안톤(`#00a2e8`)의 경위**
+> 초기 시안은 펼친 그룹을 시안톤(`#e6f6fd` / `border-primary/40`)으로 강조했으나, 같은 테이블 안에
+> 낱개 행이 섞이면 톤이 어긋나 보여 slate로 톤다운했다. **primary 액센트는 사용하지 않는다.**
+>
+> 그럼에도 **생산자 관리 화면에는 `bg-[#00a2e8]/20` 그룹 헤더와 `/7` 서브행이 남아 있었고**,
+> 2026-09-03 목록 표준규격 작업(R3)에서 위 slate 클래스로 교체하며 제거했다.
+> 🔴 **같은 화면의 나머지 `#00a2e8` 29건은 의미색**(인증 칩·연락처 버튼·필터 배지·감사로그 총건수 등)이라
+> **손대지 않았다.** 이 NOTE는 **그룹 표현의 색**에만 적용된다 — 부록 체크리스트도 같은 취지로 개정했다.
 
 #### 4.2.7 모바일 (카드 리스트) 적용 규칙
 
@@ -431,6 +484,9 @@ type InventoryRow = {
 - 펼쳐진 그룹만 `bg-slate-50/70` 으로 묶음 표현 (시안톤 X).
 - 서브 항목들은 묶음 영역 안에 `bg-white border border-slate-200/80 rounded-md` 카드로 들어감.
 - 낱개 행은 한 줄에 `품종 · 규격 × 수량 / 생산자 / 합계kg` + 두 번째 줄에 `LOT 칩 / 날짜`.
+
+> 🔴 **모바일 카드는 목록 표준규격의 범위 밖**이다(별도 검토). 위 값은 개정되지 않은 원안이다.
+> 카드의 **폰트를 키우지 않는다** — 줄 넘침이 더 큰 문제이며, 가독성은 정보 재배치로 해결한다.
 
 ### 4.3 모바일 품종 카드 — 2줄 구조
 
@@ -596,7 +652,7 @@ type InventoryRow = {
 ## 부록: 시안에서 실제 코드로의 변환 체크리스트
 
 ### ✅ 체크리스트
-- [ ] `#00a2e8` → `bg-primary` / `text-primary` / CSS 변수 `--primary`
+- [ ] `#00a2e8` → **그룹 표현(펼침 배경)에서만** slate로 제거. `bg-primary` 등 **다른 색으로 치환하지 않는다** — 인증 칩·연락처 버튼·필터 배지·감사로그 총건수 등 **의미색은 그대로 둔다** (2026-09-03 목록 표준규격 결정, §4.2.6 NOTE)
 - [ ] `bg-[#e6f6fd]` → `bg-blue-50`
 - [ ] `text-slate-500` → 가능하면 `text-muted-foreground`
 - [ ] 인라인 `<button>` → shadcn `<Button variant="...">`
