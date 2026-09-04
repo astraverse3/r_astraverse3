@@ -22,7 +22,7 @@
 | 좌우 패딩 | 12px (`px-3`) |
 | 행 구분 | 구분선만 (`border-b border-slate-100`) + 호버 `bg-slate-50`. 짝수행 음영 없음 |
 | 컬럼 폭 | `colgroup`에 **% 비율** + `table-layout:fixed`. 가로 스크롤 없음 |
-| 펼침 그룹 | 헤더+서브행 같은 `bg-slate-50/75` 묶음톤 |
+| 펼침 그룹 | 헤더+서브행 같은 `bg-slate-100` 묶음톤 (흰색 대비 5.5%) |
 | 접힌 그룹 | `bg-slate-50` + 상하 `border-slate-200/80`. **흰 배경 금지** |
 | 단일 건 그룹 | 그룹 헤더를 만들지 않고 낱개 흰 행으로 표시 |
 | `#00a2e8` | 펼침 그룹 2건만 삭제 — 의미색 29건은 범위 밖 |
@@ -84,10 +84,10 @@ TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 
 ```tsx
 // 펼친 그룹 헤더
-<TableRow className="bg-slate-50/75 hover:bg-slate-100/85 border-t border-slate-200/80 border-b-0 cursor-pointer">
+<TableRow className="bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0 cursor-pointer">
 
 // 펼친 그룹 서브행 — 헤더와 같은 톤
-<TableRow className={`bg-slate-50/75 hover:bg-slate-100/85 border-b-0 ${isLast ? 'border-b border-slate-200/80' : ''}`}>
+<TableRow className={`bg-slate-100 hover:bg-slate-200/70 border-b-0 ${isLast ? 'border-b border-slate-200/80' : ''}`}>
 
 // 접힌 그룹 헤더 — 흰 배경 금지
 <TableRow className="bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80 cursor-pointer">
@@ -101,15 +101,16 @@ TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 | 파일 | 현행 | 조치 |
 | --- | --- | --- |
 | `admin/farmers/farmer-list.tsx` L371 | `bg-[#00a2e8]/20` 그룹 헤더, hover `/16`, 접힘 시 `bg-white` | **시안톤 삭제.** 위 slate 클래스로 교체. 접힘 상태를 `bg-slate-50`으로 |
-| `admin/farmers/farmer-list.tsx` L405 | 서브행 `bg-[#00a2e8]/7` | `bg-slate-50/75` |
+| `admin/farmers/farmer-list.tsx` L405 | 서브행 `bg-[#00a2e8]/7` | `bg-slate-100` |
 | `raw-stocks/stock-list-client.tsx` L234 | 그룹 헤더 `h-12` + `shadow-sm`, 서브행 톤 없음 | `h-12`·`shadow-sm` 제거(44px), 서브행에 묶음톤 추가 |
-| `raw-stocks/misc/misc-stock-list-client.tsx` L210 | `h-12 border-y border-slate-200/70` + `bg-slate-50/60` | `h-12` → `h-11`, `/70` → `/80`, `/60` → `/75`. **벼와 동일 조치** |
+| `raw-stocks/misc/misc-stock-list-client.tsx` L210 | `h-12 border-y border-slate-200/70` + `bg-slate-50/60` | `h-12` → `h-11`, `/70` → `/80`, `bg-slate-50/60` → `bg-slate-100`. **벼와 동일 조치** |
 
 > **정본이라는 잡곡도 `h-12`를 갖고 있다.** 잡곡을 정본으로 삼은 것은 묶음톤·단일건 낱개 패턴이고, 행 높이는 별도로 "모든 행 44px"로 정했다. 세 화면 모두 그룹 헤더를 `h-11`로 맞춘다.
 
 - 단일 건 그룹 처리는 잡곡의 `isMulti` 패턴을 따른다 (`misc-stock-list-client.tsx` L201, `misc-stock-table-row.tsx`의 `inExpandedGroup` prop)
 - 생산자관리의 `isMultiFarmer` 분기도 같은 방식으로 정리 — 하위 1명이면 그룹 헤더를 렌더하지 않는다
-- 생산자관리 L395의 "클릭해서 펼치기/접기" 안내 문구는 다른 목록에 없다. 유지하려면 세 화면 모두에 넣고, 아니면 제거 — 한쪽만 남기지 않는다
+- **생산자관리 L411의 "클릭해서 펼치기/접기" 안내 칩은 제거한다** (`text-[#00a2e8] bg-[#00a2e8]/10` span 전체 삭제). 세 화면 중 이 화면에만 있던 예외이고, 셰브론 + `cursor-pointer` + `총 N명` 밑줄로 어포던스가 이미 확보된다. 다른 두 화면에 새로 넣지 않는다 → 이로써 그룹 헤더에서 청록은 밑줄 `decoration-[#00a2e8]/40` 하나만 남는다
+- **"총 N명" 셀은 `font-semibold text-slate-900` 유지** (기존 `text-[#008cc9] font-bold`에서 변경 확정). R2의 「대표값 = font-semibold text-slate-900」 규약과 일치하고, slate 배경 위에 청록 글자만 남는 상태를 만들지 않는다
 
 ## R4. 화면별 헤더·셀 클래스 제거 (10파일)
 
@@ -178,10 +179,10 @@ text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-sla
 
 함께 개정할 것:
 - §4.2 도입부 — 목록 표준규격 적용 사실과 상위 정본 경로 안내
-- §4.2.2 시각 원칙 — 행 44px, 묶음톤 `bg-slate-50/75` + `border-t`, 접힌 그룹 흰 배경 금지, 단일건 낱개 그룹
+- §4.2.2 시각 원칙 — 행 44px, 묶음톤 `bg-slate-100` + `border-t`, 접힌 그룹 흰 배경 금지, 단일건 낱개 그룹
 - §4.2.4/§4.2.5/§4.2.6 — `text-[12.5px]` → `text-sm`, `px-4 py-2.5` → `px-3 h-11`, 로트 `text-[11px]` → `text-[12.5px]`
 - §4.2.6 묶음 — `ring-1 ring-inset ring-slate-200/70` → `border-t border-slate-200/80`
-- §4.2.6 NOTE — 생산자관리에 `#00a2e8`이 잔존했고 R3에서 제거된 경위 기록
+- §4.2.6 NOTE — 생산자관리에 `#00a2e8`이 잔존했고 R3에서 제거된 경위 기록. 그룹 헤더에 남기는 청록은 밑줄 하나뿐임을 명시
 - `design-system.html` §Group Table 라이브 렌더링 — 위 값으로 갱신
 - 부록 체크리스트 — `#00a2e8`은 다른 색으로 치환하지 말고 그룹 표현에서만 slate로 제거
 
@@ -212,3 +213,32 @@ text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-sla
 - 컬럼 정렬 규칙 정리 — 성격별 기준선은 시안 2절에 기록
 - **`#00a2e8` 의미색 29건** — 인증 칩(`farmer-list.tsx:196`), 연락처 버튼, 필터 배지, 감사로그 총건수, 실시간 그래디언트 등. 그룹 표현과 무관한 색이므로 토큰 전환 과제로 넘긴다
 - 앱 전체 slate → 토큰 전환 — 별도 과제
+
+
+---
+
+## R6 — 제품재고(CSS Grid) 목록 표준 적용 · 확정 2026-09-04
+
+표 10곳을 표준화한 결과 `<table>`이 아닌 제품재고 목록(`packages/package-row.tsx`, `PKG_GRID`)만 밖에 남아 격차가 벌어졌다. **grid 마크업은 유지하고 타이포·밀도만 표준으로 올린다** (= 구현 측 A안).
+
+### 왜 밀도 손실 우려를 기각했는가
+현행 `text-[13px] px-4 py-3`의 실제 행 높이는 13×1.5 + 24 ≈ **43.5px**. `h-11`(44px) 고정 시 +0.5px, `py-2.5` 행만 40→44px(+4px). **한 화면 행 수는 사실상 그대로**이므로 이 화면을 예외로 둘 근거가 없다.
+
+### 적용 값
+| 위치 | 현행 | 확정 |
+| --- | --- | --- |
+| `:95` 컬럼 헤더 | `text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2.5 bg-slate-50/60` | `h-10 px-3 text-sm font-medium text-foreground bg-slate-50 border-b border-slate-200` |
+| `:219`/`:276`/`:336` 행 | `text-[13px] px-4 py-3` (또는 `py-2.5`) | `text-sm px-3 h-11` |
+| `:332` 펼친 묶음 | `bg-slate-50/60 ring-1 ring-inset ring-slate-200/70` | `bg-slate-100 border-t border-slate-200/80` (ring 제거 — 표 10곳에 없는 패턴) |
+
+헤더 변경은 선택이 아니라 **버그 수정**이다: `uppercase tracking-wider`는 한글에 아무 효과가 없고 글자만 10.5px로 줄인다. Typography의 Micro Bold(영문 섹션 라벨) 토큰을 한글 컬럼 헤더에 오용한 것.
+
+### 보조값 폰트 — 두 단으로만 접는다
+- `text-[12.5px]` — **수치 보조값** (로트, "N종 규격", 합계 등). 기존 `[12px]`·`[11px]` 흡수
+- `text-[11.5px]` — **칩/배지 전용**. 기존 `[10px]` 흡수 (`:169`, `:187`)
+- 세 번째 단은 만들지 않는다. 현재 4단인 것은 기준이 아니라 눈대중의 결과다
+
+### 범위 밖 — 기준서에 예외로 명시할 것
+- **모바일 카드(`mobile-package-card.tsx`)는 건드리지 않는다.** 카드 폰트 확대는 이미 「하지 않는다」로 확정(줄 넘침). 카드와 표는 다른 밀도 문맥이므로 같은 화면에서 데스크탑/모바일 밀도가 갈리는 것은 **의도된 예외**다
+- **`PKG_GRID` 컬럼 비율은 유지.** 로트 `1.4fr` ≈ 23%는 24% 기준에 사실상 부합하고, 비율 조정은 이번 범위 밖
+- `PKG_GRID_SELECT`(재포장 선택 모드)는 같은 상수를 공유하므로 자동 반영 — 선택 컬럼 폭만 회귀 확인

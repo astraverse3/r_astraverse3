@@ -92,7 +92,7 @@ export function deductionSummary(row: PackageRowData): string {
 // -- 컬럼 헤더 (정렬은 데이터 셀과 동일) --
 export function PackageColumnHeader({ selectMode = false }: { selectMode?: boolean }) {
     return (
-        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2.5 bg-slate-50/60 border-b border-slate-200`}>
+        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} h-10 items-center px-3 text-sm font-medium text-foreground bg-slate-50 border-b border-slate-200`}>
             {selectMode && <span />}
             <span>품종</span>
             <span>도정구분</span>
@@ -166,7 +166,7 @@ function RowActionMenu({ row, actions }: { row: PackageRowData; actions?: Packag
 // -- 매입 칩 (PURCHASED 행에만) --
 function PurchasedChip() {
     return (
-        <span className="inline-flex items-center font-medium text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-[1px]">
+        <span className="inline-flex items-center font-medium text-[11.5px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-[1px]">
             매입
         </span>
     )
@@ -175,7 +175,7 @@ function PurchasedChip() {
 // -- LOT 칩 (MILLED & lot 있을 때) --
 function LotChip({ lot }: { lot: string }) {
     return (
-        <span className="inline-flex items-center font-mono text-[11px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px]">
+        <span className="inline-flex items-center font-mono text-[12.5px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px]">
             {lot}
         </span>
     )
@@ -184,7 +184,7 @@ function LotChip({ lot }: { lot: string }) {
 // -- 「차감됨」 배지 — 매입(amber)·LOT(mono)와 톤이 겹치지 않게 회색 (D6) --
 export function DeductedBadge() {
     return (
-        <span className="inline-flex shrink-0 items-center font-medium text-[10px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px]">
+        <span className="inline-flex shrink-0 items-center font-medium text-[11.5px] text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-[1px]">
             차감됨
         </span>
     )
@@ -216,10 +216,10 @@ export function PackageSingleRow({
     const deducted = isDeducted(row)
     return (
         <div
-            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] px-4 py-3 items-center ${
+            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center ${
                 deducted
                     ? 'bg-slate-50/70 text-slate-400'
-                    : `text-slate-700 ${selected ? 'bg-primary/5' : 'hover:bg-slate-50/70'}`
+                    : `text-slate-700 ${selected ? 'bg-primary/5' : 'hover:bg-slate-50'}`
             }`}
         >
             {selection && <RowCheckbox row={row} selection={selection} />}
@@ -248,7 +248,7 @@ export function PackageSingleRow({
             </span>
             {/* 차감된 행은 포장일자 대신 「03-14 판매」 — 소진된 재고에선 언제·왜가 더 궁금한 값 (미결 A) */}
             {deducted ? (
-                <span className="text-[11.5px] text-slate-500 tabular-nums text-right">
+                <span className="text-[12.5px] text-slate-500 tabular-nums text-right">
                     {deductionSummary(row)}
                 </span>
             ) : (
@@ -264,17 +264,26 @@ function PackageSubRow({
     row,
     actions,
     selection,
+    isLast = false,
 }: {
     row: PackageRowData
     actions?: PackageRowActions
     selection?: PackageSelection
+    /** 묶음의 마지막 서브행인가 — 여기에만 아래 경계를 돌려준다 (§4.2.6) */
+    isLast?: boolean
 }) {
     const selected = selection?.selectedIds.has(row.id)
     const deducted = isDeducted(row)
     return (
         <div
-            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] px-4 py-2.5 items-center border-t border-slate-200/60 ${
-                deducted ? 'bg-slate-50/70 text-slate-400' : `text-slate-600 ${selected ? 'bg-primary/5' : ''}`
+            // §4.2.6은 묶음 내부 가로선을 지우라고 하지만, 제품재고는 한 그룹에 서브행이 열 줄 가까이
+            // 붙어 회색 덩어리가 된다 (2026-09-04 실화면 확인). 묶음톤 위에서 은은한 선으로 되살린다.
+            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center border-t border-slate-200/70 ${
+                isLast ? 'border-b border-slate-200/80' : ''
+            } ${
+                deducted
+                    ? 'bg-slate-50/70 text-slate-400'
+                    : `text-slate-600 ${selected ? 'bg-primary/5' : 'hover:bg-slate-200/70'}`
             }`}
         >
             {selection && <RowCheckbox row={row} selection={selection} />}
@@ -301,7 +310,7 @@ function PackageSubRow({
                 {deducted ? '0kg' : `${row.sub.toLocaleString()}kg`}
             </span>
             {deducted ? (
-                <span className="text-[11.5px] text-slate-500 tabular-nums text-right">
+                <span className="text-[12.5px] text-slate-500 tabular-nums text-right">
                     {deductionSummary(row)}
                 </span>
             ) : (
@@ -327,13 +336,19 @@ export function PackageGroupRow({
     selection?: PackageSelection
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
+    // 생산자는 섞일 수 있어 값 대신 인원수 — 원물재고 그룹 헤더(`farmerSetSize`)와 같은 표기
+    const producerCount = new Set(item.rows.map(r => r.producer)).size
 
     return (
-        <div className={isOpen ? 'bg-slate-50/60 ring-1 ring-inset ring-slate-200/70' : ''}>
+        // 펼친 묶음 = 헤더 + 서브행이 같은 톤. ring이 아니라 위쪽 경계만 (§4.2.6)
+        <div className={isOpen ? 'bg-slate-100 border-t border-slate-200/80' : ''}>
             <button
                 type="button"
                 onClick={onToggle}
-                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-[13px] px-4 py-3 items-center text-left transition-colors hover:bg-slate-50/70`}
+                // 펼침 시 호버가 묶음톤보다 밝으면 얼룩이 된다 — 톤 위로 한 단 어둡게
+                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center text-left transition-colors ${
+                    isOpen ? 'hover:bg-slate-200/70' : 'hover:bg-slate-50'
+                }`}
             >
                 {/* 그룹은 품종 묶음이라 그 자체를 재포장할 수 없다 — 안의 행만 고른다 */}
                 {selection && <span />}
@@ -343,12 +358,12 @@ export function PackageGroupRow({
                     />
                     <span className="truncate">{item.variety}</span>
                 </span>
-                {/* 그룹은 도정구분·생산자·로트가 섞일 수 있어 비운다 */}
+                {/* 그룹은 도정구분·로트가 섞일 수 있어 비운다. 생산자만 인원수로 요약 */}
                 <span className="text-slate-300">—</span>
-                <span className="text-slate-300">—</span>
+                <span className="text-slate-400 text-[12.5px] tabular-nums truncate">{producerCount}명</span>
                 <span className="text-slate-300 text-center">—</span>
-                <span className="text-slate-400 text-[12px] text-right pr-2">{item.rows.length}종 규격</span>
-                <span className="tabular-nums text-slate-400 text-[12px] text-right pr-12">{totalQty.toLocaleString()}개</span>
+                <span className="text-slate-400 text-[12.5px] text-right pr-2">{item.rows.length}종 규격</span>
+                <span className="tabular-nums text-slate-400 text-[12.5px] text-right pr-12">{totalQty.toLocaleString()}개</span>
                 <span className="tabular-nums font-bold text-slate-900 text-right">
                     {item.total.toLocaleString()}kg
                 </span>
@@ -357,8 +372,14 @@ export function PackageGroupRow({
             </button>
 
             {isOpen &&
-                item.rows.map(row => (
-                    <PackageSubRow key={row.id} row={row} actions={actions} selection={selection} />
+                item.rows.map((row, i) => (
+                    <PackageSubRow
+                        key={row.id}
+                        row={row}
+                        actions={actions}
+                        selection={selection}
+                        isLast={i === item.rows.length - 1}
+                    />
                 ))}
         </div>
     )
