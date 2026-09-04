@@ -389,7 +389,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {hasHeader && (
                             <TableRow
                                 className={`cursor-pointer font-bold text-slate-800 transition-colors ${isExpanded
-                                    ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+                                    ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'
                                     : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'}`}
                                 onClick={() => toggleGroup(group.key)}
                             >
@@ -420,7 +420,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {/* Farmer Rows */}
                         {(!hasHeader || isExpanded) && group.items.map((farmer: Farmer) => (
                             <TableRow key={farmer.id} className={inGroup
-                                ? 'bg-slate-100 hover:bg-slate-200/70 border-b-0'
+                                ? 'bg-slate-100 hover:bg-slate-200/70 border-b border-slate-200/70'
                                 : 'bg-white hover:bg-slate-50'}>
                                 {canManage && (
                                     <TableCell>

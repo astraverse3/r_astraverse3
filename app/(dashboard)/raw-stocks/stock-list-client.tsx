@@ -239,7 +239,7 @@ function GroupedStockRows({
                         {/* Summary Row */}
                         <TableRow
                             className={`${isExpanded
-                                ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
+                                ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'
                                 : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'} cursor-pointer font-bold text-slate-800`}
                             onClick={() => toggleGroup(group)}
                         >

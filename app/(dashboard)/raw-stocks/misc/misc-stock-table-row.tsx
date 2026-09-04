@@ -81,7 +81,7 @@ export function MiscStockTableRow({ stock, canManage = false, canMill = false, i
     // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-100 (같은 톤 묶음).
     // 단일 건(낱개 행, §4.2.4)은 흰 배경.
     return (
-        <TableRow className={inExpandedGroup ? 'bg-slate-100 hover:bg-slate-200/70 border-b-0' : 'bg-white hover:bg-slate-50'}>
+        <TableRow className={inExpandedGroup ? 'bg-slate-100 hover:bg-slate-200/70 border-b border-slate-200/70' : 'bg-white hover:bg-slate-50'}>
             <TableCell className="px-1 text-center text-slate-400">—</TableCell>
             {/* 다중 그룹 서브행은 년도·품종 셀 비워 그룹 시각 구분 강화 (그리드 정렬은 유지) */}
             <TableCell className="text-center tabular-nums text-slate-400 hidden sm:table-cell">
