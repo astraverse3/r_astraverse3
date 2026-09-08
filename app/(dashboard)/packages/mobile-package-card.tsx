@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronRight, History, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -51,21 +52,30 @@ function LotOrSourceCell({ lot, source }: { lot: string | null; source: PackageR
 }
 
 // 재포장 선택 체크박스 (결정 #43 R2) — 터치 영역을 44px로 넓힌다.
+//
+// 🔴 넓히는 방법은 **label의 패딩**이어야 한다. 예전엔 `absolute -inset-2.5` 오버레이를
+// 형제로 뒀는데, positioned 요소는 static인 형제 위에 그려지므로 **그 투명 span이
+// 체크박스를 덮어 모바일에서 체크가 아예 안 됐다**(오버레이엔 핸들러가 없다).
+// label은 클릭이 네이티브로 input에 전달돼 터치 영역과 동작을 함께 얻는다.
 function RowCheckbox({ row, selection }: { row: PackageRowData; selection: PackageSelection }) {
     const disabled = selection.isDisabled(row)
     return (
-        <span className="relative flex items-center shrink-0">
-            <span aria-hidden className="absolute -inset-2.5" />
+        <label
+            className={cn(
+                'relative -m-2.5 flex shrink-0 items-center p-2.5',
+                disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+            )}
+            onClick={e => e.stopPropagation()}
+        >
             <input
                 type="checkbox"
                 checked={selection.selectedIds.has(row.id)}
                 disabled={disabled}
                 onChange={() => selection.onToggleRow(row)}
-                onClick={e => e.stopPropagation()}
                 aria-label={`${row.variety} ${row.spec} 선택`}
                 className="h-4 w-4 accent-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
             />
-        </span>
+        </label>
     )
 }
 
@@ -254,6 +264,8 @@ export function MobilePackageGroupCard({
     selection?: PackageSelection
 }) {
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
+    // 규격 「종류」 수 — 행 수가 아니다(재포장을 반복하면 같은 규격이 여러 행으로 갈린다)
+    const specCount = new Set(item.rows.map(r => r.spec)).size
 
     return (
         <div
@@ -278,7 +290,7 @@ export function MobilePackageGroupCard({
                 <span />
                 <span className="flex items-center gap-2 shrink-0">
                     <span className="text-[11.5px] text-slate-500 tabular-nums">
-                        {item.rows.length}종 · {totalQty.toLocaleString()}개
+                        {specCount}종 · {totalQty.toLocaleString()}개
                     </span>
                     <span className="text-[12.5px] font-bold text-slate-900 tabular-nums">
                         {item.total.toLocaleString()}kg

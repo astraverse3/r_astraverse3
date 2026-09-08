@@ -533,17 +533,28 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
         >
             <div className={`flex items-center gap-2 w-full ${!isAvailable || isCartBlocked ? 'opacity-60' : ''}`}>
 
-                {/* 1) 체크박스 (시각 16px, hit-area 44px 확장) */}
+                {/* 1) 체크박스 (시각 16px, hit-area 44px 확장)
+                    🔴 hit-area는 **패딩**으로 넓힌다(음수 마진으로 자리 상쇄).
+                    예전엔 `absolute -inset-2.5` 오버레이를 체크박스 **형제**로 뒀는데,
+                    positioned 요소가 static 형제 위에 그려져 **체크박스를 덮어 모바일에서
+                    선택이 안 됐다**. ⋮ 메뉴처럼 핸들러를 가진 조상 **안쪽**에 놓인
+                    오버레이는 버블링으로 동작하므로 문제가 없다 — 형제로 놓을 때만 막힌다. */}
                 {!hideCheckbox && (
-                    <div onClick={(e) => e.stopPropagation()} className="relative flex shrink-0 items-center justify-center">
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (isAvailable && !isCartBlocked) onSelect(!selected)
+                        }}
+                        className="relative -m-2.5 flex shrink-0 items-center justify-center p-2.5"
+                    >
                         <Checkbox
                             checked={selected}
                             onCheckedChange={(checked) => onSelect(checked as boolean)}
                             disabled={!isAvailable || isCartBlocked}
                             aria-label="개별 재고 선택"
                             className="w-4 h-4 rounded-sm border-slate-300"
+                            onClick={(e) => e.stopPropagation()}
                         />
-                        <span aria-hidden className="absolute -inset-2.5" />
                     </div>
                 )}
 
