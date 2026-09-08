@@ -148,7 +148,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                 )}
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <Label htmlFor="productionYear" className="text-[13px] whitespace-nowrap">생산년도</Label>
                             <Input
                                 id="productionYear"
@@ -159,7 +159,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                 className="text-[13px]"
                             />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <Label htmlFor="incomingDate" className="text-[13px] whitespace-nowrap">입고일자</Label>
                             <Input
                                 id="incomingDate"
@@ -172,9 +172,9 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="min-w-0 space-y-1.5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
+                            <div className="min-w-0 space-y-1.5">
                                 <Label className="text-[13px]">생산자</Label>
                                 <Select value={selectedFarmerId} onValueChange={(val) => {
                                     setSelectedFarmerId(val)
@@ -193,7 +193,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="min-w-0 space-y-1.5">
                                 <Label htmlFor="actualFarmer" className="text-[13px] whitespace-nowrap">농가명 (선택)</Label>
                                 <Input
                                     id="actualFarmer"
@@ -216,7 +216,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                         )}
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="min-w-0 space-y-1.5">
                         <Label className="text-[13px]">품종</Label>
                         <Select value={selectedVarietyId} onValueChange={setSelectedVarietyId}>
                             <SelectTrigger className="text-[13px]">
@@ -233,7 +233,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <Label htmlFor="bagNo" className="text-[13px] whitespace-nowrap">톤백번호</Label>
                             <Input
                                 id="bagNo"
@@ -244,7 +244,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                 className="text-[13px]"
                             />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <Label htmlFor="weightKg" className="text-[13px] whitespace-nowrap">중량(kg)</Label>
                             <Input
                                 id="weightKg"

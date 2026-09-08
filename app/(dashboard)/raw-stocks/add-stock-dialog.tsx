@@ -138,7 +138,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                 <form id="add-stock-form" onSubmit={onSubmit} className="grid gap-4 py-2 overflow-y-auto px-1 flex-1 min-h-0">
                     {/* 1. Context: Year & Cert Type */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="productionYear" className="text-[13px]">생산년도</Label>
                             <Input
                                 id="productionYear"
@@ -150,7 +150,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                                 required
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px]">인증 구분</Label>
                             <Select value={certType} onValueChange={setCertType}>
                                 <SelectTrigger className="text-[13px]">
@@ -166,9 +166,9 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     </div>
 
                     {/* 2. Target: Farmer + Actual Farmer */}
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label className="text-[13px]">생산자</Label>
                                 <Select
                                     value={selectedFarmerId}
@@ -188,7 +188,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label htmlFor="actualFarmer" className="text-[13px]">농가명 (선택)</Label>
                                 <Input
                                     id="actualFarmer"
@@ -213,7 +213,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
                     {/* 3. Meta: Variety & Incoming Date */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="varietyId" className="text-[13px]">품종</Label>
                             <Select name="varietyId" required>
                                 <SelectTrigger className="text-[13px]">
@@ -228,18 +228,18 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="incomingDate" className="text-[13px]">입고일자 (Lot 기준)</Label>
                             <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="text-[13px]" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="bagNo" className="text-[13px]">톤백번호</Label>
                             <Input id="bagNo" name="bagNo" type="number" placeholder="1234" required className="text-[13px]" />
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="weightKg" className="text-[13px]">중량(kg)</Label>
                             <Input id="weightKg" name="weightKg" type="number" step="0.1" placeholder="800" required className="text-[13px]" />
                         </div>

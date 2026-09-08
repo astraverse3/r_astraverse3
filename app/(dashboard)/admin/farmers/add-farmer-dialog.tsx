@@ -215,20 +215,20 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                         {isNewGroup ? (
                             <div className="grid gap-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="grid gap-1.5">
+                                    <div className="grid min-w-0 gap-1.5">
                                         <Label htmlFor="cropYear" className="text-xs">생산년도</Label>
                                         <Input id="cropYear" name="cropYear" defaultValue={getDefaultCropYear()} required />
                                     </div>
-                                    <div className="grid gap-1.5">
+                                    <div className="grid min-w-0 gap-1.5">
                                         <Label htmlFor="groupCode" className="text-xs">작목반번호</Label>
                                         <Input id="groupCode" name="groupCode" placeholder="예: 1" required />
                                     </div>
                                 </div>
-                                <div className="grid gap-1.5">
+                                <div className="grid min-w-0 gap-1.5">
                                     <Label htmlFor="groupName" className="text-xs">작목반명 (필수)</Label>
                                     <Input id="groupName" name="groupName" placeholder="예: 땅끝황토친환경" required />
                                 </div>
-                                <div className="grid gap-1.5">
+                                <div className="grid min-w-0 gap-1.5">
                                     <Label htmlFor="certNo" className="text-xs">인증번호 (일반은 비워둠)</Label>
                                     <Input id="certNo" name="certNo" placeholder="예: 무농약 13245" />
                                 </div>
@@ -245,7 +245,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                                             </span>
                                             <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[10px]">{farmer.group.certType} {farmer.group.certNo}</span>
                                         </div>
-                                        <div className="grid gap-1.5">
+                                        <div className="grid min-w-0 gap-1.5">
                                             <Label htmlFor="editGroupName" className="text-xs">작목반명 (수정 가능)</Label>
                                             <Input
                                                 id="editGroupName"
@@ -275,22 +275,22 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
+                        <div className="grid min-w-0 gap-2">
                             <Label htmlFor="farmerNo">생산자번호</Label>
                             <Input id="farmerNo" name="farmerNo" defaultValue={farmer?.farmerNo || ''} placeholder="예: 1" required />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid min-w-0 gap-2">
                             <Label htmlFor="name">생산자명 (필수)</Label>
                             <Input id="name" name="name" defaultValue={farmer?.name} placeholder="생산자 이름" required />
                         </div>
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid min-w-0 gap-2">
                         <Label htmlFor="items">취급품목</Label>
                         <Input id="items" name="items" defaultValue={farmer?.items || ''} placeholder="취급 품목 (쉼표 구분)" />
                     </div>
 
-                    <div className="grid gap-2">
+                    <div className="grid min-w-0 gap-2">
                         <Label htmlFor="phone">연락처</Label>
                         <Input id="phone" name="phone" defaultValue={farmer?.phone || ''} placeholder="010-1234-5678" />
                     </div>

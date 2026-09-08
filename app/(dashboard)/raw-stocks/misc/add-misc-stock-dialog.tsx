@@ -283,7 +283,7 @@ export function AddMiscStockDialog({
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     {/* 0. 입고 유형 라디오 */}
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <Label className="text-[13px]">입고 유형</Label>
                         <div className="flex flex-wrap gap-3">
                             {SOURCE_OPTIONS.map(opt => (
@@ -309,7 +309,7 @@ export function AddMiscStockDialog({
 
                     {/* 1. Context: Year & Cert */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px]">생산년도</Label>
                             <Select
                                 value={productionYear.toString()}
@@ -325,7 +325,7 @@ export function AddMiscStockDialog({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px]">인증 구분</Label>
                             <Select value={certType} onValueChange={setCertType}>
                                 <SelectTrigger className="text-[13px]">
@@ -341,9 +341,9 @@ export function AddMiscStockDialog({
                     </div>
 
                     {/* 2. 생산자 + 농가명 */}
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label className="text-[13px]">생산자</Label>
                                 <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
                                     <SelectTrigger className="text-[13px]">
@@ -360,7 +360,7 @@ export function AddMiscStockDialog({
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label htmlFor="actualFarmer" className="text-[13px]">농가명 (선택)</Label>
                                 <Input
                                     id="actualFarmer"
@@ -381,7 +381,7 @@ export function AddMiscStockDialog({
 
                     {/* 3. 품종 + 입고일 */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="varietyId" className="text-[13px]">품종</Label>
                             <Select value={varietyId} onValueChange={setVarietyId}>
                                 <SelectTrigger className="text-[13px]">
@@ -396,7 +396,7 @@ export function AddMiscStockDialog({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="incomingDate" className="text-[13px]">입고일자 (Lot 기준)</Label>
                             <Input
                                 id="incomingDate"
@@ -411,7 +411,7 @@ export function AddMiscStockDialog({
                     </div>
 
                     {/* 4. 입고중량 (일련번호는 server에서 자동 부여) */}
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <Label htmlFor="weightKg" className="text-[13px]">
                             입고중량(kg)
                             <span className="ml-2 text-[11px] font-normal text-slate-400">{weightHint}</span>
@@ -432,7 +432,7 @@ export function AddMiscStockDialog({
                     {/* 5. 위탁/발아 전용 — 원료중량 + 위탁업체 */}
                     {(isConsignment || isGermination) && (
                         <div className="grid grid-cols-2 gap-4 rounded-md border border-slate-200 bg-slate-50/60 p-3">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label htmlFor="rawWeightKg" className="text-[13px]">{rawLabel}</Label>
                                 <Input
                                     id="rawWeightKg"
@@ -449,7 +449,7 @@ export function AddMiscStockDialog({
                                     <p className="text-[11px] text-slate-500">수율 {yieldPreview}%</p>
                                 )}
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label htmlFor="vendor" className="text-[13px]">{vendorLabel}</Label>
                                 <Input
                                     id="vendor"

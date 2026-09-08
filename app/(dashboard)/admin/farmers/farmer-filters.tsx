@@ -111,7 +111,7 @@ export function FarmerFilters() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label>생산년도</Label>
                             <MultiSelect
                                 options={YEAR_OPTIONS}
@@ -121,7 +121,7 @@ export function FarmerFilters() {
                             />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label>인증구분</Label>
                             <MultiSelect
                                 options={CERT_OPTIONS}
