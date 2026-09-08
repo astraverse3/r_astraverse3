@@ -291,7 +291,7 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                     {/* 컬럼 헤더 — 스크롤에 고정. 같은 품종·규격이 9행씩 오는 게 기본이라
                         헤더가 사라지면 가용 숫자가 무엇인지 알 수 없다 (R1-1).
                         컬럼 어휘는 목록 테이블을 따른다 — 행은 한 줄이다 (R2-1) */}
-                    <div className="sticky top-0 z-10 mt-1.5 hidden gap-x-4 border-b border-slate-200 bg-white pb-1.5 pt-1 text-[10.5px] font-bold uppercase tracking-wider text-slate-400 sm:grid sm:grid-cols-[1fr_.5fr_74px_158px_42px_96px]">
+                    <div className="sticky top-0 z-10 mt-1.5 hidden h-10 items-center gap-x-4 border-b border-slate-200 bg-slate-50 text-sm font-medium text-foreground sm:grid sm:grid-cols-[1fr_.5fr_74px_158px_42px_96px]">
                         <span>품종 · 규격</span>
                         <span>생산자</span>
                         <span className="text-right">포장일</span>

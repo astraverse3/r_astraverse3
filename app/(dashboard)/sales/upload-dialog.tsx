@@ -228,7 +228,7 @@ export function UploadDialog() {
                             onReselect={() => fileInputRef.current?.click()}
                         />
                         <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-slate-200">
-                            <div className="hidden sm:grid grid-cols-[34px_minmax(0,1fr)_132px_128px_74px_minmax(0,180px)] sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 py-2 px-2 gap-2">
+                            <div className="hidden sm:grid grid-cols-[34px_minmax(0,1fr)_132px_128px_74px_minmax(0,180px)] sticky top-0 z-10 items-center h-10 bg-slate-50 border-b border-slate-200 text-sm font-medium text-foreground px-2 gap-2">
                                 <div />
                                 <div>시트명</div>
                                 <div>채널</div>

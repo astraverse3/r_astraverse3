@@ -46,7 +46,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
     return (
         <div className="w-full">
             {/* Table Header */}
-            <div className="hidden md:flex items-center justify-between text-[11px] font-bold text-slate-500 bg-slate-50/80 rounded-lg py-2.5 px-3 mb-1 uppercase tracking-wider">
+            <div className="hidden md:flex items-center justify-between h-10 px-3 mb-1 text-sm font-medium text-foreground bg-slate-50 rounded-lg">
                 <div className="w-[12%]">등록일자</div>
                 <div className="w-[22%]">품종 및 분류</div>
                 <div className="w-[14%]">생산자</div>
