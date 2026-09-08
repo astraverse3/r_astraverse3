@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import type { PackageCategory, PackageSort } from '@/app/actions/packages'
+import { DEFAULT_PACKAGE_SORT, PACKAGE_SORT_OPTIONS } from '@/lib/package-sort'
 
 const YEAR_OPTIONS = [
     { label: '2026년', value: '2026' },
@@ -43,11 +44,6 @@ const CERT_OPTIONS = [
     { label: '일반', value: '일반' },
 ]
 
-const SORT_OPTIONS: { value: PackageSort; label: string }[] = [
-    { value: 'weight_desc', label: '재고량 많은순' },
-    { value: 'latest', label: '최신순' },
-    { value: 'oldest', label: '오래된순' },
-]
 
 interface Props {
     category: PackageCategory
@@ -80,7 +76,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     const [farmerName, setFarmerName] = useState('')
     const [packedFrom, setPackedFrom] = useState('')
     const [packedTo, setPackedTo] = useState('')
-    const [sort, setSort] = useState<PackageSort>('weight_desc')
+    const [sort, setSort] = useState<PackageSort>(DEFAULT_PACKAGE_SORT)
 
     // URL → 위젯 sync. open 시점뿐 아니라 URL 변경 시에도 동기화.
     // useState 초기값은 빈 값 — SSR/CSR hydration 안전성 + 단일 진실 원천(URL).
@@ -93,8 +89,8 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         setPackedFrom(searchParams.get('packedFrom') ?? '')
         setPackedTo(searchParams.get('packedTo') ?? '')
         const raw = searchParams.get('sort')
-        const isValid = SORT_OPTIONS.some(o => o.value === raw)
-        setSort(isValid ? (raw as PackageSort) : 'weight_desc')
+        const isValid = PACKAGE_SORT_OPTIONS.some(o => o.value === raw)
+        setSort(isValid ? (raw as PackageSort) : DEFAULT_PACKAGE_SORT)
     }, [searchParams, open])
 
     // 기간은 시작·종료를 합쳐 한 개로 센다 — 배지도 하나로 보여준다
@@ -105,7 +101,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         category === 'RICE' && certs.length > 0,
         farmerName.trim() !== '',
         packedFrom !== '' || packedTo !== '',
-        sort !== 'weight_desc',
+        sort !== DEFAULT_PACKAGE_SORT,
     ].filter(Boolean).length
 
     const buildUrl = (params: URLSearchParams) => {
@@ -122,7 +118,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         if (farmerName.trim()) params.set('farmerName', farmerName.trim())
         if (packedFrom) params.set('packedFrom', packedFrom)
         if (packedTo) params.set('packedTo', packedTo)
-        if (sort !== 'weight_desc') params.set('sort', sort)
+        if (sort !== DEFAULT_PACKAGE_SORT) params.set('sort', sort)
         startTransition(() => router.push(buildUrl(params)))
         setOpen(false)
     }
@@ -138,7 +134,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
         setFarmerName('')
         setPackedFrom('')
         setPackedTo('')
-        setSort('weight_desc')
+        setSort(DEFAULT_PACKAGE_SORT)
 
         const params = new URLSearchParams()
         startTransition(() => router.push(buildUrl(params)))
@@ -197,7 +193,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                                         <SelectValue placeholder="정렬 선택" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {SORT_OPTIONS.map(o => (
+                                        {PACKAGE_SORT_OPTIONS.map(o => (
                                             <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                                         ))}
                                     </SelectContent>

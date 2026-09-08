@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { isDefaultPackageSort } from '@/lib/package-sort'
 
 const SOURCE_LABEL: Record<string, string> = {
     MILLED: '도정산',
@@ -65,7 +66,7 @@ export function ActivePackageFilters({ totalCount, varieties, deductedCount = 0 
         return packedFrom ? `${packedFrom}~` : `~${packedTo}`
     })()
 
-    const sortIsCustom = sort && sort !== 'weight_desc'
+    const sortIsCustom = !isDefaultPackageSort(sort)
 
     const activeFilterCount = [
         years.length > 0,

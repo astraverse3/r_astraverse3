@@ -10,6 +10,7 @@ import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { findOrCreateProductType } from '@/lib/product-type'
+import { DEFAULT_PACKAGE_SORT } from '@/lib/package-sort'
 import {
     guardDelete,
     guardUpdate,
@@ -129,7 +130,7 @@ export async function getPackages(
     params: GetPackagesParams,
 ): Promise<{ success: true; data: PackageItem[] } | { success: false; error: string }> {
     try {
-        const { sort = 'weight_desc', includeDeducted = false } = params
+        const { sort = DEFAULT_PACKAGE_SORT, includeDeducted = false } = params
 
         // where 조립은 엑셀(`exportPackages`)과 공유한다 — `lib/package-where.ts`
         const where = buildPackageWhere(params)

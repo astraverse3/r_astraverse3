@@ -7,15 +7,15 @@ import { PackagesTabs, type PackageTab } from './packages-tabs'
 import { RicePackagePanel } from './rice-package-panel'
 import { MiscPackagePanel } from './misc-package-panel'
 import { SectionLoader } from '@/components/ui/section-loader'
+import { DEFAULT_PACKAGE_SORT, PACKAGE_SORT_VALUES } from '@/lib/package-sort'
 
 export const dynamic = 'force-dynamic'
 
-const SORT_VALUES: PackageSort[] = ['latest', 'oldest', 'weight_desc']
 
 function parseSort(raw: unknown): PackageSort {
-    return typeof raw === 'string' && (SORT_VALUES as string[]).includes(raw)
+    return typeof raw === 'string' && (PACKAGE_SORT_VALUES as string[]).includes(raw)
         ? (raw as PackageSort)
-        : 'weight_desc'
+        : DEFAULT_PACKAGE_SORT
 }
 
 const pickStr = (v: string | string[] | undefined): string | undefined =>
