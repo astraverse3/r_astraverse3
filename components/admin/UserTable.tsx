@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Shield, ShieldOff, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { ALL_PERMISSIONS } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 interface User {
     id: string
@@ -138,38 +139,38 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
 
             {/* 데스크톱 테이블 뷰 */}
             <div className="hidden lg:block bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <th className="text-left px-5 py-3">사용자</th>
-                            <th className="text-left px-5 py-3">역할</th>
-                            <th className="text-left px-5 py-3">부서</th>
-                            <th className="text-left px-5 py-3">직책</th>
-                            <th className="text-left px-5 py-3">연락처</th>
-                            <th className="text-left px-5 py-3">가입일</th>
-                            <th className="text-center px-5 py-3">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                            <TableHead>사용자</TableHead>
+                            <TableHead>역할</TableHead>
+                            <TableHead>부서</TableHead>
+                            <TableHead>직책</TableHead>
+                            <TableHead>연락처</TableHead>
+                            <TableHead>가입일</TableHead>
+                            <TableHead className="text-center">관리</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {users.map((user) => (
-                            <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-5 py-3.5">
+                            <TableRow key={user.id}>
+                                <TableCell className="py-2">
                                     <div className="flex items-center gap-3">
                                         {user.image ? (
                                             <img src={user.image} alt="" className="w-8 h-8 rounded-full object-cover" />
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[12.5px] font-bold text-slate-500">
                                                 {user.name?.[0] || '?'}
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900">{user.name || '이름 없음'}</p>
-                                            <p className="text-xs text-slate-400">{user.email || '이메일 없음'}</p>
+                                            <p className="font-medium text-slate-900">{user.name || '이름 없음'}</p>
+                                            <p className="text-[12.5px] text-slate-400">{user.email || '이메일 없음'}</p>
                                         </div>
                                     </div>
-                                </td>
-                                <td className="px-5 py-3.5">
-                                    <span className={`inline-flex px-2.5 py-1 text-[11px] font-bold rounded-full ${user.role === 'ADMIN'
+                                </TableCell>
+                                <TableCell className="py-2">
+                                    <span className={`inline-flex px-2.5 py-1 text-[11.5px] font-bold rounded-full ${user.role === 'ADMIN'
                                         ? 'bg-blue-100 text-blue-700'
                                         : 'bg-slate-100 text-slate-500'
                                         }`}>
@@ -178,22 +179,22 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                     {user.role !== 'ADMIN' && (user.permissions?.length ?? 0) > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {(user.permissions || []).map(p => (
-                                                <span key={p} className="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded">
+                                                <span key={p} className="px-1.5 py-0.5 text-[11.5px] font-medium bg-emerald-50 text-emerald-600 rounded">
                                                     {ALL_PERMISSIONS[p as keyof typeof ALL_PERMISSIONS]?.label || p}
                                                 </span>
                                             ))}
                                         </div>
                                     )}
-                                </td>
-                                <td className="px-5 py-3.5 text-sm text-slate-600">{user.department || '-'}</td>
-                                <td className="px-5 py-3.5 text-sm text-slate-600">{user.position || '-'}</td>
-                                <td className="px-5 py-3.5 text-sm text-slate-600">{user.phone || '-'}</td>
-                                <td className="px-5 py-3.5 text-xs text-slate-400">
+                                </TableCell>
+                                <TableCell>{user.department || '-'}</TableCell>
+                                <TableCell>{user.position || '-'}</TableCell>
+                                <TableCell>{user.phone || '-'}</TableCell>
+                                <TableCell className="text-[12.5px] text-slate-400">
                                     <span suppressHydrationWarning>
                                         {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                                     </span>
-                                </td>
-                                <td className="px-5 py-3.5">
+                                </TableCell>
+                                <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-1">
                                         {user.id !== currentUserId && (
                                             <button
@@ -230,11 +231,11 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
                                             </button>
                                         )}
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {editingUser && (
