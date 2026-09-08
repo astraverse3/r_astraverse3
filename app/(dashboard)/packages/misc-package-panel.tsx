@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { deleteMiscPackage, deleteMiscPurchase, type GetPackagesParams, type PackageItem, type PackageRow } from '@/app/actions/packages'
 import { hasPermission } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { PackageListClient } from './package-list-client'
 import { PackageSearchDialog } from './package-search-dialog'
@@ -124,52 +125,62 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
 
     return (
         <div className="grid grid-cols-1 gap-2 px-1">
-            <section className="flex items-center justify-end gap-2 px-1">
+            {/* 🔴 모바일 툴바는 폭이 빠듯하다(잡곡만 버튼 6개).
+                작업 모드(재포장·차감)에 들어가면 나머지는 전부 disabled라 어차피 못 누른다 →
+                모바일에서만 숨겨 활성 토글에 자리를 내준다. 데스크탑은 공간이 넉넉해 그대로 둔다.
+                `contents`는 래퍼가 레이아웃에 끼어들지 않게 한다(버튼이 그대로 flex item). */}
+            <section className="flex flex-wrap items-center justify-end gap-2 px-1">
                 <PackageExcelButtons filters={filters} disabled={mode !== null} />
                 {/* 재포장·차감은 도구 그룹(구분선 왼쪽) — 가진 재고를 다루는 도구라
                     등록 버튼과 같은 편에 두지 않는다. 두 토글은 배타 (D4) */}
                 {canMill && (
-                    <RepackToggleButton
-                        active={mode === 'repack'}
-                        disabled={mode === 'deduct'}
-                        onToggle={next => setMode(next ? 'repack' : null)}
-                    />
+                    <span className={cn('contents', mode === 'deduct' && 'hidden sm:contents')}>
+                        <RepackToggleButton
+                            active={mode === 'repack'}
+                            disabled={mode === 'deduct'}
+                            onToggle={next => setMode(next ? 'repack' : null)}
+                        />
+                    </span>
                 )}
                 {canMill && (
-                    <DeductToggleButton
-                        active={mode === 'deduct'}
-                        disabled={mode === 'repack'}
-                        onToggle={next => setMode(next ? 'deduct' : null)}
+                    <span className={cn('contents', mode === 'repack' && 'hidden sm:contents')}>
+                        <DeductToggleButton
+                            active={mode === 'deduct'}
+                            disabled={mode === 'repack'}
+                            onToggle={next => setMode(next ? 'deduct' : null)}
+                        />
+                    </span>
+                )}
+                <span className={cn('contents', mode !== null && 'hidden sm:contents')}>
+                    <PackageSearchDialog
+                        category="MISC_GRAIN"
+                        varieties={varieties}
+                        disabled={mode !== null}
                     />
-                )}
-                <PackageSearchDialog
-                    category="MISC_GRAIN"
-                    varieties={varieties}
-                    disabled={mode !== null}
-                />
-                <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
-                {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
-                {canMill && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={mode !== null}
-                        onClick={() => setPackageOpen(true)}
-                        className="h-8 px-3 font-semibold rounded-md"
-                    >
-                        + 포장<span className="hidden sm:inline">하기</span>
-                    </Button>
-                )}
-                {canPurchase && (
-                    <Button
-                        size="sm"
-                        disabled={mode !== null}
-                        onClick={() => setPurchaseOpen(true)}
-                        className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
-                    >
-                        + 매입<span className="hidden sm:inline"> 등록</span>
-                    </Button>
-                )}
+                    <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
+                    {/* 핸드오프 §3.4: 추가 버튼은 primary. 잡곡은 분기가 둘이라 첫 번째는 보조(outline)로 톤다운 */}
+                    {canMill && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={mode !== null}
+                            onClick={() => setPackageOpen(true)}
+                            className="h-8 px-3 font-semibold rounded-md"
+                        >
+                            + 포장<span className="hidden sm:inline">하기</span>
+                        </Button>
+                    )}
+                    {canPurchase && (
+                        <Button
+                            size="sm"
+                            disabled={mode !== null}
+                            onClick={() => setPurchaseOpen(true)}
+                            className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md"
+                        >
+                            + 매입<span className="hidden sm:inline"> 등록</span>
+                        </Button>
+                    )}
+                </span>
             </section>
 
             <MiscPackageDialog

@@ -26,7 +26,7 @@ export function DeductToggleButton({
             aria-pressed={active}
             disabled={disabled}
             className={cn(
-                'h-8 min-w-[96px] justify-center gap-1.5 px-3 font-semibold',
+                'h-8 sm:min-w-[96px] justify-center gap-1.5 px-3 font-semibold',
                 active
                     ? 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
                     : 'text-slate-500 hover:text-slate-900',

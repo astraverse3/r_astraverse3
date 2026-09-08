@@ -338,6 +338,9 @@ export function PackageGroupRow({
     const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
     // 생산자는 섞일 수 있어 값 대신 인원수 — 원물재고 그룹 헤더(`farmerSetSize`)와 같은 표기
     const producerCount = new Set(item.rows.map(r => r.producer)).size
+    // 🔴 「N종 규격」은 행 수가 아니라 **규격 종류 수**다. 재포장을 반복하면 같은 규격이
+    // 여러 행으로 갈라지므로(작업 단위로 행을 나누는 게 원칙) rows.length를 쓰면 어긋난다.
+    const specCount = new Set(item.rows.map(r => r.spec)).size
 
     return (
         // 펼친 묶음 = 헤더 + 서브행이 같은 톤. ring이 아니라 위쪽 경계만 (§4.2.6)
@@ -362,7 +365,7 @@ export function PackageGroupRow({
                 <span className="text-slate-300">—</span>
                 <span className="text-slate-400 text-[12.5px] tabular-nums truncate">{producerCount}명</span>
                 <span className="text-slate-300 text-center">—</span>
-                <span className="text-slate-400 text-[12.5px] text-right pr-2">{item.rows.length}종 규격</span>
+                <span className="text-slate-400 text-[12.5px] text-right pr-2">{specCount}종 규격</span>
                 <span className="tabular-nums text-slate-400 text-[12.5px] text-right pr-12">{totalQty.toLocaleString()}개</span>
                 <span className="tabular-nums font-bold text-slate-900 text-right">
                     {item.total.toLocaleString()}kg

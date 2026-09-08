@@ -55,7 +55,8 @@ export function PackageExcelButtons({
             <Button
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
+                /* 모바일 숨김: 폰에서 엑셀을 받는 일은 드물고, 잡곡 탭은 버튼이 6개라 툴바가 넘친다 */
+                className="hidden sm:inline-flex h-8 w-8 p-0 border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 transition-colors"
                 onClick={handleExport}
                 disabled={exporting || disabled}
                 title="엑셀 다운로드"
