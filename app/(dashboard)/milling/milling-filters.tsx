@@ -152,7 +152,7 @@ export function MillingFilters({
                     <DialogTitle>검색</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                         <div className="flex items-center justify-between">
                             <Label className="text-[13px] font-medium">기간 설정</Label>
                             <div className="flex gap-1">
@@ -235,7 +235,7 @@ export function MillingFilters({
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">상태</Label>
                             <Select value={status} onValueChange={setStatus}>
                                 <SelectTrigger className="text-[13px]">
@@ -249,7 +249,7 @@ export function MillingFilters({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">품종</Label>
                             <MultiSelect
                                 options={varietyOptions}
@@ -261,7 +261,7 @@ export function MillingFilters({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">도정구분</Label>
                             <MultiSelect
                                 options={MILLING_TYPE_OPTIONS}
@@ -270,7 +270,7 @@ export function MillingFilters({
                                 placeholder="전체"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">수율</Label>
                             <Select value={yieldRate} onValueChange={setYieldRate}>
                                 <SelectTrigger>
@@ -288,7 +288,7 @@ export function MillingFilters({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">생산자명</Label>
                             <Input
                                 placeholder="예: 홍길동, 김철수"
@@ -300,7 +300,7 @@ export function MillingFilters({
                                 className="text-[13px]"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label className="text-[13px] font-medium">비고 (텍스트 검색)</Label>
                             <Input
                                 placeholder="비고 입력"

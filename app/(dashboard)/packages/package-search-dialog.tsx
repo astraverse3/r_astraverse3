@@ -179,9 +179,9 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                     <DialogHeader>
                         <DialogTitle>{category === 'MISC_GRAIN' ? '잡곡 제품재고 검색' : '벼 제품재고 검색'}</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid min-w-0 gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>생산연도</Label>
                                 <MultiSelect
                                     options={YEAR_OPTIONS}
@@ -190,7 +190,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                                     placeholder="전체"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>정렬</Label>
                                 <Select value={sort} onValueChange={(v) => setSort(v as PackageSort)}>
                                     <SelectTrigger>
@@ -206,7 +206,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>품종</Label>
                                 <MultiSelect
                                     options={varietyOptions}
@@ -216,7 +216,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                                 />
                             </div>
                             {category === 'MISC_GRAIN' ? (
-                                <div className="space-y-2">
+                                <div className="min-w-0 space-y-2">
                                     <Label>출처</Label>
                                     <MultiSelect
                                         options={SOURCE_OPTIONS}
@@ -226,7 +226,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                                     />
                                 </div>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="min-w-0 space-y-2">
                                     <Label>인증구분</Label>
                                     <MultiSelect
                                         options={CERT_OPTIONS}
@@ -239,7 +239,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                         </div>
 
                         {/* 이름을 여러 개 넣는 일이 잦아 한 줄을 통째로 쓴다 */}
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="packageFarmerSearch">생산자 / 농가명</Label>
                             <Input
                                 id="packageFarmerSearch"
@@ -253,7 +253,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                             />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label>포장일자</Label>
                             <div className="flex items-center gap-1.5">
                                 <Input

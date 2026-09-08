@@ -163,7 +163,7 @@ export function MiscStockFilters({ varieties }: Props) {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>생산연도</Label>
                                 <MultiSelect
                                     options={YEAR_OPTIONS}
@@ -172,7 +172,7 @@ export function MiscStockFilters({ varieties }: Props) {
                                     placeholder="전체"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>상태</Label>
                                 <Select value={status} onValueChange={setStatus}>
                                     <SelectTrigger>
@@ -188,7 +188,7 @@ export function MiscStockFilters({ varieties }: Props) {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>품종</Label>
                                 <MultiSelect
                                     options={varietyOptions}
@@ -197,7 +197,7 @@ export function MiscStockFilters({ varieties }: Props) {
                                     placeholder="전체"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="min-w-0 space-y-2">
                                 <Label>인증구분</Label>
                                 <MultiSelect
                                     options={CERT_OPTIONS}
@@ -208,7 +208,7 @@ export function MiscStockFilters({ varieties }: Props) {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label>입고 유형</Label>
                             <MultiSelect
                                 options={SOURCE_OPTIONS}
@@ -218,7 +218,7 @@ export function MiscStockFilters({ varieties }: Props) {
                             />
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="min-w-0 space-y-2">
                             <Label htmlFor="miscFarmerNameSearch">생산자 / 농가명</Label>
                             <Input
                                 id="miscFarmerNameSearch"
