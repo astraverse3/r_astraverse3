@@ -336,6 +336,27 @@ shadcn `Tabs` 컴포넌트의 `TabsList`/`TabsTrigger` 위에 **커스텀 스타
 | 컬럼 폭 | `<table>`은 `colgroup` % + `table-layout:fixed`, grid는 `fr` 비율 유지. 로트 컬럼 **≥24%** 비중 |
 | 로트번호 | `font-mono text-[12.5px] text-slate-500` |
 
+> 🔴 **이 표준의 적용 범위를 잡는 법 — 「목록처럼 보이는 것」 전수** (2026-09-08 §32 해결 시 명문화)
+>
+> 범위를 「`ui/table`을 쓰는 파일」로 잡으면 **계속 샌다.** 실제로 세 번 새 나갔다 —
+> 제품재고(CSS Grid, §30) · 관리자 목록 2곳(생 `<th>`, §32) · 다이얼로그 목록 2곳(§32 전수 조사).
+> 다음에 이 표준을 손볼 때는 **아래를 전부 훑는다**:
+>
+> | 훑을 것 | 검색 |
+> | --- | --- |
+> | `ui/table` 사용 | `grep -rln "@/components/ui/table"` |
+> | 생 `<th>` | `grep -rln "<th"` |
+> | CSS Grid 목록 | `grep -rn "grid-cols-\[" \| grep -E "border-b\|bg-slate-50\|font-(bold\|medium\|semibold)"` |
+> | div 목록 | `grep -rn "hidden md:flex\|hidden sm:grid\|divide-y"` |
+> | 토큰 오용 | `grep -rn "uppercase tracking-wider"` (영문 전용 토큰 → 한글 목록 헤더면 버그) |
+>
+> **판정 기준은 마크업이 아니라 화면이다** — 「컬럼 헤더가 있고 같은 모양의 행이 반복되면 목록」.
+> `<table>`이든 `grid`든 `flex`든 상관없다.
+>
+> ⚠️ **입력 컨트롤이 들어간 편집형 행**(체크박스·select·date·number)과 **대시보드 위젯**은
+> **헤더만** 표준으로 올리고 행 밀도(44px)는 강제하지 않는다. 컨트롤 크기가 연쇄로 끌려오고,
+> 위젯은 한 카드에 담는 건수가 목적이기 때문이다. (§32에서 3곳에 적용)
+
 #### 4.2.1 데이터 구조
 
 서버에서 **GROUP BY 결과 + 낱개 행이 섞인 형태**로 내려옴. 한 품종에 규격이 2개 이상이면 그룹으로 묶이고, 1개뿐이면 낱개 행으로 그대로 표시.
