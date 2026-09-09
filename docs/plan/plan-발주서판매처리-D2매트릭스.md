@@ -62,7 +62,13 @@ D2에 남는 몫은 하나뿐이다. **D2d 톤백 셀 팝오버에서 `createRep
   - 발주처≠수령인일 때만 `A → B` 표기 규칙
 - **신규 `app/actions/purchase-order-matrix.ts`** — `getUploadMatrix(uploadId)`
   - `purchase-order.ts`가 이미 625줄이라 **파일을 분리**한다 (D1b에서 `purchase-order-upload.ts`를 뗀 것과 같은 이유)
-  - 배치 조회 **1~3회**: ① 묶음의 order+item+movement ② 등장 SKU의 가용재고 일괄 집계 ③ SKU 메타
+  - 배치 조회 — **논리 3단계**: ① 묶음의 order+item+movement ②③ 가용재고 · SKU 메타(**병렬**)
+  - ⚠️ **실제 쿼리는 9회다**(2026-09-09 실측으로 정정). Prisma가 중첩 relation을 관계마다 별도
+    SELECT로 쪼갠다 — 「왕복 1~3회」는 그 동작을 모르고 쓴 값이었다. **다만 N+1은 아니다**:
+    라인이 79개든 1,700개든 9회로 고정이다(갭 G4 해소).
+  - 🔴 **병목은 쿼리가 아니라 왕복 지연이다** — 쿼리 9회 × ~200ms인데 앱 처리는 15ms뿐이다.
+    ②③ 병렬화로 중앙값 **1,896ms → 1,432ms**(-464ms, 7회 측정). 더 줄이려면 ①의 중첩 4회를
+    JOIN으로 합쳐야 한다(`relationJoins` preview) — 스키마를 건드리므로 **보류**.
   - **라인 루프 안에서 쿼리 금지** (G4)
   - 권한: `OPERATION_MANAGE`
 - 검증: `npm test` 통과 + 실묶음 조회 쿼리 수 로그 확인
