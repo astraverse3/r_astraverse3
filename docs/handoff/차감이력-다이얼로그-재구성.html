@@ -1,0 +1,170 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>차감 이력 다이얼로그 재구성</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+body{font-family:"Pretendard Variable",Pretendard,system-ui,sans-serif;background:#eef1f5;color:#0f172a}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.dlg{background:#fff;border-radius:14px;box-shadow:0 18px 44px -12px rgba(15,23,42,.28),0 0 0 1px rgba(15,23,42,.06);display:flex;flex-direction:column;overflow:hidden}
+.scrim{background:linear-gradient(#dfe5ec,#cfd8e3);border-radius:18px;padding:22px 14px;display:flex;justify-content:center}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 56px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sub{font-size:13px;color:#475569;line-height:1.7;text-wrap:pretty}
+.fr{display:flex;flex-direction:column;gap:10px}
+.frl{font-size:11.5px;font-weight:700;color:#64748b;letter-spacing:.02em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+table.spec{width:100%;border-collapse:collapse;font-size:12.5px}
+table.spec th{text-align:left;font-weight:600;color:#334155;background:#f8fafc;padding:8px 10px;border-bottom:1px solid #e2e8f0}
+table.spec td{padding:8px 10px;border-bottom:1px solid #f1f5f9;color:#475569;vertical-align:top}
+table.spec td:first-child{color:#0f172a;font-weight:600;white-space:nowrap}
+</style></head><body>
+<div class="wrap">
+<h1>차감 이력 다이얼로그 — 재구성</h1>
+<p class="sub" style="margin:8px 0 26px;max-width:780px">현재 화면은 ① 헤더 한 줄에 품종·규격·로트·「N개 중 M개 차감」을 다 넣어 <b>가장 중요한 숫자가 잘려 있고</b>(<span class="mono">670개 중 670…</span>) ② 이력이 1건일 때 본문이 거의 비어 <b>닫기 버튼이 화면을 지배</b>합니다. 정보량은 줄이지 않고 <b>층을 나눠</b> 재구성했습니다 — 식별(무엇의 이력인가) → 수량 요약 → 이력 행.</p>
+
+<div class="cols">
+
+<div class="fr"><div class="frl">A · 이력 1건 (현재 화면과 같은 데이터)</div>
+<div class="scrim"><div class="dlg" style="width:342px">
+  <div class="px-4 pt-3.5 pb-3 border-b border-slate-100">
+    <div class="flex items-start gap-2.5">
+      <span class="mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#2563eb]/10 text-[#2563eb]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+      <div class="min-w-0 flex-1">
+        <div class="text-[15px] font-bold leading-tight text-slate-900">차감 이력</div>
+        <div class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-slate-600"><span class="font-semibold text-slate-800">천지향1세</span><span class="text-slate-300">·</span><span>4kg</span></div>
+        <div class="mono mt-1 text-[11px] text-slate-500">251111-11-15107154-41</div>
+      </div>
+      <button class="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mt-3 grid grid-cols-3 divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">입고</div><div class="num mt-0.5 text-[14px] font-semibold text-slate-700">670<span class="ml-px text-[11px] font-medium text-slate-400">개</span></div></div>
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">차감</div><div class="num mt-0.5 text-[14px] font-bold text-slate-900">670<span class="ml-px text-[11px] font-medium text-slate-400">개</span></div></div>
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">잔여</div><div class="num mt-0.5 text-[14px] font-bold text-[#b45309]">0<span class="ml-px text-[11px] font-medium text-[#b45309]/60">개</span></div></div>
+    </div>
+  </div>
+  <div class="px-4 py-1">
+    <div class="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-b-0">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <span class="mono shrink-0 text-[12px] text-slate-500">09-07</span>
+          <span class="shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-[11px] text-slate-500">기타</span>
+          <b class="num text-[13.5px] font-bold text-slate-900">670개</b>
+        </div>
+        <div class="mt-1 truncate text-[11.5px] text-slate-500">기능 오픈 전 일괄차감 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">문석준</span></div>
+      </div>
+      <button class="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>되돌리기</button>
+    </div>
+  </div>
+  <div class="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-2.5"><button class="h-9 rounded-md border border-slate-300 bg-white px-5 text-[13px] font-medium text-slate-700 hover:bg-slate-100">닫기</button></div>
+</div></div></div>
+
+<div class="fr"><div class="frl">B · 이력 다건 · 되돌리기 막힌 건 포함</div>
+<div class="scrim"><div class="dlg" style="width:342px">
+  <div class="px-4 pt-3.5 pb-3 border-b border-slate-100">
+    <div class="flex items-start gap-2.5">
+      <span class="mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#2563eb]/10 text-[#2563eb]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+      <div class="min-w-0 flex-1">
+        <div class="text-[15px] font-bold leading-tight text-slate-900">차감 이력</div>
+        <div class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-slate-600"><span class="font-semibold text-slate-800">백미</span><span class="text-slate-300">·</span><span>8kg</span></div>
+        <div class="mono mt-1 text-[11px] text-slate-500">251031-11-15313791-151</div>
+      </div>
+      <button class="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mt-3 grid grid-cols-3 divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">입고</div><div class="num mt-0.5 text-[14px] font-semibold text-slate-700">1,692<span class="ml-px text-[11px] font-medium text-slate-400">개</span></div></div>
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">차감</div><div class="num mt-0.5 text-[14px] font-bold text-slate-900">312<span class="ml-px text-[11px] font-medium text-slate-400">개</span></div></div>
+      <div class="px-2.5 py-2"><div class="text-[10.5px] font-medium text-slate-500">잔여</div><div class="num mt-0.5 text-[14px] font-bold text-slate-700">1,380<span class="ml-px text-[11px] font-medium text-slate-400">개</span></div></div>
+    </div>
+  </div>
+  <div class="max-h-[300px] overflow-y-auto px-4 py-1">
+    <div class="flex items-center gap-3 border-b border-slate-100 py-2.5">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2"><span class="mono shrink-0 text-[12px] text-slate-500">09-06</span><span class="shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-[11px] text-slate-500">판매</span><b class="num text-[13.5px] font-bold text-slate-900">120개</b></div>
+        <div class="mt-1 truncate text-[11.5px] text-slate-500">한마음마트 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">김종수</span></div>
+      </div>
+      <button class="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>되돌리기</button>
+    </div>
+    <div class="border-b border-slate-100 py-2.5">
+      <div class="flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2"><span class="mono shrink-0 text-[12px] text-slate-500">09-04</span><span class="shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-[11px] text-slate-500">판매</span><b class="num text-[13.5px] font-bold text-slate-900">150개</b></div>
+          <div class="mt-1 truncate text-[11.5px] text-slate-500">농협하나로 9월 2차 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">박정주</span></div>
+        </div>
+        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400" title="발주서 차감은 발주서 상세에서 취소해주세요."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+      </div>
+      <div class="mt-1.5 text-[11px] leading-relaxed text-slate-500">발주서 차감은 <b class="font-semibold text-slate-600">발주서 상세</b>에서 취소해주세요.</div>
+    </div>
+    <div class="flex items-center gap-3 py-2.5">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2"><span class="mono shrink-0 text-[12px] text-slate-500">08-28</span><span class="shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-[11px] text-slate-500">기타</span><b class="num text-[13.5px] font-bold text-slate-900">42개</b></div>
+        <div class="mt-1 truncate text-[11.5px] text-slate-500">파손 폐기 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">민석홍</span></div>
+      </div>
+      <button class="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>되돌리기</button>
+    </div>
+  </div>
+  <div class="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-2.5"><button class="h-9 rounded-md border border-slate-300 bg-white px-5 text-[13px] font-medium text-slate-700 hover:bg-slate-100">닫기</button></div>
+</div></div></div>
+
+</div>
+
+<div class="fr" style="margin-top:20px"><div class="frl">C · 데스크탑 (sm:max-w-[600px]) — 같은 구조, 요약 strip이 헤더 오른쪽으로</div>
+<div class="scrim" style="padding:26px"><div class="dlg" style="width:600px;max-width:100%">
+  <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4">
+    <span class="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563eb]/10 text-[#2563eb]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></span>
+    <div class="min-w-0 flex-1">
+      <div class="text-[15px] font-bold leading-tight text-slate-900">차감 이력</div>
+      <div class="mt-1 flex items-center gap-1.5 text-[12.5px] text-slate-600"><span class="font-semibold text-slate-800">백미</span><span class="text-slate-300">·</span><span>8kg</span><span class="text-slate-300">·</span><span class="mono text-[11px] text-slate-500">251031-11-15313791-151</span></div>
+    </div>
+    <div class="flex shrink-0 divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-center">
+      <div class="px-3 py-1.5"><div class="text-[10.5px] font-medium text-slate-500">입고</div><div class="num text-[13.5px] font-semibold text-slate-700">1,692</div></div>
+      <div class="px-3 py-1.5"><div class="text-[10.5px] font-medium text-slate-500">차감</div><div class="num text-[13.5px] font-bold text-slate-900">312</div></div>
+      <div class="px-3 py-1.5"><div class="text-[10.5px] font-medium text-slate-500">잔여</div><div class="num text-[13.5px] font-bold text-slate-700">1,380</div></div>
+    </div>
+    <button class="-mr-1.5 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="px-5 py-1">
+    <div class="flex items-center gap-4 border-b border-slate-100 py-2.5">
+      <span class="mono w-[42px] shrink-0 text-[12px] text-slate-500">09-06</span>
+      <span class="w-[52px] shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-center text-[11px] text-slate-500">판매</span>
+      <b class="num w-[62px] shrink-0 text-right text-[13.5px] font-bold text-slate-900">120개</b>
+      <span class="min-w-0 flex-1 truncate text-[12px] text-slate-500">한마음마트 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">김종수</span></span>
+      <button class="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>되돌리기</button>
+    </div>
+    <div class="border-b border-slate-100 py-2.5">
+      <div class="flex items-center gap-4">
+        <span class="mono w-[42px] shrink-0 text-[12px] text-slate-500">09-04</span>
+        <span class="w-[52px] shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-center text-[11px] text-slate-500">판매</span>
+        <b class="num w-[62px] shrink-0 text-right text-[13.5px] font-bold text-slate-900">150개</b>
+        <span class="min-w-0 flex-1 truncate text-[12px] text-slate-500">농협하나로 9월 2차 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">박정주</span></span>
+        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+      </div>
+      <div class="mt-1.5 pl-[204px] text-[11px] text-slate-500">발주서 차감은 <b class="font-semibold text-slate-600">발주서 상세</b>에서 취소해주세요.</div>
+    </div>
+    <div class="flex items-center gap-4 py-2.5">
+      <span class="mono w-[42px] shrink-0 text-[12px] text-slate-500">08-28</span>
+      <span class="w-[52px] shrink-0 rounded border border-slate-200 bg-white px-1.5 py-px text-center text-[11px] text-slate-500">기타</span>
+      <b class="num w-[62px] shrink-0 text-right text-[13.5px] font-bold text-slate-900">42개</b>
+      <span class="min-w-0 flex-1 truncate text-[12px] text-slate-500">파손 폐기 <span class="mx-1 text-slate-300">|</span>작업자 <span class="text-slate-600">민석홍</span></span>
+      <button class="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>되돌리기</button>
+    </div>
+  </div>
+  <div class="flex justify-end border-t border-slate-200 bg-slate-50 px-5 py-2.5"><button class="h-8 rounded-md border border-slate-300 bg-white px-4 text-[13px] font-medium text-slate-700 hover:bg-slate-100">닫기</button></div>
+</div></div></div>
+
+<div style="margin-top:34px">
+<div class="frl" style="margin-bottom:10px">무엇을 바꿨나 · <span class="mono" style="font-weight:400">movement-history-dialog.tsx</span></div>
+<table class="spec">
+<tr><th style="width:22%">위치</th><th style="width:38%">현행</th><th>재구성</th></tr>
+<tr><td>헤더 요약</td><td><code>DialogDescription</code> 한 줄에 품종·규격·로트칩·「N개 중 M개 차감」 → <code>truncate</code>로 <b>핵심 숫자가 잘림</b></td><td><b>3층으로 분리</b>: ① 품종·규격 ② 로트(모노스페이스 전체 표시, 칩 제거) ③ <b>입고·차감·잔여 3칸 숫자 strip</b>. 잘릴 것이 없어짐</td></tr>
+<tr><td>잔여 수량</td><td>없음 — <code>qty − deducted</code>를 사용자가 머리로 계산</td><td>strip에 명시. <b>0이면 앰버</b>(<code>#b45309</code>)로 「다 빠졌다」를 색으로 알림</td></tr>
+<tr><td>이력 행</td><td>날짜가 수량 뒤 3번째. <code>py-3</code> + 메타 <code>mt-1.5</code> → 1건에 약 62px</td><td><b>날짜를 맨 앞으로</b>(이력은 시간축으로 읽음) · <code>py-2.5</code> + <code>mt-1</code> → 약 <b>52px</b>. 데스크탑은 날짜/유형/수량 <b>고정폭 컬럼</b>으로 세로 정렬</td></tr>
+<tr><td>막힌 건</td><td><code>rounded-lg border bg-slate-50 px-3 py-2.5</code> 박스 — 행보다 무거워 시선을 뺏음</td><td>박스 제거, <b>자물쇠 버튼 + 한 줄 문구</b>. 되돌리기 버튼 자리에 자물쇠가 들어가 <b>행 높이가 일정</b>해짐</td></tr>
+<tr><td>푸터</td><td>모바일 <code>h-11 w-full</code> — 1건일 때 다이얼로그 높이의 1/4을 차지</td><td><code>h-9</code> 우측 정렬. ✕가 이미 있고 스크림 탭도 닫히므로 전폭 버튼은 과잉. <b>대신 헤더 ✕를 8×8 히트영역으로 확대</b></td></tr>
+<tr><td>본문 패딩</td><td><code>py-1.5</code> + 행 <code>border-t first:border-t-0</code></td><td><code>py-1</code> + 행 <code>border-b last:border-b-0</code> — 마지막 행과 푸터 사이 여백이 줄고 경계가 겹치지 않음</td></tr>
+</table>
+<p class="sub" style="margin-top:14px;max-width:820px">유지: <code>cancellable</code>만 보고 되돌리기 노출 · 「작업자」 라벨 항상 붙이기 · <code>deductedCount</code>를 <code>items</code> 합으로 재계산 · 로딩/에러/빈 이력 3상태 · <b>되돌리기는 1건씩</b>(백로그 §24 — 묶음 되돌리기는 별건).<br><b>사유 배지는 <code>MOVEMENT_TYPE_LABEL</code> 6종뿐</b>이다 — 판매·증정·분심·파손·기타 + 재포장. 「발주서」 라벨은 없다(시안 초판 오류, 수정됨). 발주서 유래 건도 칩은 <b>판매</b>이고 되돌리기 불가는 자배마로만 구분된다.<br>이 시안의 <code>bg-white</code>·<code>#fff</code>는 정적 HTML이라 박은 것이다. 생다이얼로그는 <code>bg-card</code>가 자동이묀로 <b>배경을 지정하지 않는다</b> — 칩·버튼의 <code>bg-white</code>는 <code>bg-background</code>로 옜긴다.</p>
+</div>
+</div>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#2563eb"/><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M36 36v14h14"/><path d="M36.4 64A24 24 0 1044 43.4L36 43"/><path d="M60 48v14l10 6"/></g></svg></template>
+</body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>재포장 — 부분 분할 안내 (백로그 §37)</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11/dist/index.global.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+body{font-family:"Pretendard Variable",Pretendard,system-ui,sans-serif;background:#eef1f5;color:#0f172a}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.tn{font-variant-numeric:tabular-nums}
+.dlg{background:#fff;border-radius:14px;box-shadow:0 18px 44px -12px rgba(15,23,42,.28),0 0 0 1px rgba(15,23,42,.06);display:flex;flex-direction:column;overflow:hidden}
+.scrim{background:linear-gradient(#dfe5ec,#cfd8e3);border-radius:18px;padding:22px 14px;display:flex;justify-content:center}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 56px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sub{font-size:13px;color:#475569;line-height:1.7;text-wrap:pretty}
+.fr{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+.frl{font-size:11.5px;font-weight:700;color:#64748b;letter-spacing:.02em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+table.spec{width:100%;border-collapse:collapse;font-size:12.5px}
+table.spec th{text-align:left;font-weight:600;color:#334155;background:#f8fafc;padding:8px 10px;border-bottom:1px solid #e2e8f0}
+table.spec td{padding:8px 10px;border-bottom:1px solid #f1f5f9;color:#475569;vertical-align:top}
+table.spec td:first-child{color:#0f172a;font-weight:600;white-space:nowrap}
+.bad{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#7c2d12;line-height:1.7}
+.specbtns{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.specbtns button{height:28px;border-radius:6px;background:#f1f5f9;color:#334155;font-size:11.5px;font-weight:500}
+</style></head><body>
+<div class="wrap">
+<h1>재포장 — 「일부만 쓰기」 안내</h1>
+<div class="bad" style="margin:10px 0 6px;max-width:840px"><b>백로그 §37.</b> 기능은 있습니다(<code>createRepack</code>이 1→N이므로 남길 몫도 결과 줄로 만들면 됩니다). 문제는 <b>틀린 길만 버튼이 있는 것</b> — 잔여 780kg이 생기면 <code>손실 인정하고 진행</code>만 파란 버튼으로 나오고, 올바른 길(<b>톤백/잔량 줄 추가</b>)은 화면이 침묵합니다. 재포장 차감은 되돌리기가 막혀 있어(<code>REPACK_CANCEL_BLOCKED</code>) 오조작이 <b>복구 불가</b>입니다.</div>
+<p class="sub" style="max-width:840px;margin-bottom:4px"><b>이 시안의 판단:</b> 손실 경고만 고치면 <b>늦습니다</b>. 경고는 서버가 <code>needsLossConfirm</code>을 돌려준 <b>제출 후</b>에 뜨는데, 잔여 kg은 입력하는 내내 푸터에 이미 떠 있습니다. 그래서 <b>① 푸터 계기판에서 상시 제안</b>하고, <b>② 손실 경고는 최후 방어선으로 남겨</b> 주·보조 버튼을 뒤집습니다.</p>
+
+<div class="fr"><div class="frl">① 편집 중 · 잔여 780kg — 푸터 계기판에서 <b>제출 전에</b> 해결한다</div>
+<div class="scrim" style="padding:24px"><div class="dlg" style="width:720px;max-width:100%">
+  <div class="shrink-0 border-b border-slate-100 bg-slate-50/60 px-5 py-2"><div class="flex items-center justify-between gap-2"><span class="min-w-0 truncate text-[12px] text-slate-600">쓸 재고 <b class="text-slate-800">1건</b> <b class="tn text-slate-800">820kg</b><span class="ml-1.5 text-slate-400">· 전량 사용</span></span><button class="flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[11.5px] text-slate-500">고치기 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+  <div class="px-5 py-3">
+    <h3 class="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">만들 규격 — 버튼을 누르면 아래에 줄이 생겨요</h3>
+    <div class="specbtns"><button>톤백</button><button>20kg</button><button>10kg</button><button>8kg</button><button>5kg</button><button>4kg</button><button>3kg</button><button>1kg</button><button>잔량</button></div>
+    <div class="mt-2 flex flex-col gap-1.5">
+      <div class="grid grid-cols-[52px_128px_84px_62px_24px] items-center gap-1.5 rounded-lg border border-slate-100 bg-white px-2 py-1.5">
+        <span class="truncate rounded bg-slate-100 px-1 py-0.5 text-center text-[11px] font-bold text-slate-600">4kg</span>
+        <span class="truncate rounded-md border border-slate-200 bg-white px-1.5 py-1 text-[11.5px] text-slate-600">땅끝에서보냅니다</span>
+        <span class="tn flex items-center justify-center gap-1 text-[12px] text-slate-600"><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">−</span><b class="w-5 text-center text-slate-900">10</b><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">+</span></span>
+        <span class="tn text-right text-[12px] font-semibold text-slate-700">40kg</span>
+        <span class="text-center text-slate-300">×</span>
+      </div>
+    </div>
+  </div>
+  <div class="shrink-0 border-t border-amber-300 bg-amber-50 px-5 py-3">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-baseline gap-4">
+        <div>
+          <div class="text-[11px] font-bold text-amber-900">남는 양은 손실로 기록돼요</div>
+          <div class="tn mt-0.5 text-[11.5px] text-amber-800">쓸 양 820kg − 만들 양 40kg</div>
+        </div>
+        <span class="tn text-[22px] font-extrabold leading-none text-amber-900">780kg</span>
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <button class="h-8 rounded-md border border-amber-400 bg-white px-3 text-[12.5px] font-bold text-amber-900">남는 780kg 톤백으로 남기기</button>
+        <span class="h-5 w-px bg-amber-300"></span>
+        <button class="h-8 rounded-md border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-600">취소</button>
+        <button class="h-8 rounded-md bg-[#2563eb] px-3.5 text-[13px] font-bold text-white">재포장하기</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+<p class="sub"><b>계기판 톤을 고쳤습니다.</b> 현행 <code>warn</code>은 <code>border-slate-200 bg-slate-50 text-slate-600</code> — 「남는 양은 <b>손실</b>로 기록돼요」라고 말하면서 색은 중립 회색입니다. 손실은 경고이므로 <code>border-amber-300 bg-amber-50 text-amber-900</code>으로 올립니다(<code>ok</code>=emerald, <code>bad</code>=red와 3단이 됩니다).<br><b>제안 버튼은 잔여&gt;0일 때만</b> 나오고, 누르면 <b>소스와 같은 규격 + 잔여중량</b> 줄이 결과에 추가됩니다. 「재포장하기」 왼쪽에 두어 <b>먼저 읽히게</b> 했습니다.</p></div>
+
+<div class="cols">
+<div class="fr" style="margin-top:0"><div class="frl">② 「재포장하기」를 누른 뒤 — 경고가 <b>푸터를 대체</b>한다 (버튼 중복 없음)</div>
+<div class="scrim"><div class="dlg" style="width:342px">
+  <div class="px-4 pb-2 pt-3"><div class="flex flex-col gap-1.5 opacity-45">
+    <div class="grid grid-cols-[46px_1fr_84px_58px] items-center gap-1.5 rounded-lg border border-slate-100 bg-white px-2 py-1.5">
+      <span class="truncate rounded bg-slate-100 px-1 py-0.5 text-center text-[11px] font-bold text-slate-600">4kg</span>
+      <span class="truncate pl-0.5 text-[11px] text-slate-500">땅끝에서보냅니다</span>
+      <span class="tn text-center text-[12px] text-slate-500">10</span>
+      <span class="tn text-right text-[12px] font-semibold text-slate-700">40kg</span>
+    </div>
+  </div></div>
+  <div class="border-t border-amber-300 bg-amber-50 px-4 py-3">
+    <div class="flex items-start justify-between gap-3">
+      <p class="flex items-start gap-1.5 text-[12px] leading-relaxed text-amber-900"><svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M10.3 3.9 1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span><b>남는 몫도 줄로 만들어야</b> 손실이 안 생겨요.<span class="tn mt-0.5 block text-[11.5px] text-amber-800">쓸 양 820kg − 만들 양 40kg</span></span></p>
+      <span class="tn shrink-0 text-[22px] font-extrabold leading-none text-amber-900">780kg</span>
+    </div>
+    <button class="mt-2.5 h-11 w-full rounded-md bg-[#2563eb] text-[13px] font-bold text-white">남는 780kg 톤백으로 남기기</button>
+    <div class="mt-2 flex items-center gap-2 border-t border-amber-300 pt-2">
+      <button class="h-9 flex-none rounded-md border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-600">취소</button>
+      <button class="h-9 flex-1 rounded-md border border-amber-400 bg-white text-[12.5px] font-medium text-amber-900">780kg을 손실로 기록하고 진행</button>
+    </div>
+    <p class="mt-1.5 text-[11px] leading-relaxed text-amber-800">도정 감모처럼 <b>실제로 없어진 경우에만</b> 고르세요. 재포장 차감은 <b>되돌릴 수 없어요.</b></p>
+  </div>
+</div></div>
+<p class="sub"><b>지금 화면의 문제는 버튼이 두 번 보이는 것입니다.</b> 경고를 본문 위에 얹으면 ①의 푸터 제안 버튼이 아래에 그대로 남아 <code>남는 N kg 톤백으로 남기기</code>가 <b>상하로 중복</b>되고, 이미 눌러서 막힌 <code>재포장하기</code>도 계속 활성으로 보입니다.<br><b>그래서 경고는 푸터를 대체합니다</b> — <code>lossPrompt</code>가 열리면 푸터의 기본 액션(<code>남기기</code>·<code>재포장하기</code>·<code>취소</code>)을 <b>렌더하지 않고</b>, 같은 앰버 푸터 안에서 계기판(잔여 kg) + 경고 문구 + 출구 2개로 갈아끼웁니다. 결과 목록은 <code>opacity-45</code>·입력 불가로 <b>지금은 결정할 차례</b>임을 보입니다. <code>취소</code>는 편집 상태로 되돌립니다(<code>lossPrompt=null</code>).</p></div>
+
+<div class="fr" style="margin-top:0"><div class="frl">③ 제안을 누른 뒤 — 줄이 자동 추가되고 <b>딱 맞음</b></div>
+<div class="scrim"><div class="dlg" style="width:342px">
+  <div class="px-4 py-3">
+    <div class="flex flex-col gap-1.5">
+      <div class="grid grid-cols-[46px_1fr_84px_58px_24px] items-center gap-1.5 rounded-lg border border-slate-100 bg-white px-2 py-1.5">
+        <span class="truncate rounded bg-slate-100 px-1 py-0.5 text-center text-[11px] font-bold text-slate-600">4kg</span>
+        <span class="truncate pl-0.5 text-[11px] text-slate-500">땅끝에서보냅니다</span>
+        <span class="tn flex items-center justify-center gap-1 text-[12px] text-slate-600"><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">−</span><b class="w-5 text-center text-slate-900">10</b><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">+</span></span>
+        <span class="tn text-right text-[12px] font-semibold text-slate-700">40kg</span>
+        <span class="text-center text-slate-300">×</span>
+      </div>
+      <div class="grid grid-cols-[46px_1fr_84px_58px_24px] items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1.5">
+        <span class="truncate rounded bg-amber-100 px-1 py-0.5 text-center text-[11px] font-bold text-amber-700">톤백</span>
+        <span class="truncate pl-0.5 text-[11px] text-slate-400">포장지: 톤백</span>
+        <span class="tn flex items-center justify-center gap-1 text-[12px] text-slate-600"><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">−</span><b class="w-5 text-center text-slate-900">1</b><span class="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500">+</span></span>
+        <span class="tn text-right text-[12px] font-semibold text-slate-700">780kg</span>
+        <span class="text-center text-slate-300">×</span>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-emerald-200 bg-emerald-50 px-4 py-3">
+    <div class="flex items-baseline justify-between gap-4">
+      <div><div class="text-[11px] font-bold text-emerald-700">딱 맞음</div><div class="tn mt-0.5 text-[11.5px] text-emerald-700">쓸 양 820kg − 만들 양 820kg</div></div>
+      <span class="tn text-[22px] font-extrabold leading-none text-emerald-700">0kg</span>
+    </div>
+    <div class="mt-2.5 flex gap-2"><button class="h-11 flex-none rounded-md border border-slate-300 bg-white px-4 text-[13px] font-medium text-slate-600">취소</button><button class="h-11 flex-1 rounded-md bg-[#2563eb] text-[13.5px] font-bold text-white">재포장하기</button></div>
+  </div>
+</div></div>
+<p class="sub">추가된 줄은 <b>규격=소스와 동일 · 개수 1 · 중량=잔여</b>이고, 톤백·잔량은 <code>weightEditable</code>이라 사용자가 그 자리에서 고칠 수 있습니다. 규격 칩의 앰버는 <b>현행 잔량 칩 색</b>(<code>bg-amber-100 text-amber-700</code>)이라 그대로 씁니다 — 자동 추가된 줄임을 알리려 행 배경만 <code>bg-amber-50/60</code>으로 한 번 물들입니다(사용자가 손대면 흰색으로).</p></div>
+</div>
+
+<div class="fr"><div class="frl">④ <code style="font-weight:400">available === 1</code> — 톤백이 늘 걸리는 자리 · <b>쓸 재고는 기본 접힘</b>(결정 #44)</div>
+<div class="scrim" style="padding:20px"><div class="dlg" style="width:600px;max-width:100%">
+  <div class="shrink-0 border-b border-slate-100 bg-slate-50/60 px-5 py-2">
+    <div class="flex items-center justify-between gap-2"><span class="min-w-0 truncate text-[12px] text-slate-600">쓸 재고 <b class="text-slate-800">1건</b> <b class="tn text-slate-800">820kg</b><span class="ml-1.5 text-slate-400">· 전량 사용</span><span class="ml-1.5 text-slate-500">· <b class="font-semibold text-slate-600">톤백 1개는 개수로 못 줄여요</b></span></span><button class="flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[11.5px] text-slate-500">접기 <svg class="h-3.5 w-3.5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button></div>
+    <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
+      <div class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+        <div class="flex min-w-0 flex-col"><span class="truncate text-[12px] font-semibold text-slate-800">톤백 820kg<span class="ml-1.5 font-normal text-slate-500">윤병옥</span></span><span class="mono truncate text-[10px] text-slate-400">251111-11-15100914-391</span></div>
+        <span class="shrink-0 text-right text-[11px] font-semibold text-slate-500">1개 전부<span class="mt-0.5 block font-normal text-slate-400">아래에서 남길 몫을 줄로</span></span>
+      </div>
+    </div>
+  </div>
+</div></div>
+<p class="sub"><b>이 자리는 기본으로 안 보입니다.</b> 쓸 재고 영역은 「개수를 줄이는 건 예외 동선」이라 접혀 있어서(<code>sourcesOpen</code> 기본 false, 결정 #44), 안내를 소스 행에만 넣으면 <b>보이지 않아 무용합니다.</b> 그래서 단계를 나눕니다 — <b>주 안내는 ①의 푸터 버튼</b>(항상 보이고 잔여&gt;0이면 뜬다), 이 프레임은 보조입니다.<br>(a) <b>접힌 헤더에 한 조각</b> — 기존 「· 전량 사용」 뒤에 「톤백 1개는 개수로 못 줄여요」. 「고치기」를 눌러도 할 수 있는 게 없다는 걸 미리 알려 <b>헛클릭을 막습니다.</b> 모든 소스가 <code>available === 1</code>이고 톤백·잔량 규격일 때만.<br>(b) <b>펼친 소스 행</b> — 「1개 전부」 아래에 「아래에서 남길 몫을 줄로」. 이미 펼친 사람에게만 보이므로 짧게 둡니다.</p></div>
+
+<div style="margin-top:34px">
+<div class="frl" style="margin-bottom:10px">변경 요약 · <span class="mono" style="font-weight:400">repack-dialog.tsx</span></div>
+<table class="spec">
+<tr><th style="width:20%">위치</th><th style="width:38%">현행</th><th>제안</th></tr>
+<tr><td><code>balance</code> warn 톤 <span class="mono" style="font-weight:400">L351~372</span></td><td><code>warn: 'border-slate-200 bg-slate-50 text-slate-600'</code> — 손실을 알리면서 <b>중립 회색</b></td><td><code>'border-amber-300 bg-amber-50 text-amber-900'</code>. <code>ok</code>=emerald / <code>warn</code>=amber / <code>bad</code>=red 3단이 성립</td></tr>
+<tr><td>푸터 액션 <span class="mono" style="font-weight:400">L588~</span></td><td><code>취소</code> · <code>재포장하기</code> 2개</td><td><b><code>남는 N kg 톤백으로 남기기</code> 추가</b> (<code>remainKg &gt; 0</code>일 때만, <code>재포장하기</code> 왼쪽). 클릭 시 <code>addSpec</code>으로 <b>소스와 같은 규격 · 개수 1 · 중량=<code>remainKg</code></b> 줄 추가 + 로트는 소스 승계로 바로 정해진다(이 화면은 소스 1건이라 <code>showLot=false</code> — 로트 열 자체가 없다. 소스가 2건 이상이면 추가된 줄의 로트 <code>select</code>를 <b>잔여가 나온 그 소스로</b> 미리 고른다)</td></tr>
+<tr><td><code>lossPrompt</code> 블록 <span class="mono" style="font-weight:400">L552~578</span></td><td>문구 「…그대로 진행할까요?」 + <code>손실 인정하고 진행</code> <b>단일 primary</b>. 본문 위에 얹혀서 푸터 버튼과 <b>중복 노출</b></td><td><b>푸터 자리로 옮기고 기본 액션을 대체한다.</b> <code>lossPrompt !== null</code>이면 푸터의 <code>남기기</code>·<code>재포장하기</code>·<code>취소</code>를 <b>렌더하지 않는다</b>. 같은 앰버 푸터에 계기판 + 경고 + 출구 2개: ① <code>남는 N kg 톤백으로 남기기</code>(primary <code>h-11</code>) ② <code>취소</code> · <code>N kg을 손실로 기록하고 진행</code>(outline) + 「실제로 없어진 경우에만 · <b>되돌릴 수 없어요</b>」. 결과 목록은 <code>opacity-45 pointer-events-none</code></td></tr>
+<tr><td>경고 문구</td><td>「이 차이는 손실로 기록돼요. 그대로 진행할까요?」 — 손실을 <b>유일한 출구로 전제</b></td><td>「<b>일부만 쓰려는 것이면 남는 몫도 줄로 만들어야</b> 손실이 안 생겨요.」 — 올바른 길을 문장으로 알림</td></tr>
+<tr><td><code>available === 1</code> <span class="mono" style="font-weight:400">L455~458</span></td><td>「1개 전부」만 표시. 개수를 줄일 방법이 없다는 사실만 남고 <b>대안은 침묵</b>. 게다가 이 행은 <code>sourcesOpen</code> 기본 false라 <b>펼치지 않으면 안 보인다</b>(결정 #44)</td><td>두 자리로 나눈다 — (a) <b>접힌 헤더</b>의 「· 전량 사용」 뒤에 「톤백 1개는 개수로 못 줄여요」(모든 소스가 <code>available===1</code> + 톤백·잔량일 때만) → 헛클릭 방지 (b) <b>펼친 소스 행</b>의 「1개 전부」 아래 「아래에서 남길 몫을 줄로」. <b>주 안내는 푸터 버튼</b>이 담당</td></tr>
+<tr><td>자동 추가된 줄</td><td>—</td><td>행 배경 <code>bg-amber-50/60</code>으로 1회 표시(사용자가 수정하면 흰색). 규격 칩은 <b>현행 잔량 칩 색 그대로</b> <code>bg-amber-100 text-amber-700</code></td></tr>
+</table>
+<p class="sub" style="margin-top:14px;max-width:840px"><b>유지:</b> <code>createRepack</code> 계약(별도 <code>splitPackage</code> 없음 — D2 매트릭스 §2의 「분할과 병합은 같은 기능」 결정) · <code>needsLossConfirm</code> 서버 왕복 · 입력이 바뀌면 <code>lossPrompt</code>·<code>lossConfirmed</code> 무효화(L141~145) · <code>weightEditable</code>(톤백·잔량만 중량 직접 입력) · <code>REPACK_SPECS</code> 9칸 그리드(<code>lib/repack.ts</code> L22~31 소스 순서 — 톤백·20·10·8·5·4·3·1kg·잔량. 톤백·잔량은 <code>weight: null</code>이라 사람이 직접 입력) · 결과 행 그리드 <code>[46px_1fr_84px_58px_24px]</code> / <code>sm:[52px_128px_84px_62px_minmax(0,1fr)_24px]</code>.<br><b>함께 볼 것:</b> D2d 톤백 셀 팝오버가 같은 <code>createRepack</code>을 부릅니다 — 거기서도 같은 제안이 필요하므로 <b>D2 착수 시 한 번에</b> 처리하는 것이 낫습니다.<br><b>주의:</b> 시안의 <code>bg-white</code>·<code>#fff</code>는 정적 HTML이라 박은 값입니다 — 다이얼로그는 <code>bg-card</code> 자동이므로 배경을 지정하지 않고, 버튼의 흰 배경만 <code>bg-background</code>로 옮깁니다.</p>
+</div>
+</div>
+<template id="__bundler_thumbnail" data-bg-color="#eef1f5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#0f766e"/><g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M26 44h68v46H26z"/><path d="M26 44l14-16h40l14 16M60 44v46"/></g></svg></template>
+</body></html>
