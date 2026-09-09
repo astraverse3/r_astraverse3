@@ -43,13 +43,10 @@ const toDateInput = (d: Date): string => {
     return `${y}-${m}-${day}`
 }
 
-/**
- * 로트 앞말줄임 — 실 로트(`251119-11-15103885-4118`)는 **앞부분이 전부 같고 뒷자리가
- * 유일한 구분자**라 뒤를 자르면 서로 다른 로트가 같아 보인다(R1-1 실측).
- * CSS `direction:rtl`은 숫자·하이픈 bidi 재배치 위험이 있어 문자열로 자른다. title에 전체.
- */
-export const shortLot = (lot: string): string =>
-    lot.length > 16 ? `…${lot.slice(-14)}` : lot
+// 로트 앞말줄임(`shortLot`)은 2026-09-08에 폐기했다 — 차감·이력 두 화면 모두
+// **전체 로트 표시**로 갔다. 로트는 앞부분이 전부 같고 뒷자리가 유일한 구분자라
+// 어디를 자르든 서로 다른 로트가 같아 보였고, title 속성은 모바일에서 열 수 없다.
+// 폭은 자르는 대신 **정보를 재배치**해서 냈다(포장일을 윗줄로).
 
 export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
     const [type, setType] = useState<ManualMovementType>('SALE')
@@ -302,6 +299,9 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                     <div className="sm:mt-0 mt-1">
                         {rows.map(r => {
                             const raw = (counts[r.id] ?? '').trim()
+                            // 제외 신호는 행 흐리기(opacity-55) 하나로 낸다. 예전엔 「제외」 배지도
+                            // 같이 띄웠는데, 신호가 겹치는 데다 배지가 생겼다 사라지며 모바일에서
+                            // 입력칸 옆 폭이 들쭉날쭉해졌다. 몇 행이 들어갔는지는 하단 요약이 센다.
                             const excluded = raw === '' || raw === '0'
                             const rowError = parsed.rowErrors.get(r.id)
                             return (
@@ -326,12 +326,21 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                             <span className="ml-1.5 font-medium text-slate-400 sm:hidden">
                                                 {r.producer}
                                             </span>
+                                            {/* 모바일 포장일 — 보조줄을 로트에 통째로 내주려고 윗줄로 올렸다.
+                                                오른쪽 끝에 붙이면 차감 입력칸 유무에 따라 행마다 위치가 달라져
+                                                생산자 바로 뒤에 흘려 둔다(길면 이 줄이 통째로 truncate). */}
+                                            <span className="ml-1.5 text-[11px] tabular-nums text-slate-400 sm:hidden">
+                                                {r.date.slice(5)}
+                                            </span>
                                         </span>
-                                        {/* 모바일 보조줄 — 로트 · 가용 · 포장일 묶음 */}
-                                        <span className="mt-0.5 flex items-center gap-1.5 sm:hidden">
+                                        {/* 모바일 보조줄 — 로트(전체) · 가용.
+                                            390px에서 로트 약 152px + 가용 약 50px이라 한 줄에 들어간다.
+                                            320px 같은 더 좁은 기기에선 flex-wrap으로 가용이 아래로 접힌다
+                                            (로트를 자르느니 줄을 늘린다 — 로트 전체 표시가 요구사항). */}
+                                        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 sm:hidden">
                                             <LotOrBuyChip lot={r.lot} source={r.source} mobile />
                                             <span className="shrink-0 text-[11px] tabular-nums text-slate-400">
-                                                가용 {r.available} · {r.date.slice(5)}
+                                                가용 {r.available}
                                             </span>
                                         </span>
                                     </span>
@@ -375,11 +384,6 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                                 <span className="text-[11px] text-slate-400">개</span>
                                             </>
                                         )}
-                                        {excluded && (
-                                            <span className="rounded border border-slate-200 bg-slate-100 px-1.5 py-[1px] text-[10px] text-slate-500">
-                                                제외
-                                            </span>
-                                        )}
                                     </span>
                                     {rowError && (
                                         <span className="col-span-full text-right text-[11px] font-semibold text-red-600">
@@ -393,31 +397,65 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                 </div>
 
                 {/* 인라인 확인 — 별도 confirm 창 없이 여기서 해결 (N5) */}
-                {confirming && (
-                    <div className="shrink-0 px-4 pb-3 sm:px-6">
-                        <div className="flex flex-col gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                            <p className="flex items-start gap-2 text-[12.5px] leading-relaxed text-amber-900">
-                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                                <span>
-                                    <b className="tabular-nums">
-                                        {parsed.items.length}행 {totalCount.toLocaleString()}개
-                                    </b>
-                                    를 <b>{MOVEMENT_TYPE_LABEL[type]}</b>로 차감합니다. 발생일{' '}
-                                    <b className="tabular-nums">{occurredAt}</b>
-                                    {type === 'SALE' && customer.trim()
-                                        ? ` · 거래처 ${customer.trim()}`
-                                        : ''}
-                                    .<br />
-                                    차감한 재고는 목록에서 사라지고, 「차감된 재고 보기」를 켜야
-                                    다시 보입니다.
-                                </span>
-                            </p>
-                            <div className="flex justify-end gap-2">
+                {/* 푸터 — 평소엔 계기판, 확인 모드에선 **푸터 자체가 확인 패널**이 된다.
+                    예전엔 본문과 푸터 사이에 앰버 카드를 하나 더 끼웠는데, 같은 요약이
+                    ① 재고 행의 입력칸 ② 그 카드 ③ 푸터 계기판 **세 번** 나왔다.
+                    죽은 「차감하기」(disabled)까지 남아 눌러야 할 것이 두 군데로 갈렸다.
+                    상단선을 border-t-2 amber-400으로 한 단 올려 「칩이 아니라 구역」임을 낸다
+                    — 이 화면엔 매입 칩(amber)이 이미 있어 위계를 벌려야 한다. */}
+                <div
+                    className={cn(
+                        'shrink-0 border-t px-4 py-3 sm:px-6',
+                        confirming
+                            ? 'border-t-2 border-amber-400 bg-amber-50'
+                            : 'border-slate-200 bg-slate-50',
+                    )}
+                >
+                    {confirming ? (
+                        <div className="sm:flex sm:items-center sm:gap-4">
+                            <div className="flex items-start gap-2 sm:min-w-0 sm:flex-1">
+                                <AlertTriangle className="mt-px h-4 w-4 shrink-0 text-amber-600 sm:h-[18px] sm:w-[18px]" />
+                                <div className="min-w-0 flex-1">
+                                    {/* 값은 flex-wrap이라 어디서 접혀도 단위가 쪼개지지 않는다.
+                                        제목은 모바일에서만 한 줄을 통째로 쓴다(w-full sm:w-auto). */}
+                                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-amber-900 sm:text-[13px]">
+                                        <b className="w-full text-[13px] font-bold leading-snug sm:w-auto">
+                                            이대로 차감할까요?
+                                        </b>
+                                        <span className="hidden text-amber-700/50 sm:inline">·</span>
+                                        <b className="font-bold tabular-nums">
+                                            {parsed.items.length}행 {totalCount.toLocaleString()}개
+                                        </b>
+                                        <span className="text-amber-700/50">·</span>
+                                        <span className="font-semibold">
+                                            {MOVEMENT_TYPE_LABEL[type]}
+                                        </span>
+                                        <span className="text-amber-700/50">·</span>
+                                        <span className="font-mono text-[12px] tabular-nums">
+                                            {occurredAt}
+                                        </span>
+                                        {type === 'SALE' && customer.trim() && (
+                                            <>
+                                                <span className="text-amber-700/50">·</span>
+                                                <span className="min-w-0 truncate">
+                                                    {customer.trim()}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="mt-1.5 text-[11.5px] leading-relaxed text-amber-800">
+                                        차감한 재고는 목록에서 사라집니다. 「차감된 재고 보기」를
+                                        켜면 다시 보입니다.
+                                    </div>
+                                </div>
+                            </div>
+                            {/* 확인 액션이므로 모바일 히트타겟은 푸터 본버튼과 같은 규칙(h-11 sm:h-8) */}
+                            <div className="mt-3 flex gap-2 sm:mt-0 sm:shrink-0">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 bg-white"
+                                    className="h-11 flex-none border-amber-300 bg-white px-4 text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:px-3"
                                     disabled={saving}
                                     onClick={() => setConfirming(false)}
                                 >
@@ -426,61 +464,60 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                 <Button
                                     type="button"
                                     size="sm"
-                                    className="h-8 gap-1.5"
+                                    className="h-11 flex-1 gap-1.5 sm:h-8 sm:flex-none"
                                     disabled={saving}
                                     onClick={() => void submit()}
                                 >
                                     {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                    확인하고 차감
+                                    확인하고 차감{' '}
+                                    <span className="font-extrabold tabular-nums">
+                                        {totalCount.toLocaleString()}개
+                                    </span>
                                 </Button>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* 푸터 — 계기판 자리에 차감 요약 */}
-                <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
-                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-baseline justify-between gap-5 sm:justify-start">
-                            <div>
-                                <div className="text-[11px] font-bold text-slate-600">
-                                    {confirming
-                                        ? '확인을 기다리는 중'
-                                        : `${MOVEMENT_TYPE_LABEL[type]}로 차감`}
+                    ) : (
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-baseline justify-between gap-5 sm:justify-start">
+                                <div>
+                                    <div className="text-[11px] font-bold text-slate-600">
+                                        {MOVEMENT_TYPE_LABEL[type]}로 차감
+                                    </div>
+                                    <div className="mt-0.5 text-[11.5px] tabular-nums text-slate-500">
+                                        {parsed.items.length}행 · {occurredAt || '날짜 미정'}
+                                        {type === 'SALE' && customer.trim()
+                                            ? ` · ${customer.trim()}`
+                                            : ''}
+                                    </div>
                                 </div>
-                                <div className="mt-0.5 text-[11.5px] tabular-nums text-slate-500">
-                                    {parsed.items.length}행 · {occurredAt || '날짜 미정'}
-                                    {type === 'SALE' && customer.trim()
-                                        ? ` · ${customer.trim()}`
-                                        : ''}
-                                </div>
+                                <span className="text-[22px] font-extrabold leading-none tabular-nums text-slate-900">
+                                    {totalCount.toLocaleString()}개
+                                </span>
                             </div>
-                            <span className="text-[22px] font-extrabold leading-none tabular-nums text-slate-900">
-                                {totalCount.toLocaleString()}개
-                            </span>
+                            <div className="flex shrink-0 gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-11 flex-none bg-white sm:h-8"
+                                    onClick={() => onOpenChange(false)}
+                                    disabled={saving}
+                                >
+                                    취소
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="h-11 flex-1 gap-1.5 sm:h-8 sm:flex-none"
+                                    disabled={!!blockingReason || saving}
+                                    onClick={() => setConfirming(true)}
+                                >
+                                    차감하기
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex shrink-0 gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-11 flex-none bg-white sm:h-8"
-                                onClick={() => onOpenChange(false)}
-                                disabled={saving}
-                            >
-                                취소
-                            </Button>
-                            <Button
-                                type="button"
-                                size="sm"
-                                className="h-11 flex-1 gap-1.5 sm:h-8 sm:flex-none"
-                                disabled={!!blockingReason || confirming || saving}
-                                onClick={() => setConfirming(true)}
-                            >
-                                차감하기
-                            </Button>
-                        </div>
-                    </div>
+                    )}
+                    {/* 에러는 확인 모드에서도 같은 자리(버튼 아래) — 위치 규칙을 유지한다 */}
                     {blockingReason && !confirming && (
                         <p className="mt-2 text-[11.5px] font-semibold text-red-600">
                             {blockingReason}
@@ -499,7 +536,8 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
 
 // 로트 칩 / 매입 칩 — 목록 행과 같은 문법 (package-row.tsx의 것과 동일한 모양)
 //  · 데스크탑(158px 열): 10.5px mono면 전체가 들어가므로 **자르지 않는다** (R2-2)
-//  · 모바일(`mobile`): 폭이 없어 앞말줄임 — 뒷자리가 유일한 구분자다 (R1-1 ③)
+//  · 모바일(`mobile`): 포장일을 윗줄로 올려 보조줄을 통째로 내줬으므로 **여기도 자르지 않는다.**
+//    `mobile`은 이제 글자 크기·여백 차이만 뜻한다.
 // 어느 쪽이든 title에 전체 로트를 남긴다(비용 0).
 function LotOrBuyChip({
     lot,
@@ -515,11 +553,11 @@ function LotOrBuyChip({
             <span
                 title={lot}
                 className={cn(
-                    'inline-block max-w-full rounded border border-slate-200 bg-slate-100 px-1.5 font-mono leading-4 text-slate-500',
-                    mobile ? 'truncate py-[1px] text-[10px]' : 'whitespace-nowrap py-[2px] text-[10.5px]',
+                    'inline-block max-w-full whitespace-nowrap rounded border border-slate-200 bg-slate-100 px-1.5 font-mono leading-4 text-slate-500',
+                    mobile ? 'py-[1px] text-[10px]' : 'py-[2px] text-[10.5px]',
                 )}
             >
-                {mobile ? shortLot(lot) : lot}
+                {lot}
             </span>
         )
     }
