@@ -194,7 +194,7 @@ async function loadSkuMeta(skuIds: number[]): Promise<MatrixSkuInput[]> {
       id: true,
       millingType: true,
       packageType: true,
-      variety: { select: { name: true } },
+      variety: { select: { name: true, type: true } },
       packaging: { select: { name: true } },
     },
   })
@@ -202,6 +202,7 @@ async function loadSkuMeta(skuIds: number[]): Promise<MatrixSkuInput[]> {
     id: r.id,
     varietyName: r.variety.name,
     millingType: r.millingType,
+    varietyType: r.variety.type,
     packageType: r.packageType,
     packagingName: r.packaging.name,
   }))

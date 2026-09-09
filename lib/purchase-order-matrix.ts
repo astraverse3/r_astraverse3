@@ -13,6 +13,7 @@
 
 import { computeLineStatus } from './purchase-order-allocation'
 import { normalizeSpec } from './purchase-order-parser'
+import { getDisplayMillingType } from './milling-type-display'
 
 // ------------------------------------------------------
 // 입력 — 호출부가 배치 조회해서 넣는다
@@ -46,6 +47,8 @@ export type MatrixSkuInput = {
   id: number
   varietyName: string
   millingType: string
+  /** 찰벼면 표시를 찹쌀/찰현미로 바꾼다 (`getDisplayMillingType`) */
+  varietyType: string | null
   packageType: string
   packagingName: string
 }
@@ -84,9 +87,9 @@ export type MatrixColumn = {
   /** 열 식별자. 매칭된 SKU는 `pt:<id>`, 매칭실패는 원본 조합 키 */
   key: string
   productTypeId: number | null
-  /** 화면 머리글 2줄용 */
-  title: string
-  subtitle: string
+  /** 이 열이 속한 품목 그룹 (`MatrixColumnGroup.key`) */
+  groupKey: string
+  /** 열 머리글에 찍히는 규격 — 헤더 2행 */
   packageType: string
   /** 규격 1개당 kg. 알 수 없으면 null */
   unitWeightKg: number | null
@@ -94,6 +97,22 @@ export type MatrixColumn = {
   allocatedQty: number
   /** 이 열의 SKU 가용재고. 매칭실패 열은 null */
   availableQty: number | null
+}
+
+/**
+ * 열 머리글 1행 = 품목. 같은 품목의 규격들이 그 아래 묶인다.
+ * 발주서 원본이 「품목 한 칸 아래 10kg·5kg·1kg」로 되어 있어 그 모양을 그대로 살린다.
+ */
+export type MatrixColumnGroup = {
+  /** `품종|도정|포장지` 또는 매칭실패 원본 조합 */
+  key: string
+  /** `천지향1세` · 백미가 아니면 `서농22호 · 현미` */
+  title: string
+  /** 포장지명. 매칭실패면 `매칭실패` */
+  packagingName: string
+  unmatched: boolean
+  /** 이 그룹에 속한 열 키 — 화면이 colspan을 여기서 낸다 */
+  columnKeys: string[]
 }
 
 export type MatrixRow = {
@@ -114,6 +133,9 @@ export type MatrixRow = {
 }
 
 export type Matrix = {
+  /** 머리글 1행 — 품목. 등장 순서를 지킨다 */
+  groups: MatrixColumnGroup[]
+  /** 머리글 2행 — 규격. 그룹 순서대로 늘어선다 */
   columns: MatrixColumn[]
   rows: MatrixRow[]
   totals: {
@@ -157,6 +179,22 @@ export function unitWeightOf(packageType: string, unitWeightKg: number | null): 
   return normalizeSpec(packageType).weightKg
 }
 
+/**
+ * 품목 머리글 — `천지향1세`, 도정이 백미가 아니면 `서농22호 · 현미`.
+ * 🔴 **백미는 적지 않는다.** 대부분이 백미라 전부 붙이면 글자만 늘고 구분이 안 된다.
+ * 찰벼는 저장값이 `백미`여도 `찹쌀`로 보여야 하므로 `getDisplayMillingType`을 먼저 통과시킨다.
+ */
+export function groupTitleOf(varietyName: string, millingType: string, varietyType: string | null): string {
+  const shown = getDisplayMillingType(millingType, varietyType)
+  return shown && shown !== '백미' ? `${varietyName} · ${shown}` : varietyName
+}
+
+/** 품목 그룹 식별자 — 같은 품종·도정·포장지면 한 그룹으로 묶인다. */
+export function groupKeyOf(item: MatrixItemInput, sku: MatrixSkuInput | undefined): string {
+  if (!sku) return `raw:${item.rawItemName}|${item.rawPackaging ?? ''}`
+  return `g:${sku.varietyName}|${sku.millingType}|${sku.packagingName}`
+}
+
 // ------------------------------------------------------
 // 셀 상태
 // ------------------------------------------------------
@@ -190,24 +228,42 @@ const isUnfinished = (s: CellStatus): boolean => s !== 'COMPLETED'
 // ------------------------------------------------------
 
 /**
- * 열 목록을 세운다. 등장 순서가 아니라 **규격 무게 내림차순**으로 세운다 —
- * 20kg·10kg처럼 큰 것이 왼쪽에 오는 편이 발주서 원본과 눈이 맞는다.
- * 무게를 못 읽는 열은 뒤로 보내고, 그 안에서는 이름순이다.
+ * 열과 품목 그룹을 세운다.
+ *
+ * 🔴 **등장 순서를 지킨다.** 이 화면의 목적은 「발주서 원본 그대로의 2D 피벗」이고,
+ * `PurchaseOrderItem.id` 순서가 곧 엑셀 열 순서다. 무게순 같은 걸로 재배열하면
+ * 사람이 원본과 대조할 수 없다. 그룹도 그 안의 규격도 처음 나온 차례대로 선다.
  */
-function buildColumns(input: BuildMatrixInput): MatrixColumn[] {
+function buildColumns(input: BuildMatrixInput): {
+  groups: MatrixColumnGroup[]
+  columns: MatrixColumn[]
+} {
   const skuById = new Map(input.skus.map((s) => [s.id, s]))
-  const byKey = new Map<string, MatrixColumn>()
+  const groupByKey = new Map<string, MatrixColumnGroup>()
+  const colByKey = new Map<string, MatrixColumn>()
 
   for (const item of input.items) {
-    const key = columnKeyOf(item)
     const sku = item.productTypeId !== null ? skuById.get(item.productTypeId) : undefined
-    let col = byKey.get(key)
+    const gKey = groupKeyOf(item, sku)
+    const cKey = columnKeyOf(item)
+
+    if (!groupByKey.has(gKey)) {
+      groupByKey.set(gKey, {
+        key: gKey,
+        title: sku ? groupTitleOf(sku.varietyName, sku.millingType, sku.varietyType) : item.rawItemName,
+        packagingName: sku ? sku.packagingName : '매칭실패',
+        unmatched: !sku,
+        columnKeys: [],
+      })
+    }
+    const group = groupByKey.get(gKey)!
+
+    let col = colByKey.get(cKey)
     if (!col) {
       col = {
-        key,
+        key: cKey,
         productTypeId: item.productTypeId,
-        title: sku ? `${sku.varietyName} ${sku.millingType}` : item.rawItemName,
-        subtitle: sku ? `${sku.packageType} · ${sku.packagingName}` : `${item.packageType} · 매칭실패`,
+        groupKey: gKey,
         packageType: sku?.packageType ?? item.packageType,
         unitWeightKg: unitWeightOf(item.packageType, item.unitWeightKg),
         orderedQty: 0,
@@ -215,23 +271,17 @@ function buildColumns(input: BuildMatrixInput): MatrixColumn[] {
         availableQty:
           item.productTypeId !== null ? (input.availability[item.productTypeId] ?? 0) : null,
       }
-      byKey.set(key, col)
+      colByKey.set(cKey, col)
+      group.columnKeys.push(cKey)
     }
     col.orderedQty += item.orderedQty
     col.allocatedQty += item.allocatedQty
   }
 
-  return [...byKey.values()].sort(compareColumns)
-}
-
-/** 규격 무게 내림차순 → 무게 미상은 뒤로 → 이름순 */
-function compareColumns(a: MatrixColumn, b: MatrixColumn): number {
-  const aw = a.unitWeightKg
-  const bw = b.unitWeightKg
-  if (aw !== null && bw !== null && aw !== bw) return bw - aw
-  if (aw === null && bw !== null) return 1
-  if (aw !== null && bw === null) return -1
-  return a.title.localeCompare(b.title, 'ko') || a.subtitle.localeCompare(b.subtitle, 'ko')
+  // 열은 그룹 차례대로 늘어놓는다 — 그래야 머리글 colspan과 아래 칸이 맞는다
+  const groups = [...groupByKey.values()]
+  const columns = groups.flatMap((g) => g.columnKeys.map((k) => colByKey.get(k)!))
+  return { groups, columns }
 }
 
 /**
@@ -300,7 +350,7 @@ function buildRow(
  * 화면에서 정렬만 바꿀 때 피벗을 다시 돌 이유가 없다.
  */
 export function buildMatrix(input: BuildMatrixInput): Matrix {
-  const columns = buildColumns(input)
+  const { groups, columns } = buildColumns(input)
   const colByKey = new Map(columns.map((c) => [c.key, c]))
 
   const itemsByOrder = new Map<number, MatrixItemInput[]>()
@@ -313,6 +363,7 @@ export function buildMatrix(input: BuildMatrixInput): Matrix {
   const rows = input.orders.map((o) => buildRow(o, itemsByOrder.get(o.id) ?? [], colByKey))
 
   return {
+    groups,
     columns,
     rows,
     totals: {

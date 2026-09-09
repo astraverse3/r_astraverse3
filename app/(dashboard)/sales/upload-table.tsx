@@ -2,11 +2,13 @@
 
 // 발주서 묶음 목록 — 묶음 = 시트 1장(#30). 채널 필터칩 + 테이블.
 // 시안 `docs/handoff/발주서판매처리/엑셀업로드-2단계-데스크탑.html` 묶음 목록 프레임.
-// 행 클릭은 매트릭스(D2) 연결 전까지 비활성 — 커서·호버 배경도 두지 않는다.
+// 시트명 클릭 → 매트릭스(D2b). 🔴 행 전체를 링크로 감싸지 않는다 — 같은 행의
+// ⋮ 메뉴와 상차 편집 셀이 클릭을 삼킨다.
 
 import { useState } from 'react'
 import { Package, MessageSquareText, ChevronUp } from 'lucide-react'
 import { CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
+import Link from 'next/link'
 import { UploadRowMenu } from './upload-row-menu'
 import { LoadingCell } from './loading-cell'
 import type { UploadSummaryRow } from '@/app/actions/purchase-order'
@@ -78,8 +80,15 @@ export function UploadTable({
                                     {CHANNEL_META[r.channel].label}
                                 </span>
                             </div>
+                            {/* 매트릭스 진입점 — 🔴 행 전체를 링크로 감싸지 않는다.
+                                같은 행에 ⋮ 메뉴와 상차 편집 셀이 있어 클릭을 삼킨다. */}
                             <div className="min-w-0">
-                                <p className="text-[13.5px] font-bold text-slate-900 truncate">{r.sheetName}</p>
+                                <Link
+                                    href={`/sales/purchase/${r.id}`}
+                                    className="block text-[13.5px] font-bold text-slate-900 truncate hover:text-primary hover:underline"
+                                >
+                                    {r.sheetName}
+                                </Link>
                                 <p className="text-[10.5px] text-slate-400 truncate">{r.fileName}</p>
                             </div>
                             <div className="hidden sm:block min-w-0">

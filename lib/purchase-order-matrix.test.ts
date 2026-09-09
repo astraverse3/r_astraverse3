@@ -7,6 +7,7 @@ import {
   columnKeyOf,
   rowLabelOf,
   unitWeightOf,
+  groupTitleOf,
   type MatrixItemInput,
   type MatrixOrderInput,
   type MatrixSkuInput,
@@ -34,12 +35,18 @@ const item = (o: Partial<MatrixItemInput> & { id: number; orderId: number }): Ma
   ...o,
 })
 
-const sku = (id: number, packageType: string, varietyName = '가바백미'): MatrixSkuInput => ({
+const sku = (
+  id: number,
+  packageType: string,
+  o: Partial<MatrixSkuInput> = {},
+): MatrixSkuInput => ({
   id,
-  varietyName,
+  varietyName: '가바백미',
   millingType: '백미',
+  varietyType: 'URUCHI',
   packageType,
   packagingName: '자연주의',
+  ...o,
 })
 
 const input = (o: Partial<BuildMatrixInput>): BuildMatrixInput => ({
@@ -148,7 +155,8 @@ test('buildMatrix: 행=수령처 · 열=규격으로 펼친다', () => {
   assert.equal(m.rows[1].cells['pt:2'], undefined)
 })
 
-test('buildMatrix: 열은 규격 무게 내림차순 (20kg가 10kg보다 왼쪽)', () => {
+test('buildMatrix: 🔴 열은 등장 순서를 지킨다 (발주서 원본 그대로)', () => {
+  // 무게순으로 재배열하면 사람이 엑셀 원본과 대조할 수 없다
   const m = buildMatrix(
     input({
       orders: [order(1, '농협')],
@@ -161,24 +169,7 @@ test('buildMatrix: 열은 규격 무게 내림차순 (20kg가 10kg보다 왼쪽)
   )
   assert.deepEqual(
     m.columns.map((c) => c.packageType),
-    ['20kg', '10kg'],
-  )
-})
-
-test('buildMatrix: 무게를 못 읽는 열은 뒤로 간다', () => {
-  const m = buildMatrix(
-    input({
-      orders: [order(1, '농협')],
-      items: [
-        item({ id: 11, orderId: 1, productTypeId: 1, packageType: '톤백' }),
-        item({ id: 12, orderId: 1, productTypeId: 2, packageType: '10kg' }),
-      ],
-      skus: [sku(1, '톤백'), sku(2, '10kg')],
-    }),
-  )
-  assert.deepEqual(
-    m.columns.map((c) => c.packageType),
-    ['10kg', '톤백'],
+    ['10kg', '20kg'],
   )
 })
 
@@ -310,5 +301,107 @@ test('sortMatrixRows: 원본 배열을 건드리지 않는다', () => {
   assert.deepEqual(
     rows.map((r) => r.label),
     before,
+  )
+})
+
+// ------------------------------------------------------
+// 열 그룹 — 머리글 2단 (품목 → 규격)
+// ------------------------------------------------------
+test('groupTitleOf: 백미는 적지 않는다', () => {
+  assert.equal(groupTitleOf('천지향1세', '백미', 'URUCHI'), '천지향1세')
+})
+
+test('groupTitleOf: 백미가 아니면 붙여 적는다', () => {
+  assert.equal(groupTitleOf('서농22호', '현미', 'URUCHI'), '서농22호 · 현미')
+})
+
+test('groupTitleOf: 찰벼는 표시가 바뀐다 (찹쌀/찰현미)', () => {
+  // 저장값은 '백미'지만 찰벼라 '찹쌀'로 보여야 하고, 백미가 아니므로 생략되지 않는다
+  assert.equal(groupTitleOf('백옥찰', '백미', 'GLUTINOUS'), '백옥찰 · 찹쌀')
+  assert.equal(groupTitleOf('백옥찰', '현미', 'GLUTINOUS'), '백옥찰 · 찰현미')
+})
+
+test('buildMatrix: 같은 품목의 규격들이 한 그룹으로 묶인다', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1, packageType: '10kg' }),
+        item({ id: 12, orderId: 1, productTypeId: 2, packageType: '5kg' }),
+      ],
+      skus: [sku(1, '10kg'), sku(2, '5kg')],
+    }),
+  )
+  assert.equal(m.groups.length, 1)
+  assert.equal(m.groups[0].title, '가바백미')
+  assert.equal(m.groups[0].packagingName, '자연주의')
+  assert.equal(m.groups[0].columnKeys.length, 2)
+})
+
+test('buildMatrix: 포장지가 다르면 다른 그룹이다', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1 }),
+        item({ id: 12, orderId: 1, productTypeId: 2 }),
+      ],
+      skus: [sku(1, '10kg'), sku(2, '10kg', { packagingName: '땅끝에서보냅니다' })],
+    }),
+  )
+  assert.equal(m.groups.length, 2)
+})
+
+test('buildMatrix: 그룹도 등장 순서를 지킨다', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 2 }),
+        item({ id: 12, orderId: 1, productTypeId: 1 }),
+      ],
+      skus: [sku(1, '10kg', { varietyName: '가나다' }), sku(2, '10kg', { varietyName: '하나로' })],
+    }),
+  )
+  // 가나다순이 아니라 나온 차례대로
+  assert.deepEqual(
+    m.groups.map((g) => g.title),
+    ['하나로', '가나다'],
+  )
+})
+
+test('buildMatrix: 매칭실패 그룹은 표시가 다르다', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [item({ id: 11, orderId: 1, productTypeId: null, rawItemName: '유기농 차조' })],
+      skus: [],
+    }),
+  )
+  assert.equal(m.groups[0].title, '유기농 차조')
+  assert.equal(m.groups[0].packagingName, '매칭실패')
+  assert.equal(m.groups[0].unmatched, true)
+})
+
+test('buildMatrix: 열 순서가 그룹 순서와 맞물린다 (colspan 정합)', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1, packageType: '10kg' }),
+        item({ id: 12, orderId: 1, productTypeId: 3, packageType: '10kg' }),
+        item({ id: 13, orderId: 1, productTypeId: 2, packageType: '5kg' }),
+      ],
+      skus: [
+        sku(1, '10kg'),
+        sku(2, '5kg'),
+        sku(3, '10kg', { varietyName: '다른품종' }),
+      ],
+    }),
+  )
+  // 그룹의 columnKeys를 순서대로 이으면 columns와 정확히 같아야 한다
+  assert.deepEqual(
+    m.groups.flatMap((g) => g.columnKeys),
+    m.columns.map((c) => c.key),
   )
 })
