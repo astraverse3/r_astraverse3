@@ -20,12 +20,27 @@ import {
 } from '@/components/ui/dialog'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { triggerDataUpdate } from '@/components/last-updated'
-import { cancelMovement, listMovements, type MovementRow } from '@/app/actions/package-movement'
+import {
+    cancelMovement,
+    listMovements,
+    type MovementRow,
+    type RepackResultSummary,
+} from '@/app/actions/package-movement'
 import type { PackageRow } from '@/app/actions/packages'
 import { REPACK_CANCEL_BLOCKED } from '@/lib/package-guard'
 import { MOVEMENT_TYPE_LABEL } from '@/lib/movement-label'
 
 const ORDER_CANCEL_BLOCKED = '발주서 차감은 발주서 상세에서 취소해주세요.'
+
+/** 결과를 몇 종까지 펼칠지 — 넘으면 「외 N종」으로 접어 행 높이를 지킨다. */
+const REPACK_RESULT_MAX = 3
+
+/** `10kg × 4 · 잔량 3kg × 1` — 규격 × 개수 (`describeDeduction`과 같은 어법). */
+function formatRepackResults(results: RepackResultSummary[]): string {
+    const shown = results.slice(0, REPACK_RESULT_MAX).map(r => `${r.label} × ${r.count}`).join(' · ')
+    const rest = results.length - REPACK_RESULT_MAX
+    return rest > 0 ? `${shown} 외 ${rest}종` : shown
+}
 
 interface Props {
     open: boolean
@@ -43,6 +58,14 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
     const [loading, setLoading] = useState(false)
     const [loadError, setLoadError] = useState<string | null>(null)
     const [cancellingId, setCancellingId] = useState<number | null>(null)
+    // 「왜 되돌리기가 없나」의 답을 **누른 사람에게만** 보여준다. 재포장 행마다 같은 두 줄을
+    // 늘 뿌리면 한 번 아는 순간부터 자리만 차지한다(실기기 제보 ③-6).
+    const [blockedShown, setBlockedShown] = useState<Set<number>>(new Set())
+
+    // 다이얼로그를 닫으면 펼침 상태도 접는다 — 다음에 열 때 남아 있으면 놀란다.
+    useEffect(() => {
+        if (!open) setBlockedShown(new Set())
+    }, [open])
 
     const packageId = open ? row?.id : undefined
     useEffect(() => {
@@ -231,25 +254,37 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
                                                     {mv.count.toLocaleString()}개
                                                 </b>
                                                 {hasMeta && (
-                                                    <span className="hidden min-w-0 flex-1 truncate text-[11.5px] text-slate-500 sm:block">
+                                                    <span
+                                                        title={[mv.customer, mv.note].filter(Boolean).join(' · ') || undefined}
+                                                        className="hidden min-w-0 flex-1 truncate text-[11.5px] text-slate-500 sm:block"
+                                                    >
                                                         {meta}
                                                     </span>
                                                 )}
                                             </div>
+                                            {/* ③-2 모바일은 **자르지 않는다.** 잘린 뒷부분이 `title`에만 있었는데
+                                                title은 마우스 호버용이라 폰에선 열 수가 없다 — 즉 볼 방법이 없었다.
+                                                ①(차감)에서 로트를 자르지 않기로 한 것과 같은 판단이다.
+                                                데스크탑은 컬럼 정렬이 우선이라 한 줄 truncate + title 유지. */}
                                             {hasMeta && (
-                                                <div className="mt-1 truncate text-[11.5px] text-slate-500 sm:hidden">
+                                                <div className="mt-1 text-[11.5px] leading-relaxed text-slate-500 sm:hidden">
                                                     {meta}
                                                 </div>
                                             )}
                                         </div>
                                         {/* 되돌리기와 자물쇠가 같은 자리를 쓰므로 행 높이가 일정하다.
                                             🔴 판정은 `cancellable`만 본다 — `fromRepack`은 문구 선택용. */}
+                                        {/* ③-1 모바일은 아이콘만(90px → 32px) — 막힌 행의 자물쇠와 폭이 같아져
+                                            행 끝이 가지런해진다. 누르면 확인 다이얼로그가 뜨므로 오탭 위험은 낮다.
+                                            데스크탑은 라벨을 유지한다(발견성). */}
                                         {mv.cancellable && canCancel ? (
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
-                                                className="h-8 shrink-0 gap-1.5 bg-white"
+                                                aria-label="되돌리기"
+                                                title="되돌리기"
+                                                className="h-8 w-8 shrink-0 gap-1.5 bg-white p-0 sm:w-auto sm:px-3"
                                                 disabled={cancellingId !== null}
                                                 onClick={() => void undo(mv)}
                                             >
@@ -258,20 +293,48 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
                                                 ) : (
                                                     <Undo2 className="h-3.5 w-3.5" />
                                                 )}
-                                                되돌리기
+                                                <span className="hidden sm:inline">되돌리기</span>
                                             </Button>
                                         ) : !mv.cancellable ? (
-                                            <span
-                                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400"
+                                            // ③-6 자물쇠는 이제 **버튼**이다 — 눌러야 이유가 나온다.
+                                            <button
+                                                type="button"
+                                                aria-expanded={blockedShown.has(mv.id)}
+                                                aria-label="되돌릴 수 없는 이유 보기"
                                                 title={mv.fromRepack ? REPACK_CANCEL_BLOCKED : ORDER_CANCEL_BLOCKED}
+                                                onClick={() =>
+                                                    setBlockedShown(prev => {
+                                                        const next = new Set(prev)
+                                                        if (!next.delete(mv.id)) next.add(mv.id)
+                                                        return next
+                                                    })
+                                                }
+                                                className={cn(
+                                                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors',
+                                                    blockedShown.has(mv.id)
+                                                        ? 'bg-slate-200 text-slate-600'
+                                                        : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600',
+                                                )}
                                             >
                                                 <Lock className="h-3.5 w-3.5" />
-                                            </span>
+                                            </button>
                                         ) : null}
                                     </div>
-                                    {/* 막힌 이유는 부수 정보다 — 예전의 박스(border+bg)는 행 본체보다 무거웠다.
+                                    {/* ③-6 늘 붙어 있던 「되돌릴 수 없다」 안내를 이 자리에서 **재포장 결과**로 바꿨다.
+                                        나간 것만 있고 「그래서 뭐가 됐나」가 없어 재포장 화면을 따로 열어야 했다.
                                         데스크탑 들여쓰기 220px = 58+16+52+16+62+16(비고 컬럼 시작점). */}
-                                    {!mv.cancellable && (
+                                    {mv.repackResults && mv.repackResults.length > 0 && (
+                                        <div className="mt-1 text-[11.5px] leading-relaxed text-slate-600 sm:pl-[220px]">
+                                            {/* 🔴 병합(소스 2행 이상)이면 이건 「이 행이 만든 것」이 아니라
+                                                그 재포장 **작업 전체**의 결과다. 문구로 갈라 오해를 막는다. */}
+                                            <span className="text-slate-400">
+                                                {mv.repackMerged ? '합쳐서 → ' : '→ '}
+                                            </span>
+                                            {formatRepackResults(mv.repackResults)}
+                                        </div>
+                                    )}
+                                    {/* 막힌 이유는 **자물쇠를 누른 사람에게만.** 한 번 알면 다시 필요 없는 문구다. */}
+                                    {!mv.cancellable && blockedShown.has(mv.id) && (
                                         <div className="mt-1 text-[11px] leading-relaxed text-slate-500 sm:pl-[220px]">
                                             {mv.fromRepack ? REPACK_CANCEL_BLOCKED : ORDER_CANCEL_BLOCKED}
                                         </div>

@@ -348,7 +348,21 @@ export type MovementRow = {
   fromRepack: boolean // 재포장 경로 여부(repackId != null)
   /** 되돌릴 수 있는 건지 — 화면은 이 값만 보면 된다. 서버도 같은 규칙으로 거부한다. */
   cancellable: boolean
+  /**
+   * 재포장으로 **무엇이 나왔는지**(type=REPACK만, 그 외는 undefined).
+   * 「나간 건 알겠는데 그래서 뭐가 됐나」가 화면 어디에도 없어 재포장 화면을 따로 열어야 했다.
+   * 표기는 `describeDeduction`(lib/package-guard.ts)의 어법과 같은 `규격 × 개수`.
+   */
+  repackResults?: RepackResultSummary[]
+  /**
+   * 🔴 소스가 둘 이상인 **병합 재포장**이면 `repackResults`는 「이 행이 만든 것」이 아니라
+   * **그 재포장 작업 전체의 결과**다. 화면은 이 값으로 문구를 갈라 오해를 막는다.
+   */
+  repackMerged?: boolean
 }
+
+/** 재포장 결과 한 종 — `20kg × 4`. */
+export type RepackResultSummary = { label: string; count: number }
 
 export async function listMovements(
   packageId: number,
@@ -358,6 +372,33 @@ export async function listMovements(
       where: { packageId },
       orderBy: { occurredAt: 'desc' },
     })
+
+    // 재포장 결과를 **한 번에** 읽는다 — 행마다 조회하면 왕복이 행 수만큼 늘어난다
+    // (Neon 왕복 250~300ms. 루프 안 왕복은 20회가 한계였다 — 발주서 적재 사고 참조).
+    // 재포장 행이 없으면 두 번째 쿼리 자체를 건너뛰므로 종전과 왕복 수가 같다.
+    const repackIds = [...new Set(rows.map((r) => r.repackId).filter((id): id is number => id !== null))]
+    const repackById = new Map<number, { results: RepackResultSummary[]; merged: boolean }>()
+    if (repackIds.length > 0) {
+      const repacks = await prisma.repack.findMany({
+        where: { id: { in: repackIds } },
+        select: {
+          id: true,
+          results: { select: { packageType: true, count: true } },
+          _count: { select: { sources: true } },
+        },
+      })
+      for (const rp of repacks) {
+        // 같은 규격이 여러 줄로 나뉘어 있으면 합쳐 센다 — 사람은 「10kg 4개」로 읽지
+        // 「10kg 3개 + 10kg 1개」로 읽지 않는다. 입력 순서를 표시 순서로 삼는다.
+        const byType = new Map<string, number>()
+        for (const r of rp.results) byType.set(r.packageType, (byType.get(r.packageType) ?? 0) + r.count)
+        repackById.set(rp.id, {
+          results: [...byType].map(([label, count]) => ({ label, count })),
+          merged: rp._count.sources > 1,
+        })
+      }
+    }
+
     const data: MovementRow[] = rows.map((r) => ({
       id: r.id,
       count: r.count,
@@ -369,6 +410,12 @@ export async function listMovements(
       fromOrder: r.orderItemId !== null,
       fromRepack: r.repackId !== null,
       cancellable: r.orderItemId === null && r.repackId === null,
+      ...(r.repackId !== null && repackById.has(r.repackId)
+        ? {
+            repackResults: repackById.get(r.repackId)!.results,
+            repackMerged: repackById.get(r.repackId)!.merged,
+          }
+        : {}),
     }))
     return { success: true, data }
   } catch (error) {
