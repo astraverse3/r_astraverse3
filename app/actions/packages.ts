@@ -237,13 +237,19 @@ export async function getPackages(
             if (list.length === 1) {
                 items.push({ type: 'single', ...list[0] })
             } else {
-                // FIFO: 같은 규격끼리 묶이도록 weightPerUnit asc, 같은 규격 내에선 오래된 순(date asc)
-                // 사용자 sort 옵션은 상위 items 정렬에만 적용. 그룹 내부는 항상 FIFO 유지.
-                const sortedRows = [...list].sort(
-                    (a, b) =>
-                        a.weightPerUnit - b.weightPerUnit ||
-                        a.date.localeCompare(b.date),
-                )
+                // 그룹 내부도 사용자 sort 옵션을 따른다. 예전엔 규격(weightPerUnit) 우선
+                // 고정이라 오래된순을 골라도 카드 안에서 날짜가 뒤죽박죽 보였다.
+                // 날짜가 1순위, 같은 날짜 안에서만 규격 asc로 묶는다.
+                const sortedRows = [...list].sort((a, b) => {
+                    if (sort === 'weight_desc') {
+                        return b.sub - a.sub || a.date.localeCompare(b.date)
+                    }
+                    const d =
+                        sort === 'oldest'
+                            ? a.date.localeCompare(b.date)
+                            : b.date.localeCompare(a.date)
+                    return d || a.weightPerUnit - b.weightPerUnit
+                })
                 // 차감 완료 행은 합계에서 뺀다 — 「차감된 재고 보기」를 켰다고 재고 합계가 튀면 안 된다.
                 // 끈 상태에선 그런 행이 애초에 없어 종전과 같은 값이다.
                 const total = sortedRows.reduce((s, r) => (r.available > 0 ? s + r.sub : s), 0)
@@ -259,7 +265,7 @@ export async function getPackages(
 
         // -- 그룹/낱개 정렬 (sort 옵션 반영) --
         // 그룹의 대표 날짜는 sort 방향에 따라 max(latest) 또는 min(oldest)으로 산출.
-        // 그룹 rows 자체 순서는 FIFO로 고정이라 rows[0]이 항상 최신은 아님.
+        // weight_desc일 땐 rows가 날짜순이 아니라 rows[0]에 기댈 수 없으므로 항상 전체를 훑는다.
         const repDate = (it: PackageItem): string => {
             if (it.type === 'single') return it.date
             if (sort === 'oldest') {
