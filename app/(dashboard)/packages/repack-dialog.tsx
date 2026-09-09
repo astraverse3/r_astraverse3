@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ChevronDown, Loader2, PackageOpen } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -68,14 +69,23 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
     const [packagings, setPackagings] = useState<Packaging[]>([])
     /** packageId → 이번에 쓸 개수(입력 중이라 문자열) */
     const [takeCounts, setTakeCounts] = useState<Record<number, string>>({})
-    /** 쓸 재고 펼침 — 기본은 전량 소진이라 접어둔다 (결정 #44) */
-    const [sourcesOpen, setSourcesOpen] = useState(false)
+    /**
+     * 쓸 재고 펼침 — **기본 펼침**.
+     *
+     * 결정 #44는 「개수를 줄이는 건 예외 동선」이라 접어뒀지만, 실기기에서 뒤집혔다
+     * (2026-09-08). 접혀 있으면 쓸 개수를 줄일 수 있다는 사실 자체가 안 보이고,
+     * 고정 규격 소스에서 잔여가 났을 때 올바른 길(개수 줄이기)이 화면 밖에 있다
+     * — 백로그 §37이 재포장에서 지적한 것과 같은 문제다.
+     */
+    const [sourcesOpen, setSourcesOpen] = useState(true)
     const [results, setResults] = useState<ResultDraft[]>([])
     const [note, setNote] = useState('')
     /** 포장지 추천을 기다리는 중인 줄 key — 아직 미지정이어도 꾸짖지 않는다 (결정 #48·#52) */
     const [pkgPending, setPkgPending] = useState<Set<string>>(new Set())
     /** 손실 경고를 확인했는지 — 서버가 needsLossConfirm을 돌려주면 켜진다 */
     const [lossConfirmed, setLossConfirmed] = useState(false)
+    /** 「남기기」로 자동 추가한 줄 — 사람이 손대면 지워 강조를 끈다 (백로그 §37) */
+    const [autoKey, setAutoKey] = useState<string | null>(null)
     const [lossPrompt, setLossPrompt] = useState<{ lossKg: number; sourceKg: number } | null>(null)
 
     /** 줄 key는 카운터로 만든다 — Date.now()는 같은 밀리초에 두 번 누르면 겹친다 */
@@ -97,7 +107,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
         setLossConfirmed(false)
         setLossPrompt(null)
         setNote('')
-        setSourcesOpen(false)
+        setSourcesOpen(true)
         // 줄은 규격 버튼으로 만든다 — 빈 줄로 시작하지 않는다 (결정 #45)
         setResults([])
         setPkgPending(new Set())
@@ -183,6 +193,70 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
     const remainKg = round3(sourceKg - resultKg)
 
     const allFull = sources.every(s => Number(takeCounts[s.packageId]) === s.available)
+
+    /**
+     * 남는 몫을 **결과 줄로** 만든다 (백로그 §37).
+     *
+     * 재포장은 1→N이므로 「일부만 쓰기」는 남길 몫도 결과물로 만드는 것이다.
+     * 예전엔 이 길을 화면이 알려주지 않아, 820kg 톤백에서 40kg만 만들면
+     * 남은 780kg을 **손실로 넘기는 버튼만** 떠 있었다. 재포장 차감은 되돌릴 수
+     * 없으므로(REPACK_CANCEL_BLOCKED) 그 오조작은 복구가 안 된다.
+     *
+     * 🔴 규격을 무턱대고 소스에서 물려받으면 안 된다 — 소스가 20kg이면
+     * 「규격 20kg인데 중량 630kg인 자루 1개」라는 모순된 줄이 생긴다.
+     * 남길 몫의 규격은 **소스가 개수로 쪼개지느냐**로 갈린다.
+     *
+     *  · 톤백·잔량(weight=null): 자루 하나의 중량이 건마다 다르다. 덜어내고 남은
+     *    것도 같은 규격이므로 **소스 규격 그대로** 중량만 잔여로 적는다.
+     *  · 고정 규격(20kg 등)이면서 잔여가 자루 하나보다 작다: 진짜 자투리다 → **잔량**.
+     *  · 고정 규격인데 잔여가 자루 하나 이상이다: 애초에 **쓸 개수를 줄이는 게 정답**이다
+     *    (위 「고치기」). 뭉쳐서 잔량으로 만들면 실물 자루 수와 장부가 어긋난다.
+     *    이때는 제안 자체를 하지 않는다.
+     */
+    const srcSpec = REPACK_SPECS.find(sp => sp.label === sources[0]?.packageType)
+    const srcUnitKg = sources[0]?.weightPerUnit ?? 0
+    const remainderSpec =
+        srcSpec && srcSpec.weight === null
+            ? srcSpec
+            : REPACK_SPECS.find(sp => sp.label === PACKAGE_TYPE_REMAINDER)!
+    /** 남길 몫을 줄로 만드는 게 옳은 상황인가 — 아니면 개수를 줄여야 한다 */
+    const canOfferRemainder =
+        remainKg > 0 &&
+        sources.length > 0 &&
+        (remainderSpec.weight === null && srcSpec?.weight === null
+            ? true
+            : srcUnitKg > 0 && remainKg < srcUnitKg)
+
+    /**
+     * 개수로는 못 줄이는 상태 — 소스가 전부 1개뿐이고 톤백·잔량처럼 개당 중량이 큰 규격.
+     * 톤백은 늘 여기 걸린다(available===1이면 「고치기」에 입력칸조차 없다).
+     * 이때 「일부만 쓰기」의 유일한 길은 **남길 몫을 결과 줄로 만드는 것**이다.
+     */
+    const countLocked =
+        sources.length > 0 &&
+        sources.every(
+            s =>
+                s.available === 1 &&
+                (s.packageType === PACKAGE_TYPE_TONBAG ||
+                    s.packageType === PACKAGE_TYPE_REMAINDER),
+        )
+
+    const addRemainderRow = () => {
+        const key = `r${nextKey.current++}`
+        // 로트는 잔여가 나온 소스를 그대로 승계한다. 소스가 1건이면 고를 것도 없다.
+        const lot = sources[0]?.packageId ?? lotOptions[0]?.packageId ?? 0
+        setResults(prev => [
+            ...prev,
+            {
+                ...makeResultDraft(key, remainderSpec, lot),
+                weightPerUnit: String(remainKg),
+                count: '1',
+            },
+        ])
+        setAutoKey(key)
+        // 손실 경고에서 눌렀으면 그 경고는 이미 답을 얻었다
+        setLossPrompt(null)
+    }
 
     /**
      * 규격 버튼 = 줄 추가 (결정 #45 · #50).
@@ -364,9 +438,11 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                     value: `${Math.abs(remainKg).toLocaleString()}kg`,
                 }
 
+    // 「손실로 기록돼요」라고 말하면서 색이 중립 회색이면 경고로 안 읽힌다.
+    // ok=emerald / warn=amber / bad=red 3단으로 맞춘다 (백로그 §37).
     const balanceCls = {
         ok: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-        warn: 'border-slate-200 bg-slate-50 text-slate-600',
+        warn: 'border-amber-300 bg-amber-50 text-amber-900',
         bad: 'border-red-200 bg-red-50 text-red-700',
     }[balance.tone]
 
@@ -417,6 +493,16 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                     <span className="ml-1.5 text-slate-400">
                                         · {allFull ? '전량 사용' : '일부 사용'}
                                     </span>
+                                    {/* 쓸 재고 영역은 기본으로 접혀 있다(결정 #44).
+                                        안내를 소스 행에만 두면 펼치지 않는 사람에겐 보이지 않는다. */}
+                                    {countLocked && (
+                                        <span className="ml-1.5 text-slate-500">
+                                            ·{' '}
+                                            <b className="font-semibold text-slate-600">
+                                                {sources[0].packageType} 1개는 개수로 못 줄여요
+                                            </b>
+                                        </span>
+                                    )}
                                 </span>
                                 <Button
                                     type="button"
@@ -452,8 +538,13 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             </div>
                                             {/* 가용이 1개면 고를 게 없다 — 입력을 없애고 값만 보여준다 */}
                                             {s.available === 1 ? (
-                                                <span className="shrink-0 text-[11px] font-semibold text-slate-500">
+                                                <span className="shrink-0 text-right text-[11px] font-semibold text-slate-500">
                                                     1개 전부
+                                                    {countLocked && (
+                                                        <span className="mt-0.5 block font-normal text-slate-400">
+                                                            아래에서 남길 몫을 줄로
+                                                        </span>
+                                                    )}
                                                 </span>
                                             ) : (
                                                 <div className="flex shrink-0 items-center gap-1">
@@ -482,8 +573,14 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                             )}
                         </div>
 
-                        {/* 본문 — 만들 규격 */}
-                        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 sm:px-5">
+                        {/* 본문 — 만들 규격.
+                            손실 경고가 열려 있으면 「지금은 결정할 차례」라 입력을 잠근다. */}
+                        <div
+                            className={cn(
+                                'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 sm:px-5',
+                                lossPrompt && 'pointer-events-none opacity-45',
+                            )}
+                        >
                             {/* 규격 버튼이 곧 줄 추가다 (결정 #45) */}
                             <div>
                                 <h3 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
@@ -521,11 +618,14 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             packagings={packagings}
                                             lotOptions={lotOptions}
                                             error={rowError?.index === i ? rowError : null}
-                                            onChange={next =>
+                                            highlight={autoKey === r.key}
+                                            onChange={next => {
+                                                // 사람이 손댄 줄은 더 이상 「자동 추가」가 아니다
+                                                if (autoKey === r.key) setAutoKey(null)
                                                 setResults(prev =>
                                                     prev.map(x => (x.key === r.key ? next : x)),
                                                 )
-                                            }
+                                            }}
                                             onRemove={() =>
                                                 setResults(prev =>
                                                     prev.filter(x => x.key !== r.key),
@@ -549,38 +649,89 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                 />
                             </label>
 
-                            {lossPrompt && (
-                                <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                                    <p className="flex items-start gap-2 text-[12.5px] text-amber-900">
-                                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                                        <span>
-                                            만들 양이 쓸 양보다{' '}
-                                            <b className="tabular-nums">
-                                                {lossPrompt.lossKg.toLocaleString()}kg
-                                            </b>{' '}
-                                            적어요. 이 차이는 손실로 기록돼요. 그대로 진행할까요?
+                        </div>
+
+                        {/* 푸터 — 계기판 + 액션. 규격을 넣는 내내 잔여 kg이 보여야 한다.
+                            🔴 손실 경고는 **푸터를 대체한다**. 본문 위에 얹으면 푸터의 「남기기」가
+                            아래에 그대로 남아 같은 버튼이 상하로 중복되고, 이미 눌러서 막힌
+                            「재포장하기」도 계속 활성으로 보인다. 그래서 경고가 열리면 기본 액션
+                            셋을 렌더하지 않고 같은 앰버 푸터에 계기판 + 문구 + 출구 2개를 넣는다. */}
+                        <div
+                            className={cn(
+                                'shrink-0 border-t px-4 py-3 sm:px-5',
+                                lossPrompt ? 'border-amber-300 bg-amber-50' : balanceCls,
+                            )}
+                        >
+                            {lossPrompt ? (
+                                <>
+                                    <div className="flex items-start justify-between gap-3">
+                                        <p className="flex items-start gap-1.5 text-[12px] leading-relaxed text-amber-900">
+                                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                                            <span>
+                                                {canOfferRemainder ? (
+                                                    <b>남는 몫도 줄로 만들어야</b>
+                                                ) : (
+                                                    <b>위 「고치기」에서 쓸 개수를 줄여야</b>
+                                                )}{' '}
+                                                손실이 안 생겨요.
+                                                <span className="mt-0.5 block text-[11.5px] tabular-nums text-amber-800">
+                                                    쓸 양 {sourceKg.toLocaleString()}kg − 만들 양{' '}
+                                                    {resultKg.toLocaleString()}kg
+                                                </span>
+                                            </span>
+                                        </p>
+                                        <span className="shrink-0 text-[22px] font-extrabold leading-none tabular-nums text-amber-900">
+                                            {lossPrompt.lossKg.toLocaleString()}kg
                                         </span>
-                                    </p>
-                                    <div className="flex justify-end">
+                                    </div>
+                                    {canOfferRemainder && (
                                         <Button
                                             type="button"
                                             size="sm"
-                                            className="h-8"
+                                            className="mt-2.5 h-11 w-full sm:h-9"
+                                            disabled={saving}
+                                            onClick={addRemainderRow}
+                                        >
+                                            남는 {lossPrompt.lossKg.toLocaleString()}kg{' '}
+                                            {remainderSpec.label}으로 남기기
+                                        </Button>
+                                    )}
+                                    {/* 「취소」는 다이얼로그를 닫지 않는다 — 편집 상태로 되돌린다 */}
+                                    <div className="mt-2 flex items-center gap-2 border-t border-amber-300 pt-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 flex-none bg-white"
+                                            disabled={saving}
+                                            onClick={() => setLossPrompt(null)}
+                                        >
+                                            취소
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 flex-1 border-amber-400 bg-white text-amber-900 hover:bg-amber-50 hover:text-amber-900"
                                             disabled={saving}
                                             onClick={() => {
                                                 setLossConfirmed(true)
                                                 void submit(true)
                                             }}
                                         >
-                                            손실 인정하고 진행
+                                            {saving && (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            )}
+                                            {lossPrompt.lossKg.toLocaleString()}kg을 손실로 기록하고
+                                            진행
                                         </Button>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 푸터 — 계기판 + 액션. 규격을 넣는 내내 잔여 kg이 보여야 한다 */}
-                        <div className={`shrink-0 border-t px-4 py-3 sm:px-5 ${balanceCls}`}>
+                                    <p className="mt-1.5 text-[11px] leading-relaxed text-amber-800">
+                                        도정 감모처럼 <b>실제로 없어진 경우에만</b> 고르세요. 재포장
+                                        차감은 <b>되돌릴 수 없어요.</b>
+                                    </p>
+                                </>
+                            ) : (
                             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-baseline justify-between gap-4 sm:justify-start">
                                     <div>
@@ -594,7 +745,23 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                         {balance.value}
                                     </span>
                                 </div>
-                                <div className="flex shrink-0 gap-2">
+                                <div className="flex shrink-0 flex-wrap gap-2">
+                                    {/* 잔여가 있는 동안 **제출 전에** 올바른 길을 상시 제안한다.
+                                        손실 경고는 서버 왕복(needsLossConfirm) 뒤에야 뜨는데,
+                                        잔여 kg은 입력하는 내내 이 계기판에 이미 떠 있다. */}
+                                    {canOfferRemainder && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-11 w-full border-amber-400 bg-white font-bold text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:w-auto"
+                                            disabled={saving}
+                                            onClick={addRemainderRow}
+                                        >
+                                            남는 {remainKg.toLocaleString()}kg{' '}
+                                            {remainderSpec.label}으로 남기기
+                                        </Button>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -617,7 +784,8 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                     </Button>
                                 </div>
                             </div>
-                            {blockingReason && !quiet && (
+                            )}
+                            {blockingReason && !quiet && !lossPrompt && (
                                 <p className="mt-2 text-[11.5px] font-semibold text-red-600">
                                     {blockingReason}
                                 </p>

@@ -47,6 +47,11 @@ interface Props {
     onRemove: () => void
     /** 이 줄에서 막힌 이유 — 다이얼로그의 blockingReason과 같은 판정이다 */
     error?: { field: ResultFieldKey; message: string } | null
+    /**
+     * 「남는 N kg 남기기」로 **자동 추가된 줄**임을 한 번 알린다 (백로그 §37).
+     * 사람이 그 줄을 건드리면 다이얼로그가 꺼주므로 여기서는 그리기만 한다.
+     */
+    highlight?: boolean
 }
 
 /**
@@ -62,6 +67,7 @@ export function RepackResultRow({
     onChange,
     onRemove,
     error,
+    highlight = false,
 }: Props) {
     const isRemainder = draft.packageType === PACKAGE_TYPE_REMAINDER
     const isTonbag = draft.packageType === PACKAGE_TYPE_TONBAG
@@ -100,7 +106,11 @@ export function RepackResultRow({
     return (
         <div
             className={`flex flex-col gap-1.5 rounded-lg border px-2 py-1.5 ${
-                error ? 'border-red-200 bg-red-50/40' : 'border-slate-100 bg-white'
+                error
+                    ? 'border-red-200 bg-red-50/40'
+                    : highlight
+                      ? 'border-amber-200 bg-amber-50/60'
+                      : 'border-slate-100 bg-white'
             }`}
         >
             {/* 모바일 5열(로트 제외) / 데스크탑 6열.
