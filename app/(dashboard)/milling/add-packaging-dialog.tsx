@@ -61,6 +61,9 @@ interface Props {
 }
 
 type LotGroup = {
+    /** 그룹 식별자 — 관행은 `관행-농가번호`라 그룹마다 유일하다.
+     *  표시용 `lotNo`는 관행이면 전부 `관행`이라 겹친다. 식별자로 쓰지 말 것. */
+    groupKey: string
     lotNo: string
     representativeStockId: number
     varietyId: number
@@ -90,6 +93,7 @@ function computeLotGroups(stocks: PackagingStock[], millingType: string): LotGro
         const displayLotNo = isConventional ? '관행' : groupKey
         if (!map.has(groupKey)) {
             map.set(groupKey, {
+                groupKey,
                 lotNo: displayLotNo,
                 representativeStockId: stock.id,
                 varietyId: stock.variety?.id ?? stock.varietyId ?? 0,
@@ -441,12 +445,12 @@ export function AddPackagingDialog({
     }
 
     const handleCustomAdd = (group: LotGroup) => {
-        const raw = customWeights[group.lotNo]
+        const raw = customWeights[group.groupKey]
         const weight = parseFloat(raw)
         if (weight > 0) {
             addToGroup(group, { label: `${weight}kg`, weight })
-            setCustomWeights(prev => ({ ...prev, [group.lotNo]: '' }))
-            setCustomInputs(prev => ({ ...prev, [group.lotNo]: false }))
+            setCustomWeights(prev => ({ ...prev, [group.groupKey]: '' }))
+            setCustomInputs(prev => ({ ...prev, [group.groupKey]: false }))
         } else {
             toast.warning('올바른 무게를 입력해주세요.')
         }
@@ -508,7 +512,7 @@ export function AddPackagingDialog({
     // 단일 그룹이면 stocks가 없어도 빈 그룹 하나로 처리
     const displayGroups: LotGroup[] = lotGroups.length > 0
         ? lotGroups
-        : [{ lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
+        : [{ groupKey: 'single', lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -558,7 +562,7 @@ export function AddPackagingDialog({
                         const expectedKg = Math.round(group.totalInputKg * yieldRate)
 
                         return (
-                            <div key={group.lotNo || 'single'} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
+                            <div key={group.groupKey} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
                                 {/* 그룹 헤더 — 모바일: LOT은 1줄 인라인, 입력→예상은 2번째 줄 우측 정렬 / PC: 모두 1줄 */}
                                 {(isMultiGroup || group.farmerName) && (
                                     <div className="bg-stone-50 border-b border-stone-100 px-3 py-2">
@@ -613,20 +617,20 @@ export function AddPackagingDialog({
                                             ))}
                                             <Button variant="outline"
                                                 className="h-7 w-full px-0 text-[11px] border-dashed border-stone-300 hover:bg-stone-100 text-stone-500"
-                                                onClick={() => setCustomInputs(prev => ({ ...prev, [group.lotNo]: true }))}>
+                                                onClick={() => setCustomInputs(prev => ({ ...prev, [group.groupKey]: true }))}>
                                                 기타
                                             </Button>
                                         </div>
                                         {/* 직접입력 확장 영역 */}
-                                        {customInputs[group.lotNo] && (
+                                        {customInputs[group.groupKey] && (
                                             <div className="flex items-center gap-2 pt-1">
                                                 <Input
                                                     type="number"
-                                                    value={customWeights[group.lotNo] ?? ''}
-                                                    onChange={(e) => setCustomWeights(prev => ({ ...prev, [group.lotNo]: e.target.value }))}
+                                                    value={customWeights[group.groupKey] ?? ''}
+                                                    onChange={(e) => setCustomWeights(prev => ({ ...prev, [group.groupKey]: e.target.value }))}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') handleCustomAdd(group)
-                                                        if (e.key === 'Escape') setCustomInputs(prev => ({ ...prev, [group.lotNo]: false }))
+                                                        if (e.key === 'Escape') setCustomInputs(prev => ({ ...prev, [group.groupKey]: false }))
                                                     }}
                                                     placeholder="무게 입력"
                                                     autoFocus
@@ -637,7 +641,7 @@ export function AddPackagingDialog({
                                                     추가
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-stone-400"
-                                                    onClick={() => setCustomInputs(prev => ({ ...prev, [group.lotNo]: false }))}>
+                                                    onClick={() => setCustomInputs(prev => ({ ...prev, [group.groupKey]: false }))}>
                                                     <X className="h-4 w-4" />
                                                 </Button>
                                             </div>
