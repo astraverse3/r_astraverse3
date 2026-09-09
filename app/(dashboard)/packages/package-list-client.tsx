@@ -264,8 +264,10 @@ export function PackageListClient({
             )}
 
             {/* 모바일: 하단 탭바 위 floating pill */}
+            {/* 탭바 상단 = nav 60px + mb-4 16px + safe-area. 여기에 여백 8px을 더한 5.25rem이
+                pill의 하한이다. 예전 bottom-16(64px)은 safe-area도 mb-4도 빼먹어 탭바를 파고들었다. */}
             {selectMode && selected.size > 0 && (
-                <div className="sm:hidden fixed inset-x-0 bottom-16 z-40 px-3">
+                <div className="sm:hidden fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 px-3">
                     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-lg">
                         <span className="text-[12.5px] text-slate-600">
                             <b className="text-slate-900">{selected.size}건</b> 선택 ·{' '}
