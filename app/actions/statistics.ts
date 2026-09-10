@@ -62,7 +62,6 @@ export type MillingStatisticsData = {
   summary: StatsSummary
   chartData: ChartDataPoint[]
   tableData: TableRow[]
-  targetYieldRate: number
   groupBy: GroupBy
 }
 
@@ -157,11 +156,6 @@ export async function getMillingStatistics(
 
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
-
-  const targetConfig = await prisma.systemConfig.findUnique({
-    where: { key: 'yield_rate_target' },
-  })
-  const targetYieldRate = targetConfig ? parseFloat(targetConfig.value) : 68
 
   const where: any = { isClosed: true }
 
@@ -284,7 +278,7 @@ export async function getMillingStatistics(
     }
   })
 
-  return { summary, chartData, tableData, targetYieldRate, groupBy }
+  return { summary, chartData, tableData, groupBy }
 }
 
 // ── 품종별 통계 집계 ────────────────────────────────────

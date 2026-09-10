@@ -15,6 +15,8 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { getYieldLevel, YIELD_BADGE_CLASS } from '@/lib/milling-yield'
+import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 interface MillingBatch {
     id: number
@@ -49,6 +51,7 @@ function getMillingTypeStyle(type: string) {
 }
 
 export function MobileMillingCard({ log, selected, onSelect }: Props) {
+    const yieldRates = useYieldRates()
     const [packagingOpen, setPackagingOpen] = useState(false)
     const [stockListOpen, setStockListOpen] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
@@ -158,7 +161,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                                 >
                                     {totalRiceKg.toLocaleString()}<span className="text-[9px] font-medium text-primary/60 ml-0.5 no-underline">kg</span>
                                 </button>
-                                <span className={`text-[10px] px-1 ml-1 py-0 rounded-full font-bold ${yieldRate >= 70 ? 'bg-primary/10 text-primary' : yieldRate >= 60 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
+                                <span className={`text-[10px] px-1 ml-1 py-0 rounded-full font-bold ${YIELD_BADGE_CLASS[getYieldLevel(yieldRate, log.millingType, yieldRates, log.stocks?.[0]?.variety?.type)]}`}>
                                     {Math.round(yieldRate)}%
                                 </span>
                             </>

@@ -5,14 +5,21 @@ import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
 import { HeaderUserProfile } from "@/components/header/header-user-profile"
 import { MillingCartProvider } from "./raw-stocks/milling-cart-context"
 import { LastUpdated } from "@/components/last-updated"
+import { YieldRatesProvider } from "./yield-rates-context"
+import { getYieldRates } from "@/app/actions/settings"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    // 도정구분별 수율 기준값 — 소비 화면(대시보드·도정목록·통계)이 모두 이 그룹 안이라
+    // 여기서 한 번만 읽어 내려준다. middleware가 전 경로를 막고 있어 세션은 보장된다.
+    const yieldRates = await getYieldRates();
+
     return (
         <>
+            <YieldRatesProvider rates={yieldRates}>
             <MillingCartProvider>
                 {/* Mobile Header (Fixed Top) */}
                 <MobileHeader />
@@ -48,6 +55,7 @@ export default function DashboardLayout({
                 {/* Mobile Bottom Navigation */}
                 <MobileNav />
             </MillingCartProvider>
+            </YieldRatesProvider>
         </>
     );
 }

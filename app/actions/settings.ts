@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { DEFAULT_YIELD_RATES } from "@/lib/settings-constants";
+import { DEFAULT_YIELD_RATES, DEFAULT_VARIETY_YIELD_RATES } from "@/lib/settings-constants";
 import { requireAdmin, requireSession } from "@/lib/auth-guard";
 
 function yieldKey(millingType: string) {
@@ -16,7 +16,9 @@ export async function getYieldRates(): Promise<Record<string, number>> {
         where: { key: { startsWith: 'yield_rate_' } },
     });
 
-    const result: Record<string, number> = { ...DEFAULT_YIELD_RATES };
+    // 도정구분 키(`yield_rate_백미`)와 품종축 키(`yield_rate_INDICA_백미`)는 접두사가 같아
+    // 같은 맵에 담긴다. 판정 시 getYieldTarget이 품종축을 먼저 본다.
+    const result: Record<string, number> = { ...DEFAULT_YIELD_RATES, ...DEFAULT_VARIETY_YIELD_RATES };
     for (const config of configs) {
         const millingType = config.key.replace('yield_rate_', '');
         const parsed = parseFloat(config.value);
@@ -52,5 +54,7 @@ export async function saveYieldRates(rates: Record<string, number>) {
             })
         )
     );
-    revalidatePath('/admin/settings');
+    // 기준값은 (dashboard) layout에서 읽어 화면 전체에 공급된다(YieldRatesProvider).
+    // 설정 페이지만 revalidate하면 대시보드·도정목록·통계가 낡은 기준값을 계속 쓴다.
+    revalidatePath('/', 'layout');
 }

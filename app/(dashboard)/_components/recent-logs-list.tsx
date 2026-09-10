@@ -8,7 +8,8 @@ import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dia
 import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dialog';
 import { useSession } from 'next-auth/react';
 import { hasPermission } from '@/lib/permissions';
-import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants';
+import { getYieldLevel, YIELD_TEXT_CLASS } from '@/lib/milling-yield';
+import { useYieldRates } from '@/app/(dashboard)/yield-rates-context';
 import { getDisplayMillingType } from '@/lib/milling-type-display';
 
 interface RecentLogsListProps {
@@ -29,17 +30,11 @@ function getMillingTypeStyle(type: string) {
     return millingTypeColors[type] || millingTypeColors['기타']
 }
 
-function getYieldColor(yieldRate: number, millingType: string): string {
-    if (yieldRate <= 60) return 'text-red-500'
-    const target = DEFAULT_YIELD_RATES[millingType] ?? 68
-    if (yieldRate >= target) return 'text-blue-500'
-    return 'text-slate-700'
-}
-
 export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [selectedInputLog, setSelectedInputLog] = useState<any | null>(null);
     const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
     const { data: session } = useSession();
+    const yieldRates = useYieldRates();
     // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE');
 
@@ -76,7 +71,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                     const primaryStock = log.stocks && log.stocks.length > 0 ? log.stocks[0] : null;
                     const classification = getDisplayMillingType(log.millingType, primaryStock?.variety?.type) || '-';
                     const classStyle = getMillingTypeStyle(classification);
-                    const yieldColor = getYieldColor(Math.round(yieldRate * 10) / 10, log.millingType);
+                    const yieldColor = YIELD_TEXT_CLASS[getYieldLevel(Math.round(yieldRate * 10) / 10, log.millingType, yieldRates, primaryStock?.variety?.type)];
 
                     return (
                         <div key={log.id} className={`flex flex-col md:flex-row md:items-center justify-between py-3 md:py-2.5 px-3 md:border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group bg-slate-50 md:bg-transparent rounded-xl md:rounded-none gap-2 md:gap-0 cursor-pointer ${index >= 7 ? 'hidden lg:flex' : ''}`}

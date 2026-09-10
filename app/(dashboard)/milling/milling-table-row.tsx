@@ -14,6 +14,8 @@ import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
+import { getYieldLevel, YIELD_BADGE_CLASS } from '@/lib/milling-yield'
+import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 interface MillingBatch {
     id: number
@@ -34,6 +36,7 @@ interface Props {
 }
 
 export function MillingTableRow({ log, selected, onSelect }: Props) {
+    const yieldRates = useYieldRates()
     const [packagingOpen, setPackagingOpen] = useState(false)
     const [stockListOpen, setStockListOpen] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
@@ -169,7 +172,7 @@ export function MillingTableRow({ log, selected, onSelect }: Props) {
                 {/* 8. Yield */}
                 <TableCell className="text-center font-mono tabular-nums font-semibold">
                     {totalRiceKg > 0 ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${yieldRate >= 70 ? 'bg-primary/10 text-primary' : 'bg-slate-50 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${YIELD_BADGE_CLASS[getYieldLevel(yieldRate, log.millingType, yieldRates, log.stocks?.[0]?.variety?.type)]}`}>
                             {Math.round(yieldRate)}%
                         </span>
                     ) : <span className="text-slate-300">-</span>}

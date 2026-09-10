@@ -21,6 +21,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dialog'
 import type { TableRow, OutputDetail } from '@/app/actions/statistics'
+import { getYieldLevel, YIELD_BADGE_CLASS } from '@/lib/milling-yield'
+import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 type Props = {
   data: TableRow[]
@@ -161,6 +163,8 @@ export function MillingTable({ data }: Props) {
   const [inputPopup, setInputPopup] = useState<TableRow | null>(null)
   const [outputPopup, setOutputPopup] = useState<TableRow | null>(null)
 
+  const yieldRates = useYieldRates()
+
   const columns = useMemo<ColumnDef<TableRow>[]>(() => [
     {
       accessorKey: 'date',
@@ -233,7 +237,7 @@ export function MillingTable({ data }: Props) {
         const val = info.getValue() as number
         return val > 0 ? (
           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            val >= 70 ? 'bg-[#0080c8]/10 text-[#0080c8]' : 'bg-slate-50 text-slate-500'
+            YIELD_BADGE_CLASS[getYieldLevel(val, info.row.original.millingType, yieldRates, info.row.original.stockDetails?.[0]?.varietyType)]
           }`}>
             {Math.round(val)}%
           </span>
@@ -249,7 +253,7 @@ export function MillingTable({ data }: Props) {
         </span>
       ),
     },
-  ], [])
+  ], [yieldRates])
 
   const table = useReactTable({
     data,
