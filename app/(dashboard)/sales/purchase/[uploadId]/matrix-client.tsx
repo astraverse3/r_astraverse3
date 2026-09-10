@@ -272,7 +272,7 @@ function HeadCorner({
         <th
             rowSpan={2}
             className={cn(
-                'sticky top-0 z-40 border-b border-r border-slate-200 bg-slate-200/70 px-2 font-bold text-slate-600',
+                'sticky top-0 z-40 border-b border-r border-slate-200 bg-slate-200 px-2 font-bold text-slate-600',
                 align === 'left' ? 'text-left' : 'text-center',
                 shadow && 'shadow-[6px_0_8px_-6px_rgba(15,23,42,0.18)]',
             )}
