@@ -41,7 +41,12 @@
   thead .subtot { z-index:40; background:#e8eef5; }
   .mx thead .sumrow th, .mx thead .sumrow2 th { position:sticky; height:34px; background:#eef3f8; border-bottom:1px solid #d3dce6; color:#334155; font-size:11.5px; font-variant-numeric:tabular-nums; z-index:18; padding:0 8px; }
   .mx thead .sumrow th { top:68px; }
-  .mx thead .sumrow2 th { top:102px; background:#f4f8fc; }
+  .mx thead .sumrow2 th { top:108px; background:#f4f8fc; }
+  .mx thead tr.sumrow th, .mx thead tr.sumrow th.sumcell, .mx thead tr.sumrow th.sumkg { height:40px; font-size:15px; font-weight:800; }
+  .mx thead tr.sumrow th.sumlabel { font-size:12.5px; }
+  .mx thead .sumrow .sumlabel span { font-size:12px; color:#475569 !important; }
+  .mx thead tr.sumrow2 th, .mx thead tr.sumrow2 th.sumcell { height:28px; font-size:11.5px; }
+  .mx thead .sumrow2 .sumlabel span { color:#475569 !important; }
   .mx thead .sumrow .sumcell, .mx thead .sumrow2 .sumcell { text-align:right; font-weight:700; }
   .mx thead .sumrow .sumlabel, .mx thead .sumrow2 .sumlabel { left:0; text-align:left; padding-left:14px; font-weight:700; color:#475569; z-index:36; box-shadow:6px 0 8px -6px rgba(15,23,42,.18); }
   .mx thead .sumrow2 .sumlabel { background:#f4f8fc; font-weight:600; color:#64748b; }
@@ -57,14 +62,14 @@
 <div style="position:absolute; left:40px; top:36px; width:1480px;">
   <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">서울급식 — 엑셀 매트릭스 작업 화면 (행복플러스 발주서(서울급식) 6-4)</h1>
   <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1280px;">
-    행복플러스 발주서의 <b>발주서(서울급식) 6-4 시트(26/06/16)</b> 기준. 발주처 <b>서울급식</b> → 수령인 <b>은평구·서대문구</b>. 여유(예비) 물량은 매트릭스 행 대신 <b>전달사항</b>으로 안내.
+    행복플러스 발주서의 <b>발주서(서울급식) 6-4 시트(26/06/16)</b> 기준. 발주처 <b>은평구·서대문구</b> → 수령인 <b>행복플러스</b>(상수). 수령인이 항상 같으므로 이름 칸은 <b>발주처를 앞에 굵게</b> — 다른 채널과 반대 순서. <b>여유 행도 다른 발주처와 동일하게</b> 처리한다 — 사용자가 이미 시트에서 쓰는 표기다.
     택배·해남급식과 같은 매트릭스 문법: 소계 띠에서 규격별 합계와 <b class="text-amber-700">가용 재고 부족(주황)</b>을 바로 확인. 발주 0인 규격(현미 5·10kg, 찹쌀 10kg, 찹쌀현미, 귀리, 쥐눈이콩)은 숨김.
     행 소계(kg)는 화면의 셀 값으로 계산한 값입니다.
   </p>
 </div>
 
 <div style="position:absolute; left:40px; top:158px;">
-  <div class="frame-label"><span class="pill">데스크탑</span> 서울급식 매트릭스 · 수령인 2 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900 · 수령인 × 품목규격</span></div>
+  <div class="frame-label"><span class="pill">데스크탑</span> 서울급식 매트릭스 · 발주처 3 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900 · 발주처 × 품목규격</span></div>
   <div class="win">
 
     <aside class="w-60 bg-white border-r border-slate-200 flex flex-col shrink-0">
@@ -119,7 +124,7 @@
 
       <div class="bg-sky-50/60 border-b border-sky-100 px-7 py-2 shrink-0 flex items-start gap-2">
         <svg class="mt-0.5 shrink-0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-        <div class="text-[12px] leading-snug"><b class="text-sky-800">전달사항</b> <span class="text-slate-600">새청무 10kg <b class="text-slate-800">2포</b>는 여유(예비) 물량 — 수령처 미지정, 여유분으로 함께 발송.</span> <span class="text-sky-400">— 업로드 시 입력된 비고</span></div>
+        <div class="text-[12px] leading-snug"><b class="text-sky-800">전달사항</b> <span class="text-slate-600">새청무 1kg <b class="text-slate-800">2포</b>는 여유 물량 — 행복플러스로 함께 발송.</span> <span class="text-sky-400">— 업로드 시 입력된 비고</span></div>
       </div>
 
       <div class="px-3 pt-2 pb-1 bg-slate-50 shrink-0 flex items-center gap-3">
@@ -183,11 +188,12 @@ const cols = [
   { item:'유기농 팥', producer:'신승철', w:'500g', kg:0.5, avail:8 },
 ];
 
-// 상태: d=완료 p=부분 w=대기 e=여유(예비) z=발주없음
-function R(name, note, status, done, total, cells){ return {name, note, status, done, total, cells}; }
+// 상태: d=완료 p=부분 w=대기 z=발주없음
+function R(name, recipient, status, done, total, cells){ return {name, recipient, status, done, total, cells}; }
 const rows = [
-  R('은평구', null, 'w', 0, 12, {0:[19,'w'],1:[5,'w'],2:[112,'w'],4:[60,'w'],5:[4,'w'],6:[4,'w'],7:[7,'w'],8:[4,'w'],9:[3,'w'],10:[5,'w'],11:[9,'w'],12:[1,'w']}),
-  R('서대문구', null, 'w', 0, 7, {0:[1,'w'],1:[5,'w'],2:[68,'w'],3:[9,'w'],4:[18,'w'],6:[4,'w'],9:[4,'w']}),
+  R('은평구', '행복플러스', 'w', 0, 8, {0:[31,'w'],1:[6,'w'],2:[91,'w'],6:[37,'w'],7:[6,'w'],9:[2,'w'],11:[9,'w'],12:[1,'w']}),
+  R('서대문구', '행복플러스', 'w', 0, 5, {0:[2,'w'],1:[7,'w'],2:[75,'w'],8:[6,'w'],11:[3,'w']}),
+  R('여유', '행복플러스', 'w', 0, 1, {0:[2,'w']}),
 ];
 
 const STATE = {
@@ -200,7 +206,6 @@ const STATUS_BADGE = {
   d:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>완료</span>',
   p:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-amber-700"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>부분</span>',
   w:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span>',
-  e:'<span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-sky-700"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>여유</span>',
 };
 
 function render(){
@@ -211,7 +216,7 @@ function render(){
   const fmtKg = v => (Math.round(v*10)/10).toLocaleString();
   let h = '<thead><tr>';
   h += '<th class="ck r1" rowspan="2"><input type="checkbox" onchange="toggleAll(this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></th>';
-  h += '<th class="nm r1" rowspan="2" style="text-align:left;">수령인</th>';
+  h += '<th class="nm r1" rowspan="2" style="text-align:left;">발주처</th>';
   h += '<th class="st r1" rowspan="2">상태</th>';
   h += '<th class="pg r1" rowspan="2">진행</th>';
   cols.forEach(c => {
@@ -244,11 +249,10 @@ function render(){
 
   rows.forEach((r, ri) => {
     let sub = 0; Object.entries(r.cells).forEach(([ci,[q]]) => { const c = cols[+ci]; if (c) sub += q * c.kg; });
-    const noteHtml = r.note ? `<div class="text-[10px] text-slate-400 leading-tight">${r.note}</div>` : '';
-    const nameCol = r.status==='e' ? 'text-sky-700' : 'text-slate-900';
+    const nameHtml = `<div class="flex items-center"><span class="text-[12.5px] font-bold text-slate-900 leading-tight truncate" style="width:104px;flex:none">${r.name}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid #cbd5e1;color:#64748b">${r.recipient}</span></div>`;
     h += `<tr data-ri="${ri}">`;
-    h += `<td class="ck">${r.status==='e'?'':`<input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" />`}</td>`;
-    h += `<td class="nm"><div class="text-[12.5px] font-bold ${nameCol} leading-tight">${r.name}</div>${noteHtml}</td>`;
+    h += `<td class="ck"><input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></td>`;
+    h += `<td class="nm">${nameHtml}</td>`;
     h += `<td class="st">${STATUS_BADGE[r.status]}</td>`;
     h += `<td class="pg">${r.total?`<div class="flex items-center gap-1.5"><div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full ${r.done===r.total?'bg-emerald-400':'bg-amber-400'}" style="width:${Math.round(r.done/r.total*100)}%"></div></div><span class="text-[10px] mono text-slate-500 shrink-0">${r.done}/${r.total}</span></div>`:'<span class="text-[10px] text-slate-300">—</span>'}</td>`;
     cols.forEach((c, ci) => {

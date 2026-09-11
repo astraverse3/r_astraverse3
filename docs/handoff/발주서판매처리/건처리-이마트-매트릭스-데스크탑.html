@@ -41,7 +41,12 @@
   thead .subtot { z-index:40; background:#e8eef5; }
   .mx thead .sumrow th, .mx thead .sumrow2 th { position:sticky; height:34px; background:#eef3f8; border-bottom:1px solid #d3dce6; color:#334155; font-size:11.5px; font-variant-numeric:tabular-nums; z-index:18; padding:0 8px; }
   .mx thead .sumrow th { top:68px; }
-  .mx thead .sumrow2 th { top:102px; background:#f4f8fc; }
+  .mx thead .sumrow2 th { top:108px; background:#f4f8fc; }
+  .mx thead tr.sumrow th, .mx thead tr.sumrow th.sumcell, .mx thead tr.sumrow th.sumkg { height:40px; font-size:15px; font-weight:800; }
+  .mx thead tr.sumrow th.sumlabel { font-size:12.5px; }
+  .mx thead .sumrow .sumlabel span { font-size:12px; color:#475569 !important; }
+  .mx thead tr.sumrow2 th, .mx thead tr.sumrow2 th.sumcell { height:28px; font-size:11.5px; }
+  .mx thead .sumrow2 .sumlabel span { color:#475569 !important; }
   .mx thead .sumrow .sumcell, .mx thead .sumrow2 .sumcell { text-align:right; font-weight:700; }
   .mx thead .sumrow .sumlabel, .mx thead .sumrow2 .sumlabel { left:0; text-align:left; padding-left:14px; font-weight:700; color:#475569; z-index:36; box-shadow:6px 0 8px -6px rgba(15,23,42,.18); }
   .mx thead .sumrow2 .sumlabel { background:#f4f8fc; font-weight:600; color:#64748b; }
@@ -166,18 +171,18 @@
 // ── 마트 납품 규격(가로축) — 전부 샘플 ──
 const cols = [
   { item:'유기농 가바백미', pkg:'자연주의', w:'4kg',  kg:4,    avail:30 },
-  { item:'유기농 가바백미', pkg:'자연주의', w:'1kg',  kg:1,    avail:120 },
+  { item:'유기농 가바백미', pkg:'자연주의', w:'1kg',  kg:1,    avail:260 },
   { item:'유기농 천지향',   pkg:'자연주의', w:'4kg',  kg:4,    avail:40 },
   { item:'유기농 귀리쌀',   pkg:'PET',      w:'420g', kg:0.42, avail:80 },
-  { item:'유기농 천지향',   pkg:'자연주의', w:'8kg',  kg:8,    avail:20 },
+  { item:'유기농 천지향5세 오분도미', pkg:'자연주의', w:'4kg', kg:4, avail:20 },
 ];
 
 // 상태: d=완료 p=부분 w=대기 f=실패
-function R(name, note, status, done, total, cells){ return {name, note, status, done, total, cells}; }
+function R(name, vendor, status, done, total, cells){ return {name, vendor, status, done, total, cells}; }
 const rows = [
-  R('이마트 여주', null, 'w', 0, 3, {0:[4,'w'],1:[48,'w'],4:[12,'w']}),
-  R('이마트 대구', null, 'p', 1, 3, {0:[4,'d'],1:[16,'p'],3:[20,'w']}),
-  R('이마트 시화', null, 'w', 0, 3, {1:[80,'w'],2:[8,'w'],3:[40,'w']}),
+  R('여주지점', '이마트', 'w', 0, 3, {2:[24,'w'],3:[20,'w']}),
+  R('대구지점', '이마트', 'p', 1, 2, {2:[24,'d']}),
+  R('시화지점', '이마트', 'w', 0, 3, {1:[96,'w'],2:[16,'w'],3:[40,'w']}),
 ];
 
 const STATE = {
@@ -201,7 +206,7 @@ function render(){
   const fmtKg = v => (Math.round(v*10)/10).toLocaleString();
   let h = '<thead><tr>';
   h += '<th class="ck r1" rowspan="2"><input type="checkbox" onchange="toggleAll(this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></th>';
-  h += '<th class="nm r1" rowspan="2" style="text-align:left;">점포</th>';
+  h += '<th class="nm r1" rowspan="2" style="text-align:left;">수령인</th>';
   h += '<th class="st r1" rowspan="2">상태</th>';
   h += '<th class="pg r1" rowspan="2">진행</th>';
   cols.forEach(c => {
@@ -234,10 +239,13 @@ function render(){
 
   rows.forEach((r, ri) => {
     let sub = 0; Object.entries(r.cells).forEach(([ci,[q]]) => { const c = cols[+ci]; if (c) sub += q * c.kg; });
-    const noteHtml = r.note ? `<div class="text-[10px] text-slate-400 leading-tight">${r.note}</div>` : '';
+    const twoTier = r.vendor && r.vendor !== r.name;
+    const nameHtml = twoTier
+      ? `<div class="flex items-center"><span class="text-[12.5px] font-bold text-slate-900 leading-tight truncate" style="width:104px;flex:none">${r.name}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid #cbd5e1;color:#64748b">${r.vendor}</span></div>`
+      : `<div class="text-[12.5px] font-bold text-slate-900 leading-tight">${r.name}</div>`;
     h += `<tr data-ri="${ri}">`;
     h += `<td class="ck"><input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></td>`;
-    h += `<td class="nm"><div class="text-[12.5px] font-bold text-slate-900 leading-tight">${r.name}</div>${noteHtml}</td>`;
+    h += `<td class="nm">${nameHtml}</td>`;
     h += `<td class="st">${STATUS_BADGE[r.status]}</td>`;
     h += `<td class="pg"><div class="flex items-center gap-1.5"><div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full ${r.done===r.total?'bg-emerald-400':'bg-amber-400'}" style="width:${Math.round(r.done/r.total*100)}%"></div></div><span class="text-[10px] mono text-slate-500 shrink-0">${r.done}/${r.total}</span></div></td>`;
     cols.forEach((c, ci) => {

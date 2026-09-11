@@ -1,0 +1,110 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="design_doc_mode" content="canvas"><title>채널별 발주처 · 수령처 표기 규칙</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 18px 44px rgba(15,23,42,.13)}
+.lab{font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.lab .pill{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:#fff;border:1px solid #cbd5e1;color:#475569}
+.lab .pill.rec{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
+.note{font-size:12px;color:#475569;line-height:1.65;margin-top:10px}
+.note b{color:#0f172a}
+.ctx{display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.ctxl{font-size:10.5px;font-weight:700;color:#475569;letter-spacing:.02em}
+.ctxv{font-size:13.5px;font-weight:800;color:#0f172a}
+.ctxn{font-size:10.5px;color:#64748b;margin-left:auto}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+th,td{border-bottom:1px solid #eef2f7;padding:0 10px;white-space:nowrap}
+thead th{height:34px;background:#f1f5f9;color:#475569;font-weight:700;font-size:11px;text-align:center;border-bottom:1px solid #dde5ee}
+thead th.nm{text-align:left}
+tbody tr{height:44px}
+td.nm{text-align:left}
+td.n{text-align:right}
+tr.sumrow th{height:38px;background:#eef3f8;border-bottom:2px solid #cbd5e1;color:#0f172a;font-size:15px;font-weight:800;text-align:right}
+tr.sumrow th.nm{font-size:12px;text-align:left;color:#334155}
+.rule td,.rule th{border-bottom:1px solid #e2e8f0;padding:9px 12px;font-size:12px;white-space:normal;text-align:left;vertical-align:top}
+.rule thead th{height:auto;font-size:11px}
+.ord{display:inline-flex;align-items:center;gap:5px;font-size:11.5px}
+.ord .b{font-weight:800;color:#0f172a}
+.ord .d{color:#475569}
+.ord .l{color:#475569}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+</style></head><body class="bg-slate-200">
+
+<div style="position:absolute;left:40px;top:34px;width:1320px">
+<h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">채널별 발주처 · 수령처 표기 — <span style="color:#2563eb">순서만 바뀌고 형태는 하나</span></h1>
+<p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.7"><b>형태는 택배 하나로 통일합니다</b> — <code>굵은 값 ｜ 세로선 ｜ 연한 값</code>. 채널마다 다른 레이아웃을 만들지 않고 <b>두 값의 순서만 뒤집습니다.</b><br>기준은 <b>「행마다 변하는 값이 앞에, 굵게」</b>. 이마트·해남급식은 발주처가 상수라 <code>수령처 ｜ 발주처</code>, 서울급식은 수령처가 상수라 <code>발주처 ｜ 수령처</code>, 택배는 <b>둘 다 변수</b>라 <code>수령인 ｜ 발주처</code>로 모든 행 2단 — <b>같은 규칙이 순서와 적용 범위만 바꿉니다.</b> 열 머리 라벨은 앞에 오는 값의 이름(<code>수령처</code> / <code>수령인</code> / <code>발주처</code> / <code>거래처</code>)을 씁니다.<br><b>색 스트라이프는 쓰지 않습니다</b> — 연한 값이 세로선 뒤 같은 x에 정렬되어 서면, 구분은 이름만으로 충분합니다.</p>
+<p style="font-size:11.5px;color:#64748b;margin-top:6px">※ 행 이름은 각 채널 시안 파일의 실제 목업과 동일. 고정 쪽 값(<span class="mono">이마트 본사 · 해남군</span>)은 구조를 보이기 위한 <b>예시명</b>입니다(서울급식 수령처 <span class="mono">행복 플러스</span>는 확인 완료).</p>
+</div>
+
+<div id="rule" style="position:absolute;left:40px;top:198px;width:1320px"></div>
+<div id="f1" style="position:absolute;left:40px;top:580px;width:640px"></div>
+<div id="f2" style="position:absolute;left:720px;top:580px;width:640px"></div>
+<div id="f3" style="position:absolute;left:40px;top:940px;width:640px"></div>
+<div id="f4" style="position:absolute;left:720px;top:940px;width:640px"></div>
+<div id="f5" style="position:absolute;left:40px;top:1300px;width:640px"></div>
+<div id="f6" style="position:absolute;left:720px;top:1300px;width:640px"></div>
+
+<script>
+const O=(a,b)=>`<span class="ord"><span class="b">${a}</span><span class="l">｜</span><span class="d">${b}</span></span>`;
+const RULE=[
+ ['이마트','이마트 본사 <b>1곳</b> <span style="color:#64748b">(상수)</span>','점포 <b>여럿</b> <span style="color:#64748b">(변수)</span>',O('수령처','발주처'),'수령처'],
+ ['해남급식','해남군 <b>1곳</b> <span style="color:#64748b">(상수)</span>','유통·센터 <b>여럿</b> <span style="color:#64748b">(변수)</span>',O('수령처','발주처'),'수령처'],
+ ['서울급식','구청 <b>여럿</b> <span style="color:#64748b">(변수)</span>','행복 플러스 <b>1곳</b> <span style="color:#64748b">(상수)</span>',O('발주처','수령처'),'발주처'],
+ ['기업별','대체로 <b>동일</b>','대체로 <b>동일</b>','<span class="ord"><span class="b">거래처</span> <span class="l">한 값만</span></span>','거래처'],
+ ['택배','<b>여럿</b> — 블록으로 반복 <span style="color:#475569">(변수 · 그룹 키)</span>','<b>여럿</b> <span style="color:#475569">(변수)</span>',O('수령인','발주처')+'<br><span style="color:#475569;font-size:11px">모든 행 2단 · 발주처가 정렬되어 블록이 보임</span>','수령인'],
+];
+document.getElementById('rule').innerHTML='<div class="lab"><span class="pill rec">규칙</span> 채널 × 계약 구조 → 이름 열 순서</div><div class="card" style="padding:0"><table class="rule"><thead><tr><th style="width:92px">채널</th><th style="width:250px">발주처</th><th style="width:250px">수령처</th><th>이름 열 표기 <span style="font-weight:500;color:#64748b">(굵은 값 ｜ 세로선 ｜ 연한 값)</span></th><th style="width:96px">열 머리</th></tr></thead><tbody>'+RULE.map(r=>`<tr><td style="font-weight:800;color:#0f172a">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td class="mono" style="font-weight:700">${r[4]}</td></tr>`).join('')+'</tbody></table></div><p class="note"><b>「변하는 값이 앞에」</b> 하나로 다섯 채널이 다 풀립니다. 서울급식만 순서가 뒤집히는 것은 예외가 아니라 <b>같은 규칙의 결과</b>입니다 — 거기서는 발주처가 변수이기 때문입니다.<br>연한 쪽은 <b>매 행 같은 값이 반복</b>되지만 지우지 않습니다: 화면을 캡처해 넘기거나 한 행만 떼어 봐도 <b>어느 계약인지 그 행 안에서 완결</b>되기 때문입니다. 반복되는 값이라 눈은 자연히 앞쪽만 훑습니다.</p>';
+function hue(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h}
+const COLS=[['새청무','10kg'],['새청무','5kg'],['백옥찰 · 찹쌀','1kg']];
+function frame(id,pill,title,colLabel,rows,sums,note,stripe){
+  let h='<div class="lab"><span class="pill">'+pill+'</span> '+title+'</div><div class="card">';
+  h+='<table><thead><tr><th class="nm" style="min-width:230px">'+colLabel+'</th><th style="min-width:70px">상태</th>'+COLS.map(c=>`<th style="min-width:76px">${c[0]}<div style="font-weight:500;font-size:10px;color:#475569;margin-top:-1px">${c[1]}</div></th>`).join('')+'<th style="min-width:70px">소계<div style="font-weight:500;font-size:10px;color:#475569;margin-top:-1px">kg</div></th></tr>';
+  h+='<tr class="sumrow"><th class="nm" colspan="2">규격별 소계 <span style="font-weight:500;color:#475569;font-size:11px">(개)</span></th>'+sums.map(n=>`<th class="mono">${n}</th>`).join('')+`<th class="mono">${sums.reduce((t,n,i)=>t+n*parseFloat(COLS[i][1]),0).toLocaleString()}</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    h+='<tr><td class="nm">'+(r.sub
+      ?(stripe
+      ?`<div class="flex items-center" style="box-shadow:inset 4px 0 0 hsl(${hue(r.sub)} 62% 52%);margin-left:-10px;padding-left:12px"><span class="text-[12.5px] font-bold text-slate-900 truncate" style="width:112px;flex:none">${r.main}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid hsl(${hue(r.sub)} 40% 78%);color:hsl(${hue(r.sub)} 45% 30%)">${r.sub}</span></div>`
+      :`<div class="flex items-center"><span class="text-[12.5px] font-bold text-slate-900 truncate" style="width:112px;flex:none">${r.main}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid #cbd5e1;color:#64748b">${r.sub}</span></div>`)
+      :`<span class="text-[12.5px] font-bold text-slate-900">${r.main}</span>`)+'</td>';
+    h+='<td style="text-align:center"><span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>대기</span></td>';
+    h+=r.c.map(v=>`<td class="n mono" style="color:${v?'#334155':'#dbe1e8'}">${v||'·'}</td>`).join('');
+    h+=`<td class="n mono" style="font-weight:700;color:#0f172a">${r.c.reduce((t,v,i)=>t+v*parseFloat(COLS[i][1]),0).toLocaleString()}</td></tr>`;
+  });
+  document.getElementById(id).innerHTML=h+'</tbody></table></div><p class="note">'+note+'</p>';
+}
+
+frame('f1','이마트','발주처 1곳(상수) · 점포 여럿(변수)','수령처',
+ [{main:'이마트 여주',sub:'이마트 본사',c:[4,48,0]},{main:'이마트 대구',sub:'이마트 본사',c:[4,16,0]},{main:'이마트 시화',sub:'이마트 본사',c:[0,80,8]}],[8,144,8],
+ '<b>택배와 같은 형태 — 수령처가 굵게 앞, 발주처가 연하게 뒤.</b> 「이마트 본사」가 세 줄 반복되지만 <b>행마다 변하는 점포가 왼쪽 정렬선을 잡고</b> 있어 눈은 점포만 훑습니다. 상수 쪽은 112px 뒤에 고정 위치로 서니 <b>읽지 않아도 방해가 되지 않습니다.</b><br>컨텍스트 바를 쓰지 않기로 한 이유: 한 행만 떼어 캡처해도 <b>어느 발주처의 건인지 그 행 안에서 완결</b>됩니다.');
+
+frame('f2','해남급식','발주처 1곳(상수) · 수령처 여럿(변수)','수령처',
+ [{main:'싱싱유통',sub:'해남군',c:[62,2,34]},{main:'급식센터',sub:'해남군',c:[15,1,0]}],[77,3,34],
+ '<b>이마트와 같은 구조 = 같은 처리.</b> 계약 형태(점포 납품 vs 급식 공급)는 달라도 <b>화면이 다룰 문제는 동일</b>합니다 — 발주처 상수 : 수령처 변수. 채널마다 다른 규칙을 만들 필요가 없고, <b>바뀌는 것은 값뿐</b>입니다. 열 머리도 <code>수령처</code> 그대로.');
+
+frame('f3','서울급식','수령처 1곳(상수) · 발주처 여럿(변수)','발주처',
+ [{main:'은평구',sub:'행복 플러스',c:[19,5,112]},{main:'서대문구',sub:'행복 플러스',c:[1,5,68]}],[20,10,180],
+ '<b>여기만 순서가 뒤집힙니다 — 규칙은 그대로입니다.</b> 서울급식은 <b>발주 구청이 변수, 수령처가 상수</b>라서 <code>발주처 ｜ 수령처(연하게)</code>가 됩니다. 택배 순서를 그대로 썼다면 <b>유일하게 정보량이 있는 값이 가장 흐리게</b> 표시됐을 겁니다.<br>형태(굵게 ｜ 세로선 ｜ 연하게)는 다른 채널과 <b>완전히 같으므로</b> 사용자가 배울 것은 「여기서는 앞이 발주처」 한 가지뿐입니다. 열 머리가 <code>발주처</code>로 바뀌어 그것을 알려 줍니다.');
+
+frame('f4','기업별','발주 = 수령 (동일)','거래처',
+ [{main:'광천다솔김',c:[10,0,0]}],[10,0,0],
+ '<b>두 값이 같으면 한 값만 씁니다.</b> <code>광천다솔김 ｜ 광천다솔김</code>으로 두 번 적는 것은 정보가 0이고 폭만 먹습니다. 열 머리를 <code>거래처</code>로 두어 <b>발주·수령을 구분하지 않는다는 사실 자체를 라벨로 선언</b>합니다.<br><b>예외 처리:</b> 드물게 둘이 다른 행이 나오면 <b>그 행만</b> 2단 표기 — 택배와 동일한 취급.');
+
+frame('f5','택배','발주처 여럿(그룹) · 수령인 여럿 — 둘 다 변수','수령인',
+ [{main:'이마트연수점',sub:'땅끝황토친환경',c:[6,0,0]},{main:'이마트풍산점',sub:'땅끝황토친환경',c:[4,0,0]},{main:'이선우',sub:'쿠팡wing',c:[0,1,0]},{main:'김지희',sub:'쿠팡wing',c:[0,1,0]},{main:'꼬마박사어린이집',sub:'서대문마을생협',c:[0,0,1]},{main:'서보람',sub:'일반판매',c:[0,0,2]}],[10,2,3],
+ '<b>정정합니다 — 택배는 「발주처 ≈ 수령인」이 아닙니다.</b> 실제 시트에서 발주처는 <span class="mono">땅끝황토친환경 8행 · 쿠팡wing 5행 · 서대문마을생협 4행</span>처럼 <b>블록으로 반복되는 변수</b>이고, 수령인과는 <b>대부분 다릅니다</b>(같은 경우가 예외).<br>그래서 <b>모든 행을 2단으로</b> 그립니다 — 「다를 때만」 조건이 필요 없습니다. 값이 여러 가지이지만 <b>색 스트라이프는 쓰지 않습니다</b> — 실제 시트에 올려 보니 너버 세고, 발주처가 세로선 뒤 같은 x에 정렬되므로 <b>이름이 바뀌는 지점이 그 자체로 블록 경계</b>로 읽힙니다.<br><b>대안:</b> 발주처가 이렇게 블록이면 <a href="매트릭스-발주처-수령인-표기-3안.html">③ 발주처 그룹 행</a>도 여전히 유효합니다 — 그룹별 규격 소계가 필요해지면 그때 전환.');
+
+document.getElementById('f6').innerHTML='<div class="lab"><span class="pill">확정 + 검증</span> 선언을 어겼을 때 — 업로드 단계에서 막기</div><div class="card">'
++'<div class="ctx" style="background:#fffdf5;border-bottom-color:#fcd34d"><span class="ctxl" style="color:#92702a">채널 선언</span><span class="ctxv" style="color:#92702a">이마트 · 발주처 상수 : 수령처 변수</span><span class="ctxn" style="color:#92702a">설정에 저장된 값</span></div>'
++'<div class="px-4 py-3.5"><div class="flex items-start gap-2.5"><svg class="mt-0.5 shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.1" stroke-linecap="round"><path d="M10.3 3.9 1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>'
++'<div class="min-w-0"><div class="text-[13px] font-extrabold" style="color:#9a3412">발주처가 <span class="mono">2곳</span> 섞여 있어 진행할 수 없어요</div><div class="text-[12px] text-slate-600 mt-1 leading-relaxed">이마트 채널은 발주처가 1곳이라고 설정돼 있습니다. 시트에서 <b class="text-slate-900">이마트 본사</b> 2건, <b class="text-slate-900">이마트에브리데이</b> 1건이 읽혔어요.</div></div></div>'
++'<div class="mt-3 flex flex-col gap-1.5">'
++'<div class="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2"><span class="text-[11.5px] font-bold text-slate-700" style="width:132px;flex:none">이마트 본사</span><span class="mono text-[11.5px] text-slate-500">2건</span><span class="ml-auto text-[11px] text-slate-500">여주 · 대구</span></div>'
++'<div class="flex items-center gap-2 rounded-lg border px-2.5 py-2" style="border-color:#fcd34d;background:#fffdf5"><span class="text-[11.5px] font-bold" style="width:132px;flex:none;color:#92702a">이마트에브리데이</span><span class="mono text-[11.5px]" style="color:#b45309">1건</span><span class="ml-auto text-[11px]" style="color:#92702a">시화</span></div></div>'
++'<div class="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3"><button class="h-9 flex-none rounded-md border border-slate-300 bg-white px-3 text-[12.5px] font-medium text-slate-600">어떤 행인지 보기</button><button class="h-9 flex-1 rounded-md bg-[#2563eb] text-[12.5px] font-bold text-white">시트 고치고 다시 올리기</button></div>'
++'<p class="mt-2 text-[11px] leading-relaxed text-slate-500">진행 버튼은 없습니다. 다른 발주처가 섞여 있는 채널은 <b>설정이 틀렸거나 시트가 잘못된 것</b>이고, 둘 다 사람이 결정해야 합니다.</p></div></div>'
++'<p class="note"><b>채널별 특성은 확정값으로 둡니다.</b> 채널 설정에 <code>발주처: 상수</code> / <code>수령처: 변수</code>를 <b>선언으로 저장</b>하고, 화면은 항상 그 선언대로 순서를 정합니다. 레이아웃이 데이터에 따라 흔들리지 않으니 <b>사람이 화면을 외울 수 있습니다.</b> 매트릭스 본체에는 분기 로직이 없습니다.<br><b>단 한 곳에서만 의심합니다: 업로드 검토 게이트.</b> 파싱 직후 <code>distinct(상수쪽).length > 1</code> 한 줄 검사로 선언 위반을 잡고, 매트릭스에 들어가기 <b>전에</b> 막습니다.<br><b>자동 폴백도, 통과 우회로도 두지 않습니다.</b> 차감은 되돌릴 수 없으니 어김이 있는 시트는 <b>수정 후 재업로드만</b> 허용합니다. 「이번만 예외」를 열어 주면 그 예외가 기록으로 남지 않아, 나중에 재고가 틀어졌을 때 <b>원인을 추적할 수 없습니다.</b></p>';
+</script>
+<template id="__bundler_thumbnail" data-bg-color="#e2e8f0"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#e2e8f0"/><rect x="20" y="24" width="60" height="12" rx="3" fill="#94a3b8"/><rect x="20" y="42" width="26" height="8" rx="2" fill="#0f172a"/><rect x="50" y="42" width="30" height="8" rx="2" fill="#cbd5e1"/><rect x="20" y="56" width="26" height="8" rx="2" fill="#0f172a"/><rect x="50" y="56" width="30" height="8" rx="2" fill="#cbd5e1"/><rect x="20" y="70" width="60" height="8" rx="2" fill="#e2e8f0"/></svg></template>
+</body></html>

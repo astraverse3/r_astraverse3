@@ -46,7 +46,12 @@
   /* 규격별 소계(개) 띄 — 헤더 아래 고정 */
   .mx thead .sumrow th, .mx thead .sumrow2 th { position:sticky; height:32px; background:#eef3f8; border-bottom:1px solid #d3dce6; color:#334155; font-size:11px; font-variant-numeric:tabular-nums; z-index:18; padding:0 6px; }
   .mx thead .sumrow th { top:62px; }
-  .mx thead .sumrow2 th { top:94px; background:#f4f8fc; }
+  .mx thead .sumrow2 th { top:102px; background:#f4f8fc; }
+  .mx thead tr.sumrow th, .mx thead tr.sumrow th.sumcell, .mx thead tr.sumrow th.sumkg { height:40px; font-size:15px; font-weight:800; }
+  .mx thead tr.sumrow th.sumlabel { font-size:12.5px; }
+  .mx thead .sumrow .sumlabel span { font-size:12px; color:#475569 !important; }
+  .mx thead tr.sumrow2 th, .mx thead tr.sumrow2 th.sumcell { height:28px; font-size:11.5px; }
+  .mx thead .sumrow2 .sumlabel span { color:#475569 !important; }
   .mx thead .sumrow .sumcell, .mx thead .sumrow2 .sumcell { text-align:right; font-weight:700; }
   .mx thead .sumrow .sumlabel, .mx thead .sumrow2 .sumlabel { left:0; text-align:left; padding-left:14px; font-weight:700; color:#475569; z-index:36; box-shadow:6px 0 8px -6px rgba(15,23,42,.18); }
   .mx thead .sumrow2 .sumlabel { background:#f4f8fc; font-weight:600; color:#64748b; }
@@ -55,7 +60,7 @@
   .mx thead .sumrow .short, .mx thead .sumrow2 .short { color:#b45309; }
   .selrow .nm, .selrow .st, .selrow .pg, .selrow .ck { background:#eff6ff !important; }
 
-  /* ── 받는사람 상세 슬라이드 패널 ── */
+  /* ── 수령인 상세 슬라이드 패널 ── */
   #detailPanel { transition: opacity .2s ease; }
   #detailPanel.hidden { display:none; }
   #detailPanel aside { transform: translateX(100%); transition: transform .3s cubic-bezier(.32,.72,0,1); }
@@ -70,14 +75,14 @@
 <div style="position:absolute; left:40px; top:36px; width:1480px;">
   <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">택배 특화 — 엑셀 매트릭스 작업 화면 (데스크탑)</h1>
   <p style="font-size:13px; color:#475569; margin-top:6px; line-height:1.6; max-width:1280px;">
-    택배는 <b>발주처 ≈ 받는사람</b>이고 건수가 100개를 넘어, 건마다 좌우로 드릴다운하면 너무 느립니다. 그래서 업로드한 <b>발주서 원본(2D 피벗)을 그대로 작업 화면</b>으로 살렸습니다 —
-    세로축 = 받는사람, 가로축 = 제품 규격, <b>셀 = 주문 수량(색 = 차감 상태)</b>. 셀을 누르면 <b>그 자리에서 FIFO 배분</b>, 행을 체크하면 <b>여러 명을 한 번에 일괄 차감</b>.
-    이름이 다를 때만 <span class="mono">받는사람(←발주처)</span>으로 표기합니다.
+    택배는 <b>발주처가 블록으로 반복되는 변수</b>(땅끝황토친환경 8행 · 쿠팡wing 5행 …)이고 <b>수령인과 대부분 다릅니다.</b> 건수가 100개를 넘어 건마다 드릴다운하면 너무 느리므로, 업로드한 <b>발주서 원본(2D 피벗)을 그대로</b> 보여줍니다.<br>
+    세로축 = 수령인, 가로축 = 제품 규격, <b>셀 = 주문 수량(색 = 차감 상태)</b>. 셀을 누르면 <b>그 자리에서 FIFO 배분</b>, 행을 체크하면 <b>여러 명을 한 번에</b> 일괄 차감합니다.<br>
+    이름 칸은 <span class="mono">수령인 ｜ 발주처(연하게)</span> 2단입니다 — 발주처가 세로선 뒤 같은 x에 정렬되므로 <b>블록 경계는 이름이 바뀔 때 자연히 보이고</b>, 색은 쓰지 않습니다. 둘이 같은 행은 한 줄로만 표기합니다.
   </p>
 </div>
 
 <div style="position:absolute; left:40px; top:154px;">
-  <div class="frame-label"><span class="pill">데스크탑</span> 택배 매트릭스 · 124건 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900 · 받는사람 × 제품규격</span></div>
+  <div class="frame-label"><span class="pill">데스크탑</span> 택배 매트릭스 · 124건 <span style="font-size:11.5px; font-weight:500; color:#64748b; margin-left:6px;">1440 × 900 · 수령인 × 제품규격</span></div>
   <div class="win">
 
     <!-- ════════ 사이드바 ════════ -->
@@ -139,7 +144,7 @@
       <div class="bg-white border-b border-slate-200 px-7 py-2.5 shrink-0 flex items-center gap-2.5">
         <div class="relative">
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" placeholder="받는사람 검색" class="w-56 h-8 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12.5px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-300 focus:bg-white" />
+          <input type="text" placeholder="수령인 검색" class="w-56 h-8 pl-8 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-[12.5px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-300 focus:bg-white" />
         </div>
         <div class="flex items-center gap-1">
           <button class="h-8 px-3 rounded-md bg-slate-900 text-white text-[12px] font-semibold whitespace-nowrap">작업 필요 38</button>
@@ -150,7 +155,7 @@
         <div class="ml-auto flex items-center gap-2">
           <button id="sortBtn" onclick="toggleSort()" class="h-8 px-2.5 rounded-md border border-slate-200 text-slate-600 text-[12px] font-medium hover:bg-slate-50 flex items-center gap-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg>
-            <span id="sortLabel">받는사람 가나다</span>
+            <span id="sortLabel">수령인 가나다</span>
           </button>
           <button title="엑셀 다운로드" class="w-8 h-8 rounded-md border border-slate-200 bg-slate-50 text-slate-500 hover:bg-[#8dc540]/20 hover:text-[#7db037] hover:border-[#8dc540]/50 flex items-center justify-center transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
         </div>
@@ -233,7 +238,7 @@
               <span class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4"/></svg></span>
               <div class="flex-1">
                 <h3 class="text-[17px] font-bold text-slate-900">선택 <span id="bulkModalN" class="text-primary">12</span>명 일괄 차감</h3>
-                <p class="text-[12.5px] text-slate-500 mt-1 leading-relaxed">선택한 받는사람의 매칭된 대기·부분 라인을 오래된 로트부터(FIFO) 한 번에 차감합니다. 재고부족·매칭실패 라인은 자동 제외돼요.</p>
+                <p class="text-[12.5px] text-slate-500 mt-1 leading-relaxed">선택한 수령인의 매칭된 대기·부분 라인을 오래된 로트부터(FIFO) 한 번에 차감합니다. 재고부족·매칭실패 라인은 자동 제외돼요.</p>
               </div>
               <button onclick="closeBulk()" class="w-7 h-7 -mt-1 -mr-1 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             </div>
@@ -257,14 +262,14 @@
       </div>
     </div>
 
-    <!-- ▼ 받는사람 전체 주문 상세 (이름 클릭) -->
+    <!-- ▼ 수령인 전체 주문 상세 (이름 클릭) -->
     <div id="detailPanel" class="hidden absolute inset-0 z-[55]">
       <div class="absolute inset-0 bg-slate-900/40" onclick="closeDetail()"></div>
       <aside class="absolute right-0 top-0 bottom-0 w-[468px] bg-white shadow-2xl flex flex-col">
         <!-- 헤더 -->
         <header class="px-5 pt-4 pb-3.5 border-b border-slate-200 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">받는사람 주문 상세</span>
+            <span class="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">수령인 주문 상세</span>
             <button onclick="closeDetail()" class="ml-auto w-7 h-7 -mr-1 rounded-md text-slate-400 hover:bg-slate-100 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
           </div>
           <div class="flex items-center gap-2.5 mt-2">
@@ -330,24 +335,25 @@ groups.forEach(g => g.weights.forEach(w => cols.push({ item:g.item, pkg:g.pkg, w
 const txAvail = [80, 40, 300, 120, 8, 40, 0, 60, 70, 25, 15, 30];
 cols.forEach((c, i) => c.avail = c.fail ? 0 : (txAvail[i] ?? 60));
 
-// ── 받는사람(세로축) ────────────────────────────────
+// ── 수령인(세로축) ────────────────────────────────
 // c: 컬럼인덱스→[수량, 상태]  상태: d=완료 p=부분 w=대기 f=실패
+function vh(s){ let x=0; for (const ch of s) x=(x*31+ch.charCodeAt(0))%360; return x; }
 function R(name, vendor, status, done, total, cells){ return {name, vendor, status, done, total, cells}; }
 const rows = [
-  R('김도현', null, 'p', 12, 17, {0:[80,'p'],1:[20,'d'],2:[40,'d'],3:[60,'w'],4:[3,'d'],5:[6,'f'],6:[15,'d'],7:[10,'d'],8:[8,'d'],9:[5,'d'],11:[4,'d']}),
-  R('이수민', null, 'w', 0, 8, {2:[30,'w'],3:[12,'w'],6:[8,'w'],8:[6,'w'],9:[4,'w'],11:[10,'w'],10:[5,'w'],7:[3,'w']}),
-  R('최지아', null, 'p', 5, 11, {0:[24,'d'],1:[10,'d'],3:[8,'d'],5:[12,'p'],7:[20,'w'],8:[6,'w'],10:[4,'w'],11:[9,'w'],6:[5,'w'],4:[2,'d'],9:[3,'w']}),
-  R('정민재', '행복도시락', 'w', 0, 6, {2:[18,'w'],3:[6,'w'],4:[1,'f'],8:[12,'w'],9:[3,'w'],11:[5,'w']}),
-  R('조현우', null, 'w', 0, 4, {3:[20,'w'],6:[8,'w'],8:[15,'w'],11:[6,'w']}),
-  R('한서연', null, 'p', 7, 13, {0:[40,'d'],1:[15,'d'],2:[10,'d'],3:[30,'p'],4:[2,'d'],6:[6,'d'],7:[12,'w'],8:[9,'w'],9:[5,'w'],10:[3,'w'],11:[8,'w'],5:[4,'d'],13:[7,'w']}),
-  R('윤채원', null, 'w', 0, 9, {0:[12,'w'],2:[5,'w'],3:[8,'w'],5:[6,'f'],6:[20,'w'],8:[7,'w'],9:[4,'w'],11:[6,'w'],10:[2,'f']}),
-  R('배수아', null, 'w', 0, 3, {3:[15,'w'],8:[10,'w'],11:[3,'w']}),
-  R('서지호', null, 'p', 9, 15, {0:[34,'d'],1:[12,'d'],2:[20,'d'],3:[24,'p'],4:[3,'d'],6:[8,'d'],7:[14,'d'],8:[10,'w'],9:[6,'w'],10:[5,'w'],11:[7,'w'],5:[5,'d'],13:[4,'w'],12:[2,'w']}),
-  R('문가은', null, 'w', 0, 5, {2:[18,'w'],3:[5,'w'],8:[12,'w'],9:[3,'w'],11:[6,'w']}),
-  R('신우진', '들녘유통', 'w', 0, 7, {0:[20,'w'],3:[10,'w'],4:[1,'f'],6:[8,'w'],8:[15,'w'],9:[3,'w'],11:[5,'w']}),
-  R('오세빈', null, 'p', 3, 10, {1:[24,'d'],3:[10,'p'],5:[5,'w'],7:[20,'w'],8:[6,'w'],9:[4,'w'],10:[3,'w'],11:[8,'w'],6:[5,'w'],2:[12,'d']}),
-  R('강하늘', null, 'w', 0, 6, {0:[16,'w'],2:[8,'w'],3:[12,'w'],8:[10,'w'],9:[3,'w'],11:[5,'w']}),
-  R('임도윤', null, 'w', 0, 4, {3:[18,'w'],6:[8,'w'],8:[12,'w'],11:[4,'w']}),
+  R('이마트연수점', '땅끝황토친환경', 'p', 12, 17, {0:[80,'p'],1:[20,'d'],2:[40,'d'],3:[60,'w'],4:[3,'d'],5:[6,'f'],6:[15,'d'],7:[10,'d'],8:[8,'d'],9:[5,'d'],11:[4,'d']}),
+  R('이마트풍산점', '땅끝황토친환경', 'w', 0, 8, {2:[30,'w'],3:[12,'w'],6:[8,'w'],8:[6,'w'],9:[4,'w'],11:[10,'w'],10:[5,'w'],7:[3,'w']}),
+  R('이마트명일점', '땅끝황토친환경', 'p', 5, 11, {0:[24,'d'],1:[10,'d'],3:[8,'d'],5:[12,'p'],7:[20,'w'],8:[6,'w'],10:[4,'w'],11:[9,'w'],6:[5,'w'],4:[2,'d'],9:[3,'w']}),
+  R('이마트본사 김보훈', '땅끝황토친환경', 'w', 0, 6, {2:[18,'w'],3:[6,'w'],4:[1,'f'],8:[12,'w'],9:[3,'w'],11:[5,'w']}),
+  R('이선우', '쿠팡wing', 'w', 0, 4, {3:[20,'w'],6:[8,'w'],8:[15,'w'],11:[6,'w']}),
+  R('나혜경', '쿠팡wing', 'p', 7, 13, {0:[40,'d'],1:[15,'d'],2:[10,'d'],3:[30,'p'],4:[2,'d'],6:[6,'d'],7:[12,'w'],8:[9,'w'],9:[5,'w'],10:[3,'w'],11:[8,'w'],5:[4,'d'],13:[7,'w']}),
+  R('성수옥', '쿠팡wing', 'w', 0, 9, {0:[12,'w'],2:[5,'w'],3:[8,'w'],5:[6,'f'],6:[20,'w'],8:[7,'w'],9:[4,'w'],11:[6,'w'],10:[2,'f']}),
+  R('김지희', '쿠팡wing', 'w', 0, 3, {3:[15,'w'],8:[10,'w'],11:[3,'w']}),
+  R('울림생협 성산점', '우리아이행복밥상', 'p', 9, 15, {0:[34,'d'],1:[12,'d'],2:[20,'d'],3:[24,'p'],4:[3,'d'],6:[8,'d'],7:[14,'d'],8:[10,'w'],9:[6,'w'],10:[5,'w'],11:[7,'w'],5:[5,'d'],13:[4,'w'],12:[2,'w']}),
+  R('울림생협 북가좌점', '우리아이행복밥상', 'w', 0, 5, {2:[18,'w'],3:[5,'w'],8:[12,'w'],9:[3,'w'],11:[6,'w']}),
+  R('꼬마박사어린이집', '서대문마을생협', 'w', 0, 7, {0:[20,'w'],3:[10,'w'],4:[1,'f'],6:[8,'w'],8:[15,'w'],9:[3,'w'],11:[5,'w']}),
+  R('별빛단어린이집', '서대문마을생협', 'p', 3, 10, {1:[24,'d'],3:[10,'p'],5:[5,'w'],7:[20,'w'],8:[6,'w'],9:[4,'w'],10:[3,'w'],11:[8,'w'],6:[5,'w'],2:[12,'d']}),
+  R('서대문마을생협', '서대문마을생협', 'w', 0, 6, {0:[16,'w'],2:[8,'w'],3:[12,'w'],8:[10,'w'],9:[3,'w'],11:[5,'w']}),
+  R('서보람', '일반판매', 'w', 0, 4, {3:[18,'w'],6:[8,'w'],8:[12,'w'],11:[4,'w']}),
 ];
 
 const STATE = {
@@ -373,7 +379,7 @@ function render(){
   // 1행: 식별(rowspan2) + 품목명(colspan) + 소계(rowspan2)
   h += '<tr>';
   h += '<th class="ck r1" rowspan="2"><input type="checkbox" onchange="toggleAll(this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></th>';
-  h += '<th class="nm r1" rowspan="2" style="text-align:left;">받는사람</th>';
+  h += '<th class="nm r1" rowspan="2" style="text-align:left;">수령인</th>';
   h += '<th class="st r1" rowspan="2">상태</th>';
   h += '<th class="pg r1" rowspan="2">진행</th>';
   groups.forEach(g => {
@@ -401,8 +407,9 @@ function render(){
 
   rows.forEach((r, ri) => {
     let sub = 0; Object.entries(r.cells).forEach(([ci,[q]]) => { const c = cols[+ci]; if (c) sub += q * parseFloat(c.w); });
-    const nameHtml = r.vendor
-      ? `<div class="text-[12.5px] font-bold text-slate-900 leading-tight truncate">${r.name}<span class="font-medium text-slate-400">(←${r.vendor})</span></div>`
+    const vc = (r.vendor && r.vendor !== r.name) ? 1 : null;
+    const nameHtml = vc!==null
+      ? `<div class="flex items-center"><span class="text-[12.5px] font-bold text-slate-900 leading-tight truncate" style="width:104px;flex:none">${r.name}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid #cbd5e1;color:#64748b">${r.vendor}</span></div>`
       : `<div class="text-[12.5px] font-bold text-slate-900 leading-tight">${r.name}</div>`;
     h += `<tr data-ri="${ri}">`;
     h += `<td class="ck"><input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" /></td>`;
@@ -477,7 +484,7 @@ function toggleAll(el){
   });
   updateBulk();
 }
-// ── 받는사람 전체 주문 상세 패널 ──
+// ── 수령인 전체 주문 상세 패널 ──
 const STATUS_ORDER = { f:0, p:1, w:2, d:3 };       // 작업 필요 → 완료 순
 const STATUS_KO = { d:'완료', p:'부분', w:'대기', f:'실패' };
 // 라인 수량 → FIFO 추천 로트 분배(시안용 정적 풀)
@@ -533,8 +540,8 @@ function lineCard(c, q, s){
 function openDetail(ri){
   const r = rows[ri];
   // 헤더
-  document.getElementById('dpName').innerHTML = r.vendor
-    ? `${r.name}<span class="text-[14px] font-medium text-slate-400 ml-1">(←${r.vendor})</span>` : r.name;
+  document.getElementById('dpName').innerHTML = (r.vendor && r.vendor !== r.name)
+    ? `${r.name}<span class="text-[14px] font-medium ml-2 pl-2" style="border-left:1px solid #cbd5e1;color:#64748b">${r.vendor}</span>` : r.name;
   document.getElementById('dpStatus').innerHTML = STATUS_BADGE[r.status];
   document.getElementById('dpProg').className = `h-full ${r.done===r.total?'bg-emerald-400':'bg-amber-400'}`;
   document.getElementById('dpProg').style.width = Math.round(r.done/r.total*100)+'%';
@@ -587,7 +594,7 @@ function closeBulk(){ document.getElementById('bulkModal').classList.add('hidden
 
 // ── 정렬 토글 ──
 let sortMode = 0;
-const SORTS = ['받는사람 가나다','최신 업로드순','작업 필요 우선'];
+const SORTS = ['수령인 가나다','발주처별','최신 업로드순','작업 필요 우선'];
 function toggleSort(){ sortMode = (sortMode+1)%SORTS.length; document.getElementById('sortLabel').textContent = SORTS[sortMode]; }
 
 // 기본 시연: 한 셀 팝오버 + 두 행 선택

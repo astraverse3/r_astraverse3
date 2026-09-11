@@ -42,7 +42,12 @@
   thead .subtot { z-index:40; background:#e8eef5; }
   .mx thead .sumrow th, .mx thead .sumrow2 th { position:sticky; height:34px; background:#eef3f8; border-bottom:1px solid #d3dce6; color:#334155; font-size:11.5px; font-variant-numeric:tabular-nums; z-index:18; padding:0 8px; }
   .mx thead .sumrow th { top:68px; }
-  .mx thead .sumrow2 th { top:102px; background:#f4f8fc; }
+  .mx thead .sumrow2 th { top:108px; background:#f4f8fc; }
+  .mx thead tr.sumrow th, .mx thead tr.sumrow th.sumcell, .mx thead tr.sumrow th.sumkg { height:40px; font-size:15px; font-weight:800; }
+  .mx thead tr.sumrow th.sumlabel { font-size:12.5px; }
+  .mx thead .sumrow .sumlabel span { font-size:12px; color:#475569 !important; }
+  .mx thead tr.sumrow2 th, .mx thead tr.sumrow2 th.sumcell { height:28px; font-size:11.5px; }
+  .mx thead .sumrow2 .sumlabel span { color:#475569 !important; }
   .mx thead .sumrow .sumcell, .mx thead .sumrow2 .sumcell { text-align:right; font-weight:700; }
   .mx thead .sumrow .sumlabel, .mx thead .sumrow2 .sumlabel { left:0; text-align:left; padding-left:14px; font-weight:700; color:#475569; z-index:36; box-shadow:6px 0 8px -6px rgba(15,23,42,.18); }
   .mx thead .sumrow2 .sumlabel { background:#f4f8fc; font-weight:600; color:#64748b; }
@@ -189,10 +194,12 @@ const cols = [
 ];
 
 // ── 수령인(세로축) — 상태: d=완료 p=부분 w=대기 f=실패 v=보관차감 ──
-function R(name, note, status, done, total, cells, keep){ return {name, note, status, done, total, cells, keep}; }
+function R(name, vendor, status, done, total, cells, keep){ return {name, vendor, status, done, total, cells, keep}; }
 const rows = [
-  R('싱싱유통', null, 'w', 0, 3, {0:[62,'w'],1:[2,'w'],2:[34,'w']}),
-  R('급식센터', null, 'w', 0, 9, {0:[15,'w'],1:[1,'w'],3:[1,'f'],4:[3,'w'],5:[5,'w'],6:[4,'w'],7:[3,'w'],8:[4,'w'],9:[4,'w']}),
+  R('싱싱유통', '해남급식', 'w', 0, 3, {0:[62,'w'],1:[2,'w'],2:[34,'w']}),
+  R('급식센터', '해남급식', 'w', 0, 9, {0:[15,'w'],1:[1,'w'],3:[1,'f'],4:[3,'w'],5:[5,'w'],6:[4,'w'],7:[3,'w'],8:[4,'w'],9:[4,'w']}),
+  R('땅끝농협', '해남급식', 'z', 0, 0, {}),
+  R('참솜', '해남급식', 'z', 0, 0, {}),
 ];
 
 const STATE = {
@@ -256,11 +263,14 @@ function render(){
 
   rows.forEach((r, ri) => {
     let sub = 0; Object.entries(r.cells).forEach(([ci,[q]]) => { const c = cols[+ci]; if (c) sub += q * wKg(c.w); });
-    const noteHtml = r.note ? `<div class="text-[10px] text-slate-400 leading-tight">${r.note}</div>` : '';
+    const twoTier = r.vendor && r.vendor !== r.name;
+    const nameHtml = twoTier
+      ? `<div class="flex items-center"><span class="text-[12.5px] font-bold ${r.status==='z'?'text-slate-400':'text-slate-900'} leading-tight truncate" style="width:104px;flex:none">${r.name}</span><span class="text-[10.5px] font-medium truncate" style="flex:none;padding-left:10px;border-left:1px solid #cbd5e1;color:#64748b">${r.vendor}</span></div>`
+      : `<div class="text-[12.5px] font-bold text-slate-900 leading-tight">${r.name}</div>`;
     const nameCol = r.status==='z' ? 'text-slate-400' : (r.status==='v' ? 'text-violet-700' : 'text-slate-900');
     h += `<tr data-ri="${ri}"${r.status==='z'?' style="opacity:.6;"':''}>`;
     h += `<td class="ck">${r.status==='z'||r.status==='v'?'':`<input type="checkbox" onchange="onCheck(${ri},this)" class="w-3.5 h-3.5 accent-blue-600 align-middle" />`}</td>`;
-    h += `<td class="nm rowname"><div class="text-[12.5px] font-bold ${nameCol} leading-tight">${r.name}</div>${noteHtml}</td>`;
+    h += `<td class="nm rowname">${nameHtml}</td>`;
     h += `<td class="st">${STATUS_BADGE[r.status]}</td>`;
     h += `<td class="pg">${r.total?`<div class="flex items-center gap-1.5"><div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full ${r.done===r.total?'bg-emerald-400':'bg-amber-400'}" style="width:${Math.round(r.done/r.total*100)}%"></div></div><span class="text-[10px] mono text-slate-500 shrink-0">${r.done}/${r.total}</span></div>`:'<span class="text-[10px] text-slate-300">—</span>'}</td>`;
     cols.forEach((c, ci) => {

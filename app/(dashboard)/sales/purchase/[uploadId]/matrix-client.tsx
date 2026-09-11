@@ -33,9 +33,13 @@ const L_PROGRESS = W_NAME + W_STATUS
 const W_LEFT = W_NAME + W_STATUS + W_PROGRESS
 
 // 헤더 4행 높이 (그룹 · 규격 · 소계 · 가용)
+//
+// 🔴 소계 두 줄은 높이가 다르다. 소계는 「할 일」, 가용은 「조건」이라 주·보조 관계가
+// 눈에 보여야 한다 — 같은 크기로 두면 어느 쪽이 주문이고 어느 쪽이 재고인지 안 갈린다.
 const H_GROUP = 38
 const H_SPEC = 24
-const H_SUM = 26
+const H_SUM_MAIN = 40
+const H_SUM_SUB = 28
 
 // ------------------------------------------------------
 // 셀 상태 표기
@@ -242,7 +246,7 @@ function MatrixHead({ matrix, availKg }: { matrix: Matrix; availKg: number }) {
 
             {/* 4행 — 가용 재고(개) */}
             <SumRow
-                top={H_GROUP + H_SPEC + H_SUM}
+                top={H_GROUP + H_SPEC + H_SUM_MAIN}
                 label="가용 재고"
                 unit="(현재 SKU · 개)"
                 columns={matrix.columns}
@@ -303,17 +307,20 @@ function SumRow({
     strong?: boolean
     colByKey: Map<string, Matrix['columns'][number]>
 }) {
+    const height = strong ? H_SUM_MAIN : H_SUM_SUB
     return (
         <tr>
             <th
                 colSpan={3}
                 className={cn(
                     'sticky left-0 z-40 border-b border-r border-slate-200 px-3 text-left shadow-[6px_0_8px_-6px_rgba(15,23,42,0.18)]',
-                    strong ? 'bg-slate-100 font-bold text-slate-600' : 'bg-slate-50 font-semibold text-slate-500',
+                    strong
+                        ? 'bg-slate-100 text-[12.5px] font-bold text-slate-600'
+                        : 'bg-slate-50 text-[11.5px] font-semibold text-slate-500',
                 )}
-                style={{ top, height: H_SUM, width: W_LEFT, minWidth: W_LEFT }}
+                style={{ top, height, width: W_LEFT, minWidth: W_LEFT }}
             >
-                {label} <span className="font-medium text-slate-400">{unit}</span>
+                {label} <span className="text-[12px] font-medium text-slate-500">{unit}</span>
             </th>
             {columns.map((c) => {
                 const v = valueOf(c)
@@ -328,16 +335,18 @@ function SumRow({
                         key={c.key}
                         className={cn(
                             'sticky z-[18] border-b border-r border-slate-200 px-1.5 text-right tabular-nums',
-                            strong ? 'bg-slate-100' : 'bg-slate-50',
+                            strong ? 'bg-slate-100 text-[15px]' : 'bg-slate-50 text-[11.5px]',
+                            // 🔴 `short`를 `strong`보다 먼저 본다 — 순서를 바꾸면 소계 줄의
+                            // 강조가 재고부족 앰버를 덮어 경고가 사라진다.
                             v === null
                                 ? 'text-slate-300'
                                 : short
-                                  ? 'font-bold text-orange-700'
+                                  ? 'font-extrabold text-orange-700'
                                   : strong
-                                    ? 'font-bold text-slate-700'
+                                    ? 'font-extrabold text-foreground'
                                     : 'text-slate-500',
                         )}
-                        style={{ top, height: H_SUM }}
+                        style={{ top, height }}
                     >
                         {v === null ? '·' : fmt(v)}
                     </th>
@@ -346,9 +355,11 @@ function SumRow({
             <th
                 className={cn(
                     'sticky right-0 z-40 border-b border-l border-slate-200 px-1.5 text-right tabular-nums',
-                    strong ? 'bg-slate-100 font-extrabold text-foreground' : 'bg-slate-50 font-semibold text-slate-500',
+                    strong
+                        ? 'bg-slate-100 text-[15px] font-extrabold text-foreground'
+                        : 'bg-slate-50 text-[11.5px] font-semibold text-slate-500',
                 )}
-                style={{ top, height: H_SUM }}
+                style={{ top, height }}
             >
                 {fmtKg(kg)}
                 <span className="ml-0.5 text-[8.5px] font-medium text-slate-400">kg</span>

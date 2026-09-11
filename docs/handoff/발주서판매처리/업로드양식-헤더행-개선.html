@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="design_doc_mode" content="canvas" />
+<title>업로드 양식 — 발주처/수령인 라벨 행 개선</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+body{margin:0;background:#f1f5f9;font-family:Pretendard,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+a{color:#2563eb}a:hover{color:#1d4ed8}
+.frame-label{font-size:12.5px;font-weight:700;color:#334155;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.pill{display:inline-block;padding:2px 7px;border-radius:5px;background:#e2e8f0;color:#475569;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.pill.bad{background:#fff1f2;color:#be123c}.pill.good{background:#eff6ff;color:#2563eb}.pill.alt{background:#f5f3ff;color:#6d28d9}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.05);overflow:hidden}
+/* excel-ish grid */
+table.xl{border-collapse:collapse;font-size:11.5px;color:#1e293b}
+table.xl th,table.xl td{border:1px solid #cbd5e1;padding:3px 7px;height:24px;white-space:nowrap}
+table.xl thead th{background:#f1f5f9;color:#64748b;font-weight:600;font-size:10.5px;text-align:center;height:19px;padding:1px 6px}
+table.xl td.rn{background:#f1f5f9;color:#94a3b8;font-size:10px;text-align:center;width:24px;font-weight:600}
+td.hd{background:#f8fafc;color:#475569;font-weight:600}
+td.itm{background:#f8fafc;color:#334155;font-weight:600;font-size:10.5px}
+td.lbl{background:#e2e8f0;color:#334155;font-weight:700}
+td.num{text-align:right;font-family:'SF Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#0f172a}
+tr.waste td{background:#fff1f2!important;color:#be123c!important;border-color:#fecdd3!important}
+td.axis{background:#dbeafe;color:#1d4ed8;font-weight:700}
+td.merged{background:#ede9fe;color:#5b21b6;font-weight:700;font-size:10.5px}
+.note{font-size:11.5px;color:#475569;line-height:1.65}
+.tick{color:#059669;font-weight:700}.cross{color:#be123c;font-weight:700}
+</style>
+</head>
+<body>
+
+<div style="position:absolute; left:40px; top:36px; width:1560px;">
+  <h1 style="font-size:20px; font-weight:800; color:#0f172a; letter-spacing:-.02em;">업로드 양식 — 「발주처 · 수령인」 라벨 행 개선 <span style="font-size:13px; font-weight:600; color:#2563eb; vertical-align:2px;">3안 비교</span></h1>
+  <p class="note" style="margin-top:6px; max-width:1400px;">
+    현행 통일양식은 <b>r1 날짜/품목명 · r2 포장지 · r3 중량 · r4 「발주처|수령인」 · r5~ 데이터</b>. r4는 라벨 두 칸만 담고 한 행을 통째로 씁니다 —
+    <b>기업별(1×1) 시트에서는 헤더 4행 : 데이터 1행</b>이 되어 비율이 가장 나쁩니다. 표시는 이마트_260619 시트 실데이터.
+  </p>
+</div>
+
+<!-- 현행 -->
+<div style="position:absolute; left:40px; top:132px; width:600px;">
+  <div class="frame-label"><span class="pill bad">현행</span> 라벨 전용 행 1줄 소모</div>
+  <div class="card" style="padding:16px 18px 14px;">
+    <table class="xl">
+      <thead><tr><th></th><th style="width:96px">A</th><th style="width:66px">B</th><th style="width:78px">C</th><th style="width:78px">D</th><th style="width:78px">E</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="hd">26/06/19 (금) 옥천농협 배송</td><td></td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>천지향</td></tr>
+        <tr><td class="rn">2</td><td class="hd">포장지</td><td></td><td>자연주의</td><td>자연주의</td><td>자연주의</td></tr>
+        <tr><td class="rn">3</td><td class="hd">중량</td><td></td><td class="mono">4kg</td><td class="mono">1kg</td><td class="mono">4kg</td></tr>
+        <tr class="waste"><td class="rn">4</td><td class="lbl">발주처</td><td class="lbl">수령인</td><td></td><td></td><td></td></tr>
+        <tr><td class="rn">5</td><td>이마트</td><td>여주</td><td class="num">4</td><td class="num">48</td><td></td></tr>
+        <tr><td class="rn">6</td><td>이마트</td><td>대구</td><td class="num">4</td><td class="num">16</td><td></td></tr>
+        <tr><td class="rn">7</td><td>이마트</td><td>시화</td><td></td><td class="num">80</td><td class="num">8</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px;">
+      <b style="color:#be123c;">문제</b> · r4 전체가 라벨 2개용. 헤더 4행 고정이라 1×1 기업별 시트는 <b class="mono">헤더 4 : 데이터 1</b>.<br>
+      <b style="color:#334155;">파서 규칙</b> · A열에서 <span class="mono">"발주처"</span> 찾은 행 <b>+1</b>부터 데이터.
+    </p>
+  </div>
+</div>
+
+<!-- A안 -->
+<div style="position:absolute; left:680px; top:132px; width:600px;">
+  <div class="frame-label"><span class="pill good">A안 · 권장</span> 중량 행의 교차 셀에 축 이름을 놓는다</div>
+  <div class="card" style="padding:16px 18px 14px;">
+    <table class="xl">
+      <thead><tr><th></th><th style="width:96px">A</th><th style="width:66px">B</th><th style="width:78px">C</th><th style="width:78px">D</th><th style="width:78px">E</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="hd">26/06/19 (금) 옥천농협 배송</td><td></td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>천지향</td></tr>
+        <tr><td class="rn">2</td><td class="hd">포장지</td><td></td><td>자연주의</td><td>자연주의</td><td>자연주의</td></tr>
+        <tr><td class="rn">3</td><td class="axis">발주처</td><td class="axis">수령인</td><td class="mono">4kg</td><td class="mono">1kg</td><td class="mono">4kg</td></tr>
+        <tr><td class="rn">4</td><td>이마트</td><td>여주</td><td class="num">4</td><td class="num">48</td><td></td></tr>
+        <tr><td class="rn">5</td><td>이마트</td><td>대구</td><td class="num">4</td><td class="num">16</td><td></td></tr>
+        <tr><td class="rn">6</td><td>이마트</td><td>시화</td><td></td><td class="num">80</td><td class="num">8</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px;">
+      <span class="tick">✓</span> 헤더 3행. <b>「중량」 라벨만 생략</b> — 값에 단위(4kg·420g·1,000kg)가 붙어 자명.<br>
+      <span class="tick">✓</span> <b>파서 규칙 그대로</b> — A열 <span class="mono">"발주처"</span> 행 +1부터 데이터. 코드 수정 없음.<br>
+      <span class="tick">✓</span> 피벗표에서 흔한 문법(행축·열축 이름이 교차 지점에). A3·B3은 <b style="color:#1d4ed8;">파란 배경</b>으로 값 행과 구분.<br>
+      <span class="cross">△</span> A3 한 행에 「축 이름 + 중량값」이 섞임 → 색으로만 구분.
+    </p>
+  </div>
+</div>
+
+<!-- B안 -->
+<div style="position:absolute; left:1320px; top:132px; width:620px;">
+  <div class="frame-label"><span class="pill alt">B안</span> A열을 라벨 전용 열로, 발주처·수령인을 한 칸에 병합</div>
+  <div class="card" style="padding:16px 18px 14px;">
+    <table class="xl">
+      <thead><tr><th></th><th style="width:112px">A</th><th style="width:66px">B</th><th style="width:78px">C</th><th style="width:78px">D</th><th style="width:78px">E</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="hd">품목</td><td class="hd">26/06/19 (금)</td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>천지향</td></tr>
+        <tr><td class="rn">2</td><td class="hd">포장지</td><td class="hd">옥천농협 배송</td><td>자연주의</td><td>자연주의</td><td>자연주의</td></tr>
+        <tr><td class="rn">3</td><td class="merged" colspan="2">발주처 → 수령인</td><td class="mono">4kg</td><td class="mono">1kg</td><td class="mono">4kg</td></tr>
+        <tr><td class="rn">4</td><td>이마트</td><td>여주</td><td class="num">4</td><td class="num">48</td><td></td></tr>
+        <tr><td class="rn">5</td><td>이마트</td><td>대구</td><td class="num">4</td><td class="num">16</td><td></td></tr>
+        <tr><td class="rn">6</td><td>이마트</td><td>시화</td><td></td><td class="num">80</td><td class="num">8</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px;">
+      <span class="tick">✓</span> A열이 완전한 라벨 열(품목·포장지·발주처). 날짜·배송메모를 B1·B2로 분리해 A1이 깔끔.<br>
+      <span class="tick">✓</span> A3:B3 병합 한 칸 — 택배처럼 <b>수령인만 있는 시트</b>에서도 라벨이 어색하지 않음.<br>
+      <span class="cross">×</span> 병합 셀이 생겨 파서가 <span class="mono">mergeCells</span>를 무시하도록 처리해야 함.<br>
+      <span class="cross">×</span> 「중량」 라벨이 사라진 자리가 A3라 A안보다 더 낯설다.
+    </p>
+  </div>
+</div>
+
+<!-- C안 -->
+<div style="position:absolute; left:40px; top:520px; width:600px;">
+  <div class="frame-label"><span class="pill alt">C안</span> 라벨 행 유지 + 높이만 압축</div>
+  <div class="card" style="padding:16px 18px 14px;">
+    <table class="xl">
+      <thead><tr><th></th><th style="width:96px">A</th><th style="width:66px">B</th><th style="width:78px">C</th><th style="width:78px">D</th><th style="width:78px">E</th></tr></thead>
+      <tbody>
+        <tr><td class="rn">1</td><td class="hd">26/06/19 (금) 옥천농협 배송</td><td></td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>가바백미</td><td class="itm">유기농<br>천지향</td></tr>
+        <tr><td class="rn">2</td><td class="hd">포장지</td><td></td><td>자연주의</td><td>자연주의</td><td>자연주의</td></tr>
+        <tr><td class="rn">3</td><td class="hd">중량</td><td></td><td class="mono">4kg</td><td class="mono">1kg</td><td class="mono">4kg</td></tr>
+        <tr style="height:14px"><td class="rn" style="height:14px;font-size:9px">4</td><td class="lbl" style="height:14px;padding:0 7px;font-size:9.5px">발주처</td><td class="lbl" style="height:14px;padding:0 7px;font-size:9.5px">수령인</td><td style="height:14px;padding:0"></td><td style="height:14px;padding:0"></td><td style="height:14px;padding:0"></td></tr>
+        <tr><td class="rn">5</td><td>이마트</td><td>여주</td><td class="num">4</td><td class="num">48</td><td></td></tr>
+        <tr><td class="rn">6</td><td>이마트</td><td>대구</td><td class="num">4</td><td class="num">16</td><td></td></tr>
+        <tr><td class="rn">7</td><td>이마트</td><td>시화</td><td></td><td class="num">80</td><td class="num">8</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px;">
+      <span class="tick">✓</span> 구조 변경 0 — 기존 파일·파서·기존 시트 전부 그대로. 행 높이 <b class="mono">14px</b>, 글자 <b class="mono">9.5px</b>로 눌러 시각적 무게만 제거.<br>
+      <span class="tick">✓</span> 라벨이 남아 <b>사람이 열 뜻을 헷갈릴 일 없음</b> — 발주처와 수령인을 반대로 넣는 실수 방지.<br>
+      <span class="cross">×</span> 행 수는 그대로. 1×1 기업별 시트 비율 문제는 해결 못 함.
+    </p>
+  </div>
+</div>
+
+<!-- 1×1 케이스 비교 -->
+<div style="position:absolute; left:680px; top:520px; width:1260px;">
+  <div class="frame-label"><span class="pill">최악 케이스 검증</span> 광천김_260618 — 데이터 1행짜리 시트</div>
+  <div class="card" style="padding:16px 18px 14px;">
+    <div style="display:flex; gap:26px; align-items:flex-start;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#be123c;margin-bottom:7px;">현행 · 헤더 4 : 데이터 1</div>
+        <table class="xl">
+          <thead><tr><th></th><th style="width:130px">A</th><th style="width:60px">B</th><th style="width:84px">C</th></tr></thead>
+          <tbody>
+            <tr><td class="rn">1</td><td class="hd">26/06/18 (목) 화물 배차 예정</td><td></td><td class="itm">하이아미</td></tr>
+            <tr><td class="rn">2</td><td class="hd">포장지</td><td></td><td></td></tr>
+            <tr><td class="rn">3</td><td class="hd">중량</td><td></td><td class="mono">1,000kg</td></tr>
+            <tr class="waste"><td class="rn">4</td><td class="lbl">발주처</td><td class="lbl">수령인</td><td></td></tr>
+            <tr><td class="rn">5</td><td>광천다솔김</td><td></td><td class="num">10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="align-self:center;font-size:20px;color:#94a3b8;padding-top:18px;">→</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:7px;">A안 · 헤더 3 : 데이터 1</div>
+        <table class="xl">
+          <thead><tr><th></th><th style="width:130px">A</th><th style="width:60px">B</th><th style="width:84px">C</th></tr></thead>
+          <tbody>
+            <tr><td class="rn">1</td><td class="hd">26/06/18 (목) 화물 배차 예정</td><td></td><td class="itm">하이아미</td></tr>
+            <tr><td class="rn">2</td><td class="hd">포장지</td><td></td><td></td></tr>
+            <tr><td class="rn">3</td><td class="axis">발주처</td><td class="axis">수령인</td><td class="mono">1,000kg</td></tr>
+            <tr><td class="rn">4</td><td>광천다솔김</td><td></td><td class="num">10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="flex:1; min-width:300px;">
+        <p class="note">
+          <b style="color:#334155;">더 줄이려면 — 포장지 행 조건부 생략</b><br>
+          템플릿 9시트 중 <b>포장지 값이 실제로 있는 건 이마트뿐</b>(자연주의·PET). 나머지 8시트는 r2가 라벨만 있고 값이 전부 빈칸입니다.
+          포장지를 <b>「품목명」 셀 안에 <span class="mono">유기농 가바백미(자연주의)</span> 형태로 붙이면</b> A안에서 한 행 더 줄어 <b class="mono">헤더 2 : 데이터 1</b>이 됩니다.
+        </p>
+        <p class="note" style="margin-top:10px; padding-top:10px; border-top:1px solid #e2e8f0;">
+          <b style="color:#be123c;">단, 권장하지 않음</b> — 포장지는 규격 매칭 키(<span class="mono">packageId</span>)의 일부입니다.
+          괄호 파싱은 품목명에 괄호가 들어오는 순간(<span class="mono">천지향(5세)</span>) 깨집니다. <b>행 하나 아끼려고 매칭 정확도를 걸 값이 아님.</b>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 결론 -->
+<div style="position:absolute; left:40px; top:900px; width:1900px;">
+  <div class="card" style="padding:18px 22px; background:#0f172a; border-color:#1e293b;">
+    <div style="font-size:13px; font-weight:800; color:#fff; margin-bottom:10px;">정리</div>
+    <div style="display:flex; gap:36px;">
+      <p class="note" style="color:#cbd5e1; flex:1;">
+        <b style="color:#93c5fd;">A안을 권합니다.</b> 얻는 것은 한 행이지만, 진짜 이득은 <b style="color:#e2e8f0;">파서 규칙(“A열 ‘발주처’ 행 +1”)이 그대로 유효</b>하다는 점입니다.
+        기존 발주서 파일을 새 양식으로 다시 만들지 않아도, 파서가 <span class="mono">발주처</span>를 만난 행 다음부터 읽으므로 <b style="color:#e2e8f0;">구·신 양식이 동시에 통과</b>합니다.
+      </p>
+      <p class="note" style="color:#cbd5e1; flex:1;">
+        <b style="color:#fca5a5;">이건 안 함</b> — 라벨을 아예 지우고 “A열=발주처, B열=수령인”을 위치로만 약속하는 안. 사람이 직접 채우는 양식에서 열 뜻을 지우면
+        <b style="color:#e2e8f0;">발주처·수령인을 뒤집어 넣는 실수</b>가 나고, 그건 매칭 실패가 아니라 <b style="color:#fca5a5;">조용한 오배송</b>으로 끝납니다.
+      </p>
+      <p class="note" style="color:#cbd5e1; flex:1;">
+        <b style="color:#a5b4fc;">함께 손볼 것</b> — 작성안내 시트의 “표 구조 (행 순서 고정)” 문단, 파서 <span class="mono">headerRow</span> 상수,
+        <a href="엑셀내보내기-데스크탑.html" style="color:#93c5fd;">엑셀 내보내기</a>의 원본 양식 복원 로직(헤더 3행 기준으로 재작성).
+      </p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
