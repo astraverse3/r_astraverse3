@@ -22,6 +22,20 @@
 - 변경: `matrix-client.tsx` · `plan-발주서판매처리-D2c.md` · `리팩토링-백로그.md` · `report-발주서-D2c-시안대조-2026-09-11.md`
   · 시안 갱신본 11파일
 
+### 발주서 매트릭스 정렬 4종 · 죽은 `label` 제거 (D2c C0-d) `feat` `a190394`
+
+퇴근 직전 13분에 자기완결적인 C0-d만 떼어 갔다.
+
+- `MatrixSort`에 `vendor`(발주처별) 추가, **기본 정렬로**. 택배 시트는 같은 발주처가 흩어져 있어(§3①)
+  원본 순서로는 블록이 안 잡힌다. 발주처가 상수인 채널은 자연히 수령인 순이 된다.
+- 🔴 정렬 키를 `label` 문자열 → `recipient`/`vendor` 필드로. `label`이 `"발주처 → 수령인"`이라
+  「가나다」가 발주처 순이었다.
+- `MatrixRow.label`·`rowLabelOf` 제거 — 화면은 이미 `vendor`/`recipient`를 직접 조합했고 `label`은
+  정렬 키로만 남은 죽은 표시값. `MatrixRow` 타입에 「조합 문자열을 여기 두지 말 것」 주석을 박았다.
+- 테스트 30/30 (`rowLabelOf` 3건 삭제 · 택배 모양 픽스처로 발주처별·수령인 가나다 2건 추가). tsc·eslint ✅.
+  **브라우저 미확인**(C0-b와 함께 내일).
+- 변경: `lib/purchase-order-matrix.ts` · `.test.ts` · `matrix-client.tsx`
+
 ## 2026-09-10
 
 ### 도정구분별 수율 기준값 전 화면 반영 + 인디카 품종 축 `feat`
