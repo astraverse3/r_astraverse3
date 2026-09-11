@@ -117,8 +117,8 @@ export type MatrixColumnGroup = {
 
 export type MatrixRow = {
   orderId: number
-  /** 발주처≠수령인일 때만 `발주처 → 수령인` */
-  label: string
+  // 이름칸은 화면이 채널 규칙(`ChannelDecl`)으로 vendor·recipient를 직접 조합한다.
+  // 조합한 문자열을 여기 두면 정렬 키로 새어 나간다 — 한 번 그랬다(C0-d).
   vendor: string
   recipient: string
   createdAt: string
@@ -147,7 +147,7 @@ export type Matrix = {
   }
 }
 
-export type MatrixSort = 'recipient' | 'latest' | 'needsWork'
+export type MatrixSort = 'vendor' | 'recipient' | 'latest' | 'needsWork'
 
 // ------------------------------------------------------
 // 열 키 · 표기
@@ -160,17 +160,6 @@ export type MatrixSort = 'recipient' | 'latest' | 'needsWork'
 export function columnKeyOf(item: MatrixItemInput): string {
   if (item.productTypeId !== null) return `pt:${item.productTypeId}`
   return `raw:${item.rawItemName}|${item.packageType}|${item.rawPackaging ?? ''}`
-}
-
-/**
- * 행 머리글 — 발주처와 수령인이 다를 때만 `A → B`로 적는다 (택배·기업별은 파서가
- * 빈 수령인에 발주처를 복사해 두므로 대부분 같다).
- */
-export function rowLabelOf(vendor: string, recipient: string): string {
-  const v = vendor.trim()
-  const r = recipient.trim()
-  if (!r || v === r) return v
-  return `${v} → ${r}`
 }
 
 /** 규격 1개당 kg. 톤백은 라인의 요구 자루중량(#34)을 우선한다. */
@@ -333,7 +322,6 @@ function buildRow(
 
   return {
     orderId: order.id,
-    label: rowLabelOf(order.vendor, order.recipient),
     vendor: order.vendor,
     recipient: order.recipient,
     createdAt: order.createdAt,
@@ -380,17 +368,24 @@ export function buildMatrix(input: BuildMatrixInput): Matrix {
 // ------------------------------------------------------
 
 /**
- * 행 정렬 3종. **원본 배열을 건드리지 않는다.**
- *   recipient — 수령처 가나다
+ * 행 정렬 4종. **원본 배열을 건드리지 않는다.**
+ *   vendor    — 발주처별로 뭉친 뒤 그 안에서 수령인 가나다.
+ *               택배는 시트 원본에서 같은 발주처가 떨어져 나타나므로 이게 기본이다.
+ *   recipient — 수령인 가나다
  *   latest    — 최신 등록 순
- *   needsWork — 손댈 일이 남은 행 먼저, 그 안에서 가나다
+ *   needsWork — 손댈 일이 남은 행 먼저, 그 안에서 수령인 가나다
+ *
+ * 🔴 정렬 키는 필드다. 화면용으로 조합한 문자열(`발주처 → 수령인`)을 키로 쓰면
+ * 「수령인 가나다」가 발주처 순이 된다 — C0-d에서 걷어낸 결함.
  */
 export function sortMatrixRows(rows: MatrixRow[], sort: MatrixSort): MatrixRow[] {
-  const byLabel = (a: MatrixRow, b: MatrixRow) => a.label.localeCompare(b.label, 'ko')
+  const ko = (a: string, b: string) => a.localeCompare(b, 'ko')
+  const byRecipient = (a: MatrixRow, b: MatrixRow) => ko(a.recipient, b.recipient)
   const copy = [...rows]
-  if (sort === 'recipient') return copy.sort(byLabel)
+  if (sort === 'vendor') return copy.sort((a, b) => ko(a.vendor, b.vendor) || byRecipient(a, b))
+  if (sort === 'recipient') return copy.sort(byRecipient)
   if (sort === 'latest') {
-    return copy.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || byLabel(a, b))
+    return copy.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || byRecipient(a, b))
   }
-  return copy.sort((a, b) => Number(b.needsWork) - Number(a.needsWork) || byLabel(a, b))
+  return copy.sort((a, b) => Number(b.needsWork) - Number(a.needsWork) || byRecipient(a, b))
 }

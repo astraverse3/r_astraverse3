@@ -5,7 +5,6 @@ import {
   sortMatrixRows,
   cellStatusOf,
   columnKeyOf,
-  rowLabelOf,
   unitWeightOf,
   groupTitleOf,
   type MatrixItemInput,
@@ -60,19 +59,6 @@ const input = (o: Partial<BuildMatrixInput>): BuildMatrixInput => ({
 // ------------------------------------------------------
 // 행 머리글 — 발주처≠수령인일 때만 화살표
 // ------------------------------------------------------
-test('rowLabelOf: 발주처와 수령인이 같으면 하나만', () => {
-  assert.equal(rowLabelOf('농협', '농협'), '농협')
-})
-
-test('rowLabelOf: 수령인이 비면 발주처만', () => {
-  assert.equal(rowLabelOf('농협', ''), '농협')
-  assert.equal(rowLabelOf('농협', '   '), '농협')
-})
-
-test('rowLabelOf: 다르면 화살표로 잇는다', () => {
-  assert.equal(rowLabelOf('농협', '서울지점'), '농협 → 서울지점')
-})
-
 // ------------------------------------------------------
 // 규격 → kg
 // ------------------------------------------------------
@@ -272,10 +258,10 @@ const sortFixture = () =>
     }),
   ).rows
 
-test('sortMatrixRows: 수령처 가나다', () => {
+test('sortMatrixRows: 수령인 가나다', () => {
   const r = sortMatrixRows(sortFixture(), 'recipient')
   assert.deepEqual(
-    r.map((x) => x.label),
+    r.map((x) => x.recipient),
     ['가나다', '마트', '하나로'],
   )
 })
@@ -283,24 +269,61 @@ test('sortMatrixRows: 수령처 가나다', () => {
 test('sortMatrixRows: 최신순', () => {
   const r = sortMatrixRows(sortFixture(), 'latest')
   assert.deepEqual(
-    r.map((x) => x.label),
+    r.map((x) => x.recipient),
     ['가나다', '마트', '하나로'],
   )
 })
 
 test('sortMatrixRows: 작업필요 우선 — 남은 행이 맨 위', () => {
   const r = sortMatrixRows(sortFixture(), 'needsWork')
-  assert.equal(r[0].label, '하나로')
+  assert.equal(r[0].recipient, '하나로')
   assert.equal(r[0].needsWork, true)
 })
 
 test('sortMatrixRows: 원본 배열을 건드리지 않는다', () => {
   const rows = sortFixture()
-  const before = rows.map((r) => r.label)
+  const before = rows.map((r) => r.recipient)
   sortMatrixRows(rows, 'recipient')
   assert.deepEqual(
-    rows.map((r) => r.label),
+    rows.map((r) => r.recipient),
     before,
+  )
+})
+
+// 택배 실데이터 모양 — 발주처 하나에 수령인 여럿, 시트 원본에서는 발주처가 흩어져 있다
+const vendorFixture = () =>
+  buildMatrix(
+    input({
+      orders: [
+        order(1, '네이버스토어', '최지애'),
+        order(2, '해남미소', '임수진'),
+        order(3, '네이버스토어', '김성욱'),
+        order(4, '해남로컬푸드'), // recipient = vendor
+      ],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 12, orderId: 2, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 14, orderId: 4, productTypeId: 1, orderedQty: 1 }),
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+  ).rows
+
+test('sortMatrixRows: 발주처별 — 흩어진 발주처가 뭉치고 그 안은 수령인 가나다', () => {
+  const r = sortMatrixRows(vendorFixture(), 'vendor')
+  assert.deepEqual(
+    r.map((x) => `${x.vendor}/${x.recipient}`),
+    ['네이버스토어/김성욱', '네이버스토어/최지애', '해남로컬푸드/해남로컬푸드', '해남미소/임수진'],
+  )
+})
+
+test('sortMatrixRows: 수령인 가나다는 발주처를 무시한다 — 조합 문자열 정렬이던 결함', () => {
+  const r = sortMatrixRows(vendorFixture(), 'recipient')
+  assert.deepEqual(
+    r.map((x) => x.recipient),
+    ['김성욱', '임수진', '최지애', '해남로컬푸드'],
   )
 })
 

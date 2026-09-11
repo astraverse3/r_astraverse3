@@ -67,17 +67,20 @@ function rowStatusOf(statuses: CellStatus[]): CellStatus {
     return 'COMPLETED'
 }
 
+// 순서·라벨은 핸드오프 §7. 발주처별이 기본 — 택배 시트는 같은 발주처가 흩어져 있어
+// 원본 순서로는 블록이 안 잡힌다. 발주처가 상수인 채널(이마트·해남급식)은 자연히 수령인 순.
 const SORTS: { key: MatrixSort; label: string }[] = [
-    { key: 'needsWork', label: '작업필요' },
-    { key: 'recipient', label: '가나다' },
+    { key: 'vendor', label: '발주처별' },
+    { key: 'recipient', label: '수령인 가나다' },
     { key: 'latest', label: '최신' },
+    { key: 'needsWork', label: '작업필요' },
 ]
 
 const fmt = (n: number) => n.toLocaleString()
 const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 
 export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix: Matrix }) {
-    const [sort, setSort] = useState<MatrixSort>('needsWork')
+    const [sort, setSort] = useState<MatrixSort>('vendor')
     const rows = useMemo(() => sortMatrixRows(matrix.rows, sort), [matrix.rows, sort])
 
     const availKg = useMemo(
