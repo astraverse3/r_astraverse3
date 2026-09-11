@@ -120,8 +120,10 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
     //    Neon 왕복이 건당 ~200ms라 순차로 하면 그대로 더해진다(실측: 병렬화 전 1.9초).
     //    가용 공식은 `lib/package-available.ts`의 `availableOf` 하나만 쓴다 —
     //    여기서 손으로 빼면 화면과 차감 판정이 갈린다(백로그 §20).
-    const [availability, skus] = await Promise.all([
-      skuIds.length > 0 ? loadAvailability(skuIds) : Promise.resolve<AvailabilityMap>({}),
+    const [{ qty: availability, kg: availabilityKg }, skus] = await Promise.all([
+      skuIds.length > 0
+        ? loadAvailability(skuIds)
+        : Promise.resolve<{ qty: AvailabilityMap; kg: AvailabilityMap }>({ qty: {}, kg: {} }),
       skuIds.length > 0 ? loadSkuMeta(skuIds) : Promise.resolve<MatrixSkuInput[]>([]),
     ])
 
@@ -135,6 +137,7 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
       items,
       skus,
       availability,
+      availabilityKg,
     })
 
     return {
@@ -172,18 +175,28 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
  * SKU별 가용재고 합. 왕복 **1회** — 등장한 SKU의 재고 행만 끌어와 메모리에서 합친다.
  * 행 수는 SKU 수에 비례할 뿐이라(현재 제품재고 전체가 636행) 부담이 없다.
  */
-async function loadAvailability(skuIds: number[]): Promise<AvailabilityMap> {
+async function loadAvailability(
+  skuIds: number[],
+): Promise<{ qty: AvailabilityMap; kg: AvailabilityMap }> {
   const pkgs = await prisma.millingOutputPackage.findMany({
     where: { productTypeId: { in: skuIds } },
-    select: { productTypeId: true, count: true, ...MOVEMENT_COUNT_SELECT },
+    select: { productTypeId: true, count: true, weightPerUnit: true, ...MOVEMENT_COUNT_SELECT },
   })
-  const map: AvailabilityMap = {}
-  for (const id of skuIds) map[id] = 0
+  const qty: AvailabilityMap = {}
+  const kg: AvailabilityMap = {}
+  for (const id of skuIds) {
+    qty[id] = 0
+    kg[id] = 0
+  }
   for (const p of pkgs) {
     if (p.productTypeId === null) continue
-    map[p.productTypeId] = (map[p.productTypeId] ?? 0) + Math.max(0, availableOf(p))
+    const n = Math.max(0, availableOf(p))
+    qty[p.productTypeId] = (qty[p.productTypeId] ?? 0) + n
+    // 🔴 kg는 행마다 곱한다 — 톤백은 재고 행마다 `weightPerUnit`이 다르다(203~1,014kg).
+    //    개수 합에 한 중량을 곱하면 C0-a가 잡은 그 결함(11,000 vs 7,067)이 된다.
+    kg[p.productTypeId] = (kg[p.productTypeId] ?? 0) + n * p.weightPerUnit
   }
-  return map
+  return { qty, kg }
 }
 
 /** 열 머리글에 쓸 SKU 이름들. 왕복 1회. */

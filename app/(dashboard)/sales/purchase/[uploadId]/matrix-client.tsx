@@ -18,7 +18,13 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { channelLabel } from '@/lib/purchase-channel'
-import { sortMatrixRows, type CellStatus, type Matrix, type MatrixSort } from '@/lib/purchase-order-matrix'
+import {
+    isColumnShort,
+    sortMatrixRows,
+    type CellStatus,
+    type Matrix,
+    type MatrixSort,
+} from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 
@@ -83,10 +89,12 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
     const [sort, setSort] = useState<MatrixSort>('vendor')
     const rows = useMemo(() => sortMatrixRows(matrix.rows, sort), [matrix.rows, sort])
 
+    // 톤백 열은 서버가 행마다 곱해 온 kg 합을 그대로 쓴다 — 개수 × 열 중량은 틀린다(C0-a)
     const availKg = useMemo(
         () =>
             matrix.columns.reduce(
-                (t, c) => t + (c.availableQty ?? 0) * (c.unitWeightKg ?? 0),
+                (t, c) =>
+                    t + (c.bulk ? (c.availableKg ?? 0) : (c.availableQty ?? 0) * (c.unitWeightKg ?? 0)),
                 0,
             ),
         [matrix.columns],
@@ -230,7 +238,8 @@ function MatrixHead({ matrix, availKg }: { matrix: Matrix; availKg: number }) {
                         className="sticky z-30 border-b border-r border-slate-200 bg-slate-100 px-1.5 text-center text-[10.5px] font-semibold text-slate-500"
                         style={{ top: H_GROUP, height: H_SPEC, minWidth: 46 }}
                     >
-                        {c.packageType}
+                        {/* 톤백은 자루중량까지 적는다 — 「톤백」만으론 1,000kg 열과 200kg 열이 안 갈린다 */}
+                        {c.bulk ? `${c.packageType} ${fmtKg(c.unitWeightKg ?? 0)}kg` : c.packageType}
                     </th>
                 ))}
             </tr>
@@ -251,9 +260,10 @@ function MatrixHead({ matrix, availKg }: { matrix: Matrix; availKg: number }) {
             <SumRow
                 top={H_GROUP + H_SPEC + H_SUM_MAIN}
                 label="가용 재고"
-                unit="(현재 SKU · 개)"
+                unit="(현재 SKU · 개 · 톤백은 kg)"
                 columns={matrix.columns}
                 valueOf={(c) => c.availableQty}
+                kgOf={(c) => (c.bulk ? c.availableKg : null)}
                 kg={availKg}
                 colByKey={colByKey}
             />
@@ -297,6 +307,7 @@ function SumRow({
     unit,
     columns,
     valueOf,
+    kgOf,
     kg,
     strong,
     colByKey,
@@ -306,6 +317,8 @@ function SumRow({
     unit: string
     columns: Matrix['columns']
     valueOf: (c: Matrix['columns'][number]) => number | null
+    /** 값을 kg으로 적을 열 — 톤백 가용 칸. null이면 `valueOf`의 개수를 쓴다 */
+    kgOf?: (c: Matrix['columns'][number]) => number | null
     kg: number
     strong?: boolean
     colByKey: Map<string, Matrix['columns'][number]>
@@ -327,12 +340,11 @@ function SumRow({
             </th>
             {columns.map((c) => {
                 const v = valueOf(c)
+                const colKg = kgOf?.(c) ?? null
                 const col = colByKey.get(c.key)
-                // 🔴 주문이 가용을 넘으면 양쪽 띠 모두 주황으로 — 어느 규격이 모자란지 한 줄로 보인다
-                const short =
-                    col !== undefined &&
-                    col.availableQty !== null &&
-                    col.orderedQty > col.availableQty
+                // 🔴 주문이 가용을 넘으면 양쪽 띠 모두 주황으로 — 어느 규격이 모자란지 한 줄로 보인다.
+                //    판정은 lib의 `isColumnShort` 하나(톤백은 kg끼리 비교).
+                const short = col !== undefined && isColumnShort(col)
                 return (
                     <th
                         key={c.key}
@@ -351,7 +363,16 @@ function SumRow({
                         )}
                         style={{ top, height }}
                     >
-                        {v === null ? '·' : fmt(v)}
+                        {colKg !== null ? (
+                            <>
+                                {fmtKg(colKg)}
+                                <span className="ml-0.5 text-[8.5px] font-medium text-slate-400">kg</span>
+                            </>
+                        ) : v === null ? (
+                            '·'
+                        ) : (
+                            fmt(v)
+                        )}
                     </th>
                 )
             })}

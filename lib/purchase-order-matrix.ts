@@ -61,6 +61,12 @@ export type BuildMatrixInput = {
   items: MatrixItemInput[]
   skus: MatrixSkuInput[]
   availability: AvailabilityMap
+  /**
+   * productTypeId → 지금 쓸 수 있는 **kg 합**. 톤백 열이 쓴다.
+   * 🔴 개수 × 요구중량으로 환산하면 틀린다 — 톤백은 자루마다 중량이 제각각이라
+   * (실측 203~1,014kg) 11자루 × 1,000 = 11,000이 나오는데 실제는 7,067이다.
+   */
+  availabilityKg: AvailabilityMap
 }
 
 // ------------------------------------------------------
@@ -95,8 +101,15 @@ export type MatrixColumn = {
   unitWeightKg: number | null
   orderedQty: number
   allocatedQty: number
-  /** 이 열의 SKU 가용재고. 매칭실패 열은 null */
+  /** 이 열의 SKU 가용재고(개). 매칭실패 열은 null */
   availableQty: number | null
+  /**
+   * 톤백 열 — 라인이 자루중량(#34)을 갖는다. 같은 SKU라도 중량이 다르면 다른 열이고,
+   * 가용은 개수가 아니라 `availableKg`로 읽는다(자루가 제각각이라 개수는 의미가 없다).
+   */
+  bulk: boolean
+  /** 톤백 열의 SKU 가용 kg 합. 톤백이 아니면 null */
+  availableKg: number | null
 }
 
 /**
@@ -158,8 +171,22 @@ export type MatrixSort = 'vendor' | 'recipient' | 'latest' | 'needsWork'
  * 실패 라인을 하나로 뭉치면 수동지정할 때 무엇을 지정하는지 알 수 없다.
  */
 export function columnKeyOf(item: MatrixItemInput): string {
-  if (item.productTypeId !== null) return `pt:${item.productTypeId}`
-  return `raw:${item.rawItemName}|${item.packageType}|${item.rawPackaging ?? ''}`
+  // 🔴 톤백은 자루중량까지 열 키다. 1,000kg 주문과 200kg 주문이 같은 SKU라고 한 열에
+  //    합쳐지면 「톤백 2개」라는 의미 없는 소계가 찍힌다(C0-a, 실데이터 #19 시아스).
+  const w = item.unitWeightKg !== null ? `|w:${item.unitWeightKg}` : ''
+  if (item.productTypeId !== null) return `pt:${item.productTypeId}${w}`
+  return `raw:${item.rawItemName}|${item.packageType}|${item.rawPackaging ?? ''}${w}`
+}
+
+/**
+ * 열 소계가 가용을 넘는가 — 소계 띠 두 줄을 주황으로 칠하는 판정.
+ * 톤백은 kg끼리 비교한다. 개수 비교(주문 2자루 vs 가용 11자루)는 성립하지 않는다.
+ */
+export function isColumnShort(col: MatrixColumn): boolean {
+  if (col.bulk) {
+    return col.availableKg !== null && col.orderedQty * (col.unitWeightKg ?? 0) > col.availableKg
+  }
+  return col.availableQty !== null && col.orderedQty > col.availableQty
 }
 
 /** 규격 1개당 kg. 톤백은 라인의 요구 자루중량(#34)을 우선한다. */
@@ -249,6 +276,7 @@ function buildColumns(input: BuildMatrixInput): {
 
     let col = colByKey.get(cKey)
     if (!col) {
+      const bulk = item.unitWeightKg !== null
       col = {
         key: cKey,
         productTypeId: item.productTypeId,
@@ -259,6 +287,11 @@ function buildColumns(input: BuildMatrixInput): {
         allocatedQty: 0,
         availableQty:
           item.productTypeId !== null ? (input.availability[item.productTypeId] ?? 0) : null,
+        bulk,
+        availableKg:
+          bulk && item.productTypeId !== null
+            ? (input.availabilityKg[item.productTypeId] ?? 0)
+            : null,
       }
       colByKey.set(cKey, col)
       group.columnKeys.push(cKey)
@@ -311,11 +344,22 @@ function buildRow(
   }
 
   for (const [key, cell] of Object.entries(cells)) {
+    const col = colByKey.get(key)
+    // 톤백은 kg 기준 — 「남은 kg > 가용 kg」를 개수 축으로 옮겨 같은 판정식에 넣는다
+    // (availableKg / 자루중량 < remaining ⟺ availableKg < remaining × 자루중량).
+    const available =
+      col === undefined
+        ? null
+        : col.bulk
+          ? col.availableKg !== null && col.unitWeightKg
+            ? col.availableKg / col.unitWeightKg
+            : null
+          : col.availableQty
     cell.status = cellStatusOf(
       cell.orderedQty,
       cell.allocatedQty,
       productTypeByKey.get(key) ?? null,
-      colByKey.get(key)?.availableQty ?? null,
+      available,
     )
     cell.remainingQty = Math.max(0, cell.orderedQty - cell.allocatedQty)
   }

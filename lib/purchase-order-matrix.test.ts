@@ -5,6 +5,7 @@ import {
   sortMatrixRows,
   cellStatusOf,
   columnKeyOf,
+  isColumnShort,
   unitWeightOf,
   groupTitleOf,
   type MatrixItemInput,
@@ -53,12 +54,10 @@ const input = (o: Partial<BuildMatrixInput>): BuildMatrixInput => ({
   items: [],
   skus: [],
   availability: {},
+  availabilityKg: {},
   ...o,
 })
 
-// ------------------------------------------------------
-// 행 머리글 — 발주처≠수령인일 때만 화살표
-// ------------------------------------------------------
 // ------------------------------------------------------
 // 규격 → kg
 // ------------------------------------------------------
@@ -427,4 +426,97 @@ test('buildMatrix: 열 순서가 그룹 순서와 맞물린다 (colspan 정합)'
     m.groups.flatMap((g) => g.columnKeys),
     m.columns.map((c) => c.key),
   )
+})
+
+// ------------------------------------------------------
+// 톤백 열 (C0-a) — 실데이터 #19 시아스: 같은 SKU 18, 라인 두 개가 1,000kg·200kg
+// 가용 11자루의 kg 합은 7,067(203~1,014kg 제각각). 개수 × 1,000 = 11,000은 틀린 값.
+// ------------------------------------------------------
+const bulkInput = (o: Partial<BuildMatrixInput> = {}) =>
+  input({
+    orders: [order(1, '시아스')],
+    items: [
+      item({ id: 310, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000, orderedQty: 5 }),
+      item({ id: 311, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 200, orderedQty: 3 }),
+    ],
+    skus: [sku(18, '톤백')],
+    availability: { 18: 11 },
+    availabilityKg: { 18: 7067 },
+    ...o,
+  })
+
+test('columnKeyOf: 톤백은 자루중량까지 열 키다 — 중량이 다르면 다른 열', () => {
+  const a = item({ id: 1, orderId: 1, productTypeId: 18, unitWeightKg: 1000 })
+  const b = item({ id: 2, orderId: 1, productTypeId: 18, unitWeightKg: 200 })
+  const c = item({ id: 3, orderId: 1, productTypeId: 18, unitWeightKg: null })
+  assert.notEqual(columnKeyOf(a), columnKeyOf(b))
+  assert.equal(columnKeyOf(a), 'pt:18|w:1000')
+  assert.equal(columnKeyOf(c), 'pt:18') // 일반 규격 키는 그대로 — 기존 열 구성이 안 바뀐다
+})
+
+test('buildMatrix: 톤백 1,000kg·200kg이 두 열로 선다 (한 열로 합쳐지던 결함)', () => {
+  const m = buildMatrix(bulkInput())
+  assert.equal(m.columns.length, 2)
+  assert.deepEqual(
+    m.columns.map((c) => [c.unitWeightKg, c.orderedQty, c.bulk]),
+    [
+      [1000, 5, true],
+      [200, 3, true],
+    ],
+  )
+})
+
+test('buildMatrix: 톤백 열 가용은 kg 합 — 개수 × 중량으로 환산하지 않는다', () => {
+  const m = buildMatrix(bulkInput())
+  assert.equal(m.columns[0].availableKg, 7067)
+  assert.equal(m.columns[1].availableKg, 7067)
+  assert.equal(m.columns[0].availableQty, 11) // 개수는 참고용으로 남는다
+})
+
+test('buildMatrix: 일반 규격 열은 bulk=false·availableKg=null', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [item({ id: 1, orderId: 1, productTypeId: 1, orderedQty: 3 })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 10 },
+    }),
+  )
+  assert.equal(m.columns[0].bulk, false)
+  assert.equal(m.columns[0].availableKg, null)
+})
+
+test('cellStatusOf/톤백: 재고부족은 kg 기준 — 5,000kg 주문 vs 7,067kg 가용은 부족 아님', () => {
+  const m = buildMatrix(bulkInput())
+  assert.equal(m.rows[0].cells['pt:18|w:1000'].status, 'PENDING')
+  assert.equal(m.rows[0].cells['pt:18|w:200'].status, 'PENDING')
+})
+
+test('cellStatusOf/톤백: 8,000kg 주문 vs 7,067kg 가용은 부족 — 개수(8 < 11)로 보면 놓친다', () => {
+  const m = buildMatrix(
+    bulkInput({
+      items: [item({ id: 310, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000, orderedQty: 8 })],
+    }),
+  )
+  assert.equal(m.rows[0].cells['pt:18|w:1000'].status, 'SHORTAGE')
+})
+
+test('isColumnShort: 톤백은 kg끼리, 일반은 개수끼리', () => {
+  const m = buildMatrix(bulkInput())
+  assert.equal(isColumnShort(m.columns[0]), false) // 5×1,000 = 5,000 < 7,067
+  const short = buildMatrix(
+    bulkInput({
+      items: [item({ id: 310, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000, orderedQty: 8 })],
+    }),
+  )
+  assert.equal(isColumnShort(short.columns[0]), true) // 8,000 > 7,067
+  const plain = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [item({ id: 1, orderId: 1, productTypeId: 1, orderedQty: 12 })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 10 },
+    }),
+  )
+  assert.equal(isColumnShort(plain.columns[0]), true) // 12 > 10
 })
