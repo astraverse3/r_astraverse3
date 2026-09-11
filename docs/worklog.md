@@ -36,6 +36,21 @@
   **브라우저 미확인**(C0-b와 함께 내일).
 - 변경: `lib/purchase-order-matrix.ts` · `.test.ts` · `matrix-client.tsx`
 
+### 발주서 매트릭스 톤백 열 — 중량별 분리 · 가용은 kg 합 (D2c C0-a) `fix` `a7ee142`
+
+D2b 결함. `columnKeyOf`가 `pt:18`만 봐서 **1,000kg·200kg 톤백이 한 열로 합쳐지고**, 총 가용 kg이
+「11자루 × 1,000 = 11,000」으로 찍혔다(실제 **7,067** — 자루가 203~1,014kg 제각각).
+
+- `columnKeyOf`에 `|w:<kg>` 접미 — 톤백은 자루중량까지 열 키. 일반 규격 키는 그대로라 기존 열 구성 불변.
+- `MatrixColumn.bulk`/`availableKg` 신설, `BuildMatrixInput.availabilityKg` 추가. 액션 `loadAvailability`가
+  `{qty, kg}` 반환 — 🔴 **kg는 재고 행마다 `weightPerUnit`을 곱해 합친다**(개수 합 × 한 중량이 바로 그 결함).
+- 재고부족 판정은 톤백만 kg 기준 — `availableKg / 자루중량`을 개수 축으로 넣어 `cellStatusOf` 시그니처는 안 건드림.
+  열 소계 주황 판정도 `isColumnShort`(lib)로 통일(화면 인라인 → 순수함수).
+- 화면: 규격 헤더 「톤백 1,000kg」, 가용 띠의 톤백 칸은 kg 단위(`SumRow.kgOf`), 총 가용 kg은 bulk 열 `availableKg` 그대로.
+- 테스트 7건 추가(#19 시아스 모양). **8,000kg 주문이 개수로는 8 < 11이라 놓치던 부족**이 kg로는 잡힌다. 전체 257/257.
+  **브라우저 미확인**(`/sales/purchase/19`가 두 열로 서는지 내일).
+- 변경: `lib/purchase-order-matrix.ts` · `.test.ts` · `app/actions/purchase-order-matrix.ts` · `matrix-client.tsx`
+
 ## 2026-09-10
 
 ### 도정구분별 수율 기준값 전 화면 반영 + 인디카 품종 축 `feat`
