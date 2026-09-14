@@ -54,7 +54,7 @@ export function UploadTable({
                         상차
                         <ChevronUp className="w-3 h-3" strokeWidth={2.6} />
                     </div>
-                    <div className="text-right">수령처</div>
+                    <div className="text-right">수령인</div>
                     <div className="hidden sm:block">진행</div>
                     <div className="hidden sm:block">매칭실패</div>
                     <div className="hidden sm:block">업로드</div>

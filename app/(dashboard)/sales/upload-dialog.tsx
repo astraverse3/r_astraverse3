@@ -165,7 +165,7 @@ export function UploadDialog() {
         }
         const { bundleCount, orderCount, itemCount, failed } = res.summary
         toast.success(
-            `묶음 ${bundleCount}건 등록 — 수령처 ${orderCount} · 라인 ${itemCount}` +
+            `묶음 ${bundleCount}건 등록 — 수령인 ${orderCount} · 라인 ${itemCount}` +
                 (failed > 0 ? ` (매칭실패 ${failed})` : ''),
         )
         if (res.warnings.length > 0) {

@@ -2,7 +2,7 @@
 //
 // 계획서 `docs/plan/plan-발주서판매처리-D2매트릭스.md` D2a.
 //
-//   행 = 수령처 · 열 = 제품규격 · 셀 = 주문수량(+ 차감상태)
+//   행 = 수령인 · 열 = 제품규격 · 셀 = 주문수량(+ 차감상태)
 //
 // 호출부(`app/actions/purchase-order-matrix.ts`)가 배치 조회한 결과를 넣는다.
 // 여기서 DB를 만지지 않는 이유는 `lib/purchase-order-allocation.ts`와 같다 —
@@ -80,7 +80,7 @@ export type BuildMatrixInput = {
 export type CellStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'UNMATCHED' | 'SHORTAGE'
 
 export type MatrixCell = {
-  /** 같은 (수령처, 열)에 라인이 둘 이상일 수 있다 — 전부 담는다 */
+  /** 같은 (수령인, 열)에 라인이 둘 이상일 수 있다 — 전부 담는다 */
   itemIds: number[]
   orderedQty: number
   allocatedQty: number
@@ -307,7 +307,7 @@ function buildColumns(input: BuildMatrixInput): {
 }
 
 /**
- * 한 행(수령처)의 셀을 채운다.
+ * 한 행(수령인)의 셀을 채운다.
  * 🔴 상태는 라인마다 내지 않고 **셀 합계가 다 모인 뒤** 한 번에 낸다 —
  * 같은 칸에 라인이 둘이면 합쳐서 봐야 「부분」인지 「완료」인지가 맞다.
  */

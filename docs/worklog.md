@@ -1,5 +1,21 @@
 # 작업일지
 
+## 2026-09-14
+
+### 발주서 매트릭스 채널별 2단 표기(C0-c) · 톤백 라벨 정리 `feat` `(커밋)`
+
+C0-a·b·d 브라우저 확인에서 사용자가 둘을 짚었다 — 규격 머리 `톤백 1,000kg`의 「톤백」이 중복이고,
+확정해 둔 표기 규칙이 아직 `←발주처` 옛 표기였다. C0-c는 확정만 되어 있었고 구현은 이번이 처음.
+
+- **`lib/purchase-channel.ts`** — `ChannelDecl` · `CHANNEL_DECL` 5채널 · `nameTiersOf()`. 규칙은 하나(`굵은 값 ｜ 세로선 ｜ 연한 값`),
+  채널은 `primary`로 순서만 바뀐다. 서울급식 반전은 분기가 아니라 같은 함수의 결과.
+- **`matrix-client.tsx`** — `NameCell`(앞 값 104px `flex-none truncate` + `border-l` + 뒤 값 `min-w-0 truncate` 10.5px slate-500),
+  열 머리 `decl.columnLabel`(수령인/발주처/거래처), 톤백 2행 라벨 kg만.
+- **용어 §7** — 「수령처」→「수령인」 전부(화면 3곳 · 업로드 다이얼로그·목록 · 주석·테스트명).
+- 신규 테스트 5건(`purchase-channel.test.ts`). tsc 0 · eslint 0 · test 262/262. **브라우저 미확인.**
+- 변경: `purchase-channel.ts`(+test) · `matrix-client.tsx` · `upload-dialog.tsx` · `upload-table.tsx` · `purchase-order-matrix.ts`(+test)
+  · `purchase-order-parser.test.ts` · `purchase-order-allocation.ts` · 계획서 D2c · `report-발주서-D2c-C0c-2026-09-14.md`
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`

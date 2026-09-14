@@ -198,7 +198,7 @@ test('실파일 서울급식: 서식에 든 단위(1 kg) 정규화 (#33)', () =>
   )
 })
 
-test('실파일 해남급식: 소계 행 + 수량 0인 수령처는 발주 없음', () => {
+test('실파일 해남급식: 소계 행 + 수량 0인 수령인은 발주 없음', () => {
   const haenam = sheet('해남급식_260821')
   assert.equal(haenam.suggestedChannel, 'MEAL_HAENAM')
   // 땅끝농협·참솔은 전 규격 0 → 발주 라인이 없어 제외

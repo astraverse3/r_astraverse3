@@ -2,7 +2,8 @@
 
 // 발주서 매트릭스 — 읽기 전용 (계획서 D2b)
 //
-// 행=수령처 · 열=제품규격 · 셀=주문수량(색=차감상태).
+// 행=수령인 · 열=제품규격 · 셀=주문수량(색=차감상태).
+// 이름칸은 채널 선언(`CHANNEL_DECL`)대로 `굵은 값 ｜ 세로선 ｜ 연한 값` 2단이다(C0-c).
 // 셀 클릭(FIFO 배분 팝오버)은 D2c, 행 일괄선택은 D3에서 붙는다.
 //
 // 🔴 **밀도가 목적인 화면이라 목록 표준규격(44px 행)을 따르지 않는다.**
@@ -17,12 +18,13 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { channelLabel } from '@/lib/purchase-channel'
+import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
     isColumnShort,
     sortMatrixRows,
     type CellStatus,
     type Matrix,
+    type MatrixRow,
     type MatrixSort,
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
@@ -32,6 +34,9 @@ import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 // sticky 좌표 — 좌측 고정 3칸
 // ------------------------------------------------------
 const W_NAME = 184
+// 이름칸 앞 값 고정 폭 — 구분선이 모든 행에서 같은 x에 서야 한다(핸드오프 §4).
+// ⚠️ 104px는 재검토 대상: `이마트본사 김보훈`·`울림생협 북가좌점`·`롯데백화점 평촌점`은 잘린다.
+const W_NAME_HEAD = 104
 const W_STATUS = 60
 const W_PROGRESS = 92
 const L_STATUS = W_NAME
@@ -88,6 +93,7 @@ const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix: Matrix }) {
     const [sort, setSort] = useState<MatrixSort>('vendor')
     const rows = useMemo(() => sortMatrixRows(matrix.rows, sort), [matrix.rows, sort])
+    const decl = CHANNEL_DECL[header.channel as PurchaseChannel]
 
     // 톤백 열은 서버가 행마다 곱해 온 kg 합을 그대로 쓴다 — 개수 × 열 중량은 틀린다(C0-a)
     const availKg = useMemo(
@@ -106,7 +112,7 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
 
             <div className="overflow-auto rounded-xl border border-slate-200 bg-card max-h-[calc(100dvh-230px)]">
                 <table className="border-separate border-spacing-0 text-[11.5px]">
-                    <MatrixHead matrix={matrix} availKg={availKg} />
+                    <MatrixHead matrix={matrix} availKg={availKg} nameLabel={decl.columnLabel} />
                     <tbody>
                         {rows.map((row) => {
                             const status = rowStatusOf(
@@ -119,18 +125,7 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
                                         className="sticky z-20 bg-card text-left group-hover:bg-slate-50"
                                         style={{ left: 0, width: W_NAME, minWidth: W_NAME }}
                                     >
-                                        <span className="block truncate text-[12.5px] font-bold text-foreground">
-                                            {row.recipient && row.vendor !== row.recipient ? (
-                                                <>
-                                                    {row.recipient}
-                                                    <span className="ml-1 font-medium text-slate-400">
-                                                        ←{row.vendor}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                row.vendor
-                                            )}
-                                        </span>
+                                        <NameCell decl={decl} row={row} />
                                     </Th>
                                     <Th
                                         as="td"
@@ -190,13 +185,21 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
 // ------------------------------------------------------
 // 머리글 4행
 // ------------------------------------------------------
-function MatrixHead({ matrix, availKg }: { matrix: Matrix; availKg: number }) {
+function MatrixHead({
+    matrix,
+    availKg,
+    nameLabel,
+}: {
+    matrix: Matrix
+    availKg: number
+    nameLabel: string
+}) {
     const colByKey = new Map(matrix.columns.map((c) => [c.key, c]))
     return (
         <thead>
             {/* 1행 — 품목(그룹). 발주서 원본 순서 그대로 */}
             <tr>
-                <HeadCorner left={0} width={W_NAME} label="수령처" align="left" />
+                <HeadCorner left={0} width={W_NAME} label={nameLabel} align="left" />
                 <HeadCorner left={L_STATUS} width={W_STATUS} label="상태" />
                 <HeadCorner left={L_PROGRESS} width={W_PROGRESS} label="진행" shadow />
                 {matrix.groups.map((g) => (
@@ -238,8 +241,9 @@ function MatrixHead({ matrix, availKg }: { matrix: Matrix; availKg: number }) {
                         className="sticky z-30 border-b border-r border-slate-200 bg-slate-100 px-1.5 text-center text-[10.5px] font-semibold text-slate-500"
                         style={{ top: H_GROUP, height: H_SPEC, minWidth: 46 }}
                     >
-                        {/* 톤백은 자루중량까지 적는다 — 「톤백」만으론 1,000kg 열과 200kg 열이 안 갈린다 */}
-                        {c.bulk ? `${c.packageType} ${fmtKg(c.unitWeightKg ?? 0)}kg` : c.packageType}
+                        {/* 톤백은 자루중량만 적는다 — 「톤백」은 1행 그룹에 이미 있고,
+                            중량이 없으면 1,000kg 열과 200kg 열이 안 갈린다 */}
+                        {c.bulk ? `${fmtKg(c.unitWeightKg ?? 0)}kg` : c.packageType}
                     </th>
                 ))}
             </tr>
@@ -422,7 +426,7 @@ function Header({
                 </span>
                 <h1 className="text-[17px] font-bold text-foreground">{header.sheetName}</h1>
                 <span className="text-[12.5px] text-slate-500">
-                    {header.orderCount}건 · {matrix.rows.length}수령처 · {matrix.columns.length}규격
+                    {header.orderCount}건 · {matrix.rows.length}수령인 · {matrix.columns.length}규격
                 </span>
                 {header.orderDate && (
                     <span className="text-[12.5px] text-slate-400">발주 {header.orderDate}</span>
@@ -453,10 +457,42 @@ function Header({
                 <p className="text-[12.5px] text-slate-500">
                     주문 <b className="text-foreground">{fmt(matrix.totals.orderedQty)}개</b> ·{' '}
                     <b className="text-foreground">{fmtKg(matrix.totals.orderedKg)}kg</b> 중{' '}
-                    <b className="text-amber-700">{matrix.totals.needsWorkRows}수령처</b>가 작업 필요
+                    <b className="text-amber-700">{matrix.totals.needsWorkRows}수령인</b>이 작업 필요
                 </p>
             )}
         </div>
+    )
+}
+
+// ------------------------------------------------------
+// 이름칸 — `굵은 값 ｜ 세로선 ｜ 연한 값` (C0-c)
+// ------------------------------------------------------
+/**
+ * 앞 값은 고정 폭 + truncate라 구분선이 행마다 같은 자리에 선다. 뒤 값은 남는 폭에서 잘린다.
+ * `←` 화살표·색 스트라이프·조건부 2단은 핸드오프에서 기각됐다 — 되살리지 말 것.
+ */
+function NameCell({ decl, row }: { decl: ChannelDecl; row: MatrixRow }) {
+    const [head, tail] = nameTiersOf(decl, row)
+    const full = tail ? `${head} ｜ ${tail}` : head
+    if (!tail) {
+        return (
+            <span className="block truncate text-[12.5px] font-bold text-foreground" title={full}>
+                {head}
+            </span>
+        )
+    }
+    return (
+        <span className="flex items-center" title={full}>
+            <span
+                className="flex-none truncate text-[12.5px] font-bold text-foreground"
+                style={{ width: W_NAME_HEAD }}
+            >
+                {head}
+            </span>
+            <span className="min-w-0 truncate border-l border-slate-300 pl-2.5 text-[10.5px] font-medium text-slate-500">
+                {tail}
+            </span>
+        </span>
     )
 }
 
