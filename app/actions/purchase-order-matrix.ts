@@ -77,7 +77,6 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
             id: true,
             vendor: true,
             recipient: true,
-            createdAt: true,
             items: {
               select: {
                 id: true,
@@ -132,7 +131,6 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
         id: o.id,
         vendor: o.vendor,
         recipient: o.recipient,
-        createdAt: o.createdAt.toISOString(),
       })),
       items,
       skus,

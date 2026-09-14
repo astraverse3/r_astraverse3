@@ -20,6 +20,7 @@ import { ArrowLeft, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
+    ROW_STATUS_ORDER,
     isColumnShort,
     sortMatrixRows,
     type CellStatus,
@@ -64,26 +65,21 @@ const CELL_TONE: Record<CellStatus, string> = {
     UNMATCHED: 'bg-red-50 text-red-600 font-bold',
 }
 
-const ROW_STATUS: { key: CellStatus; label: string; dot: string; text: string }[] = [
-    { key: 'UNMATCHED', label: '매칭실패', dot: 'bg-red-500', text: 'text-red-600' },
-    { key: 'SHORTAGE', label: '재고부족', dot: 'bg-orange-500', text: 'text-orange-700' },
-    { key: 'PARTIAL', label: '부분', dot: 'bg-amber-500', text: 'text-amber-700' },
-    { key: 'PENDING', label: '대기', dot: 'bg-slate-400', text: 'text-slate-500' },
-    { key: 'COMPLETED', label: '완료', dot: 'bg-emerald-500', text: 'text-emerald-700' },
-]
-
-/** 행 하나를 대표하는 상태 — 가장 손이 많이 가는 것이 이긴다(위 배열 순서). */
-function rowStatusOf(statuses: CellStatus[]): CellStatus {
-    for (const s of ROW_STATUS) if (statuses.includes(s.key)) return s.key
-    return 'COMPLETED'
+// 행 상태 표기. 순서(심각도)는 lib `ROW_STATUS_ORDER` 하나가 갖는다 — 여기선 라벨·색만.
+const ROW_STATUS_META: Record<CellStatus, { label: string; dot: string; text: string }> = {
+    UNMATCHED: { label: '매칭실패', dot: 'bg-red-500', text: 'text-red-600' },
+    SHORTAGE: { label: '재고부족', dot: 'bg-orange-500', text: 'text-orange-700' },
+    PARTIAL: { label: '부분', dot: 'bg-amber-500', text: 'text-amber-700' },
+    PENDING: { label: '대기', dot: 'bg-slate-400', text: 'text-slate-500' },
+    COMPLETED: { label: '완료', dot: 'bg-emerald-500', text: 'text-emerald-700' },
 }
 
-// 순서·라벨은 핸드오프 §7. 발주처별이 기본 — 택배 시트는 같은 발주처가 흩어져 있어
-// 원본 순서로는 블록이 안 잡힌다. 발주처가 상수인 채널(이마트·해남급식)은 자연히 수령인 순.
+// 순서·라벨은 핸드오프 §7(단, 「최신」은 뺐다 — 시트 안 행은 createdAt이 전부 같아 의미가 없다).
+// 발주처별이 기본 — 택배 시트는 같은 발주처가 흩어져 있어 원본 순서로는 블록이 안 잡힌다.
+// 발주처가 상수인 채널(이마트·해남급식)은 자연히 수령인 순.
 const SORTS: { key: MatrixSort; label: string }[] = [
     { key: 'vendor', label: '발주처별' },
     { key: 'recipient', label: '수령인 가나다' },
-    { key: 'latest', label: '최신' },
     { key: 'needsWork', label: '작업필요' },
 ]
 
@@ -115,9 +111,7 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
                     <MatrixHead matrix={matrix} availKg={availKg} nameLabel={decl.columnLabel} />
                     <tbody>
                         {rows.map((row) => {
-                            const status = rowStatusOf(
-                                Object.values(row.cells).map((c) => c.status),
-                            )
+                            const status = row.status
                             return (
                                 <tr key={row.orderId} className="group">
                                     <Th
@@ -524,7 +518,7 @@ function Th({
 }
 
 function StatusDot({ status }: { status: CellStatus }) {
-    const s = ROW_STATUS.find((x) => x.key === status) ?? ROW_STATUS[4]
+    const s = ROW_STATUS_META[status]
     return (
         <span className={cn('inline-flex items-center gap-1 text-[10.5px] font-bold', s.text)}>
             <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} />
@@ -553,12 +547,15 @@ function Progress({ done, total }: { done: number; total: number }) {
 function Legend() {
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11.5px]">
-            {ROW_STATUS.map((s) => (
-                <span key={s.key} className={cn('inline-flex items-center gap-1.5 font-medium', s.text)}>
-                    <span className={cn('h-2 w-2 rounded-sm', s.dot)} />
-                    {s.label}
-                </span>
-            ))}
+            {ROW_STATUS_ORDER.map((key) => {
+                const s = ROW_STATUS_META[key]
+                return (
+                    <span key={key} className={cn('inline-flex items-center gap-1.5 font-medium', s.text)}>
+                        <span className={cn('h-2 w-2 rounded-sm', s.dot)} />
+                        {s.label}
+                    </span>
+                )
+            })}
             <span className="text-slate-400">셀 = 주문 수량 · 소계 = 주문 중량</span>
         </div>
     )

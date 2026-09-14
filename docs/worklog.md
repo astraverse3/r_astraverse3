@@ -25,6 +25,17 @@ C0-a·b·d 브라우저 확인에서 사용자가 둘을 짚었다 — 규격 �
   4개 전부 통일은 사용자가 거절.
 - 테스트 3건, 265/265. 변경: `purchase-channel.ts` · `purchase-order-matrix.ts`(+test) · 계획서 기각표 · 보고서
 
+### 매트릭스 정렬 4종 → 3종 — 「최신」 삭제 · 「작업필요」 상태 심각도순 `fix` `(커밋)`
+
+브라우저 확인에서 「최신·작업필요가 안 되는 듯」. 둘 다 진짜였다.
+
+- **최신** — 시트 안 행은 `createdAt`이 전부 같아(트랜잭션 1회) 수령인 가나다와 동일하게 떴다. 화면이 묶음 하나만
+  보여주니 개념 자체가 없다 → 삭제. `MatrixRow.createdAt`·입력·액션 select 제거.
+- **작업필요** — `needsWork` boolean(완료 아니면 true)이라 차감 전엔 전 행 동률. 화면에만 있던 `rowStatusOf`를
+  lib `ROW_STATUS_ORDER`로 올려 `MatrixRow.status` 신설, 정렬·상태 점·범례가 같은 순서 하나를 쓴다.
+- tsc 0 · eslint 0 · test 265/265. 변경: `purchase-order-matrix.ts`(+test) · `matrix-client.tsx` · `actions/purchase-order-matrix.ts`
+  · 계획서 C0-d 정정 · 보고서
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`

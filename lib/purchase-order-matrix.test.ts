@@ -17,11 +17,10 @@ import {
 // ------------------------------------------------------
 // 만들기 도우미
 // ------------------------------------------------------
-const order = (id: number, vendor: string, recipient = '', createdAt = '2026-08-01'): MatrixOrderInput => ({
+const order = (id: number, vendor: string, recipient = ''): MatrixOrderInput => ({
   id,
   vendor,
   recipient: recipient || vendor,
-  createdAt,
 })
 
 const item = (o: Partial<MatrixItemInput> & { id: number; orderId: number }): MatrixItemInput => ({
@@ -242,18 +241,22 @@ const sortFixture = () =>
   buildMatrix(
     input({
       orders: [
-        order(1, '하나로', '', '2026-08-01'),
-        order(2, '가나다', '', '2026-08-03'),
-        order(3, '마트', '', '2026-08-02'),
+        order(1, '하나로'),
+        order(2, '가나다'),
+        order(3, '마트'),
+        order(4, '바다'),
+        order(5, '사과'),
       ],
       items: [
-        // 하나로만 손댈 일이 남는다
+        // 상태가 전부 다르다 — 하나로=대기 · 가나다=완료 · 마트=재고부족 · 바다=매칭실패 · 사과=부분
         item({ id: 11, orderId: 1, productTypeId: 1, orderedQty: 5, allocatedQty: 0 }),
         item({ id: 12, orderId: 2, productTypeId: 1, orderedQty: 1, allocatedQty: 1 }),
-        item({ id: 13, orderId: 3, productTypeId: 1, orderedQty: 1, allocatedQty: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: 2, orderedQty: 50, allocatedQty: 0 }),
+        item({ id: 14, orderId: 4, productTypeId: null, orderedQty: 1 }),
+        item({ id: 15, orderId: 5, productTypeId: 1, orderedQty: 4, allocatedQty: 2 }),
       ],
-      skus: [sku(1, '10kg')],
-      availability: { 1: 100 },
+      skus: [sku(1, '10kg'), sku(2, '5kg')],
+      availability: { 1: 100, 2: 3 },
     }),
   ).rows
 
@@ -261,22 +264,37 @@ test('sortMatrixRows: 수령인 가나다', () => {
   const r = sortMatrixRows(sortFixture(), 'recipient')
   assert.deepEqual(
     r.map((x) => x.recipient),
-    ['가나다', '마트', '하나로'],
+    ['가나다', '마트', '바다', '사과', '하나로'],
   )
 })
 
-test('sortMatrixRows: 최신순', () => {
-  const r = sortMatrixRows(sortFixture(), 'latest')
-  assert.deepEqual(
-    r.map((x) => x.recipient),
-    ['가나다', '마트', '하나로'],
-  )
-})
-
-test('sortMatrixRows: 작업필요 우선 — 남은 행이 맨 위', () => {
+test('sortMatrixRows: 작업필요 = 행 상태 심각도순 (매칭실패 → 재고부족 → 부분 → 대기 → 완료)', () => {
   const r = sortMatrixRows(sortFixture(), 'needsWork')
-  assert.equal(r[0].recipient, '하나로')
+  assert.deepEqual(
+    r.map((x) => `${x.recipient}:${x.status}`),
+    ['바다:UNMATCHED', '마트:SHORTAGE', '사과:PARTIAL', '하나로:PENDING', '가나다:COMPLETED'],
+  )
   assert.equal(r[0].needsWork, true)
+  assert.equal(r[4].needsWork, false)
+})
+
+test('sortMatrixRows: 작업필요 — 같은 상태 안에서는 수령인 가나다', () => {
+  const rows = buildMatrix(
+    input({
+      orders: [order(1, '하나'), order(2, '가나'), order(3, '다라')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 12, orderId: 2, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: 1, orderedQty: 1 }),
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+  ).rows
+  assert.deepEqual(
+    sortMatrixRows(rows, 'needsWork').map((x) => x.recipient),
+    ['가나', '다라', '하나'],
+  )
 })
 
 test('sortMatrixRows: 원본 배열을 건드리지 않는다', () => {
@@ -331,9 +349,9 @@ const seoulFixture = () =>
   buildMatrix(
     input({
       orders: [
-        order(1, '여유', '행복플러스', '2026-08-03'),
-        order(2, '은평구', '행복플러스', '2026-08-01'),
-        order(3, '서대문구', '행복플러스', '2026-08-02'),
+        order(1, '여유', '행복플러스'),
+        order(2, '은평구', '행복플러스'),
+        order(3, '서대문구', '행복플러스'),
       ],
       items: [
         // 여유만 손댈 일이 남는다 — 작업필요 정렬에서 맨 위여야 한다
@@ -357,11 +375,7 @@ test('sortMatrixRows: 「여유」는 발주처별·수령인 가나다에서 �
   )
 })
 
-test('sortMatrixRows: 「여유」도 최신·작업필요에서는 제 기준대로 섞인다 — 숨으면 안 된다', () => {
-  assert.deepEqual(
-    sortMatrixRows(seoulFixture(), 'latest').map((x) => x.vendor),
-    ['여유', '서대문구', '은평구'],
-  )
+test('sortMatrixRows: 「여유」도 작업필요에서는 상태대로 섞인다 — 숨으면 안 된다', () => {
   assert.equal(sortMatrixRows(seoulFixture(), 'needsWork')[0].vendor, '여유')
 })
 

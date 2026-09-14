@@ -24,8 +24,6 @@ export type MatrixOrderInput = {
   id: number
   vendor: string
   recipient: string
-  /** 정렬(최신순)용. ISO 문자열 */
-  createdAt: string
 }
 
 export type MatrixItemInput = {
@@ -135,14 +133,15 @@ export type MatrixRow = {
   // 조합한 문자열을 여기 두면 정렬 키로 새어 나간다 — 한 번 그랬다(C0-d).
   vendor: string
   recipient: string
-  createdAt: string
   /** 열 key → 셀. 주문이 없는 칸은 키가 없다 */
   cells: Record<string, MatrixCell>
   orderedQty: number
   allocatedQty: number
   /** 주문 중량 합. 규격을 kg로 못 읽는 열은 빠진다 */
   orderedKg: number
-  /** 이 행에 손댈 일이 남았는가 — 정렬 「작업필요 우선」의 기준 */
+  /** 행을 대표하는 상태 — 셀 중 가장 손이 많이 가는 것(`ROW_STATUS_ORDER`). 화면 점·정렬 「작업필요」가 쓴다 */
+  status: CellStatus
+  /** 이 행에 손댈 일이 남았는가 (= status !== COMPLETED). 헤더 「N수령인이 작업 필요」 집계용 */
   needsWork: boolean
 }
 
@@ -161,7 +160,11 @@ export type Matrix = {
   }
 }
 
-export type MatrixSort = 'vendor' | 'recipient' | 'latest' | 'needsWork'
+/**
+ * 정렬 3종. 「최신」은 없다 — 이 화면은 묶음(=시트) 하나만 보여주고, 한 시트의 행은
+ * 업로드 트랜잭션 한 번에 들어가 `createdAt`이 전부 같다. 있어 봐야 수령인 가나다와 동일하게 뜬다.
+ */
+export type MatrixSort = 'vendor' | 'recipient' | 'needsWork'
 
 // ------------------------------------------------------
 // 열 키 · 표기
@@ -237,8 +240,23 @@ export function cellStatusOf(
   return line
 }
 
-/** 손댈 일이 남았는가 — 완료만 아니면 남은 것으로 본다. */
-const isUnfinished = (s: CellStatus): boolean => s !== 'COMPLETED'
+/**
+ * 행 상태 우선순위 — 앞이 더 급하다. 행의 셀 중 여기서 가장 앞선 것이 행 상태가 된다.
+ * 화면 점·범례·정렬 「작업필요」가 전부 이 순서 하나를 쓴다.
+ */
+export const ROW_STATUS_ORDER: readonly CellStatus[] = [
+  'UNMATCHED',
+  'SHORTAGE',
+  'PARTIAL',
+  'PENDING',
+  'COMPLETED',
+]
+
+/** 셀 상태들 → 행 상태. 셀이 없으면 완료로 본다(할 일이 없다). */
+export function rowStatusOf(statuses: readonly CellStatus[]): CellStatus {
+  for (const s of ROW_STATUS_ORDER) if (statuses.includes(s)) return s
+  return 'COMPLETED'
+}
 
 // ------------------------------------------------------
 // 피벗
@@ -365,16 +383,17 @@ function buildRow(
     cell.remainingQty = Math.max(0, cell.orderedQty - cell.allocatedQty)
   }
 
+  const status = rowStatusOf(Object.values(cells).map((c) => c.status))
   return {
     orderId: order.id,
     vendor: order.vendor,
     recipient: order.recipient,
-    createdAt: order.createdAt,
     cells,
     orderedQty,
     allocatedQty,
     orderedKg,
-    needsWork: Object.values(cells).some((c) => isUnfinished(c.status)),
+    status,
+    needsWork: status !== 'COMPLETED',
   }
 }
 
@@ -413,16 +432,18 @@ export function buildMatrix(input: BuildMatrixInput): Matrix {
 // ------------------------------------------------------
 
 /**
- * 행 정렬 4종. **원본 배열을 건드리지 않는다.**
+ * 행 정렬 3종. **원본 배열을 건드리지 않는다.**
  *   vendor    — 발주처별로 뭉친 뒤 그 안에서 수령인 가나다.
  *               택배는 시트 원본에서 같은 발주처가 떨어져 나타나므로 이게 기본이다.
  *   recipient — 수령인 가나다
- *   latest    — 최신 등록 순
- *   needsWork — 손댈 일이 남은 행 먼저, 그 안에서 수령인 가나다
+ *   needsWork — 행 상태 심각도순(`ROW_STATUS_ORDER`: 매칭실패 → 재고부족 → 부분 → 대기 → 완료),
+ *               같은 상태 안에서 수령인 가나다.
+ *               🔴 「완료 아니면 전부 앞」식 boolean으로 하면 차감 전엔 전 행이 동률이라
+ *               수령인 가나다와 구분이 안 된다 — 그래서 안 되는 것처럼 보였다(2026-09-14).
  *
  * 🔴 **「여유」 행은 이름 정렬 둘(vendor·recipient)에서만 맨 아래다.** 여분 물량이 가나다
  * 중간(ㅇ)에 끼면 발주처 목록으로 안 읽힌다(사용자 결정 2026-09-14, 핸드오프 §4-b 번복).
- * 최신·작업필요는 시간·상태 기준이라 그대로 섞는다 — 여유 행의 재고부족이 맨 아래로 숨으면 안 된다.
+ * 작업필요는 상태 기준이라 그대로 섞는다 — 여유 행의 재고부족이 맨 아래로 숨으면 안 된다.
  *
  * 🔴 정렬 키는 필드다. 화면용으로 조합한 문자열(`발주처 → 수령인`)을 키로 쓰면
  * 「수령인 가나다」가 발주처 순이 된다 — C0-d에서 걷어낸 결함.
@@ -436,8 +457,6 @@ export function sortMatrixRows(rows: MatrixRow[], sort: MatrixSort): MatrixRow[]
     return copy.sort((a, b) => spareLast(a, b) || ko(a.vendor, b.vendor) || byRecipient(a, b))
   }
   if (sort === 'recipient') return copy.sort((a, b) => spareLast(a, b) || byRecipient(a, b))
-  if (sort === 'latest') {
-    return copy.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || byRecipient(a, b))
-  }
-  return copy.sort((a, b) => Number(b.needsWork) - Number(a.needsWork) || byRecipient(a, b))
+  const rank = (r: MatrixRow) => ROW_STATUS_ORDER.indexOf(r.status)
+  return copy.sort((a, b) => rank(a) - rank(b) || byRecipient(a, b))
 }
