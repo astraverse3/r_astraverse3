@@ -308,13 +308,13 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
 **그 외** — 채널 선언 설정 UI(관리자 노출 vs 코드 상수) · 이름칸 `104px` 재검토
 (`이마트본사 김보훈`·`울림생협 북가좌점`·`롯데백화점 평촌점`이 잘린다) · 모바일 매트릭스(현재 미구현).
 
-### C1. 서버 헬퍼 이동 (결정 B)
+### C1. 서버 헬퍼 이동 (결정 B) ✅ **구현 완료 `f7fcd4f`** (본문 diff 동일, 265/265)
 
 - 신규 `lib/purchase-order-db.ts` ← `purchase-order.ts`에서 4개 함수 이동
 - `purchase-order.ts`는 import로 대체 (627줄 → 약 540줄)
 - 검증: `npx tsc --noEmit` · `npm test` (동작 변화 없음이 근거)
 
-### C2. 순수 배분 분배 (결정 A)
+### C2. 순수 배분 분배 (결정 A) ✅ **구현 완료 `e443f49`** (테스트 9건)
 
 - 신규 `lib/purchase-order-cell.ts` — `splitAllocationsByLine(lines, allocations)`
   - 라인을 **남은 수량이 있는 순서(id 오름차순)** 로 채운다
@@ -322,7 +322,7 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
   - 합이 안 맞으면 던진다(계산 오류를 조용히 넘기지 않는다)
 - 신규 `lib/purchase-order-cell.test.ts` — 라인1개 / 라인2개 / 경계 걸침 / 부분차감 후 재차감 / 초과
 
-### C3. 셀 액션 3종
+### C3. 셀 액션 3종 ✅ **구현 완료 `ae7c1ff`** · 🔴 **브라우저 미확인** — 보고서 `docs/report-발주서-D2c-C1-C4-2026-09-14.md`
 
 `app/actions/purchase-order-matrix.ts`에 추가(209줄이라 여유):
 
@@ -335,7 +335,7 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
 - 권한 `OPERATION_MANAGE` · `revalidatePath('/sales')` + `'/packages'`
 - 🔴 후보 목록은 `packageId`만으로는 사람이 못 고른다 → 로트코드·포장일을 함께 반환
 
-### C4. 팝오버 UI
+### C4. 팝오버 UI ✅ **구현 완료 `ae7c1ff`** · 🔴 **브라우저 미확인**(§7 검증 항목 그대로)
 
 - 신규 `cell-allocation-popover.tsx` (매트릭스 클라이언트가 800줄을 넘지 않게 — D2 §5 리스크)
   - 헤더: 수령처 · 품목 · 규격 · 「주문 12 / 차감 0」

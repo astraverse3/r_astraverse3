@@ -36,6 +36,25 @@ C0-a·b·d 브라우저 확인에서 사용자가 둘을 짚었다 — 규격 �
 - tsc 0 · eslint 0 · test 265/265. 변경: `purchase-order-matrix.ts`(+test) · `matrix-client.tsx` · `actions/purchase-order-matrix.ts`
   · 계획서 C0-d 정정 · 보고서
 
+### 발주서 D2c C1~C4 — 셀 FIFO 배분 팝오버 · 주문 상세 패널 `feat` `f7fcd4f` `e443f49` `ae7c1ff`
+
+C0 종결 뒤 계획서 §4 C1~C4를 한 세션에 구현. `confirmOrderItem` 계열이 D1 이후 처음으로 화면 진입점을 얻었다.
+
+- **C1 `f7fcd4f`** — `applyAllocations`·`loadAvailablePackages`·`allocatedQtyOfItem`·`recalcOrderStatus` → `lib/purchase-order-db.ts` 순수 이동
+  (HEAD 본문과 `diff` IDENTICAL). `'use server'` 파일은 export가 전부 액션이라 `tx` 헬퍼를 공유할 수 없다(결정 B).
+- **C2 `e443f49`** — `lib/purchase-order-cell.ts` `splitAllocationsByLine`: 라인 id 오름차순으로 채우고 경계 걸친 배분은 쪼갠다.
+  초과·음수·합 불일치는 던진다. 테스트 9건.
+- **C3·C4 `ae7c1ff`** — 액션 `getCellAllocation`(후보 FIFO 순 + 추천 + 기차감) · `confirmCell`(셀=트랜잭션 1, timeout 30초) · `cancelCell`(하드삭제+감사로그).
+  반환은 **바뀐 두 값**(라인 allocatedQty · SKU 가용 개/kg)뿐. `getUploadMatrix`는 `BuildMatrixInput`을 넘기고 클라이언트가
+  `buildMatrix`를 돌린다(결정 C, 실패 시 `router.refresh()`). 팝오버(`cell-allocation-popover.tsx`, Radix `virtualRef`로 셀에 앵커)
+  · 상세 패널(`order-detail-panel.tsx`, `getPurchaseOrderDetail` 첫 호출부 · `DetailLine.varietyType` 추가). 톤백·매칭실패는 안내만(D2d·D2e).
+  FIFO 비교자는 `sortFifo`로 export — 추천과 후보 목록이 같은 순서.
+- tsc 0 · eslint 0 · test **274/274**. 🔴 **브라우저 미확인** — 확인 항목은 보고서.
+  ⚠️ `revalidatePath` 2줄이 결정 C의 이득을 지울 수 있다(액션 응답에 현재 경로 RSC 재렌더) — 확정이 1.5초 걸리면 뺄 것.
+- 변경: `lib/purchase-order-db.ts`(신규) · `lib/purchase-order-cell.ts`(+test, 신규) · `purchase-order-allocation.ts` · `actions/purchase-order.ts`
+  · `actions/purchase-order-matrix.ts` · `[uploadId]/cell-allocation-popover.tsx`·`order-detail-panel.tsx`(신규) · `matrix-client.tsx` · `page.tsx`
+  · `package-available.ts`(주석) · 계획서 C1~C4 · `report-발주서-D2c-C1-C4-2026-09-14.md`
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
