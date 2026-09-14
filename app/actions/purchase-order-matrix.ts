@@ -26,7 +26,6 @@
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
 import { requirePermission } from '@/lib/auth-guard'
 import { recordAuditLog } from '@/lib/audit'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
@@ -495,8 +494,10 @@ export async function confirmCell(
       entity: 'PackageMovement',
       description: `발주서 셀 차감확정 orderId=${orderId} items=[${itemIds.join(',')}] (${total}개)`,
     })
-    revalidatePath('/sales')
-    revalidatePath('/packages')
+    // 🔴 revalidatePath를 부르지 않는다. Next 액션 핸들러는 revalidate가 한 번이라도 불리면 현재 페이지를
+    //    응답에 통째로 다시 그린다(action-handler skipPageRendering=false) — 매트릭스 1.4초 재조회가 매번 붙어
+    //    결정 C(15ms 로컬 재계산)가 무효가 된다(브라우저 실측 2026-09-14). /sales·/packages는 세션 기반 동적 렌더라
+    //    무효화할 캐시가 없고, 라우터 캐시도 동적 세그먼트는 staleTime 0이라 다음 방문에 새로 읽는다.
     return { success: true, patch: await loadCellPatch(itemIds, productTypeId) }
   } catch (error) {
     console.error('[confirmCell] failed:', error)
@@ -522,8 +523,10 @@ export async function cancelCell(itemIds: number[]): Promise<CellMutationResult>
       entity: 'PackageMovement',
       description: `발주서 셀 차감취소 orderId=${orderId} items=[${itemIds.join(',')}] (${removed}건 하드삭제, 재고복원)`,
     })
-    revalidatePath('/sales')
-    revalidatePath('/packages')
+    // 🔴 revalidatePath를 부르지 않는다. Next 액션 핸들러는 revalidate가 한 번이라도 불리면 현재 페이지를
+    //    응답에 통째로 다시 그린다(action-handler skipPageRendering=false) — 매트릭스 1.4초 재조회가 매번 붙어
+    //    결정 C(15ms 로컬 재계산)가 무효가 된다(브라우저 실측 2026-09-14). /sales·/packages는 세션 기반 동적 렌더라
+    //    무효화할 캐시가 없고, 라우터 캐시도 동적 세그먼트는 staleTime 0이라 다음 방문에 새로 읽는다.
     return { success: true, patch: await loadCellPatch(itemIds, productTypeId) }
   } catch (error) {
     console.error('[cancelCell] failed:', error)
