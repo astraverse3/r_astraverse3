@@ -16,7 +16,7 @@ C0-a·b·d 브라우저 확인에서 사용자가 둘을 짚었다 — 규격 �
 - 변경: `purchase-channel.ts`(+test) · `matrix-client.tsx` · `upload-dialog.tsx` · `upload-table.tsx` · `purchase-order-matrix.ts`(+test)
   · `purchase-order-parser.test.ts` · `purchase-order-allocation.ts` · 계획서 D2c · `report-발주서-D2c-C0c-2026-09-14.md`
 
-### 「여유」 행은 이름 정렬에서 맨 아래 `feat` `(커밋)`
+### 「여유」 행은 이름 정렬에서 맨 아래 `feat` `2ca14c5`
 
 서울급식 `여유` 행이 가나다 중간에 끼어 어색하다는 사용자 요청. 핸드오프 §4-b(「맨 아래 고정 안 함」) **번복**.
 
