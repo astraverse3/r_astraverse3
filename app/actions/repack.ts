@@ -385,6 +385,7 @@ export async function createRepack(input: CreateRepackInput): Promise<CreateRepa
                             incomingDate: Date | null
                             productCode: string | null
                             lotNo: string | null
+                            createdAt: Date
                         }
                         return {
                             source: head.source,
@@ -400,6 +401,10 @@ export async function createRepack(input: CreateRepackInput): Promise<CreateRepa
                             totalWeight: Math.round(r.weightPerUnit * r.count * 1000) / 1000,
                             productCode: from.productCode,
                             lotNo: from.lotNo,
+                            // 🔴 포장일(createdAt)도 승계한다 — 재포장은 새 제품이 아니다(사용자 결정 2026-09-14).
+                            //    기본값(지금)으로 두면 목록 포장일자와 FIFO 순서가 오늘 만든 것처럼 바뀌어,
+                            //    쪼개고 남은 자루가 큐 맨 뒤로 간다. 언제 재포장했는지는 Repack.occurredAt이 갖는다.
+                            createdAt: from.createdAt,
                             productTypeId:
                                 skuCache.get(`${r.packageType}|${r.packagingId ?? 'null'}`) ?? null,
                             repackId: repack.id,
