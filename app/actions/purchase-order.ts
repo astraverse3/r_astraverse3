@@ -10,14 +10,13 @@
 // export(원본 양식 복원 + 생산자·로트 채움)는 별도 단계.
 // 모든 write = OPERATION_MANAGE(2026-06-22 권한 단순화), 조회(list*/get*) = 공개.
 
-import type { Prisma, PurchaseChannel } from '@prisma/client'
+import type { PurchaseChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { matchPurchaseOrderItem, normalizeItemName } from '@/lib/purchase-order-matcher'
-import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 import {
   compareLoading,
   describeLoading,
@@ -28,12 +27,16 @@ import {
 import {
   suggestAllocation,
   computeLineStatus,
-  computeOrderStatus,
-  type AvailablePackage,
   type Allocation,
   type LineStatus,
 } from '@/lib/purchase-order-allocation'
 import { loadMatcherMasters } from '@/lib/purchase-order-masters'
+import {
+  applyAllocations,
+  allocatedQtyOfItem,
+  loadAvailablePackages,
+  recalcOrderStatus,
+} from '@/lib/purchase-order-db'
 
 // ======================================================
 // 내부 헬퍼
@@ -44,118 +47,6 @@ function formatUploadedAt(d: Date): string {
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
   const p = (n: number) => String(n).padStart(2, '0')
   return `${p(kst.getUTCMonth() + 1)}.${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`
-}
-
-/** 특정 SKU의 가용 패키지(FIFO 정렬 키 포함). available>0만. */
-async function loadAvailablePackages(
-  tx: Prisma.TransactionClient,
-  productTypeId: number,
-): Promise<AvailablePackage[]> {
-  const pkgs = await tx.millingOutputPackage.findMany({
-    where: { productTypeId },
-    select: {
-      id: true,
-      count: true,
-      source: true,
-      createdAt: true,
-      incomingDate: true,
-      ...MOVEMENT_COUNT_SELECT,
-    },
-  })
-  return pkgs
-    .map((p) => {
-      // FIFO: MILLED=createdAt(도정일), PURCHASED=incomingDate(입고일)
-      const sortKey =
-        p.source === 'PURCHASED' && p.incomingDate ? p.incomingDate : p.createdAt
-      return { packageId: p.id, available: availableOf(p), sortKey }
-    })
-    .filter((p) => p.available > 0)
-}
-
-/** 한 라인의 확정 차감합(type=SALE). */
-async function allocatedQtyOfItem(
-  tx: Prisma.TransactionClient,
-  itemId: number,
-): Promise<number> {
-  const agg = await tx.packageMovement.aggregate({
-    where: { orderItemId: itemId, type: 'SALE' },
-    _sum: { count: true },
-  })
-  return agg._sum.count ?? 0
-}
-
-/** 건 status 재계산 — 라인별 차감합 집계 → computeOrderStatus → 저장. */
-async function recalcOrderStatus(
-  tx: Prisma.TransactionClient,
-  orderId: number,
-): Promise<void> {
-  const items = await tx.purchaseOrderItem.findMany({
-    where: { orderId },
-    select: { id: true, orderedQty: true },
-  })
-  const withAlloc = await Promise.all(
-    items.map(async (it) => ({
-      orderedQty: it.orderedQty,
-      allocatedQty: await allocatedQtyOfItem(tx, it.id),
-    })),
-  )
-  await tx.purchaseOrder.update({
-    where: { id: orderId },
-    data: { status: computeOrderStatus(withAlloc) },
-  })
-}
-
-/** allocations를 검증·차감(PackageMovement type=SALE 생성). 트랜잭션 내부 공용. */
-async function applyAllocations(
-  tx: Prisma.TransactionClient,
-  args: {
-    itemId: number
-    productTypeId: number
-    orderedQty: number
-    allocations: Allocation[]
-    createdById?: string
-    createdName?: string
-  },
-): Promise<number> {
-  const already = await allocatedQtyOfItem(tx, args.itemId)
-  const addQty = args.allocations.reduce((s, a) => s + a.count, 0)
-  if (addQty <= 0) return 0
-  if (already + addQty > args.orderedQty) {
-    throw new Error(`주문수량(${args.orderedQty})을 초과한 차감입니다.`)
-  }
-
-  for (const a of args.allocations) {
-    const pkg = await tx.millingOutputPackage.findUnique({
-      where: { id: a.packageId },
-      select: { count: true, productTypeId: true },
-    })
-    if (!pkg) throw new Error('재고를 찾을 수 없습니다.')
-    if (pkg.productTypeId !== args.productTypeId) {
-      throw new Error('해당 제품유형의 재고가 아닙니다.')
-    }
-    // 🔴 DB 집계 — `lib/package-available.ts`로 합치지 않는다 (#73).
-    //    행을 로드하지 않고 DB에서 합을 낸다. 공식(count - SUM)은 같으니 고칠 땐 함께 봐야 한다.
-    const used = await tx.packageMovement.aggregate({
-      where: { packageId: a.packageId },
-      _sum: { count: true },
-    })
-    const available = pkg.count - (used._sum.count ?? 0)
-    if (a.count > available) {
-      throw new Error(`재고가 부족합니다(가용 ${available}개).`)
-    }
-    await tx.packageMovement.create({
-      data: {
-        packageId: a.packageId,
-        count: a.count,
-        type: 'SALE',
-        orderItemId: args.itemId,
-        occurredAt: new Date(),
-        createdById: args.createdById,
-        createdName: args.createdName,
-      },
-    })
-  }
-  return addQty
 }
 
 // ======================================================

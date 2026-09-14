@@ -12,7 +12,7 @@
 // 의존은 available → guard 단방향이다. guard는 이 파일을 쓰지 않는다.
 //
 // 🔴 **DB 집계는 여기 오지 않는다 (#73).**
-// `purchase-order.ts`의 `allocatedQtyOfItem`·`packageMovement.aggregate`,
+// `lib/purchase-order-db.ts`의 `allocatedQtyOfItem`·`packageMovement.aggregate`,
 // `package-movement.ts`의 before/after 집계는 행을 로드하지 않고 DB에서 합을 낸다.
 // 공식은 같지만 계산 위치가 달라, 메모리 헬퍼로 바꾸면 왕복이 늘거나 전 행을 끌어와야 한다.
 // 공식을 고칠 일이 생기면 **그 세 곳도 함께** 봐야 한다.
