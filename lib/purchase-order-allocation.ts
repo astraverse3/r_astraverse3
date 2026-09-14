@@ -27,18 +27,26 @@ export type AllocationResult = {
   shortage: number // 부족분(가용 부족 시 > 0, #4 부분처리)
 }
 
-/** 필요 수량(qty)을 FIFO 순서로 가용 재고에 그리디 배분. 부족분은 shortage로. */
-export function suggestAllocation(
-  qty: number,
-  packages: AvailablePackage[],
-): AllocationResult {
-  const sorted = packages
+/**
+ * FIFO 순서(오래된 것부터, 같은 날이면 id 오름차순)로 정렬한 새 배열. 가용 0은 뺀다.
+ * 추천(`suggestAllocation`)과 화면의 후보 목록이 **같은 순서**를 써야 사람이 추천을 대조할 수 있다.
+ */
+export function sortFifo<T extends AvailablePackage>(packages: T[]): T[] {
+  return packages
     .filter((p) => p.available > 0)
     .sort(
       (a, b) =>
         new Date(a.sortKey).getTime() - new Date(b.sortKey).getTime() ||
         a.packageId - b.packageId, // tie-break: 오래된 id 우선(결정적)
     )
+}
+
+/** 필요 수량(qty)을 FIFO 순서로 가용 재고에 그리디 배분. 부족분은 shortage로. */
+export function suggestAllocation(
+  qty: number,
+  packages: AvailablePackage[],
+): AllocationResult {
+  const sorted = sortFifo(packages)
 
   const allocations: Allocation[] = []
   let remaining = qty

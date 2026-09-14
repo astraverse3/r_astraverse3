@@ -1,10 +1,17 @@
 'use client'
 
-// 발주서 매트릭스 — 읽기 전용 (계획서 D2b)
+// 발주서 매트릭스 (계획서 D2b · D2c)
 //
 // 행=수령인 · 열=제품규격 · 셀=주문수량(색=차감상태).
 // 이름칸은 채널 선언(`CHANNEL_DECL`)대로 `굵은 값 ｜ 세로선 ｜ 연한 값` 2단이다(C0-c).
-// 셀 클릭(FIFO 배분 팝오버)은 D2c, 행 일괄선택은 D3에서 붙는다.
+// 셀 클릭 → FIFO 배분 팝오버(`cell-allocation-popover.tsx`), 이름 클릭 → 주문 상세 패널
+// (`order-detail-panel.tsx`). 행 일괄선택은 D3에서 붙는다.
+//
+// 🔴 **피벗은 여기서 돌린다**(D2c 결정 C). 서버는 `BuildMatrixInput`만 주고, 셀 차감이 끝나면
+// 액션이 돌려준 「바뀐 두 값」(라인 allocatedQty · SKU 가용)만 input에 갈아끼운 뒤 `buildMatrix`를
+// 다시 돌린다(15ms). 셀 상태·행 진행률·같은 SKU를 쓰는 다른 행의 재고부족이 전부 거기서 파생되므로
+// 여기서 상태를 손으로 고치지 않는다 — 고치는 순간 판정 규칙이 두 곳이 된다.
+// 확정이 실패하면(다른 세션이 먼저 차감했다 등) `router.refresh()`로 서버 진실에 맞춘다.
 //
 // 🔴 **밀도가 목적인 화면이라 목록 표준규격(44px 행)을 따르지 않는다.**
 // 67행 × 25열을 한눈에 대조하는 게 이 화면의 존재 이유고, 표준을 그대로 대면
@@ -16,20 +23,26 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
     ROW_STATUS_ORDER,
+    buildMatrix,
     isColumnShort,
     sortMatrixRows,
+    type BuildMatrixInput,
     type CellStatus,
     type Matrix,
+    type MatrixColumn,
     type MatrixRow,
     type MatrixSort,
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
-import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
+import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matrix'
+import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
+import { OrderDetailPanel } from './order-detail-panel'
 
 // ------------------------------------------------------
 // sticky 좌표 — 좌측 고정 3칸
@@ -86,10 +99,56 @@ const SORTS: { key: MatrixSort; label: string }[] = [
 const fmt = (n: number) => n.toLocaleString()
 const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 
-export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix: Matrix }) {
+export function MatrixClient({
+    header,
+    input: serverInput,
+}: {
+    header: MatrixHeader
+    input: BuildMatrixInput
+}) {
+    const router = useRouter()
+    // 서버가 준 input을 로컬 상태로 든다. 차감 성공은 여기만 고치고, 실패는 router.refresh()로
+    // 서버가 새 input을 내려보낸다 — 그때 로컬을 서버 값으로 되돌린다(prop 변화 감지 패턴).
+    const [input, setInput] = useState(serverInput)
+    const [seen, setSeen] = useState(serverInput)
+    if (serverInput !== seen) {
+        setSeen(serverInput)
+        setInput(serverInput)
+    }
+    const matrix = useMemo(() => buildMatrix(input), [input])
+
     const [sort, setSort] = useState<MatrixSort>('vendor')
     const rows = useMemo(() => sortMatrixRows(matrix.rows, sort), [matrix.rows, sort])
     const decl = CHANNEL_DECL[header.channel as PurchaseChannel]
+
+    const [active, setActive] = useState<ActiveCell | null>(null)
+    const [detail, setDetail] = useState<{ orderId: number; head: string; tail: string | null } | null>(null)
+
+    /** 액션이 돌려준 「바뀐 두 값」만 갈아끼운다. 나머지 파생은 buildMatrix 재실행이 맞춘다 */
+    const applyPatch = (patch: CellPatch) =>
+        setInput((prev) => ({
+            ...prev,
+            items: prev.items.map((it) =>
+                it.id in patch.allocatedQty ? { ...it, allocatedQty: patch.allocatedQty[it.id] } : it,
+            ),
+            availability: { ...prev.availability, [patch.productTypeId]: patch.availability },
+            availabilityKg: { ...prev.availabilityKg, [patch.productTypeId]: patch.availabilityKg },
+        }))
+
+    const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
+        const cell = row.cells[col.key]
+        const group = matrix.groups.find((g) => g.key === col.groupKey)
+        const spec = col.bulk ? `${fmtKg(col.unitWeightKg ?? 0)}kg` : col.packageType
+        setActive({
+            key: `${row.orderId}|${col.key}`,
+            itemIds: cell.itemIds,
+            status: cell.status,
+            bulk: col.bulk,
+            anchor: el,
+            who: nameTiersOf(decl, row)[0],
+            what: `${group?.title ?? ''} · ${spec}`,
+        })
+    }
 
     // 톤백 열은 서버가 행마다 곱해 온 kg 합을 그대로 쓴다 — 개수 × 열 중량은 틀린다(C0-a)
     const availKg = useMemo(
@@ -119,7 +178,16 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
                                         className="sticky z-20 bg-card text-left group-hover:bg-slate-50"
                                         style={{ left: 0, width: W_NAME, minWidth: W_NAME }}
                                     >
-                                        <NameCell decl={decl} row={row} />
+                                        <button
+                                            type="button"
+                                            className="block w-full text-left"
+                                            onClick={() => {
+                                                const [head, tail] = nameTiersOf(decl, row)
+                                                setDetail({ orderId: row.orderId, head, tail: tail || null })
+                                            }}
+                                        >
+                                            <NameCell decl={decl} row={row} />
+                                        </button>
                                     </Th>
                                     <Th
                                         as="td"
@@ -149,8 +217,14 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
                                             <Th
                                                 as="td"
                                                 key={col.key}
-                                                className={cn('text-right tabular-nums', CELL_TONE[cell.status])}
+                                                className={cn(
+                                                    'cursor-pointer text-right tabular-nums hover:ring-2 hover:ring-inset hover:ring-primary/50',
+                                                    CELL_TONE[cell.status],
+                                                    active?.key === `${row.orderId}|${col.key}` &&
+                                                        'ring-2 ring-inset ring-primary',
+                                                )}
                                                 title={`주문 ${cell.orderedQty} · 차감 ${cell.allocatedQty}`}
+                                                onClick={(e) => openCell(row, col, e.currentTarget)}
                                             >
                                                 {fmt(cell.orderedQty)}
                                             </Th>
@@ -172,6 +246,19 @@ export function MatrixClient({ header, matrix }: { header: MatrixHeader; matrix:
             </div>
 
             <Legend />
+
+            <CellAllocationPopover
+                cell={active}
+                onPatch={applyPatch}
+                onFail={() => router.refresh()}
+                onClose={() => setActive(null)}
+            />
+            <OrderDetailPanel
+                orderId={detail?.orderId ?? null}
+                title={detail?.head ?? ''}
+                subtitle={detail?.tail ?? null}
+                onClose={() => setDetail(null)}
+            />
         </div>
     )
 }
@@ -498,12 +585,14 @@ function Th({
     className,
     style,
     title,
+    onClick,
     children,
 }: {
     as?: 'td' | 'th'
     className?: string
     style?: React.CSSProperties
     title?: string
+    onClick?: (e: React.MouseEvent<HTMLTableCellElement>) => void
     children: React.ReactNode
 }) {
     return (
@@ -511,6 +600,7 @@ function Th({
             className={cn('h-9 border-b border-r border-slate-100 px-1.5 whitespace-nowrap', className)}
             style={style}
             title={title}
+            onClick={onClick}
         >
             {children}
         </Tag>
@@ -556,7 +646,7 @@ function Legend() {
                     </span>
                 )
             })}
-            <span className="text-slate-400">셀 = 주문 수량 · 소계 = 주문 중량</span>
+            <span className="text-slate-400">셀 = 주문 수량 · 소계 = 주문 중량 · 셀 클릭 = 차감 · 이름 클릭 = 주문 상세</span>
         </div>
     )
 }

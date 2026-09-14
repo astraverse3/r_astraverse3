@@ -181,6 +181,8 @@ export type DetailLine = {
   matched: boolean
   productTypeId: number | null
   variety: string | null
+  /** 찰벼 표시(찹쌀/찰현미)용. 매칭실패면 null */
+  varietyType: string | null
   millingType: string | null
   packaging: string | null
   allocatedQty: number // 이미 확정 차감된 수량
@@ -210,7 +212,7 @@ export async function getPurchaseOrderDetail(
           orderBy: { id: 'asc' },
           include: {
             productType: {
-              include: { variety: { select: { name: true } }, packaging: { select: { name: true } } },
+              include: { variety: { select: { name: true, type: true } }, packaging: { select: { name: true } } },
             },
           },
         },
@@ -243,6 +245,7 @@ export async function getPurchaseOrderDetail(
           matched: it.productTypeId !== null,
           productTypeId: it.productTypeId,
           variety: it.productType?.variety.name ?? null,
+          varietyType: it.productType?.variety.type ?? null,
           millingType: it.productType?.millingType ?? null,
           packaging: it.productType?.packaging.name ?? null,
           allocatedQty,
