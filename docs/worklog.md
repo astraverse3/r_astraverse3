@@ -79,6 +79,14 @@ C0 종결 뒤 계획서 §4 C1~C4를 한 세션에 구현. `confirmOrderItem` �
 - 변경: `lib/purchase-order-bulk.ts`(+test, 신규) · `purchase-order-cell.ts`(+test) · `purchase-order-db.ts`(guard 한 곳) · `actions/purchase-order-matrix.ts`
   · `[uploadId]/tonbag-popover.tsx`(신규) · `cell-allocation-popover.tsx` · `matrix-client.tsx`(1줄) · 계획서 D2d · 백로그 §40 · 보고서
 
+### 톤백 추천을 근접순 → kg FIFO로 `fix` `2efc798`
+
+사용자 지적: 쪼개기가 있는 이상 근접순은 무의미(어느 자루든 안 맞으면 쪼개고 나머지는 남는다). 「원칙대로 오래된 것부터, 여러 자루 써도」.
+
+- `suggestBulkAllocation`(통째 + 쪼갤 자루 하나 + 부족) 신설, `sortBulkCandidates` 삭제. 실데이터 pt18 1,000kg = 587+332+(450→81) 3자루.
+- 팝오버: 추천 기본 체크 · 쪼갤 몫은 행 아래 체크(끄면 안 씀) · **확정 한 번**에 `createRepack` → 재조회 → `confirmCell`. 가위(수동)는 유지.
+- 서버 후보 정렬 `sortFifo`. 테스트 291/291. 변경: `purchase-order-bulk.ts`(+test) · `actions/purchase-order-matrix.ts` · `tonbag-popover.tsx` · 계획서 E′ · 보고서
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
