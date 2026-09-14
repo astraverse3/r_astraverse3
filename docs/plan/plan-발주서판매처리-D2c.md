@@ -322,7 +322,7 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
   - 합이 안 맞으면 던진다(계산 오류를 조용히 넘기지 않는다)
 - 신규 `lib/purchase-order-cell.test.ts` — 라인1개 / 라인2개 / 경계 걸침 / 부분차감 후 재차감 / 초과
 
-### C3. 셀 액션 3종 ✅ **구현 완료 `ae7c1ff`** · 🔴 **브라우저 미확인** — 보고서 `docs/report-발주서-D2c-C1-C4-2026-09-14.md`
+### C3. 셀 액션 3종 ✅ **구현 완료 `ae7c1ff` · 브라우저 확인 2026-09-14** — 🔴 `revalidatePath` 삭제 `0e53abd`(Next가 액션 응답에 현재 페이지를 재렌더해 결정 C가 무효였다). 보고서 `docs/report-발주서-D2c-C1-C4-2026-09-14.md`
 
 `app/actions/purchase-order-matrix.ts`에 추가(209줄이라 여유):
 
@@ -332,10 +332,10 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
 | `confirmCell(itemIds, allocations)` | 결정 A. 한 트랜잭션, `timeout: 30000` 명시. **갱신된 `allocatedQty`(라인별) + `availability`(SKU) 반환**(결정 C) |
 | `cancelCell(itemIds)` | 라인들의 `type=SALE` movement 하드삭제 + 건 status 재계산 + 감사로그. **반환값은 `confirmCell`과 동일** |
 
-- 권한 `OPERATION_MANAGE` · `revalidatePath('/sales')` + `'/packages'`
+- 권한 `OPERATION_MANAGE` · ~~`revalidatePath('/sales')` + `'/packages'`~~ 🔴 **부르지 않는다** — Next 액션 핸들러가 revalidate 시 현재 페이지를 응답에 재렌더해 결정 C가 무효가 된다(실측 1초+, `0e53abd`)
 - 🔴 후보 목록은 `packageId`만으로는 사람이 못 고른다 → 로트코드·포장일을 함께 반환
 
-### C4. 팝오버 UI ✅ **구현 완료 `ae7c1ff`** · 🔴 **브라우저 미확인**(§7 검증 항목 그대로)
+### C4. 팝오버 UI ✅ **구현 완료 `ae7c1ff` · 브라우저 확인 2026-09-14**(차감→/packages 감소→취소 복원 · 로컬 재계산==F5 통과)
 
 - 신규 `cell-allocation-popover.tsx` (매트릭스 클라이언트가 800줄을 넘지 않게 — D2 §5 리스크)
   - 헤더: 수령처 · 품목 · 규격 · 「주문 12 / 차감 0」

@@ -55,6 +55,17 @@ C0 종결 뒤 계획서 §4 C1~C4를 한 세션에 구현. `confirmOrderItem` �
   · `actions/purchase-order-matrix.ts` · `[uploadId]/cell-allocation-popover.tsx`·`order-detail-panel.tsx`(신규) · `matrix-client.tsx` · `page.tsx`
   · `package-available.ts`(주석) · 계획서 C1~C4 · `report-발주서-D2c-C1-C4-2026-09-14.md`
 
+### 셀 차감 액션의 revalidatePath 제거 — 결정 C 복원 `fix` `0e53abd`
+
+브라우저 확인에서 확정 응답이 1초+. Next `action-handler.js`의 `skipPageRendering`이 `pathWasRevalidated`면 false —
+**revalidate를 어떤 경로로든 한 번 부르면 현재 페이지를 응답에 통째로 재렌더**한다. 매트릭스 1.4초 재조회가 차감마다 붙어
+결정 C(15ms 로컬 재계산)가 무효였다.
+
+- `confirmCell`·`cancelCell`의 `revalidatePath` 2줄 삭제. `/sales`·`/packages`는 세션 기반 동적 렌더 + 캐시 API 미사용이라
+  무효화할 것이 없다. 🔴 **「액션 뒤 서버 재조회 없음」을 노리는 액션은 revalidatePath를 부르면 안 된다.**
+- 나머지 확인 항목 통과 → **D2c C0~C4 종결.** 다음=D2d 톤백 / D2e 매칭실패 / D3 행 일괄.
+- 변경: `actions/purchase-order-matrix.ts` · 계획서 C3·C4 · 보고서 「브라우저 확인 결과」
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
