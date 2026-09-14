@@ -95,12 +95,12 @@ sortBulkCandidates(targetKg, rows)  // 근접순 + FIFO tie-break
 
 ## 4. 구현 단계
 
-### D1. 순수 함수 2건 + 테스트
+### D1. 순수 함수 2건 + 테스트 ✅ **구현 완료 `77ef717`** (13건)
 
 - `lib/purchase-order-bulk.ts` 신규(결정 I) + `.test.ts`: 차이 부호·1% 경계·근접순 정렬·동률 FIFO
 - `lib/purchase-order-cell.ts` — `splitAllocationsByLine` 3번째 인자 `{ overflow?: 'last' }`(결정 G) + 테스트 3건(위 표)
 
-### D2. 서버
+### D2. 서버 ✅ **구현 완료 `0f9c88e`**
 
 - `lib/purchase-order-db.ts` — `applyAllocations` `guard` 옵션(결정 F). **다른 줄은 손대지 않는다**
 - `app/actions/purchase-order-matrix.ts`
@@ -109,7 +109,7 @@ sortBulkCandidates(targetKg, rows)  // 근접순 + FIFO tie-break
   - `getCellAllocation`의 톤백 차단 문구는 유지(일반 경로에 톤백이 들어오면 여전히 막는다)
 - 532줄 → 약 650줄. 800 이내
 
-### D3. 팝오버
+### D3. 팝오버 ✅ **구현 완료 `0f9c88e`** · 🔴 **브라우저 미확인** — 보고서 `docs/report-발주서-D2d-2026-09-14.md`
 
 - 신규 `tonbag-popover.tsx`(상위 계획서 리스크 표가 지정한 파일명) — `TonbagBody` export
   - 헤더 밑 요약: **요구 1,000kg · 고른 1,005kg · +5 (+0.5%)**
@@ -119,7 +119,7 @@ sortBulkCandidates(targetKg, rows)  // 근접순 + FIFO tie-break
 - `cell-allocation-popover.tsx` — `Body`에서 `cell.bulk`면 안내문 대신 `<TonbagBody>`. `CancelButton`·`Head` export. 그 외 불변
 - `matrix-client.tsx` 변경 없음(이미 `bulk`·`itemIds`를 넘긴다)
 
-### D4. 문서
+### D4. 문서 ✅
 
 - 계획서 본 파일 상태 · `docs/report-발주서-D2d-2026-09-XX.md` · worklog · 백로그 §40에 「D2d에서 `lib/purchase-order-bulk.ts`로 뺐음, D5는 이걸 쓸 것」 한 줄
 

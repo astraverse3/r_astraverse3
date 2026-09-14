@@ -66,6 +66,19 @@ C0 종결 뒤 계획서 §4 C1~C4를 한 세션에 구현. `confirmOrderItem` �
 - 나머지 확인 항목 통과 → **D2c C0~C4 종결.** 다음=D2d 톤백 / D2e 매칭실패 / D3 행 일괄.
 - 변경: `actions/purchase-order-matrix.ts` · 계획서 C3·C4 · 보고서 「브라우저 확인 결과」
 
+### 발주서 D2d — 톤백 셀 수동 자루 지정 · 쪼개기 · 요구/실제 차이 `feat` `77ef717` `0f9c88e`
+
+계획서 `plan-발주서판매처리-D2d.md` 승인 후 D1~D3 구현. 🔴 **브라우저 미확인**(보고서 `report-발주서-D2d-2026-09-14.md` 8항목).
+
+- 실측: 톤백 라인 4건(시아스 #19, pt18·pt24 각 1,000/200kg) · pt18 가용 11자루 203~1,014kg · **톤백 `count>1` 행 43개**(균일 자루 묶음).
+- 🔴 **개수 규칙이 톤백에서 깨진다** — 1자루 주문에 587+450 두 자루가 정상인데 `applyAllocations`가 초과로 막고, kg으로 완료를 판정하면
+  985kg 통째 출고가 영원히 「부분」. → **결정 F: 완료는 자루 개수 그대로, 초과 차단만 푼다**(`guard:'open'`=완료 라인만 차단, 서버가 `unitWeightKg`로만 켠다).
+- **D1 `77ef717`** — `lib/purchase-order-bulk.ts`(`bulkDelta` ±1%·`sortBulkCandidates` 근접순→FIFO, §40 재사용점) · `splitAllocationsByLine` `overflow:'last'`(넘치는 자루는 마지막 라인, 기본 동작 불변). 13건.
+- **D2·D3 `0f9c88e`** — `getBulkCellOptions`(후보는 「남은 요구 kg」 근접순, 기차감 kg) · `confirmCell` 톤백 분기 · `tonbag-popover.tsx`(체크+stepper, 행별 쪼개기=`createRepack` 그대로 · 되돌리기 없음 confirm · 쪼갠 뒤 재조회해 새 자루 자동 체크). `cell-allocation-popover.tsx`는 `bulk`면 위임.
+- tsc 0 · eslint 0 · test **287/287**. ⚠️ 두 팝오버 파일이 서로 import — D2e 때 공용 조각 분리 권장.
+- 변경: `lib/purchase-order-bulk.ts`(+test, 신규) · `purchase-order-cell.ts`(+test) · `purchase-order-db.ts`(guard 한 곳) · `actions/purchase-order-matrix.ts`
+  · `[uploadId]/tonbag-popover.tsx`(신규) · `cell-allocation-popover.tsx` · `matrix-client.tsx`(1줄) · 계획서 D2d · 백로그 §40 · 보고서
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
