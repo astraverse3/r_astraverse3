@@ -23,6 +23,7 @@
 // 전체 재조회(1.4초)는 확정이 실패했을 때만 한다.
 //
 // 셀 액션 3종(`getCellAllocation`·`confirmCell`·`cancelCell`)은 아래 「셀 차감」 절.
+// 톤백 셀(D2d)은 `getBulkCellOptions`로 자루 목록을 받고, 확정·취소는 같은 `confirmCell`·`cancelCell`을 쓴다.
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
@@ -38,6 +39,7 @@ import {
   type AvailablePackage,
 } from '@/lib/purchase-order-allocation'
 import { splitAllocationsByLine, type CellLine } from '@/lib/purchase-order-cell'
+import { bulkDelta, requiredKgOf, sortBulkCandidates } from '@/lib/purchase-order-bulk'
 import {
   allocatedQtyOfItem,
   applyAllocations,
@@ -470,7 +472,11 @@ export async function confirmCell(
             allocatedQty: await allocatedQtyOfItem(tx, it.id),
           })),
         )
-        const byLine = splitAllocationsByLine(lines, allocations)
+        // 🔴 톤백 판정은 서버가 라인으로 한다 — 클라이언트 플래그를 믿지 않는다(D2d 결정 J).
+        //    톤백은 자루 수가 주문 자루 수와 달라도 정상이라(587+450 두 자루) 초과 차단을 풀고
+        //    넘치는 자루는 마지막 라인에 붙인다(결정 F·G). 일반 규격은 기본값 그대로.
+        const bulk = items.some((it) => it.unitWeightKg !== null)
+        const byLine = splitAllocationsByLine(lines, allocations, bulk ? { overflow: 'last' } : {})
         for (const l of byLine) {
           const item = items.find((it) => it.id === l.itemId)!
           await applyAllocations(tx, {
@@ -480,6 +486,7 @@ export async function confirmCell(
             allocations: l.allocations,
             createdById: session.user?.id,
             createdName: session.user?.name ?? undefined,
+            guard: bulk ? 'open' : 'count',
           })
         }
         await recalcOrderStatus(tx, orderId)
@@ -531,5 +538,162 @@ export async function cancelCell(itemIds: number[]): Promise<CellMutationResult>
   } catch (error) {
     console.error('[cancelCell] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '차감 취소에 실패했습니다.') }
+  }
+}
+
+// ======================================================
+// 톤백 셀 (D2d) — 자루를 사람이 고른다. 추천 없음(#34), 차이는 보여주기만(§40)
+// ======================================================
+
+/** 고를 수 있는 자루 행. `count>1`이면 같은 중량 자루 N개 묶음(실측 43행) */
+export type BulkCandidate = {
+  packageId: number
+  weightPerUnit: number
+  /** 가용 자루 수 */
+  available: number
+  lotNo: string | null
+  producer: string
+  /** 'yyyy-mm-dd'(KST). MILLED=도정일 / PURCHASED=입고일 */
+  date: string
+  source: 'MILLED' | 'PURCHASED'
+  /** 이 재포장으로 생긴 행이면 그 id — 쪼개기 직후 새 자루를 찾는 데 쓴다 */
+  repackId: number | null
+}
+
+export type BulkAllocated = {
+  packageId: number
+  lotNo: string | null
+  weightPerUnit: number
+  count: number
+  kg: number
+}
+
+export type BulkCellOptions = {
+  productTypeId: number
+  lines: (CellLine & { unitWeightKg: number })[]
+  /** 요구 kg 합 = Σ orderedQty × unitWeightKg */
+  requiredKg: number
+  /** 이미 나간 kg = Σ movement.count × weightPerUnit */
+  allocatedKg: number
+  /** 남은 자루 수(개수 기준 — 완료 판정은 개수, 결정 F) */
+  remainingQty: number
+  /** 요구 중량 근접순 */
+  candidates: BulkCandidate[]
+  allocated: BulkAllocated[]
+}
+
+export type BulkCellOptionsResult =
+  | { success: true; data: BulkCellOptions }
+  | { success: false; error: string }
+
+/**
+ * 톤백 셀 팝오버 데이터. 톤백이 아닌 라인이 섞여 있으면 막는다(그쪽은 `getCellAllocation`).
+ * 후보 정렬은 **남은 요구 kg**(요구 − 기차감) 근접순 — 200kg 셀엔 203이 맨 위, 1,000kg 셀엔 1,005·1,014.
+ */
+export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOptionsResult> {
+  await requirePermission('OPERATION_MANAGE')
+  try {
+    const { items, productTypeId } = await loadCellItems(prisma, itemIds)
+    if (items.some((it) => it.unitWeightKg === null)) {
+      return { success: false, error: '톤백 라인이 아닙니다.' }
+    }
+
+    const [movements, pkgs] = await Promise.all([
+      prisma.packageMovement.findMany({
+        where: { orderItemId: { in: itemIds }, type: 'SALE' },
+        select: {
+          orderItemId: true,
+          packageId: true,
+          count: true,
+          package: { select: { lotNo: true, weightPerUnit: true } },
+        },
+      }),
+      prisma.millingOutputPackage.findMany({
+        where: { productTypeId },
+        select: {
+          id: true,
+          count: true,
+          weightPerUnit: true,
+          source: true,
+          lotNo: true,
+          createdAt: true,
+          incomingDate: true,
+          purchaseVendor: true,
+          repackId: true,
+          stock: { select: { farmer: { select: { name: true } } } },
+          ...MOVEMENT_COUNT_SELECT,
+        },
+      }),
+    ])
+
+    const lines = items.map((it) => ({
+      itemId: it.id,
+      orderedQty: it.orderedQty,
+      unitWeightKg: it.unitWeightKg!,
+      allocatedQty: movements.filter((m) => m.orderItemId === it.id).reduce((s, m) => s + m.count, 0),
+    }))
+    const requiredKg = lines.reduce((s, l) => s + requiredKgOf(l), 0)
+    const allocatedKg =
+      Math.round(movements.reduce((s, m) => s + m.count * m.package.weightPerUnit, 0) * 10) / 10
+    const remainingQty = lines.reduce((s, l) => s + Math.max(0, l.orderedQty - l.allocatedQty), 0)
+    // 근접 기준은 「아직 못 채운 kg」. 부족(under)이면 남은 kg, 이미 넘겼으면 0 근처(=작은 자루 우선)
+    const targetKg = Math.max(0, -bulkDelta(requiredKg, allocatedKg).deltaKg)
+
+    const avail = pkgs
+      .map((p) => ({
+        packageId: p.id,
+        weightPerUnit: p.weightPerUnit,
+        available: Math.max(0, availableOf(p)),
+        lotNo: p.lotNo,
+        producer: p.source === 'PURCHASED' ? (p.purchaseVendor ?? '—') : (p.stock?.farmer.name ?? '—'),
+        date: todayIsoKst(fifoDateOf(p)),
+        source: p.source,
+        repackId: p.repackId,
+        sortKey: fifoDateOf(p),
+      }))
+      .filter((c) => c.available > 0)
+    const candidates: BulkCandidate[] = sortBulkCandidates(targetKg, avail).map((c) => ({
+      packageId: c.packageId,
+      weightPerUnit: c.weightPerUnit,
+      available: c.available,
+      lotNo: c.lotNo,
+      producer: c.producer,
+      date: c.date,
+      source: c.source,
+      repackId: c.repackId,
+    }))
+
+    const allocatedByPkg = new Map<number, BulkAllocated>()
+    for (const m of movements) {
+      const cur = allocatedByPkg.get(m.packageId)
+      if (cur) {
+        cur.count += m.count
+        cur.kg = Math.round(cur.count * cur.weightPerUnit * 10) / 10
+      } else {
+        allocatedByPkg.set(m.packageId, {
+          packageId: m.packageId,
+          lotNo: m.package.lotNo,
+          weightPerUnit: m.package.weightPerUnit,
+          count: m.count,
+          kg: Math.round(m.count * m.package.weightPerUnit * 10) / 10,
+        })
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        productTypeId,
+        lines,
+        requiredKg,
+        allocatedKg,
+        remainingQty,
+        candidates,
+        allocated: [...allocatedByPkg.values()],
+      },
+    }
+  } catch (error) {
+    console.error('[getBulkCellOptions] failed:', error)
+    return { success: false, error: sanitizeErrorMessage(error, '톤백 재고를 불러오지 못했습니다.') }
   }
 }

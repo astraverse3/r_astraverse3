@@ -8,7 +8,8 @@
 // 부모(`matrix-client.tsx`)가 `BuildMatrixInput`의 두 값만 갈아끼우고 `buildMatrix`를 다시 돌린다(결정 C).
 // 실패하면 `onFail()` — 내 화면이 낡았을 수 있으니 부모가 전체 재조회로 진실에 맞춘다.
 //
-// 결정 D — 톤백·매칭실패는 안내만 한다(각각 D2d·D2e). 완료 셀은 내역 + 취소.
+// 결정 D — 매칭실패는 안내만 한다(D2e). 톤백은 `tonbag-popover.tsx`의 `TonbagBody`로 위임한다(D2d).
+// 완료 셀은 내역 + 취소.
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -25,6 +26,7 @@ import {
     type CellAllocation,
     type CellPatch,
 } from '@/app/actions/purchase-order-matrix'
+import { TonbagBody } from './tonbag-popover'
 
 /** 부모가 넘기는 「어느 셀인가」 — 표시용 라벨과 액션에 필요한 itemIds */
 export type ActiveCell = {
@@ -44,11 +46,14 @@ const md = (iso: string) => iso.slice(5).replace('-', '.')
 
 export function CellAllocationPopover({
     cell,
+    uploadId,
     onPatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell | null
+    /** 톤백 쪼개기(재포장) 비고에 적는다 */
+    uploadId: number
     onPatch: (patch: CellPatch) => void
     onFail: () => void
     onClose: () => void
@@ -64,7 +69,9 @@ export function CellAllocationPopover({
                 className="w-[320px] p-0 text-[12px]"
                 onOpenAutoFocus={(e) => e.preventDefault()}
             >
-                {cell && <Body key={cell.key} cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />}
+                {cell && (
+                    <Body key={cell.key} cell={cell} uploadId={uploadId} onPatch={onPatch} onFail={onFail} onClose={onClose} />
+                )}
             </PopoverContent>
         </Popover>
     )
@@ -75,11 +82,13 @@ export function CellAllocationPopover({
 // ------------------------------------------------------
 function Body({
     cell,
+    uploadId,
     onPatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell
+    uploadId: number
     onPatch: (patch: CellPatch) => void
     onFail: () => void
     onClose: () => void
@@ -87,15 +96,15 @@ function Body({
     const blocked =
         cell.status === 'UNMATCHED'
             ? '품종 지정이 필요합니다. 매칭실패 셀은 다음 단계(D2e)에서 지정합니다.'
-            : cell.bulk
-              ? '수동 지정이 필요합니다. 톤백은 자루마다 중량이 달라 다음 단계(D2d)에서 로트를 직접 고릅니다.'
-              : null
+            : null
 
     return (
         <div className="flex flex-col">
             <Head cell={cell} onClose={onClose} />
             {blocked ? (
                 <p className="px-3.5 py-3 leading-relaxed text-slate-500">{blocked}</p>
+            ) : cell.bulk ? (
+                <TonbagBody cell={cell} uploadId={uploadId} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             ) : (
                 <Loaded cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             )}
@@ -349,7 +358,7 @@ function AllocatedList({
     )
 }
 
-function CancelButton({
+export function CancelButton({
     cell,
     count,
     onPatch,

@@ -82,12 +82,21 @@ export async function applyAllocations(
     allocations: Allocation[]
     createdById?: string
     createdName?: string
+    /**
+     * 초과 검사 방식. 기본 'count' = 개수 초과 차단.
+     * 'open' = **톤백 전용**(D2d 결정 F) — 「이미 완료된 라인엔 더 못 넣는다」만 본다.
+     * 1자루 주문에 587kg+450kg 두 자루를 내는 게 정상 업무라 개수로 막으면 안 된다.
+     * 🔴 호출부(`confirmCell`)가 라인의 `unitWeightKg !== null`로만 켠다. 일반 규격에 켜면 초과 차감이 열린다.
+     */
+    guard?: 'count' | 'open'
   },
 ): Promise<number> {
   const already = await allocatedQtyOfItem(tx, args.itemId)
   const addQty = args.allocations.reduce((s, a) => s + a.count, 0)
   if (addQty <= 0) return 0
-  if (already + addQty > args.orderedQty) {
+  if (args.guard === 'open') {
+    if (already >= args.orderedQty) throw new Error('이미 전부 차감된 라인입니다.')
+  } else if (already + addQty > args.orderedQty) {
     throw new Error(`주문수량(${args.orderedQty})을 초과한 차감입니다.`)
   }
 
