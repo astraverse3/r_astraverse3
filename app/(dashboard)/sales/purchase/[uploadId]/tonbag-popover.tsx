@@ -329,13 +329,17 @@ function CandidateRow({
                         className="h-3.5 w-3.5 shrink-0 accent-primary"
                     />
                     <span className="min-w-0 flex-1">
+                        {/* 날짜는 윗줄, 아랫줄은 로트 · 생산자 — 잘라내지 않고 줄바꿈한다(잘리면 로트를 못 읽는다) */}
                         <span className="flex items-baseline gap-1.5">
                             <b className="text-[13px] tabular-nums text-foreground">{fmtKg(c.weightPerUnit)}</b>
                             <span className="text-[10px] text-slate-400">kg</span>
                             {c.available > 1 && <span className="text-[10px] text-slate-400">× {c.available}자루</span>}
+                            <span className="ml-auto text-[10.5px] text-slate-500">
+                                {c.source === 'PURCHASED' ? '입고' : '도정'} {md(c.date)}
+                            </span>
                         </span>
-                        <span className="block truncate text-[10px] text-slate-400">
-                            {c.lotNo ?? '로트 없음'} · {c.source === 'PURCHASED' ? '입고' : '도정'} {md(c.date)} · {c.producer}
+                        <span className="block break-all text-[10.5px] leading-snug text-slate-500">
+                            <span className="font-mono">{c.lotNo ?? '로트 없음'}</span> · {c.producer}
                         </span>
                     </span>
                 </label>

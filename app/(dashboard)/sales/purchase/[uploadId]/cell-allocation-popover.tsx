@@ -239,11 +239,12 @@ function Editor({
                                 n > 0 ? 'border-primary/40 bg-primary/5' : 'border-slate-200',
                             )}
                         >
+                            {/* 잘라내지 않고 줄바꿈한다 — 잘리면 로트·생산자를 못 읽는다 */}
                             <div className="min-w-0 flex-1">
-                                <div className="truncate font-mono text-[11.5px] text-slate-700">
+                                <div className="break-all font-mono text-[11.5px] leading-snug text-slate-700">
                                     {c.lotNo ?? '로트 없음'}
                                 </div>
-                                <div className="truncate text-[10px] text-slate-400">
+                                <div className="text-[10.5px] leading-snug text-slate-500">
                                     {c.source === 'PURCHASED' ? '입고' : '도정'} {md(c.date)} · {c.producer} · 가용{' '}
                                     {fmt(c.available)}
                                 </div>
