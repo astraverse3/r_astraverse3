@@ -39,7 +39,7 @@ import {
   type AvailablePackage,
 } from '@/lib/purchase-order-allocation'
 import { splitAllocationsByLine, type CellLine } from '@/lib/purchase-order-cell'
-import { bulkDelta, requiredKgOf, sortBulkCandidates } from '@/lib/purchase-order-bulk'
+import { requiredKgOf } from '@/lib/purchase-order-bulk'
 import {
   allocatedQtyOfItem,
   applyAllocations,
@@ -542,7 +542,7 @@ export async function cancelCell(itemIds: number[]): Promise<CellMutationResult>
 }
 
 // ======================================================
-// 톤백 셀 (D2d) — 자루를 사람이 고른다. 추천 없음(#34), 차이는 보여주기만(§40)
+// 톤백 셀 (D2d) — 자루 목록은 FIFO 순. 추천(kg FIFO)은 클라이언트 순수 함수가, 차이는 보여주기만(§40)
 // ======================================================
 
 /** 고를 수 있는 자루 행. `count>1`이면 같은 중량 자루 N개 묶음(실측 43행) */
@@ -577,7 +577,7 @@ export type BulkCellOptions = {
   allocatedKg: number
   /** 남은 자루 수(개수 기준 — 완료 판정은 개수, 결정 F) */
   remainingQty: number
-  /** 요구 중량 근접순 */
+  /** FIFO 순(오래된 자루부터). 추천은 이 순서를 그대로 쓴다 */
   candidates: BulkCandidate[]
   allocated: BulkAllocated[]
 }
@@ -588,7 +588,7 @@ export type BulkCellOptionsResult =
 
 /**
  * 톤백 셀 팝오버 데이터. 톤백이 아닌 라인이 섞여 있으면 막는다(그쪽은 `getCellAllocation`).
- * 후보 정렬은 **남은 요구 kg**(요구 − 기차감) 근접순 — 200kg 셀엔 203이 맨 위, 1,000kg 셀엔 1,005·1,014.
+ * 후보는 **FIFO 순**(도정/입고일 → id). 클라이언트 suggestBulkAllocation이 이 순서로 kg을 채운다(사용자 결정 2026-09-14).
  */
 export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOptionsResult> {
   await requirePermission('OPERATION_MANAGE')
@@ -636,8 +636,6 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
     const allocatedKg =
       Math.round(movements.reduce((s, m) => s + m.count * m.package.weightPerUnit, 0) * 10) / 10
     const remainingQty = lines.reduce((s, l) => s + Math.max(0, l.orderedQty - l.allocatedQty), 0)
-    // 근접 기준은 「아직 못 채운 kg」. 부족(under)이면 남은 kg, 이미 넘겼으면 0 근처(=작은 자루 우선)
-    const targetKg = Math.max(0, -bulkDelta(requiredKg, allocatedKg).deltaKg)
 
     const avail = pkgs
       .map((p) => ({
@@ -652,7 +650,7 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
         sortKey: fifoDateOf(p),
       }))
       .filter((c) => c.available > 0)
-    const candidates: BulkCandidate[] = sortBulkCandidates(targetKg, avail).map((c) => ({
+    const candidates: BulkCandidate[] = sortFifo(avail).map((c) => ({
       packageId: c.packageId,
       weightPerUnit: c.weightPerUnit,
       available: c.available,
