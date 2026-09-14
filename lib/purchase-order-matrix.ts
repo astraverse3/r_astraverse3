@@ -14,6 +14,7 @@
 import { computeLineStatus } from './purchase-order-allocation'
 import { normalizeSpec } from './purchase-order-parser'
 import { getDisplayMillingType } from './milling-type-display'
+import { isSpareRow } from './purchase-channel'
 
 // ------------------------------------------------------
 // 입력 — 호출부가 배치 조회해서 넣는다
@@ -419,15 +420,22 @@ export function buildMatrix(input: BuildMatrixInput): Matrix {
  *   latest    — 최신 등록 순
  *   needsWork — 손댈 일이 남은 행 먼저, 그 안에서 수령인 가나다
  *
+ * 🔴 **「여유」 행은 이름 정렬 둘(vendor·recipient)에서만 맨 아래다.** 여분 물량이 가나다
+ * 중간(ㅇ)에 끼면 발주처 목록으로 안 읽힌다(사용자 결정 2026-09-14, 핸드오프 §4-b 번복).
+ * 최신·작업필요는 시간·상태 기준이라 그대로 섞는다 — 여유 행의 재고부족이 맨 아래로 숨으면 안 된다.
+ *
  * 🔴 정렬 키는 필드다. 화면용으로 조합한 문자열(`발주처 → 수령인`)을 키로 쓰면
  * 「수령인 가나다」가 발주처 순이 된다 — C0-d에서 걷어낸 결함.
  */
 export function sortMatrixRows(rows: MatrixRow[], sort: MatrixSort): MatrixRow[] {
   const ko = (a: string, b: string) => a.localeCompare(b, 'ko')
   const byRecipient = (a: MatrixRow, b: MatrixRow) => ko(a.recipient, b.recipient)
+  const spareLast = (a: MatrixRow, b: MatrixRow) => Number(isSpareRow(a)) - Number(isSpareRow(b))
   const copy = [...rows]
-  if (sort === 'vendor') return copy.sort((a, b) => ko(a.vendor, b.vendor) || byRecipient(a, b))
-  if (sort === 'recipient') return copy.sort(byRecipient)
+  if (sort === 'vendor') {
+    return copy.sort((a, b) => spareLast(a, b) || ko(a.vendor, b.vendor) || byRecipient(a, b))
+  }
+  if (sort === 'recipient') return copy.sort((a, b) => spareLast(a, b) || byRecipient(a, b))
   if (sort === 'latest') {
     return copy.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || byRecipient(a, b))
   }

@@ -326,6 +326,64 @@ test('sortMatrixRows: 수령인 가나다는 발주처를 무시한다 — 조�
   )
 })
 
+// 서울급식 모양 — 발주처가 변수, 수령인은 행복플러스 고정, 「여유」는 발주처 자리에 온다
+const seoulFixture = () =>
+  buildMatrix(
+    input({
+      orders: [
+        order(1, '여유', '행복플러스', '2026-08-03'),
+        order(2, '은평구', '행복플러스', '2026-08-01'),
+        order(3, '서대문구', '행복플러스', '2026-08-02'),
+      ],
+      items: [
+        // 여유만 손댈 일이 남는다 — 작업필요 정렬에서 맨 위여야 한다
+        item({ id: 11, orderId: 1, productTypeId: 1, orderedQty: 2, allocatedQty: 0 }),
+        item({ id: 12, orderId: 2, productTypeId: 1, orderedQty: 1, allocatedQty: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: 1, orderedQty: 1, allocatedQty: 1 }),
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+  ).rows
+
+test('sortMatrixRows: 「여유」는 발주처별·수령인 가나다에서 맨 아래', () => {
+  assert.deepEqual(
+    sortMatrixRows(seoulFixture(), 'vendor').map((x) => x.vendor),
+    ['서대문구', '은평구', '여유'],
+  )
+  assert.deepEqual(
+    sortMatrixRows(seoulFixture(), 'recipient').map((x) => x.vendor),
+    ['은평구', '서대문구', '여유'],
+  )
+})
+
+test('sortMatrixRows: 「여유」도 최신·작업필요에서는 제 기준대로 섞인다 — 숨으면 안 된다', () => {
+  assert.deepEqual(
+    sortMatrixRows(seoulFixture(), 'latest').map((x) => x.vendor),
+    ['여유', '서대문구', '은평구'],
+  )
+  assert.equal(sortMatrixRows(seoulFixture(), 'needsWork')[0].vendor, '여유')
+})
+
+test('sortMatrixRows: 수령인 자리의 「여분」도 맨 아래 (발주처가 상수인 채널)', () => {
+  const rows = buildMatrix(
+    input({
+      orders: [order(1, '이마트', '여분'), order(2, '이마트', '여주점'), order(3, '이마트', '대구점')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 12, orderId: 2, productTypeId: 1, orderedQty: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: 1, orderedQty: 1 }),
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+  ).rows
+  assert.deepEqual(
+    sortMatrixRows(rows, 'recipient').map((x) => x.recipient),
+    ['대구점', '여주점', '여분'],
+  )
+})
+
 // ------------------------------------------------------
 // 열 그룹 — 머리글 2단 (품목 → 규격)
 // ------------------------------------------------------

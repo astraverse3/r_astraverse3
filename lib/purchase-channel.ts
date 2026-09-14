@@ -51,6 +51,18 @@ export const CHANNEL_DECL: Record<PurchaseChannel, ChannelDecl> = {
 }
 
 /**
+ * 「여유」 행 — 주문이 아니라 여분으로 더 보내는 물량(핸드오프 §4-b). 재고는 실제로 나간다.
+ * 발주처 자리(서울급식)든 수령인 자리(발주처가 상수인 채널)든 올 수 있어 **양쪽을 본다**.
+ * 쓰는 곳: 이름 정렬에서 맨 아래(`sortMatrixRows`) · §6 상수 검증에서 제외(백로그).
+ */
+export const SPARE_NAMES = ['여유', '여분'] as const
+
+export function isSpareRow(row: { vendor: string; recipient: string | null }): boolean {
+  const spare = SPARE_NAMES as readonly string[]
+  return spare.includes(row.vendor) || (row.recipient !== null && spare.includes(row.recipient))
+}
+
+/**
  * 이름칸에 찍을 [앞, 뒤] 값. 뒤가 없거나 앞과 같으면 한 줄(뒤=null).
  * 🔴 택배는 전 행 2단이 기본이다 — 실측 95.5%가 발주처≠수령인. 동일명 3건만 한 줄.
  */

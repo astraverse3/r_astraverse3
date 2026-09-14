@@ -16,6 +16,15 @@ C0-a·b·d 브라우저 확인에서 사용자가 둘을 짚었다 — 규격 �
 - 변경: `purchase-channel.ts`(+test) · `matrix-client.tsx` · `upload-dialog.tsx` · `upload-table.tsx` · `purchase-order-matrix.ts`(+test)
   · `purchase-order-parser.test.ts` · `purchase-order-allocation.ts` · 계획서 D2c · `report-발주서-D2c-C0c-2026-09-14.md`
 
+### 「여유」 행은 이름 정렬에서 맨 아래 `feat` `(커밋)`
+
+서울급식 `여유` 행이 가나다 중간에 끼어 어색하다는 사용자 요청. 핸드오프 §4-b(「맨 아래 고정 안 함」) **번복**.
+
+- 서울급식 예외가 아니라 **값 규칙**으로 — `SPARE_NAMES`·`isSpareRow`(`lib/purchase-channel.ts`, 발주처·수령인 양쪽).
+- **발주처별·수령인 가나다에서만** 맨 아래. 최신·작업필요는 그대로 — 여유 행의 재고부족이 숨으면 안 된다.
+  4개 전부 통일은 사용자가 거절.
+- 테스트 3건, 265/265. 변경: `purchase-channel.ts` · `purchase-order-matrix.ts`(+test) · 계획서 기각표 · 보고서
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
