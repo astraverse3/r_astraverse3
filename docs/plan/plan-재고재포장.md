@@ -163,6 +163,7 @@ model MillingOutputPackage {
 |---|---|
 | `lotNo` | 지정값 (§3.3) |
 | `batchId` · `stockId` · `varietyId` · `purchaseVendor` · `incomingDate` · `productCode` | **지정한 로트의 소스 행**에서 승계 |
+| `createdAt` | 🔴 **소스 행에서 승계** (2026-09-14 `388400e`, 사용자 결정 「재포장은 새 제품이 아니다 — 품질은 만든 날 기준」). 도정산은 목록 포장일자·FIFO 키가 `createdAt`이라 기본값(지금)으로 두면 쪼개고 남은 자루가 오늘 만든 것처럼 큐 맨 뒤로 갔다(톤백 분할 #11에서 발견). 재포장 시각은 `Repack.occurredAt`. 기존 테스트 결과 행은 백필 안 함(#11 두 행만 수동 복원) |
 | `source` · `category` | 소스와 동일(제약상 전부 같음) |
 | `packageType` · `weightPerUnit` · `count` | 입력값 |
 | `totalWeight` | `weightPerUnit × count` |

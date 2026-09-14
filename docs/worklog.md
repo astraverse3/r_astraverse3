@@ -87,6 +87,17 @@ C0 종결 뒤 계획서 §4 C1~C4를 한 세션에 구현. `confirmOrderItem` �
 - 팝오버: 추천 기본 체크 · 쪼갤 몫은 행 아래 체크(끄면 안 씀) · **확정 한 번**에 `createRepack` → 재조회 → `confirmCell`. 가위(수동)는 유지.
 - 서버 후보 정렬 `sortFifo`. 테스트 291/291. 변경: `purchase-order-bulk.ts`(+test) · `actions/purchase-order-matrix.ts` · `tonbag-popover.tsx` · 계획서 E′ · 보고서
 
+### 재포장 결과 행이 포장일(createdAt)을 원본에서 승계 `fix` `388400e`
+
+D2d 브라우저 확인에서 「369kg 톤백이 안 생겼다」 — 생겼는데 포장일자가 오늘이라 서농22호 그룹 **맨 아래**에 가 있었다.
+사용자: 「중요한 건 그 제품이 언제 만들어졌냐. 재포장으로 새 제품으로 인식되면 오류」.
+
+- `createRepack` 결과 행 승계 목록에 `createdAt` 한 줄. 도정산은 목록 포장일자·FIFO 키(`loadAvailablePackages`·`getCellAllocation`·`getBulkCellOptions`)가 전부 `createdAt`이라
+  기본값이면 쪼개고 남은 자루가 큐 맨 뒤로 갔다. 매입은 `incomingDate`를 이미 승계해 문제없었다.
+- 재포장 #11 결과 2행(81·369kg)은 스크립트로 원본 1017 날짜(07-23)로 복원. 나머지 테스트 재포장은 사용자 결정으로 백필 안 함.
+- 🔴 대안 `packedAt` 필드 신설은 기각 — 코드베이스가 이미 「도정산 포장일 = createdAt」 관례.
+- 변경: `actions/repack.ts` · 재포장 계획서 §3.4
+
 ## 2026-09-11
 
 ### 발주서 매트릭스 소계 위계(C0-b) · D2c 계획 확정 · 시안 대조 2회 `feat` `829d6fd`
