@@ -2,6 +2,11 @@
 
 ## 2026-09-15
 
+### D2d 종결 — 계획서 상태 정리 · 결과보고서 `docs` `__HASH__`
+
+사용자 브라우저 확인 M1~M5 완료(M3·M4는 데이터상 재현 불가 → 실제 부족 상황 때). 계획서 머리에 종결 배너, §1·D3·D5·§7 상태 갱신.
+결과보고서 `docs/report-발주서-D2d-리셋-2026-09-15.md`. 오늘 커밋 전부 origin/main 푸시.
+
 ### 발주서 매트릭스 — 「← 제품판매」 뒤로가기 링크 삭제(브레드크럼이 맡음) `chore` `f724a20`
 
 - `sales/purchase/[uploadId]/page.tsx` — `BackLink`·오류 화면의 링크 삭제, `Link`·`ArrowLeft` import 정리
