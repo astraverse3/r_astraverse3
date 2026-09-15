@@ -3,6 +3,7 @@
 // 톤백은 자루마다 중량이 제각각이라(실측 124종) 「개수」 추천이 성립하지 않는다.
 // 그래서 **kg으로 FIFO**를 돈다(사용자 결정 2026-09-14): 오래된 자루부터 kg을 채워 나가고,
 // 요구량을 넘기는 자루 하나만 쪼갠다(`createRepack`). 자루가 여러 개 쓰여도 된다.
+// 추천 목표는 요구 kg가 아니라 **요구 + 자루 무게**다(결정 K, 2026-09-15): 1톤 주문은 1,003kg으로 맞춰 보낸다.
 // 「요구 vs 실제」 차이는 **보여주기만** 한다(백로그 §40 — 막지 않는다). D5 엑셀이 같은 계산을 쓴다.
 
 /** 요구 중량 판정에 필요한 라인 조각 */
@@ -43,6 +44,15 @@ export function bulkDelta(requiredKg: number, actualKg: number): BulkDelta {
 // ------------------------------------------------------
 // kg FIFO 추천
 // ------------------------------------------------------
+
+/** 톤백 자루 무게(kg/자루). 추천 목표에 요구 자루 수만큼 더한다(결정 K). 사람이 ±1kg로 조절할 수 있다 */
+export const BULK_TARE_KG = 3
+
+/** 추천 목표 kg = 남은 요구 kg + 자루 무게 × 남은 요구 자루 수. 남은 요구가 0이면 0 */
+export function bulkTargetKg(remainingKg: number, remainingBags: number): number {
+  if (remainingKg <= 0 || remainingBags <= 0) return 0
+  return Math.round((remainingKg + BULK_TARE_KG * remainingBags) * 1000) / 1000
+}
 
 /** 자루 행 — `count>1`이면 같은 중량 자루 N개 묶음. **입력 순서가 FIFO**여야 한다(호출부가 정렬해 넘긴다) */
 export type BulkBagLike = {

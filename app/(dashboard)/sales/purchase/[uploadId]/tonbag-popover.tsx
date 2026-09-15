@@ -1,11 +1,12 @@
 'use client'
 
-// 톤백 셀 팝오버 본문 (계획서 D2d 결정 E'·H·I)
+// 톤백 셀 팝오버 본문 (계획서 D2d 결정 E'·H·I·K)
 //
 // `cell-allocation-popover.tsx`의 `Body`가 `cell.bulk`면 여기로 위임한다. 껍데기(Popover·Head)는 거기 것.
 // **kg FIFO** — 오래된 자루부터 kg을 채우고, 요구량을 넘기는 자루 하나만 쪼갠다(사용자 결정 2026-09-14,
 // 「자루가 여러 개 쓰여도 원칙대로 오래된 것부터」). 추천은 `suggestBulkAllocation`(순수)이 내고 기본 체크로 띄운다.
-// 사람이 바꿀 수 있다 — 통째 자루 체크 해제/추가, 쪼갤 몫 끄기(그러면 1,005 통째 같은 「차이 감수」가 된다).
+// 추천 목표는 **요구 + 자루 무게(3kg/자루)**다(결정 K, 2026-09-15 — 1톤 주문은 1,003으로 맞춰 보낸다).
+// 사람이 바꿀 수 있다 — 통째 자루 체크 해제/추가, 쪼갤 몫 끄기, **쪼갤 kg ±1 조절**(직접 입력도).
 // 「요구 vs 실제」 차이는 `bulkDelta`가 계산하고 여기는 색만 바꾼다(§40, 막지 않는다).
 // 확정 한 번에 끝난다: 쪼갤 몫이 켜져 있으면 `createRepack`(되돌리기 없음 confirm) → 재조회로 새 자루를 찾아 → `confirmCell`.
 // 확정·취소는 일반 셀과 같은 `confirmCell`·`cancelCell`(서버가 라인으로 톤백을 판정한다).
@@ -15,7 +16,7 @@ import { toast } from 'sonner'
 import { Check, Minus, Plus, Scissors } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
-import { bulkDelta, suggestBulkAllocation } from '@/lib/purchase-order-bulk'
+import { BULK_TARE_KG, bulkDelta, bulkTargetKg, suggestBulkAllocation } from '@/lib/purchase-order-bulk'
 import { PACKAGE_TYPE_TONBAG } from '@/lib/repack'
 import { createRepack } from '@/app/actions/repack'
 import {
@@ -33,8 +34,11 @@ const signed = (n: number) => (n > 0 ? `+${fmtKg(n)}` : fmtKg(n))
 
 const LEVEL_TONE = { exact: 'text-emerald-700', over: 'text-orange-700', under: 'text-orange-700' } as const
 
-/** 쪼개 쓸 몫 — 추천이 정한 자루와 kg. `on`을 끄면 그 자루는 안 쓴다(통째로 바꾸려면 체크) */
+/** 쪼개 쓸 몫 — 추천이 정한 자루와 kg. `on`을 끄면 그 자루는 안 쓴다(통째로 바꾸려면 체크). `kg`는 사람이 조절한다(결정 K) */
 type SplitPlan = { packageId: number; kg: number; on: boolean }
+
+/** 쪼갤 kg 범위 — 최소 1, 최대 자루중량 − 1(통째는 체크박스로) */
+const clampSplitKg = (kg: number, weightPerUnit: number) => Math.max(1, Math.min(weightPerUnit - 1, kg))
 
 export function TonbagBody({
     cell,
@@ -55,23 +59,6 @@ export function TonbagBody({
     const [picked, setPicked] = useState<Record<number, number>>({})
     const [split, setSplit] = useState<SplitPlan | null>(null)
     const [busy, setBusy] = useState(false)
-    /** 행별 수동 쪼개기 입력이 펼쳐진 자루 */
-    const [manualSplit, setManualSplit] = useState<number | null>(null)
-
-    /** 서버 값으로 추천을 다시 낸다(처음 열 때 · 수동 쪼개기 뒤) */
-    const load = async () => {
-        const r = await getBulkCellOptions(cell.itemIds)
-        if (!r.success) {
-            setError(r.error)
-            return null
-        }
-        setData(r.data)
-        const remainingKg = Math.max(0, r.data.requiredKg - r.data.allocatedKg)
-        const s = suggestBulkAllocation(remainingKg, r.data.candidates)
-        setPicked(Object.fromEntries(s.whole.map((w) => [w.packageId, w.count])))
-        setSplit(s.split ? { ...s.split, on: true } : null)
-        return r.data
-    }
 
     useEffect(() => {
         let alive = true
@@ -82,8 +69,9 @@ export function TonbagBody({
                 return
             }
             setData(r.data)
+            // 목표 = 남은 요구 + 자루 무게 × 남은 자루 수 (결정 K)
             const remainingKg = Math.max(0, r.data.requiredKg - r.data.allocatedKg)
-            const s = suggestBulkAllocation(remainingKg, r.data.candidates)
+            const s = suggestBulkAllocation(bulkTargetKg(remainingKg, r.data.remainingQty), r.data.candidates)
             setPicked(Object.fromEntries(s.whole.map((w) => [w.packageId, w.count])))
             setSplit(s.split ? { ...s.split, on: true } : null)
         })
@@ -108,6 +96,9 @@ export function TonbagBody({
 
     const setPick = (c: BulkCandidate, n: number) =>
         setPicked((p) => ({ ...p, [c.packageId]: Math.max(0, Math.min(c.available, n)) }))
+
+    const setSplitKg = (c: BulkCandidate, kg: number) =>
+        setSplit((s) => (s ? { ...s, kg: clampSplitKg(kg, c.weightPerUnit) } : s))
 
     /** 자루 하나를 kg + (w−kg)로. 성공하면 새 자루의 packageId(재조회로 찾음) */
     const doSplit = async (c: BulkCandidate, kg: number): Promise<BulkCandidate | null> => {
@@ -187,22 +178,6 @@ export function TonbagBody({
         }
     }
 
-    /** 행의 가위 — 지금 바로 쪼개고 목록을 다시 받아 추천을 새로 낸다 */
-    const manualSplitNow = async (c: BulkCandidate, kg: number) => {
-        if (!(await confirmSplitDialog(c, kg))) return
-        setBusy(true)
-        try {
-            const hit = await doSplit(c, kg)
-            setManualSplit(null)
-            if (hit) {
-                toast.success(`${fmtKg(kg)}kg + ${fmtKg(c.weightPerUnit - kg)}kg으로 나눴습니다`)
-                await load()
-            }
-        } finally {
-            setBusy(false)
-        }
-    }
-
     return (
         <>
             {/* 요약 — 요구 · 실제(기차감+고른) · 차이 */}
@@ -242,7 +217,7 @@ export function TonbagBody({
             {!done && (
                 <div className="flex max-h-[280px] flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5">
                     <div className="text-[10px] font-semibold text-slate-400">
-                        오래된 자루부터(FIFO) · 남은 요구 {fmtKg(remainingKg)}kg
+                        오래된 자루부터(FIFO) · 남은 요구 {fmtKg(remainingKg)}kg · 추천은 자루당 +{BULK_TARE_KG}kg
                     </div>
                     {data.candidates.length === 0 && <p className="py-1 text-slate-400">가용 톤백이 없습니다.</p>}
                     {data.candidates.map((c) => (
@@ -251,13 +226,9 @@ export function TonbagBody({
                             c={c}
                             n={picked[c.packageId] ?? 0}
                             split={split?.packageId === c.packageId ? split : null}
-                            busy={busy}
-                            manualOpen={manualSplit === c.packageId}
-                            defaultManualKg={Math.min(remainingKg, Math.max(1, c.weightPerUnit - 1))}
                             onPick={(n) => setPick(c, n)}
                             onSplitToggle={(on) => setSplit((s) => (s ? { ...s, on } : s))}
-                            onManualToggle={() => setManualSplit((m) => (m === c.packageId ? null : c.packageId))}
-                            onManualSplit={(kg) => manualSplitNow(c, kg)}
+                            onSplitKg={(kg) => setSplitKg(c, kg)}
                         />
                     ))}
                 </div>
@@ -294,29 +265,18 @@ function CandidateRow({
     c,
     n,
     split,
-    busy,
-    manualOpen,
-    defaultManualKg,
     onPick,
     onSplitToggle,
-    onManualToggle,
-    onManualSplit,
+    onSplitKg,
 }: {
     c: BulkCandidate
     n: number
     /** 추천이 이 자루를 쪼개 쓰기로 했으면 그 계획 */
     split: SplitPlan | null
-    busy: boolean
-    manualOpen: boolean
-    defaultManualKg: number
     onPick: (n: number) => void
     onSplitToggle: (on: boolean) => void
-    onManualToggle: () => void
-    onManualSplit: (kg: number) => void
+    onSplitKg: (kg: number) => void
 }) {
-    const [kg, setKg] = useState(defaultManualKg)
-    const rest = Math.round((c.weightPerUnit - kg) * 1000) / 1000
-    const manualOk = kg > 0 && kg < c.weightPerUnit
     const active = n > 0 || (split?.on ?? false)
     return (
         <div className={cn('rounded-lg border px-2.5 py-1.5', active ? 'border-primary/40 bg-primary/5' : 'border-slate-200')}>
@@ -350,58 +310,39 @@ function CandidateRow({
                         <Step onClick={() => onPick(n + 1)} disabled={n >= c.available}><Plus className="h-3 w-3" /></Step>
                     </span>
                 )}
-                <button
-                    type="button"
-                    onClick={onManualToggle}
-                    disabled={busy}
-                    title="이 자루를 직접 나눕니다"
-                    className={cn(
-                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-slate-500 hover:bg-slate-50',
-                        manualOpen ? 'border-primary text-primary' : 'border-slate-200',
-                    )}
-                >
-                    <Scissors className="h-3 w-3" />
-                </button>
             </div>
 
-            {/* 추천이 쪼개 쓰기로 한 자루 — 확정 때 나뉜다. 끄면 이 자루는 안 쓴다(통째로 쓰려면 위 체크) */}
+            {/* 추천이 쪼개 쓰기로 한 자루 — 확정 때 나뉜다. kg는 ±1로 조절(결정 K). 끄면 이 자루는 안 쓴다(통째로 쓰려면 위 체크) */}
             {split && (
-                <label className="mt-1.5 flex cursor-pointer items-center gap-2 border-t border-slate-100 pt-1.5 text-[11px]">
+                <div className="mt-1.5 flex items-center gap-1.5 border-t border-slate-100 pt-1.5 text-[11px]">
                     <input
                         type="checkbox"
                         checked={split.on}
                         onChange={(e) => onSplitToggle(e.target.checked)}
                         className="h-3.5 w-3.5 shrink-0 accent-primary"
                     />
-                    <Scissors className="h-3 w-3 text-primary" />
-                    <span className="text-slate-600">
-                        확정 때 <b className="tabular-nums text-foreground">{fmtKg(split.kg)}</b>kg만 쪼개 씀 ·{' '}
-                        {fmtKg(c.weightPerUnit - split.kg)}kg 남김
-                    </span>
-                </label>
-            )}
-
-            {manualOpen && (
-                <div className="mt-1.5 flex items-center gap-1.5 border-t border-slate-100 pt-1.5 text-[11px]">
+                    <Scissors className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="shrink-0 text-slate-600">확정 때</span>
+                    <Step onClick={() => onSplitKg(split.kg - 1)} disabled={!split.on || split.kg <= 1}>
+                        <Minus className="h-3 w-3" />
+                    </Step>
                     <input
                         type="number"
-                        inputMode="decimal"
+                        inputMode="numeric"
                         min={1}
                         max={c.weightPerUnit - 1}
                         step={1}
-                        value={kg}
-                        onChange={(e) => setKg(Number(e.target.value) || 0)}
-                        className="h-6 w-16 rounded-md border border-slate-200 bg-card px-1 text-right text-[12px] font-bold tabular-nums outline-none focus:border-primary"
+                        value={split.kg}
+                        disabled={!split.on}
+                        onChange={(e) => onSplitKg(Number(e.target.value) || 1)}
+                        className="h-6 w-14 rounded-md border border-slate-200 bg-card px-1 text-right text-[12px] font-bold tabular-nums outline-none focus:border-primary disabled:text-slate-400"
                     />
-                    <span className="text-slate-500">kg + {manualOk ? fmtKg(rest) : '—'}kg</span>
-                    <button
-                        type="button"
-                        disabled={!manualOk || busy}
-                        onClick={() => onManualSplit(kg)}
-                        className="ml-auto h-6 rounded-md bg-primary px-2.5 text-[11px] font-semibold text-white disabled:bg-slate-200 disabled:text-slate-400"
-                    >
-                        지금 나누기
-                    </button>
+                    <Step onClick={() => onSplitKg(split.kg + 1)} disabled={!split.on || split.kg >= c.weightPerUnit - 1}>
+                        <Plus className="h-3 w-3" />
+                    </Step>
+                    <span className="min-w-0 truncate text-slate-600">
+                        kg만 쪼개 씀 · {fmtKg(c.weightPerUnit - split.kg)}kg 남김
+                    </span>
                 </div>
             )}
         </div>
@@ -414,7 +355,7 @@ function Step({ onClick, disabled, children }: { onClick: () => void; disabled?:
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
         >
             {children}
         </button>

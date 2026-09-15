@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { requiredKgOf, bulkDelta, suggestBulkAllocation } from './purchase-order-bulk'
+import { requiredKgOf, bulkDelta, bulkTargetKg, suggestBulkAllocation, BULK_TARE_KG } from './purchase-order-bulk'
 
 test('requiredKgOf: 자루 수 × 요구 자루중량, 톤백 아니면 0', () => {
   assert.equal(requiredKgOf({ orderedQty: 1, unitWeightKg: 1000 }), 1000)
@@ -91,4 +91,24 @@ test('suggestBulkAllocation: 요구 0이면 아무것도 안 담는다', () => {
 test('suggestBulkAllocation: 가용 0 행은 건너뛴다', () => {
   const r = suggestBulkAllocation(300, [bag(1, 300, 0), bag(2, 300)])
   assert.deepEqual(r.whole, [{ packageId: 2, count: 1 }])
+})
+
+test('bulkTargetKg: 남은 요구 + 자루 무게 × 남은 자루 수 (결정 K). 남은 게 없으면 0', () => {
+  assert.equal(BULK_TARE_KG, 3)
+  assert.equal(bulkTargetKg(1000, 1), 1003)
+  assert.equal(bulkTargetKg(2000, 2), 2006)
+  assert.equal(bulkTargetKg(0, 1), 0)
+  assert.equal(bulkTargetKg(500, 0), 0)
+})
+
+test('bulkTargetKg → suggestBulkAllocation: 1,000kg 1자루면 587 + 332 + (450에서 84)', () => {
+  const bags = [
+    { packageId: 1, weightPerUnit: 587, available: 1 },
+    { packageId: 2, weightPerUnit: 332, available: 1 },
+    { packageId: 3, weightPerUnit: 450, available: 1 },
+  ]
+  const s = suggestBulkAllocation(bulkTargetKg(1000, 1), bags)
+  assert.deepEqual(s.whole, [{ packageId: 1, count: 1 }, { packageId: 2, count: 1 }])
+  assert.deepEqual(s.split, { packageId: 3, kg: 84 })
+  assert.equal(s.totalKg, 1003)
 })
