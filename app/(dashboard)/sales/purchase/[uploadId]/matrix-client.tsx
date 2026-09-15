@@ -249,7 +249,6 @@ export function MatrixClient({
 
             <CellAllocationPopover
                 cell={active}
-                uploadId={header.uploadId}
                 onPatch={applyPatch}
                 onFail={() => router.refresh()}
                 onClose={() => setActive(null)}

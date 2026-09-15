@@ -2,6 +2,17 @@
 
 ## 2026-09-15
 
+### 발주서 톤백 — 🔴 **결정 M 리셋**: 팝오버는 선택만, 쪼개기는 제품재고에서, 허용 폭 +10kg 고정 `feat` `__HASHM__`
+
+K(+3 조절)·L(자루 단위 +1%)까지 가 보고 사용자가 리셋 — 「실업무를 완벽히 커버할 수도 없고 너무 복잡해진다」.
+허용 폭은 1% → max(3kg,1%) → **+10kg 고정**으로 확정(1,000은 1,000~1,010, 200은 200~210).
+
+- **`lib/purchase-order-bulk.ts`** 148→90줄 — `BULK_FIT_KG = 10` · `fitsUnit` · `suggestBulkWhole`(FIFO로 맞는 자루만 남은 발주 수만큼, 모자라면 `shortUnits`).
+  `suggestBulkAllocation`·`bulkTargetKg`·`suggestBulkUnits`·`BULK_TARE_KG`·`BULK_TOLERANCE` **삭제**. `bulkDelta`는 3번째 인자 `toleranceKg`(0 이상 폭 이하 = exact, 부족은 늘 under). 테스트 12건
+- **`tonbag-popover.tsx`** 375→248줄 — 쪼개기 전부 삭제(`createRepack`·확인 다이얼로그·±조절·`SplitPlan`). 「맞음」 배지 · 부족 안내(`/packages` 새 탭 링크) · 요약 초록 폭 = 발주 자루 수 × 10
+- `cell-allocation-popover.tsx` · `matrix-client.tsx` — `uploadId` prop 제거(재포장 비고에만 쓰였음)
+- 계획서 결정 M · D5 · 검증 M1~M5. 같은 날 K(`8542a5b`·`17be729`)·L(`4d95e65`)은 이 커밋으로 전부 덮임
+
 ### 발주서 톤백 — 쪼갤 몫 「요구 + 3kg」 추천 · ±1kg 조절 · 행별 가위 삭제 (D2d 결정 K) `feat` `8542a5b`
 
 D2d 브라우저 확인에서 사용자가 짚었다 — 마지막 자루를 요구량에 딱 맞게 자르면 실업무와 안 맞는다(1톤 주문은 1,005 정도로 보낸다).

@@ -46,14 +46,11 @@ const md = (iso: string) => iso.slice(5).replace('-', '.')
 
 export function CellAllocationPopover({
     cell,
-    uploadId,
     onPatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell | null
-    /** 톤백 쪼개기(재포장) 비고에 적는다 */
-    uploadId: number
     onPatch: (patch: CellPatch) => void
     onFail: () => void
     onClose: () => void
@@ -70,7 +67,7 @@ export function CellAllocationPopover({
                 onOpenAutoFocus={(e) => e.preventDefault()}
             >
                 {cell && (
-                    <Body key={cell.key} cell={cell} uploadId={uploadId} onPatch={onPatch} onFail={onFail} onClose={onClose} />
+                    <Body key={cell.key} cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
                 )}
             </PopoverContent>
         </Popover>
@@ -82,13 +79,11 @@ export function CellAllocationPopover({
 // ------------------------------------------------------
 function Body({
     cell,
-    uploadId,
     onPatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell
-    uploadId: number
     onPatch: (patch: CellPatch) => void
     onFail: () => void
     onClose: () => void
@@ -104,7 +99,7 @@ function Body({
             {blocked ? (
                 <p className="px-3.5 py-3 leading-relaxed text-slate-500">{blocked}</p>
             ) : cell.bulk ? (
-                <TonbagBody cell={cell} uploadId={uploadId} onPatch={onPatch} onFail={onFail} onClose={onClose} />
+                <TonbagBody cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             ) : (
                 <Loaded cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             )}
