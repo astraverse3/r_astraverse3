@@ -4,6 +4,7 @@
 // 그래서 **kg으로 FIFO**를 돈다(사용자 결정 2026-09-14): 오래된 자루부터 kg을 채워 나가고,
 // 요구량을 넘기는 자루 하나만 쪼갠다(`createRepack`). 자루가 여러 개 쓰여도 된다.
 // 추천 목표는 요구 kg가 아니라 **요구 + 3kg(고정)**이다(결정 K, 2026-09-15): 1톤 주문은 1,003kg으로 맞춰 보낸다.
+// 추천은 **발주 자루 단위**로 본다(결정 L): 발주 자루중량 ~ +1% 안의 재고 자루는 그 자체로 1자루 만족(통째), 나머지만 kg FIFO.
 // 「요구 vs 실제」 차이는 **보여주기만** 한다(백로그 §40 — 막지 않는다). D5 엑셀이 같은 계산을 쓴다.
 
 /** 요구 중량 판정에 필요한 라인 조각 */
@@ -102,4 +103,46 @@ export function suggestBulkAllocation(requiredKg: number, bags: BulkBagLike[]): 
 
   const totalKg = Math.round((requiredKg - remaining) * 1000) / 1000
   return { whole, split, totalKg, shortageKg: Math.round(remaining * 1000) / 1000 }
+}
+
+// ------------------------------------------------------
+// 발주 자루 단위 추천 (결정 L, 2026-09-15)
+// ------------------------------------------------------
+
+/** 재고 자루가 발주 자루 하나를 그대로 만족하는가 — 발주 자루중량 이상, +`BULK_TOLERANCE`(1%) 이하. 1,000 발주면 1,000~1,010 */
+export function fitsUnit(weightPerUnit: number, unitKg: number): boolean {
+  return weightPerUnit >= unitKg - 1e-9 && weightPerUnit <= unitKg * (1 + BULK_TOLERANCE) + 1e-9
+}
+
+/**
+ * 발주 `units`자루 × `unitKg`를 채운다.
+ * 1) 오래된 순으로 `fitsUnit`인 자루를 통째로 1자루씩 인정한다(쪼개기 없음).
+ * 2) 그래도 남은 발주 자루는 나머지 재고로 kg FIFO(`suggestBulkAllocation`) — 목표는 남은 자루 × unitKg + 3kg(한 번).
+ * 예: 1,000×3 발주에 1003·1005·890·350 → 1003·1005 통째, 890 + (350에서 113).
+ * `bags`는 FIFO 순이어야 한다.
+ */
+export function suggestBulkUnits(unitKg: number, units: number, bags: BulkBagLike[]): BulkSuggestion {
+  const whole = new Map<number, number>()
+  const pool: BulkBagLike[] = []
+  let left = units
+  for (const b of bags) {
+    if (b.available <= 0 || b.weightPerUnit <= 0) continue
+    const take = left > 0 && fitsUnit(b.weightPerUnit, unitKg) ? Math.min(b.available, left) : 0
+    if (take > 0) {
+      whole.set(b.packageId, take)
+      left -= take
+    }
+    if (b.available > take) pool.push({ ...b, available: b.available - take })
+  }
+  const fittedKg = bags.reduce((sum, b) => sum + (whole.get(b.packageId) ?? 0) * b.weightPerUnit, 0)
+  const rest = left > 0 ? suggestBulkAllocation(bulkTargetKg(left * unitKg), pool) : null
+  for (const w of rest?.whole ?? []) whole.set(w.packageId, (whole.get(w.packageId) ?? 0) + w.count)
+  // 순서는 FIFO(입력 순) 그대로
+  const wholeList = bags.filter((b) => whole.has(b.packageId)).map((b) => ({ packageId: b.packageId, count: whole.get(b.packageId)! }))
+  return {
+    whole: wholeList,
+    split: rest?.split ?? null,
+    totalKg: Math.round((fittedKg + (rest?.totalKg ?? 0)) * 1000) / 1000,
+    shortageKg: rest?.shortageKg ?? 0,
+  }
 }

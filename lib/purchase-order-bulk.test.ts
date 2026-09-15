@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { requiredKgOf, bulkDelta, bulkTargetKg, suggestBulkAllocation, BULK_TARE_KG } from './purchase-order-bulk'
+import { requiredKgOf, bulkDelta, bulkTargetKg, suggestBulkAllocation, suggestBulkUnits, fitsUnit, BULK_TARE_KG } from './purchase-order-bulk'
 
 test('requiredKgOf: 자루 수 × 요구 자루중량, 톤백 아니면 0', () => {
   assert.equal(requiredKgOf({ orderedQty: 1, unitWeightKg: 1000 }), 1000)
@@ -110,4 +110,74 @@ test('bulkTargetKg → suggestBulkAllocation: 1,000kg 1자루면 587 + 332 + (45
   assert.deepEqual(s.whole, [{ packageId: 1, count: 1 }, { packageId: 2, count: 1 }])
   assert.deepEqual(s.split, { packageId: 3, kg: 84 })
   assert.equal(s.totalKg, 1003)
+})
+
+// ------------------------------------------------------
+// 발주 자루 단위 (결정 L)
+// ------------------------------------------------------
+
+test('fitsUnit: 발주 자루중량 이상 +1% 이하 — 1,000이면 1,000~1,010', () => {
+  assert.equal(fitsUnit(1000, 1000), true)
+  assert.equal(fitsUnit(1010, 1000), true)
+  assert.equal(fitsUnit(1003, 1000), true)
+  assert.equal(fitsUnit(999, 1000), false)
+  assert.equal(fitsUnit(1011, 1000), false)
+  assert.equal(fitsUnit(202, 200), true)
+  assert.equal(fitsUnit(203, 200), false)
+})
+
+test('suggestBulkUnits: 사용자 예시 — 1,000×3에 1003·1005·890·350 → 두 자루 통째, 890 + (350에서 113)', () => {
+  const r = suggestBulkUnits(1000, 3, [bag(1, 1003), bag(2, 1005), bag(3, 890), bag(4, 350)])
+  assert.deepEqual(r.whole, [
+    { packageId: 1, count: 1 },
+    { packageId: 2, count: 1 },
+    { packageId: 3, count: 1 },
+  ])
+  assert.deepEqual(r.split, { packageId: 4, kg: 113 })
+  assert.equal(r.totalKg, 3011)
+  assert.equal(r.shortageKg, 0)
+})
+
+test('suggestBulkUnits: 실데이터 pt18 1,000×1 — 오래된 587·332보다 1% 안의 1,005가 통째로 먼저', () => {
+  const r = suggestBulkUnits(1000, 1, [bag(870, 587), bag(871, 332), bag(1017, 450), bag(1089, 1014), bag(1131, 1005)])
+  assert.deepEqual(r.whole, [{ packageId: 1131, count: 1 }])
+  assert.equal(r.split, null)
+  assert.equal(r.totalKg, 1005)
+})
+
+test('suggestBulkUnits: 맞는 자루가 없으면 kg FIFO + 3 — 587 + 332 + (450에서 84)', () => {
+  const r = suggestBulkUnits(1000, 1, [bag(870, 587), bag(871, 332), bag(1017, 450), bag(1089, 1014)])
+  assert.deepEqual(r.whole, [
+    { packageId: 870, count: 1 },
+    { packageId: 871, count: 1 },
+  ])
+  assert.deepEqual(r.split, { packageId: 1017, kg: 84 })
+  assert.equal(r.totalKg, 1003)
+})
+
+test('suggestBulkUnits: 1,014는 1% 밖 → 풀로 가서 1,003만 쪼개 쓴다', () => {
+  const r = suggestBulkUnits(1000, 1, [bag(1, 1014)])
+  assert.deepEqual(r.whole, [])
+  assert.deepEqual(r.split, { packageId: 1, kg: 1003 })
+})
+
+test('suggestBulkUnits: count>1 행 — 발주 2자루에 1,005×3이면 2개만 통째, 남은 1개는 풀에(쓰이지 않음)', () => {
+  const r = suggestBulkUnits(1000, 2, [bag(1, 1005, 3)])
+  assert.deepEqual(r.whole, [{ packageId: 1, count: 2 }])
+  assert.equal(r.split, null)
+  assert.equal(r.totalKg, 2010)
+})
+
+test('suggestBulkUnits: 남은 발주 2자루면 풀 목표는 2×unitKg + 3 (한 번)', () => {
+  const r = suggestBulkUnits(1000, 2, [bag(1, 1500), bag(2, 900)])
+  assert.deepEqual(r.whole, [{ packageId: 1, count: 1 }])
+  assert.deepEqual(r.split, { packageId: 2, kg: 503 })
+  assert.equal(r.totalKg, 2003)
+})
+
+test('suggestBulkUnits: 재고 부족이면 shortageKg', () => {
+  const r = suggestBulkUnits(1000, 2, [bag(1, 1005), bag(2, 400)])
+  assert.deepEqual(r.whole, [{ packageId: 1, count: 1 }, { packageId: 2, count: 1 }])
+  assert.equal(r.split, null)
+  assert.equal(r.shortageKg, 603)
 })

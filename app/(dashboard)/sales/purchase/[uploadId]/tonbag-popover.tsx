@@ -5,7 +5,8 @@
 // `cell-allocation-popover.tsx`의 `Body`가 `cell.bulk`면 여기로 위임한다. 껍데기(Popover·Head)는 거기 것.
 // **kg FIFO** — 오래된 자루부터 kg을 채우고, 요구량을 넘기는 자루 하나만 쪼갠다(사용자 결정 2026-09-14,
 // 「자루가 여러 개 쓰여도 원칙대로 오래된 것부터」). 추천은 `suggestBulkAllocation`(순수)이 내고 기본 체크로 띄운다.
-// 추천 목표는 **요구 + 3kg(고정)**이다(결정 K, 2026-09-15 — 포장 때 발주량 +3~5로 맞추므로 1톤 주문은 1,003으로).
+// 추천은 **발주 자루 단위**(결정 L, 2026-09-15): 발주 자루중량 ~ +1% 안의 재고 자루는 통째로 1자루 만족, 남는 발주 자루만
+// kg FIFO로 채우고 마지막 하나를 쪼개 **+3kg**(결정 K — 포장 때 발주량 +3~5로 맞추므로).
 // 사람이 바꿀 수 있다 — 통째 자루 체크 해제/추가, 쪼갤 몫 끄기, **쪼갤 kg ±1 조절**(직접 입력도).
 // 「요구 vs 실제」 차이는 `bulkDelta`가 계산하고 여기는 색만 바꾼다(§40, 막지 않는다).
 // 확정 한 번에 끝난다: 쪼갤 몫이 켜져 있으면 `createRepack`(되돌리기 없음 confirm) → 재조회로 새 자루를 찾아 → `confirmCell`.
@@ -16,7 +17,7 @@ import { toast } from 'sonner'
 import { Check, Minus, Plus, Scissors } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
-import { BULK_TARE_KG, bulkDelta, bulkTargetKg, suggestBulkAllocation } from '@/lib/purchase-order-bulk'
+import { BULK_TARE_KG, BULK_TOLERANCE, bulkDelta, suggestBulkUnits } from '@/lib/purchase-order-bulk'
 import { PACKAGE_TYPE_TONBAG } from '@/lib/repack'
 import { createRepack } from '@/app/actions/repack'
 import {
@@ -69,9 +70,8 @@ export function TonbagBody({
                 return
             }
             setData(r.data)
-            // 목표 = 남은 요구 + 3kg 고정 (결정 K)
-            const remainingKg = Math.max(0, r.data.requiredKg - r.data.allocatedKg)
-            const s = suggestBulkAllocation(bulkTargetKg(remainingKg), r.data.candidates)
+            // 발주 자루 단위(결정 L) — 셀의 라인은 열 분리(C0-a)로 자루중량이 같다
+            const s = suggestBulkUnits(r.data.lines[0]?.unitWeightKg ?? 0, r.data.remainingQty, r.data.candidates)
             setPicked(Object.fromEntries(s.whole.map((w) => [w.packageId, w.count])))
             setSplit(s.split ? { ...s.split, on: true } : null)
         })
@@ -91,7 +91,8 @@ export function TonbagBody({
     const bags = wholeBags + (split?.on ? 1 : 0)
     const done = data.remainingQty === 0
     const delta = bulkDelta(data.requiredKg, data.allocatedKg + pickedKg)
-    const remainingKg = Math.max(0, data.requiredKg - data.allocatedKg)
+    const unitKg = data.lines[0]?.unitWeightKg ?? 0
+    const remainingKg = data.remainingQty * unitKg
     const shortage = data.candidates.reduce((s, c) => s + c.available * c.weightPerUnit, 0) < remainingKg
 
     const setPick = (c: BulkCandidate, n: number) =>
@@ -217,7 +218,7 @@ export function TonbagBody({
             {!done && (
                 <div className="flex max-h-[280px] flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5">
                     <div className="text-[10px] font-semibold text-slate-400">
-                        오래된 자루부터(FIFO) · 남은 요구 {fmtKg(remainingKg)}kg · 추천은 +{BULK_TARE_KG}kg 여유
+                        남은 발주 {data.remainingQty}자루 × {fmtKg(unitKg)}kg · +{Math.round(BULK_TOLERANCE * 100)}% 안 자루는 통째 · 나머지는 오래된 순 +{BULK_TARE_KG}kg
                     </div>
                     {data.candidates.length === 0 && <p className="py-1 text-slate-400">가용 톤백이 없습니다.</p>}
                     {data.candidates.map((c) => (
