@@ -2,6 +2,11 @@
 
 ## 2026-09-15
 
+### 발주서 매트릭스 — 「← 제품판매」 뒤로가기 링크 삭제(브레드크럼이 맡음) `chore` `__HASH__`
+
+- `sales/purchase/[uploadId]/page.tsx` — `BackLink`·오류 화면의 링크 삭제, `Link`·`ArrowLeft` import 정리
+- `matrix-client.tsx` — 본문 헤더 위 링크 삭제
+
 ### 브레드크럼 — 하위 페이지 서브컨텍스트 링크(판매관리 / 제품판매) · /sales 기본 탭 정정 `fix` `ec61402`
 
 발주서 매트릭스(`/sales/purchase/…`)에서 헤더가 「판매관리 · 설명」뿐이라 사용자가 「다른 메뉴처럼 서브메뉴까지, 링크로」 요청.

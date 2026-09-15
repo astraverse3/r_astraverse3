@@ -1,6 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { getUploadMatrix } from '@/app/actions/purchase-order-matrix'
 import { MatrixClient } from './matrix-client'
 
@@ -24,7 +22,6 @@ export default async function PurchaseMatrixPage({
     if (!result.success) {
         return (
             <div className="flex flex-col gap-4">
-                <BackLink />
                 <div className="rounded-xl border border-slate-200 bg-card px-5 py-8 text-center">
                     <p className="text-sm font-medium text-slate-700">{result.error}</p>
                 </div>
@@ -33,16 +30,4 @@ export default async function PurchaseMatrixPage({
     }
 
     return <MatrixClient header={result.header} input={result.input} />
-}
-
-function BackLink() {
-    return (
-        <Link
-            href="/sales?tab=product"
-            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
-        >
-            <ArrowLeft className="h-4 w-4" />
-            제품판매
-        </Link>
-    )
 }

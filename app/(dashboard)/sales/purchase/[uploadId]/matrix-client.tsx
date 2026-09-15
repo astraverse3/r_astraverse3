@@ -22,9 +22,8 @@
 // 스크롤할 때 열이 겹쳐 보이는데, 눈으로는 원인을 못 찾는다.
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
@@ -493,14 +492,7 @@ function Header({
 }) {
     return (
         <div className="flex flex-col gap-2.5">
-            <Link
-                href="/sales?tab=product"
-                className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                제품판매
-            </Link>
-
+            {/* 뒤로가기 링크는 브레드크럼 「판매관리 / 제품판매」가 맡는다(2026-09-15) */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span className="rounded-md bg-primary/15 px-2 py-0.5 text-[11.5px] font-bold text-primary">
                     {channelLabel(header.channel as PurchaseChannel)}
