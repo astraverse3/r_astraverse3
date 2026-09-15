@@ -183,14 +183,16 @@ export function columnKeyOf(item: MatrixItemInput): string {
 }
 
 /**
- * 열 소계가 가용을 넘는가 — 소계 띠 두 줄을 주황으로 칠하는 판정.
+ * 열의 **남은** 주문(발주 − 차감)이 가용을 넘는가 — 소계 띠 두 줄을 주황으로 칠하는 판정.
+ * 셀 판정(`cellStatusOf`)과 같은 축. 발주 전체와 비교하면 확정할 때마다 가용이 줄어 다 차감한 열이 빨개진다(2026-09-15 수정).
  * 톤백은 kg끼리 비교한다. 개수 비교(주문 2자루 vs 가용 11자루)는 성립하지 않는다.
  */
 export function isColumnShort(col: MatrixColumn): boolean {
+  const remaining = Math.max(0, col.orderedQty - col.allocatedQty)
   if (col.bulk) {
-    return col.availableKg !== null && col.orderedQty * (col.unitWeightKg ?? 0) > col.availableKg
+    return col.availableKg !== null && remaining * (col.unitWeightKg ?? 0) > col.availableKg
   }
-  return col.availableQty !== null && col.orderedQty > col.availableQty
+  return col.availableQty !== null && remaining > col.availableQty
 }
 
 /** 규격 1개당 kg. 톤백은 라인의 요구 자루중량(#34)을 우선한다. */

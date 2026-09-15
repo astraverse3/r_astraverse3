@@ -592,3 +592,34 @@ test('isColumnShort: 톤백은 kg끼리, 일반은 개수끼리', () => {
   )
   assert.equal(isColumnShort(plain.columns[0]), true) // 12 > 10
 })
+
+test('isColumnShort: 남은 주문(발주 − 차감)으로 본다 — 다 차감한 열은 가용이 0이어도 부족이 아니다', () => {
+  // 톤백 1자루 발주를 1,004 자루로 확정 → 가용 203kg만 남아도 남은 주문 0
+  const done = buildMatrix(
+    bulkInput({
+      items: [item({ id: 310, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000, orderedQty: 1, allocatedQty: 1 })],
+      availabilityKg: { 18: 203 },
+    }),
+  )
+  assert.equal(isColumnShort(done.columns[0]), false)
+  // 일반 규격도 같다 — 12 발주 중 10 차감, 가용 2면 남은 2 ≤ 2
+  const plain = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [item({ id: 1, orderId: 1, productTypeId: 1, orderedQty: 12, allocatedQty: 10 })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 2 },
+    }),
+  )
+  assert.equal(isColumnShort(plain.columns[0]), false)
+  // 부분 차감 뒤 실제로 모자라면 여전히 부족
+  const still = buildMatrix(
+    input({
+      orders: [order(1, '농협')],
+      items: [item({ id: 1, orderId: 1, productTypeId: 1, orderedQty: 12, allocatedQty: 10 })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 1 },
+    }),
+  )
+  assert.equal(isColumnShort(still.columns[0]), true)
+})
