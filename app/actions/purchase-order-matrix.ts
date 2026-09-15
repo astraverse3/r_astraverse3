@@ -112,6 +112,12 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
                 // 이 라인이 실제로 차감한 양. type=SALE만 센다(발주서 경로).
                 movements: { where: { type: 'SALE' }, select: { count: true } },
               },
+              // 🔴 **빼면 안 된다.** 열 순서는 `buildColumns`가 이 배열을 훑는 차례로 정해지고,
+              //    id 순 = 엑셀 원본 순이다. orderBy가 없으면 Postgres가 물리적 순서로 주는데,
+              //    UPDATE된 행은 새 튜플로 테이블 끝에 다시 쓰이므로 **방금 수동지정(D2e)한 라인의
+              //    열이 뒤로 밀린다.** 실제로 그랬다(2026-09-15: 천지향5세 열이 백옥찰 뒤로).
+              //    차감은 movement를 INSERT할 뿐 라인을 UPDATE하지 않아 D2e 전에는 드러나지 않았다.
+              orderBy: { id: 'asc' },
             },
           },
           orderBy: { id: 'asc' },
