@@ -21,25 +21,29 @@
 // sticky 좌표는 아래 상수 한 곳에서만 만든다 — 칸 폭과 left 값이 어긋나면
 // 스크롤할 때 열이 겹쳐 보이는데, 눈으로는 원인을 못 찾는다.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
     ROW_STATUS_ORDER,
+    applyMatchPatches,
     buildMatrix,
     isColumnShort,
     sortMatrixRows,
     type BuildMatrixInput,
     type CellStatus,
     type Matrix,
+    type MatchPatch,
     type MatrixColumn,
     type MatrixRow,
     type MatrixSort,
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matrix'
+import { rematchUpload } from '@/app/actions/purchase-order-assign'
 import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
 import { OrderDetailPanel } from './order-detail-panel'
 
@@ -134,6 +138,35 @@ export function MatrixClient({
             availabilityKg: { ...prev.availabilityKg, [patch.productTypeId]: patch.availabilityKg },
         }))
 
+    /** 수동지정·재매칭 결과 — 라인의 SKU가 바뀌므로 열이 옮겨간다. 파생은 buildMatrix가 낸다 */
+    const applyMatches = (patches: MatchPatch[]) =>
+        setInput((prev) => applyMatchPatches(prev, patches))
+
+    const unmatchedLines = useMemo(
+        () => input.items.filter((it) => it.productTypeId === null).length,
+        [input.items],
+    )
+
+    // 업로드 시점 매칭이 굳어 있어, 마스터를 보완해도 화면은 실패인 채다 — 다시 돌린다(결정 R)
+    const [rematching, startRematch] = useTransition()
+    const runRematch = () =>
+        startRematch(async () => {
+            const r = await rematchUpload(header.uploadId)
+            if (!r.success) {
+                toast.error(r.error)
+                return
+            }
+            if (r.matchedLines === 0) {
+                toast.info(`새로 붙은 라인이 없어요. ${r.stillUnmatched}라인이 그대로 실패입니다.`)
+                return
+            }
+            applyMatches(r.patches)
+            toast.success(
+                `${r.matchedLines}라인이 매칭됐어요` +
+                    (r.stillUnmatched > 0 ? ` · ${r.stillUnmatched}라인 남음` : ''),
+            )
+        })
+
     const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
         const cell = row.cells[col.key]
         const group = matrix.groups.find((g) => g.key === col.groupKey)
@@ -162,7 +195,15 @@ export function MatrixClient({
 
     return (
         <div className="flex flex-col gap-3">
-            <Header header={header} matrix={matrix} sort={sort} onSort={setSort} />
+            <Header
+                header={header}
+                matrix={matrix}
+                sort={sort}
+                onSort={setSort}
+                unmatchedLines={unmatchedLines}
+                rematching={rematching}
+                onRematch={runRematch}
+            />
 
             <div className="overflow-auto rounded-xl border border-slate-200 bg-card max-h-[calc(100dvh-230px)]">
                 <table className="border-separate border-spacing-0 text-[11.5px]">
@@ -249,6 +290,7 @@ export function MatrixClient({
             <CellAllocationPopover
                 cell={active}
                 onPatch={applyPatch}
+                onMatch={(patch) => applyMatches([patch])}
                 onFail={() => router.refresh()}
                 onClose={() => setActive(null)}
             />
@@ -484,11 +526,17 @@ function Header({
     matrix,
     sort,
     onSort,
+    unmatchedLines,
+    rematching,
+    onRematch,
 }: {
     header: MatrixHeader
     matrix: Matrix
     sort: MatrixSort
     onSort: (s: MatrixSort) => void
+    unmatchedLines: number
+    rematching: boolean
+    onRematch: () => void
 }) {
     return (
         <div className="flex flex-col gap-2.5">
@@ -526,12 +574,33 @@ function Header({
                 </div>
             </div>
 
-            {matrix.totals.needsWorkRows > 0 && (
-                <p className="text-[12.5px] text-slate-500">
-                    주문 <b className="text-foreground">{fmt(matrix.totals.orderedQty)}개</b> ·{' '}
-                    <b className="text-foreground">{fmtKg(matrix.totals.orderedKg)}kg</b> 중{' '}
-                    <b className="text-amber-700">{matrix.totals.needsWorkRows}수령인</b>이 작업 필요
-                </p>
+            {(matrix.totals.needsWorkRows > 0 || unmatchedLines > 0) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    {matrix.totals.needsWorkRows > 0 && (
+                        <p className="text-[12.5px] text-slate-500">
+                            주문 <b className="text-foreground">{fmt(matrix.totals.orderedQty)}개</b> ·{' '}
+                            <b className="text-foreground">{fmtKg(matrix.totals.orderedKg)}kg</b> 중{' '}
+                            <b className="text-amber-700">{matrix.totals.needsWorkRows}수령인</b>이 작업 필요
+                        </p>
+                    )}
+                    {unmatchedLines > 0 && (
+                        <>
+                            <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11.5px] font-bold text-red-600">
+                                매칭실패 {fmt(unmatchedLines)}라인
+                            </span>
+                            {/* 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R) */}
+                            <button
+                                type="button"
+                                onClick={onRematch}
+                                disabled={rematching}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                            >
+                                <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
+                                {rematching ? '재매칭 중…' : '재매칭'}
+                            </button>
+                        </>
+                    )}
+                </div>
             )}
         </div>
     )

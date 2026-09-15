@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import {
   matchPurchaseOrderItem,
   normalizeItemName,
+  sortSkuCandidates,
+  hasMillingToken,
   type MatchResult,
   type MatcherVariety,
   type MatcherProductType,
@@ -211,4 +213,45 @@ test('품종 실패: 미지의 품목은 variety_unresolved + 학습용 토큰 �
   assert.equal(r.matched, false)
   assert.equal(!r.matched && r.reason, 'variety_unresolved')
   assert.equal(!r.matched && r.varietyToken, '도깨비쌀')
+})
+
+// ------------------------------------------------------
+// 수동지정 보조 (D2e)
+// ------------------------------------------------------
+
+test('sortSkuCandidates: 주문 규격과 같은 SKU가 먼저, 그 안에서 기본 SKU가 먼저', () => {
+  const v14 = productTypes.filter((p) => p.varietyId === 14)
+  const sorted = sortSkuCandidates(v14, '1kg')
+  assert.deepEqual(
+    sorted.slice(0, 3).map((p) => `${p.millingType}/${p.packageType}/${p.packagingName}`),
+    ['백미/1kg/자연주의', '현미/1kg/자연주의', '백미/1kg/땅끝미가'],
+  )
+  // 다른 규격은 전부 뒤로
+  assert.equal(
+    sorted.slice(3).every((p) => p.packageType !== '1kg'),
+    true,
+  )
+})
+
+test('sortSkuCandidates: 원본 배열을 건드리지 않는다', () => {
+  const src = productTypes.filter((p) => p.varietyId === 14)
+  const before = src.map((p) => p.id)
+  sortSkuCandidates(src, '800g')
+  assert.deepEqual(
+    src.map((p) => p.id),
+    before,
+  )
+})
+
+test('hasMillingToken: 도정이 앞에 온 이름은 별칭 학습을 막는다 (결정 T)', () => {
+  assert.equal(hasMillingToken('백미 천지향5세'), true)
+  assert.equal(hasMillingToken('현미천지향5세'), true)
+  assert.equal(hasMillingToken('혼합곡 (친환경)'), false)
+  assert.equal(hasMillingToken('누룽지'), false)
+})
+
+test('hasMillingToken: 위탁가공 별도품종은 도정 단어가 아니다 (가바발아현미·가바흑미)', () => {
+  assert.equal(hasMillingToken('가바발아현미'), false)
+  assert.equal(hasMillingToken('가바 발아현미'), false)
+  assert.equal(hasMillingToken('가바흑미'), false)
 })

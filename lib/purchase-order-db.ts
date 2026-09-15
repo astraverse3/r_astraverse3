@@ -6,7 +6,9 @@
 // (`purchase-order-masters.ts`와 같은 패턴 — DB 접근이 있어 서버에서만 import한다)
 
 import type { Prisma } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
+import type { AvailabilityMap, MatrixSkuInput } from '@/lib/purchase-order-matrix'
 import {
   computeOrderStatus,
   type AvailablePackage,
@@ -133,3 +135,57 @@ export async function applyAllocations(
   }
   return addQty
 }
+
+// ------------------------------------------------------
+// 매트릭스 입력 조각 (D2a) — D2e 지정 액션도 같은 두 값을 다시 읽는다
+// ------------------------------------------------------
+/**
+ * SKU별 가용재고 합. 왕복 **1회** — 등장한 SKU의 재고 행만 끌어와 메모리에서 합친다.
+ * 행 수는 SKU 수에 비례할 뿐이라(현재 제품재고 전체가 636행) 부담이 없다.
+ */
+export async function loadAvailability(
+  skuIds: number[],
+): Promise<{ qty: AvailabilityMap; kg: AvailabilityMap }> {
+  const pkgs = await prisma.millingOutputPackage.findMany({
+    where: { productTypeId: { in: skuIds } },
+    select: { productTypeId: true, count: true, weightPerUnit: true, ...MOVEMENT_COUNT_SELECT },
+  })
+  const qty: AvailabilityMap = {}
+  const kg: AvailabilityMap = {}
+  for (const id of skuIds) {
+    qty[id] = 0
+    kg[id] = 0
+  }
+  for (const p of pkgs) {
+    if (p.productTypeId === null) continue
+    const n = Math.max(0, availableOf(p))
+    qty[p.productTypeId] = (qty[p.productTypeId] ?? 0) + n
+    // 🔴 kg는 행마다 곱한다 — 톤백은 재고 행마다 `weightPerUnit`이 다르다(203~1,014kg).
+    //    개수 합에 한 중량을 곱하면 C0-a가 잡은 그 결함(11,000 vs 7,067)이 된다.
+    kg[p.productTypeId] = (kg[p.productTypeId] ?? 0) + n * p.weightPerUnit
+  }
+  return { qty, kg }
+}
+
+/** 열 머리글에 쓸 SKU 이름들. 왕복 1회. */
+export async function loadSkuMeta(skuIds: number[]): Promise<MatrixSkuInput[]> {
+  const rows = await prisma.productType.findMany({
+    where: { id: { in: skuIds } },
+    select: {
+      id: true,
+      millingType: true,
+      packageType: true,
+      variety: { select: { name: true, type: true } },
+      packaging: { select: { name: true } },
+    },
+  })
+  return rows.map((r) => ({
+    id: r.id,
+    varietyName: r.variety.name,
+    millingType: r.millingType,
+    varietyType: r.variety.type,
+    packageType: r.packageType,
+    packagingName: r.packaging.name,
+  }))
+}
+

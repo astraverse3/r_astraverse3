@@ -20,6 +20,8 @@ export type MatcherVariety = {
   name: string
   category: string // 'RICE' | 'MISC_GRAIN'
   aliases: string[]
+  /** 곡종 구분. 매칭엔 안 쓰이고 찰벼 표시(`getDisplayMillingType`)에만 쓰는 선택 필드 */
+  type?: string | null
 }
 
 export type MatcherProductType = {
@@ -211,4 +213,45 @@ function ok(
     millingType,
     packagingId: sku.packagingId,
   }
+}
+
+// ------------------------------------------------------
+// 수동지정 보조 (D2e) — 매칭 자체와는 무관, 팝오버가 쓴다
+// ------------------------------------------------------
+
+/**
+ * 수동지정 팝오버의 SKU 후보 정렬 (결정 O).
+ * 주문 규격과 **같은 규격 먼저** → 기본 SKU 먼저 → 도정·규격·포장지 이름순.
+ * 원본 배열을 건드리지 않는다.
+ */
+export function sortSkuCandidates(
+  skus: readonly MatcherProductType[],
+  packageType: string,
+): MatcherProductType[] {
+  const wanted = stripSpaces(packageType)
+  const sameSpec = (p: MatcherProductType) => (stripSpaces(p.packageType) === wanted ? 0 : 1)
+  return [...skus].sort(
+    (a, b) =>
+      sameSpec(a) - sameSpec(b) ||
+      Number(b.isDefault) - Number(a.isDefault) ||
+      a.millingType.localeCompare(b.millingType, 'ko') ||
+      a.packageType.localeCompare(b.packageType, 'ko') ||
+      a.packagingName.localeCompare(b.packagingName, 'ko'),
+  )
+}
+
+/**
+ * 품종토큰에 **도정 단어가 섞여 있는가** (결정 T).
+ *
+ * `백미 천지향5세`처럼 도정이 이름 **앞**에 오면 접미 분리가 안 돼 토큰에 도정이 남는다.
+ * 이걸 별칭으로 학습하면 도정은 품종 category 기본값으로 굳고, 나중에 `현미 …`가 와서
+ * 또 학습되면 **현미 주문이 백미 SKU로 조용히 붙는다.** 그래서 학습을 거부한다.
+ *
+ * 🔴 위탁가공 별도품종(`발아현미`·`흑미`)을 먼저 걷어낸다 — 안 그러면 `가바발아현미`가
+ * '현미'를 품어 학습이 막힌다(실제로 쓰이는 별칭이다).
+ */
+export function hasMillingToken(token: string): boolean {
+  let t = stripSpaces(token)
+  for (const tail of NON_MILLING_TAILS) t = t.split(stripSpaces(tail)).join('')
+  return MILLING_SUFFIXES.some((s) => t.includes(s))
 }

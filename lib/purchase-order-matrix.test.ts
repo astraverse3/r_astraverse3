@@ -8,6 +8,7 @@ import {
   isColumnShort,
   unitWeightOf,
   groupTitleOf,
+  applyMatchPatches,
   type MatrixItemInput,
   type MatrixOrderInput,
   type MatrixSkuInput,
@@ -622,4 +623,54 @@ test('isColumnShort: 남은 주문(발주 − 차감)으로 본다 — 다 차�
     }),
   )
   assert.equal(isColumnShort(still.columns[0]), true)
+})
+
+// ------------------------------------------------------
+// 매칭 지정 반영 (D2e)
+// ------------------------------------------------------
+
+test('applyMatchPatches: 지정한 라인이 매칭실패 열에서 SKU 열로 옮겨간다', () => {
+  const base = input({
+    orders: [order(1, '박가네')],
+    items: [item({ id: 10, orderId: 1, rawItemName: '혼합곡 (친환경)', packageType: '1kg', productTypeId: null })],
+  })
+  assert.equal(buildMatrix(base).columns[0].key.startsWith('raw:'), true)
+
+  const after = applyMatchPatches(base, [
+    { itemIds: [10], productTypeId: 7, sku: sku(7, '1kg', { varietyName: '혼합곡' }), availability: 30, availabilityKg: 30 },
+  ])
+  const m = buildMatrix(after)
+  assert.equal(m.columns.length, 1)
+  assert.equal(m.columns[0].key, 'pt:7')
+  assert.equal(m.columns[0].availableQty, 30)
+  assert.equal(m.groups[0].unmatched, false)
+  // 원본은 그대로 — 불변성
+  assert.equal(base.items[0].productTypeId, null)
+})
+
+test('applyMatchPatches: 이미 있는 SKU 열과 합쳐진다(중복 SKU 없음)', () => {
+  const base = input({
+    orders: [order(1, '박가네'), order(2, '김가네')],
+    items: [
+      item({ id: 10, orderId: 1, packageType: '1kg', productTypeId: 7 }),
+      item({ id: 20, orderId: 2, rawItemName: '혼합곡 (친환경)', packageType: '1kg', productTypeId: null }),
+    ],
+    skus: [sku(7, '1kg')],
+    availability: { 7: 5 },
+    availabilityKg: { 7: 5 },
+  })
+  assert.equal(buildMatrix(base).columns.length, 2)
+
+  const after = applyMatchPatches(base, [
+    { itemIds: [20], productTypeId: 7, sku: sku(7, '1kg'), availability: 5, availabilityKg: 5 },
+  ])
+  assert.equal(after.skus.length, 1)
+  const m = buildMatrix(after)
+  assert.equal(m.columns.length, 1)
+  assert.equal(m.columns[0].orderedQty, 2)
+})
+
+test('applyMatchPatches: 패치가 없으면 입력을 그대로 돌려준다', () => {
+  const base = input({ orders: [order(1, '박가네')], items: [item({ id: 10, orderId: 1 })] })
+  assert.equal(applyMatchPatches(base, []), base)
 })

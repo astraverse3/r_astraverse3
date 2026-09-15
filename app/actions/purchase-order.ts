@@ -16,7 +16,6 @@ import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
-import { matchPurchaseOrderItem, normalizeItemName } from '@/lib/purchase-order-matcher'
 import {
   compareLoading,
   describeLoading,
@@ -30,7 +29,6 @@ import {
   type Allocation,
   type LineStatus,
 } from '@/lib/purchase-order-allocation'
-import { loadMatcherMasters } from '@/lib/purchase-order-masters'
 import {
   applyAllocations,
   allocatedQtyOfItem,
@@ -271,80 +269,6 @@ export async function getPurchaseOrderDetail(
   } catch (error) {
     console.error('[getPurchaseOrderDetail] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '발주 상세를 불러오지 못했습니다.') }
-  }
-}
-
-// ======================================================
-// 매칭 (재매칭 / 수동지정 #18·#22)
-// ======================================================
-
-export async function autoMatchOrderItem(
-  itemId: number,
-): Promise<{ success: true; matched: boolean } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
-  try {
-    const item = await prisma.purchaseOrderItem.findUnique({ where: { id: itemId } })
-    if (!item) return { success: false, error: '라인을 찾을 수 없습니다.' }
-    const masters = await loadMatcherMasters()
-    const m = matchPurchaseOrderItem(
-      { rawItemName: item.rawItemName, packageType: item.packageType, rawPackaging: item.rawPackaging },
-      masters.varieties,
-      masters.productTypes,
-    )
-    await prisma.purchaseOrderItem.update({
-      where: { id: itemId },
-      data: { productTypeId: m.matched ? m.productTypeId : null },
-    })
-    revalidatePath('/sales')
-    return { success: true, matched: m.matched }
-  } catch (error) {
-    console.error('[autoMatchOrderItem] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '재매칭에 실패했습니다.') }
-  }
-}
-
-export async function setOrderItemProductType(
-  itemId: number,
-  productTypeId: number,
-  opts?: { learnAlias?: boolean },
-): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
-  try {
-    await prisma.$transaction(async (tx) => {
-      const item = await tx.purchaseOrderItem.findUnique({ where: { id: itemId } })
-      if (!item) throw new Error('라인을 찾을 수 없습니다.')
-      const pt = await tx.productType.findUnique({
-        where: { id: productTypeId },
-        select: { varietyId: true },
-      })
-      if (!pt) throw new Error('제품유형을 찾을 수 없습니다.')
-
-      await tx.purchaseOrderItem.update({
-        where: { id: itemId },
-        data: { productTypeId },
-      })
-
-      // 별칭 학습(#22): 정규화한 품종토큰을 해당 품종 aliases에 append
-      if (opts?.learnAlias) {
-        const { varietyToken } = normalizeItemName(item.rawItemName)
-        const key = varietyToken.trim()
-        const variety = await tx.variety.findUnique({
-          where: { id: pt.varietyId },
-          select: { name: true, aliases: true },
-        })
-        if (variety && key && key !== variety.name && !variety.aliases.includes(key)) {
-          await tx.variety.update({
-            where: { id: pt.varietyId },
-            data: { aliases: { push: key } },
-          })
-        }
-      }
-    })
-    revalidatePath('/sales')
-    return { success: true }
-  } catch (error) {
-    console.error('[setOrderItemProductType] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '품종 지정에 실패했습니다.') }
   }
 }
 

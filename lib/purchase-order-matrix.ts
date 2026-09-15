@@ -462,3 +462,62 @@ export function sortMatrixRows(rows: MatrixRow[], sort: MatrixSort): MatrixRow[]
   const rank = (r: MatrixRow) => ROW_STATUS_ORDER.indexOf(r.status)
   return copy.sort((a, b) => rank(a) - rank(b) || byRecipient(a, b))
 }
+
+// ------------------------------------------------------
+// 매칭 지정 반영 (D2e)
+// ------------------------------------------------------
+
+/**
+ * 매칭실패 라인에 SKU를 지정했을 때 서버가 돌려주는 「바뀐 것」.
+ * 결정 C와 같은 원칙 — 서버 재조회 없이 이것만 갈아끼우고 `buildMatrix`를 다시 돈다.
+ */
+export type MatchPatch = {
+  /** 이 SKU로 지정된 라인들 */
+  itemIds: number[]
+  productTypeId: number
+  /** 열 머리글에 쓸 SKU 메타. 이미 `skus`에 있으면 덮어쓴다 */
+  sku: MatrixSkuInput
+  /** 그 SKU의 지금 가용(개) */
+  availability: number
+  /** 그 SKU의 지금 가용(kg) */
+  availabilityKg: number
+}
+
+/**
+ * 지정 결과를 입력에 반영한다. **원본을 건드리지 않는다.**
+ *
+ * 지정된 라인은 `raw:` 열에서 빠져나와 `pt:<id>` 열로 간다(`columnKeyOf`가 productTypeId를 본다) —
+ * 그 SKU 열이 이미 있으면 자연히 합쳐지고, 없으면 새 열이 선다. 열·그룹·상태·소계는
+ * 전부 `buildMatrix`가 다시 낸다. 🔴 여기서 열을 손으로 옮기지 말 것 — 판정이 두 곳이 된다.
+ */
+export function applyMatchPatches(
+  input: BuildMatrixInput,
+  patches: readonly MatchPatch[],
+): BuildMatrixInput {
+  if (patches.length === 0) return input
+
+  const productTypeByItem = new Map<number, number>()
+  for (const p of patches) for (const id of p.itemIds) productTypeByItem.set(id, p.productTypeId)
+
+  // 기존 SKU는 자리를 지키고 값만 갱신된다(Map은 삽입 순서 유지) — 열 순서가 흔들리지 않는다
+  const skuById = new Map(input.skus.map((s) => [s.id, s]))
+  for (const p of patches) skuById.set(p.sku.id, p.sku)
+
+  const availability = { ...input.availability }
+  const availabilityKg = { ...input.availabilityKg }
+  for (const p of patches) {
+    availability[p.productTypeId] = p.availability
+    availabilityKg[p.productTypeId] = p.availabilityKg
+  }
+
+  return {
+    ...input,
+    items: input.items.map((it) => {
+      const pt = productTypeByItem.get(it.id)
+      return pt === undefined ? it : { ...it, productTypeId: pt }
+    }),
+    skus: [...skuById.values()],
+    availability,
+    availabilityKg,
+  }
+}

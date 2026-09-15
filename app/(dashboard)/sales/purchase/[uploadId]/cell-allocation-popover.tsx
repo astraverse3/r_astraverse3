@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import type { Allocation } from '@/lib/purchase-order-allocation'
-import type { CellStatus } from '@/lib/purchase-order-matrix'
+import type { CellStatus, MatchPatch } from '@/lib/purchase-order-matrix'
 import {
     cancelCell,
     confirmCell,
@@ -27,6 +27,7 @@ import {
     type CellPatch,
 } from '@/app/actions/purchase-order-matrix'
 import { TonbagBody } from './tonbag-popover'
+import { UnmatchedBody } from './unmatched-popover'
 
 /** 부모가 넘기는 「어느 셀인가」 — 표시용 라벨과 액션에 필요한 itemIds */
 export type ActiveCell = {
@@ -47,11 +48,13 @@ const md = (iso: string) => iso.slice(5).replace('-', '.')
 export function CellAllocationPopover({
     cell,
     onPatch,
+    onMatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell | null
     onPatch: (patch: CellPatch) => void
+    onMatch: (patch: MatchPatch) => void
     onFail: () => void
     onClose: () => void
 }) {
@@ -67,7 +70,14 @@ export function CellAllocationPopover({
                 onOpenAutoFocus={(e) => e.preventDefault()}
             >
                 {cell && (
-                    <Body key={cell.key} cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
+                    <Body
+                        key={cell.key}
+                        cell={cell}
+                        onPatch={onPatch}
+                        onMatch={onMatch}
+                        onFail={onFail}
+                        onClose={onClose}
+                    />
                 )}
             </PopoverContent>
         </Popover>
@@ -80,24 +90,22 @@ export function CellAllocationPopover({
 function Body({
     cell,
     onPatch,
+    onMatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell
     onPatch: (patch: CellPatch) => void
+    onMatch: (patch: MatchPatch) => void
     onFail: () => void
     onClose: () => void
 }) {
-    const blocked =
-        cell.status === 'UNMATCHED'
-            ? '품종 지정이 필요합니다. 매칭실패 셀은 다음 단계(D2e)에서 지정합니다.'
-            : null
-
     return (
         <div className="flex flex-col">
             <Head cell={cell} onClose={onClose} />
-            {blocked ? (
-                <p className="px-3.5 py-3 leading-relaxed text-slate-500">{blocked}</p>
+            {/* 매칭실패는 차감이 아니라 「무엇을 낼지」를 먼저 정한다(D2e) */}
+            {cell.status === 'UNMATCHED' ? (
+                <UnmatchedBody cell={cell} onMatch={onMatch} onFail={onFail} onClose={onClose} />
             ) : cell.bulk ? (
                 <TonbagBody cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             ) : (

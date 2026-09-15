@@ -43,6 +43,8 @@ import { requiredKgOf } from '@/lib/purchase-order-bulk'
 import {
   allocatedQtyOfItem,
   applyAllocations,
+  loadAvailability,
+  loadSkuMeta,
   recalcOrderStatus,
 } from '@/lib/purchase-order-db'
 import type {
@@ -187,56 +189,6 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
     console.error('[getUploadMatrix] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '매트릭스를 불러오지 못했습니다.') }
   }
-}
-
-/**
- * SKU별 가용재고 합. 왕복 **1회** — 등장한 SKU의 재고 행만 끌어와 메모리에서 합친다.
- * 행 수는 SKU 수에 비례할 뿐이라(현재 제품재고 전체가 636행) 부담이 없다.
- */
-async function loadAvailability(
-  skuIds: number[],
-): Promise<{ qty: AvailabilityMap; kg: AvailabilityMap }> {
-  const pkgs = await prisma.millingOutputPackage.findMany({
-    where: { productTypeId: { in: skuIds } },
-    select: { productTypeId: true, count: true, weightPerUnit: true, ...MOVEMENT_COUNT_SELECT },
-  })
-  const qty: AvailabilityMap = {}
-  const kg: AvailabilityMap = {}
-  for (const id of skuIds) {
-    qty[id] = 0
-    kg[id] = 0
-  }
-  for (const p of pkgs) {
-    if (p.productTypeId === null) continue
-    const n = Math.max(0, availableOf(p))
-    qty[p.productTypeId] = (qty[p.productTypeId] ?? 0) + n
-    // 🔴 kg는 행마다 곱한다 — 톤백은 재고 행마다 `weightPerUnit`이 다르다(203~1,014kg).
-    //    개수 합에 한 중량을 곱하면 C0-a가 잡은 그 결함(11,000 vs 7,067)이 된다.
-    kg[p.productTypeId] = (kg[p.productTypeId] ?? 0) + n * p.weightPerUnit
-  }
-  return { qty, kg }
-}
-
-/** 열 머리글에 쓸 SKU 이름들. 왕복 1회. */
-async function loadSkuMeta(skuIds: number[]): Promise<MatrixSkuInput[]> {
-  const rows = await prisma.productType.findMany({
-    where: { id: { in: skuIds } },
-    select: {
-      id: true,
-      millingType: true,
-      packageType: true,
-      variety: { select: { name: true, type: true } },
-      packaging: { select: { name: true } },
-    },
-  })
-  return rows.map((r) => ({
-    id: r.id,
-    varietyName: r.variety.name,
-    millingType: r.millingType,
-    varietyType: r.variety.type,
-    packageType: r.packageType,
-    packagingName: r.packaging.name,
-  }))
 }
 
 // ======================================================
