@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import {
     Home,
@@ -26,6 +27,12 @@ type BreadcrumbConfig = {
     icon: IconComponent
     title: string
     description?: string
+    /**
+     * 하위 페이지의 서브컨텍스트 — 상위 탭으로 돌아가는 **링크**로 그린다.
+     * 예) /sales/purchase/… → 「판매관리 / 제품판매」에서 제품판매를 누르면 /sales?tab=product.
+     * 탭 페이지 자체(?tab=)의 서브컨텍스트는 `TAB_LABEL_MAP`이 맡는다(링크 아님).
+     */
+    sub?: { label: string; href: string }
 }
 
 // path → 페이지 구성. 정확 매치 우선, 실패 시 긴 prefix 매치.
@@ -61,6 +68,13 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
         title: '판매관리',
         description: '출고 및 판매 내역을 관리합니다.',
     },
+    // 발주서 매트릭스(제품판매 탭의 하위) — 서브컨텍스트가 탭으로 돌아가는 링크
+    '/sales/purchase': {
+        icon: SalesIcon,
+        title: '판매관리',
+        description: '출고 및 판매 내역을 관리합니다.',
+        sub: { label: '제품판매', href: '/sales?tab=product' },
+    },
 
     '/statistics': {
         icon: StatsIcon,
@@ -86,7 +100,8 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
 const TAB_LABEL_MAP: Record<string, string> = {
     rice: '벼',
     misc: '잡곡',
-    release: '출고',
+    product: '제품판매',
+    release: '원물출고',
 }
 
 // path별 기본 탭 — URL에 ?tab= 쿼리가 없을 때 추론할 값.
@@ -94,7 +109,7 @@ const TAB_LABEL_MAP: Record<string, string> = {
 const PATH_DEFAULT_TAB: Record<string, string> = {
     '/raw-stocks': 'rice',
     '/packages': 'rice',
-    '/sales': 'release',
+    '/sales': 'product', // DEFAULT_SALES_TAB과 같아야 한다(sales-tab-constants.ts)
 }
 
 function resolveConfig(pathname: string): BreadcrumbConfig | null {
@@ -120,8 +135,9 @@ export function BreadcrumbDisplay() {
     }
 
     const Icon = config.icon
-    const tab = searchParams.get('tab') || PATH_DEFAULT_TAB[pathname] || null
-    const subContext = tab ? TAB_LABEL_MAP[tab] : null
+    // 하위 페이지(sub)는 링크, 탭 페이지(?tab=)는 글자만
+    const tab = config.sub ? null : searchParams.get('tab') || PATH_DEFAULT_TAB[pathname] || null
+    const subContext = config.sub?.label ?? (tab ? TAB_LABEL_MAP[tab] : null)
 
     return (
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -132,9 +148,18 @@ export function BreadcrumbDisplay() {
             {subContext && (
                 <>
                     <span className="text-sm text-slate-300 shrink-0">/</span>
-                    <span className="text-sm font-medium text-slate-600 shrink-0">
-                        {subContext}
-                    </span>
+                    {config.sub ? (
+                        <Link
+                            href={config.sub.href}
+                            className="text-sm font-medium text-slate-600 shrink-0 hover:text-slate-900 hover:underline underline-offset-2"
+                        >
+                            {subContext}
+                        </Link>
+                    ) : (
+                        <span className="text-sm font-medium text-slate-600 shrink-0">
+                            {subContext}
+                        </span>
+                    )}
                 </>
             )}
             {config.description && (

@@ -2,6 +2,16 @@
 
 ## 2026-09-15
 
+### 브레드크럼 — 하위 페이지 서브컨텍스트 링크(판매관리 / 제품판매) · /sales 기본 탭 정정 `fix` `__HASH__`
+
+발주서 매트릭스(`/sales/purchase/…`)에서 헤더가 「판매관리 · 설명」뿐이라 사용자가 「다른 메뉴처럼 서브메뉴까지, 링크로」 요청.
+보니 두 결함 — ① prefix 매치라 하위 페이지엔 서브컨텍스트가 아예 없고 ② `/sales` 기본 탭이 `release`(출고)로 박혀
+실제 기본 탭(`DEFAULT_SALES_TAB = product`)과 어긋나 제품판매 탭에서 「판매관리 / 출고」로 떴다(`product` 라벨도 없었음).
+
+- **`components/breadcrumb-display.tsx`** — `BreadcrumbConfig.sub?: { label, href }` 신설. 하위 페이지는 서브컨텍스트를 **Link**로(상위 탭 복귀),
+  탭 페이지(?tab=)는 글자 그대로. `/sales/purchase` 항목 추가(sub=제품판매 → `/sales?tab=product`). `TAB_LABEL_MAP`에 `product`, `release`는 「원물출고」로.
+  `PATH_DEFAULT_TAB['/sales']`를 `product`로
+
 ### 발주서 매트릭스 — 열 부족 판정을 「남은 주문」 기준으로 (다 차감한 열이 빨개지던 결함) `fix` `429a58d`
 
 결정 M 브라우저 확인(M1)에서 사용자가 짚음 — 현미 1,000kg 셀을 1,004 자루로 확정했더니 셀은 초록인데 열 소계·가용이 빨갛다.
