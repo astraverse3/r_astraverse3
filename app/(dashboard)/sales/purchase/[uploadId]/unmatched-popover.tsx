@@ -8,13 +8,14 @@
 //
 // 🔴 **지정은 셀이 아니라 열 전체에 닿는다**(결정 N) — 서버가 돌려준 `scope.itemIds`를 그대로 보낸다.
 //    클릭한 셀의 itemIds가 아니다. 머리에 「N수령인 · M라인」으로 범위를 적어 둔다.
-// 🔴 후보는 **기존 활성 SKU뿐**(결정 O). 없으면 제품유형 등록 화면으로 보낸다 — 여기서 만들지 않는다.
+// 🔴 후보는 **기존 활성 SKU뿐**(결정 O). 없으면 어느 메뉴에서 등록하면 되는지 **일러 주기만** 한다 —
+//    여기서 SKU도 품종도 만들지 않고, 링크로 새 탭을 열지도 않는다(사용자 결정 2026-09-15).
 //
 // 결과 반영은 부모가 한다(결정 C) — `onMatch(patch)`로 넘기고 닫는다.
 
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { AlertCircle, ExternalLink, Info } from 'lucide-react'
+import { AlertCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MatchPatch } from '@/lib/purchase-order-matrix'
 import {
@@ -128,7 +129,7 @@ export function UnmatchedBody({
                         className="w-full rounded-lg border border-slate-200 bg-card px-2 py-1.5 text-[12px] text-foreground"
                     >
                         <option value="">품종을 고르세요</option>
-                        {/* SKU 0개도 고를 수 있게 둔다 — 골라야 「등록하러 가기」 안내를 볼 수 있다 */}
+                        {/* SKU 0개도 고를 수 있게 둔다 — 골라야 「제품유형이 없어요」 안내를 볼 수 있다 */}
                         {data.varieties.map((v) => (
                             <option key={v.id} value={v.id}>
                                 {v.name}
@@ -138,16 +139,15 @@ export function UnmatchedBody({
                     </select>
                 </label>
 
-                {/* 품종 마스터에 아예 없는 품목이 있다(혼합곡·누룽지·귀리쌀 등) — 여기서 만들지 않는다 */}
-                <a
-                    href="/admin/varieties"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1 text-[11px] text-slate-400 underline hover:text-slate-600"
-                >
-                    찾는 품종이 목록에 없나요? 품종 관리 열기
-                    <ExternalLink className="h-2.5 w-2.5" />
-                </a>
+                {/* 품종 마스터에 아예 없는 품목이 있다(혼합곡·누룽지·귀리쌀 등) — 여기서 만들지 않는다.
+                    🔴 링크로 새 탭을 열지 않는다. 등록하고 와도 「재매칭」을 눌러야 해서 링크가 흐름을
+                    완결시키지 못하고, 이 화면을 떠났다 오게 만들 뿐이다(사용자 결정 2026-09-15). */}
+                {varietyId === null && (
+                    <p className="text-[11px] leading-snug text-slate-400">
+                        찾는 품종이 목록에 없으면 <b className="font-semibold text-slate-500">품종 관리</b>에서
+                        먼저 등록해 주세요.
+                    </p>
+                )}
 
                 {varietyId !== null && skus.length === 0 && <NoSku />}
 
@@ -217,20 +217,14 @@ export function UnmatchedBody({
     )
 }
 
-/** 고른 품종에 SKU가 없다 — 여기서 만들지 않는다(결정 O). */
+/** 고른 품종에 SKU가 없다 — 여기서 만들지 않는다(결정 O). 메뉴 이름만 일러 준다. */
 function NoSku() {
     return (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-800">
-            이 품종에 등록된 제품유형이 없어요. 먼저 등록한 뒤 헤더의 「재매칭」을 눌러 주세요.
-            <a
-                href="/admin/product-types"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 flex items-center gap-1 font-bold text-amber-900 underline"
-            >
-                제품유형 관리 열기
-                <ExternalLink className="h-3 w-3" />
-            </a>
+            이 품종에 등록된 제품유형이 없어요.
+            <br />
+            <b className="font-bold text-amber-900">관리자 메뉴 › 제품유형 관리</b>에서 등록한 뒤, 위의{' '}
+            <b className="font-bold text-amber-900">재매칭</b>을 눌러 주세요.
         </div>
     )
 }
