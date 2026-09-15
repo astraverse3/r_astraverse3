@@ -128,14 +128,26 @@ export function UnmatchedBody({
                         className="w-full rounded-lg border border-slate-200 bg-card px-2 py-1.5 text-[12px] text-foreground"
                     >
                         <option value="">품종을 고르세요</option>
+                        {/* SKU 0개도 고를 수 있게 둔다 — 골라야 「등록하러 가기」 안내를 볼 수 있다 */}
                         {data.varieties.map((v) => (
-                            <option key={v.id} value={v.id} disabled={v.skuCount === 0}>
+                            <option key={v.id} value={v.id}>
                                 {v.name}
                                 {v.skuCount === 0 ? ' (제품유형 없음)' : ''}
                             </option>
                         ))}
                     </select>
                 </label>
+
+                {/* 품종 마스터에 아예 없는 품목이 있다(혼합곡·누룽지·귀리쌀 등) — 여기서 만들지 않는다 */}
+                <a
+                    href="/admin/varieties"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[11px] text-slate-400 underline hover:text-slate-600"
+                >
+                    찾는 품종이 목록에 없나요? 품종 관리 열기
+                    <ExternalLink className="h-2.5 w-2.5" />
+                </a>
 
                 {varietyId !== null && skus.length === 0 && <NoSku />}
 
