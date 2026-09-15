@@ -7,7 +7,7 @@
 D2d 브라우저 확인에서 사용자가 짚었다 — 마지막 자루를 요구량에 딱 맞게 자르면 실업무와 안 맞는다(1톤 주문은 1,005 정도로 보낸다).
 행별 가위(「지금 나누기」)는 뭘 하는 버튼인지 알 수 없었다. 2차 정정: 스텝 5kg 말고 1kg, 대신 기본값을 발주량 + 3kg(톤백 자루 무게).
 
-- **`lib/purchase-order-bulk.ts`** — `BULK_TARE_KG = 3` · `bulkTargetKg(remainingKg)`. 추천 목표 = 남은 요구 + 3(고정, 자루 수 무관 — 3차 정정 `__HASH2__`).
+- **`lib/purchase-order-bulk.ts`** — `BULK_TARE_KG = 3` · `bulkTargetKg(remainingKg)`. 추천 목표 = 남은 요구 + 3(고정, 자루 수 무관 — 3차 정정 `17be729`).
   `suggestBulkAllocation`은 불변(호출부가 목표 kg를 넣는다). 테스트 +2 = 14건
 - **`tonbag-popover.tsx`** 422→375줄 — 쪼개기 행이 `☑ ✂ 확정 때 [−] 84 [+] kg만 쪼개 씀 · 366kg 남김`. ±1 · 직접 입력 · 범위 1~(자루중량−1).
   요약 「실제·차이」와 확정 버튼 kg가 같이 움직인다. 가위 버튼·인라인 수동 입력·`manualSplitNow`·`load` 삭제 → 팝오버 = 추천 확인 → 조절 → 체크 → 확정
