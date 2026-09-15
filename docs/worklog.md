@@ -2,6 +2,40 @@
 
 ## 2026-09-15
 
+### 발주서 D2e — 매칭실패 셀 수동지정 + 묶음 재매칭 `feat` `c0f9f97`
+
+매트릭스의 빨간 셀을 눌러 SKU를 직접 지정한다. 지정 단위는 셀이 아니라 **같은 원본 조합을 가진 열 전체**(결정 N).
+D2c가 「다음 단계(D2e)에서 지정합니다」로 막아 두었던 자리를 채웠다.
+
+**착수 전 Neon 실측이 계획의 전제를 갈랐다** (27라인 / 원본 조합 17종)
+- 실패의 **절반은 이름이 아니라 SKU 카탈로그 빈칸**(7종) → 팝오버는 기존 활성 SKU 중에서만 고르고,
+  없으면 `/admin/product-types`로 보낸다(결정 O — 매처의 find-or-create 금지와 같은 원칙)
+- 업로드 시점 매칭이 굳어 있어 마스터를 보완해도 화면은 실패인 채(찰보리 1kg·가바발아현미 800g)
+  → **묶음 단위 재매칭 버튼**을 함께 넣었다(결정 R). 계획엔 곁가지였는데 실제로는 이것만으로 2종이 풀린다
+
+🔴 **결정 T — 도정 단어가 섞인 이름은 별칭으로 학습하지 않는다**(사용자 결정).
+매처의 접미 분리는 **이름 끝만** 본다 → `백미 천지향5세`는 도정이 분리되지 않고 통째로 품종토큰이 되고,
+학습하면 도정이 품종 기본값(백미)으로 굳는다. 나중에 `현미 …`가 또 학습되면 **현미 주문이 백미 SKU로 조용히 붙는다.**
+학습만 거부하고 지정은 정상 처리. 근본 해결(도정 접두 분리)은 천지향5세 품종 등록 시점에 재판단.
+⚠️ 검사에서 **위탁가공 별도품종(발아현미·흑미)을 먼저 걷어낸다** — 안 그러면 실제로 쓰이는 별칭 `가바발아현미`가
+'현미'를 품어 학습이 막힌다. 테스트로 고정.
+
+- **`lib/purchase-order-matrix.ts`** — `MatchPatch` · `applyMatchPatches`(불변 갱신). 열이 `raw:`→`pt:`로 옮겨가며
+  이미 있는 SKU 열이면 자연히 합쳐진다(`columnKeyOf`가 productTypeId를 보므로). 🔴 열을 손으로 옮기지 않는다
+- **`lib/purchase-order-matcher.ts`** — `sortSkuCandidates`(주문과 같은 규격 먼저) · `hasMillingToken` · `type` 선택 필드
+- **`lib/purchase-order-masters.ts`** — `learnVarietyAlias` 신설. 다른 품종이 이미 쓰는 이름이면 학습 거부(결정 S)
+- **`lib/purchase-order-db.ts`** — `loadAvailability`·`loadSkuMeta` 이동(내용 동일, 지정 액션과 공유. C1과 같은 이동)
+- **`app/actions/purchase-order-assign.ts`** 신규 — `getUnmatchedCellOptions`·`assignUnmatchedColumn`·`rematchUpload`.
+  🔴 `revalidatePath` 부르지 않음(D2c 결정 C) · 재매칭 쓰기는 **SKU별 `updateMany`**로 묶어 라인 루프 쿼리 없음
+- **`unmatched-popover.tsx`** 신규 — 품종 select → SKU 라디오 **2단**(결정 P). 시안의 3단 셀렉트(품종→규격→포장지)는
+  각 단에서 막다른 골목이 생긴다. SKU가 75개뿐이라 품종 하나 고르고 전부 펼치는 편이 빠르고 안 틀린다
+- **`matrix-client.tsx`** — 매칭실패 배지 · 재매칭 버튼 · `onMatch` 연결
+- 호출 화면이 없던 `setOrderItemProductType`·`autoMatchOrderItem` **삭제**(새 액션이 대체. 둘 다 `revalidatePath`를 불러
+  매트릭스에서 쓰면 결정 C가 무효가 되는 함정이었다)
+
+계획서 `docs/plan/plan-발주서판매처리-D2e.md` · 보고서 `docs/report-발주서-D2e-2026-09-15.md`.
+tsc·eslint 통과, 테스트 **299/299**(신규 7). 🔴 **브라우저 확인·푸시는 아직.**
+
 ### D2d 종결 — 계획서 상태 정리 · 결과보고서 `docs` `3d06c8f`
 
 사용자 브라우저 확인 M1~M5 완료(M3·M4는 데이터상 재현 불가 → 실제 부족 상황 때). 계획서 머리에 종결 배너, §1·D3·D5·§7 상태 갱신.
