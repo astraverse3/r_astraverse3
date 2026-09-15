@@ -2,7 +2,7 @@
 
 ## 2026-09-15
 
-### 발주서 매트릭스 — 「← 제품판매」 뒤로가기 링크 삭제(브레드크럼이 맡음) `chore` `__HASH__`
+### 발주서 매트릭스 — 「← 제품판매」 뒤로가기 링크 삭제(브레드크럼이 맡음) `chore` `f724a20`
 
 - `sales/purchase/[uploadId]/page.tsx` — `BackLink`·오류 화면의 링크 삭제, `Link`·`ArrowLeft` import 정리
 - `matrix-client.tsx` — 본문 헤더 위 링크 삭제
