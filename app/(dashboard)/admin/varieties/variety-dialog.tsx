@@ -85,7 +85,16 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
     }
 
     const handleDelete = async () => {
-        if (!variety || !(await confirmDialog({ description: '정말 삭제하시겠습니까?', destructive: true, confirmText: '삭제' }))) return
+        if (!variety) return
+
+        // 🔴 별칭은 품종 행에 얹혀 있어서 품종을 지우면 같이 사라진다.
+        //    그 이름으로 오던 발주서 품목은 다음 업로드부터 조용히 매칭실패가 된다.
+        const saved = variety.aliases ?? []
+        const description = saved.length > 0
+            ? `정말 삭제하시겠습니까?\n\n별칭 ${saved.length}개(${saved.join(', ')})도 함께 사라져, 그 이름으로 오던 발주서 품목이 매칭실패로 돌아갑니다.`
+            : '정말 삭제하시겠습니까?'
+
+        if (!(await confirmDialog({ description, destructive: true, confirmText: '삭제' }))) return
 
         setLoading(true)
         const result = await deleteVariety(variety.id)
@@ -137,8 +146,9 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                     </div>
                     <div className="space-y-3">
                         <Label>곡종 구분</Label>
-                        <div className="flex flex-wrap gap-x-4 gap-y-3">
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                        {/* 🔴 한 줄에 7개 — text-sm(크기 미지정이면 16px 상속) + 좁은 gap이라야 들어간다 */}
+                        <div className="flex flex-wrap gap-x-3 gap-y-2.5">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -149,7 +159,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>메벼</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -160,7 +170,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>찰벼</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -171,7 +181,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>인디카</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -182,7 +192,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>흑미</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -193,7 +203,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>잡곡</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"
@@ -204,7 +214,7 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
                                 />
                                 <span>기타</span>
                             </label>
-                            <label className="flex items-center space-x-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                                 <input
                                     type="radio"
                                     name="type"

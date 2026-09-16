@@ -21,7 +21,7 @@ export function VarietyPageWrapper({
     varieties,
     addDialogSlot
 }: VarietyPageWrapperProps) {
-    const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDeleteVarieties()
+    const { selectedIds, setSelectedIds, showDeleteDialog, DeleteDialog } = useBulkDeleteVarieties(varieties)
 
     return (
         <>

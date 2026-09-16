@@ -17,7 +17,7 @@ import { deleteVarieties } from '@/app/actions/admin'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 
-export function useBulkDeleteVarieties() {
+export function useBulkDeleteVarieties(varieties: { id: number; name: string; aliases: string[] }[] = []) {
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -44,6 +44,9 @@ export function useBulkDeleteVarieties() {
         }
     }
 
+    // 🔴 별칭은 품종 행에 얹혀 있어서 품종을 지우면 같이 사라진다(단건 삭제와 같은 경고)
+    const losingAliases = varieties.filter(v => selectedIds.has(v.id) && v.aliases.length > 0)
+
     const DeleteDialog = () => (
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <AlertDialogContent>
@@ -53,8 +56,18 @@ export function useBulkDeleteVarieties() {
                         선택한 {selectedIds.size}개의 품종을 삭제하시겠습니까?
                         <br /><br />
                         <span className="text-amber-600 font-medium">
-                            ⚠️ 재고/포장에 사용된 품종은 삭제되지 않아요.
+                            ⚠️ 재고 · 포장 · 제품유형에 사용된 품종은 삭제되지 않아요.
                         </span>
+                        {losingAliases.length > 0 && (
+                            <>
+                                <br /><br />
+                                <span className="text-red-600 font-medium">
+                                    🔴 별칭도 함께 사라집니다 —{' '}
+                                    {losingAliases.map(v => `${v.name}(${v.aliases.join(', ')})`).join(' · ')}
+                                    <br />그 이름으로 오던 발주서 품목이 매칭실패로 돌아갑니다.
+                                </span>
+                            </>
+                        )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

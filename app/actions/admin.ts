@@ -147,28 +147,34 @@ export async function updateVariety(id: number, data: VarietyFormData) {
 }
 
 /**
- * 품종 삭제 사전 가드 — Stock + MillingOutputPackage(varietyId) 참조 검사.
- * Variety는 두 모델에 의해 참조됨:
+ * 품종 삭제 사전 가드 — varietyId로 Variety를 참조하는 **세 모델 전부** 검사.
  *  - Stock.varietyId (벼 입고, 잡곡 도정위탁/농가도정 입고)
  *  - MillingOutputPackage.varietyId (잡곡 매입 — #8 도입)
- * 둘 중 하나라도 참조 중이면 한글 안내 + 차단.
+ *  - ProductType.varietyId (제품유형/SKU 카탈로그 — 2026-06-17 도입)
+ * 하나라도 참조 중이면 한글 안내 + 차단.
+ *
+ * 🔴 제품유형은 2026-09-16까지 이 가드에 없었다. FK가 Restrict라 데이터는 안 깨졌지만,
+ *    가드를 통과한 뒤 delete에서 터져 「품종 삭제에 실패했어요」만 뜨고 **이유를 알 수 없었다.**
+ *    참조자가 늘면 이 함수도 같이 늘어야 한다.
  */
 async function checkVarietyReferences(
     id: number,
 ): Promise<{ blocked: false } | { blocked: true; reason: string }> {
-    const [stockCount, packageCount, variety] = await Promise.all([
+    const [stockCount, packageCount, productTypeCount, variety] = await Promise.all([
         prisma.stock.count({ where: { varietyId: id } }),
         prisma.millingOutputPackage.count({ where: { varietyId: id } }),
+        prisma.productType.count({ where: { varietyId: id } }),
         prisma.variety.findUnique({ where: { id }, select: { name: true } }),
     ])
 
-    if (stockCount === 0 && packageCount === 0) {
+    if (stockCount === 0 && packageCount === 0 && productTypeCount === 0) {
         return { blocked: false }
     }
 
     const parts: string[] = []
     if (stockCount > 0) parts.push(`재고 ${stockCount}건`)
     if (packageCount > 0) parts.push(`포장 ${packageCount}건`)
+    if (productTypeCount > 0) parts.push(`제품유형 ${productTypeCount}건`)
     const name = variety?.name ?? `id=${id}`
     return {
         blocked: true,
