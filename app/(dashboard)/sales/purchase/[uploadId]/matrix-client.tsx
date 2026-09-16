@@ -5,7 +5,7 @@
 // 행=수령인 · 열=제품규격 · 셀=주문수량(색=차감상태).
 // 이름칸은 채널 선언(`CHANNEL_DECL`)대로 `굵은 값 ｜ 세로선 ｜ 연한 값` 2단이다(C0-c).
 // 셀 클릭 → FIFO 배분 팝오버(`cell-allocation-popover.tsx`), 이름 클릭 → 주문 상세 패널
-// (`order-detail-panel.tsx`). 행 일괄선택은 D3에서 붙는다.
+// (`order-detail-panel.tsx`). 행 일괄선택 → 검토 게이트는 `review-gate-dialog.tsx`(D3).
 //
 // 🔴 **피벗은 여기서 돌린다**(D2c 결정 C). 서버는 `BuildMatrixInput`만 주고, 셀 차감이 끝나면
 // 액션이 돌려준 「바뀐 두 값」(라인 allocatedQty · SKU 가용)만 input에 갈아끼운 뒤 `buildMatrix`를
@@ -52,11 +52,23 @@ import { OrderDetailPanel } from './order-detail-panel'
 import { ReviewGateDialog } from './review-gate-dialog'
 
 // ------------------------------------------------------
-// sticky 좌표 — 좌측 고정 3칸
+// sticky 좌표 — 좌측 고정 4칸 (선택 · 이름 · 상태 · 진행)
 // ------------------------------------------------------
+/**
+ * 좌측 고정 칸의 폭 — **width·min·max를 한꺼번에** 준다.
+ *
+ * 🔴 `width`만 주면 지켜지지 않는다. 테이블 auto 레이아웃은 내용(`whitespace-nowrap`)에 맞춰
+ * 칸을 늘리는데, sticky `left`는 아래 상수로 **고정**돼 있어 실제 위치와 어긋난다. 그러면
+ * 가로 스크롤할 때 상태·진행 칸이 왼쪽으로 당겨져 이름 칸을 덮고, 소계·가용 줄의 라벨
+ * (`colSpan`이라 실제 열 합 폭을 갖는다)만 튀어나와 보인다.
+ * 실측(2026-09-16): 이름칸 184 지정 → **201로 렌더**, 좌측 합 387 vs sticky 영역 370.
+ */
+const fixedW = (w: number) => ({ width: w, minWidth: w, maxWidth: w })
+
 // 행 일괄선택 체크박스 칸 (D3). 맨 왼쪽이라 뒤 칸들의 left가 전부 이만큼 밀린다.
 const W_CHECK = 34
-const W_NAME = 184
+// 204 = 실측이 원한 폭(201)에 여유 3px. 좁히면 잘림만 늘고, 넓히면 표가 그만큼 밀린다.
+const W_NAME = 204
 // 이름칸 앞 값 고정 폭 — 구분선이 모든 행에서 같은 x에 서야 한다(핸드오프 §4).
 // ⚠️ 104px는 재검토 대상: `이마트본사 김보훈`·`울림생협 북가좌점`·`롯데백화점 평촌점`은 잘린다.
 const W_NAME_HEAD = 104
@@ -308,7 +320,7 @@ export function MatrixClient({
                                             'sticky z-20 px-0 text-center group-hover:bg-slate-50',
                                             checked ? 'bg-primary/5' : 'bg-card',
                                         )}
-                                        style={{ left: 0, width: W_CHECK, minWidth: W_CHECK }}
+                                        style={{ left: 0, ...fixedW(W_CHECK) }}
                                     >
                                         {/* 🔴 터치영역은 label/패딩으로 — absolute 오버레이는 클릭을 삼킨다 */}
                                         <label className="flex cursor-pointer items-center justify-center py-1">
@@ -325,7 +337,7 @@ export function MatrixClient({
                                             'sticky z-20 text-left group-hover:bg-slate-50',
                                             checked ? 'bg-primary/5' : 'bg-card',
                                         )}
-                                        style={{ left: L_NAME, width: W_NAME, minWidth: W_NAME }}
+                                        style={{ left: L_NAME, ...fixedW(W_NAME) }}
                                     >
                                         <button
                                             type="button"
@@ -344,7 +356,7 @@ export function MatrixClient({
                                             'sticky z-20 text-center group-hover:bg-slate-50',
                                             checked ? 'bg-primary/5' : 'bg-card',
                                         )}
-                                        style={{ left: L_STATUS, width: W_STATUS, minWidth: W_STATUS }}
+                                        style={{ left: L_STATUS, ...fixedW(W_STATUS) }}
                                     >
                                         <StatusDot status={status} />
                                     </Th>
@@ -354,7 +366,7 @@ export function MatrixClient({
                                             'sticky z-20 shadow-[6px_0_8px_-6px_rgba(15,23,42,0.12)] group-hover:bg-slate-50',
                                             checked ? 'bg-primary/5' : 'bg-card',
                                         )}
-                                        style={{ left: L_PROGRESS, width: W_PROGRESS, minWidth: W_PROGRESS }}
+                                        style={{ left: L_PROGRESS, ...fixedW(W_PROGRESS) }}
                                     >
                                         <Progress done={row.allocatedQty} total={row.orderedQty} />
                                     </Th>
@@ -598,7 +610,7 @@ function HeadCorner({
                 children && 'px-0',
                 shadow && 'shadow-[6px_0_8px_-6px_rgba(15,23,42,0.18)]',
             )}
-            style={{ left, width, minWidth: width }}
+            style={{ left, ...fixedW(width) }}
         >
             {children ? <span className="flex items-center justify-center">{children}</span> : label}
         </th>
@@ -639,7 +651,7 @@ function SumRow({
                         ? 'bg-slate-100 text-[12.5px] font-bold text-slate-600'
                         : 'bg-slate-50 text-[11.5px] font-semibold text-slate-500',
                 )}
-                style={{ top, height, width: W_LEFT, minWidth: W_LEFT }}
+                style={{ top, height, ...fixedW(W_LEFT) }}
             >
                 {label} <span className="text-[12px] font-medium text-slate-500">{unit}</span>
             </th>
