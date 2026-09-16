@@ -228,13 +228,25 @@ export function MatrixClient({
     }, [matrix, decl])
 
     // 게이트에서 넘어온 셀로 데려간다. 강조는 스스로 꺼진다.
+    //
+    // 🔴 **한 프레임 미룬다.** 이 effect가 도는 시점은 게이트 다이얼로그가 언마운트되는 커밋이고,
+    //    Radix가 그 뒤에 포커스를 원래 자리(선택 바 버튼)로 되돌린다 — 바로 스크롤하면 그 복원이
+    //    스크롤을 원위치시킨다.
+    // 🔴 매칭실패 열 키는 **엑셀 원본 문자열**(`raw:품목명|규격|포장지`)이라 따옴표·역슬래시가
+    //    들어올 수 있다. 속성 선택자 값에서 그 둘만 이스케이프하면 된다.
     useEffect(() => {
         if (!highlight) return
-        document
-            .querySelector(`[data-cell="${highlight}"]`)
-            ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
+        const selector = `[data-cell="${highlight.replace(/["\\]/g, '\\$&')}"]`
+        const frame = requestAnimationFrame(() => {
+            document
+                .querySelector(selector)
+                ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
+        })
         const timer = setTimeout(() => setHighlight(null), 2500)
-        return () => clearTimeout(timer)
+        return () => {
+            cancelAnimationFrame(frame)
+            clearTimeout(timer)
+        }
     }, [highlight])
 
     const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
@@ -808,6 +820,11 @@ function NameCell({ decl, row }: { decl: ChannelDecl; row: MatrixRow }) {
 // ------------------------------------------------------
 // 작은 조각들
 // ------------------------------------------------------
+/**
+ * 🔴 props를 **명시적으로만** 받는다. 여기 없는 것은 DOM까지 가지 못한다 —
+ * `data-*`는 JSX에서 임의 허용이라 **타입이 잡아주지 않고 조용히 사라진다**(D3에서 한 번 당했다:
+ * 게이트의 「셀로 이동」이 `data-cell`을 못 찾아 아무 반응이 없었다). 새 속성을 쓰려면 여기 추가할 것.
+ */
 function Th({
     as: Tag = 'td',
     className,
@@ -815,6 +832,7 @@ function Th({
     title,
     onClick,
     children,
+    'data-cell': dataCell,
 }: {
     as?: 'td' | 'th'
     className?: string
@@ -822,6 +840,8 @@ function Th({
     title?: string
     onClick?: (e: React.MouseEvent<HTMLTableCellElement>) => void
     children: React.ReactNode
+    /** 검토 게이트가 이 셀을 찾아오는 앵커 — `${orderId}|${col.key}` */
+    'data-cell'?: string
 }) {
     return (
         <Tag
@@ -829,6 +849,7 @@ function Th({
             style={style}
             title={title}
             onClick={onClick}
+            data-cell={dataCell}
         >
             {children}
         </Tag>
