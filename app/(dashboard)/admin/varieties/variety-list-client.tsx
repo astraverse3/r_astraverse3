@@ -1,10 +1,7 @@
 'use client'
 
-import { useState, useMemo, Fragment } from 'react'
-import { ChevronRight, ChevronDown } from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
-import { VarietyDialog } from './variety-dialog'
-import { DeleteVarietyButton } from './delete-button'
+import { useMemo, useState } from 'react'
+import { VarietyRowMenu } from './variety-row-menu'
 import {
     Table,
     TableBody,
@@ -16,6 +13,12 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
+import {
+    VARIETY_TYPE_ORDER,
+    getVarietyTypeLabel,
+    getVarietyTypeOrder,
+    sortByVarietyType,
+} from '@/lib/variety-labels'
 
 interface Variety {
     id: number
@@ -24,44 +27,91 @@ interface Variety {
     aliases: string[]
 }
 
-interface VarietyListClientProps {
-    varieties: Variety[]
-    selectedIds: Set<number>
-    onSelectionChange: (ids: Set<number>) => void
-}
+const ALL = '__ALL__'
 
-export function VarietyListClient({ varieties, selectedIds, onSelectionChange }: VarietyListClientProps) {
+export function VarietyListClient({ varieties, q, onResetSearch }: {
+    varieties: Variety[]
+    /** 검색어 — 입력칸은 상단 줄(등록 버튼 옆)에 있다 */
+    q: string
+    onResetSearch: () => void
+}) {
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            onSelectionChange(new Set(varieties.map(v => v.id)))
-        } else {
-            onSelectionChange(new Set())
-        }
-    }
+    const [typeFilter, setTypeFilter] = useState<string>(ALL)
 
-    const handleSelectOne = (id: number, checked: boolean) => {
-        const newSet = new Set(selectedIds)
-        if (checked) {
-            newSet.add(id)
-        } else {
-            newSet.delete(id)
-        }
-        onSelectionChange(newSet)
+    // 🔴 칩 개수는 **검색과 무관한 전체 기준**이다.
+    //    검색할 때마다 배지 숫자가 요동치면 읽을 수 없다.
+    const chips = useMemo(() => {
+        const counted = Object.keys(VARIETY_TYPE_ORDER)
+            .map(type => ({
+                type,
+                label: getVarietyTypeLabel(type),
+                count: varieties.filter(v => v.type === type).length,
+            }))
+            .filter(c => c.count > 0) // 0개 곡종 칩은 만들지 않는다
+            .sort((a, b) => getVarietyTypeOrder(a.type) - getVarietyTypeOrder(b.type))
+        return [{ type: ALL, label: '전체', count: varieties.length }, ...counted]
+    }, [varieties])
+
+    const filtered = useMemo(() => {
+        const needle = q.trim().toLowerCase()
+        return varieties.filter(v => {
+            if (typeFilter !== ALL && v.type !== typeFilter) return false
+            if (needle === '') return true
+            // 별칭도 검색 대상 — 발주서에서 「가바」를 보고 들어온 사람이 서농22호를 찾는 주 경로
+            return v.name.toLowerCase().includes(needle)
+                || v.aliases.some(a => a.toLowerCase().includes(needle))
+        })
+    }, [varieties, q, typeFilter])
+
+    const isFiltered = typeFilter !== ALL || q.trim() !== ''
+    const resetFilters = () => {
+        setTypeFilter(ALL)
+        onResetSearch()
     }
 
     return (
         <>
+            {/* 곡종 필터 칩 — 단일 선택, 기본 「전체」. URL·localStorage에 남기지 않는다.
+                🔴 위아래 8px인 것은 부모 grid의 `gap-1`(4px)이 더해져 시안의 12px가 되기 때문이다 */}
+            <div className="flex flex-wrap gap-1.5 px-1 pt-2 pb-2">
+                {chips.map(chip => {
+                    const active = typeFilter === chip.type
+                    return (
+                        <button
+                            key={chip.type}
+                            type="button"
+                            onClick={() => setTypeFilter(chip.type)}
+                            aria-pressed={active}
+                            className={
+                                'inline-flex h-[30px] items-center gap-1 rounded-full border px-3 text-[12.5px] font-semibold transition-colors '
+                                + (active
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')
+                            }
+                        >
+                            {chip.label}
+                            <span
+                                className={
+                                    'text-[11px] tabular-nums '
+                                    + (active ? 'text-primary-foreground/70' : 'text-slate-400')
+                                }
+                            >
+                                {chip.count}
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+
             {/* Desktop View */}
             <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <Table className="table-fixed">
                     {canManage ? (
                         <colgroup>
-                            <col className="w-[6%]" /><col className="w-[7%]" /><col className="w-[26%]" />
-                            <col className="w-[27%]" /><col className="w-[20%]" /><col className="w-[14%]" />
+                            <col className="w-[8%]" /><col className="w-[32%]" /><col className="w-[30%]" />
+                            <col className="w-[22%]" /><col className="w-[8%]" />
                         </colgroup>
                     ) : (
                         <colgroup>
@@ -71,36 +121,21 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                     )}
                     <TableHeader>
                         <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
-                            {canManage && (
-                                <TableHead className="px-1 text-center">
-                                    <Checkbox
-                                        checked={selectedIds.size === varieties.length && varieties.length > 0}
-                                        onCheckedChange={handleSelectAll}
-                                    />
-                                </TableHead>
-                            )}
                             <TableHead className="text-center">No</TableHead>
                             <TableHead>품종명</TableHead>
                             <TableHead>별칭</TableHead>
                             <TableHead>곡종</TableHead>
-                            {canManage && (
-                                <TableHead className="text-center">수정</TableHead>
-                            )}
+                            {canManage && <TableHead />}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {varieties.length > 0 ? (
-                            <FlatVarietyRows
-                                varieties={varieties}
-                                selectedIds={selectedIds}
-                                onSelectOne={handleSelectOne}
-                                canManage={canManage}
-                            />
+                        {filtered.length > 0 ? (
+                            <FlatVarietyRows varieties={filtered} allVarieties={varieties} canManage={canManage} />
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={canManage ? 6 : 4} className="h-32 text-center text-slate-400 font-medium">
-                                    등록된 품종이 없습니다.
-                                </TableHead>
+                                <TableCell colSpan={canManage ? 5 : 4} className="h-32 text-center text-slate-400 font-medium">
+                                    <EmptyMessage isFiltered={isFiltered} onReset={resetFilters} />
+                                </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -109,20 +144,27 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
 
             {/* Mobile View */}
             <div className="block sm:hidden space-y-3">
-                {varieties.length > 0 ? (
-                    <MobileVarietyGroups
-                        varieties={varieties}
-                        selectedIds={selectedIds}
-                        onSelectOne={handleSelectOne}
-                        canManage={canManage}
-                    />
+                {filtered.length > 0 ? (
+                    <MobileVarietyGroups varieties={filtered} allVarieties={varieties} canManage={canManage} />
                 ) : (
                     <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400">
-                        등록된 품종이 없습니다.
+                        <EmptyMessage isFiltered={isFiltered} onReset={resetFilters} />
                     </div>
                 )}
             </div>
         </>
+    )
+}
+
+function EmptyMessage({ isFiltered, onReset }: { isFiltered: boolean; onReset: () => void }) {
+    if (!isFiltered) return <>등록된 품종이 없어요.</>
+    return (
+        <span className="inline-flex flex-col items-center gap-1">
+            <span>조건에 맞는 결과가 없어요. 필터를 바꿔보세요.</span>
+            <button type="button" onClick={onReset} className="text-primary font-semibold hover:underline">
+                전체 보기
+            </button>
+        </span>
     )
 }
 
@@ -148,40 +190,20 @@ function AliasChips({ aliases, className }: { aliases: string[]; className?: str
     )
 }
 
-function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }: {
+function MobileVarietyGroups({ varieties, allVarieties, canManage }: {
     varieties: Variety[],
-    selectedIds: Set<number>,
-    onSelectOne: (id: number, checked: boolean) => void,
+    allVarieties: Variety[],
     canManage: boolean
 }) {
     const groups = useMemo(() => {
-        const grouped: Record<string, {
-            key: string,
-            type: string,
-            label: string,
-            count: number,
-            items: Variety[]
-        }> = {}
+        const grouped: Record<string, { key: string, type: string, label: string, items: Variety[] }> = {}
 
         varieties.forEach(variety => {
             const key = variety.type
             if (!grouped[key]) {
-                const label = variety.type === 'URUCHI' ? '메벼' :
-                    variety.type === 'GLUTINOUS' ? '찰벼' :
-                        variety.type === 'INDICA' ? '인디카' :
-                            variety.type === 'BLACK' ? '흑미' :
-                                variety.type === 'MISC_GRAIN' ? '잡곡' :
-                                    variety.type === 'PURCHASED' ? '매입' : '기타'
-                grouped[key] = {
-                    key,
-                    type: variety.type,
-                    label,
-                    count: 0,
-                    items: []
-                }
+                grouped[key] = { key, type: variety.type, label: getVarietyTypeLabel(variety.type), items: [] }
             }
             grouped[key].items.push(variety)
-            grouped[key].count += 1
         })
 
         // Sort items by name within group
@@ -189,12 +211,11 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
             group.items.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
         })
 
-        // Sort groups by type — 매입은 끝, 잡곡은 기타 앞
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5, 'PURCHASED': 6 }
-
-        return Object.values(grouped).sort((a, b) => {
-            return (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
-        })
+        // 🔴 곡종 순서는 `lib/variety-labels.ts` 한 곳에서만 정한다
+        //    (BLACK이 빠져 있어 흑미가 매입 뒤로 밀려 있었다 — 2026-09-16 해소)
+        return Object.values(grouped).sort(
+            (a, b) => getVarietyTypeOrder(a.type) - getVarietyTypeOrder(b.type)
+        )
     }, [varieties])
 
     return (
@@ -205,7 +226,7 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
                     <div className="bg-slate-50 border-b border-slate-100 flex items-center justify-between px-3 py-2.5">
                         <span className="font-bold text-[13px] text-slate-800">{group.label}</span>
                         <Badge variant="secondary" className="bg-slate-200/60 text-slate-600 text-[10px] px-1.5 py-0">
-                            {group.count}개
+                            {group.items.length}개
                         </Badge>
                     </div>
 
@@ -213,25 +234,14 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
                     <div className="divide-y divide-slate-100">
                         {group.items.map(variety => (
                             <div key={variety.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-slate-50/50">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    {canManage && (
-                                        <Checkbox
-                                            checked={selectedIds.has(variety.id)}
-                                            onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
-                                            className="h-4 w-4 shrink-0"
-                                        />
+                                {/* 별칭은 품종명 아래 줄로 — 옆에 붙이면 이름이 밀려 잘린다 */}
+                                <div className="min-w-0">
+                                    <span className="font-medium text-[13px] text-slate-700">{variety.name}</span>
+                                    {variety.aliases.length > 0 && (
+                                        <AliasChips aliases={variety.aliases} className="flex flex-wrap gap-1 mt-1" />
                                     )}
-                                    {/* 별칭은 품종명 아래 줄로 — 옆에 붙이면 이름이 밀려 잘린다 */}
-                                    <div className="min-w-0">
-                                        <span className="font-medium text-[13px] text-slate-700">{variety.name}</span>
-                                        {variety.aliases.length > 0 && (
-                                            <AliasChips aliases={variety.aliases} className="flex flex-wrap gap-1 mt-1" />
-                                        )}
-                                    </div>
                                 </div>
-                                {canManage && (
-                                    <VarietyDialog mode="edit" variety={variety} varieties={varieties} />
-                                )}
+                                {canManage && <VarietyRowMenu variety={variety} varieties={allVarieties} />}
                             </div>
                         ))}
                     </div>
@@ -241,49 +251,25 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
     )
 }
 
-function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
+function FlatVarietyRows({ varieties, allVarieties, canManage }: {
     varieties: Variety[],
-    selectedIds: Set<number>,
-    onSelectOne: (id: number, checked: boolean) => void,
+    allVarieties: Variety[],
     canManage: boolean
 }) {
-    // Sort varieties by type then name — 매입은 끝, 잡곡은 기타 앞
-    const sortedVarieties = useMemo(() => {
-        const typeOrder: Record<string, number> = { 'URUCHI': 1, 'GLUTINOUS': 2, 'INDICA': 3, 'MISC_GRAIN': 4, 'OTHER': 5, 'PURCHASED': 6 }
-        return [...varieties].sort((a, b) => {
-            const typeDiff = (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99)
-            if (typeDiff !== 0) return typeDiff
-            return a.name.localeCompare(b.name, 'ko')
-        })
-    }, [varieties])
+    // 🔴 곡종 순 → 이름순. 순서는 `lib/variety-labels.ts` 단일 원천
+    const sortedVarieties = useMemo(() => sortByVarietyType(varieties), [varieties])
 
     return (
         <>
             {sortedVarieties.map((variety, index) => (
                 <TableRow key={variety.id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0">
-                    {canManage && (
-                        <TableCell className="px-1 text-center">
-                            <Checkbox
-                                checked={selectedIds.has(variety.id)}
-                                onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
-                            />
-                        </TableCell>
-                    )}
                     <TableCell className="text-center font-mono tabular-nums text-slate-400">{index + 1}</TableCell>
                     <TableCell className="truncate font-semibold text-slate-900">{variety.name}</TableCell>
                     <TableCell><AliasChips aliases={variety.aliases} /></TableCell>
-                    <TableCell className="truncate text-slate-500">
-                        {variety.type === 'URUCHI' ? '메벼'
-                            : variety.type === 'GLUTINOUS' ? '찰벼'
-                                : variety.type === 'INDICA' ? '인디카'
-                                    : variety.type === 'BLACK' ? '흑미'
-                                        : variety.type === 'MISC_GRAIN' ? '잡곡'
-                                            : variety.type === 'PURCHASED' ? '매입'
-                                                : '기타'}
-                    </TableCell>
+                    <TableCell className="truncate text-slate-500">{getVarietyTypeLabel(variety.type)}</TableCell>
                     {canManage && (
                         <TableCell className="text-center">
-                            <VarietyDialog mode="edit" variety={variety} varieties={varieties} />
+                            <VarietyRowMenu variety={variety} varieties={allVarieties} />
                         </TableCell>
                     )}
                 </TableRow>

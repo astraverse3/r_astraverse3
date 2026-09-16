@@ -218,6 +218,8 @@ export async function deleteVariety(id: number) {
     }
 }
 
+// ⚠️ 호출부 없음 — 2026-09-16 품종 일괄삭제 UI를 없애고 행 ⋯ 메뉴 단건 삭제로 옮겼다.
+//    되살릴 여지가 있어 액션은 남겨 둔다.
 export async function deleteVarieties(ids: number[]) {
     await requirePermission('SUPPLY_MANAGE')
     try {

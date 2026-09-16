@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -10,19 +10,19 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogFooter,
     DialogDescription
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/app/actions/admin'
+import { createVariety, updateVariety, VarietyFormData } from '@/app/actions/admin'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { getProductCode } from '@/lib/lot-generation'
 import { AliasEditor } from './alias-editor'
 import type { AliasVariety } from '@/lib/variety-alias'
+import { confirmAndDeleteVariety } from './delete-variety'
 
 interface Props {
     mode: 'create' | 'edit'
@@ -34,15 +34,28 @@ interface Props {
     }
     /** 전체 품종 목록 — 별칭 충돌 검사용. 수정 모드에서만 쓴다 */
     varieties?: AliasVariety[]
+    /**
+     * 외부 제어 — 행 ⋯ 메뉴가 여닫는 수정 모드에서 쓴다.
+     * 넘어오면 자체 트리거를 렌더하지 않는다(메뉴 안에 트리거를 두면 Radix 포커스 복귀가 얽힌다).
+     */
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
-export function VarietyDialog({ mode, variety, varieties }: Props) {
+export function VarietyDialog({ mode, variety, varieties, open: controlledOpen, onOpenChange }: Props) {
     const router = useRouter()
-    const [open, setOpen] = useState(false)
+    const isControlled = onOpenChange !== undefined
+    const [internalOpen, setInternalOpen] = useState(false)
+    const open = isControlled ? !!controlledOpen : internalOpen
     const [name, setName] = useState(variety?.name || '')
     const [type, setType] = useState(variety?.type || 'URUCHI')
     const [aliases, setAliases] = useState<string[]>(variety?.aliases ?? [])
     const [loading, setLoading] = useState(false)
+
+    const setOpen = (next: boolean) => {
+        if (isControlled) onOpenChange!(next)
+        else setInternalOpen(next)
+    }
 
     // 🔴 열 때마다 현재 값으로 되돌린다. useState 초기값은 최초 마운트 때만 먹으므로,
     //    저장 후 목록이 갱신돼도 다이얼로그 상태는 낡은 채 남는다(별칭은 배열 통째 저장이라 특히 위험).
@@ -112,47 +125,30 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
         setLoading(false)
     }
 
+    // 🔴 확인 문구(별칭 동반 소멸 경고)는 `delete-variety.ts` 한 곳에만 있다 —
+    //    행 ⋯ 메뉴의 삭제도 같은 함수를 부른다.
     const handleDelete = async () => {
         if (!variety) return
 
-        // 🔴 별칭은 품종 행에 얹혀 있어서 품종을 지우면 같이 사라진다.
-        //    그 이름으로 오던 발주서 품목은 다음 업로드부터 조용히 매칭실패가 된다.
-        const saved = variety.aliases ?? []
-        const description = saved.length > 0
-            ? `정말 삭제하시겠습니까?\n\n별칭 ${saved.length}개(${saved.join(', ')})도 함께 사라져, 그 이름으로 오던 발주서 품목이 매칭실패로 돌아갑니다.`
-            : '정말 삭제하시겠습니까?'
-
-        if (!(await confirmDialog({ description, destructive: true, confirmText: '삭제' }))) return
-
         setLoading(true)
-        const result = await deleteVariety(variety.id)
-        if (result.success) {
-            triggerDataUpdate()
+        if (await confirmAndDeleteVariety(variety)) {
             setOpen(false)
             router.refresh()
-        } else {
-            toast.error(result.error || '삭제에 실패했습니다.')
         }
         setLoading(false)
     }
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                {mode === 'create' ? (
+            {/* 수정 모드는 행 ⋯ 메뉴가 외부에서 연다 — 자체 트리거는 등록 버튼뿐 */}
+            {!isControlled && (
+                <DialogTrigger asChild>
                     <Button size="sm" className="px-2.5 sm:px-4">
                         <Plus className="w-4 h-4 sm:mr-1.5" />
                         <span className="hidden sm:inline">품종 등록</span>
                     </Button>
-                ) : (
-                    <button
-                        className="p-2 text-slate-400 hover:text-primary rounded-full hover:bg-primary/10 transition-colors"
-                        title="수정"
-                    >
-                        <Pencil className="w-4 h-4" />
-                    </button>
-                )}
-            </DialogTrigger>
+                </DialogTrigger>
+            )}
             {/* 🔴 flex flex-col — 기본 grid는 내용이 길어지면 푸터가 잘린다 */}
             <DialogContent className="flex flex-col max-h-[88vh]">
                 <DialogHeader>

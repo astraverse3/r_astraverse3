@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="design_doc_mode" content="canvas"><title>품종 관리 · 행 메뉴 + 곡종 탐색 3안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard Variable',Pretendard,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#2563eb;text-decoration:none}a:hover{color:#1d4ed8}
+.frame{position:absolute;width:660px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:22px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.fr-tag{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.fr-tag b{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.fr-tag span{font-size:12px;color:#64748b}
+.fr-note{font-size:12px;line-height:1.55;color:#475569;margin-bottom:16px;text-wrap:pretty}
+.fr-note em{font-style:normal;color:#b45309;font-weight:600}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px}
+.search{flex:1;display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#94a3b8;max-width:230px}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;background:#2563eb;color:#fff;border-radius:8px;font-size:13px;font-weight:600;white-space:nowrap}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{height:40px;padding:0 12px;text-align:left;font-size:13px;font-weight:500;color:#64748b;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+td{padding:0 12px;height:44px;font-size:13px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.c-no{width:56px;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:#94a3b8}
+.c-name{font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-alias{width:150px}
+.c-type{width:86px;color:#64748b}
+.c-act{width:52px;text-align:center}
+.chip{display:inline-flex;align-items:center;border:1px solid #e2e8f0;background:#f8fafc;border-radius:999px;padding:1px 8px;font-size:11px;color:#475569}
+.dash{color:#cbd5e1}
+.kebab{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:#94a3b8}
+.kebab.on{background:#f1f5f9;color:#334155}
+.menu{position:absolute;right:14px;top:34px;z-index:5;width:132px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.13);padding:4px;text-align:left}
+.menu div{display:flex;align-items:center;gap:8px;height:32px;padding:0 9px;border-radius:6px;font-size:13px;color:#334155;font-weight:500}
+.menu div.hov{background:#f1f5f9}
+.menu div.danger{color:#dc2626}
+.menu .sep{height:1px;margin:4px 0;background:#f1f5f9;display:block;padding:0}
+.rowrel{position:relative}
+/* A — 그룹 헤더 */
+.grp{background:#f1f5f9}
+.grp td{height:34px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:800;color:#334155;letter-spacing:.01em}
+.grp .cnt{font-weight:600;color:#94a3b8;margin-left:6px}
+/* B — 필터 칩 */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.fchip{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border:1px solid #e2e8f0;background:#fff;border-radius:999px;font-size:12.5px;font-weight:600;color:#475569}
+.fchip .n{font-size:11px;font-weight:600;color:#94a3b8;font-variant-numeric:tabular-nums}
+.fchip.sel{background:#2563eb;border-color:#2563eb;color:#fff}
+.fchip.sel .n{color:#bfdbfe}
+/* C — 탭 */
+.tabs{display:flex;gap:2px;border-bottom:1px solid #e2e8f0;margin-bottom:12px;overflow:hidden}
+.tab{display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;font-size:13px;font-weight:600;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab .n{font-size:11px;font-weight:600;color:#94a3b8;background:#f1f5f9;border-radius:999px;padding:1px 6px;font-variant-numeric:tabular-nums}
+.tab.sel{color:#2563eb;border-bottom-color:#2563eb}
+.tab.sel .n{background:#dbeafe;color:#2563eb}
+.tab.thin .n{color:#b45309;background:#fef3c7}
+.empty{padding:26px 12px;text-align:center;font-size:12.5px;color:#94a3b8}
+</style></head><body>
+
+<!-- ============ A안 ============ -->
+<div class="frame" style="left:60px;top:60px">
+<div class="fr-tag"><b>A안 · 곡종 그룹 헤더</b><span>탭 없음 · 한 화면 한 스크롤</span></div>
+<div class="fr-note">곡종을 <em>나누지 않고 구분만</em> 한다. 찰벼 2개·흑미 1개처럼 개수가 적어도 그냥 두 줄·한 줄로 앉으면 되니 불균형이 문제가 되지 않는다. 전체를 한 번에 훑거나 Ctrl+F로 찾는 지금 사용 방식과 가장 가깝다.</div>
+<div class="topbar"><div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>품종명 · 별칭 검색</div><div class="btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>품종 등록</div></div>
+<div class="card rowrel">
+<table><thead><tr><th class="c-no">No</th><th>품종명</th><th class="c-alias">별칭</th><th class="c-act"></th></tr></thead><tbody>
+<tr class="grp"><td colspan="4" style="padding-left:12px">메벼<span class="cnt">8</span></td></tr>
+<tr><td class="c-no">1</td><td class="c-name">다온누리큰눈</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">2</td><td class="c-name">삼광</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">3</td><td class="c-name">새청무</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">4</td><td class="c-name">서농22호</td><td class="c-alias"><span class="chip">가바</span></td><td class="c-act"><span class="kebab on"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">5</td><td class="c-name">신길</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">6</td><td class="c-name">천지향1세</td><td class="c-alias"><span class="chip">천지향</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">7</td><td class="c-name">천지향5세</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">8</td><td class="c-name">하이아미</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr class="grp"><td colspan="4" style="padding-left:12px">찰벼<span class="cnt">2</span></td></tr>
+<tr><td class="c-no">9</td><td class="c-name">다온누리찰</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">10</td><td class="c-name">백옥찰</td><td class="c-alias"><span class="chip">찹쌀</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr class="grp"><td colspan="4" style="padding-left:12px">흑미<span class="cnt">1</span></td></tr>
+<tr><td class="c-no">11</td><td class="c-name">흑진주</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr class="grp"><td colspan="4" style="padding-left:12px">인디카<span class="cnt">7</span> <span style="font-weight:500;color:#cbd5e1">· 이하 시안상 축약</span></td></tr>
+<tr><td class="c-no">12</td><td class="c-name">바스마티</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">12</td><td class="c-name">아미면</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">13</td><td class="c-name">CJ1</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr class="grp"><td colspan="4" style="padding-left:12px">잡곡<span class="cnt">15</span></td></tr>
+<tr><td class="c-no">14</td><td class="c-name">보리</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">15</td><td class="c-name">백태</td><td class="c-alias"><span class="chip">콩</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">16</td><td class="c-name">서목태</td><td class="c-alias"><span class="chip">쥐눈이</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr class="grp"><td colspan="4" style="padding-left:12px">매입<span class="cnt">3</span></td></tr>
+<tr><td class="c-no">17</td><td class="c-name">누룽지</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+</tbody></table>
+<div class="menu" style="top:210px"><div class="hov"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>수정</div><span class="sep"></span><div class="danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제</div></div>
+</div>
+<div class="fr-note" style="margin:12px 0 0"><b style="color:#0f172a">곡종 열이 사라진다</b> — 그룹 헤더가 그 역할을 하므로 열 하나가 비고, 품종명·별칭이 넓어진다.</div>
+</div>
+
+<!-- ============ B안 ============ -->
+<div class="frame" style="left:780px;top:60px">
+<div class="fr-tag"><b>B안 · 곡종 필터 칩</b><span>기본값 = 전체</span></div>
+<div class="fr-note">탭과 달리 <em>「전체」가 기본 상태</em>다. 찰벼 2·흑미 1도 개수 배지를 달고 한 줄에 같이 앉으니 빈약해 보이지 않고, 필요할 때만 좁혀 본다. 개수 불균형이 오히려 정보가 된다.</div>
+<div class="topbar"><div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>품종명 · 별칭 검색</div><div class="btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>품종 등록</div></div>
+<div class="chips"><span class="fchip sel">전체<span class="n">36</span></span><span class="fchip">메벼<span class="n">8</span></span><span class="fchip">찰벼<span class="n">2</span></span><span class="fchip">인디카<span class="n">7</span></span><span class="fchip">흑미<span class="n">1</span></span><span class="fchip">잡곡<span class="n">15</span></span><span class="fchip">매입<span class="n">3</span></span></div>
+<div class="card rowrel">
+<table><thead><tr><th class="c-no">No</th><th>품종명</th><th class="c-alias">별칭</th><th class="c-type">곡종</th><th class="c-act"></th></tr></thead><tbody>
+<tr><td class="c-no">1</td><td class="c-name">다온누리큰눈</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">2</td><td class="c-name">삼광</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">3</td><td class="c-name">서농22호</td><td class="c-alias"><span class="chip">가바</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab on"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">4</td><td class="c-name">천지향1세</td><td class="c-alias"><span class="chip">천지향</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">5</td><td class="c-name">백옥찰</td><td class="c-alias"><span class="chip">찹쌀</span></td><td class="c-type">찰벼</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">6</td><td class="c-name">바스마티</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">인디카</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">7</td><td class="c-name">CJ1</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">인디카</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">8</td><td class="c-name">흑진주</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">흑미</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">9</td><td class="c-name">백태</td><td class="c-alias"><span class="chip">콩</span></td><td class="c-type">잡곡</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">10</td><td class="c-name">서목태</td><td class="c-alias"><span class="chip">쥐눈이</span></td><td class="c-type">잡곡</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">11</td><td class="c-name">누룽지</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">매입</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+</tbody></table>
+<div class="menu" style="top:122px"><div class="hov"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>수정</div><span class="sep"></span><div class="danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제</div></div>
+</div>
+<div class="fr-note" style="margin:12px 0 0"><b style="color:#0f172a">곡종 열은 남는다</b> — 전체 보기가 기본이라 각 행이 어느 곡종인지 여전히 표시해야 한다.</div>
+</div>
+
+<!-- ============ C안 ============ -->
+<div class="frame" style="left:1500px;top:60px">
+<div class="fr-tag"><b>C안 · 탭 (제안하신 안)</b><span>전체 탭 없음 · 항상 한 곡종</span></div>
+<div class="fr-note">탭은 <em>「각 칸이 한 화면치는 된다」</em>를 전제한다. 흑미 1개 탭은 눌러 보면 한 줄만 있는 빈 화면이 되고, 전체를 훑을 방법이 사라진다. 곡종이 6→8개로 늘면 탭 줄도 넘친다.</div>
+<div class="topbar"><div class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>품종명 · 별칭 검색</div><div class="btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>품종 등록</div></div>
+<div class="tabs"><span class="tab">메벼<span class="n">8</span></span><span class="tab thin">찰벼<span class="n">2</span></span><span class="tab">인디카<span class="n">7</span></span><span class="tab sel">잡곡<span class="n">15</span></span><span class="tab">매입<span class="n">3</span></span><span class="tab thin">흑미<span class="n">1</span></span></div>
+<div class="card rowrel">
+<table><thead><tr><th class="c-no">No</th><th>품종명</th><th class="c-alias">별칭</th><th class="c-act"></th></tr></thead><tbody>
+<tr><td class="c-no">1</td><td class="c-name">보리</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">2</td><td class="c-name">검정보리</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">3</td><td class="c-name">통밀</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab on"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">4</td><td class="c-name">수수</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">5</td><td class="c-name">백태</td><td class="c-alias"><span class="chip">콩</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">6</td><td class="c-name">서목태</td><td class="c-alias"><span class="chip">쥐눈이</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">7</td><td class="c-name">팥</td><td class="c-alias"><span class="chip">적두</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+</tbody></table>
+<div class="menu" style="top:130px"><div class="hov"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>수정</div><span class="sep"></span><div class="danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제</div></div>
+</div>
+<div class="fr-note" style="margin:12px 0 0"><b style="color:#dc2626">흑미 탭을 누르면</b></div>
+<div class="card" style="margin-top:8px"><div class="tabs" style="margin:0;padding:0 8px"><span class="tab" style="height:34px">메벼<span class="n">8</span></span><span class="tab" style="height:34px">잡곡<span class="n">15</span></span><span class="tab sel" style="height:34px">흑미<span class="n">1</span></span></div><table><tbody><tr><td class="c-no">1</td><td class="c-name">흑진주</td><td class="c-alias"><span class="dash">—</span></td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr></tbody></table><div class="empty">한 줄짜리 화면 — 탭을 누른 대가가 없다</div></div>
+</div>
+
+<!-- ============ 행 메뉴 상세 ============ -->
+<div class="frame" style="left:60px;top:1330px;width:1380px">
+<div class="fr-tag"><b>공통 · 행 메뉴 전환</b><span>왼쪽 체크박스 → 오른쪽 ⋯</span></div>
+<div class="fr-note" style="margin-bottom:18px">체크박스는 <em>여러 개 골라 한꺼번에 삭제</em>하는 장치다. 품종은 하나씩 고치고 어쩌다 하나 지우는 대상이라 일괄 삭제가 쓸 일이 거의 없고, 대신 첫 열이 통째로 낭비되고 상단 「삭제」 버튼이 항상 회색으로 죽어 있었다. 행 메뉴로 옮기면 두 동작(수정·삭제)이 <b style="color:#0f172a">대상 행 위에서 끝난다</b>.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+<div>
+<div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px">BEFORE</div>
+<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;opacity:.72">
+<div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9"><span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:12.5px;color:#cbd5e1">🗑 삭제</span><span style="display:inline-flex;align-items:center;height:30px;padding:0 12px;background:#2563eb;color:#fff;border-radius:7px;font-size:12.5px;font-weight:600">+ 품종 등록</span></div>
+<table><thead><tr><th style="width:44px;text-align:center"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #cbd5e1;border-radius:3px"></span></th><th class="c-no">No</th><th>품종명</th><th class="c-type">곡종</th><th class="c-act">수정</th></tr></thead><tbody>
+<tr><td style="text-align:center"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #cbd5e1;border-radius:3px"></span></td><td class="c-no">4</td><td class="c-name">서농22호</td><td class="c-type">메벼</td><td class="c-act"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></td></tr>
+<tr><td style="text-align:center"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #cbd5e1;border-radius:3px"></span></td><td class="c-no">5</td><td class="c-name">신길</td><td class="c-type">메벼</td><td class="c-act"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></td></tr>
+</tbody></table></div>
+<div style="font-size:12px;color:#64748b;line-height:1.6;margin-top:9px">삭제는 상단(선택 후) · 수정은 행 끝 — 한 동작이 두 군데로 갈린다. 삭제 버튼은 평소 비활성.</div>
+</div>
+<div>
+<div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:8px">AFTER</div>
+<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;position:relative">
+<div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9"><span class="search" style="max-width:190px;height:30px">품종명 · 별칭 검색</span><span style="display:inline-flex;align-items:center;height:30px;padding:0 12px;background:#2563eb;color:#fff;border-radius:7px;font-size:12.5px;font-weight:600">+ 품종 등록</span></div>
+<table><thead><tr><th class="c-no">No</th><th>품종명</th><th class="c-alias">별칭</th><th class="c-type">곡종</th><th class="c-act"></th></tr></thead><tbody>
+<tr><td class="c-no">4</td><td class="c-name">서농22호</td><td class="c-alias"><span class="chip">가바</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab on"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+<tr><td class="c-no">5</td><td class="c-name">신길</td><td class="c-alias"><span class="dash">—</span></td><td class="c-type">메벼</td><td class="c-act"><span class="kebab"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span></td></tr>
+</tbody></table>
+<div class="menu" style="top:96px"><div class="hov"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>수정</div><span class="sep"></span><div class="danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>삭제</div></div>
+</div>
+<div style="font-size:12px;color:#64748b;line-height:1.6;margin-top:9px">빈 첫 열과 상단 삭제 버튼이 사라지고, 그 자리를 검색이 받는다. 삭제는 기존 확인 다이얼로그(「연결된 재고가 있으면 삭제 불가」)를 그대로 띄운다.</div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:20px;padding:14px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px">
+<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:5px">권한</div><div style="font-size:12px;color:#64748b;line-height:1.55"><code>SUPPLY_MANAGE</code> 없으면 ⋯ 열 자체를 렌더하지 않는다(현재 <code>canManage</code> 분기 그대로).</div></div>
+<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:5px">모바일</div><div style="font-size:12px;color:#64748b;line-height:1.55">카드 오른쪽 연필 아이콘을 같은 ⋯ 메뉴로 교체. 왼쪽 체크박스 제거로 품종명이 16px 넓어진다.</div></div>
+<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:5px">지워지는 코드</div><div style="font-size:12px;color:#64748b;line-height:1.55"><code>selectedIds</code>·<code>onSelectionChange</code>·<code>handleSelectAll</code>·상단 일괄삭제 — 페이지 클라이언트까지 함께 정리.</div></div>
+</div>
+</div>
+
+</body></html>
