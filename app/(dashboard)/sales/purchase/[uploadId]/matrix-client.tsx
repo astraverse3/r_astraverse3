@@ -138,7 +138,7 @@ export function MatrixClient({
             availabilityKg: { ...prev.availabilityKg, [patch.productTypeId]: patch.availabilityKg },
         }))
 
-    /** 수동지정·재매칭 결과 — 라인의 SKU가 바뀌므로 열이 옮겨간다. 파생은 buildMatrix가 낸다 */
+    /** 재매칭 결과 — 라인의 SKU가 바뀌므로 열이 옮겨간다. 파생은 buildMatrix가 낸다 */
     const applyMatches = (patches: MatchPatch[]) =>
         setInput((prev) => applyMatchPatches(prev, patches))
 
@@ -290,7 +290,6 @@ export function MatrixClient({
             <CellAllocationPopover
                 cell={active}
                 onPatch={applyPatch}
-                onMatch={(patch) => applyMatches([patch])}
                 onFail={() => router.refresh()}
                 onClose={() => setActive(null)}
             />

@@ -216,39 +216,21 @@ function ok(
 }
 
 // ------------------------------------------------------
-// 수동지정 보조 (D2e) — 매칭 자체와는 무관, 팝오버가 쓴다
+// 별칭 가드 — 매칭 자체와는 무관
 // ------------------------------------------------------
 
 /**
- * 수동지정 팝오버의 SKU 후보 정렬 (결정 O).
- * 주문 규격과 **같은 규격 먼저** → 기본 SKU 먼저 → 도정·규격·포장지 이름순.
- * 원본 배열을 건드리지 않는다.
- */
-export function sortSkuCandidates(
-  skus: readonly MatcherProductType[],
-  packageType: string,
-): MatcherProductType[] {
-  const wanted = stripSpaces(packageType)
-  const sameSpec = (p: MatcherProductType) => (stripSpaces(p.packageType) === wanted ? 0 : 1)
-  return [...skus].sort(
-    (a, b) =>
-      sameSpec(a) - sameSpec(b) ||
-      Number(b.isDefault) - Number(a.isDefault) ||
-      a.millingType.localeCompare(b.millingType, 'ko') ||
-      a.packageType.localeCompare(b.packageType, 'ko') ||
-      a.packagingName.localeCompare(b.packagingName, 'ko'),
-  )
-}
-
-/**
- * 품종토큰에 **도정 단어가 섞여 있는가** (결정 T).
+ * 품종토큰에 **도정 단어가 섞여 있는가** (구 D2e 결정 T).
  *
  * `백미 천지향5세`처럼 도정이 이름 **앞**에 오면 접미 분리가 안 돼 토큰에 도정이 남는다.
- * 이걸 별칭으로 학습하면 도정은 품종 category 기본값으로 굳고, 나중에 `현미 …`가 와서
- * 또 학습되면 **현미 주문이 백미 SKU로 조용히 붙는다.** 그래서 학습을 거부한다.
+ * 이걸 별칭으로 등록하면 도정은 품종 category 기본값으로 굳고, 나중에 `현미 …`가 와서
+ * 또 등록되면 **현미 주문이 백미 SKU로 조용히 붙는다.** 그래서 별칭으로 받지 않는다.
  *
  * 🔴 위탁가공 별도품종(`발아현미`·`흑미`)을 먼저 걷어낸다 — 안 그러면 `가바발아현미`가
- * '현미'를 품어 학습이 막힌다(실제로 쓰이는 별칭이다).
+ * '현미'를 품어 막힌다(실제로 쓰이는 별칭이다).
+ *
+ * 쓰는 곳: 매칭실패 안내(가도 거절당할 이름인지 미리 알려 준다)와
+ * 품종 별칭 관리 화면의 검증(`lib/variety-alias.ts`, 계획 중).
  */
 export function hasMillingToken(token: string): boolean {
   let t = stripSpaces(token)

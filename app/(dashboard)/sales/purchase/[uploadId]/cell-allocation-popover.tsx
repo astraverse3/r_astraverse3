@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import type { Allocation } from '@/lib/purchase-order-allocation'
-import type { CellStatus, MatchPatch } from '@/lib/purchase-order-matrix'
+import type { CellStatus } from '@/lib/purchase-order-matrix'
 import {
     cancelCell,
     confirmCell,
@@ -48,13 +48,11 @@ const md = (iso: string) => iso.slice(5).replace('-', '.')
 export function CellAllocationPopover({
     cell,
     onPatch,
-    onMatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell | null
     onPatch: (patch: CellPatch) => void
-    onMatch: (patch: MatchPatch) => void
     onFail: () => void
     onClose: () => void
 }) {
@@ -74,7 +72,6 @@ export function CellAllocationPopover({
                         key={cell.key}
                         cell={cell}
                         onPatch={onPatch}
-                        onMatch={onMatch}
                         onFail={onFail}
                         onClose={onClose}
                     />
@@ -90,22 +87,20 @@ export function CellAllocationPopover({
 function Body({
     cell,
     onPatch,
-    onMatch,
     onFail,
     onClose,
 }: {
     cell: ActiveCell
     onPatch: (patch: CellPatch) => void
-    onMatch: (patch: MatchPatch) => void
     onFail: () => void
     onClose: () => void
 }) {
     return (
         <div className="flex flex-col">
             <Head cell={cell} onClose={onClose} />
-            {/* 매칭실패는 차감이 아니라 「무엇을 낼지」를 먼저 정한다(D2e) */}
+            {/* 매칭실패는 차감할 게 없다 — 어느 마스터를 손봐야 풀리는지 안내만 한다 */}
             {cell.status === 'UNMATCHED' ? (
-                <UnmatchedBody cell={cell} onMatch={onMatch} onFail={onFail} onClose={onClose} />
+                <UnmatchedBody cell={cell} />
             ) : cell.bulk ? (
                 <TonbagBody cell={cell} onPatch={onPatch} onFail={onFail} onClose={onClose} />
             ) : (
