@@ -1,6 +1,6 @@
 'use server'
 
-// 발주서 판매처리 — 조회·매칭·차감 액션 (계획서 §8.3.1)
+// 발주서 판매처리 — 묶음 목록 · 건 상세 · 삭제 (계획서 §8.3.1)
 //
 // 흐름: 엑셀 업로드 → 파싱(§8.2.2) → 중복감지(#16) → 적재(Upload+Order+Item) →
 //       라인 자동매칭(§8.2.3, productTypeId) → 차감확정(FIFO #3, PackageMovement type=SALE) →
@@ -9,6 +9,11 @@
 // **업로드(미리보기·적재·비고)는 `purchase-order-upload.ts`로 분리**했다(D1b, 800줄 상한).
 // export(원본 양식 복원 + 생산자·로트 채움)는 별도 단계.
 // 모든 write = OPERATION_MANAGE(2026-06-22 권한 단순화), 조회(list*/get*) = 공개.
+//
+// 🔴 **차감은 이 파일에 없다.** 셀 단위(사람이 로트를 고름) = `purchase-order-matrix.ts`의
+// `confirmCell`/`cancelCell`, 행 일괄(FIFO 자동) = `purchase-order-batch.ts`.
+// 여기 있던 `confirmOrder`·`confirmOrderItem`·`cancelOrderItemMovements`·`listPurchaseOrders`는
+// D2c 이후 **호출처가 0건인 채로 남아 있다가** D3에서 삭제됐다(계획서 D3 §5) — 되살리지 말 것.
 
 import type { PurchaseChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
@@ -29,12 +34,7 @@ import {
   type Allocation,
   type LineStatus,
 } from '@/lib/purchase-order-allocation'
-import {
-  applyAllocations,
-  allocatedQtyOfItem,
-  loadAvailablePackages,
-  recalcOrderStatus,
-} from '@/lib/purchase-order-db'
+import { allocatedQtyOfItem, loadAvailablePackages } from '@/lib/purchase-order-db'
 
 // ======================================================
 // 내부 헬퍼
@@ -132,41 +132,6 @@ export async function listPurchaseUploads(): Promise<
   } catch (error) {
     console.error('[listPurchaseUploads] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '업로드 목록을 불러오지 못했습니다.') }
-  }
-}
-
-export type OrderRow = {
-  id: number
-  channel: PurchaseChannel
-  vendor: string
-  recipient: string
-  status: 'PENDING' | 'PARTIAL' | 'COMPLETED'
-  itemCount: number
-  unmatched: number
-}
-
-export async function listPurchaseOrders(
-  uploadId: number,
-): Promise<{ success: true; data: OrderRow[] } | { success: false; error: string }> {
-  try {
-    const orders = await prisma.purchaseOrder.findMany({
-      where: { uploadId },
-      orderBy: { id: 'asc' },
-      include: { items: { select: { productTypeId: true } } },
-    })
-    const data: OrderRow[] = orders.map((o) => ({
-      id: o.id,
-      channel: o.channel,
-      vendor: o.vendor,
-      recipient: o.recipient,
-      status: o.status,
-      itemCount: o.items.length,
-      unmatched: o.items.filter((i) => i.productTypeId === null).length,
-    }))
-    return { success: true, data }
-  } catch (error) {
-    console.error('[listPurchaseOrders] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '발주 목록을 불러오지 못했습니다.') }
   }
 }
 
@@ -269,119 +234,6 @@ export async function getPurchaseOrderDetail(
   } catch (error) {
     console.error('[getPurchaseOrderDetail] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '발주 상세를 불러오지 못했습니다.') }
-  }
-}
-
-// ======================================================
-// 차감 확정 / 취소 (#3·#12·#17)
-// ======================================================
-
-export async function confirmOrderItem(
-  itemId: number,
-  allocations: Allocation[],
-): Promise<{ success: true } | { success: false; error: string }> {
-  const session = await requirePermission('OPERATION_MANAGE')
-  try {
-    await prisma.$transaction(async (tx) => {
-      const item = await tx.purchaseOrderItem.findUnique({ where: { id: itemId } })
-      if (!item) throw new Error('라인을 찾을 수 없습니다.')
-      if (!item.productTypeId) throw new Error('매칭되지 않은 라인입니다. 먼저 품종을 지정하세요.')
-      await applyAllocations(tx, {
-        itemId,
-        productTypeId: item.productTypeId,
-        orderedQty: item.orderedQty,
-        allocations,
-        createdById: session.user?.id,
-        createdName: session.user?.name ?? undefined,
-      })
-      await recalcOrderStatus(tx, item.orderId)
-    })
-
-    await recordAuditLog({
-      action: 'CREATE',
-      entity: 'PackageMovement',
-      description: `발주서 라인 차감확정 itemId=${itemId} (${allocations.reduce((s, a) => s + a.count, 0)}개)`,
-    })
-    revalidatePath('/sales')
-    revalidatePath('/packages')
-    return { success: true }
-  } catch (error) {
-    console.error('[confirmOrderItem] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '차감 확정에 실패했습니다.') }
-  }
-}
-
-export async function confirmOrder(
-  orderId: number,
-): Promise<{ success: true; confirmed: number } | { success: false; error: string }> {
-  const session = await requirePermission('OPERATION_MANAGE')
-  try {
-    const confirmed = await prisma.$transaction(async (tx) => {
-      const items = await tx.purchaseOrderItem.findMany({ where: { orderId } })
-      let total = 0
-      for (const item of items) {
-        if (!item.productTypeId) continue // 매칭실패 라인은 건너뜀
-        const already = await allocatedQtyOfItem(tx, item.id)
-        const need = item.orderedQty - already
-        if (need <= 0) continue
-        const avail = await loadAvailablePackages(tx, item.productTypeId)
-        const { allocations } = suggestAllocation(need, avail)
-        if (allocations.length === 0) continue
-        total += await applyAllocations(tx, {
-          itemId: item.id,
-          productTypeId: item.productTypeId,
-          orderedQty: item.orderedQty,
-          allocations,
-          createdById: session.user?.id,
-          createdName: session.user?.name ?? undefined,
-        })
-      }
-      await recalcOrderStatus(tx, orderId)
-      return total
-    })
-
-    await recordAuditLog({
-      action: 'CREATE',
-      entity: 'PurchaseOrder',
-      entityId: orderId,
-      description: `발주 건 일괄 차감확정 orderId=${orderId} (${confirmed}개)`,
-    })
-    revalidatePath('/sales')
-    revalidatePath('/packages')
-    return { success: true, confirmed }
-  } catch (error) {
-    console.error('[confirmOrder] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '일괄 차감에 실패했습니다.') }
-  }
-}
-
-export async function cancelOrderItemMovements(
-  itemId: number,
-): Promise<{ success: true; removed: number } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
-  try {
-    const item = await prisma.purchaseOrderItem.findUnique({ where: { id: itemId } })
-    if (!item) return { success: false, error: '라인을 찾을 수 없습니다.' }
-
-    const removed = await prisma.$transaction(async (tx) => {
-      const del = await tx.packageMovement.deleteMany({
-        where: { orderItemId: itemId, type: 'SALE' },
-      })
-      await recalcOrderStatus(tx, item.orderId)
-      return del.count
-    })
-
-    await recordAuditLog({
-      action: 'DELETE',
-      entity: 'PackageMovement',
-      description: `발주서 라인 차감취소 itemId=${itemId} (${removed}건 하드삭제, 재고복원)`,
-    })
-    revalidatePath('/sales')
-    revalidatePath('/packages')
-    return { success: true, removed }
-  } catch (error) {
-    console.error('[cancelOrderItemMovements] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '차감 취소에 실패했습니다.') }
   }
 }
 

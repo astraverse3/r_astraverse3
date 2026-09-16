@@ -21,10 +21,12 @@
 // sticky 좌표는 아래 상수 한 곳에서만 만든다 — 칸 폭과 left 값이 어긋나면
 // 스크롤할 때 열이 겹쳐 보이는데, 눈으로는 원인을 못 찾는다.
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowUpDown, RefreshCw } from 'lucide-react'
+import { ArrowUpDown, RefreshCw, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { CHANNEL_DECL, channelLabel, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
 import {
@@ -44,21 +46,28 @@ import {
 import type { PurchaseChannel } from '@prisma/client'
 import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { rematchUpload } from '@/app/actions/purchase-order-assign'
+import type { BatchPatch } from '@/app/actions/purchase-order-batch'
 import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
 import { OrderDetailPanel } from './order-detail-panel'
+import { ReviewGateDialog } from './review-gate-dialog'
 
 // ------------------------------------------------------
 // sticky 좌표 — 좌측 고정 3칸
 // ------------------------------------------------------
+// 행 일괄선택 체크박스 칸 (D3). 맨 왼쪽이라 뒤 칸들의 left가 전부 이만큼 밀린다.
+const W_CHECK = 34
 const W_NAME = 184
 // 이름칸 앞 값 고정 폭 — 구분선이 모든 행에서 같은 x에 서야 한다(핸드오프 §4).
 // ⚠️ 104px는 재검토 대상: `이마트본사 김보훈`·`울림생협 북가좌점`·`롯데백화점 평촌점`은 잘린다.
 const W_NAME_HEAD = 104
 const W_STATUS = 60
 const W_PROGRESS = 92
-const L_STATUS = W_NAME
-const L_PROGRESS = W_NAME + W_STATUS
-const W_LEFT = W_NAME + W_STATUS + W_PROGRESS
+const L_NAME = W_CHECK
+const L_STATUS = W_CHECK + W_NAME
+const L_PROGRESS = W_CHECK + W_NAME + W_STATUS
+const W_LEFT = W_CHECK + W_NAME + W_STATUS + W_PROGRESS
+/** 좌측 고정 칸 수 — 소계 줄이 이만큼 합쳐 라벨을 적는다 */
+const LEFT_COLS = 4
 
 // 헤더 4행 높이 (그룹 · 규격 · 소계 · 가용)
 //
@@ -127,6 +136,25 @@ export function MatrixClient({
     const [active, setActive] = useState<ActiveCell | null>(null)
     const [detail, setDetail] = useState<{ orderId: number; head: string; tail: string | null } | null>(null)
 
+    // 행 일괄선택(D3) — 키는 orderId라 정렬이 바뀌어도 선택이 유지된다
+    const [selected, setSelected] = useState<Set<number>>(new Set())
+    const [gateOpen, setGateOpen] = useState(false)
+    /** 게이트에서 「이 줄」을 눌러 찾아온 셀 — 잠깐 강조했다가 스스로 꺼진다 */
+    const [highlight, setHighlight] = useState<string | null>(null)
+
+    const toggleRow = (orderId: number) =>
+        setSelected((prev) => {
+            const next = new Set(prev)
+            if (!next.delete(orderId)) next.add(orderId)
+            return next
+        })
+    // 게이트가 의존성으로 받는다 — 매 렌더 새 배열이면 열자마자 다시 계산한다
+    const selectedIds = useMemo(() => [...selected], [selected])
+    const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.orderId))
+    const someChecked = selected.size > 0 && !allChecked
+    const toggleAll = () =>
+        setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.orderId)))
+
     /** 액션이 돌려준 「바뀐 두 값」만 갈아끼운다. 나머지 파생은 buildMatrix 재실행이 맞춘다 */
     const applyPatch = (patch: CellPatch) =>
         setInput((prev) => ({
@@ -136,6 +164,17 @@ export function MatrixClient({
             ),
             availability: { ...prev.availability, [patch.productTypeId]: patch.availability },
             availabilityKg: { ...prev.availabilityKg, [patch.productTypeId]: patch.availabilityKg },
+        }))
+
+    /** 일괄차감 결과 — 바뀐 라인·SKU가 여럿이다(결정 H). 파생은 buildMatrix가 낸다 */
+    const applyBatchPatch = (patch: BatchPatch) =>
+        setInput((prev) => ({
+            ...prev,
+            items: prev.items.map((it) =>
+                it.id in patch.allocatedQty ? { ...it, allocatedQty: patch.allocatedQty[it.id] } : it,
+            ),
+            availability: { ...prev.availability, ...patch.availability },
+            availabilityKg: { ...prev.availabilityKg, ...patch.availabilityKg },
         }))
 
     /** 재매칭 결과 — 라인의 SKU가 바뀌므로 열이 옮겨간다. 파생은 buildMatrix가 낸다 */
@@ -167,18 +206,48 @@ export function MatrixClient({
             )
         })
 
+    /**
+     * 라인(itemId) → 그 라인이 앉은 셀과 사람 말 이름.
+     * 셀 팝오버와 검토 게이트가 **같은 표기**를 써야 해서 한 곳에서 만든다 — 서버는 이름을 주지 않는다.
+     */
+    const lineIndex = useMemo(() => {
+        const groupByKey = new Map(matrix.groups.map((g) => [g.key, g]))
+        const index = new Map<number, { cellKey: string; who: string; what: string }>()
+        for (const row of matrix.rows) {
+            const who = nameTiersOf(decl, row)[0]
+            for (const col of matrix.columns) {
+                const cell = row.cells[col.key]
+                if (!cell) continue
+                const spec = col.bulk ? `${fmtKg(col.unitWeightKg ?? 0)}kg` : col.packageType
+                const what = `${groupByKey.get(col.groupKey)?.title ?? ''} · ${spec}`
+                const cellKey = `${row.orderId}|${col.key}`
+                for (const itemId of cell.itemIds) index.set(itemId, { cellKey, who, what })
+            }
+        }
+        return index
+    }, [matrix, decl])
+
+    // 게이트에서 넘어온 셀로 데려간다. 강조는 스스로 꺼진다.
+    useEffect(() => {
+        if (!highlight) return
+        document
+            .querySelector(`[data-cell="${highlight}"]`)
+            ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
+        const timer = setTimeout(() => setHighlight(null), 2500)
+        return () => clearTimeout(timer)
+    }, [highlight])
+
     const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
         const cell = row.cells[col.key]
-        const group = matrix.groups.find((g) => g.key === col.groupKey)
-        const spec = col.bulk ? `${fmtKg(col.unitWeightKg ?? 0)}kg` : col.packageType
+        const at = lineIndex.get(cell.itemIds[0])
         setActive({
             key: `${row.orderId}|${col.key}`,
             itemIds: cell.itemIds,
             status: cell.status,
             bulk: col.bulk,
             anchor: el,
-            who: nameTiersOf(decl, row)[0],
-            what: `${group?.title ?? ''} · ${spec}`,
+            who: at?.who ?? '',
+            what: at?.what ?? '',
         })
     }
 
@@ -207,16 +276,44 @@ export function MatrixClient({
 
             <div className="overflow-auto rounded-xl border border-slate-200 bg-card max-h-[calc(100dvh-230px)]">
                 <table className="border-separate border-spacing-0 text-[11.5px]">
-                    <MatrixHead matrix={matrix} availKg={availKg} nameLabel={decl.columnLabel} />
+                    <MatrixHead
+                        matrix={matrix}
+                        availKg={availKg}
+                        nameLabel={decl.columnLabel}
+                        allChecked={allChecked}
+                        someChecked={someChecked}
+                        onToggleAll={toggleAll}
+                    />
                     <tbody>
                         {rows.map((row) => {
                             const status = row.status
+                            const checked = selected.has(row.orderId)
                             return (
-                                <tr key={row.orderId} className="group">
+                                <tr key={row.orderId} className={cn('group', checked && 'bg-primary/5')}>
                                     <Th
                                         as="td"
-                                        className="sticky z-20 bg-card text-left group-hover:bg-slate-50"
-                                        style={{ left: 0, width: W_NAME, minWidth: W_NAME }}
+                                        className={cn(
+                                            'sticky z-20 px-0 text-center group-hover:bg-slate-50',
+                                            checked ? 'bg-primary/5' : 'bg-card',
+                                        )}
+                                        style={{ left: 0, width: W_CHECK, minWidth: W_CHECK }}
+                                    >
+                                        {/* 🔴 터치영역은 label/패딩으로 — absolute 오버레이는 클릭을 삼킨다 */}
+                                        <label className="flex cursor-pointer items-center justify-center py-1">
+                                            <Checkbox
+                                                checked={checked}
+                                                onCheckedChange={() => toggleRow(row.orderId)}
+                                                aria-label={`${nameTiersOf(decl, row)[0]} 선택`}
+                                            />
+                                        </label>
+                                    </Th>
+                                    <Th
+                                        as="td"
+                                        className={cn(
+                                            'sticky z-20 text-left group-hover:bg-slate-50',
+                                            checked ? 'bg-primary/5' : 'bg-card',
+                                        )}
+                                        style={{ left: L_NAME, width: W_NAME, minWidth: W_NAME }}
                                     >
                                         <button
                                             type="button"
@@ -231,14 +328,20 @@ export function MatrixClient({
                                     </Th>
                                     <Th
                                         as="td"
-                                        className="sticky z-20 bg-card text-center group-hover:bg-slate-50"
+                                        className={cn(
+                                            'sticky z-20 text-center group-hover:bg-slate-50',
+                                            checked ? 'bg-primary/5' : 'bg-card',
+                                        )}
                                         style={{ left: L_STATUS, width: W_STATUS, minWidth: W_STATUS }}
                                     >
                                         <StatusDot status={status} />
                                     </Th>
                                     <Th
                                         as="td"
-                                        className="sticky z-20 bg-card shadow-[6px_0_8px_-6px_rgba(15,23,42,0.12)] group-hover:bg-slate-50"
+                                        className={cn(
+                                            'sticky z-20 shadow-[6px_0_8px_-6px_rgba(15,23,42,0.12)] group-hover:bg-slate-50',
+                                            checked ? 'bg-primary/5' : 'bg-card',
+                                        )}
                                         style={{ left: L_PROGRESS, width: W_PROGRESS, minWidth: W_PROGRESS }}
                                     >
                                         <Progress done={row.allocatedQty} total={row.orderedQty} />
@@ -253,15 +356,19 @@ export function MatrixClient({
                                                 </Th>
                                             )
                                         }
+                                        const cellKey = `${row.orderId}|${col.key}`
                                         return (
                                             <Th
                                                 as="td"
                                                 key={col.key}
+                                                data-cell={cellKey}
                                                 className={cn(
                                                     'cursor-pointer text-right tabular-nums hover:ring-2 hover:ring-inset hover:ring-primary/50',
                                                     CELL_TONE[cell.status],
-                                                    active?.key === `${row.orderId}|${col.key}` &&
-                                                        'ring-2 ring-inset ring-primary',
+                                                    active?.key === cellKey && 'ring-2 ring-inset ring-primary',
+                                                    // 게이트에서 「이 줄」을 눌러 찾아온 셀 — 잠깐만 튄다
+                                                    highlight === cellKey &&
+                                                        'ring-2 ring-inset ring-primary ring-offset-0 animate-pulse',
                                                 )}
                                                 title={`주문 ${cell.orderedQty} · 차감 ${cell.allocatedQty}`}
                                                 onClick={(e) => openCell(row, col, e.currentTarget)}
@@ -287,6 +394,48 @@ export function MatrixClient({
 
             <Legend />
 
+            {/* 선택 바 — 표 바깥에 떠 있어야 가로 스크롤을 따라다니지 않는다 */}
+            {selected.size > 0 && (
+                <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-primary/30 bg-card px-4 py-2.5 shadow-lg">
+                    <span className="text-[13px] text-slate-600">
+                        <b className="font-bold text-foreground">{fmt(selected.size)}수령처</b> 선택
+                    </span>
+                    <Button type="button" size="sm" onClick={() => setGateOpen(true)}>
+                        차감 예정 확인
+                    </Button>
+                    <button
+                        type="button"
+                        onClick={() => setSelected(new Set())}
+                        className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        aria-label="선택 해제"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
+
+            {/* 🔴 조건부 마운트 — 열 때마다 새로 계산한다(낡은 검토 화면으로 확정하지 않게) */}
+            {gateOpen && (
+            <ReviewGateDialog
+                orderIds={selectedIds}
+                sheetName={header.sheetName}
+                lookup={(itemId) => lineIndex.get(itemId) ?? null}
+                onClose={() => setGateOpen(false)}
+                onDone={(patch, summary) => {
+                    applyBatchPatch(patch)
+                    setGateOpen(false)
+                    setSelected(new Set())
+                    toast.success(`${fmt(summary.lines)}라인 · ${fmt(summary.units)}개를 차감했어요`)
+                }}
+                onJump={(itemId) => {
+                    const at = lineIndex.get(itemId)
+                    if (!at) return
+                    setGateOpen(false)
+                    setHighlight(at.cellKey)
+                }}
+            />
+            )}
+
             <CellAllocationPopover
                 cell={active}
                 onPatch={applyPatch}
@@ -310,17 +459,32 @@ function MatrixHead({
     matrix,
     availKg,
     nameLabel,
+    allChecked,
+    someChecked,
+    onToggleAll,
 }: {
     matrix: Matrix
     availKg: number
     nameLabel: string
+    allChecked: boolean
+    someChecked: boolean
+    onToggleAll: (v: boolean | 'indeterminate') => void
 }) {
     const colByKey = new Map(matrix.columns.map((c) => [c.key, c]))
     return (
         <thead>
             {/* 1행 — 품목(그룹). 발주서 원본 순서 그대로 */}
             <tr>
-                <HeadCorner left={0} width={W_NAME} label={nameLabel} align="left" />
+                <HeadCorner left={0} width={W_CHECK}>
+                    {/* 전체선택 — 부분선택은 가운데 막대로(Radix `indeterminate`) */}
+                    <Checkbox
+                        checked={allChecked ? true : someChecked ? 'indeterminate' : false}
+                        onCheckedChange={onToggleAll}
+                        aria-label="전체 선택"
+                        className="bg-card"
+                    />
+                </HeadCorner>
+                <HeadCorner left={L_NAME} width={W_NAME} label={nameLabel} align="left" />
                 <HeadCorner left={L_STATUS} width={W_STATUS} label="상태" />
                 <HeadCorner left={L_PROGRESS} width={W_PROGRESS} label="진행" shadow />
                 {matrix.groups.map((g) => (
@@ -403,12 +567,15 @@ function HeadCorner({
     label,
     align = 'center',
     shadow,
+    children,
 }: {
     left: number
     width: number
-    label: string
+    label?: string
     align?: 'left' | 'center'
     shadow?: boolean
+    /** 라벨 대신 넣을 것 — 전체선택 체크박스 */
+    children?: ReactNode
 }) {
     return (
         <th
@@ -416,11 +583,12 @@ function HeadCorner({
             className={cn(
                 'sticky top-0 z-40 border-b border-r border-slate-200 bg-slate-200 px-2 font-bold text-slate-600',
                 align === 'left' ? 'text-left' : 'text-center',
+                children && 'px-0',
                 shadow && 'shadow-[6px_0_8px_-6px_rgba(15,23,42,0.18)]',
             )}
             style={{ left, width, minWidth: width }}
         >
-            {label}
+            {children ? <span className="flex items-center justify-center">{children}</span> : label}
         </th>
     )
 }
@@ -452,7 +620,7 @@ function SumRow({
     return (
         <tr>
             <th
-                colSpan={3}
+                colSpan={LEFT_COLS}
                 className={cn(
                     'sticky left-0 z-40 border-b border-r border-slate-200 px-3 text-left shadow-[6px_0_8px_-6px_rgba(15,23,42,0.18)]',
                     strong
