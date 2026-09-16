@@ -110,3 +110,77 @@ export function validateAliasList(
   }
   return { ok: true, values: accepted }
 }
+
+// ------------------------------------------------------
+// 품종명 검증 — 🔴 이름과 별칭은 **같은 네임스페이스**를 공유한다
+//
+// 매처 `resolveVariety`는 **name 정확일치를 먼저** 보고, 실패해야 aliases를 본다.
+// 그래서 어떤 품종의 이름이 다른 품종의 별칭과 겹치면 **그 별칭은 그 순간 무력화된다.**
+// `efdbeb7`(보리·찰보리 통합)에서 실제로 겪은 일 — 빈 품종 하나가 별칭을 가로챘다.
+//
+// `validateAlias`는 「별칭 → 다른 품종의 이름·별칭」 방향만 막는다. 이 함수가 반대 방향이다.
+// 둘이 같은 파일에 있는 건 의도다 — 한쪽만 고치면 다른 쪽으로 같은 충돌이 들어온다.
+// ------------------------------------------------------
+
+export type NameRejectReason =
+  | 'empty'
+  | 'duplicate_name' // 다른 품종의 이름과 같음
+  | 'alias_taken' // 다른 품종이 별칭으로 쓰는 이름 → 그 별칭이 죽는다
+  | 'own_alias' // 자기 자신의 별칭과 같음
+
+export type NameValidation =
+  | { ok: true; value: string }
+  | { ok: false; reason: NameRejectReason; message: string }
+
+/**
+ * 품종명을 검증한다.
+ *
+ * @param input      입력한 이름
+ * @param targetId   수정 중인 품종 id. **신규 등록이면 `null`**
+ * @param varieties  전체 품종 목록
+ */
+export function validateVarietyName(
+  input: string,
+  targetId: number | null,
+  varieties: AliasVariety[],
+): NameValidation {
+  const value = normalizeAlias(input) // 정리 규칙은 별칭과 같다
+  if (!value) {
+    return { ok: false, reason: 'empty', message: '품종명을 입력하세요.' }
+  }
+
+  const key = stripSpaces(value)
+
+  // 공백만 다른 이름은 매처가 구분하지 못한다(같은 값으로 본다) → 막는다.
+  // DB의 name unique는 공백 차이를 다른 값으로 보므로 여기서만 걸린다.
+  const sameName = varieties.find((v) => v.id !== targetId && stripSpaces(v.name) === key)
+  if (sameName) {
+    return {
+      ok: false,
+      reason: 'duplicate_name',
+      message: `이미 존재하는 품종입니다${sameName.name === value ? '' : ` (${sameName.name})`}.`,
+    }
+  }
+
+  const aliasOwner = varieties.find(
+    (v) => v.id !== targetId && v.aliases.some((a) => stripSpaces(a) === key),
+  )
+  if (aliasOwner) {
+    return {
+      ok: false,
+      reason: 'alias_taken',
+      message: `「${aliasOwner.name}」이(가) 별칭으로 쓰는 이름입니다. 이 이름을 쓰면 그 별칭이 무력화됩니다.`,
+    }
+  }
+
+  const self = targetId === null ? null : varieties.find((v) => v.id === targetId)
+  if (self?.aliases.some((a) => stripSpaces(a) === key)) {
+    return {
+      ok: false,
+      reason: 'own_alias',
+      message: `이 품종의 별칭 「${value}」과(와) 같습니다. 별칭에서 지운 뒤 이름을 바꾸세요.`,
+    }
+  }
+
+  return { ok: true, value }
+}

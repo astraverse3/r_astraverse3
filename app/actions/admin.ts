@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
-import { validateAliasList } from '@/lib/variety-alias'
+import { validateAliasList, validateVarietyName } from '@/lib/variety-alias'
 
 // --- VARIETY ACTIONS ---
 export type VarietyFormData = {
@@ -51,13 +51,16 @@ export async function getRiceVarieties() {
 export async function createVariety(data: VarietyFormData) {
     await requirePermission('SUPPLY_MANAGE')
     try {
-        const name = data.name.trim()
-        const existing = await prisma.variety.findUnique({
-            where: { name }
+        // 🔴 이름 중복만이 아니라 **다른 품종의 별칭과 겹치는지**도 본다.
+        //    매처는 name을 먼저 보므로, 겹치면 그 별칭이 그 순간 무력화된다(efdbeb7).
+        const all = await prisma.variety.findMany({
+            select: { id: true, name: true, aliases: true }
         })
-        if (existing) {
-            return { success: false, error: '이미 존재하는 품종입니다.' }
+        const verdict = validateVarietyName(data.name, null, all)
+        if (!verdict.ok) {
+            return { success: false, error: verdict.message }
         }
+        const name = verdict.value
 
         const variety = await prisma.variety.create({
             data: { name, type: data.type, category: deriveVarietyCategory(data.type) }
@@ -84,26 +87,31 @@ export async function createVariety(data: VarietyFormData) {
 export async function updateVariety(id: number, data: VarietyFormData) {
     await requirePermission('SUPPLY_MANAGE')
     try {
-        const name = data.name.trim()
-        const existing = await prisma.variety.findUnique({
-            where: { name }
+        const all = await prisma.variety.findMany({
+            select: { id: true, name: true, aliases: true }
         })
-        if (existing && existing.id !== id) {
-            return { success: false, error: '이미 존재하는 품종입니다.' }
+        const target = all.find(v => v.id === id)
+        if (!target) {
+            return { success: false, error: '품종을 찾을 수 없습니다.' }
         }
+
+        // 이름 검증과 별칭 검증은 서로를 본다 — 이름은 「자기 별칭과 겹치나」를, 별칭은
+        // 「품종명과 같나」를 본다. 순환을 끊으려고 **이번에 저장될 별칭**을 먼저 깔고 이름부터 정한다.
+        const pendingAliases = data.aliases ?? target.aliases
+        const allWithPending = all.map(v => (v.id === id ? { ...v, aliases: pendingAliases } : v))
+
+        // 🔴 이름 중복만이 아니라 **다른 품종의 별칭과 겹치는지**도 본다(efdbeb7).
+        const nameVerdict = validateVarietyName(data.name, id, allWithPending)
+        if (!nameVerdict.ok) {
+            return { success: false, error: nameVerdict.message }
+        }
+        const name = nameVerdict.value
 
         // 별칭(선택) — 화면에서 이미 검증했지만 서버에서 전수 재검증한다.
         // 🔴 2026-09-16 이후 별칭을 만드는 경로가 이 화면 하나뿐이라, 여기서 안 막으면 아무도 안 막는다.
         let aliases: string[] | undefined
         let aliasesBefore: string[] | undefined
         if (data.aliases) {
-            const all = await prisma.variety.findMany({
-                select: { id: true, name: true, aliases: true }
-            })
-            const target = all.find(v => v.id === id)
-            if (!target) {
-                return { success: false, error: '품종을 찾을 수 없습니다.' }
-            }
             // 이름도 같이 바뀌는 중이므로 새 이름으로 검증한다(자기 자신은 id로 걸러진다)
             const verdict = validateAliasList(data.aliases, { id, name, aliases: [] }, all)
             if (!verdict.ok) {

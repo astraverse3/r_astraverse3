@@ -20,6 +20,7 @@ import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { getProductCode } from '@/lib/lot-generation'
 import { AliasEditor } from './alias-editor'
 import type { AliasVariety } from '@/lib/variety-alias'
 
@@ -57,8 +58,35 @@ export function VarietyDialog({ mode, variety, varieties }: Props) {
     // Ensure unique IDs for form inputs
     const nameId = `name-${variety?.id || 'new'}`
 
+    /**
+     * 🔴 로트 품목코드는 **품종명 문자열**과 곡종으로 정해진다(`getProductCode`).
+     * 「검정보리」→「블랙보리」처럼 이름을 바꾸면 215가 21로 조용히 바뀐다(41종 중 18종이 이름에 의존).
+     * 막을 일은 아니다 — 정당한 개명일 수 있으니 — 바뀐다는 걸 보여 주고 확인만 받는다.
+     */
+    const confirmProductCodeChange = async (): Promise<boolean> => {
+        if (mode !== 'edit' || !variety) return true
+
+        const pairs = (['백미', '현미'] as const).map(mt => ({
+            mt,
+            before: getProductCode(variety.type, variety.name, mt),
+            after: getProductCode(type, name.trim(), mt),
+        })).filter(p => p.before !== p.after)
+
+        if (pairs.length === 0) return true
+
+        const lines = pairs.map(p => `${p.mt} ${p.before} → ${p.after}`).join(' · ')
+        return confirmDialog({
+            title: '로트 품목코드가 바뀝니다',
+            description: `${lines}\n\n앞으로 만들어질 로트번호에 반영됩니다. 이미 만들어진 로트는 그대로입니다.`,
+            confirmText: '저장',
+        })
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!(await confirmProductCodeChange())) return
+
         setLoading(true)
 
         const data: VarietyFormData = mode === 'edit' ? { name, type, aliases } : { name, type }

@@ -4,6 +4,7 @@ import {
   normalizeAlias,
   validateAlias,
   validateAliasList,
+  validateVarietyName,
   type AliasVariety,
 } from './variety-alias'
 
@@ -96,5 +97,59 @@ test('validateAliasList: 기존 6종은 전부 통과한다 (리스크 §6 — �
   for (const v of VARIETIES) {
     const r = validateAliasList(v.aliases, { ...v, aliases: [] }, VARIETIES)
     assert.equal(r.ok, true, `${v.name}: ${r.ok ? '' : r.message}`)
+  }
+})
+
+// ------------------------------------------------------
+// 품종명 검증 — 이름↔별칭 충돌 (validateVarietyName)
+// ------------------------------------------------------
+
+function nameReason(r: ReturnType<typeof validateVarietyName>): string {
+  assert.equal(r.ok, false)
+  if (r.ok) throw new Error('unreachable')
+  return r.reason
+}
+
+test('품종명: 빈 값은 거절한다', () => {
+  assert.equal(nameReason(validateVarietyName('  ', null, VARIETIES)), 'empty')
+})
+
+test('품종명: 다른 품종의 이름과 같으면 거절한다', () => {
+  assert.equal(nameReason(validateVarietyName('흑미', null, VARIETIES)), 'duplicate_name')
+})
+
+test('품종명: 공백만 다른 이름도 거절한다 — 매처가 구분하지 못한다', () => {
+  // DB의 name unique는 이걸 통과시킨다. 통과하면 매처에 같은 이름 둘이 생긴다.
+  assert.equal(nameReason(validateVarietyName('서농 22호', null, VARIETIES)), 'duplicate_name')
+})
+
+test('🔴 품종명: 다른 품종이 별칭으로 쓰는 이름은 거절한다 (efdbeb7 재발 방지)', () => {
+  // 「보리」는 찰보리의 별칭. 이 이름으로 품종을 만들면 매처가 name을 먼저 봐서
+  // 찰보리의 별칭이 그 순간 무력화된다.
+  const r = validateVarietyName('보리', null, VARIETIES)
+  assert.equal(nameReason(r), 'alias_taken')
+  assert.equal(r.ok, false)
+  if (!r.ok) assert.match(r.message, /찰보리/)
+})
+
+test('품종명: 자기 자신의 이름은 통과한다 — 곡종만 바꾸는 경우', () => {
+  const r = validateVarietyName('서농22호', 1, VARIETIES)
+  assert.equal(r.ok, true)
+})
+
+test('품종명: 자기 별칭과 같으면 거절한다', () => {
+  // 찰보리(id 5)를 「보리」로 개명 — 자기 별칭과 충돌
+  assert.equal(nameReason(validateVarietyName('보리', 5, VARIETIES)), 'own_alias')
+})
+
+test('품종명: 겹치지 않으면 통과하고 정규화된 표기를 돌려준다', () => {
+  const r = validateVarietyName('  새청무  ', null, VARIETIES)
+  assert.equal(r.ok, true)
+  if (r.ok) assert.equal(r.value, '새청무')
+})
+
+test('품종명: 기존 41종은 자기 id로 전부 통과한다 (개명 없이 곡종만 고치는 경우)', () => {
+  for (const v of VARIETIES) {
+    assert.equal(validateVarietyName(v.name, v.id, VARIETIES).ok, true, v.name)
   }
 })
