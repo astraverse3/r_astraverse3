@@ -10,6 +10,7 @@ const ADMIN_ROUTE_PERMISSIONS: Array<{ prefix: string; permission: string | null
     { prefix: "/admin/users", permission: null },
     { prefix: "/admin/notices", permission: "NOTICE_MANAGE" },
     { prefix: "/admin/logs", permission: null },
+    { prefix: "/admin/trace", permission: null }, // 덫: 임시 계측 화면(plan-네비게이션-덫.md)
     { prefix: "/admin/backup", permission: null },
     { prefix: "/admin/settings", permission: null },
 ]

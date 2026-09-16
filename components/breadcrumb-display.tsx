@@ -92,6 +92,7 @@ const PAGE_CONFIG: Record<string, BreadcrumbConfig> = {
     '/admin/users': { icon: Users, title: '사용자 관리' },
     '/admin/notices': { icon: Megaphone, title: '공지사항 관리' },
     '/admin/logs': { icon: History, title: '활동 로그' },
+    '/admin/trace': { icon: History, title: '네비게이션 덫' }, // 덫: 임시(plan-네비게이션-덫.md)
     '/admin/backup': { icon: Database, title: '시스템 백업' },
     '/admin/settings': { icon: Settings, title: '관리자 설정' },
 }

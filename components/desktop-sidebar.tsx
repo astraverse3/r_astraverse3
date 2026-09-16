@@ -229,6 +229,16 @@ export function DesktopSidebar() {
                                         >
                                             활동 로그
                                         </Link>
+                                        {/* 덫: 임시 계측 화면. 원인 확정 후 제거(plan-네비게이션-덫.md §7) */}
+                                        <Link
+                                            href="/admin/trace"
+                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/trace')
+                                                ? 'text-primary bg-blue-50'
+                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            네비게이션 덫
+                                        </Link>
                                         <Link
                                             href="/admin/backup"
                                             className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/backup')

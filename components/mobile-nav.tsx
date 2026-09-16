@@ -10,6 +10,7 @@ import {
     SalesIcon,
     StatsIcon,
 } from '@/components/icons/duotone';
+import { record, flushTrace } from '@/lib/nav-trace'; // 덫: 용의자 C (plan-네비게이션-덫.md)
 
 type IconComponent = React.ComponentType<{
     className?: string
@@ -79,6 +80,8 @@ export function MobileNav() {
     const blobVisible = activeHref !== '/';
 
     const handleNav = (href: string) => {
+        record('push', `용의자C 하단탭 클릭 → ${href}`);
+        flushTrace();
         setActiveHref(href);
         setBlobX(getTargetX(getActiveIndex(href)));
         router.push(href);

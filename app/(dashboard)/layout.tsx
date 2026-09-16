@@ -1,5 +1,6 @@
 import { MobileHeader } from "@/components/mobile-header"
 import { MobileNav } from "@/components/mobile-nav"
+import { NavTrace } from "@/components/nav-trace"
 import { DesktopSidebar } from "@/components/desktop-sidebar"
 import { BreadcrumbDisplay } from "@/components/breadcrumb-display"
 import { HeaderUserProfile } from "@/components/header/header-user-profile"
@@ -54,6 +55,9 @@ export default async function DashboardLayout({
 
                 {/* Mobile Bottom Navigation */}
                 <MobileNav />
+
+                {/* 네비게이션 덫 — UI 없음. 원인 확정 후 제거(plan-네비게이션-덫.md §7) */}
+                <NavTrace />
             </MillingCartProvider>
             </YieldRatesProvider>
         </>

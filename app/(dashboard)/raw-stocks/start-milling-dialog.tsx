@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { record, flushTrace } from '@/lib/nav-trace' // 덫: 용의자 B (plan-네비게이션-덫.md)
 import { triggerDataUpdate } from '@/components/last-updated'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 
@@ -90,6 +91,8 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
                 toast.success('작업이 수정되었습니다.')
                 clearCart()
             }
+            record('push', '용의자B 도정시작 제출 → /milling')
+            flushTrace()
             router.push('/milling')
             onOpenChange(false)
             onSuccess()

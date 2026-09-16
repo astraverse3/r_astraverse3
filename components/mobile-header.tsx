@@ -115,6 +115,15 @@ export function MobileHeader() {
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
+                                {/* 덫: 임시 계측 화면. 원인 확정 후 제거(plan-네비게이션-덫.md §7) */}
+                                {user?.role === 'ADMIN' && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/admin/trace" className="flex items-center gap-2 cursor-pointer">
+                                            <History className="w-4 h-4 text-amber-500" />
+                                            <span>네비게이션 덫</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                             </>
                         )}

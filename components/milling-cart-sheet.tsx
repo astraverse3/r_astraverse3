@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { updateMillingBatchStocks } from '@/app/actions/milling'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { record, flushTrace } from '@/lib/nav-trace' // 덫: 용의자 A (plan-네비게이션-덫.md)
 
 interface Props {
     onStartMilling: (stocks: any[]) => void
@@ -40,6 +41,8 @@ export function MillingCartSheet({ onStartMilling }: Props) {
 
         if (result.success) {
             clearCart() // This clears editingBatchId too
+            record('push', '용의자A 장바구니 수정 → /milling')
+            flushTrace()
             router.push('/milling') // Go back to milling log
         } else {
             toast.error(result.error || '수정 실패')
@@ -128,6 +131,7 @@ export function MillingCartSheet({ onStartMilling }: Props) {
                     <Button
                         className={`w-full h-11 text-base font-bold shadow-lg ${editingBatchId ? 'bg-amber-600 hover:bg-amber-700' : 'bg-primary hover:bg-primary/90'}`}
                         disabled={items.length === 0}
+                        data-trace="용의자A-장바구니-푸터버튼"
                         onClick={editingBatchId ? handleUpdate : handleStart}
                     >
                         {editingBatchId ? `${items.length}개 톤백 수정 완료` : `${items.length}개 톤백 도정 시작`}
