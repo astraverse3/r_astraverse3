@@ -21,6 +21,7 @@ interface Variety {
     id: number
     name: string
     type: string
+    aliases: string[]
 }
 
 interface VarietyListClientProps {
@@ -59,12 +60,13 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                 <Table className="table-fixed">
                     {canManage ? (
                         <colgroup>
-                            <col className="w-[6%]" /><col className="w-[8%]" /><col className="w-[38%]" />
-                            <col className="w-[34%]" /><col className="w-[14%]" />
+                            <col className="w-[6%]" /><col className="w-[7%]" /><col className="w-[26%]" />
+                            <col className="w-[27%]" /><col className="w-[20%]" /><col className="w-[14%]" />
                         </colgroup>
                     ) : (
                         <colgroup>
-                            <col className="w-[9%]" /><col className="w-[46%]" /><col className="w-[45%]" />
+                            <col className="w-[9%]" /><col className="w-[31%]" /><col className="w-[33%]" />
+                            <col className="w-[27%]" />
                         </colgroup>
                     )}
                     <TableHeader>
@@ -79,6 +81,7 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                             )}
                             <TableHead className="text-center">No</TableHead>
                             <TableHead>품종명</TableHead>
+                            <TableHead>별칭</TableHead>
                             <TableHead>곡종</TableHead>
                             {canManage && (
                                 <TableHead className="text-center">수정</TableHead>
@@ -95,7 +98,7 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                             />
                         ) : (
                             <TableRow>
-                                <TableHead colSpan={canManage ? 5 : 3} className="h-32 text-center text-slate-400 font-medium">
+                                <TableHead colSpan={canManage ? 6 : 4} className="h-32 text-center text-slate-400 font-medium">
                                     등록된 품종이 없습니다.
                                 </TableHead>
                             </TableRow>
@@ -120,6 +123,28 @@ export function VarietyListClient({ varieties, selectedIds, onSelectionChange }:
                 )}
             </div>
         </>
+    )
+}
+
+/**
+ * 별칭 칩 나열 (결정 Y) — 🔴 한눈에 보이는 게 이번 작업의 절반이다.
+ * 잘못 학습된 별칭은 목록에서 보여야 발견된다. 권한과 무관하게 모두에게 보인다.
+ */
+function AliasChips({ aliases, className }: { aliases: string[]; className?: string }) {
+    if (aliases.length === 0) {
+        return <span className="text-slate-300">—</span>
+    }
+    return (
+        <div className={className ?? 'flex flex-wrap gap-1'}>
+            {aliases.map(alias => (
+                <span
+                    key={alias}
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600"
+                >
+                    {alias}
+                </span>
+            ))}
+        </div>
     )
 }
 
@@ -187,19 +212,25 @@ function MobileVarietyGroups({ varieties, selectedIds, onSelectOne, canManage }:
                     {/* Items */}
                     <div className="divide-y divide-slate-100">
                         {group.items.map(variety => (
-                            <div key={variety.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50/50">
-                                <div className="flex items-center gap-3">
+                            <div key={variety.id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-slate-50/50">
+                                <div className="flex items-center gap-3 min-w-0">
                                     {canManage && (
                                         <Checkbox
                                             checked={selectedIds.has(variety.id)}
                                             onCheckedChange={(checked) => onSelectOne(variety.id, checked as boolean)}
-                                            className="h-4 w-4"
+                                            className="h-4 w-4 shrink-0"
                                         />
                                     )}
-                                    <span className="font-medium text-[13px] text-slate-700">{variety.name}</span>
+                                    {/* 별칭은 품종명 아래 줄로 — 옆에 붙이면 이름이 밀려 잘린다 */}
+                                    <div className="min-w-0">
+                                        <span className="font-medium text-[13px] text-slate-700">{variety.name}</span>
+                                        {variety.aliases.length > 0 && (
+                                            <AliasChips aliases={variety.aliases} className="flex flex-wrap gap-1 mt-1" />
+                                        )}
+                                    </div>
                                 </div>
                                 {canManage && (
-                                    <VarietyDialog mode="edit" variety={variety} />
+                                    <VarietyDialog mode="edit" variety={variety} varieties={varieties} />
                                 )}
                             </div>
                         ))}
@@ -240,6 +271,7 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
                     )}
                     <TableCell className="text-center font-mono tabular-nums text-slate-400">{index + 1}</TableCell>
                     <TableCell className="truncate font-semibold text-slate-900">{variety.name}</TableCell>
+                    <TableCell><AliasChips aliases={variety.aliases} /></TableCell>
                     <TableCell className="truncate text-slate-500">
                         {variety.type === 'URUCHI' ? '메벼'
                             : variety.type === 'GLUTINOUS' ? '찰벼'
@@ -251,7 +283,7 @@ function FlatVarietyRows({ varieties, selectedIds, onSelectOne, canManage }: {
                     </TableCell>
                     {canManage && (
                         <TableCell className="text-center">
-                            <VarietyDialog mode="edit" variety={variety} />
+                            <VarietyDialog mode="edit" variety={variety} varieties={varieties} />
                         </TableCell>
                     )}
                 </TableRow>

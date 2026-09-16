@@ -6,7 +6,7 @@ import { Suspense } from 'react'
 
 export default async function VarietyPage() {
     const result = await getVarieties()
-    const varieties = (result.success && result.data ? result.data : []) as { id: number; name: string; type: string }[]
+    const varieties = (result.success && result.data ? result.data : []) as { id: number; name: string; type: string; aliases: string[] }[]
 
     return (
         <Suspense fallback={<SectionLoader message="품종 목록을 불러오는 중" />}>

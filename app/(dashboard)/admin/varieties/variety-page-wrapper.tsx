@@ -9,6 +9,7 @@ interface Variety {
     id: number
     name: string
     type: string
+    aliases: string[]
 }
 
 interface VarietyPageWrapperProps {

@@ -5,11 +5,14 @@ import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { validateAliasList } from '@/lib/variety-alias'
 
 // --- VARIETY ACTIONS ---
 export type VarietyFormData = {
     name: string
     type: string
+    /** 발주서 품목명이 이 품종을 가리키는 다른 표기(결정 #22). 미전달이면 기존 값 유지. */
+    aliases?: string[]
 }
 
 // type='MISC_GRAIN' 또는 'PURCHASED'이면 category=MISC_GRAIN, 그 외(URUCHI/GLUTINOUS/INDICA/OTHER 등)는 RICE
@@ -89,17 +92,49 @@ export async function updateVariety(id: number, data: VarietyFormData) {
             return { success: false, error: '이미 존재하는 품종입니다.' }
         }
 
+        // 별칭(선택) — 화면에서 이미 검증했지만 서버에서 전수 재검증한다.
+        // 🔴 2026-09-16 이후 별칭을 만드는 경로가 이 화면 하나뿐이라, 여기서 안 막으면 아무도 안 막는다.
+        let aliases: string[] | undefined
+        let aliasesBefore: string[] | undefined
+        if (data.aliases) {
+            const all = await prisma.variety.findMany({
+                select: { id: true, name: true, aliases: true }
+            })
+            const target = all.find(v => v.id === id)
+            if (!target) {
+                return { success: false, error: '품종을 찾을 수 없습니다.' }
+            }
+            // 이름도 같이 바뀌는 중이므로 새 이름으로 검증한다(자기 자신은 id로 걸러진다)
+            const verdict = validateAliasList(data.aliases, { id, name, aliases: [] }, all)
+            if (!verdict.ok) {
+                return { success: false, error: `별칭 「${verdict.input}」 — ${verdict.message}` }
+            }
+            aliases = verdict.values
+            aliasesBefore = target.aliases
+        }
+
         const variety = await prisma.variety.update({
             where: { id },
-            data: { name, type: data.type, category: deriveVarietyCategory(data.type) }
+            data: {
+                name,
+                type: data.type,
+                category: deriveVarietyCategory(data.type),
+                ...(aliases ? { aliases } : {})
+            }
         })
+
+        const aliasChanged =
+            aliases !== undefined &&
+            JSON.stringify(aliases) !== JSON.stringify(aliasesBefore ?? [])
 
         await recordAuditLog({
             action: 'UPDATE',
             entity: 'Variety',
             entityId: id,
-            details: data,
-            description: `품종 정보 수정: ${name}`
+            details: aliasChanged ? { ...data, aliasesBefore } : data,
+            description: aliasChanged
+                ? `품종 정보 수정: ${name} (별칭 ${JSON.stringify(aliasesBefore ?? [])} → ${JSON.stringify(aliases)})`
+                : `품종 정보 수정: ${name}`
         })
 
         revalidatePath('/admin/varieties')

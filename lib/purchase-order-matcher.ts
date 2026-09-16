@@ -73,8 +73,9 @@ const MILLING_SUFFIXES = ['오분도미', '칠분도미', '백미', '현미']
 const NON_MILLING_TAILS = ['발아현미', '흑미']
 const MISC_MILLING_SENTINEL = '기타'
 
-/** 공백 전부 제거(품종명·포장지명 비교용 — 발주서 줄바꿈이 공백으로 남는 문제 흡수). */
-function stripSpaces(s: string): string {
+/** 공백 전부 제거(품종명·포장지명 비교용 — 발주서 줄바꿈이 공백으로 남는 문제 흡수).
+ *  별칭 관리 화면의 검증(`lib/variety-alias.ts`)도 같은 규칙이어야 하므로 export. */
+export function stripSpaces(s: string): string {
   return s.replace(/\s+/g, '')
 }
 

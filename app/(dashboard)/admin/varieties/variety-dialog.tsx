@@ -20,6 +20,8 @@ import { createVariety, updateVariety, deleteVariety, VarietyFormData } from '@/
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { AliasEditor } from './alias-editor'
+import type { AliasVariety } from '@/lib/variety-alias'
 
 interface Props {
     mode: 'create' | 'edit'
@@ -27,15 +29,30 @@ interface Props {
         id: number
         name: string
         type: string
+        aliases?: string[]
     }
+    /** 전체 품종 목록 — 별칭 충돌 검사용. 수정 모드에서만 쓴다 */
+    varieties?: AliasVariety[]
 }
 
-export function VarietyDialog({ mode, variety }: Props) {
+export function VarietyDialog({ mode, variety, varieties }: Props) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [name, setName] = useState(variety?.name || '')
     const [type, setType] = useState(variety?.type || 'URUCHI')
+    const [aliases, setAliases] = useState<string[]>(variety?.aliases ?? [])
     const [loading, setLoading] = useState(false)
+
+    // 🔴 열 때마다 현재 값으로 되돌린다. useState 초기값은 최초 마운트 때만 먹으므로,
+    //    저장 후 목록이 갱신돼도 다이얼로그 상태는 낡은 채 남는다(별칭은 배열 통째 저장이라 특히 위험).
+    const handleOpenChange = (next: boolean) => {
+        if (next) {
+            setName(variety?.name || '')
+            setType(variety?.type || 'URUCHI')
+            setAliases(variety?.aliases ?? [])
+        }
+        setOpen(next)
+    }
 
     // Ensure unique IDs for form inputs
     const nameId = `name-${variety?.id || 'new'}`
@@ -44,7 +61,7 @@ export function VarietyDialog({ mode, variety }: Props) {
         e.preventDefault()
         setLoading(true)
 
-        const data: VarietyFormData = { name, type }
+        const data: VarietyFormData = mode === 'edit' ? { name, type, aliases } : { name, type }
         let result
 
         if (mode === 'create') {
@@ -83,7 +100,7 @@ export function VarietyDialog({ mode, variety }: Props) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {mode === 'create' ? (
                     <Button size="sm" className="px-2.5 sm:px-4">
@@ -99,14 +116,15 @@ export function VarietyDialog({ mode, variety }: Props) {
                     </button>
                 )}
             </DialogTrigger>
-            <DialogContent>
+            {/* 🔴 flex flex-col — 기본 grid는 내용이 길어지면 푸터가 잘린다 */}
+            <DialogContent className="flex flex-col max-h-[88vh]">
                 <DialogHeader>
                     <DialogTitle>{mode === 'create' ? '품종 등록' : '품종 수정'}</DialogTitle>
                     <DialogDescription>
                         {mode === 'create' ? '새로운 품종을 등록합니다.' : '등록된 품종 정보를 수정합니다.'}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4 py-4 min-h-0 overflow-y-auto">
                     <div className="space-y-2">
                         <Label htmlFor={nameId}>품종명</Label>
                         <Input
@@ -199,6 +217,16 @@ export function VarietyDialog({ mode, variety }: Props) {
                             </label>
                         </div>
                     </div>
+                    {mode === 'edit' && variety && varieties && (
+                        <div className="pt-2 border-t border-slate-100">
+                            <AliasEditor
+                                aliases={aliases}
+                                onChange={setAliases}
+                                target={{ id: variety.id, name }}
+                                varieties={varieties}
+                            />
+                        </div>
+                    )}
                     <div className="flex items-center justify-between w-full pt-4 border-t border-slate-100 mt-2">
                         {mode === 'edit' ? (
                             <Button
