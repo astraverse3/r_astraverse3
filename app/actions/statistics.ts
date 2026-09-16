@@ -503,9 +503,20 @@ export async function getMillingStatsByMillingType(params: {
 
 // ── 필터 옵션 ───────────────────────────────────────────
 
+/**
+ * 수율·도정 통계의 품종 필터 목록.
+ *
+ * 🔴 `category='RICE'`만 — 도정 통계는 **벼**의 것이다. 전 품종을 내보내면 잡곡 17종·매입 2종이
+ *    필터에 뜨는데, 이들은 도정 배치가 없어 **골라도 결과가 늘 빈다**(2026-09-16 사용자 지적).
+ *    ⚠️ 인디카는 빼면 안 된다 — 도정구분이 아니라 `Variety.type`이고 수율 기준값이 61.3%로
+ *    따로 잡혀 있는 독립 축이다(`getYieldLevel`). 실적 1위 CJ6이 인디카다.
+ */
 export async function getVarietyOptions(): Promise<string[]> {
   await requireSession()
-  const varieties = await prisma.variety.findMany({ orderBy: { name: 'asc' } })
+  const varieties = await prisma.variety.findMany({
+    where: { category: 'RICE' },
+    orderBy: { name: 'asc' },
+  })
   return varieties.map(v => v.name)
 }
 
