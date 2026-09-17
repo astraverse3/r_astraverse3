@@ -87,12 +87,32 @@ function tidy(s: string): string {
 // ------------------------------------------------------
 // ① 정규화 — 접두 제거 + 도정 접미 분리
 // ------------------------------------------------------
+/**
+ * 브랜드·인증 접두 제거.
+ *
+ * 🔴 **더 못 뗄 때까지 반복한다.** 한 번만 떼면 접두가 겹친 이름이 통째로 품종토큰이 된다 —
+ * 「유기농 프로틴 라이스 IPS」가 `유기농`만 떨어져 「프로틴 라이스 IPS」로 남고 품종 해석에
+ * 실패했다(2026-09-17 실측, #15 택배 1라인). `자스민 라이스`도 같은 구멍이었다.
+ * 접두는 3종뿐이고 매번 짧아지므로 반복 비용·종료 모두 문제없다.
+ *
+ * 🔴 **괄호 접미(`(친환경)`·`(일반)`)는 떼지 않는다.** 그건 꾸밈말이 아니라 **매입 잡곡의
+ * 명칭 체계**이자 품종명의 일부다(결정 ㉮, `plan-발주서판매처리-D4.md`). 품종 마스터에
+ * 「율무」와 「율무(친환경)」이 별개로 있고 SKU는 친환경 쪽에만 붙어 있다 — 떼는 순간
+ * 「율무 (친환경)」이 율무로 붙어 **다른 품종의 재고를 조용히 차감**한다.
+ */
 function stripBrandPrefix(name: string): string {
-  for (const p of BRAND_PREFIXES) {
-    if (name === p) return ''
-    if (name.startsWith(p + ' ')) return name.slice(p.length).trim()
+  let out = name
+  for (;;) {
+    const before = out
+    for (const p of BRAND_PREFIXES) {
+      if (out === p) return ''
+      if (out.startsWith(p + ' ')) {
+        out = out.slice(p.length).trim()
+        break
+      }
+    }
+    if (out === before) return out
   }
-  return name
 }
 
 function splitMillingSuffix(token: string): {

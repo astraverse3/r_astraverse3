@@ -230,3 +230,52 @@ test('hasMillingToken: 위탁가공 별도품종은 도정 단어가 아니다 (
   assert.equal(hasMillingToken('가바 발아현미'), false)
   assert.equal(hasMillingToken('가바흑미'), false)
 })
+
+// ------------------------------------------------------
+// 접두 제거 — 겹친 접두 (2026-09-17 D4 실측)
+// ------------------------------------------------------
+
+test('normalizeItemName: 겹친 브랜드 접두를 끝까지 뗀다', () => {
+  // 🔴 한 번만 떼면 「프로틴 라이스 IPS」가 통째로 품종토큰이 돼 품종 해석에 실패했다
+  assert.deepEqual(normalizeItemName('유기농 프로틴 라이스 IPS'), {
+    varietyToken: 'IPS',
+    millingType: null,
+  })
+  // 자스민 라이스도 같은 구멍이었다(발주서 실데이터엔 아직 없다)
+  assert.deepEqual(normalizeItemName('유기농 자스민 라이스 하이아미'), {
+    varietyToken: '하이아미',
+    millingType: null,
+  })
+})
+
+test('normalizeItemName: 접두 1개·0개는 그대로 (회귀)', () => {
+  assert.deepEqual(normalizeItemName('유기농 천지향5세'), {
+    varietyToken: '천지향5세',
+    millingType: null,
+  })
+  assert.deepEqual(normalizeItemName('프로틴 라이스 IPS'), {
+    varietyToken: 'IPS',
+    millingType: null,
+  })
+  assert.deepEqual(normalizeItemName('천지향5세'), {
+    varietyToken: '천지향5세',
+    millingType: null,
+  })
+})
+
+test('normalizeItemName: 접두만 있으면 빈 토큰', () => {
+  assert.equal(normalizeItemName('유기농').varietyToken, '')
+  assert.equal(normalizeItemName('유기농 프로틴 라이스').varietyToken, '')
+})
+
+test('normalizeItemName: 괄호 접미는 품종명의 일부라 떼지 않는다 (결정 ㉮)', () => {
+  // 🔴 떼면 「율무 (친환경)」이 율무로 붙어 다른 품종의 재고를 차감한다
+  assert.deepEqual(normalizeItemName('율무 (친환경)'), {
+    varietyToken: '율무 (친환경)',
+    millingType: null,
+  })
+  assert.deepEqual(normalizeItemName('유기농 녹두 (친환경)'), {
+    varietyToken: '녹두 (친환경)',
+    millingType: null,
+  })
+})
