@@ -42,8 +42,8 @@ const varieties: MatcherVariety[] = [
   V(36, '차조', 'MISC_GRAIN'),
   V(34, '수수', 'MISC_GRAIN'),
   V(43, '팥', 'MISC_GRAIN'),
-  V(7, 'IPS', 'RICE'),
-  V(6, 'CJ6', 'RICE'),
+  V(7, 'IPS', 'RICE', ['프로틴 라이스']), // 2026-09-17 등록 — 브랜드명이 곧 별칭
+  V(6, 'CJ6', 'RICE', ['자스민 라이스']),
   V(20, '서농24호', 'RICE'), // 함정: 흑미 계통이나 별개 품종, alias 없음(가바흑미와 무관 §6.2)
 ]
 
@@ -263,9 +263,12 @@ test('normalizeItemName: 접두 1개·0개는 그대로 (회귀)', () => {
   })
 })
 
-test('normalizeItemName: 접두만 있으면 빈 토큰', () => {
-  assert.equal(normalizeItemName('유기농').varietyToken, '')
-  assert.equal(normalizeItemName('유기농 프로틴 라이스').varietyToken, '')
+test('normalizeItemName: 접두만 남으면 떼지 않는다 — 브랜드명이 곧 품종 별칭일 수 있다', () => {
+  // 🔴 빈 문자열로 만들면 별칭(프로틴 라이스=IPS · 자스민 라이스=CJ6)을 볼 기회가 사라진다
+  assert.equal(normalizeItemName('유기농 프로틴 라이스').varietyToken, '프로틴 라이스')
+  assert.equal(normalizeItemName('프로틴 라이스').varietyToken, '프로틴 라이스')
+  assert.equal(normalizeItemName('유기농 자스민 라이스').varietyToken, '자스민 라이스')
+  assert.equal(normalizeItemName('유기농').varietyToken, '유기농')
 })
 
 test('normalizeItemName: 괄호 접미는 품종명의 일부라 떼지 않는다 (결정 ㉮)', () => {
@@ -278,4 +281,37 @@ test('normalizeItemName: 괄호 접미는 품종명의 일부라 떼지 않는�
     varietyToken: '녹두 (친환경)',
     millingType: null,
   })
+})
+
+test('별칭: 품종명 없이 브랜드만 와도 품종에 붙는다 (프로틴 라이스 → IPS)', () => {
+  // 🔴 접두 제거가 브랜드를 통째로 먹으면 빈 토큰이 돼 별칭을 볼 기회가 사라진다.
+  //    IPS·CJ6 픽스처엔 SKU가 없으므로 여기서는 **품종 해석까지**만 단언한다.
+  for (const raw of ['유기농 프로틴 라이스', '프로틴 라이스']) {
+    const r = matchPurchaseOrderItem(
+      { rawItemName: raw, packageType: '1kg', rawPackaging: null },
+      varieties,
+      productTypes,
+    )
+    assert.equal(r.varietyId, 7, `「${raw}」는 IPS로 해석돼야 한다`)
+  }
+  const cj = matchPurchaseOrderItem(
+    { rawItemName: '유기농 자스민 라이스', packageType: '1kg', rawPackaging: null },
+    varieties,
+    productTypes,
+  )
+  assert.equal(cj.varietyId, 6)
+})
+
+test('별칭: 브랜드 + 품종 조합은 정규화가 처리한다 (별칭에 안 기댄다)', () => {
+  // 접두가 다 떨어져 토큰이 `IPS` → 품종명 정확일치. 별칭은 쓰이지 않는다.
+  assert.deepEqual(normalizeItemName('유기농 프로틴 라이스 IPS'), {
+    varietyToken: 'IPS',
+    millingType: null,
+  })
+  const r = matchPurchaseOrderItem(
+    { rawItemName: '유기농 프로틴 라이스 IPS', packageType: '10kg', rawPackaging: null },
+    varieties,
+    productTypes,
+  )
+  assert.equal(r.varietyId, 7)
 })
