@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Clock, Plus, Truck } from 'lucide-react'
+import { Check, Clock, Pencil, Plus, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -38,7 +38,11 @@ export function LoadingCell({
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <button type="button" className="text-left min-w-0" onClick={(e) => e.stopPropagation()}>
+                <button
+                    type="button"
+                    className="group text-left min-w-0 cursor-pointer rounded-md transition-colors hover:bg-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <LoadingLabel display={display} />
                 </button>
             </PopoverTrigger>
@@ -66,21 +70,23 @@ function LoadingLabel({ display }: { display: LoadingDisplay }) {
     }
     if (display.tone === 'done') {
         return (
-            <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-slate-400">
+            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 text-[12px] font-medium text-slate-400">
                 <Check className="w-3 h-3 shrink-0" />
                 {display.label}
+                <EditHint />
             </span>
         )
     }
     // 오늘 나가는 건은 눈에 먼저 들어와야 한다
     if (display.tone === 'today') {
         return (
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-600 text-white text-[11.5px] font-bold">
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-600 text-white text-[11.5px] font-bold transition-colors group-hover:bg-red-700">
                 <Clock className="w-3 h-3 shrink-0" />
                 <span className="truncate">
                     {display.label}
                     {display.vendorName && ` · ${display.vendorName}`}
                 </span>
+                <EditHint tone="today" />
             </span>
         )
     }
@@ -91,6 +97,7 @@ function LoadingLabel({ display }: { display: LoadingDisplay }) {
                 {display.label}
                 {display.vendorName && ` · ${display.vendorName}`}
             </span>
+            <EditHint />
         </span>
     )
 }
@@ -204,6 +211,21 @@ function LoadingForm({
                 </Button>
             </div>
         </div>
+    )
+}
+
+/**
+ * 「이 값은 고칠 수 있다」는 표시. 상차 조건은 보내기 전까지 바뀌므로 채운 뒤에도 계속 눌러야 한다.
+ * 🔴 **호버에만 걸지 않는다** — 이 셀은 모바일 묶음 목록에서도 같은 컴포넌트를 쓴다(upload-table.tsx).
+ *    호버가 없는 기기에서는 연한 연필이 유일한 단서다. 호버는 그 위에 얹는 강조일 뿐이다.
+ */
+function EditHint({ tone }: { tone?: 'today' }) {
+    return (
+        <Pencil
+            className={`w-2.5 h-2.5 shrink-0 transition-colors ${
+                tone === 'today' ? 'text-white/60 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-500'
+            }`}
+        />
     )
 }
 
