@@ -15,7 +15,10 @@ import type { UploadSummaryRow } from '@/app/actions/purchase-order'
 import type { ShippingVendorOption } from '@/app/actions/purchase-order-upload'
 import type { PurchaseChannel } from '@prisma/client'
 
-const GRID = 'grid grid-cols-[92px_minmax(0,1fr)_56px_44px] sm:grid-cols-[104px_minmax(0,1fr)_176px_60px_180px_72px_100px_40px] items-center gap-2 px-3'
+// 남는 폭은 시트명과 진행이 나눠 갖는다 — 시트명 혼자 1fr을 먹으면 상차까지 빈 구간이 뜨고,
+// 진행은 배지가 3개(완료·부분·대기)라 180px 고정이면 줄바꿈이 난다.
+// 상차는 「9/19(금) 오전 · 대한통운」이 들어갈 만큼만 고정한다.
+const GRID = 'grid grid-cols-[92px_minmax(0,1fr)_56px_44px] sm:grid-cols-[100px_minmax(0,0.9fr)_184px_64px_minmax(184px,1.1fr)_76px_96px_40px] items-center gap-2 px-3'
 
 export function UploadTable({
     rows,
@@ -54,7 +57,7 @@ export function UploadTable({
                         상차
                         <ChevronUp className="w-3 h-3" strokeWidth={2.6} />
                     </div>
-                    <div className="text-right">수령인</div>
+                    <div className="text-right pr-3">수령인</div>
                     <div className="hidden sm:block">진행</div>
                     <div className="hidden sm:block">매칭실패</div>
                     <div className="hidden sm:block">업로드</div>
@@ -100,7 +103,7 @@ export function UploadTable({
                                     vendors={vendors}
                                 />
                             </div>
-                            <div className="text-right text-[13px] text-slate-700">{r.orderCount}</div>
+                            <div className="text-right pr-3 text-[13px] text-slate-700">{r.orderCount}</div>
                             <div className="hidden sm:flex items-center gap-1 flex-wrap">
                                 <ProgressBadges row={r} />
                             </div>
