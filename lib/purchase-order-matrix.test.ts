@@ -406,6 +406,12 @@ test('groupTitleOf: 백미는 적지 않는다', () => {
   assert.equal(groupTitleOf('천지향1세', '백미', 'URUCHI'), '천지향1세')
 })
 
+test('groupTitleOf: 잡곡 sentinel「기타」도 적지 않는다', () => {
+  // 잡곡은 millingType이 '기타' sentinel — 도정 개념 자체가 없으므로 머리글에 남기지 않는다
+  assert.equal(groupTitleOf('차조', '기타', null), '차조')
+  assert.equal(groupTitleOf('녹두(친환경)', '기타', 'PURCHASED'), '녹두(친환경)')
+})
+
 test('groupTitleOf: 백미가 아니면 붙여 적는다', () => {
   assert.equal(groupTitleOf('서농22호', '현미', 'URUCHI'), '서농22호 · 현미')
 })

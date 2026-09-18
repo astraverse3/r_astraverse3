@@ -202,13 +202,20 @@ export function unitWeightOf(packageType: string, unitWeightKg: number | null): 
 }
 
 /**
+ * 머리글에서 생략하는 도정값 — 붙여 봐야 구분에 보탬이 안 되는 둘.
+ *   `백미` : 대부분이 백미라 전부 붙이면 글자만 늘고 구분이 안 된다
+ *   `기타` : 잡곡 sentinel(`MISC_MILLING_SENTINEL`)이라 **도정 개념 자체가 없다**
+ */
+const HIDDEN_MILLING = new Set(['백미', '기타'])
+
+/**
  * 품목 머리글 — `천지향1세`, 도정이 백미가 아니면 `서농22호 · 현미`.
- * 🔴 **백미는 적지 않는다.** 대부분이 백미라 전부 붙이면 글자만 늘고 구분이 안 된다.
+ * 🔴 **백미·기타는 적지 않는다**(사유는 `HIDDEN_MILLING`).
  * 찰벼는 저장값이 `백미`여도 `찹쌀`로 보여야 하므로 `getDisplayMillingType`을 먼저 통과시킨다.
  */
 export function groupTitleOf(varietyName: string, millingType: string, varietyType: string | null): string {
   const shown = getDisplayMillingType(millingType, varietyType)
-  return shown && shown !== '백미' ? `${varietyName} · ${shown}` : varietyName
+  return shown && !HIDDEN_MILLING.has(shown) ? `${varietyName} · ${shown}` : varietyName
 }
 
 /** 품목 그룹 식별자 — 같은 품종·도정·포장지면 한 그룹으로 묶인다. */
