@@ -131,7 +131,9 @@ export function OrderListMobile({
     }, [rows])
 
     return (
-        <div className="flex flex-col">
+        // 🔴 배경을 안 주면 대시보드 페이지 배경(회색)이 그대로 비친다 — 시안은 흰 면 위의 목록이다.
+        // min-h-full은 건이 적어 목록이 짧을 때 아래쪽만 회색으로 남는 것을 막는다.
+        <div className="flex min-h-full flex-col bg-card">
             {/* 헤더 — 채널 · 파일명 · 업로드 · 건수 */}
             <div className="flex flex-col gap-2.5 px-3 pt-1 pb-3">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
