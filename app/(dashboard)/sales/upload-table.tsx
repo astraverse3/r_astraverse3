@@ -5,7 +5,7 @@
 // 시트명 클릭 → 매트릭스(D2b). 🔴 행 전체를 링크로 감싸지 않는다 — 같은 행의
 // ⋮ 메뉴와 상차 편집 셀이 클릭을 삼킨다.
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Package, MessageSquareText, ChevronUp } from 'lucide-react'
 import { CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
 import Link from 'next/link'
@@ -31,12 +31,35 @@ export function UploadTable({
     const filtered = channel === 'ALL' ? rows : rows.filter((r) => r.channel === channel)
     const usedChannels = PURCHASE_CHANNELS.filter((c) => rows.some((r) => r.channel === c))
 
+    // 칩 줄 오른쪽 페이드 — 「더 있다」 단서. 끝에 닿으면 떼야 마지막 칩이 흐린 채로 남지 않는다.
+    // 🔴 데스크탑은 wrap이라 넘침이 없어 hasMore가 저절로 false가 된다(별도 분기 불필요)
+    const chipsRef = useRef<HTMLDivElement>(null)
+    const [chipsOverflow, setChipsOverflow] = useState(false)
+    const syncChipsOverflow = useCallback(() => {
+        const el = chipsRef.current
+        if (!el) return
+        setChipsOverflow(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+    }, [])
+    useEffect(() => {
+        syncChipsOverflow()
+        window.addEventListener('resize', syncChipsOverflow)
+        return () => window.removeEventListener('resize', syncChipsOverflow)
+    }, [syncChipsOverflow, usedChannels.length])
+
     return (
         <div className="flex flex-col gap-3">
             {usedChannels.length > 1 && (
                 /* 모바일은 1줄 가로 스크롤 — 채널이 다 차면 칩 6개라 390px에서 반드시 2줄이 된다.
-                   데스크탑은 종전대로 wrap */
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap sm:overflow-visible">
+                   데스크탑은 종전대로 wrap.
+                   -mx-3 px-3은 부모(px-3)의 패딩 밖으로 빼 화면 끝까지 스크롤되게 한다 —
+                   패딩 안에 갇히면 칩이 여백에서 깔끔하게 끊겨 「더 있다」가 안 보인다 */
+                <div
+                    ref={chipsRef}
+                    onScroll={syncChipsOverflow}
+                    className={`flex items-center gap-1.5 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible ${
+                        chipsOverflow ? 'mask-fade-r' : ''
+                    }`}
+                >
                     <Chip active={channel === 'ALL'} onClick={() => setChannel('ALL')}>
                         전체 {rows.length}
                     </Chip>

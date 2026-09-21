@@ -198,3 +198,12 @@ input[type="number"] {
     display: none;
   }
 }
+
+/* 가로 스크롤 줄의 「오른쪽에 더 있다」 단서 — 끝을 흐리게 깎는다.
+   🔴 잘린 칩에만 기대면 안 된다: 칩 폭과 컨테이너 폭이 우연히 맞아떨어지면
+   여백에서 깔끔하게 끊겨 단서가 통째로 사라진다(실측 2026-09-21).
+   스크롤이 끝에 닿으면 클래스를 떼는 쪽이 호출부 책임이다. */
+@utility mask-fade-r {
+  mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+}
