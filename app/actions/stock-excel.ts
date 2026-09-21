@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
 import { generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
-import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
 
 import { GetStocksParams } from './stock'
@@ -128,7 +128,9 @@ export async function exportStocks(params?: GetStocksParams) {
 
 // --- IMPORT LOGIC ---
 export async function importStocks(formData: FormData, options: { dryRun?: boolean } = {}): Promise<ExcelImportResult> {
-    await requireAdmin()
+    // 버튼 노출 조건(stock-excel-buttons.tsx)·수동 등록(createStock)·생산자 엑셀(importFarmers)과 같은 권한.
+    // 이 한 곳만 requireAdmin이라 ADMIN 1명 외에는 "버튼은 보이는데 항상 실패"했다 (2026-09-21)
+    await requirePermission('SUPPLY_MANAGE')
     const dryRun = options.dryRun || false
     const result: ExcelImportResult = {
         success: false,

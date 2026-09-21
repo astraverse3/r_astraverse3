@@ -1,7 +1,7 @@
 # 권한 매트릭스 (Permission Matrix)
 
 > **단일 진실 원천**: 권한 변경/추가/제거 시 **이 문서를 먼저** 갱신한 뒤 코드 수정.
-> **마지막 갱신**: 2026-06-22 (권한 단순화 — 비즈니스 5→2개 통합 + USER/SYSTEM의 ADMIN 흡수)
+> **마지막 갱신**: 2026-09-21 (원물 엑셀 업로드 `importStocks` ADMIN → `SUPPLY_MANAGE`)
 > **관련 코드**: [lib/permissions.ts](../lib/permissions.ts), [lib/auth-guard.ts](../lib/auth-guard.ts), [middleware.ts](../middleware.ts)
 > **관련 계획서**: [docs/plan/plan-권한단순화.md](plan/plan-권한단순화.md)
 
@@ -97,6 +97,7 @@
 | `app/actions/admin.ts` | `createVariety`, `updateVariety`, `deleteVariety`, `deleteVarieties` (구 VARIETY_MANAGE) |
 | `app/actions/admin.ts` | `createFarmer`, `updateFarmer`, `deleteFarmer`, `deleteFarmers`, `createFarmerWithGroup`, `createProducerGroup`, `updateProducerGroup` (구 FARMER_MANAGE) |
 | `app/actions/excel.ts` | `importFarmers` (구 FARMER_MANAGE) |
+| `app/actions/stock-excel.ts` | `importStocks` (2026-09-21 ADMIN→SUPPLY_MANAGE) · `exportStocks`는 `requireSession` |
 
 ### 가공·판매 (`OPERATION_MANAGE`)
 | 파일 | 함수 |
@@ -114,7 +115,6 @@
 | `app/actions/backup.ts` | `getBackups`, `createBackup`, `restoreBackup` |
 | `app/actions/user.ts` | 모든 함수 (`updateUserPermissions` 등) |
 | `app/actions/settings.ts` | `saveYieldRates` |
-| `app/actions/stock-excel.ts` | `importStocks` |
 
 ### 인라인 체크 (특이 케이스)
 - `app/actions/notice.ts` — `createNotice`/`updateNotice`/`deleteNotice` 내부에서 `role !== 'ADMIN' && !permissions?.includes('NOTICE_MANAGE')` 직접 체크. 동작 동일하지만 패턴 비일관 — 별도 PR로 통일 검토.
@@ -135,6 +135,15 @@
 - **세션 JWT 캐싱**: 기존 로그인 사용자는 토큰에 옛 permissions가 남음 → **재로그인 시 갱신**.
 
 ## 변경 이력
+
+### 2026-09-21 — 원물 엑셀 업로드 `importStocks` ADMIN → `SUPPLY_MANAGE`
+- 증상: 원물 엑셀 등록 버튼을 눌러도 "파일 분석 중 오류가 발생했습니다"만 뜨고 미리보기 요약조차 안 나옴. 특정 PC 문제로 보였으나 **계정 권한 문제**였다
+- 원인: 버튼 노출 조건은 `SUPPLY_MANAGE`(`stock-excel-buttons.tsx`)인데 서버 가드만 `requireAdmin()`. 실 DB에 ADMIN은 1명뿐이라 **나머지 전원이 "버튼은 보이는데 항상 실패"**
+- 같은 데이터를 다루는 `createStock`·`importFarmers`가 이미 `SUPPLY_MANAGE`였다 — **엑셀 import 한 곳만 빠져 있던 것**
+- 에러가 뭉개진 이유: `requireAdmin()`이 `try` 블록 **밖**이라 `ForbiddenError`가 `ExcelImportResult`에 안 담기고 그대로 reject → 클라이언트가 generic 메시지만 표시. 실패 지점이 dry-run이라 요약도 안 뜬다
+- 📌 교훈: **UI 노출 조건과 서버 가드는 한 쌍이다.** 어긋나면 "보이는데 안 되는" 기능이 되고, 사용자에겐 PC 고장처럼 보인다
+- 재로그인 불필요(세션에 이미 `SUPPLY_MANAGE` 보유 — 버튼이 보였다는 게 그 증거)
+- 계획서: [plan-26년산전환.md](plan/plan-26년산전환.md)
 
 ### 2026-06-22 — 권한 단순화 (비즈니스 5→2 + USER/SYSTEM ADMIN 흡수)
 - 실 사용자 권한 데이터 진단(MILLING↔SALES 100% 동행, STOCK↔마스터 동행, USER/SYSTEM 개별 보유자 0) → 2분할 확정
