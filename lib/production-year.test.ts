@@ -9,14 +9,14 @@ const at = (year: number, month: number) => new Date(year, month - 1, 15, 12)
 // 검색 (복수)
 // ------------------------------------------------------
 
-test('벼: 수확 전(1~9월)은 전년 한 해만', () => {
-    for (const m of [1, 3, 6, 9]) {
+test('벼: 수확 전(1~8월)은 전년 한 해만', () => {
+    for (const m of [1, 3, 6, 8]) {
         assert.deepEqual(defaultProductionYears('RICE', at(2026, m)), ['2025'], `${m}월`)
     }
 })
 
-test('벼: 수확기(10~12월)는 올해와 전년을 함께', () => {
-    for (const m of [10, 11, 12]) {
+test('벼: 수확기(9~12월)는 올해와 전년을 함께', () => {
+    for (const m of [9, 10, 11, 12]) {
         assert.deepEqual(defaultProductionYears('RICE', at(2026, m)), ['2026', '2025'], `${m}월`)
     }
 })
@@ -52,8 +52,9 @@ test('최신 연도가 앞에 온다', () => {
 // 등록 폼 (단일)
 // ------------------------------------------------------
 
-test('벼 등록: 11월부터 당해년도', () => {
-    assert.equal(defaultProductionYear('RICE', at(2026, 10)), 2025)
+test('벼 등록: 9월부터 당해년도', () => {
+    assert.equal(defaultProductionYear('RICE', at(2026, 8)), 2025)
+    assert.equal(defaultProductionYear('RICE', at(2026, 9)), 2026)
     assert.equal(defaultProductionYear('RICE', at(2026, 11)), 2026)
     assert.equal(defaultProductionYear('RICE', at(2026, 12)), 2026)
 })
@@ -63,8 +64,17 @@ test('잡곡 등록: 6월부터 당해년도', () => {
     assert.equal(defaultProductionYear('MISC_GRAIN', at(2026, 6)), 2026)
 })
 
-test('벼 검색은 10월에 올해를 포함하지만, 벼 등록은 아직 전년을 찍는다', () => {
-    // 10월엔 수확분이 들어오기 시작만 해 검색 범위는 넓히되, 등록 기본값까지 옮기진 않는다
-    assert.ok(defaultProductionYears('RICE', at(2026, 10)).includes('2026'))
-    assert.equal(defaultProductionYear('RICE', at(2026, 10)), 2025)
+// 구 테스트 `벼 검색은 10월에 올해를 포함하지만, 벼 등록은 아직 전년을 찍는다`는 삭제했다.
+// 2026-09-21에 두 경계를 9월로 맞추면서 **주장 자체가 폐기**됐다(값 수정으로 살릴 수 없다).
+test('벼: 검색이 올해를 보기 시작하는 달과 등록이 올해를 찍는 달이 같다', () => {
+    for (let m = 1; m <= 12; m++) {
+        const searchHasThisYear = defaultProductionYears('RICE', at(2026, m)).includes('2026')
+        const formPicksThisYear = defaultProductionYear('RICE', at(2026, m)) === 2026
+        assert.equal(searchHasThisYear, formPicksThisYear, `${m}월`)
+    }
+})
+
+test('벼: 26년산 첫 입고(2026-09-15)가 기본 검색에 걸린다', () => {
+    // 이 회귀가 실제 사고였다 — DB에 26년산이 있는데 기본 필터가 ['2025']라 목록에서 안 보였다
+    assert.ok(defaultProductionYears('RICE', new Date(2026, 8, 15, 12)).includes('2026'))
 })
