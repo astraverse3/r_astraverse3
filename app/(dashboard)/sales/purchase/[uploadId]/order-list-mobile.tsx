@@ -78,7 +78,12 @@ export function OrderListMobile({
     unmatchedLines: number
     rematching: boolean
     onRematch: () => void
-    onOpenDetail: (row: MatrixRow) => void
+    /**
+     * 건 상세 열기. 🔴 두 번째 인자로 **지금 화면에 보이는 순서**를 같이 넘긴다 —
+     * 건상세의 「다음 건 ›」이 따라갈 형제 목록이다. 필터(`onlyWork`)가 여기 로컬 상태라
+     * 부모의 `rows`와 다르고, 부모가 대신 만들 수 없다(§4.2).
+     */
+    onOpenDetail: (row: MatrixRow, siblings: number[]) => void
     onOpenGate: (orderIds: number[]) => void
 }) {
     /** 기본은 「작업 필요」 — 다 끝난 건을 먼저 보여 줄 이유가 없다(§3.2) */
@@ -107,6 +112,13 @@ export function OrderListMobile({
 
     /** 헤더를 그릴 가치가 있는가 — 그룹이 하나뿐이면 행 수만큼 같은 이름이 반복될 뿐이다 */
     const showGroupHeader = groups.length > 1
+
+    /**
+     * 건상세 「다음 건 ›」이 따라갈 순서 — **그룹으로 묶은 뒤의 순서**다.
+     * 🔴 `shown`을 그대로 쓰면 안 된다. 발주처별 정렬일 때 그룹을 건수순으로 다시 세우므로
+     * 화면에 보이는 차례와 어긋난다 — 사용자는 위에서 아래로 넘긴다고 믿는다.
+     */
+    const shownIds = useMemo(() => groups.flatMap(([, list]) => list.map((r) => r.orderId)), [groups])
 
     const workRows = useMemo(() => rows.filter((r) => r.needsWork), [rows])
     const workIds = useMemo(() => workRows.map((r) => r.orderId), [workRows])
@@ -210,7 +222,12 @@ export function OrderListMobile({
                             </div>
                         )}
                         {list.map((row) => (
-                            <OrderRow key={row.orderId} row={row} decl={decl} onOpen={() => onOpenDetail(row)} />
+                            <OrderRow
+                                key={row.orderId}
+                                row={row}
+                                decl={decl}
+                                onOpen={() => onOpenDetail(row, shownIds)}
+                            />
                         ))}
                     </div>
                 ))}

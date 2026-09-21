@@ -68,6 +68,13 @@ import { ReviewGateDialog } from './review-gate-dialog'
  */
 const fixedW = (w: number) => ({ width: w, minWidth: w, maxWidth: w })
 
+/**
+ * 매트릭스 셀을 DOM에서 찾는 선택자.
+ * 🔴 매칭실패 열 키는 **엑셀 원본 문자열**(`raw:품목명|규격|포장지`)이라 따옴표·역슬래시가
+ *    들어올 수 있다. 속성 선택자 값에서 그 둘만 이스케이프하면 된다.
+ */
+const cellSelector = (key: string) => `[data-cell="${key.replace(/["\\]/g, '\\$&')}"]`
+
 // 행 일괄선택 체크박스 칸 (D3). 맨 왼쪽이라 뒤 칸들의 left가 전부 이만큼 밀린다.
 const W_CHECK = 34
 // 204 = 실측이 원한 폭(201)에 여유 3px. 좁히면 잘림만 늘고, 넓히면 표가 그만큼 밀린다.
@@ -143,7 +150,19 @@ export function MatrixClient({
     const decl = CHANNEL_DECL[header.channel as PurchaseChannel]
 
     const [active, setActive] = useState<ActiveCell | null>(null)
-    const [detail, setDetail] = useState<{ orderId: number; head: string; tail: string | null } | null>(null)
+    /**
+     * 열린 건 상세. `siblings`는 **열 때 찍은 스냅샷**이다 — 「다음 건 ›」이 따라갈 순서.
+     *
+     * 🔴 살아 있는 목록(`rows`·모바일 `shown`)을 매번 다시 읽으면 안 된다. 모바일 목록의 기본
+     * 필터가 「작업 필요」라 이 건을 차감하는 순간 목록에서 빠지고 뒤 건이 한 칸 당겨진다 —
+     * 그 상태로 다음을 고르면 **바로 다음 건을 건너뛴다**.
+     */
+    const [detail, setDetail] = useState<{
+        orderId: number
+        head: string
+        tail: string | null
+        siblings: number[]
+    } | null>(null)
 
     // 행 일괄선택(D3) — 키는 orderId라 정렬이 바뀌어도 선택이 유지된다
     const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -230,7 +249,7 @@ export function MatrixClient({
      */
     const lineIndex = useMemo(() => {
         const groupByKey = new Map(matrix.groups.map((g) => [g.key, g]))
-        const index = new Map<number, { cellKey: string; who: string; what: string }>()
+        const index = new Map<number, { cellKey: string; orderId: number; who: string; what: string }>()
         for (const row of matrix.rows) {
             const who = nameTiersOf(decl, row)[0]
             for (const col of matrix.columns) {
@@ -239,7 +258,10 @@ export function MatrixClient({
                 const spec = col.bulk ? `${fmtKg(col.unitWeightKg ?? 0)}kg` : col.packageType
                 const what = `${groupByKey.get(col.groupKey)?.title ?? ''} · ${spec}`
                 const cellKey = `${row.orderId}|${col.key}`
-                for (const itemId of cell.itemIds) index.set(itemId, { cellKey, who, what })
+                // 🔴 `orderId`를 같이 담는다 — 폰에는 갈 셀이 없어 **건**으로 데려가야 한다.
+                //    `cellKey`를 쪼개 쓰지 않는다(표시·이동용 키를 식별자로 겸용하지 말 것).
+                for (const itemId of cell.itemIds)
+                    index.set(itemId, { cellKey, orderId: row.orderId, who, what })
             }
         }
         return index
@@ -250,11 +272,9 @@ export function MatrixClient({
     // 🔴 **한 프레임 미룬다.** 이 effect가 도는 시점은 게이트 다이얼로그가 언마운트되는 커밋이고,
     //    Radix가 그 뒤에 포커스를 원래 자리(선택 바 버튼)로 되돌린다 — 바로 스크롤하면 그 복원이
     //    스크롤을 원위치시킨다.
-    // 🔴 매칭실패 열 키는 **엑셀 원본 문자열**(`raw:품목명|규격|포장지`)이라 따옴표·역슬래시가
-    //    들어올 수 있다. 속성 선택자 값에서 그 둘만 이스케이프하면 된다.
     useEffect(() => {
         if (!highlight) return
-        const selector = `[data-cell="${highlight.replace(/["\\]/g, '\\$&')}"]`
+        const selector = cellSelector(highlight)
         const frame = requestAnimationFrame(() => {
             document
                 .querySelector(selector)
@@ -267,10 +287,35 @@ export function MatrixClient({
         }
     }, [highlight])
 
-    /** 주문 상세 열기 — 매트릭스 이름칸과 모바일 건목록이 **같은 함수**를 쓴다(표기가 갈리지 않게) */
-    const openDetail = (row: MatrixRow) => {
+    /**
+     * 주문 상세 열기 — 매트릭스 이름칸과 모바일 건목록이 **같은 함수**를 쓴다(표기가 갈리지 않게).
+     * `siblings`는 부른 쪽이 「그 화면에 실제로 보이는 순서」를 넘긴다 — 모바일 목록은 필터가
+     * 걸려 있어 `rows`와 다르다(§4.2). 안 넘기면 정렬된 전체 행이 형제다.
+     */
+    const openDetail = (row: MatrixRow, siblings?: number[]) => {
         const [head, tail] = nameTiersOf(decl, row)
-        setDetail({ orderId: row.orderId, head, tail: tail || null })
+        setDetail({
+            orderId: row.orderId,
+            head,
+            tail: tail || null,
+            siblings: siblings ?? rows.map((r) => r.orderId),
+        })
+    }
+
+    /**
+     * 건 하나로 이동 — 「다음 건 ›」과 게이트의 「이 줄」이 같이 쓴다.
+     * 형제 순서는 **이미 열려 있으면 그대로 물려준다**(다음 건을 누르다 순서가 바뀌면 안 된다).
+     */
+    const goDetail = (orderId: number) => {
+        const row = matrix.rows.find((r) => r.orderId === orderId)
+        if (!row) return
+        const [head, tail] = nameTiersOf(decl, row)
+        setDetail((prev) => ({
+            orderId,
+            head,
+            tail: tail || null,
+            siblings: prev?.siblings ?? rows.map((r) => r.orderId),
+        }))
     }
 
     const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
@@ -490,7 +535,21 @@ export function MatrixClient({
                     const at = lineIndex.get(itemId)
                     if (!at) return
                     setGateOpen(false)
-                    setHighlight(at.cellKey)
+                    /*
+                     * 🔴 **폰에는 갈 셀이 없다.** 매트릭스는 `hidden sm:contents`(= `display:none`)라
+                     * DOM에는 있지만 스크롤해도 아무 일이 일어나지 않는다 — 눌렀는데 무반응이다
+                     * (D3의 `data-cell` 사고와 같은 증상). 브레이크포인트를 JS에 복제하는 대신
+                     * **그 셀이 실제로 그려져 있는지**를 DOM에 묻고, 아니면 그 건의 상세로 데려간다.
+                     */
+                    const el = document.querySelector(cellSelector(at.cellKey))
+                    if (el instanceof HTMLElement && el.offsetParent !== null) {
+                        // 건상세에서 게이트를 연 뒤 셀로 가는 길 — 패널이 열린 채면 오른쪽
+                        // 468px을 덮어 정작 그 셀이 패널 뒤에 숨는다
+                        setDetail(null)
+                        setHighlight(at.cellKey)
+                    } else {
+                        goDetail(at.orderId)
+                    }
                 }}
             />
             )}
@@ -506,6 +565,20 @@ export function MatrixClient({
                 lines={detailLines}
                 title={detail?.head ?? ''}
                 subtitle={detail?.tail ?? null}
+                siblings={detail?.siblings ?? []}
+                onNavigate={goDetail}
+                /*
+                 * 건 단위 일괄차감 = **검토 게이트를 건 하나로 여는 것**이다(M1-3).
+                 * 게이트는 이미 `orderIds[]`를 받고 4갈래 구성·실패 배너를 갖고 있다 —
+                 * 건상세용 확정 경로를 따로 지으면 그 판정이 두 벌이 된다.
+                 * 🔴 패널은 **열어 둔 채**다. 확정 결과가 패널 숫자에 바로 반영되고,
+                 *    이어서 「다음 건 ›」으로 넘어가는 것이 이 화면의 흐름이다.
+                 */
+                onBatch={() => {
+                    if (!detail) return
+                    setSelected(new Set([detail.orderId]))
+                    setGateOpen(true)
+                }}
                 onClose={() => setDetail(null)}
             />
         </div>
