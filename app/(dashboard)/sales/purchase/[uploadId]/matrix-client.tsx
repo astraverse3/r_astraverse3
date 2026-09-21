@@ -33,6 +33,7 @@ import {
     ROW_STATUS_ORDER,
     applyMatchPatches,
     buildMatrix,
+    buildOrderLines,
     isColumnShort,
     sortMatrixRows,
     type BuildMatrixInput,
@@ -48,6 +49,8 @@ import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matri
 import { rematchUpload } from '@/app/actions/purchase-order-assign'
 import type { BatchPatch } from '@/app/actions/purchase-order-batch'
 import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
+import { OrderListMobile } from './order-list-mobile'
+import { STATUS_META } from './status-meta'
 import { OrderDetailPanel } from './order-detail-panel'
 import { ReviewGateDialog } from './review-gate-dialog'
 
@@ -102,14 +105,8 @@ const CELL_TONE: Record<CellStatus, string> = {
     UNMATCHED: 'bg-red-50 text-red-600 font-bold',
 }
 
-// 행 상태 표기. 순서(심각도)는 lib `ROW_STATUS_ORDER` 하나가 갖는다 — 여기선 라벨·색만.
-const ROW_STATUS_META: Record<CellStatus, { label: string; dot: string; text: string }> = {
-    UNMATCHED: { label: '매칭실패', dot: 'bg-red-500', text: 'text-red-600' },
-    SHORTAGE: { label: '재고부족', dot: 'bg-orange-500', text: 'text-orange-700' },
-    PARTIAL: { label: '부분', dot: 'bg-amber-500', text: 'text-amber-700' },
-    PENDING: { label: '대기', dot: 'bg-slate-400', text: 'text-slate-500' },
-    COMPLETED: { label: '완료', dot: 'bg-emerald-500', text: 'text-emerald-700' },
-}
+// 행 상태 라벨·색은 `status-meta.ts` 한 곳 — 매트릭스 행·건상세 줄·건목록 행이 같은 표를 쓴다.
+// 순서(심각도)는 lib `ROW_STATUS_ORDER`가 갖는다.
 
 // 순서·라벨은 핸드오프 §7(단, 「최신」은 뺐다 — 시트 안 행은 createdAt이 전부 같아 의미가 없다).
 // 발주처별이 기본 — 택배 시트는 같은 발주처가 흩어져 있어 원본 순서로는 블록이 안 잡힌다.
@@ -198,6 +195,15 @@ export function MatrixClient({
         [input.items],
     )
 
+    /**
+     * 주문 상세 패널이 쓸 라인 — **서버를 부르지 않고 파생한다**(M1-1).
+     * 차감하면 `input`이 바뀌므로 패널 숫자가 저절로 맞는다. 예전엔 열 때마다 다시 읽어 그 낡음을 막았다.
+     */
+    const detailLines = useMemo(
+        () => (detail ? buildOrderLines(input, detail.orderId) : []),
+        [input, detail],
+    )
+
     // 업로드 시점 매칭이 굳어 있어, 마스터를 보완해도 화면은 실패인 채다 — 다시 돌린다(결정 R)
     const [rematching, startRematch] = useTransition()
     const runRematch = () =>
@@ -261,6 +267,12 @@ export function MatrixClient({
         }
     }, [highlight])
 
+    /** 주문 상세 열기 — 매트릭스 이름칸과 모바일 건목록이 **같은 함수**를 쓴다(표기가 갈리지 않게) */
+    const openDetail = (row: MatrixRow) => {
+        const [head, tail] = nameTiersOf(decl, row)
+        setDetail({ orderId: row.orderId, head, tail: tail || null })
+    }
+
     const openCell = (row: MatrixRow, col: MatrixColumn, el: HTMLElement) => {
         const cell = row.cells[col.key]
         const at = lineIndex.get(cell.itemIds[0])
@@ -288,6 +300,31 @@ export function MatrixClient({
 
     return (
         <div className="flex flex-col gap-3">
+            {/*
+             * 🔴 **폰은 매트릭스를 쓰지 않는다**(2026-09-18). 실측 밀도가 이유다 — 택배는 67건이지만
+             * 규격이 안 겹쳐 94.4%가 빈 칸이고, 급식·이마트·시아스는 건이 1~3개라 나란히 볼 상대가 없다.
+             * 데이터·정렬·상태는 **둘이 같은 것을 쓴다**(`matrix`·`rows`) — 화면 모양만 다르다.
+             */}
+            <div className="sm:hidden">
+                <OrderListMobile
+                    header={header}
+                    matrix={matrix}
+                    rows={rows}
+                    decl={decl}
+                    sort={sort}
+                    onSort={setSort}
+                    unmatchedLines={unmatchedLines}
+                    rematching={rematching}
+                    onRematch={runRematch}
+                    onOpenDetail={openDetail}
+                    onOpenGate={(ids) => {
+                        setSelected(new Set(ids))
+                        setGateOpen(true)
+                    }}
+                />
+            </div>
+
+            <div className="hidden sm:contents">
             <Header
                 header={header}
                 matrix={matrix}
@@ -342,10 +379,7 @@ export function MatrixClient({
                                         <button
                                             type="button"
                                             className="block w-full text-left"
-                                            onClick={() => {
-                                                const [head, tail] = nameTiersOf(decl, row)
-                                                setDetail({ orderId: row.orderId, head, tail: tail || null })
-                                            }}
+                                            onClick={() => openDetail(row)}
                                         >
                                             <NameCell decl={decl} row={row} />
                                         </button>
@@ -417,6 +451,7 @@ export function MatrixClient({
             </div>
 
             <Legend />
+            </div>
 
             {/* 선택 바 — 표 바깥에 떠 있어야 가로 스크롤을 따라다니지 않는다 */}
             {selected.size > 0 && (
@@ -468,6 +503,7 @@ export function MatrixClient({
             />
             <OrderDetailPanel
                 orderId={detail?.orderId ?? null}
+                lines={detailLines}
                 title={detail?.head ?? ''}
                 subtitle={detail?.tail ?? null}
                 onClose={() => setDetail(null)}
@@ -869,7 +905,7 @@ function Th({
 }
 
 function StatusDot({ status }: { status: CellStatus }) {
-    const s = ROW_STATUS_META[status]
+    const s = STATUS_META[status]
     return (
         <span className={cn('inline-flex items-center gap-1 text-[10.5px] font-bold', s.text)}>
             <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} />
@@ -899,7 +935,7 @@ function Legend() {
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11.5px]">
             {ROW_STATUS_ORDER.map((key) => {
-                const s = ROW_STATUS_META[key]
+                const s = STATUS_META[key]
                 return (
                     <span key={key} className={cn('inline-flex items-center gap-1.5 font-medium', s.text)}>
                         <span className={cn('h-2 w-2 rounded-sm', s.dot)} />

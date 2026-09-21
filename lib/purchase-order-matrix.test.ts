@@ -9,6 +9,8 @@ import {
   unitWeightOf,
   groupTitleOf,
   applyMatchPatches,
+  buildOrderLines,
+  sumOrderLines,
   type MatrixItemInput,
   type MatrixOrderInput,
   type MatrixSkuInput,
@@ -679,4 +681,170 @@ test('applyMatchPatches: 이미 있는 SKU 열과 합쳐진다(중복 SKU 없음
 test('applyMatchPatches: 패치가 없으면 입력을 그대로 돌려준다', () => {
   const base = input({ orders: [order(1, '박가네')], items: [item({ id: 10, orderId: 1 })] })
   assert.equal(applyMatchPatches(base, []), base)
+})
+
+// ------------------------------------------------------
+// 건 상세 — 라인 파생 (M1-1)
+// ------------------------------------------------------
+
+test('buildOrderLines: 그 건의 라인만 낸다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [item({ id: 1, orderId: 10 }), item({ id: 2, orderId: 11 }), item({ id: 3, orderId: 10 })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+    10,
+  )
+  assert.deepEqual(
+    lines.map((l) => l.itemId),
+    [1, 3],
+  )
+})
+
+test('buildOrderLines: 상태 심각도순으로 선다 (매칭실패 → 재고부족 → 부분 → 완료)', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [
+        item({ id: 1, orderId: 1, orderedQty: 5, allocatedQty: 5 }), // 완료
+        item({ id: 2, orderId: 1, orderedQty: 5, productTypeId: null }), // 매칭실패
+        item({ id: 3, orderId: 1, orderedQty: 5, productTypeId: 2 }), // 재고부족(가용 1)
+        item({ id: 4, orderId: 1, orderedQty: 5, allocatedQty: 2 }), // 부분
+      ],
+      skus: [sku(1, '10kg'), sku(2, '5kg')],
+      availability: { 1: 100, 2: 1 },
+    }),
+    1,
+  )
+  assert.deepEqual(
+    lines.map((l) => l.status),
+    ['UNMATCHED', 'SHORTAGE', 'PARTIAL', 'COMPLETED'],
+  )
+})
+
+test('buildOrderLines: 매칭실패는 가용을 모르므로 부족도 0이다', () => {
+  const [line] = buildOrderLines(
+    input({ items: [item({ id: 1, orderId: 1, orderedQty: 9, productTypeId: null, rawItemName: '녹두' })] }),
+    1,
+  )
+  assert.equal(line.status, 'UNMATCHED')
+  assert.equal(line.availableQty, null)
+  assert.equal(line.shortage, 0)
+  assert.equal(line.title, '녹두') // 매칭실패는 엑셀 원본 품목명
+  assert.equal(line.packagingName, null)
+})
+
+test('buildOrderLines: 🔴 톤백 가용은 kg을 자루중량으로 나눈다 (개수는 의미가 없다)', () => {
+  const [line] = buildOrderLines(
+    input({
+      items: [item({ id: 1, orderId: 1, orderedQty: 10, unitWeightKg: 1000, productTypeId: 7 })],
+      skus: [sku(7, '톤백')],
+      availability: { 7: 11 }, // 자루는 11개지만
+      availabilityKg: { 7: 7067 }, // 실제 무게는 7,067kg (자루가 제각각)
+    }),
+    1,
+  )
+  assert.equal(line.bulk, true)
+  assert.equal(line.unitWeightKg, 1000)
+  assert.equal(line.availableQty, 7.067)
+  assert.equal(line.shortage, 3) // 7자루까지만 나간다 — 내림
+  assert.equal(line.status, 'SHORTAGE')
+})
+
+test('buildOrderLines: 🔴 단위 없는 규격은 중량이 null이다 (합계에서 빠진다)', () => {
+  const [line] = buildOrderLines(
+    input({
+      items: [item({ id: 1, orderId: 1, packageType: '500' })],
+      skus: [sku(1, '500')],
+      availability: { 1: 10 },
+    }),
+    1,
+  )
+  assert.equal(line.unitWeightKg, null)
+})
+
+test('buildOrderLines: 🔴 매트릭스 셀과 같은 판정을 쓴다 (판정이 두 벌이 아니다)', () => {
+  const src = input({
+    orders: [order(1, '행복플러스', '은평구')],
+    items: [
+      item({ id: 1, orderId: 1, orderedQty: 91, productTypeId: 1 }),
+      item({ id: 2, orderId: 1, orderedQty: 4, productTypeId: null }),
+      item({ id: 3, orderId: 1, orderedQty: 6, allocatedQty: 6, productTypeId: 2 }),
+    ],
+    skus: [sku(1, '10kg'), sku(2, '5kg')],
+    availability: { 1: 59, 2: 0 },
+  })
+  const matrix = buildMatrix(src)
+  const row = matrix.rows[0]
+  const lines = buildOrderLines(src, 1)
+
+  // 라인 → 그 라인이 앉은 셀. 상태가 한 글자도 달라선 안 된다
+  for (const line of lines) {
+    const col = matrix.columns.find((c) => row.cells[c.key]?.itemIds.includes(line.itemId))
+    assert.ok(col, `열을 찾지 못함: ${line.itemId}`)
+    assert.equal(line.status, row.cells[col.key].status)
+  }
+})
+
+test('sumOrderLines: 🔴 작업 라인수는 매칭실패를 포함하고, 일괄차감 라인수는 제외한다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [
+        item({ id: 1, orderId: 1, orderedQty: 5 }), // 대기
+        item({ id: 2, orderId: 1, orderedQty: 5, productTypeId: null }), // 매칭실패
+        item({ id: 3, orderId: 1, orderedQty: 5, allocatedQty: 5 }), // 완료
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+    1,
+  )
+  const t = sumOrderLines(lines)
+  assert.equal(t.workLines, 2) // 대기 + 매칭실패
+  assert.equal(t.batchLines, 1) // 버튼이 실제로 건드리는 건 대기 하나
+  assert.equal(t.doneLines, 1)
+})
+
+test('sumOrderLines: 남은 kg은 주문이 아니라 남은 수량으로 센다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [item({ id: 1, orderId: 1, orderedQty: 10, allocatedQty: 4, packageType: '10kg' })],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+    1,
+  )
+  assert.equal(sumOrderLines(lines).remainingKg, 60) // 6개 남음 × 10kg
+})
+
+test('sumOrderLines: 🔴 중량 미산정 줄이 섞이면 표시가 필요하다고 알린다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [
+        item({ id: 1, orderId: 1, orderedQty: 2, packageType: '10kg' }),
+        item({ id: 2, orderId: 1, orderedQty: 3, packageType: '500' }), // 단위 없음
+      ],
+      skus: [sku(1, '10kg')],
+      availability: { 1: 100 },
+    }),
+    1,
+  )
+  const t = sumOrderLines(lines)
+  assert.equal(t.unknownWeight, true)
+  assert.equal(t.remainingKg, 20) // 읽힌 줄만 센 값이다
+})
+
+test('sumOrderLines: 완료 줄은 차감 중량으로 접는다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [item({ id: 1, orderId: 1, orderedQty: 9, allocatedQty: 9, packageType: '5kg' })],
+      skus: [sku(1, '5kg')],
+      availability: { 1: 100 },
+    }),
+    1,
+  )
+  const t = sumOrderLines(lines)
+  assert.equal(t.doneLines, 1)
+  assert.equal(t.doneKg, 45)
+  assert.equal(t.workLines, 0)
 })

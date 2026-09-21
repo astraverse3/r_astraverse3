@@ -528,3 +528,139 @@ export function applyMatchPatches(
     availabilityKg,
   }
 }
+
+// ------------------------------------------------------
+// 건 상세 — 한 건의 라인 목록 (M1-1)
+// ------------------------------------------------------
+
+/**
+ * 건상세 한 줄. **서버를 다시 부르지 않는다** — `BuildMatrixInput`이 이미 전 라인을 들고 있고,
+ * 상태 판정은 `cellStatusOf` 한 벌이다.
+ *
+ * 🔴 옛 경로(`getPurchaseOrderDetail`)는 라인마다 쿼리를 2회 돌았다(가용 조회 + 차감량 합).
+ * 건상세를 「다음 건 ›」으로 연속 이동하는 순간 그 왕복이 건마다 쌓인다 — 파생으로 옮겨 0으로 만든다.
+ * 🔴 상태를 여기서 다시 판정하지 말 것. 매트릭스 셀과 건상세 줄이 **같은 함수**를 써야
+ * 두 화면이 같은 색을 낸다(계획서 M1 §3-B).
+ */
+export type OrderLine = {
+  itemId: number
+  /** `천지향1세 · 현미` — 매칭실패면 엑셀 원본 품목명 */
+  title: string
+  /** 매칭됐으면 SKU 규격, 실패면 원본 규격 */
+  packageType: string
+  /** 포장지명. 매칭실패면 null */
+  packagingName: string | null
+  orderedQty: number
+  allocatedQty: number
+  /** 아직 못 채운 개수 */
+  remainingQty: number
+  /** 이 SKU 가용(개). 매칭실패면 null. 톤백은 가용 kg을 자루중량으로 나눈 값 */
+  availableQty: number | null
+  /** 가용으로도 모자란 개수. 매칭실패는 0 — 무엇을 낼지 모르는데 부족을 논할 수 없다 */
+  shortage: number
+  status: CellStatus
+  productTypeId: number | null
+  /**
+   * 규격 1개당 kg. 🔴 **`null`이면 중량을 못 읽은 것**(단위 없는 `500` 등).
+   * 틀린 값이 아니라 합계에서 **말없이 빠지는** 값이라, 화면이 「일부 규격 중량 미산정」을
+   * 표시해야 한다(핸드오프 §8-1).
+   */
+  unitWeightKg: number | null
+  /** 톤백 라인(#34) — 자루 개수가 아니라 kg이 축이다 */
+  bulk: boolean
+}
+
+/**
+ * 한 건의 라인을 상태 심각도순(`ROW_STATUS_ORDER`)으로 낸다. **원본 배열을 건드리지 않는다.**
+ *
+ * 🔴 가용은 **SKU 전체 가용**이다. 같은 SKU를 쓰는 라인이 둘이면 양쪽에 같은 수가 보인다 —
+ * 옛 서버 경로와 같은 동작이고, 실제로 얼마가 나가는지는 배분 시트가 FIFO로 다시 계산한다.
+ */
+export function buildOrderLines(input: BuildMatrixInput, orderId: number): OrderLine[] {
+  const skuById = new Map(input.skus.map((s) => [s.id, s]))
+
+  const lines = input.items
+    .filter((it) => it.orderId === orderId)
+    .map((it): OrderLine => {
+      const sku = it.productTypeId !== null ? skuById.get(it.productTypeId) : undefined
+      const bulk = it.unitWeightKg !== null
+      const unitWeightKg = unitWeightOf(it.packageType, it.unitWeightKg)
+      // 톤백 가용은 kg으로 들어온다 — 자루가 제각각이라 개수는 의미가 없다(C0-a).
+      // 셀 판정과 같은 식으로 개수 축에 맞춘다(availableKg ÷ 자루중량).
+      const availableQty =
+        it.productTypeId === null
+          ? null
+          : bulk
+            ? unitWeightKg
+              ? (input.availabilityKg[it.productTypeId] ?? 0) / unitWeightKg
+              : null
+            : (input.availability[it.productTypeId] ?? 0)
+      const remainingQty = Math.max(0, it.orderedQty - it.allocatedQty)
+      return {
+        itemId: it.id,
+        title: sku
+          ? groupTitleOf(sku.varietyName, sku.millingType, sku.varietyType)
+          : it.rawItemName,
+        packageType: sku?.packageType ?? it.packageType,
+        packagingName: sku?.packagingName ?? null,
+        orderedQty: it.orderedQty,
+        allocatedQty: it.allocatedQty,
+        remainingQty,
+        availableQty,
+        // 자루를 쪼개 낼 수는 없으므로 내림 — 가용 2.4자루는 2자루다
+        shortage:
+          availableQty === null ? 0 : Math.max(0, remainingQty - Math.floor(availableQty)),
+        status: cellStatusOf(it.orderedQty, it.allocatedQty, it.productTypeId, availableQty),
+        productTypeId: it.productTypeId,
+        unitWeightKg,
+        bulk,
+      }
+    })
+
+  return lines.sort(
+    (a, b) => ROW_STATUS_ORDER.indexOf(a.status) - ROW_STATUS_ORDER.indexOf(b.status),
+  )
+}
+
+/**
+ * 건상세 푸터용 집계. 🔴 **분모가 둘로 갈린다**(핸드오프 §4.1):
+ *   `workLines` — 매칭실패를 **포함**한다(사람이 처리할 줄 수)
+ *   `batchLines` — 매칭실패를 **제외**한다(일괄차감 버튼이 실제로 건드릴 줄 수)
+ * 한 숫자로 합치면 「7라인 작업 필요」인데 버튼이 6라인을 차감하는 화면이 설명되지 않는다.
+ *
+ * 🔴 `unknownWeight`가 참이면 kg 합계가 **일부를 빼고 센 값**이다 — 화면이 배지로 알려야 한다.
+ */
+export type OrderLineTotals = {
+  workLines: number
+  batchLines: number
+  /** 남은 수량 × 규격중량. 중량을 못 읽은 줄은 빠진다 */
+  remainingKg: number
+  /** 중량 미산정 줄이 하나라도 섞였는가 */
+  unknownWeight: boolean
+  doneLines: number
+  /** 완료 줄의 차감 중량 합 — 접힌 한 줄에 적는다 */
+  doneKg: number
+}
+
+export function sumOrderLines(lines: readonly OrderLine[]): OrderLineTotals {
+  let workLines = 0
+  let batchLines = 0
+  let remainingKg = 0
+  let unknownWeight = false
+  let doneLines = 0
+  let doneKg = 0
+
+  for (const l of lines) {
+    if (l.status === 'COMPLETED') {
+      doneLines += 1
+      if (l.unitWeightKg !== null) doneKg += l.unitWeightKg * l.allocatedQty
+      continue
+    }
+    workLines += 1
+    if (l.status !== 'UNMATCHED') batchLines += 1
+    if (l.unitWeightKg === null) unknownWeight = true
+    else remainingKg += l.unitWeightKg * l.remainingQty
+  }
+
+  return { workLines, batchLines, remainingKg, unknownWeight, doneLines, doneKg }
+}

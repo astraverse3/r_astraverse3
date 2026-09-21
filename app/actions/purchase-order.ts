@@ -1,6 +1,6 @@
 'use server'
 
-// 발주서 판매처리 — 묶음 목록 · 건 상세 · 삭제 (계획서 §8.3.1)
+// 발주서 판매처리 — 묶음 목록 · 삭제 (계획서 §8.3.1)
 //
 // 흐름: 엑셀 업로드 → 파싱(§8.2.2) → 중복감지(#16) → 적재(Upload+Order+Item) →
 //       라인 자동매칭(§8.2.3, productTypeId) → 차감확정(FIFO #3, PackageMovement type=SALE) →
@@ -14,6 +14,9 @@
 // `confirmCell`/`cancelCell`, 행 일괄(FIFO 자동) = `purchase-order-batch.ts`.
 // 여기 있던 `confirmOrder`·`confirmOrderItem`·`cancelOrderItemMovements`·`listPurchaseOrders`는
 // D2c 이후 **호출처가 0건인 채로 남아 있다가** D3에서 삭제됐다(계획서 D3 §5) — 되살리지 말 것.
+// 🔴 `getPurchaseOrderDetail`·`DetailLine`·`OrderDetail`도 **M1-1에서 같은 이유로 삭제**했다.
+// 건 상세는 서버를 부르지 않는다 — `lib/purchase-order-matrix.ts`의 `buildOrderLines`가 이미
+// 클라이언트에 있는 `BuildMatrixInput`에서 파생한다(라인마다 쿼리 2회를 돌던 경로였다).
 
 import type { PurchaseChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
@@ -28,13 +31,6 @@ import {
   type LoadingDisplay,
   type LoadingInfo,
 } from '@/lib/loading-schedule'
-import {
-  suggestAllocation,
-  computeLineStatus,
-  type Allocation,
-  type LineStatus,
-} from '@/lib/purchase-order-allocation'
-import { allocatedQtyOfItem, loadAvailablePackages } from '@/lib/purchase-order-db'
 
 // ======================================================
 // 내부 헬퍼
@@ -132,108 +128,6 @@ export async function listPurchaseUploads(): Promise<
   } catch (error) {
     console.error('[listPurchaseUploads] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '업로드 목록을 불러오지 못했습니다.') }
-  }
-}
-
-export type DetailLine = {
-  itemId: number
-  rawItemName: string
-  packageType: string
-  rawPackaging: string | null
-  orderedQty: number
-  matched: boolean
-  productTypeId: number | null
-  variety: string | null
-  /** 찰벼 표시(찹쌀/찰현미)용. 매칭실패면 null */
-  varietyType: string | null
-  millingType: string | null
-  packaging: string | null
-  allocatedQty: number // 이미 확정 차감된 수량
-  lineStatus: LineStatus
-  availableQty: number // 이 SKU 가용 재고 합
-  suggestion: Allocation[] // 남은 수량에 대한 FIFO 추천 배분
-  shortage: number // 추천으로도 부족한 수량
-}
-
-export type OrderDetail = {
-  id: number
-  channel: PurchaseChannel
-  vendor: string
-  recipient: string
-  status: 'PENDING' | 'PARTIAL' | 'COMPLETED'
-  lines: DetailLine[]
-}
-
-export async function getPurchaseOrderDetail(
-  orderId: number,
-): Promise<{ success: true; data: OrderDetail } | { success: false; error: string }> {
-  try {
-    const order = await prisma.purchaseOrder.findUnique({
-      where: { id: orderId },
-      include: {
-        items: {
-          orderBy: { id: 'asc' },
-          include: {
-            productType: {
-              include: { variety: { select: { name: true, type: true } }, packaging: { select: { name: true } } },
-            },
-          },
-        },
-      },
-    })
-    if (!order) return { success: false, error: '발주 건을 찾을 수 없습니다.' }
-
-    const lines: DetailLine[] = await Promise.all(
-      order.items.map(async (it) => {
-        const allocatedQty = await allocatedQtyOfItem(prisma, it.id)
-        let availableQty = 0
-        let suggestion: Allocation[] = []
-        let shortage = 0
-        if (it.productTypeId) {
-          const avail = await loadAvailablePackages(prisma, it.productTypeId)
-          availableQty = avail.reduce((s, p) => s + p.available, 0)
-          const need = it.orderedQty - allocatedQty
-          if (need > 0) {
-            const res = suggestAllocation(need, avail)
-            suggestion = res.allocations
-            shortage = res.shortage
-          }
-        }
-        return {
-          itemId: it.id,
-          rawItemName: it.rawItemName,
-          packageType: it.packageType,
-          rawPackaging: it.rawPackaging,
-          orderedQty: it.orderedQty,
-          matched: it.productTypeId !== null,
-          productTypeId: it.productTypeId,
-          variety: it.productType?.variety.name ?? null,
-          varietyType: it.productType?.variety.type ?? null,
-          millingType: it.productType?.millingType ?? null,
-          packaging: it.productType?.packaging.name ?? null,
-          allocatedQty,
-          lineStatus: computeLineStatus(it.orderedQty, allocatedQty),
-          availableQty,
-          suggestion,
-          shortage,
-        }
-      }),
-    )
-
-    return {
-      success: true,
-      data: {
-        id: order.id,
-        channel: order.channel,
-        vendor: order.vendor,
-        recipient: order.recipient,
-        status: order.status,
-        lines,
-      },
-    }
-  } catch (error) {
-    console.error('[getPurchaseOrderDetail] failed:', error)
-    return { success: false, error: sanitizeErrorMessage(error, '발주 상세를 불러오지 못했습니다.') }
   }
 }
 

@@ -1,46 +1,41 @@
 'use client'
 
-// 수령인 주문 상세 패널 (계획서 D2c C4) — 행 머리글(이름칸)을 누르면 오른쪽에서 열린다.
+// 수령인 주문 상세 패널 (계획서 D2c C4 · M1-1) — 행 머리글(이름칸)을 누르면 오른쪽에서 열린다.
 //
-// 그 건의 전 라인을 「작업 필요 / 차감 완료」 두 묶음으로 보여준다. `getPurchaseOrderDetail`의
-// 첫 호출부다(D1에 만들어졌지만 어떤 화면도 부르지 않았다). 읽기 전용 — 일괄 FIFO 차감은 D3.
+// 그 건의 전 라인을 「작업 필요 / 차감 완료」 두 묶음으로 보여준다. 읽기 전용 —
+// 라인 탭 → FIFO 시트와 푸터 일괄차감은 M1-3에서 붙는다.
 //
-// 🔴 셀 팝오버가 차감하면 이 패널의 숫자는 낡는다. 그래서 열 때마다 다시 읽는다(`key`로 리마운트).
+// 🔴 **서버를 부르지 않는다**(M1-1). 라인은 부모가 `buildOrderLines(input, orderId)`로 파생해 넘긴다.
+//    옛 경로(`getPurchaseOrderDetail`)는 라인마다 쿼리를 2회 돌아, 「다음 건 ›」으로 67건을 연속
+//    이동하면 왕복이 건마다 쌓였다. 파생이라 차감 즉시 숫자가 맞는 것은 덤이다 —
+//    예전엔 「열 때마다 다시 읽는다」로 그 낡음을 막고 있었다.
+// 🔴 **상태 판정을 여기서 하지 않는다.** 매트릭스 셀과 이 줄이 `cellStatusOf` 한 벌을 쓴다.
+//    예전의 `kindOf`는 같은 판정을 다른 이름으로 한 번 더 한 것이었다(M1 §3-B에서 흡수).
 
-import { useEffect, useState } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { getPurchaseOrderDetail, type DetailLine, type OrderDetail } from '@/app/actions/purchase-order'
-import { getDisplayMillingType } from '@/lib/milling-type-display'
+import { ROW_STATUS_ORDER, type OrderLine } from '@/lib/purchase-order-matrix'
+import { STATUS_META } from './status-meta'
 
 const fmt = (n: number) => n.toLocaleString()
+const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 
-/** 라인 상태 — 매트릭스 셀 상태와 같은 의미·같은 색 */
-type Kind = 'UNMATCHED' | 'SHORTAGE' | 'PARTIAL' | 'PENDING' | 'COMPLETED'
-const KIND_META: Record<Kind, { label: string; badge: string; card: string }> = {
-    UNMATCHED: { label: '매칭실패', badge: 'bg-red-50 text-red-600', card: 'border-red-200 bg-red-50/50' },
-    SHORTAGE: { label: '재고부족', badge: 'bg-orange-100 text-orange-800', card: 'border-orange-200 bg-orange-50/50' },
-    PARTIAL: { label: '부분', badge: 'bg-amber-50 text-amber-700', card: 'border-slate-200 bg-card' },
-    PENDING: { label: '대기', badge: 'bg-slate-100 text-slate-500', card: 'border-slate-200 bg-card' },
-    COMPLETED: { label: '완료', badge: 'bg-emerald-50 text-emerald-700', card: 'border-emerald-100 bg-emerald-50/40' },
-}
-const KIND_ORDER: Kind[] = ['UNMATCHED', 'SHORTAGE', 'PARTIAL', 'PENDING', 'COMPLETED']
-
-function kindOf(l: DetailLine): Kind {
-    if (l.lineStatus === 'COMPLETED') return 'COMPLETED'
-    if (!l.matched) return 'UNMATCHED'
-    if (l.availableQty < l.orderedQty - l.allocatedQty) return 'SHORTAGE'
-    return l.lineStatus
+/** 톤백은 규격칸에 자루중량을 적는다 — 「톤백」만으로는 1,000kg과 200kg이 안 갈린다 */
+function specOf(line: OrderLine): string {
+    return line.bulk ? `${fmtKg(line.unitWeightKg ?? 0)}kg` : line.packageType
 }
 
 export function OrderDetailPanel({
     orderId,
+    lines,
     title,
     subtitle,
     onClose,
 }: {
     orderId: number | null
+    /** 부모가 `buildOrderLines`로 파생해 넘긴다 — 이미 상태 심각도순이다 */
+    lines: OrderLine[]
     /** 이름칸 앞 값(굵은 값) */
     title: string
     /** 이름칸 뒤 값. 없으면 한 줄 */
@@ -50,35 +45,23 @@ export function OrderDetailPanel({
     return (
         <Sheet open={orderId !== null} onOpenChange={(o) => !o && onClose()}>
             <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-[468px]">
-                {orderId !== null && (
-                    <Body key={orderId} orderId={orderId} title={title} subtitle={subtitle} />
-                )}
+                {orderId !== null && <Body lines={lines} title={title} subtitle={subtitle} />}
             </SheetContent>
         </Sheet>
     )
 }
 
-function Body({ orderId, title, subtitle }: { orderId: number; title: string; subtitle: string | null }) {
-    const [detail, setDetail] = useState<OrderDetail | null>(null)
-    const [error, setError] = useState<string | null>(null)
-
-    useEffect(() => {
-        let alive = true
-        getPurchaseOrderDetail(orderId).then((r) => {
-            if (!alive) return
-            if (r.success) setDetail(r.data)
-            else setError(r.error)
-        })
-        return () => {
-            alive = false
-        }
-    }, [orderId])
-
-    const lines = detail
-        ? [...detail.lines].sort((a, b) => KIND_ORDER.indexOf(kindOf(a)) - KIND_ORDER.indexOf(kindOf(b)))
-        : []
-    const work = lines.filter((l) => kindOf(l) !== 'COMPLETED')
-    const done = lines.filter((l) => kindOf(l) === 'COMPLETED')
+function Body({
+    lines,
+    title,
+    subtitle,
+}: {
+    lines: OrderLine[]
+    title: string
+    subtitle: string | null
+}) {
+    const work = lines.filter((l) => l.status !== 'COMPLETED')
+    const done = lines.filter((l) => l.status === 'COMPLETED')
     const ordered = lines.reduce((s, l) => s + l.orderedQty, 0)
     const allocated = lines.reduce((s, l) => s + l.allocatedQty, 0)
     const pct = ordered > 0 ? Math.round((allocated / ordered) * 100) : 0
@@ -108,27 +91,24 @@ function Body({ orderId, title, subtitle }: { orderId: number; title: string; su
                         {fmt(allocated)}/{fmt(ordered)}
                     </span>
                 </div>
-                {detail && (
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
-                        <span className="text-slate-500">
-                            <b className="text-slate-700">{lines.length}</b>라인
-                        </span>
-                        {KIND_ORDER.map((k) => {
-                            const n = lines.filter((l) => kindOf(l) === k).length
-                            if (n === 0) return null
-                            return (
-                                <span key={k} className={cn('rounded px-1.5 py-0.5 font-semibold', KIND_META[k].badge)}>
-                                    {KIND_META[k].label} {n}
-                                </span>
-                            )
-                        })}
-                    </div>
-                )}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
+                    <span className="text-slate-500">
+                        <b className="text-slate-700">{lines.length}</b>라인
+                    </span>
+                    {ROW_STATUS_ORDER.map((k) => {
+                        const n = lines.filter((l) => l.status === k).length
+                        if (n === 0) return null
+                        return (
+                            <span key={k} className={cn('rounded px-1.5 py-0.5 font-semibold', STATUS_META[k].badge)}>
+                                {STATUS_META[k].label} {n}
+                            </span>
+                        )
+                    })}
+                </div>
             </SheetHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
-                {error && <p className="text-[12.5px] text-red-600">{error}</p>}
-                {!detail && !error && <p className="text-[12.5px] text-slate-400">불러오는 중…</p>}
+                {lines.length === 0 && <p className="text-[12.5px] text-slate-400">라인이 없습니다.</p>}
                 {work.length > 0 && <Group label={`작업 필요 · ${work.length}라인`} lines={work} />}
                 {done.length > 0 && <Group label={`차감 완료 · ${done.length}라인`} lines={done} />}
             </div>
@@ -140,7 +120,7 @@ function Body({ orderId, title, subtitle }: { orderId: number; title: string; su
     )
 }
 
-function Group({ label, lines }: { label: string; lines: DetailLine[] }) {
+function Group({ label, lines }: { label: string; lines: OrderLine[] }) {
     return (
         <div className="mb-5">
             <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
@@ -153,37 +133,42 @@ function Group({ label, lines }: { label: string; lines: DetailLine[] }) {
     )
 }
 
-function LineCard({ line }: { line: DetailLine }) {
-    const kind = kindOf(line)
-    const meta = KIND_META[kind]
-    const shown = line.millingType ? getDisplayMillingType(line.millingType, line.varietyType) : null
-    const name = line.matched
-        ? `${line.variety}${shown && shown !== '백미' ? ` · ${shown}` : ''} ${line.packageType}`
-        : `${line.rawItemName} ${line.packageType}`
-    const remaining = line.orderedQty - line.allocatedQty
+function LineCard({ line }: { line: OrderLine }) {
+    const meta = STATUS_META[line.status]
     return (
         <div className={cn('rounded-xl border px-3.5 py-2.5', meta.card)}>
             <div className="flex flex-wrap items-center gap-1.5">
-                <span className={cn('text-[13px] font-bold', kind === 'UNMATCHED' ? 'text-red-600' : 'text-foreground')}>
-                    {name}
+                <span
+                    className={cn(
+                        'text-[13px] font-bold',
+                        line.status === 'UNMATCHED' ? 'text-red-600' : 'text-foreground',
+                    )}
+                >
+                    {line.title} {specOf(line)}
                 </span>
-                {line.packaging && <span className="text-[11px] text-slate-400">{line.packaging}</span>}
+                {line.packagingName && <span className="text-[11px] text-slate-400">{line.packagingName}</span>}
                 <span className="text-[12px] tabular-nums text-slate-400">· 주문 {fmt(line.orderedQty)}개</span>
                 <span className={cn('ml-auto rounded px-1.5 py-0.5 text-[10.5px] font-semibold', meta.badge)}>
                     {meta.label}
                 </span>
             </div>
             <div className="mt-1.5 text-[11.5px] text-slate-500">
-                {kind === 'COMPLETED' && (
+                {line.status === 'COMPLETED' && (
                     <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                         <Check className="h-3 w-3" />
                         {fmt(line.allocatedQty)}개 차감
                     </span>
                 )}
-                {kind === 'UNMATCHED' && <span className="text-red-600">품종을 지정해야 차감할 수 있습니다.</span>}
-                {kind !== 'COMPLETED' && kind !== 'UNMATCHED' && (
+                {line.status === 'UNMATCHED' && (
+                    // 수동지정은 2026-09-16에 철회됐다 — 푸는 길은 품종 관리 보완 뒤 재매칭뿐이다
+                    <span className="text-red-600">
+                        품종을 못 찾았습니다. 품종 관리에서 별칭을 추가한 뒤 재매칭하세요.
+                    </span>
+                )}
+                {line.status !== 'COMPLETED' && line.status !== 'UNMATCHED' && (
                     <>
-                        차감 {fmt(line.allocatedQty)} · 남은 {fmt(remaining)} · 가용 {fmt(line.availableQty)}
+                        차감 {fmt(line.allocatedQty)} · 남은 {fmt(line.remainingQty)} · 가용{' '}
+                        {fmt(Math.floor(line.availableQty ?? 0))}
                         {line.shortage > 0 && (
                             <span className="ml-1 font-semibold text-orange-700">(부족 {fmt(line.shortage)})</span>
                         )}
