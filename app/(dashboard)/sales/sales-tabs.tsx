@@ -14,7 +14,13 @@ const ICONS: Record<SalesTabValue, typeof Package> = {
 }
 const TABS = SALES_TABS.map((t) => ({ ...t, icon: ICONS[t.value] }))
 
-export function SalesTabs({ activeTab }: { activeTab: SalesTabValue }) {
+export function SalesTabs({
+    activeTab,
+    rightSlot,
+}: {
+    activeTab: SalesTabValue
+    rightSlot?: React.ReactNode
+}) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -32,26 +38,41 @@ export function SalesTabs({ activeTab }: { activeTab: SalesTabValue }) {
 
     return (
         <div className="px-3 sm:px-0">
-            {/* 모바일: segmented control (2탭) */}
-            <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg sm:hidden">
-                {TABS.map(tab => {
-                    const Icon = tab.icon
-                    const active = activeTab === tab.value
-                    return (
-                        <button
-                            key={tab.value}
-                            onClick={() => handleClick(tab.value)}
-                            className={`h-11 rounded-md flex items-center justify-center gap-1.5 transition-all ${
-                                active
-                                    ? 'bg-white shadow-sm font-bold text-slate-900'
-                                    : 'font-semibold text-slate-500'
-                            }`}
-                        >
-                            <Icon className="w-4 h-4 shrink-0" strokeWidth={active ? 2.2 : 1.8} />
-                            <span className="text-[13px]">{tab.label}</span>
-                        </button>
-                    )
-                })}
+            {/* 모바일: segmented control (2탭) + 오른쪽 슬롯(업로드 등).
+                슬롯이 있으면 한 행을 나눠 쓴다 — 업로드가 혼자 한 줄을 차지하던 것을 흡수했다.
+                ⚠️ 구분선은 회색 세그먼트 「밖」에 둔다: 업로드는 탭이 아니라 다른 기능이다 */}
+            <div className={`sm:hidden ${rightSlot ? 'flex items-stretch gap-2.5' : ''}`}>
+                {/* 🔴 min-w-0 필수 — 없으면 탭 라벨 폭이 칸의 하한이 돼 오른쪽 버튼이 밀린다 */}
+                <div
+                    className={`grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg ${
+                        rightSlot ? 'min-w-0 flex-1' : ''
+                    }`}
+                >
+                    {TABS.map(tab => {
+                        const Icon = tab.icon
+                        const active = activeTab === tab.value
+                        return (
+                            <button
+                                key={tab.value}
+                                onClick={() => handleClick(tab.value)}
+                                className={`h-11 rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                                    active
+                                        ? 'bg-white shadow-sm font-bold text-slate-900'
+                                        : 'font-semibold text-slate-500'
+                                }`}
+                            >
+                                <Icon className="w-4 h-4 shrink-0" strokeWidth={active ? 2.2 : 1.8} />
+                                <span className="text-[13px]">{tab.label}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+                {rightSlot && (
+                    <div className="shrink-0 flex items-center">
+                        <span className="w-px h-7 bg-slate-200 mr-2.5" aria-hidden />
+                        {rightSlot}
+                    </div>
+                )}
             </div>
 
             {/* 데스크탑: underline 탭 */}

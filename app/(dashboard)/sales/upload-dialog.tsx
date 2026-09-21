@@ -68,7 +68,7 @@ function buildDrafts(
     )
 }
 
-export function UploadDialog() {
+export function UploadDialog({ compact = false }: { compact?: boolean }) {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [open, setOpen] = useState(false)
@@ -177,11 +177,20 @@ export function UploadDialog() {
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
+            {/* 트리거 두 갈래 — compact는 모바일 탭 행에 얹히는 아이콘 버튼(sales-tabs의 rightSlot),
+                기본은 데스크탑 목록 위 버튼이다. 기본 쪽은 이제 sm 미만에서 렌더되지 않으므로
+                라벨을 감추던 반응형 분기(px-2.5 sm:px-4 · hidden sm:inline)가 더는 필요 없다 */}
             <DialogTrigger asChild>
-                <Button size="sm" className="px-2.5 sm:px-4">
-                    <Upload className="w-4 h-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">발주서 등록</span>
-                </Button>
+                {compact ? (
+                    <Button size="icon-lg" aria-label="발주서 업로드" className="rounded-lg">
+                        <Upload className="w-4 h-4" />
+                    </Button>
+                ) : (
+                    <Button size="sm">
+                        <Upload className="w-4 h-4 mr-1.5" />
+                        발주서 등록
+                    </Button>
+                )}
             </DialogTrigger>
             {/* 시트 선택 중 바깥을 클릭해 닫히면 채널·발주일 입력이 통째로 날아간다 — X·취소로만 닫는다 */}
             <DialogContent

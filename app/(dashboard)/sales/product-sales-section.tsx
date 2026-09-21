@@ -14,7 +14,9 @@ export async function ProductSalesSection() {
 
     return (
         <div className="px-3 sm:px-0 flex flex-col gap-3">
-            <div className="flex items-center justify-end">
+            {/* 모바일에서는 탭 행 오른쪽(sales-tabs의 rightSlot)이 이 버튼을 대신한다 —
+                업로드 하나가 한 줄을 통째로 쓰던 것을 없앴다 */}
+            <div className="hidden sm:flex items-center justify-end">
                 <UploadDialog />
             </div>
 

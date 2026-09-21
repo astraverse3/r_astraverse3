@@ -34,7 +34,9 @@ export function UploadTable({
     return (
         <div className="flex flex-col gap-3">
             {usedChannels.length > 1 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
+                /* 모바일은 1줄 가로 스크롤 — 채널이 다 차면 칩 6개라 390px에서 반드시 2줄이 된다.
+                   데스크탑은 종전대로 wrap */
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap sm:overflow-visible">
                     <Chip active={channel === 'ALL'} onClick={() => setChannel('ALL')}>
                         전체 {rows.length}
                     </Chip>
@@ -219,7 +221,7 @@ function Chip({
         <button
             type="button"
             onClick={onClick}
-            className={`h-8 px-3 rounded-full text-[12.5px] font-semibold transition-colors ${
+            className={`h-8 shrink-0 px-3 rounded-full text-[12.5px] font-semibold transition-colors ${
                 active
                     ? 'bg-slate-900 text-white'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'

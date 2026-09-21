@@ -1,4 +1,5 @@
 import { SalesTabs } from './sales-tabs'
+import { UploadDialog } from './upload-dialog'
 import { resolveSalesTab } from './sales-tab-constants'
 import { ReleaseSection } from './release-section'
 import { ProductSalesSection } from './product-sales-section'
@@ -15,7 +16,8 @@ export default async function SalesPage({
 
     return (
         <div className="flex flex-col gap-3">
-            <SalesTabs activeTab={tab} />
+            {/* 업로드는 제품판매 탭에만 있는 기능이라 그 탭일 때만 슬롯을 채운다 */}
+            <SalesTabs activeTab={tab} rightSlot={tab === 'product' ? <UploadDialog compact /> : undefined} />
             <div className="flex-1">
                 {tab === 'product' && <ProductSalesSection />}
                 {tab === 'release' && <ReleaseSection searchParams={sp} />}

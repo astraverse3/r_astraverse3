@@ -45,9 +45,10 @@ const topbar=`<div class="bg-white px-4 h-[52px] shrink-0 flex items-center just
 <div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500"></div><span class="text-[13px] font-extrabold text-slate-800 tracking-tight">땅끝황토친환경</span></div>
 <div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-slate-300"></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.63.67 1.09 1.31 1.1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1"/></svg></div></div>`;
 
-const tabs=(extra='')=>`<div class="grid ${extra?'grid-cols-[1fr_1fr_44px]':'grid-cols-2'} gap-1 p-0.5 bg-slate-100 rounded-lg">
+const tabs=(extra='')=>{const seg=`<div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-lg">
 <button class="h-11 rounded-md flex items-center justify-center gap-1.5 bg-white shadow-sm text-slate-900">${icoPkg}<span class="text-[13px] font-bold">제품판매</span></button>
-<button class="h-11 rounded-md flex items-center justify-center gap-1.5 text-slate-500">${icoTruck}<span class="text-[13px] font-semibold">원물출고</span></button>${extra}</div>`;
+<button class="h-11 rounded-md flex items-center justify-center gap-1.5 text-slate-500">${icoTruck}<span class="text-[13px] font-semibold">원물출고</span></button></div>`;
+return extra?`<div class="flex items-stretch gap-2.5"><div class="min-w-0 flex-1">${seg}</div><div class="shrink-0 flex items-center"><span class="w-px h-7 bg-slate-200 mr-2.5"></span>${extra}</div></div>`:seg;};
 
 const chip=(l,on)=>`<button class="shrink-0 h-7 px-2.5 rounded-full text-[12px] ${on?'font-bold bg-slate-900 text-white':'font-medium bg-white text-slate-600 border border-slate-200'}">${l}</button>`;
 const CHIPS=['전체 5','택배 1','이마트 1','서울급식 1','해남급식 1','기업별 1'];
@@ -87,18 +88,18 @@ const HEADERS={
  <div class="flex justify-end mt-2.5"><button class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-white text-[12.5px] font-semibold">${icoUp}</button></div>
  <div class="mt-2.5">${chipsWrap}</div></div>`,
  a:`<div class="bg-white px-3 pt-3 pb-2.5 border-b border-slate-100 shrink-0 hdr-hi" data-rows="2줄">
- ${tabs('<button class="h-11 w-11 rounded-md bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}
+ ${tabs('<button class="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}
  <div class="mt-2.5">${chipsScroll}</div></div>`,
  b:`<div class="bg-white px-3 pt-3 pb-2.5 border-b border-slate-100 shrink-0 hdr-hi" data-rows="2줄">${tabs()}
  <div class="flex items-center gap-2 mt-2.5"><div class="min-w-0 flex-1">${chipsScroll}</div>
  <div class="shrink-0 pl-2 -ml-2 bg-gradient-to-l from-white via-white to-transparent"><button class="inline-flex items-center justify-center h-8 w-9 rounded-lg bg-primary text-white shadow-sm">${icoUp}</button></div></div></div>`,
  c:`<div class="bg-white px-3 pt-3 pb-3 border-b border-slate-100 shrink-0 hdr-hi" data-rows="1줄">
- ${tabs('<button class="h-11 w-11 rounded-md bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}</div>
+ ${tabs('<button class="h-11 w-11 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}</div>
  <div class="px-3 pt-2.5 shrink-0 flex items-center justify-between">
  <button class="inline-flex items-center gap-1 h-8 pl-3 pr-2.5 rounded-full bg-white border border-slate-200 text-[12.5px] font-bold text-slate-700 shadow-sm">전체 <span class="mono">5</span>${icoChev}</button>
  <button class="inline-flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full text-[12px] font-semibold text-slate-500"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 12h7M11 19h4M3 8l3-3 3 3M6 5v14"/></svg>상차 임박순${icoChev}</button></div>`,
  c2:`<div class="bg-white px-3 pt-3 pb-3 border-b border-slate-100 shrink-0 hdr-hi" data-rows="1줄">
- ${tabs('<button class="h-11 w-11 rounded-md bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}</div>
+ ${tabs('<button class="h-11 w-11 rounded-lg bg-primary text-white flex items-center justify-center shadow-sm">'+icoUp+'</button>')}</div>
  <div class="px-3 pt-2.5 shrink-0 flex items-center justify-between relative z-20">
  <button class="inline-flex items-center gap-1 h-8 pl-3 pr-2.5 rounded-full bg-white border border-slate-200 text-[12.5px] font-bold text-slate-700 shadow-sm">전체 <span class="mono">5</span>${icoChev}</button>
  <button class="inline-flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full bg-slate-900 text-white text-[12px] font-bold"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 12h7M11 19h4M3 8l3-3 3 3M6 5v14"/></svg>상차 임박순${icoChev}</button>
@@ -108,7 +109,7 @@ const HEADERS={
 };
 const FRAMES=[
  ['현재','탭 · 업로드 단독 행 · 칩 2줄. 업로드 버튼 하나가 한 줄을 통째로 쓰고, 칩은 6개라 390px에서 반드시 2줄이 된다.','now','#fff'],
- ['A안 — 탭 행 흡수','업로드를 탭 오른쪽 아이콘 버튼으로 붙이고 칩은 가로 스크롤 1줄. 코드 변경이 가장 작다(단독 행 삭제 + flex-wrap→overflow-x).','a','#fff'],
+ ['A안 — 탭 행 흡수','업로드를 탭 오른쪽에 구분선을 두고 떼어 붙이고 칩은 가로 스크롤 1줄. 회색 세그먼트 밖에 두어 「탭과는 다른 기능」임을 분리했다.','a','#fff'],
  ['B안 — 칩 행 흡수','탭은 2칸 그대로 두고, 업로드를 칩 줄 오른쪽 끝에 고정. 탭 폭이 안 줄어 라벨이 온전하다.','b','#fff'],
  ['C안 — 칩을 드롭다운으로','채널이 5개까지 늘어나면 칩 줄 자체가 부담. 「전체 5 ▾」 한 개로 접고 오른쪽에 정렬 기준을 노출한다. 목록 위 = 사실상 1줄.','c','#f1f5f9'],
  ['C안 + 정렬 전환','정렬을 바꿀 수 있게 한다면 이 자리다. 기본은 지금과 같은 <b>상차 임박순</b>(서버 정렬), 나머지 둘은 이미 내려온 데이터로 클라이언트에서 다시 세운다.','c2','#f1f5f9'],
