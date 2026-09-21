@@ -1,6 +1,6 @@
 # 26년산 전환 — 생산연도 경계 + 원물 엑셀 업로드 권한
 
-> 작성 2026-09-21 · 기준 커밋 `b33dd4e`
+> 작성 2026-09-21 · 기준 커밋 `00a4840`
 > 배경: 26년산 벼 첫 입고(2026-09-15). 시스템 가동 후 **처음으로 생산연도가 넘어가는 시점**이다.
 
 ---
@@ -237,7 +237,7 @@ dashboardProductionYear(now)   // 11월부터 당해년도
 
 **곁가지 — 결과를 아무도 안 읽는 쿼리 2개 삭제.** `millingBatch.count()`(`totalBatches`)와 투입량 `millingBatch.aggregate`는 반환 객체에 담기기만 하고 화면 참조가 0이었다(수율 분모는 9번 `yearBatches`가 따로 구한다 — 결정 #61). 실측 **418ms → 209ms**.
 
-12. ✅ `lib/production-year.ts` `dashboardProductionYear` 추가 · `dashboard.ts` 기준 교체 + 죽은 쿼리 2개 삭제 · `tsc` 0 · **test 401/401** — `aff3ece`
+12. ✅ `lib/production-year.ts` `dashboardProductionYear` 추가 · `dashboard.ts` 기준 교체 + 죽은 쿼리 2개 삭제 · `tsc` 0 · **test 401/401** — `2be8593`
 13. ✅ 브라우저 확인 완료(사용자) → 푸시
 
 ### 5단계 — 작목반 기본 검색 필터 (2026-09-21 추가)
