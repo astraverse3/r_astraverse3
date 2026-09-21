@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -22,7 +22,7 @@ import { createFarmer, updateFarmer, getProducerGroups, updateProducerGroup, typ
 import { triggerDataUpdate } from '@/components/last-updated'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { defaultProductionYear } from '@/lib/production-year'
+import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
 
 // Extended Farmer type to match list
 interface Farmer {
@@ -68,6 +68,11 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
 
     // 작목반 cropYear 기본값 — 규칙은 `lib/production-year.ts`
     const getDefaultCropYear = () => defaultProductionYear('RICE')
+
+    // 🔴 이 값은 표시용이 아니다 — 재고 등록 화면이 `group.cropYear !== productionYear`로
+    //    생산자를 거른다(add-stock-dialog.tsx). 잘못 치면 그 작목반 생산자가 통째로 안 보인다.
+    const yearOptions = useMemo(() => productionYearOptions(), [])
+    const [cropYear, setCropYear] = useState<number>(getDefaultCropYear())
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -123,7 +128,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     code: formData.get('groupCode') as string,
                     name: formData.get('groupName') as string,
                     certNo: rawCertNo.trim() || '-', // Default to '-' for General
-                    cropYear: parseInt(formData.get('cropYear') as string) || getDefaultCropYear()
+                    cropYear // Select는 FormData에 안 실린다 — state가 유일한 원천
                 }
 
                 // Import Dynamically or Assume it exists (Need to import createFarmerWithGroup)
@@ -216,8 +221,20 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                             <div className="grid gap-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="grid min-w-0 gap-1.5">
-                                        <Label htmlFor="cropYear" className="text-xs">생산년도</Label>
-                                        <Input id="cropYear" name="cropYear" defaultValue={getDefaultCropYear()} required />
+                                        <Label className="text-xs">생산년도</Label>
+                                        <Select
+                                            value={cropYear.toString()}
+                                            onValueChange={(v) => setCropYear(parseInt(v))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {yearOptions.map(y => (
+                                                    <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="grid min-w-0 gap-1.5">
                                         <Label htmlFor="groupCode" className="text-xs">작목반번호</Label>

@@ -5,15 +5,14 @@ import {
   getMillingTypeOptions,
 } from '@/app/actions/statistics'
 import { resolveQuickPeriod } from '@/lib/statistics-utils'
+import { dashboardProductionYear } from '@/lib/production-year'
 import { MillingTypeStatsClient } from './millingtype-stats-client'
 
 const DEFAULT_VARIETIES = ['백옥찰', '서농22호', '천지향1세', '천지향5세', '새청무', '하이아미']
 
 export default async function MillingTypeStatisticsPage() {
-  const today = new Date()
-  const currentCropYear = today.getMonth() >= 9
-    ? today.getFullYear()
-    : today.getFullYear() - 1
+  // 집계 화면이라 대시보드와 같은 기준(11월)을 쓴다 — `statistics/milling/page.tsx` 참고
+  const currentCropYear = dashboardProductionYear()
 
   const { from: initFrom, to: initTo, groupBy } = resolveQuickPeriod('6m')
 
