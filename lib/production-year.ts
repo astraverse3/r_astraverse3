@@ -58,3 +58,39 @@ export function defaultProductionYear(category: YearCategory, now: Date = new Da
     const boundary = category === 'MISC_GRAIN' ? MISC_NEW_CROP_MONTH : RICE_NEW_CROP_MONTH
     return month >= boundary ? year : year - 1
 }
+
+// ------------------------------------------------------
+// 연도 선택 목록
+//
+// 같은 [2026, 2025, 2024, 2023]이 화면 5곳에 각각 하드코딩돼 있었다(한 곳은 3년치).
+// 해가 바뀌면 다섯 곳을 손으로 고쳐야 하는 구조 — 이 파일이 애초에 풀려던 문제
+// (같은 규칙의 복붙)가 연도 목록에 그대로 남아 있었다.
+//
+// 여기서 "올해"는 달력 연도다. 수확 경계(위 상수들)와 무관하다 —
+// **고를 수 있는 범위**이지 기본값이 아니기 때문이다.
+// ------------------------------------------------------
+
+/** 목록에 담는 햇수 (올해 포함) */
+const YEAR_OPTION_SPAN = 4
+
+/** 연도 선택 목록. 올해부터 과거로 내려가며 최신이 앞에 온다. */
+export function productionYearOptions(now: Date = new Date()): number[] {
+    const year = now.getFullYear()
+    return Array.from({ length: YEAR_OPTION_SPAN }, (_, i) => year - i)
+}
+
+/** 검색 필터(MultiSelect)가 쓰는 `{label, value}` 형태 */
+export function productionYearFilterOptions(now: Date = new Date()): { label: string; value: string }[] {
+    return productionYearOptions(now).map(y => ({ label: `${y}년`, value: String(y) }))
+}
+
+/**
+ * 기존 값이 목록 밖일 수 있는 곳(수정 다이얼로그)용.
+ *
+ * 🔴 이게 없으면 오래된 재고를 수정할 때 Select가 **빈칸으로 열리고
+ *    저장하는 순간 연도가 날아간다.** 목록은 최근 4년이지만 재고는 그보다 오래 남는다.
+ */
+export function productionYearOptionsWith(value: number, now: Date = new Date()): number[] {
+    const options = productionYearOptions(now)
+    return options.includes(value) ? options : [...options, value].sort((a, b) => b - a)
+}

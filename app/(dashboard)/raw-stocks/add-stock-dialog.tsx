@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +24,7 @@ import { createStock, type StockFormData } from '@/app/actions/stock'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
-import { defaultProductionYear } from '@/lib/production-year'
+import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
 
 interface Farmer {
     id: number
@@ -48,8 +48,9 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
     const [isLoading, setIsLoading] = useState(false)
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
 
-    // 벼는 11월부터 당해년도분이 들어온다 (`lib/production-year.ts`)
+    // 벼는 9월부터 당해년도분이 들어온다 (`lib/production-year.ts`)
     const defaultYear = defaultProductionYear('RICE')
+    const yearOptions = useMemo(() => productionYearOptions(), [])
 
     const [productionYear, setProductionYear] = useState<number>(defaultYear)
     const [certType, setCertType] = useState<string>('유기농')
@@ -89,7 +90,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
         }
 
         const data: StockFormData = {
-            productionYear: parseInt(formData.get('productionYear') as string, 10),
+            productionYear, // Select는 FormData에 안 실린다 — state가 유일한 원천
             bagNo: parseInt(formData.get('bagNo') as string, 10),
             weightKg: parseFloat(formData.get('weightKg') as string),
             incomingDate: new Date(formData.get('incomingDate') as string),
@@ -139,16 +140,20 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     {/* 1. Context: Year & Cert Type */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="min-w-0 space-y-2">
-                            <Label htmlFor="productionYear" className="text-[13px]">생산년도</Label>
-                            <Input
-                                id="productionYear"
-                                name="productionYear"
-                                type="number"
-                                value={productionYear}
-                                onChange={(e) => setProductionYear(parseInt(e.target.value) || defaultYear)}
-                                className="text-[13px]"
-                                required
-                            />
+                            <Label className="text-[13px]">생산년도</Label>
+                            <Select
+                                value={productionYear.toString()}
+                                onValueChange={(v) => setProductionYear(parseInt(v))}
+                            >
+                                <SelectTrigger className="text-[13px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {yearOptions.map(y => (
+                                        <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="min-w-0 space-y-2">
                             <Label className="text-[13px]">인증 구분</Label>

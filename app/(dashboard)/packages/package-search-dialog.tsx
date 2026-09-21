@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
+import { productionYearFilterOptions } from '@/lib/production-year'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,12 +26,6 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import type { PackageCategory, PackageSort } from '@/app/actions/packages'
 import { DEFAULT_PACKAGE_SORT, PACKAGE_SORT_OPTIONS } from '@/lib/package-sort'
 
-const YEAR_OPTIONS = [
-    { label: '2026년', value: '2026' },
-    { label: '2025년', value: '2025' },
-    { label: '2024년', value: '2024' },
-    { label: '2023년', value: '2023' },
-]
 
 const SOURCE_OPTIONS = [
     { label: '도정산', value: 'MILLED' },
@@ -65,6 +60,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     const searchParams = useSearchParams()
     const [isPending, startTransition] = useTransition()
     const [open, setOpen] = useState(false)
+    const yearOptions = useMemo(() => productionYearFilterOptions(), [])
 
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
@@ -180,7 +176,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
                             <div className="min-w-0 space-y-2">
                                 <Label>생산연도</Label>
                                 <MultiSelect
-                                    options={YEAR_OPTIONS}
+                                    options={yearOptions}
                                     value={years}
                                     onValueChange={setYears}
                                     placeholder="전체"

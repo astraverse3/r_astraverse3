@@ -166,5 +166,50 @@ B의 대가(수용): 9월 초에 25년산 잔여 톤백을 등록할 일이 있�
 8. ⬜ 브라우저 확인: `/raw-stocks` 기본 진입에 26년산 15행 노출 · 등록 폼 기본값 2026
 9. ⬜ 커밋 + 푸시
 
+### 3단계 — 연도 입력 위젯 + 연도 목록 단일 원천 (2026-09-21 추가)
+
+브라우저 확인 중 사용자 지적: **벼 입고 등록창만 연도를 텍스트로 친다.**
+
+확인해보니 같은 화면의 잡곡은 이미 `<Select>`다(`add-misc-stock-dialog.tsx:314`). 벼만 `<Input type="number">`이고, 실동작도 나쁘다:
+
+- `parseInt(e.target.value) || defaultYear` — **지우면 즉시 기본값으로 튀어** 지우고 다시 칠 수 없다
+- 타이핑 중간값이 그대로 state에 들어간다. `2`인 순간 생산자 목록이 `group.cropYear !== 2`로 전부 걸러져 텅 빈다
+- `min`/`max`가 없어 `226`·`20026`이 통과한다
+
+🔴 **오타의 대가가 크다.** 연도가 틀리면 기본 필터에 안 잡혀 "등록했는데 사라졌다"가 되고(2단계에서 고친 바로 그 증상), 톤백 중복검사가 `(연도+생산자+품종+번호)`라 **연도가 틀리면 중복 검사까지 무력화**돼 같은 톤백이 두 번 들어간다.
+
+**같이 푸는 것 — 연도 목록이 5곳에 복붙돼 있다.**
+
+| 파일 | 목록 |
+| --- | --- |
+| `stock-filters.tsx` · `misc-stock-filters.tsx` · `package-search-dialog.tsx` · `add-misc-stock-dialog.tsx` | 2026~2023 |
+| `farmer-filters.tsx` | **2026~2024** (혼자 3년치) |
+
+지금은 전부 2026이 있어 안 터지지만 **2027년이 되면 5곳을 손으로 고쳐야 한다.** 이 파일이 애초에 풀려던 문제(같은 규칙의 복붙)가 연도 목록에 그대로 남아 있던 것이다.
+
+**`lib/production-year.ts`에 추가할 함수**
+
+```ts
+productionYearOptions(now)            // number[]  올해부터 과거 3년, 최신 앞
+productionYearFilterOptions(now)      // {label,value}[]  MultiSelect용
+productionYearOptionsWith(value, now) // 기존 값이 목록 밖이면 끼워 넣는다
+```
+
+🔴 **`productionYearOptionsWith`가 핵심 방어다.** 수정 다이얼로그는 옛 재고를 연다 — 연도가 목록에 없으면 Select가 빈칸이 되고 **저장하는 순간 연도가 날아간다.** (현재 DB엔 2025·2026뿐이라 당장은 안 터지지만, 이건 시간이 지나면 반드시 온다)
+
+⚠️ `Select`는 `name`으로 FormData에 안 실린다 — 두 다이얼로그 모두 `formData.get('productionYear')`를 쓰고 있으니 **state를 직접 넘기도록** 같이 고친다.
+⚠️ 배열 반환이라 클라이언트에서 `useMemo` 필수 ([[search_filter_single_sources]]와 같은 함정).
+⚠️ `farmer-filters.tsx`는 3년 → 4년으로 **늘어난다**(통일). 생산자 작목반 `cropYear` 필터라 무해.
+
+**변경 파일 9개**
+
+1. `lib/production-year.ts` (함수 3개 추가)
+2. `lib/production-year.test.ts`
+3. `add-stock-dialog.tsx` — Input → Select, formData → state
+4. `edit-stock-dialog.tsx` — Input → Select, `productionYearOptionsWith`
+5. `add-misc-stock-dialog.tsx` — 로컬 `YEAR_OPTIONS` 제거
+6. `stock-filters.tsx` · 7. `misc-stock-filters.tsx` · 8. `package-search-dialog.tsx` · 9. `farmer-filters.tsx` — 로컬 상수 제거
+
 ### 마무리
 10. ⬜ `docs/worklog.md` 갱신
+11. ⬜ **연도 관련 커밋만** `origin/main`에 cherry-pick 푸시 (M1 커밋은 계속 보류)

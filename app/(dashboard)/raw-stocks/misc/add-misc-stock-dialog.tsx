@@ -26,7 +26,7 @@ import {
 } from '@/app/actions/misc-stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
-import { defaultProductionYear } from '@/lib/production-year'
+import { defaultProductionYear, productionYearOptionsWith } from '@/lib/production-year'
 
 interface Farmer {
     id: number
@@ -80,9 +80,6 @@ const SOURCE_OPTIONS: { value: SourceType; label: string }[] = [
     { value: 'GERMINATION', label: '발아위탁' },
 ]
 
-// 생산년도 후보 (filters와 일관)
-const YEAR_OPTIONS = [2026, 2025, 2024, 2023]
-
 export function AddMiscStockDialog({
     farmers,
     varieties,
@@ -107,6 +104,8 @@ export function AddMiscStockDialog({
     const defaultYear = defaultProductionYear('MISC_GRAIN')
 
     const [productionYear, setProductionYear] = useState<number>(defaultYear)
+    // 수정 겸용이라 목록(최근 4년) 밖의 옛 연도를 열 수 있다 — 고른 값은 언제나 목록 안에 있어야 한다
+    const yearOptions = useMemo(() => productionYearOptionsWith(productionYear), [productionYear])
     const [certType, setCertType] = useState<string>('유기농')
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>('')
     const [varietyId, setVarietyId] = useState<string>('')
@@ -319,7 +318,7 @@ export function AddMiscStockDialog({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {YEAR_OPTIONS.map(y => (
+                                    {yearOptions.map(y => (
                                         <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
                                     ))}
                                 </SelectContent>

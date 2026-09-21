@@ -1,6 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { defaultProductionYears, defaultProductionYear } from './production-year'
+import {
+    defaultProductionYears,
+    defaultProductionYear,
+    productionYearOptions,
+    productionYearFilterOptions,
+    productionYearOptionsWith,
+} from './production-year'
 
 /** 그 달 15일 정오 — 월 경계만 보므로 일자는 무관하다 */
 const at = (year: number, month: number) => new Date(year, month - 1, 15, 12)
@@ -77,4 +83,44 @@ test('벼: 검색이 올해를 보기 시작하는 달과 등록이 올해를 �
 test('벼: 26년산 첫 입고(2026-09-15)가 기본 검색에 걸린다', () => {
     // 이 회귀가 실제 사고였다 — DB에 26년산이 있는데 기본 필터가 ['2025']라 목록에서 안 보였다
     assert.ok(defaultProductionYears('RICE', new Date(2026, 8, 15, 12)).includes('2026'))
+})
+
+// ------------------------------------------------------
+// 연도 선택 목록
+// ------------------------------------------------------
+
+test('연도 목록: 올해부터 과거 3년, 최신이 앞', () => {
+    assert.deepEqual(productionYearOptions(at(2026, 9)), [2026, 2025, 2024, 2023])
+})
+
+test('연도 목록: 달과 무관하다 — 수확 경계가 아니라 고를 수 있는 범위다', () => {
+    for (let m = 1; m <= 12; m++) {
+        assert.deepEqual(productionYearOptions(at(2026, m)), [2026, 2025, 2024, 2023], `${m}월`)
+    }
+})
+
+test('🔴 연도 목록: 해가 바뀌면 저절로 따라온다 (5곳 하드코딩을 없앤 이유)', () => {
+    assert.deepEqual(productionYearOptions(at(2027, 1)), [2027, 2026, 2025, 2024])
+    assert.deepEqual(productionYearOptions(at(2030, 6)), [2030, 2029, 2028, 2027])
+})
+
+test('연도 목록: 기본값은 언제나 목록 안에 있다', () => {
+    for (let m = 1; m <= 12; m++) {
+        const options = productionYearOptions(at(2026, m))
+        assert.ok(options.includes(defaultProductionYear('RICE', at(2026, m))), `벼 ${m}월`)
+        assert.ok(options.includes(defaultProductionYear('MISC_GRAIN', at(2026, m))), `잡곡 ${m}월`)
+    }
+})
+
+test('필터 목록: MultiSelect가 쓰는 {label, value} 형태', () => {
+    assert.deepEqual(productionYearFilterOptions(at(2026, 9))[0], { label: '2026년', value: '2026' })
+    assert.equal(productionYearFilterOptions(at(2026, 9)).length, 4)
+})
+
+test('🔴 목록 밖 연도는 끼워 넣는다 — 안 그러면 옛 재고 수정 시 연도가 날아간다', () => {
+    assert.deepEqual(productionYearOptionsWith(2020, at(2026, 9)), [2026, 2025, 2024, 2023, 2020])
+})
+
+test('목록 안 연도는 중복으로 들어가지 않는다', () => {
+    assert.deepEqual(productionYearOptionsWith(2025, at(2026, 9)), [2026, 2025, 2024, 2023])
 })

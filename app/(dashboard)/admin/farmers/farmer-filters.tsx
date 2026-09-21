@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { productionYearFilterOptions } from '@/lib/production-year'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,17 +24,13 @@ const CERT_OPTIONS = [
     { label: '일반', value: '일반' },
 ]
 
-const YEAR_OPTIONS = [
-    { label: '2026년', value: '2026' },
-    { label: '2025년', value: '2025' },
-    { label: '2024년', value: '2024' },
-]
-
 export function FarmerFilters() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
     const [open, setOpen] = useState(false)
+    // 다른 화면과 같은 목록을 쓴다 — 여기만 3년치로 따로 굳어 있었다
+    const yearOptions = useMemo(() => productionYearFilterOptions(), [])
 
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
@@ -114,7 +111,7 @@ export function FarmerFilters() {
                         <div className="min-w-0 space-y-2">
                             <Label>생산년도</Label>
                             <MultiSelect
-                                options={YEAR_OPTIONS}
+                                options={yearOptions}
                                 value={cropYears}
                                 onValueChange={setCropYears}
                                 placeholder="전체"

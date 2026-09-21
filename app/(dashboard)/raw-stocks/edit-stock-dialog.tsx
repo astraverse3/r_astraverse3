@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -24,6 +24,7 @@ import { Stock } from './page' // Import Stock interface
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { productionYearOptionsWith } from '@/lib/production-year'
 
 interface Props {
     stock: Stock
@@ -59,6 +60,10 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
 
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>(initialFarmerId)
     const [selectedVarietyId, setSelectedVarietyId] = useState<string>(initialVarietyId)
+    const [productionYear, setProductionYear] = useState<number>(stock.productionYear)
+
+    // 목록(최근 4년)에 없는 옛 연도라도 자기 값은 반드시 들어간다 — 없으면 저장 때 연도가 날아간다
+    const yearOptions = useMemo(() => productionYearOptionsWith(stock.productionYear), [stock.productionYear])
 
     // Derived state
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
@@ -83,7 +88,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
         }
 
         const data: StockFormData = {
-            productionYear: parseInt(formData.get('productionYear') as string, 10),
+            productionYear, // Select는 FormData에 안 실린다 — state가 유일한 원천
             bagNo: parseInt(formData.get('bagNo') as string, 10),
             weightKg: parseFloat(formData.get('weightKg') as string),
             incomingDate: new Date(formData.get('incomingDate') as string),
@@ -149,15 +154,20 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                 <form onSubmit={onSubmit} className="grid gap-4 py-2 max-h-[80vh] overflow-y-auto px-1">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="min-w-0 space-y-1.5">
-                            <Label htmlFor="productionYear" className="text-[13px] whitespace-nowrap">생산년도</Label>
-                            <Input
-                                id="productionYear"
-                                name="productionYear"
-                                type="number"
-                                defaultValue={stock.productionYear}
-                                required
-                                className="text-[13px]"
-                            />
+                            <Label className="text-[13px] whitespace-nowrap">생산년도</Label>
+                            <Select
+                                value={productionYear.toString()}
+                                onValueChange={(v) => setProductionYear(parseInt(v))}
+                            >
+                                <SelectTrigger className="text-[13px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {yearOptions.map(y => (
+                                        <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="min-w-0 space-y-1.5">
                             <Label htmlFor="incomingDate" className="text-[13px] whitespace-nowrap">입고일자</Label>

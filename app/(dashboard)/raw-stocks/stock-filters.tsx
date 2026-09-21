@@ -24,19 +24,12 @@ import {
 } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { SlidersHorizontal } from 'lucide-react'
-import { defaultProductionYears } from '@/lib/production-year'
+import { defaultProductionYears, productionYearFilterOptions } from '@/lib/production-year'
 
 const CERT_OPTIONS = [
     { label: '유기농', value: '유기농' },
     { label: '무농약', value: '무농약' },
     { label: '일반', value: '일반' },
-]
-
-const YEAR_OPTIONS = [
-    { label: '2026년', value: '2026' },
-    { label: '2025년', value: '2025' },
-    { label: '2024년', value: '2024' },
-    { label: '2023년', value: '2023' },
 ]
 
 export function StockFilters({ varieties, farmers }: { varieties: { id: number; name: string }[], farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } }[] }) {
@@ -50,6 +43,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
     // 기본 생산연도 — 규칙의 단일 원천은 `lib/production-year.ts`.
     // useMemo가 필수다 — 배열은 렌더마다 새 참조라 아래 useEffect가 무한히 돈다.
     const defaultYears = useMemo(() => defaultProductionYears('RICE'), [])
+    const yearOptions = useMemo(() => productionYearFilterOptions(), [])
 
     const parseMulti = (param: string | null) =>
         param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
@@ -166,7 +160,7 @@ export function StockFilters({ varieties, farmers }: { varieties: { id: number; 
                             <div className="min-w-0 space-y-2">
                                 <Label>생산연도</Label>
                                 <MultiSelect
-                                    options={YEAR_OPTIONS}
+                                    options={yearOptions}
                                     value={years}
                                     onValueChange={setYears}
                                     placeholder="전체"
