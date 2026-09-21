@@ -187,3 +187,14 @@ input[type="number"] {
     -webkit-mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 1rem), transparent);
   }
 }
+/* 스크롤바 숨김 — 가로 스크롤 칩·필터 줄에서 쓴다.
+   🔴 프로젝트 9곳이 `scrollbar-hide`를 쓰고 있었는데 정의가 어디에도 없었다(Tailwind v4는
+   플러그인 없이 이 유틸을 주지 않는다). 터치 기기는 오버레이 스크롤바라 여태 안 드러났다.
+   @layer utilities가 아니라 @utility로 둔 건 v4에서 variant(sm: 등)가 먹게 하기 위해서다. */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
