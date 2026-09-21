@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { productionYearFilterOptions } from '@/lib/production-year'
+import { productionYearFilterOptions, defaultProductionYears } from '@/lib/production-year'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,13 @@ const CERT_OPTIONS = [
     { label: '일반', value: '일반' },
 ]
 
+const parseMulti = (param: string | null) =>
+    param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
+
+/** URL 없으면 서버 기본값, 'ALL'이면 명시적 전체(빈 선택) */
+const readCropYears = (param: string | null, defaultYears: string[]) =>
+    param === 'ALL' ? [] : (param ? parseMulti(param) : defaultYears)
+
 export function FarmerFilters() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -31,15 +38,15 @@ export function FarmerFilters() {
     const [open, setOpen] = useState(false)
     // 다른 화면과 같은 목록을 쓴다 — 여기만 3년치로 따로 굳어 있었다
     const yearOptions = useMemo(() => productionYearFilterOptions(), [])
-
-    const parseMulti = (param: string | null) =>
-        param ? param.split(',').map(s => s.trim()).filter(Boolean) : []
+    // 서버(`page.tsx`)가 URL에 cropYear가 없을 때 쓰는 값과 **같아야 한다**.
+    // 어긋나면 검색창은 「전체」라고 말하는데 목록은 한 해만 나온다.
+    const defaultYears = useMemo(() => defaultProductionYears('RICE'), [])
 
     // Filter States
     const [groupName, setGroupName] = useState(searchParams.get('groupName') || '')
     const [farmerName, setFarmerName] = useState(searchParams.get('farmerName') || '')
     const [certTypes, setCertTypes] = useState<string[]>(() => parseMulti(searchParams.get('certType')))
-    const [cropYears, setCropYears] = useState<string[]>(() => parseMulti(searchParams.get('cropYear')))
+    const [cropYears, setCropYears] = useState<string[]>(() => readCropYears(searchParams.get('cropYear'), defaultYears))
     const [miscGrainOnly, setMiscGrainOnly] = useState(searchParams.get('producesMiscGrain') === '1')
 
     const activeFilterCount = [
@@ -56,17 +63,19 @@ export function FarmerFilters() {
             setGroupName(searchParams.get('groupName') || '')
             setFarmerName(searchParams.get('farmerName') || '')
             setCertTypes(parseMulti(searchParams.get('certType')))
-            setCropYears(parseMulti(searchParams.get('cropYear')))
+            setCropYears(readCropYears(searchParams.get('cropYear'), defaultYears))
             setMiscGrainOnly(searchParams.get('producesMiscGrain') === '1')
         }
-    }, [open, searchParams])
+    }, [open, searchParams, defaultYears])
 
     const handleApply = () => {
         const params = new URLSearchParams()
         if (groupName.trim()) params.set('groupName', groupName.trim())
         if (farmerName.trim()) params.set('farmerName', farmerName.trim())
         if (certTypes.length > 0) params.set('certType', certTypes.join(','))
-        if (cropYears.length > 0) params.set('cropYear', cropYears.join(','))
+        // 🔴 연도를 모두 해제한 건 「전체를 보겠다」는 뜻이다. 파라미터를 생략하면
+        //    서버가 기본 연도를 다시 끼워 넣어 전체를 볼 방법이 없어진다.
+        params.set('cropYear', cropYears.length > 0 ? cropYears.join(',') : 'ALL')
         if (miscGrainOnly) params.set('producesMiscGrain', '1')
 
         router.push(`/admin/farmers?${params.toString()}`)
@@ -77,7 +86,7 @@ export function FarmerFilters() {
         setGroupName('')
         setFarmerName('')
         setCertTypes([])
-        setCropYears([])
+        setCropYears(defaultYears) // 파라미터 없는 URL = 서버 기본 연도. 위젯도 같은 걸 보여야 한다
         setMiscGrainOnly(false)
         router.push('/admin/farmers')
         setOpen(false)
