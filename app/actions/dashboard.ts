@@ -3,20 +3,34 @@
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
+import { dashboardProductionYear } from '@/lib/production-year'
 
 export async function getDashboardStats() {
     await requireSession()
     try {
-        // 0. Calculate Latest Production Year from Stocks (벼 기준)
-        const latestStock = await prisma.stock.findFirst({
-            where: { category: 'RICE' },
-            orderBy: { productionYear: 'desc' },
-            select: { productionYear: true }
+        // 0. 집계 기준 연도 (벼 기준) — 규칙의 단일 원천은 `lib/production-year.ts`
+        //
+        // 🔴 예전엔 "DB에 있는 가장 최신 productionYear"를 썼는데, 그러면 **신곡이 한 톤백만
+        //    들어와도 대시보드가 통째로 넘어간다.** 2026-09-21에 실제로 그랬다 —
+        //    26년산 15행이 적재되자 보유 398,790kg → 10,884kg, 진행률 76.4% → 7.0%,
+        //    마감 배치 197 → 0이 됐다. 아직 25년산 40만kg이 주력인데 화면이 빈 것이다.
+        //    집계 기준은 신곡 도정이 본격화되는 11월에 넘긴다(등록·검색의 9월과 일부러 다르다).
+        const targetYear = dashboardProductionYear();
+
+        // 신곡 입고가 11월을 넘겨 늦어지면 기준 연도에 재고가 아예 없을 수 있다.
+        // 그때는 전년으로 물러선다 — 화면이 통째로 비는 것보다 낫다.
+        const hasStockForYear = await prisma.stock.count({
+            where: { category: 'RICE', productionYear: targetYear },
+            take: 1
         });
-        const latestYear = latestStock?.productionYear || new Date().getFullYear();
+        const latestYear = hasStockForYear > 0 ? targetYear : targetYear - 1;
 
         // Batch 1: Key Aggregates (Lightweight) — 대시보드는 벼 기준
-        const [totalAvailableStock, totalMillingBatches, totalOutputWeight, totalInputWeight] = await Promise.all([
+        // 🔴 여기 있던 쿼리 2개를 지웠다(2026-09-21) — `millingBatch.count()`와
+        //    투입량 `millingBatch.aggregate`는 **결과를 아무도 읽지 않았다.**
+        //    (수율의 분모는 아래 9번 `yearBatches`가 따로 구한다 — 결정 #61)
+        //    대시보드는 쿼리 6개 병렬에 1.8~2.2초 걸리는 무거운 화면이라 그냥 손해였다.
+        const [totalAvailableStock, totalOutputWeight] = await Promise.all([
             // 1. Total available stock weight (KG) - Filtered by Latest Year
             prisma.stock.aggregate({
                 where: {
@@ -26,9 +40,7 @@ export async function getDashboardStats() {
                 },
                 _sum: { weightKg: true }
             }),
-            // 2. Count of milling batches
-            prisma.millingBatch.count(),
-            // 3. Total output production weight (KG) - Filtered by closed and latestYear
+            // 2. Total output production weight (KG) - Filtered by closed and latestYear
             //    source=MILLED 명시(잡곡 매입품 제외 보장)
             //    repackId: null — 재포장 결과는 생산이 아니라 재배치다 (결정 #58).
             //    결과 행이 원본의 batchId를 승계하므로 이 조건이 없으면 산출이 부푼다.
@@ -43,14 +55,6 @@ export async function getDashboardStats() {
                     }
                 },
                 _sum: { totalWeight: true }
-            }),
-            // 4. Total Input Weight for Yield
-            prisma.millingBatch.aggregate({
-                where: {
-                    isClosed: true,
-                    stocks: { some: { category: 'RICE', productionYear: latestYear } }
-                },
-                _sum: { totalInputKg: true }
             })
         ]);
 
@@ -250,7 +254,6 @@ export async function getDashboardStats() {
                 consumedStockKg: consumedStockWeight,
                 totalStockKg: totalStockWeight,
                 millingProgressRate: millingProgressRate,
-                totalBatches: totalMillingBatches,
                 totalOutputKg: totalOutput,
                 outputsByType,
                 uruchiYield,

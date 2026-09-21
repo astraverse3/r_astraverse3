@@ -6,6 +6,7 @@ import {
     productionYearOptions,
     productionYearFilterOptions,
     productionYearOptionsWith,
+    dashboardProductionYear,
 } from './production-year'
 
 /** 그 달 15일 정오 — 월 경계만 보므로 일자는 무관하다 */
@@ -123,4 +124,35 @@ test('🔴 목록 밖 연도는 끼워 넣는다 — 안 그러면 옛 재고 �
 
 test('목록 안 연도는 중복으로 들어가지 않는다', () => {
     assert.deepEqual(productionYearOptionsWith(2025, at(2026, 9)), [2026, 2025, 2024, 2023])
+})
+
+// ------------------------------------------------------
+// 대시보드 집계 기준
+// ------------------------------------------------------
+
+test('대시보드: 11월부터 당해년도', () => {
+    assert.equal(dashboardProductionYear(at(2026, 10)), 2025)
+    assert.equal(dashboardProductionYear(at(2026, 11)), 2026)
+    assert.equal(dashboardProductionYear(at(2026, 12)), 2026)
+    assert.equal(dashboardProductionYear(at(2027, 1)), 2026)
+})
+
+test('🔴 대시보드는 등록·검색보다 늦게 넘어간다 — 신곡 몇 톤백에 화면이 비면 안 된다', () => {
+    // 2026-09-21에 실제로 겪은 일: 26년산 15행이 들어오자 대시보드가 통째로 26년 기준이 됐다
+    for (const m of [9, 10]) {
+        assert.equal(defaultProductionYear('RICE', at(2026, m)), 2026, `등록 ${m}월`)
+        assert.equal(dashboardProductionYear(at(2026, m)), 2025, `대시보드 ${m}월`)
+    }
+})
+
+test('대시보드: 11월부터는 등록 기준과 같아진다', () => {
+    for (const m of [11, 12]) {
+        assert.equal(dashboardProductionYear(at(2026, m)), defaultProductionYear('RICE', at(2026, m)), `${m}월`)
+    }
+})
+
+test('대시보드 기준 연도는 언제나 연도 선택 목록 안에 있다', () => {
+    for (let m = 1; m <= 12; m++) {
+        assert.ok(productionYearOptions(at(2026, m)).includes(dashboardProductionYear(at(2026, m))), `${m}월`)
+    }
 })

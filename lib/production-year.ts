@@ -25,6 +25,17 @@ const RICE_NEW_CROP_MONTH = 9
 const MISC_NEW_CROP_MONTH = 6
 
 /**
+ * 대시보드 집계가 당해년도로 넘어가는 달 — 등록·검색(9월)보다 **일부러 늦다**.
+ *
+ * 등록과 검색은 신곡이 들어오는 즉시 보여야 하니 9월에 넘긴다.
+ * 집계는 반대다 — 신곡 몇 톤백 들어왔다고 기준을 옮기면 보유재고·진행률·수율이
+ * 한꺼번에 0에 가까워져 **화면이 통째로 빈다**(2026-09-21에 실제로 그랬다:
+ * 26년산 15행이 들어오자 보유 398,790kg → 10,884kg, 진행률 76.4% → 7.0%).
+ * 신곡 도정이 본격적으로 도는 11월에 넘긴다.
+ */
+const DASHBOARD_NEW_CROP_MONTH = 11
+
+/**
  * 검색 필터의 기본 생산연도(복수). 최신 연도가 앞에 온다.
  *
  *   벼   1~8월 → [전년] / 9~12월 → [올해, 전년]
@@ -57,6 +68,19 @@ export function defaultProductionYear(category: YearCategory, now: Date = new Da
     const month = now.getMonth() + 1
     const boundary = category === 'MISC_GRAIN' ? MISC_NEW_CROP_MONTH : RICE_NEW_CROP_MONTH
     return month >= boundary ? year : year - 1
+}
+
+/**
+ * 대시보드처럼 **한 해 실적을 집계하는 화면**의 기준 연도.
+ *
+ *   11월부터 당해년도 (등록·검색은 9월 — `defaultProductionYear` 참고)
+ *
+ * 한 해를 통으로 봐야 의미가 있는 값들(진행률·수율)을 다루므로 **두 해를 섞지 않는다**.
+ */
+export function dashboardProductionYear(now: Date = new Date()): number {
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1
+    return month >= DASHBOARD_NEW_CROP_MONTH ? year : year - 1
 }
 
 // ------------------------------------------------------
