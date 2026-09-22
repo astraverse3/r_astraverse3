@@ -8,7 +8,7 @@
 // 같은 상태가 화면마다 달라 보인다 — 판정을 한 벌로 합쳐 놓고 표기를 세 벌로 두면
 // 사용자에게는 결국 세 벌이다.
 
-import type { CellStatus } from '@/lib/purchase-order-matrix'
+import type { CellStatus, MatrixSort } from '@/lib/purchase-order-matrix'
 
 export type StatusMeta = {
     label: string
@@ -68,3 +68,26 @@ export const QTY_TONE: Record<CellStatus, string> = {
     PENDING: 'text-slate-500',
     COMPLETED: 'text-emerald-700',
 }
+
+// ------------------------------------------------------
+// 정렬 라벨 (2026-09-22 — 매트릭스와 건 목록이 갈려 있었다)
+// ------------------------------------------------------
+
+/**
+ * 정렬 3종의 화면 라벨. **매트릭스 헤더와 모바일 건 목록이 같은 표를 쓴다.**
+ *
+ * 🔴 전에는 두 화면이 각자 들고 있었고 `needsWork`의 라벨이 **「작업필요」와 「작업 필요 먼저」로
+ * 갈려 있었다.** 건 목록에는 「같은 3종」이라는 주석까지 있었는데 실제로는 달랐다 —
+ * 그 주석을 믿고 한쪽만 고치면 차이가 더 벌어진다.
+ *
+ * 🔴 「먼저」를 붙인 이유: 폰 목록에는 **필터 칩 「작업필요 n」이 이미 떠 있어서**, 정렬까지
+ * 「작업필요」면 같은 문구가 한 화면에 둘이 된다. 하나는 거르는 것이고 하나는 줄 세우는 것이다.
+ * 나머지 둘(`발주처별`·`수령인 가나다`)처럼 **무엇으로 줄을 세우는지**가 드러나야 한다.
+ *
+ * 키·순서는 `lib`의 `MatrixSort`·`sortMatrixRows`가 갖는다 — 여기는 라벨만.
+ */
+export const MATRIX_SORTS: { key: MatrixSort; label: string }[] = [
+    { key: 'vendor', label: '발주처별' },
+    { key: 'recipient', label: '수령인 가나다' },
+    { key: 'needsWork', label: '작업필요 먼저' },
+]

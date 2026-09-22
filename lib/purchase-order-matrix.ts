@@ -141,7 +141,7 @@ export type MatrixRow = {
   orderedKg: number
   /** 행을 대표하는 상태 — 셀 중 가장 손이 많이 가는 것(`ROW_STATUS_ORDER`). 화면 점·정렬 「작업필요」가 쓴다 */
   status: CellStatus
-  /** 이 행에 손댈 일이 남았는가 (= status !== COMPLETED). 헤더 「N수령인이 작업 필요」 집계용 */
+  /** 이 행에 손댈 일이 남았는가 (= status !== COMPLETED). 헤더 「N수령인이 작업필요」 집계용 */
   needsWork: boolean
 }
 
@@ -626,7 +626,7 @@ export function buildOrderLines(input: BuildMatrixInput, orderId: number): Order
  * 건상세 푸터용 집계. 🔴 **분모가 둘로 갈린다**(핸드오프 §4.1):
  *   `workLines` — 매칭실패를 **포함**한다(사람이 처리할 줄 수)
  *   `batchLines` — 매칭실패를 **제외**한다(일괄차감 버튼이 실제로 건드릴 줄 수)
- * 한 숫자로 합치면 「7라인 작업 필요」인데 버튼이 6라인을 차감하는 화면이 설명되지 않는다.
+ * 한 숫자로 합치면 「7품목 작업필요」인데 버튼이 6라인을 차감하는 화면이 설명되지 않는다.
  *
  * 🔴 `unknownWeight`가 참이면 kg 합계가 **일부를 빼고 센 값**이다 — 화면이 배지로 알려야 한다.
  */

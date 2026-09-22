@@ -2,7 +2,7 @@
 
 // 수령인 주문 상세 패널 (계획서 D2c C4 · M1-1 · M1-3) — 행 머리글(이름칸)을 누르면 오른쪽에서 열린다.
 //
-// 그 건의 전 라인을 「작업 필요 / 차감 완료」 두 묶음으로 보여주고, 푸터에서 건 단위로 일괄차감한다.
+// 그 건의 전 라인을 「작업필요 / 차감 완료」 두 묶음으로 보여주고, 푸터에서 건 단위로 일괄차감한다.
 // 라인 탭 → FIFO 시트는 M1-5에서 붙는다.
 //
 // 🔴 **서버를 부르지 않는다**(M1-1). 라인은 부모가 `buildOrderLines(input, orderId)`로 파생해 넘긴다.
@@ -47,7 +47,7 @@ export function OrderDetailPanel({
     /**
      * 「다음 건 ›」이 따라갈 순서 — 패널을 **열 때 찍은 스냅샷**이다(부모가 만든다).
      *
-     * 🔴 살아 있는 목록을 그대로 쓰면 안 된다. 모바일 목록의 기본 필터가 「작업 필요」라,
+     * 🔴 살아 있는 목록을 그대로 쓰면 안 된다. 모바일 목록의 기본 필터가 「작업필요」라,
      * 이 건을 차감하는 순간 이 건이 목록에서 빠지고 뒤 건이 한 칸 당겨진다 —
      * 그 상태로 `indexOf + 1`을 하면 **바로 다음 건을 건너뛴다**.
      */
@@ -159,7 +159,7 @@ function Body({
 
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
                 {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
-                {work.length > 0 && <Group label={`작업 필요 · ${work.length}품목`} lines={work} />}
+                {work.length > 0 && <Group label={`작업필요 · ${work.length}품목`} lines={work} />}
                 {done.length > 0 && (
                     <DoneGroup lines={done} doneKg={totals.doneKg} collapsed={work.length > 0} />
                 )}
@@ -179,7 +179,7 @@ function Body({
 /**
  * 푸터 — 「무엇이 남았나」 한 줄과 행동 두 개.
  *
- * 🔴 **라인수와 버튼수는 분모가 다르다**(의도). `작업 필요 7라인`은 사람이 볼 줄 수라 매칭실패를
+ * 🔴 **라인수와 버튼수는 분모가 다르다**(의도). `작업필요 7품목`은 사람이 볼 줄 수라 매칭실패를
  * 포함하고, `6라인 일괄차감`은 버튼이 실제로 건드릴 줄 수라 매칭실패를 뺀다 — 실패 라인은 FIFO로
  * 풀리지 않고 품종 관리 보완 뒤 재매칭으로만 풀린다(2026-09-16 수동지정 철회).
  */
@@ -220,7 +220,7 @@ function Footer({
                 <>
                     <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-[12px] text-slate-500">
                         <span>
-                            작업 필요 <b className="text-foreground">{fmt(totals.workLines)}</b>품목
+                            작업필요 <b className="text-foreground">{fmt(totals.workLines)}</b>품목
                         </span>
                         <span>
                             · 남은 <b className="text-foreground">{fmtKg(totals.remainingKg)}</b>kg

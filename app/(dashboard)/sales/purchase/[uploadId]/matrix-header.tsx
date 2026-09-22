@@ -9,18 +9,10 @@ import type { Matrix, MatrixSort } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { fmt, fmtKg } from './matrix-layout'
+import { MATRIX_SORTS } from './status-meta'
 
 // 행 상태 라벨·색은 `status-meta.ts` 한 곳 — 매트릭스 행·건상세 줄·건목록 행이 같은 표를 쓴다.
 // 순서(심각도)는 lib `ROW_STATUS_ORDER`가 갖는다.
-
-// 순서·라벨은 핸드오프 §7(단, 「최신」은 뺐다 — 시트 안 행은 createdAt이 전부 같아 의미가 없다).
-// 발주처별이 기본 — 택배 시트는 같은 발주처가 흩어져 있어 원본 순서로는 블록이 안 잡힌다.
-// 발주처가 상수인 채널(이마트·해남급식)은 자연히 수령인 순.
-const SORTS: { key: MatrixSort; label: string }[] = [
-    { key: 'vendor', label: '발주처별' },
-    { key: 'recipient', label: '수령인 가나다' },
-    { key: 'needsWork', label: '작업필요' },
-]
 
 export function Header({
     header,
@@ -57,7 +49,7 @@ export function Header({
 
                 <div className="ml-auto flex items-center gap-1.5">
                     <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
-                    {SORTS.map((s) => (
+                    {MATRIX_SORTS.map((s) => (
                         <button
                             key={s.key}
                             type="button"
@@ -81,7 +73,7 @@ export function Header({
                         <p className="text-[12.5px] text-slate-500">
                             주문 <b className="text-foreground">{fmt(matrix.totals.orderedQty)}개</b> ·{' '}
                             <b className="text-foreground">{fmtKg(matrix.totals.orderedKg)}kg</b> 중{' '}
-                            <b className="text-amber-700">{matrix.totals.needsWorkRows}수령인</b>이 작업 필요
+                            <b className="text-amber-700">{matrix.totals.needsWorkRows}수령인</b>이 작업필요
                         </p>
                     )}
                     {unmatchedLines > 0 && (

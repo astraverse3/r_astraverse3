@@ -35,16 +35,9 @@ import {
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
-import { STATUS_META, QTY_TONE } from './status-meta'
+import { STATUS_META, QTY_TONE, MATRIX_SORTS } from './status-meta'
 
 const fmt = (n: number) => n.toLocaleString()
-
-/** 정렬 라벨 — 매트릭스 헤더와 같은 3종(lib `MatrixSort`) */
-const SORTS: { key: MatrixSort; label: string }[] = [
-    { key: 'vendor', label: '발주처별' },
-    { key: 'recipient', label: '수령인 가나다' },
-    { key: 'needsWork', label: '작업 필요 먼저' },
-]
 
 /**
  * 묶음 안에서 **반복되는 쪽**의 이름 — 그룹 헤더가 쓴다.
@@ -95,13 +88,13 @@ export function OrderListMobile({
     /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
     input: BuildMatrixInput
 }) {
-    /** 기본은 「작업 필요」 — 다 끝난 건을 먼저 보여 줄 이유가 없다(§3.2) */
+    /** 기본은 「작업필요」 — 다 끝난 건을 먼저 보여 줄 이유가 없다(§3.2) */
     const [onlyWork, setOnlyWork] = useState(true)
 
     /**
      * 펼친 행 (`detail === 'inline'`인 채널만). 택배는 건 상세를 열지 않는다.
      *
-     * 🔴 **형제 순서를 펼칠 때 스냅샷으로 잡는다.** 기본 필터가 「작업 필요」라 차감하면
+     * 🔴 **형제 순서를 펼칠 때 스냅샷으로 잡는다.** 기본 필터가 「작업필요」라 차감하면
      * 그 건이 목록에서 빠지고 뒤가 당겨진다 — 그때 「다음 건」을 지금 목록에서 찾으면
      * **한 건을 건너뛴다**(건 상세가 이미 같은 함정을 겪었다).
      */
@@ -113,7 +106,7 @@ export function OrderListMobile({
     /**
      * 발주처 그룹. **정렬된 순서를 흐트러뜨리지 않는다** — 먼저 나온 그룹이 먼저 선다.
      * 핸드오프 §3.1은 「건수 많은 발주처 먼저」지만, 그건 정렬이 발주처별일 때의 이야기다.
-     * 사용자가 「작업 필요 먼저」를 고른 상태에서 그룹을 건수순으로 다시 세우면 고른 정렬이 사라진다.
+     * 사용자가 「작업필요 먼저」를 고른 상태에서 그룹을 건수순으로 다시 세우면 고른 정렬이 사라진다.
      */
     const groups = useMemo(() => {
         /*
@@ -220,7 +213,7 @@ export function OrderListMobile({
             {/* 필터 · 정렬 */}
             <div className="flex items-center gap-1.5 border-y border-slate-200 bg-slate-50 px-3 py-2">
                 <FilterChip active={onlyWork} onClick={() => setOnlyWork(true)}>
-                    작업 필요 {fmt(workRows.length)}
+                    작업필요 {fmt(workRows.length)}
                 </FilterChip>
                 <FilterChip active={!onlyWork} onClick={() => setOnlyWork(false)}>
                     전체 {fmt(rows.length)}
@@ -229,10 +222,10 @@ export function OrderListMobile({
                 <DropdownMenu>
                     <DropdownMenuTrigger className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11.5px] font-semibold text-slate-500">
                         <ArrowUpDown className="h-3 w-3" />
-                        {SORTS.find((s) => s.key === sort)?.label}
+                        {MATRIX_SORTS.find((s) => s.key === sort)?.label}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        {SORTS.map((s) => (
+                        {MATRIX_SORTS.map((s) => (
                             <DropdownMenuItem key={s.key} onClick={() => onSort(s.key)} className="text-[13px]">
                                 <Check className={cn('h-3.5 w-3.5', sort === s.key ? 'opacity-100' : 'opacity-0')} />
                                 {s.label}
@@ -307,7 +300,7 @@ export function OrderListMobile({
                         onClick={() => onOpenGate(workIds)}
                         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[14px] font-semibold text-primary-foreground shadow-lg shadow-primary/25"
                     >
-                        작업 필요 {fmt(workRows.length)}건 검토
+                        작업필요 {fmt(workRows.length)}건 검토
                         <ChevronRight className="h-4 w-4" />
                     </button>
                 </div>
