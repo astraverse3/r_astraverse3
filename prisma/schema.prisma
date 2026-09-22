@@ -5,6 +5,10 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // 🔴 migrate 전용 직결 주소 — pooler(PgBouncer)는 세션을 돌려써서 `pg_advisory_lock`을
+  //    제대로 걸지 못한다. 2026-09-22 배포가 P1002로 깨졌다(백로그 §27).
+  //    런타임(url)은 pooler를 그대로 쓴다 — 서버리스는 커넥션 풀링이 필요하다.
+  directUrl = env("DIRECT_URL")
 }
 
 // 1. ProducerGroup (작목반 관리) - 인증정보는 여기서 관리
