@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { describeElement, record, recordRoute, flushTrace } from '@/lib/nav-trace'
+import { describeElement, record, recordRoute, flushTrace, stackHint } from '@/lib/nav-trace'
 
 /**
  * 네비게이션 덫 — 전역 리스너. UI가 없다(화면에 아무것도 그리지 않는다).
@@ -43,6 +43,33 @@ export function NavTrace() {
             flushTrace() // 앱이 숨겨질 때 확실히 저장
         }
 
+        /*
+         * 🔴 **클라이언트 라우팅이 지나가는 목을 지킨다** — 호출 지점을 미리 고르지 않는다.
+         *
+         * 2026-09-22 실측: 튄 2건의 직전 신호가 `<input 입력칸>`(8.3초 전)·`<span>`(1.0초 전)이라
+         * **용의자 A·B·C 어느 것도 아니었다.** 하나씩 계측하는 방식은 계측 안 한 자리로 빠져나간다.
+         * Next App Router는 어떤 경로로 옮겨가든 history API를 거치므로 여기서 감싸면 구멍이 없다.
+         *
+         * 🔴 **원본을 반드시 부르고 반환값을 그대로 넘긴다**(원칙 1) — 삼키면 앱이 멈춘다.
+         * 🔴 기록이 실패해도 라우팅은 진행된다(원칙 2) — record는 try 안에 둔다.
+         */
+        const origPush = history.pushState
+        const origReplace = history.replaceState
+        // `this`를 쓰지 않는다 — 쓰면 React Compiler가 이 함수를 건너뛴다. history.pushState는
+        // 늘 history에 묶여 호출되므로 수신자를 직접 적어도 동작이 같다.
+        const watch = (name: string, orig: typeof history.pushState) =>
+            (...args: Parameters<typeof history.pushState>) => {
+                try {
+                    const url = args[2]
+                    record('push', `history.${name} → ${url ?? '(url 없음)'} · ${stackHint(new Error().stack)}`)
+                } catch {
+                    // 무시 — 덫이 앱을 방해하지 않는다
+                }
+                return orig.apply(history, args)
+            }
+        history.pushState = watch('pushState', origPush)
+        history.replaceState = watch('replaceState', origReplace)
+
         window.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true })
         window.addEventListener('popstate', onPopState, { capture: true })
         window.addEventListener('online', onOnline)
@@ -65,6 +92,8 @@ export function NavTrace() {
             window.removeEventListener('online', onOnline)
             document.removeEventListener('visibilitychange', onVisibility)
             clearInterval(idle)
+            history.pushState = origPush
+            history.replaceState = origReplace
             flushTrace()
         }
     }, [])
@@ -87,11 +116,16 @@ export function NavTrace() {
  * `input`은 `describeElement`가 값 대신 종류만 남기도록 먼저 걸러낸다(§4.1).
  */
 function toDescribable(el: HTMLElement | null, depth = 0): Parameters<typeof describeElement>[0] {
-    if (!el || depth > 3) return null
+    // 🔴 깊이 제한이 **두 곳**에 있었다(여기와 `describeElement`의 maxDepth) — 한쪽만 풀면
+    // 효과가 없다. 3단계로는 행 전체를 감싼 링크가 `<span>`으로 뭉개져, 2026-09-22 기록의
+    // 「직전 `<span>`」이 링크였는지조차 가릴 수 없었다.
+    if (!el || depth > 12) return null
     return {
         tagName: el.tagName,
         isContentEditable: el.isContentEditable,
         trace: el.dataset?.trace ?? null,
+        // getAttribute를 쓴다 — `el.href`는 절대 URL이라 로그가 길어진다
+        href: el.getAttribute?.('href') ?? null,
         text: el.textContent,
         parent: toDescribable(el.parentElement, depth + 1),
     }

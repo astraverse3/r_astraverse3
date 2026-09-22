@@ -13,6 +13,7 @@ import {
     isSuspectRoute,
     elapsedLabel,
     formatEntry,
+    stackHint,
     type TraceEntry,
 } from './nav-trace'
 
@@ -386,4 +387,56 @@ test('formatEntry: 날짜·시각·종류·내용이 한 줄에 담긴다', () =
 test('formatEntry: 좌표가 있으면 덧붙인다', () => {
     const r = formatEntry({ t: Date.now(), kind: 'pointer', detail: '<button> 수정', x: 120, y: 700 })
     assert.ok(r.endsWith('(120,700)'))
+})
+
+// --- 라우팅 호출자 추적 (2026-09-22 보강) --------------------------------
+
+test('stackHint: 앱 코드 프레임만 남긴다 — 덫 자신과 node_modules는 버린다', () => {
+    const stack = [
+        'Error',
+        '    at watch (webpack-internal:///./components/nav-trace.tsx:41:21)',
+        '    at push (webpack-internal:///./node_modules/next/dist/client/app-router.js:120:5)',
+        '    at handleApply (webpack-internal:///./app/(dashboard)/milling/milling-filters.tsx:119:16)',
+        '    at onClick (webpack-internal:///./app/(dashboard)/milling/page.tsx:12:3)',
+    ].join('\n')
+    const r = stackHint(stack)
+    assert.ok(!r.includes('nav-trace'), '덫 자신은 답이 아니다')
+    assert.ok(!r.includes('app-router'), 'node_modules는 답이 아니다')
+    assert.equal(r, 'milling-filters.tsx:119 ← page.tsx:12')
+})
+
+test('stackHint: 개수를 넘기면 앞에서 자른다', () => {
+    const stack = ['Error', '    at a (./a.tsx:1:1)', '    at b (./b.tsx:2:2)', '    at c (./c.tsx:3:3)'].join('\n')
+    assert.equal(stackHint(stack, 2), 'a.tsx:1 ← b.tsx:2')
+})
+
+test('stackHint: 스택이 없거나 앱 프레임이 하나도 없으면 조용히 답한다', () => {
+    assert.equal(stackHint(undefined), '')
+    assert.equal(stackHint('Error\n    at x (./node_modules/react/index.js:1:1)'), '(앱 프레임 없음)')
+})
+
+// --- 깊이 제한 해제 · href 기록 -------------------------------------------
+
+/** 조상 체인을 만든다 — 맨 앞이 클릭 대상 */
+const chain = (...tags: string[]) =>
+    tags.reduceRight<Parameters<typeof describeElement>[0]>(
+        (parent, tagName) => ({ tagName, isContentEditable: false, trace: null, text: null, parent }),
+        null,
+    )
+
+test('describeElement: 3단계보다 깊은 조상의 링크도 찾아낸다 (옛 maxDepth=3의 한계)', () => {
+    // span → div → div → div → a : 옛 제한이면 `<span>`으로 뭉개졌다
+    const el = chain('span', 'div', 'div', 'div', 'a')
+    const r = describeElement(el)
+    assert.ok(r.startsWith('<a>'), `링크를 찾아야 한다: ${r}`)
+})
+
+test('describeElement: `<a>`면 목적지를 함께 남긴다', () => {
+    const el = { tagName: 'A', isContentEditable: false, trace: null, href: '/milling', text: '도정관리', parent: null }
+    assert.equal(describeElement(el), '<a> 도정관리 → /milling')
+})
+
+test('describeElement: `<button>`은 href를 붙이지 않는다', () => {
+    const el = { tagName: 'BUTTON', isContentEditable: false, trace: null, href: '/x', text: '원물', parent: null }
+    assert.equal(describeElement(el), '<button> 원물')
 })

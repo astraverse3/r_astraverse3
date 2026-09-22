@@ -33,7 +33,7 @@ export const TRACE_KEY = 'mill-nav-trace'
 export const TRACE_ROUTE_KEY = 'mill-nav-trace-routes'
 
 /** 일반 버퍼 상한. 넘으면 오래된 것부터 버린다. */
-export const TRACE_LIMIT = 200
+export const TRACE_LIMIT = 400
 /**
  * 경로 변경은 **따로** 보관한다(계획서 §8.3).
  * 튄 뒤에도 앱을 계속 쓰면 일반 버퍼에서 밀려나는데, 정작 그게 제일 중요한 기록이다.
@@ -81,10 +81,12 @@ export function describeElement(
         tagName: string
         isContentEditable: boolean
         trace: string | null
+        /** `<a>`의 href — 「어디로 가는 링크였나」. 입력값이 아니라 마크업이다 */
+        href?: string | null
         text: string | null
         parent: unknown
     } | null,
-    maxDepth = 3,
+    maxDepth = 12,
 ): string {
     let cur = el
     let depth = 0
@@ -94,7 +96,9 @@ export function describeElement(
         if (isUserInputElement(cur.tagName, cur.isContentEditable)) return `<${tag} 입력칸>`
         if (tag === 'button' || tag === 'a') {
             const label = normalizeLabel(cur.text)
-            return label ? `<${tag}> ${label}` : `<${tag}>`
+            // `<a>`면 목적지까지 남긴다 — 이게 `/milling`이면 링크 클릭으로 즉시 확정된다.
+            const to = tag === 'a' && cur.href ? ` → ${cur.href}` : ''
+            return label ? `<${tag}> ${label}${to}` : `<${tag}>${to}`
         }
         cur = cur.parent as typeof cur
         depth += 1
@@ -303,4 +307,27 @@ export function clearTrace(): void {
     } catch {
         // 무시
     }
+}
+
+/**
+ * 스택에서 **앱 코드 프레임만** 남긴다 — 「누가 라우팅을 불렀나」의 답이 여기 있다.
+ *
+ * 🔴 용의자를 하나씩 계측하는 방식은 놓친 곳이 생긴다. 2026-09-22 실측에서
+ * 튄 2건의 직전 신호가 `<input 입력칸>`(8.3초 전)·`<span>`(1.0초 전)이었고
+ * **용의자 A·B·C 어느 것도 아니었다** — 계측이 걸린 자리로는 이동이 오지 않았다.
+ * 그래서 호출 지점을 미리 고르지 않고, 라우팅이 지나가는 목을 지킨다.
+ *
+ * 덫 자신과 프레임워크 내부 프레임은 버린다 — 답이 아니다.
+ */
+export function stackHint(stack: string | undefined, max = 3): string {
+    if (!stack) return ''
+    const picked: string[] = []
+    for (const raw of stack.split('\n').slice(1)) {
+        const line = raw.trim()
+        if (/nav-trace|node_modules/.test(line)) continue
+        const m = line.match(/([\w.-]+\.(?:tsx|ts|jsx|js)):(\d+)/)
+        if (m) picked.push(`${m[1]}:${m[2]}`)
+        if (picked.length >= max) break
+    }
+    return picked.length > 0 ? picked.join(' ← ') : '(앱 프레임 없음)'
 }
