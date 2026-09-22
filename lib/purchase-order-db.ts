@@ -97,7 +97,7 @@ export async function applyAllocations(
   const addQty = args.allocations.reduce((s, a) => s + a.count, 0)
   if (addQty <= 0) return 0
   if (args.guard === 'open') {
-    if (already >= args.orderedQty) throw new Error('이미 전부 차감된 라인입니다.')
+    if (already >= args.orderedQty) throw new Error('이미 전부 차감된 품목입니다.')
   } else if (already + addQty > args.orderedQty) {
     throw new Error(`주문수량(${args.orderedQty})을 초과한 차감입니다.`)
   }

@@ -213,7 +213,7 @@ function Editor({
         <>
             <div className="flex items-center gap-1.5 border-b border-slate-100 px-3.5 py-2 text-[11px]">
                 <Sparkles className="h-3 w-3 text-primary" />
-                <span className="font-semibold text-slate-500">FIFO 추천 · 오래된 로트부터</span>
+                <span className="font-semibold text-slate-500">오래된 로트부터 추천</span>
                 <span className="ml-auto text-slate-500">
                     합계{' '}
                     <b className={cn('tabular-nums', over ? 'text-red-600' : 'text-foreground')}>{fmt(sum)}</b>

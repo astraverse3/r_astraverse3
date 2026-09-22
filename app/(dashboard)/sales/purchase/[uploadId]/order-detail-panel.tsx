@@ -146,7 +146,7 @@ function Body({
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
                     <span className="text-slate-500">
-                        <b className="text-slate-700">{lines.length}</b>라인
+                        <b className="text-slate-700">{lines.length}</b>품목
                     </span>
                     {ROW_STATUS_ORDER.map((k) => {
                         const n = lines.filter((l) => l.status === k).length
@@ -161,8 +161,8 @@ function Body({
             </SheetHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
-                {lines.length === 0 && <p className="text-[12.5px] text-slate-400">라인이 없습니다.</p>}
-                {work.length > 0 && <Group label={`작업 필요 · ${work.length}라인`} lines={work} />}
+                {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
+                {work.length > 0 && <Group label={`작업 필요 · ${work.length}품목`} lines={work} />}
                 {done.length > 0 && (
                     <DoneGroup lines={done} doneKg={totals.doneKg} collapsed={work.length > 0} />
                 )}
@@ -223,7 +223,7 @@ function Footer({
                 <>
                     <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-[12px] text-slate-500">
                         <span>
-                            작업 필요 <b className="text-foreground">{fmt(totals.workLines)}</b>라인
+                            작업 필요 <b className="text-foreground">{fmt(totals.workLines)}</b>품목
                         </span>
                         <span>
                             · 남은 <b className="text-foreground">{fmtKg(totals.remainingKg)}</b>kg
@@ -246,8 +246,8 @@ function Footer({
                             onClick={onBatch}
                         >
                             {totals.batchLines > 0
-                                ? `${fmt(totals.batchLines)}라인 FIFO 일괄차감`
-                                : '차감할 라인이 없습니다'}
+                                ? `${fmt(totals.batchLines)}품목 일괄차감`
+                                : '차감할 품목이 없습니다'}
                         </Button>
                         {nextButton}
                     </div>

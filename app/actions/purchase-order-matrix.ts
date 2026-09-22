@@ -125,7 +125,7 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
       },
     })
 
-    if (!upload) return { success: false, error: '묶음을 찾을 수 없습니다.' }
+    if (!upload) return { success: false, error: '시트를 찾을 수 없습니다.' }
 
     const items: MatrixItemInput[] = upload.orders.flatMap((o) =>
       o.items.map((it) => ({
@@ -263,17 +263,17 @@ export type CellMutationResult =
 
 /** 셀의 라인들을 읽고 한 SKU·한 건인지 확인한다. 아니면 던진다(호출부 catch). */
 async function loadCellItems(tx: Prisma.TransactionClient, itemIds: number[]) {
-  if (itemIds.length === 0) throw new Error('셀에 라인이 없습니다.')
+  if (itemIds.length === 0) throw new Error('셀에 품목이 없습니다.')
   const items = await tx.purchaseOrderItem.findMany({
     where: { id: { in: itemIds } },
     select: { id: true, orderId: true, orderedQty: true, unitWeightKg: true, productTypeId: true },
     orderBy: { id: 'asc' },
   })
-  if (items.length !== itemIds.length) throw new Error('라인을 찾을 수 없습니다.')
+  if (items.length !== itemIds.length) throw new Error('품목을 찾을 수 없습니다.')
   const productTypeId = items[0].productTypeId
-  if (productTypeId === null) throw new Error('매칭되지 않은 라인입니다. 먼저 품종을 지정하세요.')
+  if (productTypeId === null) throw new Error('매칭되지 않은 품목입니다. 먼저 품종을 지정하세요.')
   if (items.some((it) => it.productTypeId !== productTypeId || it.orderId !== items[0].orderId)) {
-    throw new Error('한 셀의 라인이 아닙니다.')
+    throw new Error('한 셀의 품목이 아닙니다.')
   }
   return { items, productTypeId, orderId: items[0].orderId }
 }
@@ -553,7 +553,7 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
   try {
     const { items, productTypeId } = await loadCellItems(prisma, itemIds)
     if (items.some((it) => it.unitWeightKg === null)) {
-      return { success: false, error: '톤백 라인이 아닙니다.' }
+      return { success: false, error: '톤백 품목이 아닙니다.' }
     }
 
     const [movements, pkgs] = await Promise.all([

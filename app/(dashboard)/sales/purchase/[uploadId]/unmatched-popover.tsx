@@ -95,7 +95,7 @@ export function UnmatchedBody({ cell }: { cell: ActiveCell }) {
             <p className="border-b border-slate-100 px-3.5 py-1.5 text-[11px] text-slate-500">
                 이 품목 열{' '}
                 <b className="text-foreground">
-                    {fmt(data.scope.recipientCount)}수령인 · {fmt(data.scope.lineCount)}라인
+                    {fmt(data.scope.recipientCount)}수령인 · {fmt(data.scope.lineCount)}품목
                 </b>{' '}
                 ({fmt(data.scope.orderedQty)}개)이 같이 막혀 있어요
             </p>

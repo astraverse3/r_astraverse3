@@ -165,7 +165,7 @@ export function UploadDialog({ compact = false }: { compact?: boolean }) {
         }
         const { bundleCount, orderCount, itemCount, failed } = res.summary
         toast.success(
-            `묶음 ${bundleCount}건 등록 — 수령인 ${orderCount} · 라인 ${itemCount}` +
+            `시트 ${bundleCount}건 등록 — 수령인 ${orderCount} · 품목 ${itemCount}` +
                 (failed > 0 ? ` (매칭실패 ${failed})` : ''),
         )
         if (res.warnings.length > 0) {
@@ -207,8 +207,8 @@ export function UploadDialog({ compact = false }: { compact?: boolean }) {
                     <DialogTitle>{sheets ? '올릴 시트 선택' : '발주서 등록'}</DialogTitle>
                     <DialogDescription>
                         {sheets
-                            ? '체크한 시트마다 묶음 1건이 생성됩니다.'
-                            : '시트 1개 = 묶음 1건 · 파일을 올리면 시트 목록을 보여드려요.'}
+                            ? '체크한 시트마다 1건씩 등록됩니다.'
+                            : '파일을 올리면 시트 목록을 보여드려요.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -242,7 +242,7 @@ export function UploadDialog({ compact = false }: { compact?: boolean }) {
                                 <div>시트명</div>
                                 <div>채널</div>
                                 <div>발주일</div>
-                                <div className="text-right">건 / 라인</div>
+                                <div className="text-right">건 / 품목</div>
                                 <div>확인 필요</div>
                             </div>
                             {sheets.map((s) => (
@@ -278,9 +278,8 @@ export function UploadDialog({ compact = false }: { compact?: boolean }) {
                                 </span>
                             ) : (
                                 <>
-                                    <b className="text-slate-900">{checkedSheets.length}</b>개 시트 → 묶음{' '}
-                                    <b className="text-slate-900">{checkedSheets.length}</b>건 · 라인{' '}
-                                    <b className="text-slate-900">{totalLines}</b>
+                                    시트 <b className="text-slate-900">{checkedSheets.length}</b>개 · 품목{' '}
+                                    <b className="text-slate-900">{totalLines}</b>개
                                 </>
                             )}
                         </span>

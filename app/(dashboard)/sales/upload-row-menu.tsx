@@ -49,8 +49,8 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
 
     const handleDelete = async () => {
         const ok = await confirmDialog({
-            title: '묶음 삭제',
-            description: `${row.sheetName} 묶음과 그 안의 발주 건·라인을 모두 삭제할까요?\n되돌릴 수 없어요.`,
+            title: '시트 삭제',
+            description: `${row.sheetName} 시트와 그 안의 발주 건·품목을 모두 삭제할까요?\n되돌릴 수 없어요.`,
             confirmText: '삭제',
             destructive: true,
         })
@@ -61,7 +61,7 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
             toast.error(res.error)
             return
         }
-        toast.success('묶음을 삭제했어요.')
+        toast.success('시트를 삭제했어요.')
         router.refresh()
     }
 
@@ -71,7 +71,7 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400">
                         <MoreVertical className="w-4 h-4" />
-                        <span className="sr-only">묶음 메뉴</span>
+                        <span className="sr-only">시트 메뉴</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
@@ -93,11 +93,11 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
                         className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                     >
                         <Trash2 className="w-3.5 h-3.5" />
-                        묶음 삭제
+                        시트 삭제
                     </DropdownMenuItem>
                     {!row.deletable && (
                         <p className="px-2 pt-1 pb-1.5 text-[10.5px] text-slate-400 leading-snug">
-                            차감된 라인이 있어 삭제할 수 없어요
+                            차감된 품목이 있어 삭제할 수 없어요
                         </p>
                     )}
                 </DropdownMenuContent>

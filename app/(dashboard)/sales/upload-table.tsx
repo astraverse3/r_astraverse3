@@ -182,14 +182,14 @@ export function UploadTable({
                         <p className="text-sm text-slate-500">
                             {rows.length === 0
                                 ? '아직 올린 발주서가 없어요. 발주서 등록으로 시작해 보세요.'
-                                : '이 채널의 묶음이 없어요.'}
+                                : '이 채널의 시트가 없어요.'}
                         </p>
                     </div>
                 )}
             </div>
 
             <p className="text-[11.5px] text-slate-400 px-1">
-                묶음 1건 = 시트 1장 · 상차 임박순으로 정렬돼요 — 먼저 나갈 것이 먼저 포장되도록. 매트릭스 차감 화면은 다음 단계에서 연결됩니다.
+                상차 임박순으로 정렬돼요 — 먼저 나갈 것이 먼저 포장되도록.
             </p>
         </div>
     )

@@ -197,7 +197,7 @@ export async function previewBatch(orderIds: number[]): Promise<BatchPreviewResu
     if (ids.length === 0) return { success: false, error: '선택된 수령처가 없습니다.' }
 
     const items = await loadItems(prisma, ids)
-    if (items.length === 0) return { success: false, error: '선택한 건에 라인이 없습니다.' }
+    if (items.length === 0) return { success: false, error: '선택한 건에 품목이 없습니다.' }
 
     const [allocated, { pools, weights }] = await Promise.all([
       loadAllocated(prisma, items.map((it) => it.id)),
@@ -240,7 +240,7 @@ export async function confirmBatch(
           }),
           loadItems(tx, ids),
         ])
-        if (items.length === 0) throw new Error('선택한 건에 라인이 없습니다.')
+        if (items.length === 0) throw new Error('선택한 건에 품목이 없습니다.')
 
         const allocated = await loadAllocated(tx, items.map((it) => it.id))
         const { pools, weights } = await loadPools(tx, skuIdsOf(items))
@@ -250,7 +250,7 @@ export async function confirmBatch(
         if (fingerprintBatchPlan(plan) !== fingerprint) {
           return { mismatch: true as const, preview: toPreview(plan) }
         }
-        if (plan.lines.length === 0) throw new Error('차감할 라인이 없습니다.')
+        if (plan.lines.length === 0) throw new Error('차감할 품목이 없습니다.')
 
         // ① 차감 — 라인 루프가 아니라 한 번에 넣는다
         const occurredAt = new Date()

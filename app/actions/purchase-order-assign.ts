@@ -81,7 +81,7 @@ export async function getUnmatchedCellOptions(
 ): Promise<UnmatchedCellOptionsResult> {
   await requirePermission('OPERATION_MANAGE')
   try {
-    if (itemIds.length === 0) return { success: false, error: '셀에 라인이 없습니다.' }
+    if (itemIds.length === 0) return { success: false, error: '셀에 품목이 없습니다.' }
 
     const clicked = await prisma.purchaseOrderItem.findMany({
       where: { id: { in: itemIds } },
@@ -95,9 +95,9 @@ export async function getUnmatchedCellOptions(
         order: { select: { uploadId: true } },
       },
     })
-    if (clicked.length !== itemIds.length) return { success: false, error: '라인을 찾을 수 없습니다.' }
+    if (clicked.length !== itemIds.length) return { success: false, error: '품목을 찾을 수 없습니다.' }
     if (clicked.some((it) => it.productTypeId !== null)) {
-      return { success: false, error: '이미 지정된 라인이 섞여 있습니다. 새로고침해 주세요.' }
+      return { success: false, error: '이미 지정된 품목이 섞여 있습니다. 새로고침해 주세요.' }
     }
     const head = clicked[0]
     const sameCombo = (it: (typeof clicked)[number]) =>
@@ -105,7 +105,7 @@ export async function getUnmatchedCellOptions(
       it.packageType === head.packageType &&
       it.rawPackaging === head.rawPackaging &&
       it.unitWeightKg === head.unitWeightKg
-    if (!clicked.every(sameCombo)) return { success: false, error: '한 셀의 라인이 아닙니다.' }
+    if (!clicked.every(sameCombo)) return { success: false, error: '한 셀의 품목이 아닙니다.' }
 
     // 열 전체 — 같은 묶음 안에서 원본 조합이 같고 아직 매칭 안 된 라인
     const column = await prisma.purchaseOrderItem.findMany({

@@ -144,7 +144,7 @@ export function ReviewGateDialog({
                                     <span className="text-[15px] font-semibold text-slate-500">kg</span>
                                 </p>
                                 <p className="text-[12.5px] text-slate-500">
-                                    포장 {fmt(t.units)}개 · 로트 {fmt(t.lots)}개
+                                    포장 {fmt(t.units)}개 · 로트 {fmt(t.lots)}개 · 오래된 것부터
                                 </p>
                             </div>
 
@@ -167,7 +167,7 @@ export function ReviewGateDialog({
                                             <Tally n={t.none} label="재고없음 · 차감 0" dot="bg-orange-400" />
                                         )}
                                         <Tally n={t.unmatched} label="제외 · 매칭실패" dot="bg-red-500" />
-                                        <span className="text-slate-400">{fmt(barTotal)}라인 구성</span>
+                                        <span className="text-slate-400">{fmt(barTotal)}품목 구성</span>
                                     </div>
                                 </div>
                             )}
@@ -177,7 +177,7 @@ export function ReviewGateDialog({
                                 <div className="flex gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
                                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                                     <div className="min-w-0 text-[13px] leading-relaxed text-red-700">
-                                        <b>{fmt(t.unmatched)}라인은 SKU가 매칭되지 않아 차감할 수 없습니다.</b>
+                                        <b>{fmt(t.unmatched)}품목은 SKU가 매칭되지 않아 차감할 수 없습니다.</b>
                                         <br />
                                         {/* 수동지정은 없다(c2fc6f3) — 마스터를 고치고 재매칭하는 길뿐이다 */}
                                         품종 관리에서 별칭을, 제품유형 관리에서 규격을 보완한 뒤 매트릭스 상단{' '}
@@ -185,7 +185,7 @@ export function ReviewGateDialog({
                                             <RefreshCw className="h-3 w-3" />
                                             재매칭
                                         </span>
-                                        을 누르면 다시 붙습니다. 지금 확정해도 이 라인들은 남습니다.
+                                        을 누르면 다시 붙습니다. 지금 확정해도 이 품목들은 남습니다.
                                     </div>
                                 </div>
                             )}
@@ -194,7 +194,7 @@ export function ReviewGateDialog({
                             {t.bulk > 0 && (
                                 <p className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12.5px] text-slate-600">
                                     <PackageX className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                    톤백 {fmt(t.bulk)}라인은 자루를 직접 골라야 해서 빠집니다 — 셀을 눌러 처리하세요.
+                                    톤백 {fmt(t.bulk)}품목은 자루를 직접 골라야 해서 빠집니다 — 셀을 눌러 처리하세요.
                                 </p>
                             )}
 
@@ -236,7 +236,7 @@ export function ReviewGateDialog({
                                 title="재고없음 · 이번엔 차감되지 않음"
                                 count={t.none}
                                 tone="orange"
-                                note="가용 재고가 0이라 확정해도 이 라인은 그대로 남습니다"
+                                note="가용 재고가 0이라 확정해도 이 품목은 그대로 남습니다"
                                 rows={preview.shortages
                                     .filter((s) => s.allocated === 0)
                                     .map((s) => ({
@@ -250,13 +250,13 @@ export function ReviewGateDialog({
 
                             {t.done > 0 && (
                                 <p className="text-[12px] text-slate-400">
-                                    이미 전량 차감된 {fmt(t.done)}라인은 건드리지 않습니다.
+                                    이미 전량 차감된 {fmt(t.done)}품목은 건드리지 않습니다.
                                 </p>
                             )}
 
                             {preview.confirmLines === 0 && (
                                 <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] font-medium text-slate-600">
-                                    지금 차감할 수 있는 라인이 없습니다.
+                                    지금 차감할 수 있는 품목이 없습니다.
                                 </p>
                             )}
                         </>
@@ -278,7 +278,7 @@ export function ReviewGateDialog({
                         >
                             {confirming
                                 ? '차감 중…'
-                                : `${fmt(preview?.confirmLines ?? 0)}라인 차감 확정`}
+                                : `${fmt(preview?.confirmLines ?? 0)}품목 차감 확정`}
                         </Button>
                     </div>
                 </DialogFooter>
@@ -358,7 +358,7 @@ function IssueList({
                             {/* 🔴 min-w-0 — 없으면 긴 품목명이 칸의 하한이 되어 오른쪽 수치를 밀어낸다 */}
                             <span className="min-w-0 flex-1">
                                 <span className="block truncate text-[12.5px] font-semibold text-foreground">
-                                    {at?.who ?? `라인 ${r.itemId}`}
+                                    {at?.who ?? `품목 ${r.itemId}`}
                                 </span>
                                 <span className="block truncate text-[11.5px] text-slate-500">
                                     {at?.what ?? '—'}

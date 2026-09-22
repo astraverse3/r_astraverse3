@@ -233,13 +233,13 @@ export function MatrixClient({
                 return
             }
             if (r.matchedLines === 0) {
-                toast.info(`새로 붙은 라인이 없어요. ${r.stillUnmatched}라인이 그대로 실패입니다.`)
+                toast.info(`새로 붙은 품목이 없어요. ${r.stillUnmatched}품목이 그대로 실패입니다.`)
                 return
             }
             applyMatches(r.patches)
             toast.success(
-                `${r.matchedLines}라인이 매칭됐어요` +
-                    (r.stillUnmatched > 0 ? ` · ${r.stillUnmatched}라인 남음` : ''),
+                `${r.matchedLines}품목이 매칭됐어요` +
+                    (r.stillUnmatched > 0 ? ` · ${r.stillUnmatched}품목 남음` : ''),
             )
         })
 
@@ -529,7 +529,7 @@ export function MatrixClient({
                     applyBatchPatch(patch)
                     setGateOpen(false)
                     setSelected(new Set())
-                    toast.success(`${fmt(summary.lines)}라인 · ${fmt(summary.units)}개를 차감했어요`)
+                    toast.success(`${fmt(summary.lines)}품목 · ${fmt(summary.units)}개를 차감했어요`)
                 }}
                 onJump={(itemId) => {
                     const at = lineIndex.get(itemId)
@@ -886,7 +886,7 @@ function Header({
                     {unmatchedLines > 0 && (
                         <>
                             <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11.5px] font-bold text-red-600">
-                                매칭실패 {fmt(unmatchedLines)}라인
+                                매칭실패 {fmt(unmatchedLines)}품목
                             </span>
                             {/* 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R) */}
                             <button

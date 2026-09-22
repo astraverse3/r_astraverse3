@@ -18,7 +18,7 @@ export default async function AdminSettingsPage() {
             {/* 긴 카드를 먼저 — 두 컬럼 높이가 자동으로 맞는다 */}
             <SettingSection
                 title="배송업체"
-                description="발주서 묶음의 배송업체 목록입니다. 순서를 바꾸면 등록 화면 드롭다운에도 같은 순서로 나옵니다."
+                description="발주서 시트의 배송업체 목록입니다. 순서를 바꾸면 등록 화면 드롭다운에도 같은 순서로 나옵니다."
             >
                 <ShippingVendorSection vendors={vendors} />
             </SettingSection>

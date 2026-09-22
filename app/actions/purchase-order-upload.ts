@@ -397,7 +397,7 @@ export async function uploadPurchaseOrder(
         success: false,
         duplicate: true,
         conflicts: dups.map((s) => ({ sheetName: s.sheetName, orderDate: s.orderDate })),
-        message: `이미 적재된 시트입니다(${dups.map((s) => s.sheetName).join(', ')}). 다시 올리려면 묶음 목록에서 기존 묶음을 삭제해 주세요.`,
+        message: `이미 적재된 시트입니다(${dups.map((s) => s.sheetName).join(', ')}). 다시 올리려면 시트 목록에서 기존 시트를 삭제해 주세요.`,
       }
     }
 

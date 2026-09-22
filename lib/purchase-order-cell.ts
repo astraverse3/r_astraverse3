@@ -73,7 +73,7 @@ export function splitAllocationsByLine(
       const slot = slots[cursor]
       if (!slot) {
         // 남은 라인이 없다 — 톤백이면 마지막 라인에 통째로 붙인다
-        if (!overflowLast) throw new Error('배분을 받을 라인이 남지 않았습니다.')
+        if (!overflowLast) throw new Error('배분을 받을 품목이 남지 않았습니다.')
         pushTo(out, slots[slots.length - 1].itemId, { packageId: a.packageId, count: need })
         need = 0
         break

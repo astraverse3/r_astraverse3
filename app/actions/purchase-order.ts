@@ -173,7 +173,7 @@ export async function deletePurchaseOrder(
       where: { orderItem: { orderId } },
     })
     if (movementCount > 0) {
-      return { success: false, error: '차감된 라인이 있어 삭제할 수 없습니다. 먼저 차감을 취소하세요.' }
+      return { success: false, error: '차감된 품목이 있어 삭제할 수 없습니다. 먼저 차감을 취소하세요.' }
     }
     await prisma.purchaseOrder.delete({ where: { id: orderId } }) // item Cascade
     await recordAuditLog({

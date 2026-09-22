@@ -317,7 +317,7 @@ function OrderRow({
                         </span>
                     )}
                 </span>
-                <span className="mt-0.5 block text-[10.5px] text-slate-400">{lines}라인</span>
+                <span className="mt-0.5 block text-[10.5px] text-slate-400">{lines}품목</span>
             </span>
             <span className={cn('shrink-0 text-[12px] font-bold tabular-nums', QTY_TONE[row.status])}>
                 {fmt(row.allocatedQty)}/{fmt(row.orderedQty)}

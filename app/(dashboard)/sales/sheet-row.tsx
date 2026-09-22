@@ -78,7 +78,7 @@ export function SheetRow({
                     {/* 모바일에서는 컬럼이 접히므로 요약을 한 줄로 */}
                     <p className="sm:hidden text-[11px] text-slate-400">
                         {sheet.recognized
-                            ? `${sheet.orderCount}건 / ${sheet.itemCount}라인`
+                            ? `${sheet.orderCount}건 / ${sheet.itemCount}품목`
                             : sheet.reason}
                     </p>
                 </div>
@@ -162,7 +162,7 @@ export function SheetRow({
                             className="w-full px-3 py-2 text-[12px] text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none"
                         />
                         <div className="flex items-center justify-between px-3 py-1 bg-slate-50 border-t border-slate-100">
-                            <span className="text-[10.5px] text-slate-400">이 묶음에 그대로 저장됩니다</span>
+                            <span className="text-[10.5px] text-slate-400">이 시트에 그대로 저장됩니다</span>
                             <span className="text-[10.5px] text-slate-400">
                                 {draft.note.length} / {NOTE_MAX}
                             </span>

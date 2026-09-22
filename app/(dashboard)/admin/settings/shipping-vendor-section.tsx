@@ -201,7 +201,7 @@ export function ShippingVendorSection({ vendors }: Props) {
             {inactiveVendors.length > 0 && (
                 <div className="-mx-2 mt-2 pt-2 border-t border-slate-100">
                     <p className="text-[11px] text-slate-400 px-2 pb-1">
-                        미사용 — 등록 화면에는 안 뜨지만 과거 발주서 묶음에는 그대로 남습니다.
+                        미사용 — 등록 화면에는 안 뜨지만 과거 발주서 시트에는 그대로 남습니다.
                     </p>
                     {inactiveVendors.map((vendor, index) => renderRow(vendor, index, inactiveVendors))}
                 </div>
