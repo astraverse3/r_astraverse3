@@ -40,14 +40,28 @@ export type ChannelDecl = {
   constantSide: 'vendor' | 'recipient' | null
   /** 이름 열 머리 — `수령인` · `발주처` · `거래처`만 쓴다(§7 용어) */
   columnLabel: '수령인' | '발주처' | '거래처'
+  /**
+   * 모바일에서 건을 여는 방식.
+   *
+   * - `inline` — 목록 안에서 행이 펼쳐진다. 건 상세 화면이 없다
+   * - `sheet`  — 건 상세 화면(Sheet)을 연다
+   *
+   * 🔴 **데이터가 아니라 채널로 가른다**(2026-09-22 결정). 건수·평균 품목수로 판정하면
+   * 같은 채널인데 **시트마다 화면이 달라져** 「이 채널은 이렇게 쓰는 것」이라는 학습이 안 선다.
+   * 다음 주 택배가 3건만 들어와도 화면이 바뀌어서는 안 된다.
+   */
+  detail: 'inline' | 'sheet'
 }
 
+// `detail`의 근거는 **건당 품목 수**다(실측 2026-09-22).
+//   택배 67건 · 평균 1.18품목(1품목 건이 58) → 건 상세를 열어도 카드 한 장이라 깊이만 는다
+//   나머지 1~3건 · 건당 3~8품목      → 목록 안에서 펼치면 목록이 아니라 스크롤이 된다
 export const CHANNEL_DECL: Record<PurchaseChannel, ChannelDecl> = {
-  DELIVERY: { primary: 'recipient', constantSide: null, columnLabel: '수령인' },
-  EMART: { primary: 'recipient', constantSide: 'vendor', columnLabel: '수령인' },
-  MEAL_SEOUL: { primary: 'vendor', constantSide: 'recipient', columnLabel: '발주처' },
-  MEAL_HAENAM: { primary: 'recipient', constantSide: 'vendor', columnLabel: '수령인' },
-  CORPORATE: { primary: 'single', constantSide: 'vendor', columnLabel: '거래처' },
+  DELIVERY: { primary: 'recipient', constantSide: null, columnLabel: '수령인', detail: 'inline' },
+  EMART: { primary: 'recipient', constantSide: 'vendor', columnLabel: '수령인', detail: 'sheet' },
+  MEAL_SEOUL: { primary: 'vendor', constantSide: 'recipient', columnLabel: '발주처', detail: 'sheet' },
+  MEAL_HAENAM: { primary: 'recipient', constantSide: 'vendor', columnLabel: '수령인', detail: 'sheet' },
+  CORPORATE: { primary: 'single', constantSide: 'vendor', columnLabel: '거래처', detail: 'sheet' },
 }
 
 /**

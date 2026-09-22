@@ -303,6 +303,7 @@ export function MatrixClient({
                     rematching={rematching}
                     onRematch={runRematch}
                     onOpenDetail={openDetail}
+                    input={input}
                     onOpenGate={(ids) => {
                         setSelected(new Set(ids))
                         setGateOpen(true)

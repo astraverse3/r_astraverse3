@@ -11,8 +11,9 @@
 //    그래서 만들지 않았다 — 핸드오프 §2.0).
 // 🔴 상태 색·라벨은 `status-meta.ts` 한 곳. 판정은 lib `cellStatusOf` 한 곳.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { ChevronRight, RefreshCw, ArrowUpDown, Check } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -21,7 +22,17 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { channelLabel, isSpareRow, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
-import { ROW_STATUS_ORDER, type Matrix, type MatrixRow, type MatrixSort } from '@/lib/purchase-order-matrix'
+import { LineCard } from './order-line-card'
+import {
+    ROW_STATUS_ORDER,
+    buildOrderLines,
+    rowNoteOf,
+    sumOrderLines,
+    type BuildMatrixInput,
+    type Matrix,
+    type MatrixRow,
+    type MatrixSort,
+} from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { STATUS_META, QTY_TONE } from './status-meta'
@@ -34,11 +45,6 @@ const SORTS: { key: MatrixSort; label: string }[] = [
     { key: 'recipient', label: '수령인 가나다' },
     { key: 'needsWork', label: '작업 필요 먼저' },
 ]
-
-/** 그 건의 라인 수 — 셀에 담긴 itemId를 센다 */
-function lineCountOf(row: MatrixRow): number {
-    return Object.values(row.cells).reduce((s, c) => s + c.itemIds.length, 0)
-}
 
 /**
  * 묶음 안에서 **반복되는 쪽**의 이름 — 그룹 헤더가 쓴다.
@@ -67,6 +73,7 @@ export function OrderListMobile({
     onRematch,
     onOpenDetail,
     onOpenGate,
+    input,
 }: {
     header: MatrixHeader
     matrix: Matrix
@@ -85,9 +92,21 @@ export function OrderListMobile({
      */
     onOpenDetail: (row: MatrixRow, siblings: number[]) => void
     onOpenGate: (orderIds: number[]) => void
+    /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
+    input: BuildMatrixInput
 }) {
     /** 기본은 「작업 필요」 — 다 끝난 건을 먼저 보여 줄 이유가 없다(§3.2) */
     const [onlyWork, setOnlyWork] = useState(true)
+
+    /**
+     * 펼친 행 (`detail === 'inline'`인 채널만). 택배는 건 상세를 열지 않는다.
+     *
+     * 🔴 **형제 순서를 펼칠 때 스냅샷으로 잡는다.** 기본 필터가 「작업 필요」라 차감하면
+     * 그 건이 목록에서 빠지고 뒤가 당겨진다 — 그때 「다음 건」을 지금 목록에서 찾으면
+     * **한 건을 건너뛴다**(건 상세가 이미 같은 함정을 겪었다).
+     */
+    const [open, setOpen] = useState<{ id: number; siblings: number[] } | null>(null)
+    const inline = decl.detail === 'inline'
 
     const shown = useMemo(() => (onlyWork ? rows.filter((r) => r.needsWork) : rows), [rows, onlyWork])
 
@@ -97,6 +116,19 @@ export function OrderListMobile({
      * 사용자가 「작업 필요 먼저」를 고른 상태에서 그룹을 건수순으로 다시 세우면 고른 정렬이 사라진다.
      */
     const groups = useMemo(() => {
+        /*
+         * 🔴 **「수령인 가나다」는 묶지 않는다**(백로그 §45 · 2026-09-22 사용자 지적).
+         *
+         * 그룹 축은 `nameTiersOf`의 tail이라 택배는 **발주처**로 묶인다. 그런데
+         * 「발주처별」이 이미 2차 키로 `byRecipient`를 쓰므로, 묶고 나면 **그룹 안 행 순서가
+         * 두 정렬에서 같아진다** — 남는 차이가 그룹이 늘어선 순서뿐이라 이름으로 훑는다는
+         * 정렬의 목적이 사라진다. 이름순으로 볼 때는 그룹 경계가 오히려 방해다.
+         *
+         * 📌 원인: 정렬 3종은 **그룹이 없는 매트릭스**에서 왔는데 모바일 목록에만 그룹을 얹었다.
+         * 공용 순수함수를 그대로 쓰는 것과, 그 함수가 쓰이는 화면 구조가 같은 것은 다르다.
+         */
+        if (sort === 'recipient') return [['', shown]] as [string, MatrixRow[]][]
+
         const m = new Map<string, MatrixRow[]>()
         for (const r of shown) {
             const k = groupNameOf(decl, r) ?? ''
@@ -112,6 +144,12 @@ export function OrderListMobile({
 
     /** 헤더를 그릴 가치가 있는가 — 그룹이 하나뿐이면 행 수만큼 같은 이름이 반복될 뿐이다 */
     const showGroupHeader = groups.length > 1
+
+    /** 펼칠 때 잡아 둔 순서에서 바로 다음 건. 없으면 undefined */
+    const nextOf = (o: { id: number; siblings: number[] }) => {
+        const i = o.siblings.indexOf(o.id)
+        return i >= 0 ? o.siblings[i + 1] : undefined
+    }
 
     /**
      * 건상세 「다음 건 ›」이 따라갈 순서 — **그룹으로 묶은 뒤의 순서**다.
@@ -228,8 +266,25 @@ export function OrderListMobile({
                                 key={row.orderId}
                                 row={row}
                                 decl={decl}
-                                onOpen={() => onOpenDetail(row, shownIds)}
-                            />
+                                inline={inline}
+                                open={open?.id === row.orderId}
+                                onOpen={() => {
+                                    if (!inline) return onOpenDetail(row, shownIds)
+                                    setOpen((cur) =>
+                                        cur?.id === row.orderId ? null : { id: row.orderId, siblings: shownIds },
+                                    )
+                                }}
+                            >
+                                {inline && open?.id === row.orderId && (
+                                    <InlineLines
+                                        input={input}
+                                        orderId={row.orderId}
+                                        nextId={nextOf(open)}
+                                        onBatch={() => onOpenGate([row.orderId])}
+                                        onNext={(id) => setOpen({ id, siblings: open.siblings })}
+                                    />
+                                )}
+                            </OrderRow>
                         ))}
                     </div>
                 ))}
@@ -291,38 +346,124 @@ function FilterChip({
 function OrderRow({
     row,
     decl,
+    inline,
+    open,
     onOpen,
+    children,
 }: {
     row: MatrixRow
     decl: ChannelDecl
+    /** 목록 안에서 펼치는 채널인가(`ChannelDecl.detail`) */
+    inline: boolean
+    open: boolean
     onOpen: () => void
+    /** 펼쳤을 때 아래에 붙는 것 */
+    children?: ReactNode
 }) {
     const meta = STATUS_META[row.status]
     const [head] = nameTiersOf(decl, row)
-    const lines = lineCountOf(row)
+    const note = rowNoteOf(row)
     return (
-        <button
-            type="button"
-            onClick={onOpen}
-            className="flex w-full items-center gap-2.5 border-b border-slate-100 px-4 py-2.5 text-left active:bg-slate-50"
-        >
-            <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', meta.dot)} />
-            <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5">
-                    <span className="truncate text-[13px] font-bold text-foreground">{head}</span>
-                    {/* 여유분은 주문이 아니라 여분으로 더 보내는 물량이다(§8-4) */}
-                    {isSpareRow(row) && (
-                        <span className="shrink-0 rounded bg-slate-100 px-1 text-[9.5px] font-bold text-slate-500">
-                            여유분
+        <div className={cn(open && 'bg-primary/5')}>
+            <button
+                type="button"
+                onClick={onOpen}
+                aria-expanded={inline ? open : undefined}
+                className="flex w-full items-center gap-2.5 border-b border-slate-100 px-4 py-2.5 text-left active:bg-slate-50"
+            >
+                <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', meta.dot)} />
+                <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                        <span className="truncate text-[13px] font-bold text-foreground">{head}</span>
+                        {/* 여유분은 주문이 아니라 여분으로 더 보내는 물량이다(§8-4) */}
+                        {isSpareRow(row) && (
+                            <span className="shrink-0 rounded bg-slate-100 px-1 text-[9.5px] font-bold text-slate-500">
+                                여유분
+                            </span>
+                        )}
+                    </span>
+                    {/*
+                     * 🔴 **예외만 적는다.** 모든 줄에 「1품목」을 반복하면 정작 봐야 할
+                     * 부족·실패가 묻힌다 — 택배는 67건 중 58건이 1품목이다(실측 2026-09-22).
+                     * 규칙은 `rowNoteOf` 한 곳이고 순수함수라 테스트로 고정돼 있다.
+                     */}
+                    {note && (
+                        <span
+                            className={cn(
+                                'mt-0.5 block text-[10.5px] font-semibold',
+                                note.kind === 'unmatched'
+                                    ? 'text-red-600'
+                                    : note.kind === 'shortage'
+                                      ? 'text-orange-700'
+                                      : 'font-normal text-slate-400',
+                            )}
+                        >
+                            {note.kind === 'unmatched'
+                                ? `${note.n}품목 매칭실패`
+                                : note.kind === 'shortage'
+                                  ? '재고부족'
+                                  : `${note.n}품목`}
                         </span>
                     )}
                 </span>
-                <span className="mt-0.5 block text-[10.5px] text-slate-400">{lines}품목</span>
-            </span>
-            <span className={cn('shrink-0 text-[12px] font-bold tabular-nums', QTY_TONE[row.status])}>
-                {fmt(row.allocatedQty)}/{fmt(row.orderedQty)}
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-        </button>
+                <span className={cn('shrink-0 text-[12px] font-bold tabular-nums', QTY_TONE[row.status])}>
+                    {fmt(row.allocatedQty)}/{fmt(row.orderedQty)}
+                </span>
+                {/* 펼치는 채널은 방향으로 「열린다」를 알린다 — `›`는 다른 화면으로 간다는 뜻이다 */}
+                <ChevronRight
+                    className={cn(
+                        'h-4 w-4 shrink-0 text-slate-300 transition-transform',
+                        inline && (open ? 'rotate-90' : 'rotate-0'),
+                    )}
+                />
+            </button>
+            {children}
+        </div>
+    )
+}
+
+/**
+ * 펼친 행 안 — 라인 카드와 행동 둘.
+ *
+ * 🔴 **서버를 부르지 않는다.** `buildOrderLines`는 순수함수라 이미 받은 `input`에서 파생된다.
+ * 🔴 **일괄차감은 새로 만들지 않는다** — 게이트가 `orderIds[]`를 받으므로 건 하나짜리 배열로 연다.
+ */
+function InlineLines({
+    input,
+    orderId,
+    nextId,
+    onBatch,
+    onNext,
+}: {
+    input: BuildMatrixInput
+    orderId: number
+    nextId: number | undefined
+    onBatch: () => void
+    onNext: (id: number) => void
+}) {
+    const lines = useMemo(() => buildOrderLines(input, orderId), [input, orderId])
+    const totals = sumOrderLines(lines)
+    return (
+        <div className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+            {lines.map((line) => (
+                <LineCard key={line.itemId} line={line} />
+            ))}
+            <div className="mt-0.5 flex items-center gap-2">
+                <Button type="button" className="h-10 flex-1" disabled={totals.batchLines === 0} onClick={onBatch}>
+                    {totals.batchLines > 0 ? `${fmt(totals.batchLines)}품목 일괄차감` : '차감할 품목이 없습니다'}
+                </Button>
+                {nextId !== undefined && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 shrink-0 gap-1 px-3.5"
+                        onClick={() => onNext(nextId)}
+                    >
+                        다음 건
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                )}
+            </div>
+        </div>
     )
 }

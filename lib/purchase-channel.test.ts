@@ -52,3 +52,18 @@ test('nameTiersOf: 수령인이 비면 발주처로 대신 — 빈 굵은 값은
     null,
   ])
 })
+
+// --- 건을 여는 방식 (2026-09-22) ------------------------------------------
+
+test('detail: 택배만 목록 안에서 펼치고, 나머지는 건 상세를 연다', () => {
+    assert.equal(CHANNEL_DECL.DELIVERY.detail, 'inline')
+    for (const ch of ['EMART', 'MEAL_SEOUL', 'MEAL_HAENAM', 'CORPORATE'] as const) {
+        assert.equal(CHANNEL_DECL[ch].detail, 'sheet', `${ch}는 건 상세를 연다`)
+    }
+})
+
+test('🔴 detail: 모든 채널이 값을 갖는다 — 새 채널이 생기면 여기서 걸린다', () => {
+    for (const [ch, decl] of Object.entries(CHANNEL_DECL)) {
+        assert.ok(decl.detail === 'inline' || decl.detail === 'sheet', `${ch}에 detail이 없다`)
+    }
+})

@@ -15,6 +15,10 @@ import {
   type MatrixOrderInput,
   type MatrixSkuInput,
   type BuildMatrixInput,
+  rowNoteOf,
+  type MatrixCell,
+  type CellStatus,
+  type MatrixRow,
 } from './purchase-order-matrix'
 
 // ------------------------------------------------------
@@ -847,4 +851,48 @@ test('sumOrderLines: 완료 줄은 차감 중량으로 접는다', () => {
   assert.equal(t.doneLines, 1)
   assert.equal(t.doneKg, 45)
   assert.equal(t.workLines, 0)
+})
+
+// --- 접힌 줄의 예외 표시 (2026-09-22) --------------------------------------
+
+const cell = (status: CellStatus, itemIds: number[], remainingQty = 0): MatrixCell => ({
+    itemIds,
+    orderedQty: 10,
+    allocatedQty: 0,
+    status,
+    remainingQty,
+})
+const rowWith = (cells: Record<string, MatrixCell>): MatrixRow => ({
+    orderId: 1,
+    vendor: 'v',
+    recipient: 'r',
+    cells,
+    orderedQty: 10,
+    allocatedQty: 0,
+    orderedKg: 0,
+    status: 'PENDING',
+    needsWork: true,
+})
+
+test('rowNoteOf: 🔴 1품목이면 아무것도 안 적는다 — 반복되면 부족·실패가 묻힌다', () => {
+    assert.equal(rowNoteOf(rowWith({ a: cell('PENDING', [1]) })), null)
+})
+
+test('rowNoteOf: 2품목 이상이면 품목 수를 적는다', () => {
+    assert.deepEqual(rowNoteOf(rowWith({ a: cell('PENDING', [1, 2]) })), { kind: 'lines', n: 2 })
+})
+
+test('rowNoteOf: 매칭실패가 최우선이고 실패 품목 수를 센다', () => {
+    const r = rowWith({ a: cell('UNMATCHED', [1, 2]), b: cell('SHORTAGE', [3]), c: cell('PENDING', [4]) })
+    assert.deepEqual(rowNoteOf(r), { kind: 'unmatched', n: 2 })
+})
+
+test('rowNoteOf: 🔴 부족은 개수를 적지 않는다 — 셀에 부족분이 없어 지어내면 틀린다', () => {
+    // 주문 10 · 차감 0 · 가용 3이면 실제 부족은 7인데 remainingQty는 10이다
+    assert.deepEqual(rowNoteOf(rowWith({ a: cell('SHORTAGE', [1], 10) })), { kind: 'shortage' })
+})
+
+test('rowNoteOf: 부족이 실패보다 뒤, 품목 수보다 앞이다', () => {
+    const r = rowWith({ a: cell('SHORTAGE', [1]), b: cell('PENDING', [2]) })
+    assert.deepEqual(rowNoteOf(r), { kind: 'shortage' })
 })

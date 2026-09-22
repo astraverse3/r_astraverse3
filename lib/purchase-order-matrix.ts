@@ -664,3 +664,35 @@ export function sumOrderLines(lines: readonly OrderLine[]): OrderLineTotals {
 
   return { workLines, batchLines, remainingKg, unknownWeight, doneLines, doneKg }
 }
+
+// ------------------------------------------------------
+// 접힌 줄의 예외 표시 (2026-09-22 — 채널별 건 처리)
+// ------------------------------------------------------
+
+/** 접힌 줄에 적을 한 마디. 적을 게 없으면 `null` */
+export type RowNote =
+  | { kind: 'unmatched'; n: number }
+  | { kind: 'shortage' }
+  | { kind: 'lines'; n: number }
+
+/**
+ * 목록에서 **접힌 줄**에 적을 예외 한 마디.
+ *
+ * 🔴 **모든 줄에 「1품목」을 반복하면 정작 봐야 할 부족·실패가 묻힌다.** 택배는 67건 중
+ * 58건이 1품목이라(실측 2026-09-22) 그 표시는 정보가 아니라 잡음이다 → 1품목이면 `null`.
+ *
+ * 🔴 **부족은 개수를 적지 않는다.** 셀에는 `remainingQty`(아직 차감 안 한 전부)만 있고
+ * 부족분이 없다 — 주문 10·차감 0·가용 3이면 부족은 7인데 `remainingQty`는 10이다.
+ * 셀만 보고 숫자를 지어내면 **틀린 수를 보여주게 된다**. 정확한 부족은 펼친 뒤
+ * `buildOrderLines`의 `shortage`가 낸다.
+ */
+export function rowNoteOf(row: MatrixRow): RowNote | null {
+  const cells = Object.values(row.cells)
+  const unmatched = cells
+    .filter((c) => c.status === 'UNMATCHED')
+    .reduce((s, c) => s + c.itemIds.length, 0)
+  if (unmatched > 0) return { kind: 'unmatched', n: unmatched }
+  if (cells.some((c) => c.status === 'SHORTAGE')) return { kind: 'shortage' }
+  const lines = cells.reduce((s, c) => s + c.itemIds.length, 0)
+  return lines > 1 ? { kind: 'lines', n: lines } : null
+}
