@@ -105,12 +105,17 @@ export function describeElement(
 /** 기록 한 줄을 사람이 읽는 형식으로. 보기 화면과 「텍스트로 복사」가 함께 쓴다. */
 export function formatEntry(e: TraceEntry): string {
     const d = new Date(e.t)
+    // 🔴 날짜를 함께 적는다 — 시각만 있으면 어느 날 기록인지 가릴 수 없다.
+    //    2026-09-22 실측: 하루를 넘긴 기록에서 「오늘 것이 맞나」를 사람이 판별할 수 없었다.
+    //    저장은 epoch ms(`t`)라 날짜가 온전히 살아 있고, 깎이던 곳은 표시뿐이었다.
+    const MM = String(d.getMonth() + 1).padStart(2, '0')
+    const DD = String(d.getDate()).padStart(2, '0')
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
     const ss = String(d.getSeconds()).padStart(2, '0')
     const ms = String(d.getMilliseconds()).padStart(3, '0')
     const pos = e.x !== undefined && e.y !== undefined ? ` (${e.x},${e.y})` : ''
-    return `${hh}:${mm}:${ss}.${ms} ${e.kind.padEnd(10)} ${e.detail}${pos}`
+    return `${MM}-${DD} ${hh}:${mm}:${ss}.${ms} ${e.kind.padEnd(10)} ${e.detail}${pos}`
 }
 
 /**

@@ -375,10 +375,10 @@ test('isSuspectRoute: 반대 방향이나 무관한 이동은 아니다', () => 
 
 // --- 표시 형식 -------------------------------------------------------------
 
-test('formatEntry: 시각·종류·내용이 한 줄에 담긴다', () => {
+test('formatEntry: 날짜·시각·종류·내용이 한 줄에 담긴다', () => {
     const d = new Date(2026, 8, 16, 14, 5, 3, 7)
     const r = formatEntry({ t: d.getTime(), kind: 'route', detail: '/raw-stocks → /milling' })
-    assert.ok(r.startsWith('14:05:03.007'))
+    assert.ok(r.startsWith('09-16 14:05:03.007'))
     assert.ok(r.includes('route'))
     assert.ok(r.includes('/raw-stocks → /milling'))
 })

@@ -44,7 +44,7 @@ export function TraceView() {
 
     const handleCopy = async () => {
         const text = [
-            `# 네비게이션 덫 기록 (${new Date().toLocaleString('ko-KR')})`,
+            `# 네비게이션 덫 기록 (복사 시각 ${new Date().toLocaleString('ko-KR')})`,
             '',
             '## 경로 변경 (별도 보관)',
             ...routes.map(formatEntry),
