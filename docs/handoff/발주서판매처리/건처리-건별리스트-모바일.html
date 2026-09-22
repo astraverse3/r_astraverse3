@@ -41,7 +41,9 @@ a{color:#2563eb}a:hover{color:#1d4ed8}
   <h1 style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.02em">건처리 — 모바일 <span style="color:#1d4ed8">건별 리스트 통합안</span> <span style="font-size:12px;font-weight:700;color:#166534;background:#f0fdf4;border:1px solid #86efac;border-radius:99px;padding:3px 10px;vertical-align:3px">확정 2026-09-18</span></h1>
   <p style="font-size:12.5px;color:#475569;margin-top:6px;line-height:1.65">
     <b>모바일은 전 채널 건별 리스트</b>로 가기로 확정. 3모드 매트릭스 모바일 시안 3개는 <b class="mono">_이전시안/</b>으로 이동했습니다.
-    구조는 2026-06 확정안 <b class="mono">건목록-모바일</b> + <b class="mono">건상세-C안-간결</b>을 그대로 따르고, 통일양식 5시트 실측 데이터로 다시 채웠습니다.
+    다만 <b>건을 어떻게 여느냐는 채널 특성을 따릅니다</b> —
+    <b style="color:#1d4ed8">택배</b>는 수령인이 수십 명이고 한 명당 1라인·많아야 2~3라인이라 <b>목록 안에서 행이 펼쳐집니다</b>(② · 건 상세 화면 없음).
+    <b style="color:#7c3aed">급식·이마트·기업별</b>은 수령인이 대부분 5곳 이하지만 한 곳에 품목이 여러 건이라 <b>건 상세 화면</b>으로 엽니다(④).
     <b>매트릭스는 데스크탑 전용</b>으로 남습니다(동일 시안 5개 유효).
   </p>
 </div>
@@ -116,58 +118,43 @@ a{color:#2563eb}a:hover{color:#1d4ed8}
       <button class="w-full h-12 rounded-xl bg-primary text-white text-[14px] font-semibold flex items-center justify-center gap-2">작업 필요 41건 검토<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></button>
     </div>
   </div>
-  <div class="frame-note"><b class="mono">건목록-모바일</b>의 구조 그대로, <b>발주처 그룹 헤더</b>만 얹었습니다 — 실측 결과 발주처가 소수로 반복되기 때문입니다(땅끝황토친환경 9 · 쿠팡wing 5 · 서대문마을생협 4…). 한 건은 평균 <b>1.4라인</b>이라 카드가 아니라 <b>한 줄</b>이면 충분합니다.</div>
+  <div class="frame-note"><b class="mono">건목록-모바일</b>의 구조 그대로, <b>발주처 그룹 헤더</b>만 얹었습니다 — 실측 결과 발주처가 소수로 반복되기 때문입니다(땅끝황토친환경 9 · 쿠팡wing 5 · 서대문마을생협 4…). 한 건은 평균 <b>1.4라인</b>이라 카드가 아니라 <b>한 줄</b>이면 충분합니다. 접힌 줄에는 <b>예외만</b> 표시합니다 — 모든 줄에 「1라인」·품목명을 반복하면 정작 봐야 할 부족·실패가 묻힙니다.</div>
 </div>
 
-<!-- ② 택배 건 상세 -->
+<!-- ② 택배 건 목록 · 행 펼침 -->
 <div style="position:absolute;left:470px;top:560px">
-  <div class="frame-label"><span class="mode">2단</span> 택배 건 상세 · 1라인 <span class="pill">대부분이 이 모양</span></div>
-  <div class="screen" data-screen-label="택배-건상세-1라인">
-    <div class="bg-white px-4 pt-3.5 pb-3 border-b border-slate-100 shrink-0">
-      <div class="flex items-center gap-2 mb-2.5">
-        <button class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
-        <span class="text-[15px] font-bold text-slate-900">건 상세</span>
-        <span class="ml-auto mini bg-blue-50 text-blue-700">택배</span>
-      </div>
+  <div class="frame-label"><span class="mode">1단</span> 같은 화면 · 행 펼침 <span class="pill" style="border-color:#bfdbfe;color:#1d4ed8;background:#eff6ff">택배 확정</span></div>
+  <div class="screen" data-screen-label="택배-건목록-펼침">
+    <div class="bg-white px-3 pt-3 pb-2.5 border-b border-slate-100 shrink-0">
       <div class="flex items-center gap-1.5">
-        <span class="text-[14px] font-bold text-slate-900">땅끝황토친환경</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-        <span class="text-[13px] font-semibold text-slate-600">이마트연수점</span>
-      </div>
-      <div class="mt-2.5 flex items-center gap-2.5">
-        <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-emerald-400" style="width:100%"></div></div>
-        <span class="text-[11.5px] text-slate-500 shrink-0"><b class="text-slate-800 mono">1</b>/1 완료</span>
-      </div>
-    </div>
-    <div class="sb flex-1 overflow-y-auto py-2.5">
-      <div class="px-4 pb-1.5 text-[11px] font-bold text-slate-400">차감 완료 1</div>
-      <div class="bg-white mx-3 rounded-xl border border-emerald-200 overflow-hidden">
-        <div class="px-3.5 py-3">
-          <div class="flex items-center gap-2.5">
-            <span class="dot bg-emerald-500"></span>
-            <div class="min-w-0 flex-1">
-              <div class="text-[13px] font-bold text-slate-900 truncate">천지향 · 백미</div>
-              <div class="text-[10.5px] text-slate-400 mt-0.5">4kg · 자연주의</div>
-            </div>
-            <span class="text-[13px] font-bold text-emerald-700 mono shrink-0">6/6</span>
+        <a href="../묶음목록-모바일.html" class="w-8 h-8 -ml-1 flex items-center justify-center rounded-lg text-slate-500 shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></a>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <span class="mini bg-blue-50 text-blue-700">택배</span>
+            <span class="text-[13.5px] font-bold text-slate-900 truncate mono">택배_260818</span>
           </div>
-          <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-2">
-            <span class="text-[10.5px] text-slate-400">차감 로트</span>
-            <span class="text-[11.5px] mono text-slate-600">260802-11-…7741</span>
-            <span class="ml-auto text-[11.5px] mono font-bold text-slate-700">24kg</span>
-          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">26.08.18 09:12 업로드 · <b class="text-slate-500">67건</b> · 96라인</div>
         </div>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 shrink-0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></button>
       </div>
-      <div class="mx-3 mt-3 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-3">
-        <div class="text-[11.5px] text-slate-500 leading-snug">택배 67건 중 <b class="text-slate-700">48건이 1라인</b>, 평균 1.4라인입니다. 이 화면은 대부분 <b>한 카드로 끝납니다</b> — 매트릭스 한 행을 가로로 25칸 넘기던 것과 같은 정보입니다.</div>
+      <div class="flex items-center gap-1.5 mt-2.5 pl-0.5">
+        <span class="mini bg-emerald-50 text-emerald-700"><span class="dot bg-emerald-500"></span>완료 <span class="mono">24</span></span>
+        <span class="mini bg-amber-50 text-amber-700"><span class="dot bg-amber-500"></span>부분 <span class="mono">1</span></span>
+        <span class="mini bg-slate-100 text-slate-500"><span class="dot bg-slate-400"></span>대기 <span class="mono">40</span></span>
+        <span class="mini bg-red-50 text-red-600 border border-red-200 ml-auto">실패 <span class="mono">2</span></span>
       </div>
     </div>
-    <div class="bg-white border-t border-slate-200 px-4 py-3 shrink-0 flex items-center gap-2">
-      <button class="flex-1 h-11 rounded-xl border border-slate-200 bg-white text-slate-600 text-[13px] font-semibold">차감 되돌리기</button>
-      <button class="flex-1 h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-[13px] font-semibold">다음 건 ›</button>
+    <div class="px-3 py-2 bg-slate-50 border-b border-slate-100 shrink-0 flex items-center gap-1.5 overflow-x-auto sb">
+      <button class="shrink-0 h-7 px-2.5 rounded-md bg-slate-900 text-white text-[11px] font-semibold">작업 필요 41</button>
+      <button class="shrink-0 h-7 px-2.5 rounded-md text-slate-500 text-[11px] font-medium">전체 67</button>
+      <span class="ml-auto shrink-0 inline-flex items-center gap-1 text-[10.5px] font-semibold text-slate-500">발주처별 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+    </div>
+    <div class="sb flex-1 overflow-y-auto" data-list="parcelOpen"></div>
+    <div class="bg-white border-t border-slate-200 px-4 pt-2.5 pb-4 shrink-0" style="box-shadow:0 -8px 20px -12px rgba(15,23,42,.25)">
+      <button class="w-full h-12 rounded-xl bg-primary text-white text-[14px] font-semibold flex items-center justify-center gap-2">작업 필요 41건 검토<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></button>
     </div>
   </div>
-  <div class="frame-note"><b>「다음 건 ›」</b>이 매트릭스의 세로 스크롤을 대체합니다 — 67건을 연속 처리할 때 목록으로 돌아가지 않습니다. 매트릭스에서 불가능했던 동작입니다(행을 옮기면 가로 스크롤 위치가 리셋됨).</div>
+  <div class="frame-note"><b>택배 전용 확정안</b> — 수령인이 수십 명, 한 명당 1라인·많아야 2~3라인이라 행을 탭하면 <b>그 자리에서 펼쳐져</b> 라인 전체(품종·규격·가용·로트)와 「FIFO 차감」이 나옵니다. 1라인이든 3라인이든 동작은 같고, 깊이는 <b>시트목록 → 건목록</b> 두 단계로 끝나 뒤로가기가 항상 시트목록입니다.</div>
 </div>
 
 <!-- ③ 급식 건 목록 -->
@@ -206,12 +193,12 @@ a{color:#2563eb}a:hover{color:#1d4ed8}
 
 <!-- ④ 급식 건 상세 -->
 <div style="position:absolute;left:1330px;top:560px">
-  <div class="frame-label"><span class="mode">2단</span> 서울급식 건 상세 · 16라인 <span class="pill">C안 간결 그대로</span></div>
+  <div class="frame-label"><span class="mode">2단</span> 서울급식 건 상세 · 16라인 <span class="pill" style="border-color:#ddd6fe;color:#6d28d9;background:#f5f3ff">급식·이마트·기업별 확정</span></div>
   <div class="screen" data-screen-label="급식-건상세">
     <div class="bg-white px-4 pt-3.5 pb-3 border-b border-slate-100 shrink-0">
       <div class="flex items-center gap-2 mb-2.5">
-        <button class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
-        <span class="text-[15px] font-bold text-slate-900">건 상세</span>
+        <a href="#" class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></a>
+        <span class="text-[13px] font-bold text-slate-500 mono truncate">서울급식_260818</span>
         <span class="ml-auto mini bg-violet-50 text-violet-700">서울급식</span>
       </div>
       <div class="flex items-center gap-1.5">
@@ -232,7 +219,7 @@ a{color:#2563eb}a:hover{color:#1d4ed8}
       <button class="mt-2 w-full h-12 rounded-xl bg-primary text-white text-[14px] font-semibold flex items-center justify-center gap-2"><span id="detBtnN"></span>라인 FIFO 일괄차감</button>
     </div>
   </div>
-  <div class="frame-note">전부 접힘 기본 · 작업/완료 2그룹 — <b class="mono">건상세-C안-간결</b>을 실측 데이터로 다시 채운 것입니다. 16라인이 <b>작업 7 + 완료 1줄 = 8줄</b>로 접힙니다. 라인 탭 → ⑤ FIFO 바텀시트.</div>
+  <div class="frame-note"><b>수령인 5곳 이하 · 한 곳에 품목 여러 건</b>인 채널은 이쪽으로 확정 — 16라인을 목록 안에서 펼치면 목록이 아니라 스크롤이 됩니다. 전부 접힘 기본 · 작업/완료 2그룹 — <b class="mono">건상세-C안-간결</b>을 실측 데이터로 다시 채운 것입니다. 16라인이 <b>작업 7 + 완료 1줄 = 8줄</b>로 접힙니다. 라인 탭 → ⑤ FIFO 바텀시트.</div>
 </div>
 
 <!-- ⑤ 규격별 소계 -->
@@ -356,6 +343,57 @@ a{color:#2563eb}a:hover{color:#1d4ed8}
   <div class="frame-note">체크박스가 <b>여기에만</b> 있습니다 — 목록·상세에는 없습니다. 발주처가 소수로 반복되므로 <b>그룹 헤더 + 그룹 해제</b>가 개별 체크를 대체합니다. 택배처럼 건이 많을 때만 필요한 화면이라 급식·시아스는 건상세의 일괄차감 버튼으로 충분합니다.</div>
 </div>
 
+<!-- ②-대안 택배 건 상세(기존안) -->
+<div style="position:absolute;left:3050px;top:560px">
+  <div class="frame-label"><span class="mode">2단</span> 비교안 · 택배 건 상세 <span class="pill" style="border-color:#fca5a5;color:#b91c1c;background:#fef2f2">미채택</span></div>
+  <div class="screen" data-screen-label="택배-건상세-1라인">
+    <div class="bg-white px-4 pt-3.5 pb-3 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-2 mb-2.5">
+        <a href="#" class="w-7 h-7 -ml-1 flex items-center justify-center rounded-lg text-slate-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></a>
+        <span class="text-[13px] font-bold text-slate-500 mono truncate">택배_260818</span>
+        <span class="ml-auto mini bg-blue-50 text-blue-700">택배</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[14px] font-bold text-slate-900">땅끝황토친환경</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <span class="text-[13px] font-semibold text-slate-600">이마트연수점</span>
+      </div>
+      <div class="mt-2.5 flex items-center gap-2.5">
+        <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-emerald-400" style="width:100%"></div></div>
+        <span class="text-[11.5px] text-slate-500 shrink-0"><b class="text-slate-800 mono">1</b>/1 완료</span>
+      </div>
+    </div>
+    <div class="sb flex-1 overflow-y-auto py-2.5">
+      <div class="px-4 pb-1.5 text-[11px] font-bold text-slate-400">차감 완료 1</div>
+      <div class="bg-white mx-3 rounded-xl border border-emerald-200 overflow-hidden">
+        <div class="px-3.5 py-3">
+          <div class="flex items-center gap-2.5">
+            <span class="dot bg-emerald-500"></span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] font-bold text-slate-900 truncate">천지향 · 백미</div>
+              <div class="text-[10.5px] text-slate-400 mt-0.5">4kg · 자연주의</div>
+            </div>
+            <span class="text-[13px] font-bold text-emerald-700 mono shrink-0">6/6</span>
+          </div>
+          <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-2">
+            <span class="text-[10.5px] text-slate-400">차감 로트</span>
+            <span class="text-[11.5px] mono text-slate-600">260802-11-…7741</span>
+            <span class="ml-auto text-[11.5px] mono font-bold text-slate-700">24kg</span>
+          </div>
+        </div>
+      </div>
+      <div class="mx-3 mt-3 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-3">
+        <div class="text-[11.5px] text-slate-500 leading-snug">택배 67건 중 <b class="text-slate-700">48건이 1라인</b>, 평균 1.4라인입니다. 이 화면은 대부분 <b>한 카드로 끝납니다</b>.</div>
+      </div>
+    </div>
+    <div class="bg-white border-t border-slate-200 px-4 py-3 shrink-0 flex items-center gap-2">
+      <button class="flex-1 h-11 rounded-xl border border-slate-200 bg-white text-slate-600 text-[13px] font-semibold">차감 되돌리기</button>
+      <button class="flex-1 h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-[13px] font-semibold">다음 건 ›</button>
+    </div>
+  </div>
+  <div class="frame-note"><b>미채택 안</b>입니다 — 택배는 건당 1라인이 대부분이라 이 화면이 카드 한 장만 담고 열립니다. 비교 기록용으로만 남깁니다. 연속 처리는 ②의 펼친 행 안 <b>「다음 작업 건 ›」으로 이미 옮겨갔습니다</b>(67건을 목록으로 돌아가지 않고 넘기기 · 핸드오프 M1)입니다. 채택안에도 연속 처리가 그대로 있습니다.</div>
+</div>
+
 <script>
 const GATE=[
   {grp:'땅끝황토친환경',n:9,rows:[
@@ -399,32 +437,61 @@ const PARCEL=[
   {grp:'땅끝황토친환경',n:9,rows:[
     {r:'이마트연수점',l:1,s:'d',q:'6/6'},{r:'이마트풍산점',l:1,s:'d',q:'4/4'},
     {r:'이마트명일점',l:1,s:'d',q:'3/3'},{r:'이마트본사 김보훈',l:1,s:'p',q:'5/8',short:3},
-    {r:'이마트신월점',l:1,s:'w',q:'0/1'},{r:'이마트일산점',l:1,s:'w',q:'0/1'},
+    {r:'이마트신월점',l:1,s:'w',q:'0/1',
+      lines:[{g:'천지향 · 백미',w:'4kg · 자연주의',q:'0/1',s:'w',av:150}]},
+    {r:'이마트일산점',l:1,s:'w',q:'0/1'},
     {r:'이마트수성점',l:1,s:'w',q:'0/1'}]},
   {grp:'쿠팡wing',n:5,rows:[
     {r:'이선우',l:1,s:'d',q:'1/1'},{r:'LIUYUSHAN',l:1,s:'w',q:'0/1'},
     {r:'나혜경',l:1,s:'w',q:'0/1'},{r:'성수옥',l:1,s:'f',q:'0/2',fail:'누룽지 1kg'}]},
   {grp:'서대문마을생협',n:4,rows:[
-    {r:'서대문마을생협',l:3,s:'p',q:'28/52'},{r:'꼬마박사어린이집',l:1,s:'w',q:'0/1'},
+    {r:'서대문마을생협',l:3,s:'p',q:'28/52',
+      lines:[{g:'새청무 · 백미',w:'10kg · 자연주의',q:'20/20',s:'d',lot:'260802-11-…7741'},
+        {g:'새청무 · 백미',w:'20kg · 자연주의',q:'8/20',s:'p',short:12,av:8},
+        {g:'삼광 · 현미',w:'10kg · 자연주의',q:'0/12',s:'w',av:64}]},
+    {r:'꼬마박사어린이집',l:1,s:'w',q:'0/1'},
     {r:'별빛어린이집',l:1,s:'w',q:'0/1'},{r:'신촌어린이집',l:1,s:'w',q:'0/2'}]},
   {grp:'우리아이행복밥상',n:2,rows:[
     {r:'울림생협 성산점',l:1,s:'d',q:'8/8'},{r:'울림생협 북가좌점',l:1,s:'d',q:'4/4'}]}
 ];
-function renderParcel(){
+function lineCard(ln){
+  const tone=ln.s==='d'?'border-emerald-200':ln.s==='p'?'border-amber-200':'border-slate-200';
+  const qc=ln.s==='d'?'text-emerald-700':ln.s==='p'?'text-amber-700':'text-slate-600';
+  return `<div class="bg-white rounded-lg border ${tone} px-3 py-2.5">
+    <div class="flex items-center gap-2.5">
+      <span class="dot ${dot(ln.s)}"></span>
+      <div class="min-w-0 flex-1">
+        <div class="text-[12.5px] font-bold text-slate-900 truncate">${ln.g}</div>
+        <div class="text-[10.5px] text-slate-400 mt-0.5 truncate">${ln.w}</div>
+      </div>
+      <span class="text-[12.5px] font-bold mono shrink-0 ${qc}">${ln.q}</span>
+    </div>
+    ${ln.lot?`<div class="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2"><span class="text-[10px] text-slate-400">차감 로트</span><span class="text-[11px] mono text-slate-600">${ln.lot}</span></div>`:''}
+    ${ln.short?`<div class="mt-2 pt-2 border-t border-slate-100 text-[10.5px] text-amber-700 font-semibold">${ln.short}개 부족 · 가용 ${ln.av}개</div>`:ln.s==='w'?`<div class="mt-2 pt-2 border-t border-slate-100 text-[10.5px] text-slate-400">가용 ${ln.av}개</div>`:''}
+  </div>`;
+}
+function renderParcel(open=[]){
   return PARCEL.map(g=>`<div class="px-4 pt-3 pb-1.5 flex items-center gap-2 bg-slate-50">
     <span class="text-[10.5px] font-bold text-slate-400 tracking-wider">${g.grp}</span>
     <span class="text-[10.5px] font-bold text-slate-300 mono">${g.n}건</span>
   </div>
   <div class="bg-white border-y border-slate-200 divide-y divide-slate-100">`
-  +g.rows.map(r=>`<a href="#" class="px-4 py-2.5 flex items-center gap-2.5 ${r.s==='f'?'bg-red-50/50':''}">
-    <span class="dot ${dot(r.s)}"></span>
-    <div class="min-w-0 flex-1">
-      <div class="text-[13px] font-bold text-slate-900 truncate leading-tight">${r.r}</div>
-      <div class="text-[10.5px] ${r.s==='f'?'text-red-600 font-semibold':'text-slate-400'} mt-0.5">${r.fail?r.fail+' — 품종 못 찾음':r.l+'라인'}${r.short?` · <span class="text-amber-700 font-semibold">${r.short}개 부족</span>`:''}</div>
+  +g.rows.map(r=>{const on=open.includes(r.r),note=r.fail?`<span class="text-[10.5px] text-red-600 font-semibold">${r.fail} — 품종 못 찾음</span>`:r.short?`<span class="text-[10.5px] text-amber-700 font-semibold">${r.short}개 부족</span>`:r.l>1?`<span class="text-[10.5px] text-slate-400 font-semibold mono">${r.l}라인</span>`:'';
+  return `<div class="${r.s==='f'?'bg-red-50/50':on?'bg-blue-50/40':''}">
+    <div class="px-4 py-3 flex items-center gap-2.5">
+      <span class="dot ${dot(r.s)}"></span>
+      <div class="min-w-0 flex-1 flex items-baseline gap-2">
+        <span class="text-[13px] font-bold text-slate-900 truncate leading-tight">${r.r}</span>
+        ${note}
+      </div>
+      <span class="text-[12px] font-bold mono shrink-0 ${r.s==='d'?'text-emerald-700':r.s==='p'?'text-amber-700':r.s==='f'?'text-red-600':'text-slate-500'}">${r.q}</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" style="transform:rotate(${on?0:-90}deg)"><path d="m6 9 6 6 6-6"></path></svg>
     </div>
-    <span class="text-[12px] font-bold mono shrink-0 ${r.s==='d'?'text-emerald-700':r.s==='p'?'text-amber-700':r.s==='f'?'text-red-600':'text-slate-500'}">${r.q}</span>
-    ${chev}
-  </a>`).join('')+'</div>').join('');
+    ${on?`<div class="px-4 pb-3.5 -mt-0.5 flex flex-col gap-2">${(r.lines||[]).map(lineCard).join('')}
+      <button class="h-10 rounded-lg bg-primary text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 mt-0.5">${(r.lines||[]).filter(l=>l.s!=='d').length}라인 FIFO 차감</button>
+      <button class="h-9 rounded-lg border border-slate-200 bg-white text-slate-500 text-[12px] font-semibold">다음 작업 건 ›</button>
+    </div>`:''}
+  </div>`}).join('')+'</div>').join('');
 }
 
 /* ── ③ 급식 건 목록 (실측 서울급식_260818) ── */
@@ -553,7 +620,7 @@ function renderSub(){
   return '<div class="bg-white divide-y divide-slate-100">'+rows+'</div>';
 }
 
-const R={parcel:renderParcel,seoul:renderSeoul,seoulDetail:renderDetail,subtotal:renderSub,gate:renderGate};
+const R={parcel:()=>renderParcel(),parcelOpen:()=>renderParcel(['이마트신월점','서대문마을생협']),seoul:renderSeoul,seoulDetail:renderDetail,subtotal:renderSub,gate:renderGate};
 document.querySelectorAll('[data-list]').forEach(el=>el.innerHTML=R[el.dataset.list]());
 </script>
 </body></html>
