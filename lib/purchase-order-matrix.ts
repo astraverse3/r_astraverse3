@@ -624,15 +624,28 @@ export function buildOrderLines(input: BuildMatrixInput, orderId: number): Order
 
 /**
  * 건상세 푸터용 집계. 🔴 **분모가 둘로 갈린다**(핸드오프 §4.1):
- *   `workLines` — 매칭실패를 **포함**한다(사람이 처리할 줄 수)
- *   `batchLines` — 매칭실패를 **제외**한다(일괄차감 버튼이 실제로 건드릴 줄 수)
+ *   `workLines` — 매칭실패·톤백을 **포함**한다(사람이 처리할 줄 수)
+ *   `batchLines` — 매칭실패·**톤백**을 **제외**한다(일괄차감 버튼이 실제로 건드릴 줄 수)
  * 한 숫자로 합치면 「7품목 작업필요」인데 버튼이 6라인을 차감하는 화면이 설명되지 않는다.
+ *
+ * 🔴 **제외 사유를 정하는 것은 `planBatch`(lib/purchase-order-batch.ts)다 — 여기는 따라갈 뿐이다.**
+ * 2026-09-23까지 톤백이 빠져 있었다: 계획은 톤백을 건너뛰는데(결정 D) 푸터만 그걸 몰라,
+ * 톤백뿐인 건(#19 시아스 4품목)에서 버튼이 「4품목 일괄차감」이라 말하고 실제로는 0품목을 차감했다.
+ * 📌 **같은 분기를 두 곳에서 세면, 한쪽에 사유가 붙을 때 다른 쪽은 조용히 낡는다.**
+ *
+ * ⚠️ 톤백 판정은 **`bulk`로만** 한다. `OrderLine.unitWeightKg`는 규격 1개당 kg이라 일반 규격에도
+ * 값이 있다 — `BatchLine.unitWeightKg`(톤백이면 자루중량, 일반은 null)와 **이름이 같고 뜻이 다르다**.
  *
  * 🔴 `unknownWeight`가 참이면 kg 합계가 **일부를 빼고 센 값**이다 — 화면이 배지로 알려야 한다.
  */
 export type OrderLineTotals = {
   workLines: number
   batchLines: number
+  /**
+   * 일괄차감에서 빠지는 톤백 줄 수(결정 D — 자루는 사람이 고른다).
+   * 🔴 화면이 이걸 안 적으면 「작업필요 4품목」인데 버튼이 비활성인 이유가 설명되지 않는다.
+   */
+  bulkLines: number
   /** 남은 수량 × 규격중량. 중량을 못 읽은 줄은 빠진다 */
   remainingKg: number
   /** 중량 미산정 줄이 하나라도 섞였는가 */
@@ -645,6 +658,7 @@ export type OrderLineTotals = {
 export function sumOrderLines(lines: readonly OrderLine[]): OrderLineTotals {
   let workLines = 0
   let batchLines = 0
+  let bulkLines = 0
   let remainingKg = 0
   let unknownWeight = false
   let doneLines = 0
@@ -657,12 +671,19 @@ export function sumOrderLines(lines: readonly OrderLine[]): OrderLineTotals {
       continue
     }
     workLines += 1
-    if (l.status !== 'UNMATCHED') batchLines += 1
+    // 🔴 `planBatch`의 제외 순서 그대로다(매칭실패 → 톤백 → 나머지). 순서가 갈리면 두 수가 어긋난다.
+    if (l.status === 'UNMATCHED') {
+      // 일괄 대상이 아니다 — 품종 관리 보완 뒤 재매칭으로만 풀린다
+    } else if (l.bulk) {
+      bulkLines += 1
+    } else {
+      batchLines += 1
+    }
     if (l.unitWeightKg === null) unknownWeight = true
     else remainingKg += l.unitWeightKg * l.remainingQty
   }
 
-  return { workLines, batchLines, remainingKg, unknownWeight, doneLines, doneKg }
+  return { workLines, batchLines, bulkLines, remainingKg, unknownWeight, doneLines, doneKg }
 }
 
 // ------------------------------------------------------

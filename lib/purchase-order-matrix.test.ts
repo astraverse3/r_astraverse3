@@ -806,7 +806,45 @@ test('sumOrderLines: 🔴 작업 라인수는 매칭실패를 포함하고, 일�
   const t = sumOrderLines(lines)
   assert.equal(t.workLines, 2) // 대기 + 매칭실패
   assert.equal(t.batchLines, 1) // 버튼이 실제로 건드리는 건 대기 하나
+  assert.equal(t.bulkLines, 0)
   assert.equal(t.doneLines, 1)
+})
+
+test('sumOrderLines: 🔴 톤백은 일괄차감 분모에서 빠진다 — planBatch가 건너뛰기 때문 (#19 시아스)', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [
+        item({ id: 1, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000 }),
+        item({ id: 2, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 200 }),
+        item({ id: 3, orderId: 1, orderedQty: 5 }), // 일반 10kg
+      ],
+      skus: [sku(1, '10kg'), sku(18, '톤백')],
+      availability: { 1: 100 },
+      availabilityKg: { 18: 7067 },
+    }),
+    1,
+  )
+  const t = sumOrderLines(lines)
+  assert.equal(t.workLines, 3) // 사람이 볼 줄은 셋 다
+  assert.equal(t.bulkLines, 2)
+  assert.equal(t.batchLines, 1) // 🔴 톤백 둘이 빠져 일반 규격 하나만 남는다
+})
+
+test('sumOrderLines: 톤백뿐인 건은 일괄차감이 0이다 — 버튼이 「n품목 일괄차감」이라 말하면 안 된다', () => {
+  const lines = buildOrderLines(
+    input({
+      items: [
+        item({ id: 1, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 1000 }),
+        item({ id: 2, orderId: 1, productTypeId: 18, packageType: '톤백', unitWeightKg: 200 }),
+      ],
+      skus: [sku(18, '톤백')],
+      availabilityKg: { 18: 7067 },
+    }),
+    1,
+  )
+  const t = sumOrderLines(lines)
+  assert.equal(t.batchLines, 0)
+  assert.equal(t.bulkLines, 2)
 })
 
 test('sumOrderLines: 남은 kg은 주문이 아니라 남은 수량으로 센다', () => {

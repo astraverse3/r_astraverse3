@@ -35,6 +35,7 @@ export function OrderDetailPanel({
     siblings,
     onNavigate,
     onBatch,
+    blockOutsideClose,
     onClose,
 }: {
     orderId: number | null
@@ -55,11 +56,43 @@ export function OrderDetailPanel({
     onNavigate: (orderId: number) => void
     /** 푸터 일괄차감 — 부모가 이 건 하나로 검토 게이트를 연다 */
     onBatch: () => void
+    /**
+     * 바깥 클릭으로 닫히는 것을 막는다 — **검토 게이트가 이 패널 위에 열려 있는 동안** 켠다.
+     *
+     * 🔴 게이트(Dialog)는 이 패널(Sheet)보다 **위 레이어**인데도, 게이트 안 「이 줄」을 누른
+     * `pointerdown`이 **이 패널의 바깥 클릭**으로 잡혀 패널이 스스로 닫혔다
+     * (2026-09-23 스택으로 확인: `usePointerDownOutside` → `onDismiss` → `onOpenChange(false)`).
+     * 위 레이어가 modal이면 아래는 보호되리라 믿었지만 **실제로는 아니었다.**
+     *
+     * 📌 증상이 「이 줄을 눌렀더니 목록으로 튄다」였다 — 점프가 실패한 게 아니라(`goDetail`은
+     * 제대로 돌았다) **그 아래 패널이 닫힌 것**이었다. 딤을 탭해 닫을 때는 멀쩡했는데,
+     * 그건 게이트 자기 레이어가 처리하고 끝나 이 패널까지 오지 않기 때문이다 —
+     * 🔴 **「닫는 방법에 따라 다르다」가 이 결함의 지문이었다.**
+     */
+    blockOutsideClose?: boolean
     onClose: () => void
 }) {
     return (
-        <Sheet open={orderId !== null} onOpenChange={(o) => !o && onClose()}>
-            <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-[468px]">
+        <Sheet
+            open={orderId !== null}
+            /*
+             * 🔴 **닫힘 요청을 여기서 거른다.** `onInteractOutside`의 `preventDefault`만으로는
+             * 막히지 않았다(2026-09-23 실측) — 계측 스택이 지목한 곳이 `onOpenChange`라
+             * **경로를 막지 말고 결과를 막는다.** 게이트가 열려 있는 동안 이 패널은 어떤 경로로도
+             * 닫히지 않는다(바깥 클릭·ESC 전부). 게이트를 닫는 건 게이트 자신의 몫이다.
+             */
+            onOpenChange={(o) => {
+                if (o || blockOutsideClose) return
+                onClose()
+            }}
+        >
+            <SheetContent
+                side="right"
+                className="flex w-full flex-col gap-0 p-0 sm:max-w-[468px]"
+                onInteractOutside={(e) => {
+                    if (blockOutsideClose) e.preventDefault()
+                }}
+            >
                 {/*
                  * 🔴 `key`로 건마다 새 마운트 — 「다음 건 ›」이 스크롤·접힘 상태를 물려받으면
                  * 새 건을 중간부터 보게 된다. 리셋을 effect로 흉내 내지 않는다.
@@ -179,9 +212,12 @@ function Body({
 /**
  * 푸터 — 「무엇이 남았나」 한 줄과 행동 두 개.
  *
- * 🔴 **라인수와 버튼수는 분모가 다르다**(의도). `작업필요 7품목`은 사람이 볼 줄 수라 매칭실패를
- * 포함하고, `6라인 일괄차감`은 버튼이 실제로 건드릴 줄 수라 매칭실패를 뺀다 — 실패 라인은 FIFO로
- * 풀리지 않고 품종 관리 보완 뒤 재매칭으로만 풀린다(2026-09-16 수동지정 철회).
+ * 🔴 **줄 수와 버튼 수는 분모가 다르다**(의도). `작업필요 7품목`은 사람이 볼 줄 수라 매칭실패·톤백을
+ * 포함하고, `6품목 일괄차감`은 버튼이 실제로 건드릴 줄 수라 **둘 다 뺀다** — 매칭실패는 품종 관리
+ * 보완 뒤 재매칭으로만 풀리고(2026-09-16 수동지정 철회), 톤백은 자루를 사람이 골라야 한다(결정 D).
+ *
+ * 🔴 **빠진 줄은 푸터가 말해 준다.** 안 적으면 「작업필요 4품목」인데 버튼이 비활성인 이유가 없다 —
+ * `#19 시아스`는 4품목이 전부 톤백이라 이 화면에서 일괄로 할 수 있는 일이 하나도 없다.
  */
 function Footer({
     totals,
@@ -234,6 +270,12 @@ function Footer({
                                 일부 규격 중량 미산정
                             </span>
                         )}
+                        {/* 톤백은 일괄에서 빠진다 — 버튼 수와 작업필요 수가 갈리는 유일한 다른 사유다 */}
+                        {totals.bulkLines > 0 && (
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10.5px] font-semibold text-slate-600">
+                                톤백 {fmt(totals.bulkLines)}품목 별도
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -242,9 +284,20 @@ function Footer({
                             disabled={totals.batchLines === 0}
                             onClick={onBatch}
                         >
-                            {totals.batchLines > 0
-                                ? `${fmt(totals.batchLines)}품목 일괄차감`
-                                : '차감할 품목이 없습니다'}
+                            {totals.batchLines > 0 ? (
+                                `${fmt(totals.batchLines)}품목 일괄차감`
+                            ) : totals.bulkLines > 0 ? (
+                                /*
+                                 * 🔴 **폰엔 매트릭스 셀이 없다** — 자루 선택은 M1-5(바텀시트) 전까지 PC 전용이다.
+                                 * 이 파일은 폰·데스크탑이 함께 쓰므로 CSS로 가른다(JS 폭 감지는 SSR에서 틀린다).
+                                 */
+                                <>
+                                    <span className="sm:hidden">톤백은 PC에서 자루 선택</span>
+                                    <span className="hidden sm:inline">톤백은 셀에서 자루 선택</span>
+                                </>
+                            ) : (
+                                '차감할 품목이 없습니다'
+                            )}
                         </Button>
                         {nextButton}
                     </div>

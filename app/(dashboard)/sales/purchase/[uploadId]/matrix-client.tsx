@@ -492,7 +492,6 @@ export function MatrixClient({
                 onJump={(itemId) => {
                     const at = lineIndex.get(itemId)
                     if (!at) return
-                    setGateOpen(false)
                     /*
                      * 🔴 **폰에는 갈 셀이 없다.** 매트릭스는 `hidden sm:contents`(= `display:none`)라
                      * DOM에는 있지만 스크롤해도 아무 일이 일어나지 않는다 — 눌렀는데 무반응이다
@@ -508,6 +507,19 @@ export function MatrixClient({
                     } else {
                         goDetail(at.orderId)
                     }
+                    /*
+                     * 🔴 **게이트 닫기는 이 클릭이 끝난 뒤다**(`setTimeout 0`). 여기서 바로 닫으면
+                     * 건상세의 `blockOutsideClose`가 **그 자리에서 풀리고**, 곧이어 document로
+                     * 올라오는 **같은 click**이 건상세의 「바깥 클릭」으로 처리돼 패널이 닫힌다.
+                     *
+                     * Radix는 **터치 입력일 때 바깥 판정을 `pointerdown`이 아니라 `click`으로 미룬다**
+                     * (`usePointerDownOutside`). 그래서 순서가 **React 핸들러 → outside 처리**가 되고,
+                     * 가드를 먼저 푼 쪽이 자기 발을 밟는다. 2026-09-23 계측 로그가 그 순서를 그대로 보여 줬다:
+                     * `onJump 진입 → 셀 판정 → goDetail → 건상세 onClose`.
+                     *
+                     * 📌 **막을 곳을 찾는 문제가 아니라 순서 문제였다** — 가드는 멀쩡했고 그때 이미 꺼져 있었다.
+                     */
+                    setTimeout(() => setGateOpen(false), 0)
                 }}
             />
             )}
@@ -520,6 +532,12 @@ export function MatrixClient({
             />
             <OrderDetailPanel
                 orderId={detail?.orderId ?? null}
+                /*
+                 * 🔴 게이트가 열려 있는 동안엔 바깥 클릭으로 닫히면 안 된다 — 게이트가 **이 패널 위**에
+                 * 열리는데(M1-3), 그 안의 「이 줄」을 누르면 그 pointerdown이 패널의 **바깥**으로 잡혀
+                 * 패널이 스스로 닫혔다. 자세한 내용은 `order-detail-panel.tsx`의 `blockOutsideClose`.
+                 */
+                blockOutsideClose={gateOpen}
                 lines={detailLines}
                 title={detail?.head ?? ''}
                 subtitle={detail?.tail ?? null}

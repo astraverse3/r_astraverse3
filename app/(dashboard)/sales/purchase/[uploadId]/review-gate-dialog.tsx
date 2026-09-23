@@ -194,7 +194,16 @@ export function ReviewGateDialog({
                             {t.bulk > 0 && (
                                 <p className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12.5px] text-slate-600">
                                     <PackageX className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                    톤백 {fmt(t.bulk)}품목은 자루를 직접 골라야 해서 빠집니다 — 셀을 눌러 처리하세요.
+                                    <span>
+                                        톤백 {fmt(t.bulk)}품목은 자루를 직접 골라야 해서 빠집니다 —{' '}
+                                        {/*
+                                          * 🔴 폰엔 매트릭스 셀이 없다(`hidden sm:contents`) — **갈 수 없는 길을
+                                          * 가리키면 안 된다.** D3 `data-cell` 무반응·M1-3 「이 줄」 무반응과 같은 자리다.
+                                          * 모바일 자루 선택은 M1-5 바텀시트에서 붙는다.
+                                          */}
+                                        <span className="sm:hidden">PC에서 자루를 고르세요.</span>
+                                        <span className="hidden sm:inline">셀을 눌러 처리하세요.</span>
+                                    </span>
                                 </p>
                             )}
 
