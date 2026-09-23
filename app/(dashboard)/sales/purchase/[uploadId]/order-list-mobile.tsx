@@ -21,7 +21,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { channelLabel, isSpareRow, nameTiersOf, type ChannelDecl } from '@/lib/purchase-channel'
+import {
+    channelLabel,
+    groupAxisOf,
+    isSpareRow,
+    nameTiersOf,
+    type ChannelDecl,
+} from '@/lib/purchase-channel'
 import { LineCard } from './order-line-card'
 import {
     ROW_STATUS_ORDER,
@@ -38,21 +44,6 @@ import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { STATUS_META, QTY_TONE, MATRIX_SORTS } from './status-meta'
 
 const fmt = (n: number) => n.toLocaleString()
-
-/**
- * 묶음 안에서 **반복되는 쪽**의 이름 — 그룹 헤더가 쓴다.
- *
- * 🔴 `row.vendor`로 묶으면 안 된다. 채널마다 무엇이 반복되는지가 다르다 —
- * 서울급식은 `vendor`가 은평구·서대문구로 **매 건 달라서**(상수는 수령인 쪽이다)
- * vendor로 묶으면 「그룹 3개 × 1건」이 되어 헤더가 행 수만큼 생긴다.
- * `nameTiersOf`가 이미 채널별로 [주 이름, 보조 이름]을 갈라 두었으므로 **보조 이름**을 쓴다:
- *   택배   → 주=수령인, 보조=발주처(땅끝황토친환경 9건…) → 그룹이 선다
- *   서울급식 → 주=발주처(은평구), 보조=수령인(행복플러스 상수) → 그룹 1개 → 헤더 없음
- *   기업별  → 보조 없음 → 그룹 없음
- */
-function groupNameOf(decl: ChannelDecl, row: MatrixRow): string | null {
-    return nameTiersOf(decl, row)[1]
-}
 
 export function OrderListMobile({
     header,
@@ -112,7 +103,7 @@ export function OrderListMobile({
         /*
          * 🔴 **「수령인 가나다」는 묶지 않는다**(백로그 §45 · 2026-09-22 사용자 지적).
          *
-         * 그룹 축은 `nameTiersOf`의 tail이라 택배는 **발주처**로 묶인다. 그런데
+         * 그룹 축은 `groupAxisOf`라 택배는 **발주처**로 묶인다. 그런데
          * 「발주처별」이 이미 2차 키로 `byRecipient`를 쓰므로, 묶고 나면 **그룹 안 행 순서가
          * 두 정렬에서 같아진다** — 남는 차이가 그룹이 늘어선 순서뿐이라 이름으로 훑는다는
          * 정렬의 목적이 사라진다. 이름순으로 볼 때는 그룹 경계가 오히려 방해다.
@@ -124,7 +115,7 @@ export function OrderListMobile({
 
         const m = new Map<string, MatrixRow[]>()
         for (const r of shown) {
-            const k = groupNameOf(decl, r) ?? ''
+            const k = groupAxisOf(decl, r) ?? ''
             const list = m.get(k)
             if (list) list.push(r)
             else m.set(k, [r])
@@ -365,25 +356,28 @@ function OrderRow({
                 className="flex w-full items-center gap-2.5 border-b border-slate-100 px-4 py-2.5 text-left active:bg-slate-50"
             >
                 <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', meta.dot)} />
-                <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                        <span className="truncate text-[13px] font-bold text-foreground">{head}</span>
-                        {/* 여유분은 주문이 아니라 여분으로 더 보내는 물량이다(§8-4) */}
-                        {isSpareRow(row) && (
-                            <span className="shrink-0 rounded bg-slate-100 px-1 text-[9.5px] font-bold text-slate-500">
-                                여유분
-                            </span>
-                        )}
-                    </span>
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <span className="truncate text-[13px] font-bold text-foreground">{head}</span>
+                    {/* 여유분은 주문이 아니라 여분으로 더 보내는 물량이다(§8-4) */}
+                    {isSpareRow(row) && (
+                        <span className="shrink-0 rounded bg-slate-100 px-1 text-[9.5px] font-bold text-slate-500">
+                            여유분
+                        </span>
+                    )}
                     {/*
                      * 🔴 **예외만 적는다.** 모든 줄에 「1품목」을 반복하면 정작 봐야 할
                      * 부족·실패가 묻힌다 — 택배는 67건 중 58건이 1품목이다(실측 2026-09-22).
                      * 규칙은 `rowNoteOf` 한 곳이고 순수함수라 테스트로 고정돼 있다.
+                     *
+                     * 🔴 **이름 아래가 아니라 옆에 붙인다**(2026-09-23 사용자 결정). 아래에 깔면
+                     * 예외 있는 행만 2줄이 되어 목록 높이가 들쭉날쭉해진다 — 택배는 건별 집중도가
+                     * 낮아 조밀하게 훑는 화면이다. 이름이 `truncate`라 좁아지면 이름이 먼저 줄고
+                     * 예외 문구는 `shrink-0`으로 살아남는다(예외가 잘리면 적는 의미가 없다).
                      */}
                     {note && (
                         <span
                             className={cn(
-                                'mt-0.5 block text-[10.5px] font-semibold',
+                                'shrink-0 text-[10.5px] font-semibold',
                                 note.kind === 'unmatched'
                                     ? 'text-red-600'
                                     : note.kind === 'shortage'

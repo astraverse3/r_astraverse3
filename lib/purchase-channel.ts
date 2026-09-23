@@ -90,3 +90,25 @@ export function nameTiersOf(
   const h = head || row.vendor
   return [h, tail && tail !== h ? tail : null]
 }
+
+/**
+ * 모바일 건 목록에서 **행을 묶는 축** — 묶음 안에서 반복되는 쪽의 이름.
+ *
+ * 🔴 **`nameTiersOf`의 tail을 빌려 쓰면 안 된다**(2026-09-23 실측으로 드러난 결함).
+ * 그 함수는 **이름 열 표시**용이라 앞뒤가 같으면 뒤를 생략한다 — 표시로는 옳지만
+ * 그룹 축으로 쓰면 「생략」이 **「소속 없음」**이 된다. 택배는 수령인 칸이 비면 파서가
+ * 발주처를 복사하므로(#26) 자기 이름으로 받는 건이 전부 「미지정」으로 빠졌다.
+ * 실측 67건 중 3건 — 그중 **해남로컬푸드는 그룹이 통째로 사라졌다**(1건짜리라서).
+ *
+ * 📌 공용 순수함수를 쓰는 것과, 그 함수가 쓰이는 화면 구조가 같은 것은 다르다(백로그 §45와 같은 자리).
+ *
+ * 축은 `primary`의 **반대쪽**이다 — 행마다 변하는 값이 primary니 반복되는 건 나머지다.
+ *   택배·이마트·해남급식 → 발주처   서울급식 → 수령인   기업별 → 없음(한 값뿐)
+ */
+export function groupAxisOf(
+  decl: ChannelDecl,
+  row: { vendor: string; recipient: string | null },
+): string | null {
+  if (decl.primary === 'single') return null
+  return (decl.primary === 'vendor' ? row.recipient : row.vendor) || null
+}

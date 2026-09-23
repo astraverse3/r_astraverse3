@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { CHANNEL_DECL, nameTiersOf } from './purchase-channel'
+import { CHANNEL_DECL, groupAxisOf, nameTiersOf } from './purchase-channel'
 
 // C0-c 표기 규칙 — 「행마다 변하는 값이 앞에 굵게」. 실측 카디널리티는 계획서 D2c §C0-c.
 
@@ -66,4 +66,28 @@ test('🔴 detail: 모든 채널이 값을 갖는다 — 새 채널이 생기면
     for (const [ch, decl] of Object.entries(CHANNEL_DECL)) {
         assert.ok(decl.detail === 'inline' || decl.detail === 'sheet', `${ch}에 detail이 없다`)
     }
+})
+
+test('groupAxisOf: 축은 primary의 반대쪽 — 반복되는 값으로 묶는다', () => {
+  assert.equal(groupAxisOf(CHANNEL_DECL.DELIVERY, { vendor: '예은농산', recipient: '김철수' }), '예은농산')
+  assert.equal(
+    groupAxisOf(CHANNEL_DECL.MEAL_SEOUL, { vendor: '은평구', recipient: '행복플러스' }),
+    '행복플러스',
+  )
+})
+
+test('groupAxisOf: 🔴 동일명이어도 소속을 잃지 않는다 — nameTiersOf tail과 갈리는 지점', () => {
+  const row = { vendor: '서대문마을생협', recipient: '서대문마을생협' }
+  // 표시는 한 줄로 합치는 게 맞고(위 테스트), 그룹은 제 발주처를 유지해야 한다
+  assert.equal(nameTiersOf(CHANNEL_DECL.DELIVERY, row)[1], null)
+  assert.equal(groupAxisOf(CHANNEL_DECL.DELIVERY, row), '서대문마을생협')
+})
+
+test('groupAxisOf: 기업별은 축이 없다 — 한 값뿐이라 묶을 게 없다', () => {
+  assert.equal(groupAxisOf(CHANNEL_DECL.CORPORATE, { vendor: '시아스', recipient: '시아스' }), null)
+})
+
+test('groupAxisOf: 빈 값은 null — 빈 이름의 그룹을 만들지 않는다', () => {
+  assert.equal(groupAxisOf(CHANNEL_DECL.MEAL_SEOUL, { vendor: '은평구', recipient: '' }), null)
+  assert.equal(groupAxisOf(CHANNEL_DECL.MEAL_SEOUL, { vendor: '은평구', recipient: null }), null)
 })
