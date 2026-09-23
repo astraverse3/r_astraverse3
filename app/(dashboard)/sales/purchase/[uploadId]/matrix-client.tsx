@@ -440,23 +440,39 @@ export function MatrixClient({
             <Legend />
             </div>
 
-            {/* 선택 바 — 표 바깥에 떠 있어야 가로 스크롤을 따라다니지 않는다 */}
+            {/*
+             * 선택 바 — 표 바깥에 떠 있어야 가로 스크롤을 따라다니지 않는다.
+             *
+             * 🔴 **폰에는 띄우지 않는다**(`hidden sm:flex`). 선택은 매트릭스 행 체크박스로만
+             * 하는데 매트릭스가 `hidden sm:contents`라 **폰에는 켜고 끌 수단이 아예 없다.**
+             * 그런데도 떴던 이유는 목록 푸터 「작업필요 n건 검토」가 `onOpenGate`에서
+             * `setSelected`를 채우기 때문 — 게이트를 닫으면 선택만 남아 **정체불명의 바**가
+             * 목록 위에 눌러앉았다(닫는 X조차 깨진 박스 안에 있었다).
+             *
+             * 🔴 **`left-1/2 -translate-x-1/2`를 걷어냈다.** `translate`는 레이아웃이 끝난 뒤의
+             * 시각 이동이라 **폭 계산에 반영되지 않는다** — shrink-to-fit 폭의 상한이
+             * `100vw - left`, 즉 **화면의 절반**으로 잘린다. 390px 폰에서 195px이 되어
+             * 「54수령처 선택」이 한 글자씩 세로로 쪼개졌다. 데스크탑은 절반이 넉넉해 안 드러났을 뿐
+             * **창을 좁히면 똑같이 깨진다.** 가운데 정렬은 `inset-x-0` + `justify-center`로 한다.
+             */}
             {selected.size > 0 && (
-                <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-primary/30 bg-card px-4 py-2.5 shadow-lg">
-                    <span className="text-[13px] text-slate-600">
-                        <b className="font-bold text-foreground">{fmt(selected.size)}수령처</b> 선택
-                    </span>
-                    <Button type="button" size="sm" onClick={() => setGateOpen(true)}>
-                        차감 예정 확인
-                    </Button>
-                    <button
-                        type="button"
-                        onClick={() => setSelected(new Set())}
-                        className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                        aria-label="선택 해제"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 hidden justify-center px-4 sm:flex">
+                    <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-primary/30 bg-card px-4 py-2.5 shadow-lg">
+                        <span className="text-[13px] text-slate-600">
+                            <b className="font-bold text-foreground">{fmt(selected.size)}수령처</b> 선택
+                        </span>
+                        <Button type="button" size="sm" onClick={() => setGateOpen(true)}>
+                            차감 예정 확인
+                        </Button>
+                        <button
+                            type="button"
+                            onClick={() => setSelected(new Set())}
+                            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                            aria-label="선택 해제"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             )}
 
