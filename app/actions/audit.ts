@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { formatKstKo } from '@/lib/kst-date'
 
 export type GetAuditLogsParams = {
     userId?: string
@@ -101,7 +102,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
 
         const rows = result.data.map((log) => ({
             'ID': log.id,
-            '일시': log.createdAt.toLocaleString('ko-KR'),
+            '일시': formatKstKo(log.createdAt, true),
             '작업자': log.userName,
             '이메일': log.userEmail,
             '작업': log.action,

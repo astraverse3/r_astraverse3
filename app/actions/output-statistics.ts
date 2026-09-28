@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
 import { MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
+import { toKstMonth } from '@/lib/kst-date'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -48,14 +49,6 @@ export type OutputStatisticsData = {
   byPackageType: ByPackageTypeRow[]
   byMonth: ByMonthRow[]
   byDestination: ByDestinationRow[]
-}
-
-// ── 유틸 ──────────────────────────────────────────────────────────────────
-
-function toMonthKey(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  return `${y}-${m}`
 }
 
 // ── 품종 목록 ─────────────────────────────────────────────────────────────
@@ -164,11 +157,11 @@ export async function getOutputStatistics(
   }
   for (const p of packages) {
     // where 절에서 batch null을 이미 걸러냈으므로 non-null 단언
-    ensureMonth(toMonthKey(p.batch!.date)).productionKg += p.totalWeight
+    ensureMonth(toKstMonth(p.batch!.date)).productionKg += p.totalWeight
   }
   for (const r of releases) {
     const kg = r.stocks.reduce((s, st) => s + st.weightKg, 0)
-    ensureMonth(toMonthKey(r.date)).releaseKg += kg
+    ensureMonth(toKstMonth(r.date)).releaseKg += kg
   }
   const byMonth: ByMonthRow[] = [...monthMap.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))

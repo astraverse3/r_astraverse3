@@ -13,7 +13,7 @@ import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/lib/packaging-diff'
 import { movedCountOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
-import { toKstDate } from '@/lib/kst-date'
+import { formatKstKo, toKstDate } from '@/lib/kst-date'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -958,7 +958,7 @@ export async function deleteMillingBatches(ids: number[]) {
 
             // Check if any packaging has been done
             if (batch._count.outputs > 0) {
-                const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')
+                const dateStr = formatKstKo(new Date(batch.date))
                 results.failed.push({
                     id,
                     reason: `${dateStr} 작업: 포장 진행되어 삭제 불가`
@@ -998,7 +998,7 @@ export async function deleteMillingBatches(ids: number[]) {
 
                 results.success.push(id)
             } catch {
-                const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')
+                const dateStr = formatKstKo(new Date(batch.date))
                 results.failed.push({
                     id,
                     reason: `${dateStr} 작업: 삭제 실패`

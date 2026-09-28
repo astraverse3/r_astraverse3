@@ -53,7 +53,8 @@ test('생산연도는 stock.productionYear 또는 매입일 연도', () => {
     const w = build({ productionYear: '2025' })
     assert.deepEqual(w.AND[0].OR[0], { stock: { productionYear: 2025 } })
     assert.deepEqual(w.AND[0].OR[1], {
-        incomingDate: { gte: new Date('2025-01-01'), lt: new Date('2026-01-01') },
+        // KST 1월 1일 00:00 = UTC 전해 12-31 15:00
+        incomingDate: { gte: new Date('2024-12-31T15:00:00Z'), lt: new Date('2025-12-31T15:00:00Z') },
     })
 })
 
@@ -117,20 +118,21 @@ test('종료일은 당일을 포함한다 — 다음날 미만으로 건다', ()
     const w = build({ packedTo: '2026-06-30' })
     const range = w.AND[0].OR[0].createdAt
     assert.equal(range.gte, undefined)
-    assert.deepEqual(range.lt, new Date(2026, 6 - 1, 30 + 1))
+    // KST 07-01 00:00 — 실서버(UTC)·개발 PC(KST) 어디서 돌아도 같은 순간
+    assert.deepEqual(range.lt, new Date('2026-06-30T15:00:00Z'))
 })
 
 test('시작일만 줘도 걸린다', () => {
     const w = build({ packedFrom: '2026-06-01' })
     const range = w.AND[0].OR[0].createdAt
-    assert.deepEqual(range.gte, new Date(2026, 6 - 1, 1))
+    assert.deepEqual(range.gte, new Date('2026-05-31T15:00:00Z'))
     assert.equal(range.lt, undefined)
 })
 
 test('월말을 넘는 종료일은 다음달로 굴러간다', () => {
     // 2026-01-31 종료 → 2026-02-01 미만
     const w = build({ packedTo: '2026-01-31' })
-    assert.deepEqual(w.AND[0].OR[0].createdAt.lt, new Date(2026, 1, 1))
+    assert.deepEqual(w.AND[0].OR[0].createdAt.lt, new Date('2026-01-31T15:00:00Z'))
 })
 
 test('형식이 깨진 날짜는 필터를 만들지 않는다', () => {

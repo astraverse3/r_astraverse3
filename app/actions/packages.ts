@@ -113,17 +113,6 @@ export interface GetPackagesParams extends PackageFilterParams {
 }
 
 // -----------------------------
-// 헬퍼
-// -----------------------------
-
-const toIsoDate = (d: Date): string => {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-}
-
-// -----------------------------
 // 메인 조회
 // -----------------------------
 
@@ -181,8 +170,8 @@ export async function getPackages(
             // 표시용 날짜: PURCHASED는 incomingDate, MILLED는 createdAt
             const date =
                 r.source === 'PURCHASED' && r.incomingDate
-                    ? toIsoDate(r.incomingDate)
-                    : toIsoDate(r.createdAt)
+                    ? toKstDate(r.incomingDate)
+                    : toKstDate(r.createdAt)
 
             // 가용수량 = count - SUM(movement.count). 0 이하면 목록 제외(차감 완료분).
             // 「차감된 재고 보기」를 켜면 그 행들이 되돌리기 대상이라 남긴다.
@@ -192,7 +181,7 @@ export async function getPackages(
             // 차감 요약 — MOVEMENT_SUMMARY_SELECT로 조회했을 때만 type·occurredAt이 들어 있다.
             const movements = r.movements as { count: number; type?: string; occurredAt?: Date }[]
             const lastOccurredAt = movements[0]?.occurredAt
-            const deductedAt = lastOccurredAt ? toIsoDate(lastOccurredAt) : null
+            const deductedAt = lastOccurredAt ? toKstDate(lastOccurredAt) : null
             const deductedTypes = [
                 ...new Set(movements.map(m => m.type).filter((t): t is string => Boolean(t))),
             ]

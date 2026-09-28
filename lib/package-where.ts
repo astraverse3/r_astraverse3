@@ -10,6 +10,7 @@
 // DB 접근은 하지 않는다. 순수하게 where 객체만 만든다.
 
 import type { Prisma } from '@prisma/client'
+import { kstDayRange, kstYearRange } from './kst-date'
 
 export type PackageSource = 'MILLED' | 'PURCHASED'
 export type PackageCategory = 'RICE' | 'MISC_GRAIN'
@@ -35,22 +36,6 @@ export type PackageFilterParams = {
 
 const splitMulti = (s: string | undefined): string[] =>
     s ? s.split(',').map(x => x.trim()).filter(Boolean) : []
-
-/**
- * yyyy-mm-dd → 로컬 자정 Date. 형식이 어긋나면 null(그 필터는 적용하지 않는다).
- * 로컬 기준인 건 목록 표시(`toIsoDate`)가 로컬 기준이라 그렇다 — UTC로 만들면 하루씩 밀린다.
- */
-const parseLocalDate = (s: string | undefined): Date | null => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((s ?? '').trim())
-    if (!m) return null
-    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
-    const date = new Date(y, mo - 1, d)
-    // 2026-02-31 같은 값은 Date가 조용히 굴려버린다 — 되돌려 확인한다
-    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null
-    return date
-}
-
-const nextDay = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
 
 /**
  * 제품재고 목록/엑셀 공용 where.
@@ -94,7 +79,7 @@ export function buildPackageWhere(
             OR: yearList.flatMap(py => [
                 { stock: { productionYear: py } },
                 // PURCHASED는 productionYear 개념 없음 → incomingDate 연도 비교
-                { incomingDate: { gte: new Date(`${py}-01-01`), lt: new Date(`${py + 1}-01-01`) } },
+                { incomingDate: kstYearRange(py) },
             ]),
         })
     }
@@ -124,13 +109,15 @@ export function buildPackageWhere(
         and.push({ stock: { farmer: { group: { certType: { in: certList } } } } })
     }
 
-    // 포장일자 기간 — 종료일은 당일 포함이라 다음날 미만(lt)으로 건다
-    const from = parseLocalDate(packedFrom)
-    const to = parseLocalDate(packedTo)
+    // 포장일자 기간 — 종료일은 당일 포함이라 다음날 미만(lt)으로 건다.
+    // KST 하루로 건다 — 목록 표시(`toKstDate`)와 같은 기준이어야 「보이는 날짜로 검색했는데 안 나온다」가 없다.
+    // 🔴 로컬 자정(`new Date(y, m, d)`)은 개발 PC(KST)와 실서버(UTC)에서 서로 다른 범위가 된다(§39).
+    const from = kstDayRange(packedFrom)
+    const to = kstDayRange(packedTo)
     if (from || to) {
         const range: { gte?: Date; lt?: Date } = {}
-        if (from) range.gte = from
-        if (to) range.lt = nextDay(to)
+        if (from) range.gte = from.gte
+        if (to) range.lt = to.lt
         and.push({
             OR: [
                 { source: 'MILLED', createdAt: range },

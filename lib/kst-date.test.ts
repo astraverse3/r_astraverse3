@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { formatKstKo, kstDayRange, todayKst, toKstDate, toKstMonth } from './kst-date'
+import { formatKstKo, kstDayRange, kstYearRange, todayKst, toKstDate, toKstMonth } from './kst-date'
 
 // 🔴 이 파일은 TZ=UTC(실서버)와 TZ=Asia/Seoul(개발 PC) 두 환경에서 같은 결과여야 한다.
 
@@ -62,6 +62,12 @@ test('kstDayRange: 형식 오류·없는 날짜는 null', () => {
   assert.equal(kstDayRange('2026-02-31'), null)
   assert.equal(kstDayRange('2027-02-29'), null)
   assert.ok(kstDayRange('2028-02-29'))
+})
+
+test('kstYearRange: KST 1월 1일 00:00부터 다음 해 1월 1일 00:00 미만', () => {
+  const r = kstYearRange(2026)
+  assert.equal(r.gte.toISOString(), '2025-12-31T15:00:00.000Z')
+  assert.equal(r.lt.toISOString(), '2026-12-31T15:00:00.000Z')
 })
 
 test('formatKstKo: 프로세스 시간대와 무관하게 KST 날짜', () => {

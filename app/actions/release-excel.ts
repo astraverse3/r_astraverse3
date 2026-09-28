@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireSession } from '@/lib/auth-guard'
+import { formatKstKo } from '@/lib/kst-date'
 
 export async function exportReleaseLogs(filters?: {
     startDate?: Date
@@ -50,7 +51,7 @@ export async function exportReleaseLogs(filters?: {
         const rows: Record<string, unknown>[] = []
 
         for (const log of logs) {
-            const dateStr = log.date ? new Date(log.date).toLocaleDateString('ko-KR') : ''
+            const dateStr = log.date ? formatKstKo(new Date(log.date)) : ''
 
             if (log.stocks.length === 0) {
                 // Edge case where release has no stocks mapped

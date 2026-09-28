@@ -7,6 +7,7 @@ import { GetMillingLogsParams } from './milling'
 import { requireSession } from '@/lib/auth-guard'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
+import { formatKstKo } from '@/lib/kst-date'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
@@ -129,7 +130,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
         const rows: Record<string, unknown>[] = []
 
         for (const batch of filteredLogs) {
-            const dateStr = batch.date ? new Date(batch.date).toLocaleDateString('ko-KR') : ''
+            const dateStr = batch.date ? formatKstKo(new Date(batch.date)) : ''
             const statusStr = batch.isClosed
                 ? '마감됨'
                 : batch.outputs.length > 0 ? '포장중' : '도정중'

@@ -46,6 +46,14 @@ export function kstDayRange(ymd: string | undefined): { gte: Date; lt: Date } | 
   return { gte: new Date(start), lt: new Date(start + DAY_MS) }
 }
 
+/** 연도 → KST 1월 1일 00:00 ~ 다음 해 1월 1일 00:00 */
+export function kstYearRange(year: number): { gte: Date; lt: Date } {
+  return {
+    gte: new Date(Date.UTC(year, 0, 1) - KST_OFFSET_MS),
+    lt: new Date(Date.UTC(year + 1, 0, 1) - KST_OFFSET_MS),
+  }
+}
+
 /** 한국어 표기 (`2026. 9. 8.` / 시각 포함 `2026. 9. 8. 오후 3:00:00`) — KST 고정 */
 export function formatKstKo(d: Date, withTime = false): string {
   return withTime
