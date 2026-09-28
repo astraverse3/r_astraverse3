@@ -15,7 +15,7 @@ data.forEach(row => {
     }
 });
 
-const duplicates = Object.entries(nameCounts).filter(([name, count]) => count > 1);
+const duplicates = Object.entries(nameCounts).filter(([, count]) => count > 1);
 
 if (duplicates.length > 0) {
     console.log('Duplicate Farmer Names found:', duplicates);

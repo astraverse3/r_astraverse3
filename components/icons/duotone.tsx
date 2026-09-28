@@ -11,6 +11,8 @@ export type DuotoneIconProps = Omit<SVGProps<SVGSVGElement>, 'stroke' | 'fill'> 
 
 type BaseProps = DuotoneIconProps & { children: ReactNode; defaultStrokeWidth?: number }
 
+// active는 svg로 넘기지 않으려고 rest에서 빼기만 한다
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function Base({ children, className, strokeWidth, defaultStrokeWidth = 1.8, active: _active, ...rest }: BaseProps) {
     return (
         <svg

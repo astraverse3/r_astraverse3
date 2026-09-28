@@ -1,6 +1,5 @@
 
 const XLSX = require('xlsx');
-const fs = require('fs');
 const path = require('path');
 
 // 1. Check headers of large stock file

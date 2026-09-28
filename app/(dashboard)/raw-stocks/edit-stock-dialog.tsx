@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { updateStock, deleteStock, type StockFormData } from '@/app/actions/stock'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Stock } from './page' // Import Stock interface
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
@@ -67,8 +67,6 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
 
     // Derived state
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
-    // Cert Info from group
-    const certInfo = selectedFarmer?.group
 
     // Update state when open changes or props change
     if (open && selectedFarmerId === '' && initialFarmerId !== '') {

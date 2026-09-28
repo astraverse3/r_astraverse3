@@ -2,11 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Minus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { startMillingBatch } from '@/app/actions/milling'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
@@ -34,15 +32,6 @@ interface Stock {
 interface Props {
     availableStocks: Stock[]
 }
-
-const PACKAGE_TEMPLATES = [
-    { label: '20kg', weight: 20 },
-    { label: '10kg', weight: 10 },
-    { label: '8kg', weight: 8 },
-    { label: '5kg', weight: 5 },
-    { label: '4kg', weight: 4 },
-    { label: '1kg', weight: 1 },
-]
 
 export function AddMillingLogForm({ availableStocks }: Props) {
     const router = useRouter()

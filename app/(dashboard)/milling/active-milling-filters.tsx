@@ -59,7 +59,7 @@ export function ActiveMillingFilters({ totalCount, defaultStartDate, defaultEndD
                     <Badge key={n} variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">{n}</Badge>
                 ))}
                 {yieldRate !== 'ALL' && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">{yieldRate}</Badge>}
-                {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">"{keyword}"</Badge>}
+                {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">&quot;{keyword}&quot;</Badge>}
             </div>
         </div>
     )

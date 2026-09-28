@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+// next-pwa는 CommonJS 전용이라 require로 불러온다
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,

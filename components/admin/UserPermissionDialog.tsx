@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ALL_PERMISSIONS, BUSINESS_PERMISSIONS, ADMIN_PERMISSIONS, type PermissionCode } from '@/lib/permissions'
+import { BUSINESS_PERMISSIONS, ADMIN_PERMISSIONS } from '@/lib/permissions'
 import { updateUserPermissions } from '@/app/actions/user'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { Button } from '@/components/ui/button'

@@ -54,7 +54,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
     const yieldRates = useYieldRates()
     const [packagingOpen, setPackagingOpen] = useState(false)
     const [stockListOpen, setStockListOpen] = useState(false)
-    const [isActionLoading, setIsActionLoading] = useState(false)
+    const [, setIsActionLoading] = useState(false)
     const { data: session } = useSession()
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 

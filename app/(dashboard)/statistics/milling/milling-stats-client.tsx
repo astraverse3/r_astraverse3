@@ -361,16 +361,6 @@ export function MillingStatsClient({
     return QUICK_PERIODS.find(p => p.key === quickPeriod)?.label ?? quickPeriod
   }
 
-  function getMobilePeriodLabel(): string {
-    if (quickPeriod === 'cropYear') return `'${String(cropYear).slice(2)}년산`
-    if (quickPeriod === 'custom') return '직접입력'
-    return QUICK_PERIODS.find(p => p.key === quickPeriod)?.label ?? quickPeriod
-  }
-
-  function getMobilePeriodSub(): string {
-    return `${from.slice(5).replace('-', '/')} ~ ${to.slice(5).replace('-', '/')}`
-  }
-
   // ── 활성 필터 카운트 (모바일 뱃지용) ─────────────
   const activeFilterCount = [
     quickPeriod !== '6m',

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ChevronRight, ChevronDown, Trash2, Edit } from 'lucide-react'
 import { format } from 'date-fns'
-import { deleteStockReleases, removeStockFromRelease } from '@/app/actions/release'
+import { removeStockFromRelease } from '@/app/actions/release'
 import { EditReleaseDialog } from './edit-release-dialog'
 import { MobileReleaseCard } from './mobile-release-card'
 import { triggerDataUpdate } from '@/components/last-updated'
@@ -92,7 +92,7 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
             } else {
                 toast.error(result.error || '항목 제외 실패')
             }
-        } catch (error) {
+        } catch {
             toast.error('오류가 발생했습니다.')
         }
     }

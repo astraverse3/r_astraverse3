@@ -29,7 +29,7 @@ try {
         }
     });
 
-    const duplicates = Object.entries(certCounts).filter(([cert, count]) => count > 1);
+    const duplicates = Object.entries(certCounts).filter(([, count]) => count > 1);
 
     if (duplicates.length > 0) {
         console.log('Duplicate Cert Nos found:', duplicates);

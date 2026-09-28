@@ -295,7 +295,7 @@ export async function deleteStocks(ids: number[]) {
                     description: `재고 다중 삭제: ${deletedStock.farmer.name} - ${deletedStock.variety.name} (${deletedStock.weightKg}kg)`
                 })
                 results.success.push(id)
-            } catch (error) {
+            } catch {
                 results.failed.push({
                     id,
                     reason: `포대 ${stock.bagNo}: 삭제 실패`

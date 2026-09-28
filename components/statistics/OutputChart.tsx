@@ -47,7 +47,6 @@ function pkgColor(type: string, paletteIndex: number): string {
   return RESERVED[type] ?? PALETTE[paletteIndex % PALETTE.length]
 }
 
-const DEFAULT_PKG_COLOR = '#94a3b8'
 const PKG_COLORS: Record<string, string> = RESERVED
 
 // ── 유틸 ──────────────────────────────────────────────────────────────────
@@ -82,7 +81,6 @@ function PieTooltip({ active, payload }: PieTooltipProps) {
   )
 }
 
-const DONUT_SIZE = 300
 
 export function PackageTypePieChart({ data }: { data: ByPackageTypeRow[] }) {
   if (!data.length) {

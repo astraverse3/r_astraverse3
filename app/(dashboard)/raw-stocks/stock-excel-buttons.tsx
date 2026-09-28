@@ -69,7 +69,7 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
             const result = await importStocks(formData, { dryRun: true })
             setPreviewResult(result)
             setPreviewOpen(true)
-        } catch (error) {
+        } catch {
             toast.error('파일 분석 중 오류가 발생했습니다.')
             if (fileInputRef.current) fileInputRef.current.value = ''
         } finally {
@@ -95,7 +95,7 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
             } else {
                 toast.error(result.message || '업로드에 실패했습니다.')
             }
-        } catch (e) {
+        } catch {
             toast.error('업로드 중 오류가 발생했습니다.')
         } finally {
             setImporting(false)

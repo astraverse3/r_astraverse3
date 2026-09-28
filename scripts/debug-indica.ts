@@ -109,7 +109,7 @@ async function main() {
 
     let indicaIn = 0
     let indicaOut = 0
-    let contributingBatches: number[] = []
+    const contributingBatches: number[] = []
 
     yearBatches.forEach(b => {
         const batchOut = b.outputs.reduce((s, o) => s + o.totalWeight, 0)

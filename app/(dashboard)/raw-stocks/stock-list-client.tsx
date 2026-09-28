@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { ChevronRight, ChevronDown, Loader2, MoreVertical, Edit, Trash2 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StockTableRow } from './stock-table-row'
@@ -12,7 +12,7 @@ import {
     TableRow,
     TableCell,
 } from '@/components/ui/table'
-import { getStocksByGroup, StockGroup, deleteStock } from '@/app/actions/stock'
+import { StockGroup, deleteStock } from '@/app/actions/stock'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'

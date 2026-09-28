@@ -19,7 +19,7 @@ try {
     });
 
     const duplicates = Object.entries(keyMap)
-        .filter(([key, rows]) => rows.length > 1)
+        .filter(([, rows]) => rows.length > 1)
         .slice(0, 3);
 
     console.log('Duplicate Group Codes Check:');

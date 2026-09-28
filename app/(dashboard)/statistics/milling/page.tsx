@@ -3,7 +3,7 @@ import {
   getVarietyOptions,
   getMillingTypeOptions,
 } from '@/app/actions/statistics'
-import { resolveGroupBy, resolveQuickPeriod } from '@/lib/statistics-utils'
+import { resolveQuickPeriod } from '@/lib/statistics-utils'
 import { dashboardProductionYear } from '@/lib/production-year'
 import { MillingStatsClient } from './milling-stats-client'
 

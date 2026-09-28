@@ -1,9 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Clock,
 } from "lucide-react";
-import { format } from "date-fns";
 import { getDashboardStats } from "@/app/actions/dashboard";
 import { getActiveNotices } from "@/app/actions/notice";
 import { RealtimeStatus } from "@/app/(dashboard)/_components/realtime-status";

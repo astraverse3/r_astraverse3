@@ -1,6 +1,5 @@
 import { getStocks } from '@/app/actions/stock'
 import { AddMillingLogForm } from '../add-form'
-import { prisma } from '@/lib/prisma'
 
 export default async function NewMillingPage() {
     // Fetch available stocks directly or via action

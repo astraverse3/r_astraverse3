@@ -21,7 +21,6 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { createStock, type StockFormData } from '@/app/actions/stock'
-import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
@@ -71,11 +70,6 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
     // Derived state for certifications based on selected farmer
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
-    // Cert Info is now fixed per farmer (via group)
-    const certInfo = selectedFarmer?.group
-
-    const router = useRouter()
-
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
         setIsLoading(true)

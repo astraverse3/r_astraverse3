@@ -1,6 +1,6 @@
 'use server'
 
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
@@ -995,7 +995,7 @@ export async function deleteMillingBatches(ids: number[]) {
                 })
 
                 results.success.push(id)
-            } catch (error) {
+            } catch {
                 const dateStr = new Date(batch.date).toLocaleDateString('ko-KR')
                 results.failed.push({
                     id,
@@ -1032,7 +1032,6 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
 
             // 2. Determine Removed Stocks -> Set to AVAILABLE
             const currentStockIds = batch.stocks.map(s => s.id)
-            const remainingStockIds = currentStockIds.filter(id => stockIds.includes(id))
             const removedStockIds = currentStockIds.filter(id => !stockIds.includes(id))
 
             if (removedStockIds.length > 0) {

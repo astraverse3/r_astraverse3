@@ -244,7 +244,7 @@ export async function deleteVarieties(ids: number[]) {
                     description: `품종 다중 삭제: ${deletedVariety.name}`
                 })
                 results.success.push(id)
-            } catch (error) {
+            } catch {
                 results.failed.push({
                     id,
                     reason: `${id}: 삭제 실패`
@@ -552,7 +552,7 @@ export async function deleteFarmers(ids: number[]) {
                     description: `생산자 다중 삭제: ${deletedFarmer.name}`
                 })
                 results.success.push(id)
-            } catch (error) {
+            } catch {
                 results.failed.push({
                     id,
                     reason: `${id}: 삭제 실패`

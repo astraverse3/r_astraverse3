@@ -93,7 +93,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
                         .join('\n')
                 }
                 return JSON.stringify(details)
-            } catch (e) {
+            } catch {
                 return String(details)
             }
         }

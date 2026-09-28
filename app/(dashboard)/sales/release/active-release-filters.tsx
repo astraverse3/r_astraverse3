@@ -32,7 +32,7 @@ export function ActiveReleaseFilters({ totalCount, defaultStartDate, defaultEndD
             </span>
             <div className="flex gap-1 overflow-x-auto scrollbar-hide">
                 {dateLabel && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">{dateLabel}</Badge>}
-                {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">"{keyword}"</Badge>}
+                {keyword && <Badge variant="outline" className="whitespace-nowrap bg-transparent text-[10px] px-1.5 py-0 text-slate-500 border-slate-200 font-normal">&quot;{keyword}&quot;</Badge>}
             </div>
         </div>
     )

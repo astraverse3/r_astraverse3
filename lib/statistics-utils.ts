@@ -1,4 +1,4 @@
-import { format, differenceInDays, subDays, subMonths, subYears } from 'date-fns'
+import { differenceInDays, subDays, subMonths, subYears } from 'date-fns'
 import type { GroupBy, QuickPeriod } from '@/app/actions/statistics'
 
 // 조회 기간 일수 → groupBy 자동 결정

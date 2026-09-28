@@ -56,7 +56,7 @@ export function LogList() {
             } else {
                 toast.error(res.error || 'Failed to fetch logs')
             }
-        } catch (error) {
+        } catch {
             toast.error('로그를 불러오는 중 오류가 발생했습니다.')
         } finally {
             setLoading(false)
@@ -90,7 +90,7 @@ export function LogList() {
             } else {
                 toast.error(res.error || 'Export failed')
             }
-        } catch (error) {
+        } catch {
             toast.error('엑셀 생성 중 오류가 발생했습니다.')
         } finally {
             setExporting(false)
@@ -123,7 +123,6 @@ export function LogList() {
         'System': '시스템/기타'
     }
 
-    const getEntityName = (entity: string) => ENTITY_NAMES[entity] || entity
 
     const parseUserAgent = (ua: string | null) => {
         if (!ua) return { type: 'Unknown', icon: Globe }

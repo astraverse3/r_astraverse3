@@ -62,7 +62,7 @@ export function EditReleaseDialog({ release, open, onOpenChange }: EditReleaseDi
             } else {
                 toast.error(result.error || '수정 중 오류가 발생했습니다.')
             }
-        } catch (error) {
+        } catch {
             toast.error('수정 중 오류가 발생했습니다.')
         } finally {
             setLoading(false)

@@ -148,7 +148,6 @@ export function AddMiscStockDialog({
     // sourceType별 라벨/자동완성 후보
     const isConsignment = sourceType === 'CONSIGNMENT'
     const isGermination = sourceType === 'GERMINATION'
-    const isFarmer = sourceType === 'FARMER_MILLED'
 
     const rawLabel = isGermination ? '현미중량(kg)' : '원물중량(kg)'
     const vendorLabel = isGermination ? '발아업체' : '도정업체'
@@ -373,7 +372,7 @@ export function AddMiscStockDialog({
                         </div>
                         {filteredFarmers.length === 0 && (
                             <div className="bg-amber-50 p-2 rounded text-xs text-amber-700 border border-amber-100">
-                                선택한 인증·년도 조합에 잡곡 생산자로 등록된 농가가 없어요. 생산자 관리에서 "잡곡도 생산"을 체크해주세요.
+                                선택한 인증·년도 조합에 잡곡 생산자로 등록된 농가가 없어요. 생산자 관리에서 &quot;잡곡도 생산&quot;을 체크해주세요.
                             </div>
                         )}
                     </div>

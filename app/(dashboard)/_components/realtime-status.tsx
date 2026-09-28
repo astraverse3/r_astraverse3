@@ -68,7 +68,7 @@ interface MobileCardCarouselProps {
 function MobileCardCarousel({
     animatedAvailable, animatedOutput, animatedUruchi, animatedIndica, animatedGlutinous,
     remainingPercent, totalStock, uruchiOutPercent, indicaOutPercent, glutinousOutPercent, othersOutPercent,
-    outputsByType, years
+    years
 }: MobileCardCarouselProps) {
     const totalCards = 3;
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -356,7 +356,6 @@ function MobileCardCarousel({
 export function RealtimeStatus({
     availableStock,
     totalStock,
-    millingProgress, // Retained for compatibility but milledPercent is calculated directly below for layout matching
     totalOutput,
     outputsByType,
     yields,
@@ -398,7 +397,6 @@ export function RealtimeStatus({
 
     // calculate percentages
     const remainingPercent = totalStock > 0 ? (availableStock / totalStock) * 100 : 0;
-    const milledPercent = totalStock > 0 ? 100 - remainingPercent : 0;
 
     // calculate outputsByType percentages
     const totalOutputForTypes = outputsByType.uruchi + outputsByType.glutinous + outputsByType.indica + outputsByType.others;

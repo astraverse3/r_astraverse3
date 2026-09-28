@@ -38,7 +38,7 @@ export function ReleasePageWrapper({
             } else {
                 toast.error(result.error || '출고 취소 실패')
             }
-        } catch (error) {
+        } catch {
             toast.error('오류가 발생했습니다.')
         }
     }

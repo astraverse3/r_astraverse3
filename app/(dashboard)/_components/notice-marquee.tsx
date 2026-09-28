@@ -2,7 +2,6 @@
 
 import { Megaphone, X } from 'lucide-react';
 import { useEffect, useState, useRef, Fragment } from 'react';
-import { Button } from '@/components/ui/button';
 import { NoticeViewDialog } from '@/components/admin/NoticeViewDialog';
 
 interface Notice {
@@ -117,14 +116,6 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
             setCurrentIndex(0);
             setIsModalOpen(true);
         }
-    };
-
-    const handlePrev = () => {
-        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : notices.length - 1));
-    };
-
-    const handleNext = () => {
-        setCurrentIndex((prev) => (prev < notices.length - 1 ? prev + 1 : 0));
     };
 
     const currentNotice = notices[currentIndex];

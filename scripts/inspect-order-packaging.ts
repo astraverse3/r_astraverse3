@@ -21,7 +21,8 @@ function main() {
     const range = XLSX.utils.decode_range(ws['!ref'])
 
     // A열 라벨로 헤더 행 탐지
-    let rowItem = 0, rowPkg = -1, rowWeight = -1
+    const rowItem = 0
+    let rowPkg = -1, rowWeight = -1
     for (let r = range.s.r; r <= range.e.r; r++) {
       const a = norm(ws[XLSX.utils.encode_cell({ r, c: 0 })]?.v)
       if (a === '포장지') rowPkg = r
@@ -36,7 +37,7 @@ function main() {
     const merges = ws['!merges'] ?? []
     const itemAt = (c: number): string => {
       // 직접 셀
-      let v = norm(ws[XLSX.utils.encode_cell({ r: rowItem, c })]?.v)
+      const v = norm(ws[XLSX.utils.encode_cell({ r: rowItem, c })]?.v)
       if (v) return v
       // 병합 범위에 속하면 시작셀 값
       for (const m of merges) {

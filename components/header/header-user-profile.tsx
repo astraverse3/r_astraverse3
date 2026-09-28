@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { LogOut, User, Building, BadgeCheck } from "lucide-react"
+import { LogOut, Building, BadgeCheck } from "lucide-react"
 
 export function HeaderUserProfile() {
     const { data: session } = useSession()

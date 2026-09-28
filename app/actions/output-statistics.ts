@@ -58,9 +58,6 @@ function toMonthKey(d: Date): string {
   return `${y}-${m}`
 }
 
-// 규격 정렬 순서
-const PKG_ORDER = ['20kg', '10kg', '5kg', 'Tonbag']
-
 // ── 품종 목록 ─────────────────────────────────────────────────────────────
 
 export async function getOutputVarietyOptions(

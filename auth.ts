@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
             }
             return session
         },
-        async signIn({ user, account, profile }) {
+        async signIn({ user }) {
             // 사용자 로그인 시도/성공 시 호출
             try {
                 if (user && user.id) {

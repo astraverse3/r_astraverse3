@@ -222,7 +222,7 @@ export function StockPageWrapper({
             )}
 
             <MillingCartSheet
-                onStartMilling={(items) => {
+                onStartMilling={() => {
                     setMillingSource('CART')
                     setShowMillingDialog(true)
                 }}

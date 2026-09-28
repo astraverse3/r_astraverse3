@@ -227,7 +227,7 @@ export function EditMiscPurchaseDialog({ open, onOpenChange, packageId, onSucces
                             {trimmedVariety.length > 0 && (
                                 isNewVariety ? (
                                     <p className="text-[11px] text-amber-600">
-                                        새 품종 '{trimmedVariety}' 으로 등록돼요
+                                        새 품종 &apos;{trimmedVariety}&apos; 으로 등록돼요
                                     </p>
                                 ) : (
                                     <p className="text-[11px] text-slate-400">기존 품종 사용</p>

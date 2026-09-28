@@ -11,18 +11,9 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, MoreHorizontal, ChevronRight, ChevronDown, Phone, BadgeCheck } from 'lucide-react'
+import { Edit, ChevronRight, ChevronDown, Phone } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Checkbox } from '@/components/ui/checkbox'
-import { deleteFarmer } from '@/app/actions/admin'
 import { AddFarmerDialog } from './add-farmer-dialog'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
@@ -204,7 +195,7 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-[14px] text-slate-800">
                                         <span className="font-bold">{group.group.name}</span>
-                                        <span className="font-normal text-slate-500">({group.group.cropYear.toString().slice(-2)}')</span>
+                                        <span className="font-normal text-slate-500">({group.group.cropYear.toString().slice(-2)}&apos;)</span>
                                     </span>
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${group.group.certType === '유기농' ? 'text-[#8dc540] border-[#8dc540]/30 bg-[#8dc540]/10' :
                                         group.group.certType === '무농약' ? 'text-[#00a2e8] border-[#00a2e8]/30 bg-[#00a2e8]/10' :

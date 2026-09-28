@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link"
-import { Settings, Users, Wheat, Tractor, Package, LogOut, MoreVertical, Building, BadgeCheck, Megaphone, History } from "lucide-react"
+import { Settings, Users, Wheat, Tractor, Package, LogOut, Building, BadgeCheck, Megaphone, History } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import type { Session } from "next-auth"
 import { hasPermission, hasAnyPermission } from "@/lib/permissions"

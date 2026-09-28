@@ -1,15 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { MoreVertical, Edit, Trash2 } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
@@ -17,7 +14,6 @@ import { toast } from 'sonner'
 import { EditStockDialog } from './edit-stock-dialog'
 import { deleteStock } from '@/app/actions/stock'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { Stock } from './page'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
