@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
-import type { GetMiscStocksParams } from '@/app/actions/misc-stock'
+import type { GetMiscStocksParams, MiscStockItem } from '@/app/actions/misc-stock'
 import { AddMiscStockDialog } from './add-misc-stock-dialog'
 import { MiscStockFilters } from './misc-stock-filters'
 import { MiscStockListClient } from './misc-stock-list-client'
@@ -32,7 +32,7 @@ interface Props {
     varieties: Variety[]
     millingVendors: string[]
     sproutingVendors: string[]
-    initialStocks: any[]
+    initialStocks: MiscStockItem[]
     filters: GetMiscStocksParams
 }
 

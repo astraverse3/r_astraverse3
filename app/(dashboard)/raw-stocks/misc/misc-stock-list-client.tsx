@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import {
     deleteMiscStock,
     type MiscStockGroup,
+    type MiscStockItem,
     type GetMiscStocksParams,
 } from '@/app/actions/misc-stock'
 import { MiscStockTableRow, MiscStockMobileCard, CERT_BADGE_CLASS } from './misc-stock-table-row'
@@ -34,7 +35,7 @@ interface Farmer {
 }
 
 interface Props {
-    initialStocks: any[]
+    initialStocks: MiscStockItem[]
     filters: GetMiscStocksParams
     farmers: Farmer[]
     varieties: { id: number; name: string }[]
@@ -60,7 +61,7 @@ export function MiscStockListClient({
     const [editTarget, setEditTarget] = useState<MiscStockEditTarget | null>(null)
     const [editOpen, setEditOpen] = useState(false)
 
-    const [packageStock, setPackageStock] = useState<any | null>(null)
+    const [packageStock, setPackageStock] = useState<MiscStockItem | null>(null)
     const [packageOpen, setPackageOpen] = useState(false)
 
     const router = useRouter()
@@ -76,9 +77,11 @@ export function MiscStockListClient({
     // 클라이언트 그룹핑 — 서버 getMiscStockGroups 로직 이식
     const groups = useMemo<MiscStockGroup[]>(() => {
         const visible = initialStocks.filter(s => !hiddenIds.has(s.id))
-        const grouped: Record<string, MiscStockGroup & { _farmerIds: Set<number> }> = {}
+        const grouped: Record<string, MiscStockGroup> = {}
+        // 그룹별 고유 생산자 수 계산용
+        const farmerIdsByKey: Record<string, Set<number>> = {}
 
-        visible.forEach((stock: any) => {
+        visible.forEach((stock) => {
             const certType = stock.farmer?.group?.certType || '일반'
             const variety = stock.variety?.name || 'Unknown'
             const key = `${stock.productionYear}-${variety}-${certType}`
@@ -94,21 +97,18 @@ export function MiscStockListClient({
                     count: 0,
                     farmerSetSize: 0,
                     items: [],
-                    _farmerIds: new Set(),
-                } as any
+                }
+                farmerIdsByKey[key] = new Set()
             }
             grouped[key].totalWeight += stock.weightKg
             grouped[key].remainingTotal += stock.remainingKg ?? stock.weightKg
             grouped[key].count += 1
             grouped[key].items.push(stock)
-            if (stock.farmer?.id) grouped[key]._farmerIds.add(stock.farmer.id)
+            if (stock.farmer?.id) farmerIdsByKey[key].add(stock.farmer.id)
         })
 
         return Object.values(grouped)
-            .map(g => {
-                const { _farmerIds, ...rest } = g as any
-                return { ...rest, farmerSetSize: _farmerIds.size } as MiscStockGroup
-            })
+            .map(g => ({ ...g, farmerSetSize: farmerIdsByKey[g.key].size }))
             .sort((a, b) => {
                 if (a.year !== b.year) return b.year - a.year
                 const aIsGeneral = a.certType === '일반'
@@ -120,7 +120,7 @@ export function MiscStockListClient({
             })
     }, [initialStocks, hiddenIds])
 
-    const handleEdit = (stock: any) => {
+    const handleEdit = (stock: MiscStockItem) => {
         setEditTarget({
             id: stock.id,
             productionYear: stock.productionYear,
@@ -137,7 +137,7 @@ export function MiscStockListClient({
         setEditOpen(true)
     }
 
-    const handleDelete = async (stock: any) => {
+    const handleDelete = async (stock: MiscStockItem) => {
         if (!(await confirmDialog({ description: `이 잡곡 입고를 삭제하시겠습니까?\n${stock.variety.name} / ${stock.farmer.name} / ${stock.weightKg}kg`, destructive: true, confirmText: '삭제' }))) return
         const result = await deleteMiscStock(stock.id)
         if (result.success) {
@@ -150,7 +150,7 @@ export function MiscStockListClient({
     }
 
     // 진입점 ① — 행 메뉴/상태 셀에서 트리거 → stock 미리 지정한 다이얼로그
-    const handlePackage = (stock: any) => {
+    const handlePackage = (stock: MiscStockItem) => {
         setPackageStock(stock)
         setPackageOpen(true)
     }
@@ -164,8 +164,7 @@ export function MiscStockListClient({
         })
     }
 
-    const filterCount = Object.keys(filters).filter(k => {
-        const v = (filters as any)[k]
+    const filterCount = Object.values(filters).filter(v => {
         return v !== undefined && v !== '' && v !== 'ALL' && !(typeof v === 'object' && Object.keys(v).length === 0)
     }).length
 
@@ -253,7 +252,7 @@ export function MiscStockListClient({
 
                                         {/* Detail Rows — 단일 건 그룹은 무조건 표시, 다중은 isExpanded일 때만
                                             inExpandedGroup: 다중 그룹의 서브행만 묶음 톤(slate-100). 단일 건은 흰 배경(낱개). */}
-                                        {isOpen && group.items.map((stock: any) => (
+                                        {isOpen && group.items.map((stock) => (
                                             <MiscStockTableRow
                                                 key={stock.id}
                                                 stock={stock}
@@ -290,7 +289,7 @@ export function MiscStockListClient({
                         if (!isMulti) {
                             return (
                                 <div key={group.key} className="flex flex-col gap-1.5">
-                                    {group.items.map((stock: any) => (
+                                    {group.items.map((stock) => (
                                         <MiscStockMobileCard
                                             key={stock.id}
                                             stock={stock}
@@ -346,7 +345,7 @@ export function MiscStockListClient({
                                 {/* §4.2.7 모바일: 펼친 그룹은 bg-slate-50/70 묶음 컨테이너, 카드 자체는 흰 배경 유지 */}
                                 {isExpanded && (
                                     <div className="flex flex-col gap-1.5 p-2 mx-1 mb-2 rounded-lg bg-slate-50/70">
-                                        {group.items.map((stock: any) => (
+                                        {group.items.map((stock) => (
                                             <MiscStockMobileCard
                                                 key={stock.id}
                                                 stock={stock}

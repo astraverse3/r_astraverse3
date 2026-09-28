@@ -12,25 +12,26 @@ import {
     TableRow,
     TableCell,
 } from '@/components/ui/table'
-import { StockGroup, deleteStock } from '@/app/actions/stock'
+import { StockGroup, deleteStock, type GetStocksParams } from '@/app/actions/stock'
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
-import { EditStockDialog } from './edit-stock-dialog'
+import { EditStockDialog, type StockFarmerOption, type StockVarietyOption } from './edit-stock-dialog'
+import type { Stock } from './page'
 import { EmptyState } from '@/components/empty-state'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface StockListClientProps {
     initialGroups: StockGroup[]
-    filters: any
+    filters: GetStocksParams
     selectedIds: Set<number>
     onSelectionChange: (ids: Set<number>) => void
-    farmers: any[]
-    varieties: any[]
-    loadedItems: Record<string, any[]>
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
+    loadedItems: Record<string, Stock[]>
     loadingGroups: Set<string>
     fetchGroupItems: (group: StockGroup) => Promise<void>
     cartItemIds?: Set<number>
@@ -142,6 +143,20 @@ export function StockListClient({
     )
 }
 
+/** 그룹 목록(데스크탑 행 · 모바일 카드) 공용 props */
+interface GroupedStockProps {
+    groups: StockGroup[]
+    loadedItems: Record<string, Stock[]>
+    loadingGroups: Set<string>
+    fetchGroupItems: (group: StockGroup) => Promise<void>
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
+    selectedIds: Set<number>
+    onSelectOne: (id: number, checked: boolean) => void
+    onSelectionChange: (ids: Set<number>) => void
+    cartItemIds?: Set<number>
+}
+
 function GroupedStockRows({
     groups,
     loadedItems,
@@ -153,7 +168,7 @@ function GroupedStockRows({
     onSelectOne,
     onSelectionChange,
     cartItemIds
-}: any) {
+}: GroupedStockProps) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
     const toggleGroup = (group: StockGroup) => {
@@ -182,8 +197,8 @@ function GroupedStockRows({
             const loaded = loadedItems[key]
             if (loaded === undefined) return           // fetch 전 → 대기
             loaded
-                .filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
-                .forEach((s: any) => newSelected.add(s.id))
+                .filter((s) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                .forEach((s) => newSelected.add(s.id))
             stillPending.delete(key)
             changed = true
         })
@@ -204,15 +219,15 @@ function GroupedStockRows({
                 // If items NOT loaded, we don't know if they are selected.
                 // WE MUST LOAD THEM TO SELECT THEM.
                 // Exclude items already in cart from "available for selection"
-                const availableItems = items.filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                const availableItems = items.filter((s) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
 
                 // Group is selected if ALL available items (not in cart) are selected
                 // And there must be at least one available item
-                const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s: any) => selectedIds.has(s.id))
+                const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s) => selectedIds.has(s.id))
 
                 const handleGroupSelect = async (checked: boolean) => {
                     const newSet = new Set(selectedIds)
-                    availableItems.forEach((s: any) => {
+                    availableItems.forEach((s) => {
                         if (checked) {
                             newSet.add(s.id)
                         } else {
@@ -222,7 +237,7 @@ function GroupedStockRows({
                     onSelectionChange(newSet)
                 }
 
-                const onCheckboxClick = async (e: any) => {
+                const onCheckboxClick = async (e: React.MouseEvent) => {
                     e.stopPropagation()
                     if (items.length === 0) {
                         // 미로드: 펼치며 로드 시작 + 로드 완료 시 자동 선택 예약 (두 번 클릭 불필요)
@@ -299,7 +314,7 @@ function GroupedStockRows({
                         </TableRow>
 
                         {/* Detailed Rows */}
-                        {isExpanded && items.map((stock: any) => (
+                        {isExpanded && items.map((stock) => (
                             <StockTableRow
                                 key={stock.id}
                                 inExpandedGroup
@@ -341,7 +356,7 @@ function GroupedStockMobileCards({
     onSelectOne,
     onSelectionChange,
     cartItemIds
-}: any) {
+}: GroupedStockProps) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
     const toggleGroup = (group: StockGroup) => {
@@ -369,8 +384,8 @@ function GroupedStockMobileCards({
             const loaded = loadedItems[key]
             if (loaded === undefined) return           // fetch 전 → 대기
             loaded
-                .filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
-                .forEach((s: any) => newSelected.add(s.id))
+                .filter((s) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                .forEach((s) => newSelected.add(s.id))
             stillPending.delete(key)
             changed = true
         })
@@ -387,12 +402,12 @@ function GroupedStockMobileCards({
                 const isLoading = loadingGroups.has(group.key)
                 const items = loadedItems[group.key] || []
 
-                const availableItems = items.filter((s: any) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
-                const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s: any) => selectedIds.has(s.id))
+                const availableItems = items.filter((s) => s.status === 'AVAILABLE' && !cartItemIds?.has(s.id))
+                const isGroupSelected = items.length > 0 && availableItems.length > 0 && availableItems.every((s) => selectedIds.has(s.id))
 
                 const handleGroupSelect = async (checked: boolean) => {
                     const newSet = new Set(selectedIds)
-                    availableItems.forEach((s: any) => {
+                    availableItems.forEach((s) => {
                         if (checked) {
                             newSet.add(s.id)
                         } else {
@@ -402,7 +417,7 @@ function GroupedStockMobileCards({
                     onSelectionChange(newSet)
                 }
 
-                const onCheckboxClick = async (e: any) => {
+                const onCheckboxClick = async (e: React.MouseEvent) => {
                     e.stopPropagation()
                     if (items.length === 0) {
                         // 미로드: 펼치며 로드 시작 + 로드 완료 시 자동 선택 예약 (두 번 클릭 불필요)
@@ -477,7 +492,7 @@ function GroupedStockMobileCards({
                                         <span className="text-xs">데이터 로딩 중...</span>
                                     </div>
                                 )}
-                                {items.map((stock: any) => (
+                                {items.map((stock) => (
                                     <MobileStockDetailCard
                                         key={stock.id}
                                         stock={stock}
@@ -498,7 +513,17 @@ function GroupedStockMobileCards({
     )
 }
 
-function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart }: any) {
+interface MobileStockDetailCardProps {
+    stock: Stock
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
+    selected: boolean
+    onSelect: (checked: boolean) => void
+    hideCheckbox?: boolean
+    isInCart?: boolean
+}
+
+function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart }: MobileStockDetailCardProps) {
     const isCartBlocked = isInCart
     const isAvailable = stock.status === 'AVAILABLE'
     const [editOpen, setEditOpen] = useState(false)

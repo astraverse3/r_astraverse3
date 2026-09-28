@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, Upload } from 'lucide-react'
 import { importStocks, exportStocks } from '@/app/actions/stock-excel'
+import type { GetStocksParams } from '@/app/actions/stock'
 import { formatImportResult, ExcelImportResult } from '@/lib/excel-utils'
 import {
     AlertDialog,
@@ -20,7 +21,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 
-export function StockExcelButtons({ filters }: { filters?: any }) {
+export function StockExcelButtons({ filters }: { filters?: GetStocksParams }) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)

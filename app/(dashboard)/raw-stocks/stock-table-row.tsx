@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { EditStockDialog } from './edit-stock-dialog'
+import { EditStockDialog, type StockFarmerOption, type StockVarietyOption } from './edit-stock-dialog'
+import type { Stock } from './page'
 import { deleteStock } from '@/app/actions/stock'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { useSession } from 'next-auth/react'
@@ -19,9 +20,9 @@ import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
-    stock: any
-    farmers: any[]
-    varieties: any[]
+    stock: Stock
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
     selected: boolean
     onSelect: (checked: boolean) => void
 

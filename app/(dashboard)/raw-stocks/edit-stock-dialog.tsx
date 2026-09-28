@@ -26,10 +26,14 @@ import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { productionYearOptionsWith } from '@/lib/production-year'
 
+/** 원물 수정·목록이 받는 생산자 · 품종 선택지 */
+export type StockFarmerOption = { id: number; name: string; group: { name: string; certType: string; certNo: string } | null }
+export type StockVarietyOption = { id: number; name: string }
+
 interface Props {
     stock: Stock
-    farmers: { id: number; name: string; group: { name: string; certType: string; certNo: string } | null }[]
-    varieties: { id: number; name: string }[]
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
     open?: boolean
     onOpenChange?: (open: boolean) => void
     trigger?: React.ReactNode
@@ -56,7 +60,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
     const initialFarmerId = farmers.find(f => f.name === stock.farmer?.name)?.id.toString() || ''
 
     // We assume variety name is unique or we rely on ID if available
-    const initialVarietyId = (stock as any).varietyId?.toString() || varieties.find(v => v.name === stock.variety.name)?.id.toString() || ''
+    const initialVarietyId = stock.varietyId?.toString() || varieties.find(v => v.name === stock.variety.name)?.id.toString() || ''
 
     const [selectedFarmerId, setSelectedFarmerId] = useState<string>(initialFarmerId)
     const [selectedVarietyId, setSelectedVarietyId] = useState<string>(initialVarietyId)

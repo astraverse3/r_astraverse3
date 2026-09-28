@@ -28,6 +28,7 @@ export interface Stock {
     updatedAt: Date
     lotNo: string | null
     actualFarmer: string | null
+    varietyId?: number
     variety: {
         name: string
         type: string

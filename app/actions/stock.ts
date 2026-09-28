@@ -449,7 +449,6 @@ export type StockGroup = {
     totalWeight: number
     count: number
     farmerSetSize: number
-    items: any[] // Initially empty
 }
 
 export async function getStockGroups(params?: GetStocksParams) {
@@ -528,8 +527,10 @@ export async function getStockGroups(params?: GetStocksParams) {
 
         // Grouping Logic (Server-Side)
         const grouped: Record<string, StockGroup> = {}
+        // 그룹별 고유 생산자 수 계산용
+        const farmerIdsByKey: Record<string, Set<number>> = {}
 
-        stocks.forEach((stock: any) => {
+        stocks.forEach((stock) => {
             const certType = stock.farmer?.group?.certType || '일반'
             const key = `${stock.productionYear}-${stock.variety?.name}-${certType}`
 
@@ -542,25 +543,22 @@ export async function getStockGroups(params?: GetStocksParams) {
                     totalWeight: 0,
                     count: 0,
                     farmerSetSize: 0, // Calculated later
-                    items: [] // Empty
                 }
-                    // Temp storage for farmer IDs to count unique
-                    ; (grouped[key] as any)._farmerIds = new Set()
+                farmerIdsByKey[key] = new Set()
             }
 
             grouped[key].totalWeight += stock.weightKg
             grouped[key].count += 1
             if (stock.farmer?.id) {
-                (grouped[key] as any)._farmerIds.add(stock.farmer.id)
+                farmerIdsByKey[key].add(stock.farmer.id)
             }
         })
 
         // Finalize Groups
-        const result = Object.values(grouped).map((g: any) => {
-            g.farmerSetSize = g._farmerIds.size
-            delete g._farmerIds
-            return g as StockGroup
-        })
+        const result = Object.values(grouped).map(g => ({
+            ...g,
+            farmerSetSize: farmerIdsByKey[g.key].size,
+        }))
 
         // Sort Groups (Same logic as client)
         result.sort((a, b) => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMillingCart } from '@/app/(dashboard)/raw-stocks/milling-cart-context'
+import { useMillingCart, type Stock } from '@/app/(dashboard)/raw-stocks/milling-cart-context'
 import {
     Sheet,
     SheetContent,
@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { record, flushTrace } from '@/lib/nav-trace' // 덫: 용의자 A (plan-네비게이션-덫.md)
 
 interface Props {
-    onStartMilling: (stocks: any[]) => void
+    onStartMilling: (stocks: Stock[]) => void
 }
 
 export function MillingCartSheet({ onStartMilling }: Props) {

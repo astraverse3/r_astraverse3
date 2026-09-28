@@ -70,7 +70,9 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
         if (saved) {
             try {
                 // Parse dates back to Date objects
-                const parsed = JSON.parse(saved).map((s: any) => ({
+                // localStorage엔 날짜가 문자열로 들어 있다
+                type SavedStock = Omit<Stock, 'incomingDate'> & { incomingDate: string; createdAt?: string; updatedAt?: string }
+                const parsed = (JSON.parse(saved) as SavedStock[]).map((s) => ({
                     ...s,
                     incomingDate: new Date(s.incomingDate),
                     createdAt: s.createdAt ? new Date(s.createdAt) : undefined,

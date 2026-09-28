@@ -9,7 +9,9 @@ import { ActiveStockFilters } from './active-filters'
 import { ReleaseStockDialog } from './release-stock-dialog'
 import { StartMillingDialog } from './start-milling-dialog'
 import { cancelStockRelease } from '@/app/actions/release'
-import { getStocksByGroup, StockGroup } from '@/app/actions/stock'
+import { getStocksByGroup, StockGroup, type GetStocksParams } from '@/app/actions/stock'
+import type { Stock } from './page'
+import type { StockFarmerOption, StockVarietyOption } from './edit-stock-dialog'
 import { useMillingCart } from './milling-cart-context'
 import { MillingCartSheet } from '@/components/milling-cart-sheet'
 import { Button } from '@/components/ui/button'
@@ -17,34 +19,12 @@ import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 
-interface Stock {
-    id: number
-    productionYear: number
-    bagNo: number
-    weightKg: number
-    status: string
-    incomingDate: Date
-    createdAt: Date
-    updatedAt: Date
-    lotNo: string | null
-    variety: {
-        name: string
-        type: string
-    }
-    farmer: {
-        name: string
-        group: {
-            certType: string
-            name: string
-        }
-    }
-}
 
 interface StockPageWrapperProps {
     initialGroups: StockGroup[] // Changed from stocks
-    farmers: any[]
-    varieties: any[]
-    filters: any
+    farmers: StockFarmerOption[]
+    varieties: StockVarietyOption[]
+    filters: GetStocksParams
     filtersSlot: ReactNode
     excelSlot: ReactNode
     addDialogSlot: ReactNode

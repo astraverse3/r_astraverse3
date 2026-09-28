@@ -408,6 +408,11 @@ export async function getMiscStocks(params?: GetMiscStocksParams) {
 // 잡곡은 데이터 규모가 작아 일괄 fetch + 클라이언트 그룹핑(생산자 패턴) 채택.
 // 서버 그룹핑/펼침 액션(getMiscStockGroups/getMiscStocksByGroup)은 제거됨.
 // -----------------------------
+/** getMiscStocks가 돌려주는 목록 행 — Stock + variety · farmer.group + 잔량(remainingKg) */
+export type MiscStockItem = Prisma.StockGetPayload<{
+    include: { variety: true; farmer: { include: { group: true } } }
+}> & { remainingKg: number }
+
 export type MiscStockGroup = {
     key: string
     year: number
@@ -417,7 +422,7 @@ export type MiscStockGroup = {
     remainingTotal: number   // 재고(잔량) 합계 (kg)
     count: number
     farmerSetSize: number
-    items: any[]
+    items: MiscStockItem[]
 }
 
 // -----------------------------
