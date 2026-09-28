@@ -477,6 +477,70 @@ test('buildMatrix: 그룹도 등장 순서를 지킨다', () => {
   )
 })
 
+test('buildMatrix: 같은 품종은 포장지가 달라도 모인다 (2026-09-28)', () => {
+  // 택배 실데이터 모양 — 천지향 10kg(포장지 「천지향」)과 5kg(「땅끝에서보냅니다」) 사이에 하이아미가 끼어 있었다
+  const m = buildMatrix(
+    input({
+      orders: [order(1, 'a'), order(2, 'b'), order(3, 'c')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1 }),
+        item({ id: 12, orderId: 2, productTypeId: 2 }),
+        item({ id: 13, orderId: 3, productTypeId: 3 }),
+      ],
+      skus: [
+        sku(1, '10kg', { varietyName: '천지향1세', packagingName: '천지향' }),
+        sku(2, '10kg', { varietyName: '하이아미', packagingName: '땅끝에서보냅니다' }),
+        sku(3, '5kg', { varietyName: '천지향1세', packagingName: '땅끝에서보냅니다' }),
+      ],
+    }),
+  )
+  assert.deepEqual(
+    m.groups.map((g) => `${g.title}/${g.packagingName}`),
+    ['천지향1세/천지향', '천지향1세/땅끝에서보냅니다', '하이아미/땅끝에서보냅니다'],
+  )
+  // 열도 그룹 차례를 따른다(colspan 정합)
+  assert.deepEqual(m.columns.map((c) => c.productTypeId), [1, 3, 2])
+})
+
+test('buildMatrix: 품종 모으기는 도정을 가리지 않고, 규격 순서는 건드리지 않는다', () => {
+  // 서농22호 백미·현미 = 가바백미·가바현미 — 이웃해야 한다. 규격은 원본처럼 10kg → 1kg 그대로
+  const m = buildMatrix(
+    input({
+      orders: [order(1, 'a'), order(2, 'b')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1 }),
+        item({ id: 12, orderId: 1, productTypeId: 2 }),
+        item({ id: 13, orderId: 1, productTypeId: 4 }),
+        item({ id: 14, orderId: 2, productTypeId: 3 }),
+      ],
+      skus: [
+        sku(1, '10kg', { varietyName: '서농22호' }),
+        sku(2, '1kg', { varietyName: '서농22호' }),
+        sku(4, '1kg', { varietyName: '귀리' }),
+        sku(3, '800g', { varietyName: '서농22호', millingType: '현미' }),
+      ],
+    }),
+  )
+  assert.deepEqual(m.columns.map((c) => c.packageType), ['10kg', '1kg', '800g', '1kg'])
+  assert.deepEqual(m.columns.map((c) => c.productTypeId), [1, 2, 3, 4])
+})
+
+test('buildMatrix: 매칭실패 그룹은 원본 품목명이 제 품종이다', () => {
+  // 같은 원본 이름 매칭실패 2개(포장지만 다름)는 모이고, 매칭된 차조와는 섞이지 않는다
+  const m = buildMatrix(
+    input({
+      orders: [order(1, 'a'), order(2, 'b'), order(3, 'c')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: null, rawItemName: '유기농 율무' }),
+        item({ id: 12, orderId: 2, productTypeId: 1 }),
+        item({ id: 13, orderId: 3, productTypeId: null, rawItemName: '유기농 율무', rawPackaging: 'PET' }),
+      ],
+      skus: [sku(1, '1kg', { varietyName: '차조' })],
+    }),
+  )
+  assert.deepEqual(m.groups.map((g) => g.title), ['유기농 율무', '유기농 율무', '차조'])
+})
+
 test('buildMatrix: 매칭실패 그룹은 표시가 다르다', () => {
   const m = buildMatrix(
     input({

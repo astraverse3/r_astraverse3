@@ -277,6 +277,9 @@ export function rowStatusOf(statuses: readonly CellStatus[]): CellStatus {
  * 🔴 **등장 순서를 지킨다.** 이 화면의 목적은 「발주서 원본 그대로의 2D 피벗」이고,
  * `PurchaseOrderItem.id` 순서가 곧 엑셀 열 순서다. 무게순 같은 걸로 재배열하면
  * 사람이 원본과 대조할 수 없다. 그룹도 그 안의 규격도 처음 나온 차례대로 선다.
+ *
+ * 단 **같은 품종의 그룹은 모은다**(`gatherByVariety`) — 포장지가 다르면 그룹이 갈리는데, 원본 포장지가
+ * 빈칸이면 규격마다 기본 포장지가 달라 같은 품종이 흩어졌다(택배 천지향 10kg=「천지향」, 5·1kg=「땅끝에서보냅니다」).
  */
 function buildColumns(input: BuildMatrixInput): {
   groups: MatrixColumnGroup[]
@@ -284,6 +287,7 @@ function buildColumns(input: BuildMatrixInput): {
 } {
   const skuById = new Map(input.skus.map((s) => [s.id, s]))
   const groupByKey = new Map<string, MatrixColumnGroup>()
+  const varietyByGroup = new Map<string, string>()
   const colByKey = new Map<string, MatrixColumn>()
 
   for (const item of input.items) {
@@ -299,6 +303,7 @@ function buildColumns(input: BuildMatrixInput): {
         unmatched: !sku,
         columnKeys: [],
       })
+      varietyByGroup.set(gKey, sku ? sku.varietyName : item.rawItemName)
     }
     const group = groupByKey.get(gKey)!
 
@@ -329,9 +334,28 @@ function buildColumns(input: BuildMatrixInput): {
   }
 
   // 열은 그룹 차례대로 늘어놓는다 — 그래야 머리글 colspan과 아래 칸이 맞는다
-  const groups = [...groupByKey.values()]
+  const groups = gatherByVariety([...groupByKey.values()], varietyByGroup)
   const columns = groups.flatMap((g) => g.columnKeys.map((k) => colByKey.get(k)!))
   return { groups, columns }
+}
+
+/**
+ * 같은 품종의 그룹을 이웃하게 모은다(사용자 결정 2026-09-28, `docs/plan/plan-매트릭스-열순서-품종모으기.md`).
+ * 품종끼리는 처음 나온 순, 한 품종 안의 그룹끼리도 처음 나온 순 — 안정 정렬이라 그대로 유지된다.
+ * 품종은 도정을 가리지 않는다(서농22호 백미·현미 = 가바백미·가바현미가 이웃). 매칭실패는 원본 품목명이 제 품종.
+ * 🔴 규격 순서는 건드리지 않는다 — 원본이 `10kg → 1kg`·`1,000kg → 200kg` 순이라 무게로 세우면 원본과 어긋난다.
+ */
+function gatherByVariety(
+  groups: MatrixColumnGroup[],
+  varietyByGroup: Map<string, string>,
+): MatrixColumnGroup[] {
+  const firstIndex = new Map<string, number>()
+  groups.forEach((g, i) => {
+    const v = varietyByGroup.get(g.key)!
+    if (!firstIndex.has(v)) firstIndex.set(v, i)
+  })
+  const rank = (g: MatrixColumnGroup) => firstIndex.get(varietyByGroup.get(g.key)!)!
+  return [...groups].sort((a, b) => rank(a) - rank(b))
 }
 
 /**
