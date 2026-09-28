@@ -23,7 +23,7 @@ interface Notice {
 
 export function NoticeTable({ notices }: { notices: Notice[] }) {
     const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
-    const [viewingNotice, setViewingNotice] = useState<Notice | null>(null)
+    const [viewingNotice, setViewingNotice] = useState<(Notice & { authorName?: string | null }) | null>(null)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
 
     const handleDelete = async (notice: Notice) => {
@@ -101,7 +101,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                             onClick={() => setViewingNotice({
                                 ...notice,
                                 authorName: notice.author?.name
-                            } as any)}
+                            })}
                         >
                             <div className="flex gap-2 items-start mb-1.5">
                                 {notice.isActive && <Megaphone className="w-4 h-4 text-[#ea580c] shrink-0 mt-[2px]" />}
@@ -153,7 +153,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
                                     onClick={() => setViewingNotice({
                                         ...notice,
                                         authorName: notice.author?.name
-                                    } as any)}
+                                    })}
                                 >
                                     <div className="flex items-start gap-2 max-w-xl">
                                         {notice.isActive && <Megaphone className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />}

@@ -23,9 +23,10 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { toast } from 'sonner'
+import type { ReleaseLog } from './release-history-list'
 
 interface EditReleaseDialogProps {
-    release: any | null
+    release: Pick<ReleaseLog, 'id' | 'date' | 'destination' | 'purpose'> | null
     open: boolean
     onOpenChange: (open: boolean) => void
 }

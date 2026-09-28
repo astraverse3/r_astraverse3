@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, type User } from "next-auth"
 import KakaoProvider from "next-auth/providers/kakao"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
@@ -16,7 +16,8 @@ export const authOptions: NextAuthOptions = {
                     email: profile.kakao_account?.email,
                     image: profile.kakao_account?.profile?.profile_image_url,
                     role: "USER"
-                } as any
+                    // permissions·department·position은 DB 기본값에 맡긴다(어댑터가 사용자 생성)
+                } as User
             },
         }),
     ],

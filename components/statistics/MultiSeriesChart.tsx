@@ -11,7 +11,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import type { MultiSeriesChartData, GroupBy } from '@/app/actions/statistics'
+import type { MultiSeriesChartData, MultiSeriesPoint, GroupBy } from '@/app/actions/statistics'
+import type { BarShapeProps } from 'recharts'
+import type { ChartTooltipProps } from './chart-tooltip'
 
 // 시리즈별 색상 팔레트
 const PALETTE = [
@@ -84,7 +86,7 @@ function interpolateSeriesYield(
 }
 
 function makeOverlappingBar(inputColor: string, outputColor: string, seriesName: string) {
-  return function OverlappingBar(props: any) {
+  return function OverlappingBar(props: BarShapeProps) {
     const { x, y, width, height, payload } = props
     if (!payload || height <= 0) return null
 
@@ -114,9 +116,9 @@ function makeOverlappingBar(inputColor: string, outputColor: string, seriesName:
   }
 }
 
-function CustomTooltip({ active, payload, seriesNames }: any) {
+function CustomTooltip({ active, payload, seriesNames }: ChartTooltipProps & { seriesNames: string[] }) {
   if (!active || !payload?.length) return null
-  const item = payload[0]?.payload
+  const item = payload[0]?.payload as MultiSeriesPoint | undefined
   if (!item) return null
 
   const fmt = (kg: number) =>
@@ -125,7 +127,7 @@ function CustomTooltip({ active, payload, seriesNames }: any) {
   return (
     <div className="bg-white border border-slate-100 rounded-xl shadow-lg p-3 text-sm min-w-[190px]">
       <p className="font-semibold text-slate-700 mb-2">{item.tooltipLabel}</p>
-      {(seriesNames as string[]).map((name, i) => {
+      {seriesNames.map((name, i) => {
         const color     = PALETTE[i % PALETTE.length]
         const inputKg   = (item[`${name}_input`]   as number)  ?? 0
         const outputKg  = (item[`${name}_output`]  as number)  ?? 0
@@ -198,7 +200,7 @@ export function MultiSeriesChart({ data, title }: Props) {
   }))
 
   const chartData = periods.map((p, i) => {
-    const point: Record<string, any> = { ...p }
+    const point: Record<string, number | string | boolean | null> = { ...p }
     for (const s of seriesYield) {
       point[`${s.name}_realYield`]   = s.real[i]
       point[`${s.name}_interpYield`] = s.interp[i]
@@ -314,7 +316,7 @@ export function MultiSeriesChart({ data, title }: Props) {
                     name={name}
                     shape={makeOverlappingBar(color.input, color.output, name)}
                     maxBarSize={maxBarSize}
-                    background={(props: any) => {
+                    background={(props: BarShapeProps) => {
                       const hasData = (props.payload?.[`${name}_input`] ?? 0) > 0
                       if (hasData) return <g />
                       return (

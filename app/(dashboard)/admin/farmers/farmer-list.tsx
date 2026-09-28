@@ -36,6 +36,16 @@ interface Farmer {
     } | null
 }
 
+/** 작목반 단위 묶음(작목반 없는 농가는 key='no-group') */
+type FarmerGroupBucket = { key: string; group: Farmer['group']; items: Farmer[] }
+
+interface FarmerGroupsProps {
+    farmers: Farmer[]
+    selectedIds: Set<number>
+    onSelectOne: (id: number, checked: boolean) => void
+    setEditingFarmer: (farmer: Farmer | null) => void
+}
+
 export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage: canManageFromParent }: {
     farmers: Farmer[]
     selectedIds: Set<number>
@@ -155,11 +165,11 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
     )
 }
 
-function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
+function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarmer }: FarmerGroupsProps) {
     const { data: session } = useSession()
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
-    const groups = farmers.reduce((acc: any, farmer: Farmer) => {
+    const groups = farmers.reduce<Record<string, FarmerGroupBucket>>((acc, farmer) => {
         const key = farmer.group ? farmer.group.id.toString() : 'no-group'
         if (!acc[key]) {
             acc[key] = {
@@ -172,7 +182,7 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
         return acc
     }, {})
 
-    const sortedGroups = Object.values(groups).sort((a: any, b: any) => {
+    const sortedGroups = Object.values(groups).sort((a, b) => {
         if (!a.group && !b.group) return 0
         if (!a.group) return 1
         if (!b.group) return -1
@@ -180,7 +190,7 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
         const codeA = parseInt(a.group.code)
         const codeB = parseInt(b.group.code)
         return codeA - codeB
-    }) as any[]
+    })
 
     return (
         <div className="space-y-4">
@@ -311,7 +321,7 @@ function MobileFarmerGroups({ farmers, selectedIds, onSelectOne, setEditingFarme
     )
 }
 
-function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer }: any) {
+function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer }: FarmerGroupsProps) {
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
     const { data: session } = useSession()
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
@@ -327,7 +337,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
     }
 
     // Grouping Logic
-    const groups = farmers.reduce((acc: any, farmer: Farmer) => {
+    const groups = farmers.reduce<Record<string, FarmerGroupBucket>>((acc, farmer) => {
         // Use Group ID as key or 'no-group'
         const key = farmer.group ? farmer.group.id.toString() : 'no-group'
 
@@ -348,7 +358,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
     // Iterating array and building groups: object keys order is not guaranteed. 
     // Better to iterate the flat sorted list and group adjacents, OR explicit sort.
     // Explicit sort of groups is safer.
-    const sortedGroups = Object.values(groups).sort((a: any, b: any) => {
+    const sortedGroups = Object.values(groups).sort((a, b) => {
         if (!a.group && !b.group) return 0
         if (!a.group) return 1
         if (!b.group) return -1
@@ -359,7 +369,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
         const codeA = parseInt(a.group.code)
         const codeB = parseInt(b.group.code)
         return codeA - codeB
-    }) as any[]
+    })
 
     return (
         <>
@@ -375,7 +385,7 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                 return (
                     <Fragment key={group.key}>
                         {/* Group Header (Only if > 1 items) */}
-                        {hasHeader && (
+                        {hasHeader && group.group && (
                             <TableRow
                                 className={`cursor-pointer font-bold text-slate-800 transition-colors ${isExpanded
                                     ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'

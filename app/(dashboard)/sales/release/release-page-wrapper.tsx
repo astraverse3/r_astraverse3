@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ReactNode } from 'react'
-import { ReleaseHistoryList } from './release-history-list'
+import { ReleaseHistoryList, type ReleaseLog } from './release-history-list'
 import { ReleasePageClient } from './release-page-client'
 import { ActiveReleaseFilters } from './active-release-filters'
 import { deleteStockReleases } from '@/app/actions/release'
@@ -11,8 +11,8 @@ import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 
 interface ReleasePageWrapperProps {
-    logs: any[]
-    filters: any
+    logs: ReleaseLog[]
+    filters: { startDate?: Date; endDate?: Date; keyword?: string }
     filtersSlot: ReactNode
     excelSlot: ReactNode
 }

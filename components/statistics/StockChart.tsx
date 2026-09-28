@@ -11,6 +11,8 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts'
+import type { YAxisTickContentProps } from 'recharts'
+import type { ChartTooltipProps } from './chart-tooltip'
 
 export type StockChartItem = {
   name: string
@@ -40,13 +42,13 @@ function formatKg(v: number) {
   return `${v}kg`
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
-  const total = payload.reduce((s: number, p: any) => s + (p.value ?? 0), 0)
+  const total = payload.reduce((s: number, p) => s + (p.value ?? 0), 0)
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-xs min-w-[160px]">
       <p className="font-semibold text-slate-700 mb-1.5 truncate max-w-[200px]">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 py-0.5">
           <span className="flex items-center gap-1.5 text-slate-500">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.fill }} />
@@ -69,8 +71,8 @@ function TruncatedTick({
   expandedLabel,
   onToggle,
 }: {
-  x?: number
-  y?: number
+  x?: number | string
+  y?: number | string
   payload?: { value: string }
   expandedLabel: string | null
   onToggle: (name: string) => void
@@ -106,7 +108,7 @@ export function StockChart({ data, height = 360, truncateLabels = false }: Props
 
   // Y축 tick: truncateLabels=true면 커스텀, 아니면 기본 recharts tick
   const yAxisTick = truncateLabels
-    ? (props: any) => (
+    ? (props: YAxisTickContentProps) => (
         <TruncatedTick
           {...props}
           expandedLabel={expandedLabel}

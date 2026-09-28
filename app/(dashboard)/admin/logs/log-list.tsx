@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getAuditLogs, exportAuditLogs, GetAuditLogsParams } from '@/app/actions/audit'
+import type { AuditLog } from '@prisma/client'
 import { format } from 'date-fns'
 import { Download, Search, RefreshCcw, ChevronLeft, ChevronRight, Activity, CalendarClock, User as UserIcon, Monitor, Smartphone, Globe, FileText } from 'lucide-react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/popover"
 
 export function LogList() {
-    const [logs, setLogs] = useState<any[]>([])
+    const [logs, setLogs] = useState<AuditLog[]>([])
     const [loading, setLoading] = useState(true)
     const [exporting, setExporting] = useState(false)
     const [pagination, setPagination] = useState({

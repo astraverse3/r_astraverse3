@@ -39,7 +39,7 @@ export async function getAuditLogs(params?: GetAuditLogsParams) {
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * pageSize,
                 take: pageSize,
-            }) as Promise<any[]>
+            })
         ])
 
         return {
@@ -79,7 +79,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
             'System': '시스템/기타'
         }
 
-        const formatDetailsForExcel = (details: any) => {
+        const formatDetailsForExcel = (details: Prisma.JsonValue) => {
             if (!details) return ''
             try {
                 // 단순 객체일 경우 key: value 형태로 변환
@@ -99,7 +99,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
             }
         }
 
-        const rows = (result.data as any[]).map((log: any) => ({
+        const rows = result.data.map((log) => ({
             'ID': log.id,
             '일시': log.createdAt.toLocaleString('ko-KR'),
             '작업자': log.userName,

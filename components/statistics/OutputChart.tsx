@@ -14,6 +14,7 @@ import {
   LabelList,
 } from 'recharts'
 import type { ByPackageTypeRow, ByMonthRow, ByDestinationRow } from '@/app/actions/output-statistics'
+import type { ChartTooltipProps } from './chart-tooltip'
 
 export const PKG_LABEL: Record<string, string> = {
   '20kg':   '20kg',
@@ -58,8 +59,7 @@ function formatKg(v: number) {
 
 // ── 1. 규격별 도넛 + 우측 바 리스트 ─────────────────────────────────────
 
-type PieTooltipProps = { active?: boolean; payload?: any[] }
-function PieTooltip({ active, payload }: PieTooltipProps) {
+function PieTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload as ByPackageTypeRow
   return (
@@ -191,13 +191,12 @@ export function PackageTypePieChart({ data }: { data: ByPackageTypeRow[] }) {
 
 // ── 2. 월별 비교 바차트 (세로) ────────────────────────────────────────────
 
-type BarTooltipProps = { active?: boolean; payload?: any[]; label?: string }
-function MonthlyTooltip({ active, payload, label }: BarTooltipProps) {
+function MonthlyTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-xs min-w-[160px]">
       <p className="font-semibold text-slate-700 mb-1.5">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 py-0.5">
           <span className="flex items-center gap-1.5 text-slate-500">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.fill }} />
@@ -256,7 +255,7 @@ export function MonthlyBarChart({ data, height = 320 }: { data: ByMonthRow[]; he
 
 // ── 3. 출고처별 가로 바차트 ───────────────────────────────────────────────
 
-function DestTooltip({ active, payload, label }: BarTooltipProps) {
+function DestTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0]
   return (

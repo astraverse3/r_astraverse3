@@ -7,11 +7,17 @@ interface PWAInstallGuardProps {
     children: React.ReactNode;
 }
 
+/** 표준 DOM 타입에 없는 설치 프롬프트 이벤트(Chromium 전용) */
+type BeforeInstallPromptEvent = Event & {
+    prompt: () => Promise<void>
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
     const [isStandalone, setIsStandalone] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [isMounted, setIsMounted] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isInstalling, setIsInstalling] = useState(false);
     const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
@@ -24,7 +30,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
 
         const standalone =
             window.matchMedia('(display-mode: standalone)').matches ||
-            (window.navigator as any).standalone === true;
+            (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
         const inApp = /kakao|naver|instagram|fb_iab|line|twitter/i.test(userAgent);
 
@@ -47,7 +53,7 @@ export function PWAInstallGuard({ children }: PWAInstallGuardProps) {
         // 3. Capture install prompt
         const handleInstallPrompt = (e: Event) => {
             e.preventDefault();
-            setDeferredPrompt(e);
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
         };
         window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 

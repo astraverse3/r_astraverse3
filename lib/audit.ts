@@ -9,7 +9,8 @@ interface AuditParams {
     action: AuditAction
     entity: string
     entityId?: string | number
-    details?: any
+    /** JSON으로 직렬화해 저장한다(JSON.parse(JSON.stringify)) — 아무 값이나 받는다 */
+    details?: unknown
     description?: string
 }
 

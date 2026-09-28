@@ -34,7 +34,7 @@ interface Stock {
     farmer: { name: string; group?: { name: string } | null }
 }
 
-interface ReleaseLog {
+export interface ReleaseLog {
     id: number
     date: Date
     destination: string

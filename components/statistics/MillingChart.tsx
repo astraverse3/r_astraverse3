@@ -12,6 +12,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { ChartDataPoint, GroupBy } from '@/app/actions/statistics'
+import type { BarShapeProps } from 'recharts'
+import type { ChartTooltipProps } from './chart-tooltip'
 
 // 최대 kg 기준으로 t 단위에서 보기 좋은 눈금 계산 (kg 값으로 반환)
 function computeTonTicks(maxKg: number, count = 5): number[] {
@@ -74,8 +76,9 @@ const COLOR_INPUT  = 'rgba(0, 128, 200, 0.18)'
 const COLOR_OUTPUT = '#0080c8'
 const COLOR_YIELD  = '#f89c1e'
 
-function OverlappingBar(props: any) {
-  const { x, y, width, height, payload } = props
+// shape={<OverlappingBar />} 요소 형태라 recharts가 런타임에 채운다 — 타입상으론 전부 선택적
+function OverlappingBar(props: Partial<BarShapeProps>) {
+  const { x = 0, y = 0, width = 0, height = 0, payload } = props
   if (!payload || height <= 0) return null
 
   const r       = 4
@@ -100,7 +103,7 @@ function OverlappingBar(props: any) {
   )
 }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
   const item = payload[0]?.payload as ChartDataPoint | undefined
   if (!item) return null
