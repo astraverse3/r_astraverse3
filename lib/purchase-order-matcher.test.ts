@@ -315,3 +315,45 @@ test('별칭: 브랜드 + 품종 조합은 정규화가 처리한다 (별칭에 
   )
   assert.equal(r.varietyId, 7)
 })
+
+// ------------------------------------------------------
+// 도정 접두 분리 — 해남급식 양식 (2026-09-28)
+// ------------------------------------------------------
+
+test('normalizeItemName: 도정이 품종 앞에 오면 접두로 뗀다', () => {
+  // 🔴 접미만 보던 시절엔 「백미 천지향5세」가 통째로 품종토큰이 돼 실패했다(#20 해남급식)
+  assert.deepEqual(normalizeItemName('유기농 백미 천지향5세'), {
+    varietyToken: '천지향5세',
+    millingType: '백미',
+  })
+  assert.equal(matchedId(m('유기농 백미 천지향5세', '10kg', null)), 38)
+})
+
+test('normalizeItemName: 접두 도정은 품종 기본값으로 굳지 않는다 (구 결정 T의 사고)', () => {
+  // 현미가 앞에 와도 현미로 잡혀야 한다 — 백미 SKU(38)에 조용히 붙으면 안 된다
+  assert.deepEqual(normalizeItemName('유기농 현미 천지향5세'), {
+    varietyToken: '천지향5세',
+    millingType: '현미',
+  })
+  const r = m('유기농 현미 천지향5세', '10kg', null)
+  assert.equal(r.matched, false)
+  assert.equal(!r.matched && r.reason, 'sku_unresolved')
+  assert.equal(!r.matched && r.millingType, '현미')
+  assert.equal(normalizeItemName('칠분도미 천지향5세').millingType, '칠분도미')
+})
+
+test('normalizeItemName: 공백 없는 접두·접두+접미 겹침은 분리하지 않는다', () => {
+  assert.deepEqual(normalizeItemName('유기농 백미천지향5세'), {
+    varietyToken: '백미천지향5세',
+    millingType: null,
+  })
+  // 접미가 먼저 떨어지고 토큰에 도정이 남는다 — 어느 쪽이 맞는지 추측하지 않는다
+  const r = m('유기농 백미 천지향5세 현미', '10kg', null)
+  assert.equal(r.matched, false)
+  assert.equal(!r.matched && r.reason, 'variety_unresolved')
+  assert.equal(!r.matched && r.varietyToken, '백미 천지향5세')
+})
+
+test('normalizeItemName: 도정 단어만 있으면 접두로 떼지 않는다', () => {
+  assert.deepEqual(normalizeItemName('유기농 백미'), { varietyToken: '백미', millingType: null })
+})

@@ -1,7 +1,7 @@
 // 발주서 라인 → ProductType(SKU) 매칭 파이프라인 — 순수 모듈
 //
 // 계획서 §8.2.3 / 결정 #1·#5·#22·#23·#24:
-//   ① 정규화   : 인증/브랜드 접두 제거 + 도정유형 접미 분리 → (품종토큰, millingType?)
+//   ① 정규화   : 인증/브랜드 접두 제거 + 도정유형 접미(없으면 접두) 분리 → (품종토큰, millingType?)
 //   ② 품종 해석 : Variety.name 정확일치 → 실패 시 Variety.aliases 조회
 //   ③ 도정 확정 : 접미 분리값, 없으면 품종 category 디폴트(RICE→백미 / MISC_GRAIN→기타)
 //   ④ SKU 해석 : (varietyId + millingType + packageType + 포장지) 4키로 ProductType 조회
@@ -140,12 +140,37 @@ function splitMillingSuffix(token: string): {
   return { varietyToken: token, millingType: null }
 }
 
+/**
+ * 도정유형 접두 분리 — `백미 천지향5세` → (천지향5세, 백미).
+ *
+ * 🔴 접미가 못 뗐을 때만 쓴다. 해남급식 양식은 도정을 품종 **앞**에 적는데, 접미만 보던 시절엔
+ * `백미 천지향5세`가 통째로 품종토큰이 돼 실패했다. 9/15 수동지정이 이를 가리고 있다가
+ * 수동지정 철회 뒤 재업로드(#20, 2026-09-22)에서 드러났다.
+ *
+ * 브랜드 접두처럼 **뒤에 공백**을 요구한다(발주서 셀 줄바꿈이 공백으로 남는다).
+ * 위탁가공 별도품종은 영향 없다 — `발아현미`는 `현미 `로 시작하지 않는다.
+ * 접두·접미가 둘 다 있으면(`백미 X 현미`) 접미가 먼저 떨어져 토큰에 도정이 남고 실패한다 — 추측으로 붙이지 않는다.
+ */
+function splitMillingPrefix(token: string): {
+  varietyToken: string
+  millingType: string | null
+} {
+  for (const pre of MILLING_SUFFIXES) {
+    if (token.startsWith(pre + ' ')) {
+      const rest = token.slice(pre.length).trim()
+      if (rest) return { varietyToken: rest, millingType: pre }
+    }
+  }
+  return { varietyToken: token, millingType: null }
+}
+
 export function normalizeItemName(rawItemName: string): {
   varietyToken: string
   millingType: string | null
 } {
   const stripped = stripBrandPrefix(tidy(rawItemName))
-  return splitMillingSuffix(stripped)
+  const bySuffix = splitMillingSuffix(stripped)
+  return bySuffix.millingType ? bySuffix : splitMillingPrefix(stripped)
 }
 
 // ------------------------------------------------------
@@ -252,9 +277,10 @@ function ok(
 /**
  * 품종토큰에 **도정 단어가 섞여 있는가** (구 D2e 결정 T).
  *
- * `백미 천지향5세`처럼 도정이 이름 **앞**에 오면 접미 분리가 안 돼 토큰에 도정이 남는다.
- * 이걸 별칭으로 등록하면 도정은 품종 category 기본값으로 굳고, 나중에 `현미 …`가 와서
- * 또 등록되면 **현미 주문이 백미 SKU로 조용히 붙는다.** 그래서 별칭으로 받지 않는다.
+ * 별칭에 도정이 섞이면(`백미천지향5세`) 매칭 때 도정은 품종 category 기본값으로 굳고,
+ * 나중에 `현미…`가 와서 또 등록되면 **현미 주문이 백미 SKU로 조용히 붙는다.** 그래서 별칭으로 받지 않는다.
+ * (공백 있는 `백미 천지향5세`는 이제 매처가 접두로 분리한다 — `splitMillingPrefix`.
+ *  토큰에 도정이 남는 건 공백 없는 표기나 접두·접미가 겹친 경우뿐이다.)
  *
  * 🔴 위탁가공 별도품종(`발아현미`·`흑미`)을 먼저 걷어낸다 — 안 그러면 `가바발아현미`가
  * '현미'를 품어 막힌다(실제로 쓰이는 별칭이다).
