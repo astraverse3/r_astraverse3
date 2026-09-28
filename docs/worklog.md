@@ -2,6 +2,20 @@
 
 ## 2026-09-28
 
+### eslint 기존 오류 정리 — 517 → 0 (`83cb2d0`~`f3e9c6e`, 8커밋)
+
+`npx eslint .`(프로젝트 전체) 517건 → **0**. 동작 변경 없음(타입·주석·미사용 코드). 계획서 `docs/plan/plan-eslint정리.md`, 보고서 `docs/report-eslint정리-2026-09-28.md`.
+
+- P0 `83cb2d0` — `eslint.config.mjs`: `docs/**` 제외 · CJS require 허용 · img 규칙 끔
+- P1 `8876d9d` — `types/next-auth.d.ts` `permissions` 선언 → `@ts-ignore` 41건(실제 억제는 3건) 삭제
+- P2 `cb4adef` — 미사용 import·변수 · JSX 따옴표 · scripts prefer-const (54파일)
+- P3 `2a6376b` — catch·액션 결과·Prisma 조회 조건·엑셀 행의 `any`
+- P4 `4fa97fc`·`1fc3765`·`b0d6038` — 도정 목록·원물재고·장바구니·생산자·감사로그·출고·공지·PWA·차트 `any` → 구조 타입(`chart-tooltip.ts` 신규)
+  · 드러난 것: 권한 저장 에러 가지 죽은 코드 · `MillingOutputInput.stockId` null 누락 · `actualFarmer` 빠진 `Stock` 복사본
+- P5 `f3e9c6e` — react-hooks 37건 이유 달린 disable(고칠 결함 없음) · 빗나간 disable 3건 제자리로
+
+검증 eslint . 0/0 · tsc 0 · test 445/445.
+
 ### 백로그 §48 — 만들 규격 버튼에 SKU 규격 더하기 (`1edf2dd`)
 
 재포장·도정 포장의 규격 버튼이 고정 목록이라 SKU에 있는 IPS 백미 907g·서농22호 현미 800g을 **어느 경로로도 못 만들었다**
