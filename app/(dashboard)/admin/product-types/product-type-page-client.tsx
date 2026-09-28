@@ -16,6 +16,7 @@ import {
     createPackaging,
     togglePackagingActive,
     deleteProductType,
+    getProductTypeUsage,
     toggleProductTypeActive,
 } from '@/app/actions/product-type'
 import { ProductTypeDialog } from './product-type-dialog'
@@ -74,8 +75,30 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
     }
 
     const handleDeleteProductType = async (row: ProductTypeRow) => {
+        // 누르는 순간 사용처를 조회한다 — 제품재고가 있으면 확인창 없이 바로 안내
+        // (확인한 뒤에 서버가 거절하는 순서는 이상하다). 최종 판정은 여전히 서버 가드다.
+        const usage = await getProductTypeUsage(row.id)
+        if (!usage.success) {
+            toast.error(usage.error)
+            return
+        }
+        const { packages, orderItems } = usage.data
+        if (packages > 0) {
+            toast.error(`포장 ${packages}건에서 사용 중이라 삭제할 수 없어요. 비활성화를 사용하세요.`)
+            return
+        }
+
+        const label = `'${row.variety.name} / ${row.millingType} / ${row.packageType} / ${row.packaging.name}'`
+        const itemTotal = orderItems.reduce((s, o) => s + o.count, 0)
+        // 🔴 발주서 품목은 삭제를 막지 않고 조용히 풀린다(SetNull) — 막지는 않되 알린다
+        const warning =
+            itemTotal > 0
+                ? `\n\n⚠️ 발주서 ${itemTotal}품목이 이 제품유형에 붙어 있어요(${orderItems
+                      .map((o) => `${o.sheetName} ${o.count}`)
+                      .join(', ')}). 삭제하면 매칭실패로 돌아가요. 대신할 제품유형이 있으면 그 시트에서 재매칭하면 다시 붙어요.`
+                : ''
         const ok = await confirmDialog({
-            description: `'${row.variety.name} / ${row.millingType} / ${row.packageType} / ${row.packaging.name}' 제품유형을 삭제할까요?`,
+            description: `${label} 제품유형을 삭제할까요?${warning}`,
             destructive: true,
             confirmText: '삭제',
         })

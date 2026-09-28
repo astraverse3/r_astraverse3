@@ -209,6 +209,50 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
   }
 }
 
+export type ProductTypeUsage = {
+  /** 제품재고 수 — 있으면 삭제 불가(`deleteProductType` 가드) */
+  packages: number
+  /** 이 SKU에 매칭된 발주서 품목, 시트별. 삭제하면 전부 매칭실패로 돌아간다 */
+  orderItems: { sheetName: string; count: number }[]
+}
+
+/**
+ * SKU를 가리키는 두 참조자를 센다 — 삭제 확인창이 누르는 순간 부른다(페이지 로드 값은 낡을 수 있다).
+ *
+ * 🔴 발주서 품목은 옵셔널 관계(SetNull)라 **삭제를 막지 않고 조용히 풀린다.**
+ * 2026-09-23 SKU 58 삭제로 #15 택배 2품목이 그렇게 매칭실패가 됐다. 차감한 품목은
+ * 그 SKU의 제품재고가 있어 `packages` 가드가 먼저 막으므로, 풀리는 건 「매칭만 된 품목」뿐이다.
+ */
+export async function getProductTypeUsage(
+  id: number,
+): Promise<{ success: true; data: ProductTypeUsage } | { success: false; error: string }> {
+  await requirePermission('OPERATION_MANAGE')
+  try {
+    const [packages, items] = await Promise.all([
+      prisma.millingOutputPackage.count({ where: { productTypeId: id } }),
+      prisma.purchaseOrderItem.findMany({
+        where: { productTypeId: id },
+        select: { order: { select: { upload: { select: { sheetName: true } } } } },
+      }),
+    ])
+    const bySheet = new Map<string, number>()
+    for (const it of items) {
+      const name = it.order.upload?.sheetName ?? '시트 없음'
+      bySheet.set(name, (bySheet.get(name) ?? 0) + 1)
+    }
+    return {
+      success: true,
+      data: {
+        packages,
+        orderItems: [...bySheet.entries()].map(([sheetName, count]) => ({ sheetName, count })),
+      },
+    }
+  } catch (error) {
+    console.error('Failed to get product type usage:', error)
+    return { success: false, error: '제품유형 사용처를 불러오지 못했어요.' }
+  }
+}
+
 export async function deleteProductType(id: number) {
   await requirePermission('OPERATION_MANAGE')
   try {
@@ -220,13 +264,17 @@ export async function deleteProductType(id: number) {
       }
     }
 
+    // SetNull로 풀릴 발주서 품목 수 — 삭제 전에 세야 남는다(로그로 「왜 풀렸지」를 찾게)
+    const unmatched = await prisma.purchaseOrderItem.count({ where: { productTypeId: id } })
+
     await prisma.productType.delete({ where: { id } })
 
     await recordAuditLog({
       action: 'DELETE',
       entity: 'ProductType',
       entityId: id,
-      description: `제품유형 삭제: id=${id}`,
+      description:
+        `제품유형 삭제: id=${id}` + (unmatched > 0 ? ` (발주서 ${unmatched}품목 매칭 해제)` : ''),
     })
 
     revalidatePath(ADMIN_PATH)
