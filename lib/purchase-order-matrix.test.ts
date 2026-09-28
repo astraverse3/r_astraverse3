@@ -525,6 +525,55 @@ test('buildMatrix: 품종 모으기는 도정을 가리지 않고, 규격 순서
   assert.deepEqual(m.columns.map((c) => c.productTypeId), [1, 2, 3, 4])
 })
 
+test('buildMatrix: 머리글 1행은 제목이 같은 그룹만 합친다 — 도정이 다르면 분리 (2026-09-28)', () => {
+  // 택배 실데이터 모양 — 서농22호(자연주의) → 서농22호 · 현미 → 서농22호(땅끝미가)로 섞여 있었다
+  const m = buildMatrix(
+    input({
+      orders: [order(1, 'a'), order(2, 'b'), order(3, 'c')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1 }),
+        item({ id: 12, orderId: 1, productTypeId: 2 }),
+        item({ id: 13, orderId: 2, productTypeId: 3 }),
+        item({ id: 14, orderId: 3, productTypeId: 4 }),
+      ],
+      skus: [
+        sku(1, '10kg', { varietyName: '서농22호', packagingName: '자연주의' }),
+        sku(2, '4kg', { varietyName: '서농22호', packagingName: '자연주의' }),
+        sku(3, '1kg', { varietyName: '서농22호', millingType: '현미', packagingName: '땅끝미가' }),
+        sku(4, '1kg', { varietyName: '서농22호', packagingName: '땅끝미가' }),
+      ],
+    }),
+  )
+  // 같은 품종 안에서 제목끼리 모인다 — 현미가 백미 둘 사이에 끼지 않는다
+  assert.deepEqual(
+    m.groups.map((g) => `${g.title}/${g.packagingName}`),
+    ['서농22호/자연주의', '서농22호/땅끝미가', '서농22호 · 현미/땅끝미가'],
+  )
+  assert.deepEqual(
+    m.titles.map((t) => `${t.title}x${t.colSpan}`),
+    ['서농22호x3', '서농22호 · 현미x1'],
+  )
+  // 1행 칸 합 = 열 수 (colspan 정합)
+  assert.equal(m.titles.reduce((s, t) => s + t.colSpan, 0), m.columns.length)
+})
+
+test('buildMatrix: 머리글 1행 — 제목이 같아도 매칭실패와 매칭된 그룹은 합치지 않는다', () => {
+  const m = buildMatrix(
+    input({
+      orders: [order(1, 'a'), order(2, 'b')],
+      items: [
+        item({ id: 11, orderId: 1, productTypeId: 1 }),
+        item({ id: 12, orderId: 2, productTypeId: null, rawItemName: '차조' }),
+      ],
+      skus: [sku(1, '1kg', { varietyName: '차조' })],
+    }),
+  )
+  assert.deepEqual(
+    m.titles.map((t) => `${t.title}x${t.colSpan}${t.unmatched ? '!' : ''}`),
+    ['차조x1', '차조x1!'],
+  )
+})
+
 test('buildMatrix: 매칭실패 그룹은 원본 품목명이 제 품종이다', () => {
   // 같은 원본 이름 매칭실패 2개(포장지만 다름)는 모이고, 매칭된 차조와는 섞이지 않는다
   const m = buildMatrix(

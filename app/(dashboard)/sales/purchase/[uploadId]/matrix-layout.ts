@@ -40,11 +40,13 @@ export const W_LEFT = W_CHECK + W_NAME + W_STATUS + W_PROGRESS
 /** 좌측 고정 칸 수 — 소계 줄이 이만큼 합쳐 라벨을 적는다 */
 export const LEFT_COLS = 4
 
-// 헤더 4행 높이 (그룹 · 규격 · 소계 · 가용)
+// 헤더 5행 높이 (제목 · 포장지 · 규격 · 소계 · 가용)
 //
+// 🔴 sticky `top`은 이 높이들의 누적합이다 — 한 줄을 바꾸면 그 아래 줄 `top`이 전부 따라 밀린다.
 // 🔴 소계 두 줄은 높이가 다르다. 소계는 「할 일」, 가용은 「조건」이라 주·보조 관계가
 // 눈에 보여야 한다 — 같은 크기로 두면 어느 쪽이 주문이고 어느 쪽이 재고인지 안 갈린다.
-export const H_GROUP = 38
+export const H_TITLE = 22
+export const H_PACK = 20
 export const H_SPEC = 24
 export const H_SUM_MAIN = 40
 export const H_SUM_SUB = 28

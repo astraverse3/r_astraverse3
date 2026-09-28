@@ -1,6 +1,6 @@
 'use client'
 
-// 매트릭스 머리글 4행(그룹 · 규격 · 규격별 소계 · 가용 재고). 본체에서 떼어낸 것이다.
+// 매트릭스 머리글 5행(제목 · 포장지 · 규격 · 규격별 소계 · 가용 재고). 본체에서 떼어낸 것이다.
 
 import type { ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -8,11 +8,14 @@ import { cn } from '@/lib/utils'
 import { isColumnShort, type Matrix } from '@/lib/purchase-order-matrix'
 import {
     fixedW, fmt, fmtKg, W_CHECK, W_NAME, W_STATUS, W_PROGRESS, W_LEFT,
-    L_NAME, L_STATUS, L_PROGRESS, LEFT_COLS, H_GROUP, H_SPEC, H_SUM_MAIN, H_SUM_SUB,
+    L_NAME, L_STATUS, L_PROGRESS, LEFT_COLS, H_TITLE, H_PACK, H_SPEC, H_SUM_MAIN, H_SUM_SUB,
 } from './matrix-layout'
 
+/** 제목·포장지·규격 — 좌측 모서리 칸과 오른쪽 소계 칸이 이만큼 세로로 걸친다 */
+const HEAD_ROWS = 3
+
 // ------------------------------------------------------
-// 머리글 4행
+// 머리글 5행
 // ------------------------------------------------------
 export function MatrixHead({
     matrix,
@@ -32,7 +35,7 @@ export function MatrixHead({
     const colByKey = new Map(matrix.columns.map((c) => [c.key, c]))
     return (
         <thead>
-            {/* 1행 — 품목(그룹). 발주서 원본 순서 그대로 */}
+            {/* 1행 — 제목(품종·도정). 포장지만 다른 이웃 그룹은 한 칸으로 합친다(`matrix.titles`) */}
             <tr>
                 <HeadCorner left={0} width={W_CHECK}>
                     {/* 전체선택 — 부분선택은 가운데 막대로(Radix `indeterminate`) */}
@@ -46,29 +49,22 @@ export function MatrixHead({
                 <HeadCorner left={L_NAME} width={W_NAME} label={nameLabel} align="left" />
                 <HeadCorner left={L_STATUS} width={W_STATUS} label="상태" />
                 <HeadCorner left={L_PROGRESS} width={W_PROGRESS} label="진행" shadow />
-                {matrix.groups.map((g) => (
+                {matrix.titles.map((t) => (
                     <th
-                        key={g.key}
-                        colSpan={g.columnKeys.length}
+                        key={t.key}
+                        colSpan={t.colSpan}
+                        title={t.title}
                         className={cn(
                             'sticky top-0 z-30 border-b border-r border-slate-200 bg-slate-100 px-1.5 text-center align-middle font-bold',
-                            g.unmatched ? 'text-red-600' : 'text-slate-600',
+                            t.unmatched ? 'text-red-600' : 'text-slate-600',
                         )}
-                        style={{ height: H_GROUP }}
+                        style={{ height: H_TITLE }}
                     >
-                        <span className="block truncate">{g.title}</span>
-                        <span
-                            className={cn(
-                                '-mt-0.5 block truncate text-[9.5px] font-medium',
-                                g.unmatched ? 'text-red-500' : 'text-slate-400',
-                            )}
-                        >
-                            {g.packagingName}
-                        </span>
+                        <span className="block truncate">{t.title}</span>
                     </th>
                 ))}
                 <th
-                    rowSpan={2}
+                    rowSpan={HEAD_ROWS}
                     className="sticky right-0 top-0 z-40 border-b border-l border-slate-200 bg-slate-100 px-1.5 text-center font-bold text-slate-600"
                     style={{ width: 72, minWidth: 72 }}
                 >
@@ -77,24 +73,42 @@ export function MatrixHead({
                 </th>
             </tr>
 
-            {/* 2행 — 규격 */}
+            {/* 2행 — 포장지(그룹). 좁은 열에선 잘리므로 올리면 전체가 보이게 `title` */}
+            <tr>
+                {matrix.groups.map((g) => (
+                    <th
+                        key={g.key}
+                        colSpan={g.columnKeys.length}
+                        title={g.packagingName}
+                        className={cn(
+                            'sticky z-30 border-b border-r border-slate-200 bg-slate-100 px-1.5 text-center align-middle text-[10px] font-medium',
+                            g.unmatched ? 'text-red-500' : 'text-slate-500',
+                        )}
+                        style={{ top: H_TITLE, height: H_PACK }}
+                    >
+                        <span className="block truncate">{g.packagingName}</span>
+                    </th>
+                ))}
+            </tr>
+
+            {/* 3행 — 규격 */}
             <tr>
                 {matrix.columns.map((c) => (
                     <th
                         key={c.key}
                         className="sticky z-30 border-b border-r border-slate-200 bg-slate-100 px-1.5 text-center text-[10.5px] font-semibold text-slate-500"
-                        style={{ top: H_GROUP, height: H_SPEC, minWidth: 46 }}
+                        style={{ top: H_TITLE + H_PACK, height: H_SPEC, minWidth: 46 }}
                     >
-                        {/* 톤백은 자루중량만 적는다 — 「톤백」은 1행 그룹에 이미 있고,
+                        {/* 톤백은 자루중량만 적는다 — 「톤백」은 2행 포장지에 이미 있고,
                             중량이 없으면 1,000kg 열과 200kg 열이 안 갈린다 */}
                         {c.bulk ? `${fmtKg(c.unitWeightKg ?? 0)}kg` : c.packageType}
                     </th>
                 ))}
             </tr>
 
-            {/* 3행 — 규격별 소계(개) */}
+            {/* 4행 — 규격별 소계(개) */}
             <SumRow
-                top={H_GROUP + H_SPEC}
+                top={H_TITLE + H_PACK + H_SPEC}
                 label="규격별 소계"
                 unit="(개)"
                 columns={matrix.columns}
@@ -104,9 +118,9 @@ export function MatrixHead({
                 colByKey={colByKey}
             />
 
-            {/* 4행 — 가용 재고(개) */}
+            {/* 5행 — 가용 재고(개) */}
             <SumRow
-                top={H_GROUP + H_SPEC + H_SUM_MAIN}
+                top={H_TITLE + H_PACK + H_SPEC + H_SUM_MAIN}
                 label="가용 재고"
                 unit="(현재 SKU · 개 · 톤백은 kg)"
                 columns={matrix.columns}
@@ -119,7 +133,7 @@ export function MatrixHead({
     )
 }
 
-/** 좌측 고정 + 상단 고정이 겹치는 모서리 칸 (rowSpan 2) */
+/** 좌측 고정 + 상단 고정이 겹치는 모서리 칸 (제목·포장지·규격 3행에 걸침) */
 function HeadCorner({
     left,
     width,
@@ -138,7 +152,7 @@ function HeadCorner({
 }) {
     return (
         <th
-            rowSpan={2}
+            rowSpan={HEAD_ROWS}
             className={cn(
                 'sticky top-0 z-40 border-b border-r border-slate-200 bg-slate-200 px-2 font-bold text-slate-600',
                 align === 'left' ? 'text-left' : 'text-center',

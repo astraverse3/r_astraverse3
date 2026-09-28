@@ -112,8 +112,9 @@ export type MatrixColumn = {
 }
 
 /**
- * 열 머리글 1행 = 품목. 같은 품목의 규격들이 그 아래 묶인다.
+ * 품목 그룹 = 품종·도정·포장지. 같은 품목의 규격들이 그 아래 묶인다.
  * 발주서 원본이 「품목 한 칸 아래 10kg·5kg·1kg」로 되어 있어 그 모양을 그대로 살린다.
+ * 머리글에서는 2행(포장지)이 그룹 하나, 1행(제목)은 제목이 같은 그룹을 합친 `MatrixTitleSpan`.
  */
 export type MatrixColumnGroup = {
   /** `품종|도정|포장지` 또는 매칭실패 원본 조합 */
@@ -125,6 +126,20 @@ export type MatrixColumnGroup = {
   unmatched: boolean
   /** 이 그룹에 속한 열 키 — 화면이 colspan을 여기서 낸다 */
   columnKeys: string[]
+}
+
+/**
+ * 머리글 1행 한 칸 — 이웃한 **제목이 같은** 그룹(품종·도정이 같고 포장지만 다른 것)을 합친 것.
+ * 포장지는 그 아래 2행이 그룹마다 적는다(사용자 결정 2026-09-28, `docs/plan/plan-매트릭스-머리글-품종행.md`).
+ * 도정이 다르면 합치지 않는다 — `서농22호`와 `서농22호 · 현미`는 다른 칸.
+ */
+export type MatrixTitleSpan = {
+  /** 첫 그룹의 key — React key 용 */
+  key: string
+  title: string
+  unmatched: boolean
+  /** 합친 그룹들의 열 수 합 */
+  colSpan: number
 }
 
 export type MatrixRow = {
@@ -146,9 +161,11 @@ export type MatrixRow = {
 }
 
 export type Matrix = {
-  /** 머리글 1행 — 품목. 등장 순서를 지킨다 */
+  /** 머리글 1행 — 제목이 같은 그룹을 합친 칸. `groups`를 이웃끼리 합친 것이라 순서가 같다 */
+  titles: MatrixTitleSpan[]
+  /** 머리글 2행 — 품목 그룹(포장지). 등장 순서를 지킨다 */
   groups: MatrixColumnGroup[]
-  /** 머리글 2행 — 규격. 그룹 순서대로 늘어선다 */
+  /** 머리글 3행 — 규격. 그룹 순서대로 늘어선다 */
   columns: MatrixColumn[]
   rows: MatrixRow[]
   totals: {
@@ -343,19 +360,41 @@ function buildColumns(input: BuildMatrixInput): {
  * 같은 품종의 그룹을 이웃하게 모은다(사용자 결정 2026-09-28, `docs/plan/plan-매트릭스-열순서-품종모으기.md`).
  * 품종끼리는 처음 나온 순, 한 품종 안의 그룹끼리도 처음 나온 순 — 안정 정렬이라 그대로 유지된다.
  * 품종은 도정을 가리지 않는다(서농22호 백미·현미 = 가바백미·가바현미가 이웃). 매칭실패는 원본 품목명이 제 품종.
+ * 한 품종 안에서는 **제목(도정)끼리 한 번 더 모은다** — 안 그러면 `서농22호 → 서농22호 · 현미 → 서농22호`로
+ * 섞여 머리글 1행 `서농22호` 칸이 두 번 뜬다(택배 실데이터, `titleSpansOf`).
  * 🔴 규격 순서는 건드리지 않는다 — 원본이 `10kg → 1kg`·`1,000kg → 200kg` 순이라 무게로 세우면 원본과 어긋난다.
  */
 function gatherByVariety(
   groups: MatrixColumnGroup[],
   varietyByGroup: Map<string, string>,
 ): MatrixColumnGroup[] {
-  const firstIndex = new Map<string, number>()
+  const firstVariety = new Map<string, number>()
+  const firstTitle = new Map<string, number>()
   groups.forEach((g, i) => {
     const v = varietyByGroup.get(g.key)!
-    if (!firstIndex.has(v)) firstIndex.set(v, i)
+    if (!firstVariety.has(v)) firstVariety.set(v, i)
+    if (!firstTitle.has(titleKeyOf(g))) firstTitle.set(titleKeyOf(g), i)
   })
-  const rank = (g: MatrixColumnGroup) => firstIndex.get(varietyByGroup.get(g.key)!)!
-  return [...groups].sort((a, b) => rank(a) - rank(b))
+  const rank = (g: MatrixColumnGroup) => firstVariety.get(varietyByGroup.get(g.key)!)!
+  const titleRank = (g: MatrixColumnGroup) => firstTitle.get(titleKeyOf(g))!
+  return [...groups].sort((a, b) => rank(a) - rank(b) || titleRank(a) - titleRank(b))
+}
+
+/** 머리글 1행에서 한 칸이 될 수 있는가 — 제목이 같아도 매칭실패와 매칭된 그룹은 섞지 않는다(빨간 글씨) */
+const titleKeyOf = (g: MatrixColumnGroup) => `${g.unmatched ? 'x' : 'o'}|${g.title}`
+
+/** 이웃한 제목 같은 그룹을 머리글 1행 한 칸으로 합친다. 그룹 순서는 `gatherByVariety`가 이미 모아 두었다 */
+function titleSpansOf(groups: readonly MatrixColumnGroup[]): MatrixTitleSpan[] {
+  const spans: MatrixTitleSpan[] = []
+  for (const g of groups) {
+    const last = spans.at(-1)
+    if (last && last.title === g.title && last.unmatched === g.unmatched) {
+      spans[spans.length - 1] = { ...last, colSpan: last.colSpan + g.columnKeys.length }
+    } else {
+      spans.push({ key: g.key, title: g.title, unmatched: g.unmatched, colSpan: g.columnKeys.length })
+    }
+  }
+  return spans
 }
 
 /**
@@ -448,6 +487,7 @@ export function buildMatrix(input: BuildMatrixInput): Matrix {
   const rows = input.orders.map((o) => buildRow(o, itemsByOrder.get(o.id) ?? [], colByKey))
 
   return {
+    titles: titleSpansOf(groups),
     groups,
     columns,
     rows,
