@@ -106,7 +106,8 @@
 | `app/actions/milling.ts` | `startMillingBatch`, `removeStockFromMilling`, `addPackagingLog`, `updatePackagingLogs`, `deletePackagingLog`, `closeMillingBatch`, `reopenMillingBatch`, `updateMillingBatchStatus`, `deleteMillingBatch`, `deleteMillingBatches`, `updateMillingBatchStocks`, `updateMillingBatchMetadata` |
 | `app/actions/release.ts` | `createStockRelease`, `cancelStockRelease`, `updateStockRelease`, `deleteStockReleases`, `removeStockFromRelease` |
 | `app/actions/product-type.ts` | `createPackaging`, `togglePackagingActive`, `upsertProductType`, `deleteProductType`, `toggleProductTypeActive` · `findOrCreateProductType`은 내부 헬퍼(무가드, 상위 액션이 가드) |
-| `app/actions/purchase-order.ts` | `uploadPurchaseOrder`, `autoMatchOrderItem`, `setOrderItemProductType`, `confirmOrderItem`, `confirmOrder`, `cancelOrderItemMovements`, `deletePurchaseUpload`, `deletePurchaseOrder` · 조회(`listPurchaseUploads`/`listPurchaseOrders`/`getPurchaseOrderDetail`)는 공개 · export(미구현)는 `requireSession` 예정 |
+| `app/actions/purchase-order.ts` | `uploadPurchaseOrder`, `autoMatchOrderItem`, `setOrderItemProductType`, `confirmOrderItem`, `confirmOrder`, `cancelOrderItemMovements`, `deletePurchaseUpload`, `deletePurchaseOrder` · 조회(`listPurchaseUploads`/`listPurchaseOrders`/`getPurchaseOrderDetail`)는 공개 |
+| `app/actions/purchase-order-export.ts` | `exportPurchaseSheet` (D5 시트 엑셀 — 생산자·로트가 채워지는 내부 증빙)는 `requireSession` |
 | `app/actions/package-movement.ts` | `createSale`, `createNonSaleMovement`, `cancelMovement` · 조회(`listMovements`)는 공개 |
 
 ### ADMIN 전용 (`requireAdmin`)

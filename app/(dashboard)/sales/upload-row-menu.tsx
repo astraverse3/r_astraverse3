@@ -1,6 +1,6 @@
 'use client'
 
-// 묶음 목록 행의 ⋮ 메뉴 — 엑셀 다운로드(D5 예정) / 비고 수정 / 묶음 삭제(차감 있으면 비활성).
+// 묶음 목록 행의 ⋮ 메뉴 — 엑셀 다운로드(D5) / 비고 수정 / 묶음 삭제(차감 있으면 비활성).
 // 시안 `docs/handoff/발주서판매처리/엑셀업로드-2단계-데스크탑.html` 묶음 목록 프레임.
 
 import { useState } from 'react'
@@ -25,6 +25,7 @@ import {
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { updateUploadNote } from '@/app/actions/purchase-order-upload'
 import { deletePurchaseUpload, type UploadSummaryRow } from '@/app/actions/purchase-order'
+import { exportPurchaseSheet } from '@/app/actions/purchase-order-export'
 
 const NOTE_MAX = 500
 
@@ -33,6 +34,7 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
     const [noteOpen, setNoteOpen] = useState(false)
     const [note, setNote] = useState(row.note ?? '')
     const [saving, setSaving] = useState(false)
+    const [exporting, setExporting] = useState(false)
 
     const handleSaveNote = async () => {
         setSaving(true)
@@ -45,6 +47,26 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
         toast.success('비고를 저장했어요.')
         setNoteOpen(false)
         router.refresh()
+    }
+
+    // 다운로드 방식은 제품재고 엑셀(`package-excel-buttons.tsx`)과 같다 — base64를 받아 링크로 저장
+    const handleExport = async () => {
+        // 메뉴는 누르는 즉시 닫힌다 — 조회 1~2초 동안 진행 표시는 토스트가 맡는다
+        setExporting(true)
+        const loading = toast.loading('엑셀 만드는 중…')
+        const res = await exportPurchaseSheet(row.id)
+        toast.dismiss(loading)
+        setExporting(false)
+        if (!res.success) {
+            toast.error(res.error)
+            return
+        }
+        const link = document.createElement('a')
+        link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.data}`
+        link.download = res.fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
     }
 
     const handleDelete = async () => {
@@ -75,12 +97,13 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
-                    <DropdownMenuItem disabled className="gap-2">
+                    <DropdownMenuItem
+                        disabled={exporting}
+                        onClick={handleExport}
+                        className="gap-2 cursor-pointer"
+                    >
                         <Download className="w-3.5 h-3.5" />
                         엑셀 다운로드
-                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
-                            준비 중
-                        </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setNoteOpen(true)}>
                         <Pencil className="w-3.5 h-3.5" />
