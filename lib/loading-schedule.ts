@@ -5,6 +5,8 @@
 //
 // 상차 완료 판정에 별도 플래그를 두지 않는다 — **상차일이 오늘보다 과거면 완료**로 본다(계획서 §5).
 
+import { todayKst } from './kst-date'
+
 export type LoadingTimeSlot = 'UNKNOWN' | 'AM' | 'PM' | 'EXACT'
 
 export type LoadingInfo = {
@@ -116,5 +118,5 @@ export function compareLoading(a: LoadingInfo, b: LoadingInfo, todayIso: string)
 
 /** 오늘 날짜 'yyyy-mm-dd' (KST). 서버가 UTC로 돌아도 한국 날짜를 본다 */
 export function todayIsoKst(now: Date = new Date()): string {
-  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  return todayKst(now)
 }
