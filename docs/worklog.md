@@ -2,6 +2,21 @@
 
 ## 2026-09-28
 
+### 백로그 §48 — 만들 규격 버튼에 SKU 규격 더하기 (`1edf2dd`)
+
+재포장·도정 포장의 규격 버튼이 고정 목록이라 SKU에 있는 IPS 백미 907g·서농22호 현미 800g을 **어느 경로로도 못 만들었다**
+(발주서 907g 줄은 매칭은 되는데 늘 재고없음). 서버는 원래 규격 문자열을 그대로 받고 SKU를 찾거나 만든다 — 막은 건 화면 버튼뿐.
+
+- `lib/package-spec.ts`(신규, 테스트 9) — `specWeightKg` · `mergeSpecButtons`
+- `lib/purchase-order-parser.ts` — `normalizeSpec`이 `specWeightKg` 사용(kg 환산 규칙 한 벌, 다이얼로그는 xlsx 없이)
+- `app/actions/product-type.ts` — `listSkuSpecs`
+- `app/(dashboard)/use-sku-spec-buttons.ts`(신규) — 두 다이얼로그 공용 훅(처음엔 두 벌로 넣었다가 합침)
+- `repack-dialog.tsx`·`add-packaging-dialog.tsx` — 버튼 = 고정 + 그 품종·도정 SKU 규격
+- 🔴 사용자 되물음 「포장할 때 SKU가 새로 생긴다고?」 → 코드 확인(`findOrCreateProductType`) 후 **자동 생성 유지 결정** → 버튼을 SKU 전용으로 좁히지 않고 병합
+- 백로그 §49 추가: 도정 「기타」 입력이 `0.907kg`으로 저장 → `907g` SKU와 갈라진다(보류, 피해 0)
+
+검증 tsc 0 · eslint(변경 파일) 0 · test 445/445. ✅ 브라우저 확인. ⚠️ repack-dialog 804줄·add-packaging-dialog 837줄(상한 초과, 분리 별도).
+
 ### 발주서 M1-7 실기기 확인 — **M1 전체 종결**
 
 배포본(`44df137`)을 폰·PC로 확인, 전 항목 통과. M1-5 남은 5~8(택배 펼침 · 긴 후보 스크롤·홈 바 · 데스크탑 팝오버 옆 셀 재오픈·패널 폭 시트 · 매칭실패 시트) ·
