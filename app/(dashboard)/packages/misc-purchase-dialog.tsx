@@ -19,6 +19,7 @@ import {
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { todayKst } from '@/lib/kst-date'
 
 // 잡곡 포장 다이얼로그와 동일 셋 (잡곡 매입도 같은 포장단위)
 const PACKAGE_TEMPLATES_MISC = [
@@ -38,7 +39,7 @@ interface Props {
 }
 
 function todayYmd(): string {
-    return new Date().toISOString().slice(0, 10)
+    return todayKst()
 }
 
 export function MiscPurchaseDialog({ open, onOpenChange, onSuccess }: Props) {

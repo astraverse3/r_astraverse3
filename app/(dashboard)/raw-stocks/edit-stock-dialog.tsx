@@ -25,6 +25,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { productionYearOptionsWith } from '@/lib/production-year'
+import { toKstDate } from '@/lib/kst-date'
 
 /** 원물 수정·목록이 받는 생산자 · 품종 선택지 */
 export type StockFarmerOption = { id: number; name: string; group: { name: string; certType: string; certNo: string } | null }
@@ -178,7 +179,7 @@ export function EditStockDialog({ stock, farmers, varieties, open: controlledOpe
                                 name="incomingDate"
                                 type="date"
                                 required
-                                defaultValue={new Date(stock.incomingDate).toISOString().split('T')[0]}
+                                defaultValue={toKstDate(new Date(stock.incomingDate))}
                                 className="text-[13px]"
                             />
                         </div>

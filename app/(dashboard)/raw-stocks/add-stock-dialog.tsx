@@ -24,6 +24,7 @@ import { createStock, type StockFormData } from '@/app/actions/stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
+import { todayKst } from '@/lib/kst-date'
 
 interface Farmer {
     id: number
@@ -229,7 +230,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                         <div className="min-w-0 space-y-2">
                             <Label htmlFor="incomingDate" className="text-[13px]">입고일자 (Lot 기준)</Label>
-                            <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="text-[13px]" />
+                            <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={todayKst()} className="text-[13px]" />
                         </div>
                     </div>
 

@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { record, flushTrace } from '@/lib/nav-trace' // 덫: 용의자 B (plan-네비게이션-덫.md)
 import { triggerDataUpdate } from '@/components/last-updated'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
+import { todayKst, toKstDate } from '@/lib/kst-date'
 
 interface Stock {
     id: number
@@ -45,12 +46,12 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
     const isEditing = editMode && !!editingBatchId
     const [remarks, setRemarks] = useState('')
     const [millingType, setMillingType] = useState('백미')
-    const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0])
+    const [date, setDate] = useState<string>(todayKst())
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         if (open && isEditing) {
-            if (editingDate) setDate(new Date(editingDate).toISOString().split('T')[0])
+            if (editingDate) setDate(toKstDate(new Date(editingDate)))
             setRemarks(editingRemarks || '')
             if (editingMillingType) setMillingType(editingMillingType)
         }

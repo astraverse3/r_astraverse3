@@ -28,6 +28,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
+import { toKstDate } from '@/lib/kst-date'
 
 function Stat({ label, value, unit }: { label: string; value: number; unit: string }) {
     return (
@@ -102,7 +103,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     const [isEditingMeta, setIsEditingMeta] = useState(false)
     const [editDate, setEditDate] = useState(() => {
         const d = new Date(date)
-        return d.toISOString().split('T')[0]
+        return toKstDate(d)
     })
     const [editRemarks, setEditRemarks] = useState(remarks || '')
     const [editMillingType, setEditMillingType] = useState(normalizeMillingType(millingType))
@@ -125,7 +126,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
     }
 
     const handleCancelMeta = () => {
-        setEditDate(new Date(date).toISOString().split('T')[0])
+        setEditDate(toKstDate(new Date(date)))
         setEditRemarks(remarks || '')
         setEditMillingType(normalizeMillingType(millingType))
         setIsEditingMeta(false)

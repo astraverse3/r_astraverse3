@@ -27,6 +27,7 @@ import {
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { defaultProductionYear, productionYearOptionsWith } from '@/lib/production-year'
+import { todayKst, toKstDate } from '@/lib/kst-date'
 
 interface Farmer {
     id: number
@@ -114,7 +115,7 @@ export function AddMiscStockDialog({
     const [weightStr, setWeightStr] = useState<string>('')
     const [vendor, setVendor] = useState<string>('')
     const [incomingDateStr, setIncomingDateStr] = useState<string>(
-        () => new Date().toISOString().split('T')[0],
+        () => todayKst(),
     )
     const [actualFarmerStr, setActualFarmerStr] = useState<string>('')
 
@@ -131,7 +132,7 @@ export function AddMiscStockDialog({
             setWeightStr(String(editTarget.weightKg))
             setVendor(editTarget.millingVendor ?? '')
             const d = typeof editTarget.incomingDate === 'string' ? new Date(editTarget.incomingDate) : editTarget.incomingDate
-            setIncomingDateStr(d.toISOString().split('T')[0])
+            setIncomingDateStr(toKstDate(d))
             setActualFarmerStr(editTarget.actualFarmer ?? '')
         }
     }, [open, editTarget])
@@ -180,7 +181,7 @@ export function AddMiscStockDialog({
         setVendor('')
         setProductionYear(defaultYear)
         setCertType('유기농')
-        setIncomingDateStr(new Date().toISOString().split('T')[0])
+        setIncomingDateStr(todayKst())
         setActualFarmerStr('')
     }
 
