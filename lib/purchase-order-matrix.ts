@@ -571,6 +571,16 @@ export type OrderLine = {
 }
 
 /**
+ * 라인 규격 표기 — 톤백은 자루중량, 나머지는 원본 규격.
+ * 라인 카드와 검토 게이트 목록이 **같이 쓴다**(표기가 두 벌이면 같은 품목이 두 이름으로 보인다).
+ */
+export function orderLineSpec(line: Pick<OrderLine, 'bulk' | 'unitWeightKg' | 'packageType'>): string {
+  return line.bulk
+    ? `${(Math.round((line.unitWeightKg ?? 0) * 10) / 10).toLocaleString()}kg`
+    : line.packageType
+}
+
+/**
  * 한 건의 라인을 상태 심각도순(`ROW_STATUS_ORDER`)으로 낸다. **원본 배열을 건드리지 않는다.**
  *
  * 🔴 가용은 **SKU 전체 가용**이다. 같은 SKU를 쓰는 라인이 둘이면 양쪽에 같은 수가 보인다 —

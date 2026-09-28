@@ -28,7 +28,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
-import { CHANNEL_DECL, nameTiersOf } from '@/lib/purchase-channel'
+import { CHANNEL_DECL, groupAxisOf, nameTiersOf } from '@/lib/purchase-channel'
+import type { GateOrder } from '@/lib/purchase-order-gate'
 import {
     applyMatchPatches,
     buildMatrix,
@@ -109,6 +110,11 @@ export function MatrixClient({
     // 행 일괄선택(D3) — 키는 orderId라 정렬이 바뀌어도 선택이 유지된다
     const [selected, setSelected] = useState<Set<number>>(new Set())
     const [gateOpen, setGateOpen] = useState(false)
+    /**
+     * 게이트 안에서 건을 고르게 할지(M1-6). **폰 목록 진입일 때만** 켠다 — 데스크탑은 매트릭스
+     * 체크박스로 이미 골라 왔고, 건상세 일괄차감은 건이 하나다. 여는 곳마다 반드시 같이 정한다.
+     */
+    const [gatePick, setGatePick] = useState(false)
     /** 게이트에서 「이 줄」을 눌러 찾아온 셀 — 잠깐 강조했다가 스스로 꺼진다 */
     const [highlight, setHighlight] = useState<string | null>(null)
 
@@ -164,6 +170,27 @@ export function MatrixClient({
         () => (detail ? buildOrderLines(input, detail.orderId) : []),
         [input, detail],
     )
+
+    /**
+     * 게이트 선택 목록에 줄 건들(M1-6) — `selectedIds`와 같은 순서. 라인은 `buildOrderLines` 파생이라
+     * 서버 왕복 0이다. 이름·그룹 축은 폰 목록과 **같은 함수**(`nameTiersOf`·`groupAxisOf`)로 푼다.
+     */
+    const gateOrders = useMemo((): GateOrder[] | undefined => {
+        if (!gateOpen || !gatePick) return undefined
+        const byId = new Map(matrix.rows.map((r) => [r.orderId, r]))
+        return selectedIds.flatMap((id) => {
+            const row = byId.get(id)
+            if (!row) return []
+            return [
+                {
+                    orderId: id,
+                    group: groupAxisOf(decl, row),
+                    name: nameTiersOf(decl, row)[0],
+                    lines: buildOrderLines(input, id),
+                },
+            ]
+        })
+    }, [gateOpen, gatePick, selectedIds, matrix.rows, decl, input])
 
     // 업로드 시점 매칭이 굳어 있어, 마스터를 보완해도 화면은 실패인 채다 — 다시 돌린다(결정 R)
     const [rematching, startRematch] = useTransition()
@@ -339,6 +366,8 @@ export function MatrixClient({
                     input={input}
                     onOpenGate={(ids) => {
                         setSelected(new Set(ids))
+                        // 목록 푸터(`작업필요 n건 검토`)는 여러 건, 택배 펼침의 일괄차감은 건 하나다
+                        setGatePick(ids.length > 1)
                         setGateOpen(true)
                     }}
                 />
@@ -494,7 +523,14 @@ export function MatrixClient({
                         <span className="text-[13px] text-slate-600">
                             <b className="font-bold text-foreground">{fmt(selected.size)}수령처</b> 선택
                         </span>
-                        <Button type="button" size="sm" onClick={() => setGateOpen(true)}>
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                                setGatePick(false)
+                                setGateOpen(true)
+                            }}
+                        >
                             차감 예정 확인
                         </Button>
                         <button
@@ -513,6 +549,7 @@ export function MatrixClient({
             {gateOpen && (
             <ReviewGateDialog
                 orderIds={selectedIds}
+                orders={gateOrders}
                 sheetName={header.sheetName}
                 lookup={(itemId) => lineIndex.get(itemId) ?? null}
                 onClose={() => setGateOpen(false)}
@@ -587,6 +624,7 @@ export function MatrixClient({
                 onBatch={() => {
                     if (!detail) return
                     setSelected(new Set([detail.orderId]))
+                    setGatePick(false)
                     setGateOpen(true)
                 }}
                 onOpenLine={openLine}

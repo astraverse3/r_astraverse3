@@ -17,8 +17,13 @@
 //    매칭실패를 푸는 경로는 「품종 관리·제품유형 관리에서 보완 → 재매칭」뿐이다.
 // 🔴 이름(수령인·품목·규격)은 서버가 주지 않는다. 매트릭스가 이미 갖고 있어 `lookup`으로 붙인다 —
 //    서버가 또 조립하면 표기 규칙이 두 곳이 된다.
+//
+// M1-6 — `orders`를 주면 **선택 모드**(폰 목록 `작업필요 n건 검토`로 열었을 때만). 뺄 건의 체크를 푼다.
+// 🔴 체크를 바꾸면 **미리보기를 서버에 다시 묻는다.** FIFO라 한 건을 빼면 그 재고가 뒤 건으로 가서
+//    부족이던 건이 풀릴 수 있다 — 화면에서 빼기만 하면 kg·부족이 거짓말이 된다. 지문도 건 목록마다 다르다.
+// 🔴 확정은 **그 미리보기를 만든 건 목록**과 지문을 한 쌍으로 보낸다(지금 체크 상태가 아니라).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ChevronRight, PackageX, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,12 +35,14 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { buildGateGroups, gateStateOf, pickableIds, type GateOrder } from '@/lib/purchase-order-gate'
 import {
     confirmBatch,
     previewBatch,
     type BatchPatch,
     type BatchPreview,
 } from '@/app/actions/purchase-order-batch'
+import { GateOrderPicker } from './gate-order-picker'
 
 /** 라인 한 줄을 사람 말로 — 매트릭스가 채운다. 못 찾으면 null */
 export type LineLookup = (itemId: number) => { who: string; what: string } | null
@@ -50,6 +57,7 @@ const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
  */
 export function ReviewGateDialog({
     orderIds,
+    orders,
     sheetName,
     lookup,
     onClose,
@@ -57,6 +65,11 @@ export function ReviewGateDialog({
     onJump,
 }: {
     orderIds: number[]
+    /**
+     * 선택 모드(M1-6). **폰 목록 진입일 때만** 넘긴다 — 데스크탑은 매트릭스 체크박스로 이미 골라 왔고,
+     * 건상세 일괄차감은 건이 하나라 고를 게 없다. `orderIds`와 같은 건·같은 순서다.
+     */
+    orders?: GateOrder[]
     sheetName: string
     lookup: LineLookup
     onClose: () => void
@@ -65,30 +78,84 @@ export function ReviewGateDialog({
     /** 이슈 줄 클릭 — 매트릭스의 그 셀로 보낸다 */
     onJump: (itemId: number) => void
 }) {
-    const [preview, setPreview] = useState<BatchPreview | null>(null)
+    const pickMode = orders !== undefined
+    const groups = useMemo(() => (orders ? buildGateGroups(orders) : []), [orders])
+    const pickable = useMemo(() => pickableIds(groups), [groups])
+    /** 뺀 건. 기본은 비어 있다 — 전부 체크(빼는 UI) */
+    const [excluded, setExcluded] = useState<ReadonlySet<number>>(() => new Set())
+    /*
+     * 서버에 보낼 건 = 뺀 것만 빼고 전부. 일괄 대상이 없는 건(톤백·매칭실패만)도 **그대로 보낸다** —
+     * 그래야 그 매칭실패가 아래 배너·목록에 계속 보인다(서버가 알아서 건너뛴다).
+     */
+    const activeIds = useMemo(() => orderIds.filter((id) => !excluded.has(id)), [orderIds, excluded])
+    const activeKey = activeIds.join(',')
+    const pickedCount = pickable.filter((id) => !excluded.has(id)).length
+    const nothingPicked = pickMode && pickedCount === 0
+
+    /** 미리보기와 **그것을 만든 건 목록**. 확정은 이 한 쌍으로 보낸다 */
+    const [result, setResult] = useState<{
+        key: string
+        ids: number[]
+        data: BatchPreview | null
+        error: string | null
+        /**
+         * 확정을 눌렀는데 재고가 바뀌어 중단된 경우 — 새 계획으로 다시 보고 있다는 표시.
+         * 결과에 붙여 둔다: 그 뒤 체크를 바꿔 새로 계산하면 **저절로 꺼진다**(따로 두면 배너가 눌러앉는다)
+         */
+        stale?: boolean
+    } | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [confirming, setConfirming] = useState(false)
-    /** 확정을 눌렀는데 재고가 바뀌어 중단된 경우 — 새 계획으로 다시 보고 있다는 표시 */
-    const [stale, setStale] = useState(false)
+    const stale = result?.stale ?? false
+    const firstRun = useRef(true)
 
     useEffect(() => {
+        if (nothingPicked) return
         let alive = true
-        previewBatch(orderIds).then((r) => {
-            if (!alive) return
-            if (r.success) setPreview(r.data)
-            else setError(r.error)
-        })
+        // 처음은 바로, 체크를 바꾼 뒤엔 잠깐 모았다가 — 「그룹 해제」 뒤 몇 개 되살리는 동안 왕복이 쌓이지 않게
+        const delay = firstRun.current ? 0 : 400
+        firstRun.current = false
+        const timer = setTimeout(() => {
+            previewBatch(activeIds).then((r) => {
+                // 🔴 체크가 또 바뀌었으면 늦게 온 옛 응답은 버린다(cleanup이 alive를 끈다)
+                if (!alive) return
+                setResult({
+                    key: activeKey,
+                    ids: activeIds,
+                    data: r.success ? r.data : null,
+                    error: r.success ? null : r.error,
+                })
+            })
+        }, delay)
         return () => {
             alive = false
+            clearTimeout(timer)
         }
-    }, [orderIds])
+    }, [activeIds, activeKey, nothingPicked])
 
-    const loading = preview === null && error === null
+    /** 지금 체크 상태로 계산한 값인가 — 아니면 옛 값을 흐리게 보여 주고 확정을 막는다 */
+    const fresh = result !== null && result.key === activeKey
+    const preview = nothingPicked ? null : (result?.data ?? null)
+    const loading = !nothingPicked && result === null
+    const recalculating = !nothingPicked && result !== null && !fresh
+
+    /** 건마다 이번에 어떻게 되나 — 지금 체크 상태로 계산한 미리보기에서만 낸다(아니면 null) */
+    const states = useMemo(() => {
+        if (!fresh || !result?.data) return null
+        const byOrder = new Map<number, { allocated: number }[]>()
+        for (const s of result.data.shortages) byOrder.set(s.orderId, [...(byOrder.get(s.orderId) ?? []), s])
+        return new Map(
+            groups
+                .flatMap((g) => g.rows)
+                .filter((r) => r.skip === null)
+                .map((r) => [r.orderId, gateStateOf(r.batchLines, byOrder.get(r.orderId) ?? [])] as const),
+        )
+    }, [fresh, result, groups])
 
     const runConfirm = async () => {
-        if (!preview) return
+        if (!result?.data || !fresh) return
         setConfirming(true)
-        const r = await confirmBatch(orderIds, preview.fingerprint)
+        const r = await confirmBatch(result.ids, result.data.fingerprint)
         setConfirming(false)
         if (r.success) {
             onDone(r.patch, { units: r.confirmed, lines: r.lines })
@@ -96,13 +163,23 @@ export function ReviewGateDialog({
         }
         if (r.mismatch) {
             // 아무것도 쓰이지 않았다 — 새 계획으로 갈아끼우고 다시 확인받는다(결정 G)
-            setPreview(r.preview)
-            setStale(true)
+            setResult({ ...result, data: r.preview, stale: true })
             setError(r.error)
             return
         }
         setError(r.error)
     }
+
+    const toggle = (orderId: number) =>
+        setExcluded((prev) => {
+            const next = new Set(prev)
+            if (!next.delete(orderId)) next.add(orderId)
+            return next
+        })
+    const toggleGroup = (ids: number[], include: boolean) =>
+        setExcluded((prev) =>
+            include ? new Set([...prev].filter((id) => !ids.includes(id))) : new Set([...prev, ...ids]),
+        )
 
     const t = preview?.totals
     // 바의 분모 = 이번에 「판정한」 라인. 톤백·이미완료는 판정 대상이 아니라 따로 안내한다.
@@ -115,19 +192,51 @@ export function ReviewGateDialog({
                 <DialogHeader>
                     <DialogTitle>차감 전 검토</DialogTitle>
                     <DialogDescription>
-                        {sheetName} · {fmt(orderIds.length)}수령처 선택
+                        {sheetName} ·{' '}
+                        {pickMode
+                            ? `${fmt(pickedCount)}/${fmt(pickable.length)}건 선택`
+                            : `${fmt(orderIds.length)}수령처 선택`}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex min-h-0 flex-col gap-4 overflow-y-auto py-1">
+                    {/* 선택 목록이 위, 구성·이슈는 아래 그대로(상위 계획 §5 — 선택 UI가 4갈래를 밀어내지 않게) */}
+                    {pickMode && (
+                        <div className="flex flex-col gap-2">
+                            <p className="text-[12.5px] text-slate-500">
+                                빼야 할 건의 체크를 해제하세요. 한 건을 빼면 그 재고가 다른 건으로 가서 아래 숫자가 다시
+                                계산됩니다.
+                            </p>
+                            <GateOrderPicker
+                                groups={groups}
+                                excluded={excluded}
+                                states={states}
+                                onToggle={toggle}
+                                onToggleGroup={toggleGroup}
+                            />
+                        </div>
+                    )}
+
+                    {nothingPicked && (
+                        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] font-medium text-slate-600">
+                            선택된 건이 없습니다.
+                        </p>
+                    )}
+
                     {loading && <p className="py-8 text-center text-sm text-slate-500">계산 중…</p>}
 
-                    {!loading && error && !preview && (
-                        <p className="py-6 text-center text-sm text-red-600">{error}</p>
+                    {!loading && !preview && (result?.error ?? error) && (
+                        <p className="py-6 text-center text-sm text-red-600">{result?.error ?? error}</p>
                     )}
 
                     {!loading && preview && t && (
-                        <>
+                        <div
+                            className={cn(
+                                'flex flex-col gap-4 transition-opacity',
+                                // 옛 계산은 흐리게 — 지금 체크 상태의 숫자가 아니다
+                                recalculating && 'opacity-50',
+                            )}
+                        >
                             {stale && (
                                 <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] font-medium text-amber-800">
                                     {error ?? '재고가 바뀌어 다시 계산했습니다.'} 아래 내용으로 다시 확인해 주세요.
@@ -211,7 +320,13 @@ export function ReviewGateDialog({
                                 title="제외 · 매칭실패"
                                 count={t.unmatched}
                                 tone="red"
-                                note="행을 누르면 매트릭스 해당 셀로 이동"
+                                note={
+                                    // 폰엔 셀이 없어 그 건의 상세로 간다(`onJump`의 `offsetParent` 판정)
+                                    <>
+                                        <span className="sm:hidden">행을 누르면 그 건으로 이동</span>
+                                        <span className="hidden sm:inline">행을 누르면 매트릭스 해당 셀로 이동</span>
+                                    </>
+                                }
                                 rows={preview.skipped
                                     .filter((s) => s.reason === 'UNMATCHED')
                                     .map((s) => ({
@@ -268,14 +383,31 @@ export function ReviewGateDialog({
                                     지금 차감할 수 있는 품목이 없습니다.
                                 </p>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
 
                 <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[12px] text-slate-500">
-                        확인했습니다 — 되돌리려면 <b className="font-semibold">셀 단위로 차감 취소</b>해야 합니다.
-                    </p>
+                    <div className="flex flex-col gap-0.5">
+                        {/* 목록을 내려도 결과가 보이게 — 선택 모드에선 푸터가 요약을 한 번 더 말한다 */}
+                        {pickMode && (
+                            <p className="text-[12.5px] text-slate-600">
+                                <b className="text-foreground">{fmt(pickedCount)}</b>건
+                                {fresh && t && (
+                                    <>
+                                        {' '}
+                                        · <b className="text-foreground">{fmtKg(t.kg)}</b>kg 차감 예정
+                                    </>
+                                )}
+                                {recalculating && <span className="text-slate-400"> · 다시 계산 중…</span>}
+                                {excluded.size > 0 && <span className="text-slate-400"> · 제외 {fmt(excluded.size)}</span>}
+                            </p>
+                        )}
+                        {/* 셀은 데스크탑에만 있다 — 폰은 품목 카드에서 취소한다(M1-5) */}
+                        <p className="text-[12px] text-slate-500">
+                            확인했습니다 — 되돌리려면 <b className="font-semibold">품목 단위로 차감 취소</b>해야 합니다.
+                        </p>
+                    </div>
                     <div className="flex gap-2">
                         <Button type="button" variant="ghost" onClick={onClose} disabled={confirming}>
                             돌아가 수정
@@ -283,7 +415,9 @@ export function ReviewGateDialog({
                         <Button
                             type="button"
                             onClick={runConfirm}
-                            disabled={loading || confirming || !preview || preview.confirmLines === 0}
+                            disabled={
+                                loading || confirming || !fresh || !preview || preview.confirmLines === 0
+                            }
                         >
                             {confirming
                                 ? '차감 중…'
@@ -327,7 +461,7 @@ function IssueList({
     title: string
     count: number
     tone: 'red' | 'amber' | 'orange'
-    note: string
+    note: React.ReactNode
     rows: IssueRow[]
     lookup: LineLookup
     onJump: (itemId: number) => void

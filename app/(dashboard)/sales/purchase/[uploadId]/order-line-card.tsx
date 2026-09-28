@@ -9,16 +9,13 @@
 
 import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { OrderLine } from '@/lib/purchase-order-matrix'
+import { orderLineSpec, type OrderLine } from '@/lib/purchase-order-matrix'
 import { STATUS_META } from './status-meta'
 
 const fmt = (n: number) => n.toLocaleString()
-const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 
-/** 규격 표기 — 톤백은 자루중량, 나머지는 원본 규격 */
-export function specOf(line: OrderLine): string {
-    return line.bulk ? `${fmtKg(line.unitWeightKg ?? 0)}kg` : line.packageType
-}
+/** 규격 표기 — 톤백은 자루중량, 나머지는 원본 규격. 검토 게이트와 한 벌이라 lib에 있다 */
+export const specOf = orderLineSpec
 
 export function LineCard({ line, onOpen }: { line: OrderLine; onOpen?: () => void }) {
     const meta = STATUS_META[line.status]
