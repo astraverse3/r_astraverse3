@@ -27,6 +27,7 @@ export function NoticeViewDialog({ notice, notices, open, onClose }: NoticeViewD
     // 팝업이 새로 열릴 때마다 상세 모드 + 전달받은 공지로 초기화
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 팝업이 새로 열릴 때마다 상세 모드 + 전달받은 공지로 초기화
             setMode('detail')
             setSelected(notice)
         }

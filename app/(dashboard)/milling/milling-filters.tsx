@@ -92,6 +92,7 @@ export function MillingFilters({
                 to: end ? new Date(end) : defaultEndDate,
             })
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 열릴 때만 복원 — 기본 날짜 prop을 넣으면 열린 동안 입력이 초기화될 수 있다
     }, [open, searchParams])
 
     const activeFilterCount = [

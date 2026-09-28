@@ -168,6 +168,7 @@ function MobileCardCarousel({
 
     // Determine if we should animate or snap instantly
     const shouldAnimate = isTransitioning;
+    // eslint-disable-next-line react-hooks/refs -- 캐러셀 오프셋을 트랙 DOM 폭으로 계산(렌더 중 측정, 기존 동작 유지)
     const offset = getOffset(currentIndex);
 
     const cardBaseClass = "bg-white rounded-lg border border-slate-200 shadow-sm p-3.5 pb-4 flex flex-col justify-start shrink-0";

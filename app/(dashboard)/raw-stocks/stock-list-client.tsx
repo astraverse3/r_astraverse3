@@ -204,6 +204,7 @@ function GroupedStockRows({
         })
         if (changed) {
             onSelectionChange(newSelected)
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 그룹 로드가 끝나면 예약해둔 자동 선택을 처리한다
             setPendingSelect(stillPending)
         }
     }, [loadedItems, loadingGroups, pendingSelect, selectedIds, cartItemIds, onSelectionChange])
@@ -391,6 +392,7 @@ function GroupedStockMobileCards({
         })
         if (changed) {
             onSelectionChange(newSelected)
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 그룹 로드가 끝나면 예약해둔 자동 선택을 처리한다
             setPendingSelect(stillPending)
         }
     }, [loadedItems, loadingGroups, pendingSelect, selectedIds, cartItemIds, onSelectionChange])

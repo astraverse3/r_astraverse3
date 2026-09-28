@@ -48,6 +48,7 @@ export function ReleaseFilters() {
         if (open) {
             const start = searchParams.get('startDate')
             const end = searchParams.get('endDate')
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 URL(또는 편집값)을 입력칸에 복원하는 의도된 동기화
             setDateRange({
                 from: start ? new Date(start) : subYears(new Date(), 1),
                 to: end ? new Date(end) : new Date(),

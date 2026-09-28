@@ -121,6 +121,7 @@ export function AddMiscStockDialog({
     // editTarget prefill — 다이얼로그가 열릴 때마다 적용
     useEffect(() => {
         if (open && editTarget) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 URL(또는 편집값)을 입력칸에 복원하는 의도된 동기화
             setProductionYear(editTarget.productionYear)
             setCertType(editTarget.farmer.group?.certType ?? '일반')
             setSelectedFarmerId(editTarget.farmerId.toString())

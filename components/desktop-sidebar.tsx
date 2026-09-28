@@ -69,9 +69,11 @@ export function DesktopSidebar() {
     // 사이드바는 layout에 상주해 경로 이동 시 useState 초기값이 재평가되지 않으므로,
     // 해당 섹션 경로로 진입하면 자동으로 펼친다.
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 상주 레이아웃이라 해당 섹션 경로로 진입하면 서브메뉴를 펼친다
         if (statsActive) setStatsOpen(true);
     }, [statsActive]);
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 상주 레이아웃이라 해당 섹션 경로로 진입하면 서브메뉴를 펼친다
         if (adminActive) setAdminOpen(true);
     }, [adminActive]);
 

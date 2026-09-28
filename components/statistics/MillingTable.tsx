@@ -255,6 +255,7 @@ export function MillingTable({ data }: Props) {
     },
   ], [yieldRates])
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table — React Compiler 미사용이라 해당 없음
   const table = useReactTable({
     data,
     columns,

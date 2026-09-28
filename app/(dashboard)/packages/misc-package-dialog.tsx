@@ -93,10 +93,10 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
 
     // 진입점 ②: open=true 전이 시 stock 목록 lazy fetch.
     // (부모가 open prop을 직접 toggle하므로 handleOpenChange로는 잡히지 않아 effect 사용)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         if (!open || isStockFixed) return
         let cancelled = false
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 서버에서 불러오며 로딩 표시(부모가 open을 직접 바꿔 effect로 잡는다)
         setLoadingStocks(true)
         getAvailableMiscStocks().then(res => {
             if (cancelled) return

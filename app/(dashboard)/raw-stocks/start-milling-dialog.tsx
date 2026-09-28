@@ -54,6 +54,7 @@ export function StartMillingDialog({ open, onOpenChange, selectedStocks, onSucce
             setRemarks(editingRemarks || '')
             if (editingMillingType) setMillingType(editingMillingType)
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 열릴 때만 편집값 복원 — 장바구니 값이 바뀌어도 입력을 덮지 않는다
     }, [open, isEditing])
 
     const totalInputKg = useMemo(() => {

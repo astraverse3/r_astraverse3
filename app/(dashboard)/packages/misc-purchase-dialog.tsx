@@ -72,7 +72,6 @@ export function MiscPurchaseDialog({ open, onOpenChange, onSuccess }: Props) {
     }
 
     // open 시 자동완성 후보 lazy fetch (병렬)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         if (!open) return
         let cancelled = false

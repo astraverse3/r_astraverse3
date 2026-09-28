@@ -60,6 +60,7 @@ export function FarmerFilters() {
     // Sync from URL when opening
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 URL(또는 편집값)을 입력칸에 복원하는 의도된 동기화
             setGroupName(searchParams.get('groupName') || '')
             setFarmerName(searchParams.get('farmerName') || '')
             setCertTypes(parseMulti(searchParams.get('certType')))

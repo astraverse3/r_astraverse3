@@ -184,6 +184,7 @@ export function MultiSeriesChart({ data, title }: Props) {
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 브라우저에서만 알 수 있는 값을 마운트 후 반영(SSR 불일치 방지)
     setIsMobile(mq.matches)
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)

@@ -63,11 +63,13 @@ export function MobileNav() {
 
     useEffect(() => {
         const x = getTargetX(getActiveIndex(pathname));
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 탭 버튼 DOM 위치를 측정해 blob 위치 반영
         setBlobX(x);
         setReady(true);
     }, [getTargetX, pathname]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 경로가 바뀌면 활성 탭·blob 위치를 맞춘다
         setActiveHref(pathname);
         setStatsOpen(false);
         const x = getTargetX(getActiveIndex(pathname));

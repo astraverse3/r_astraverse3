@@ -66,6 +66,7 @@ export function LogList() {
 
     useEffect(() => {
         fetchLogs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 페이지가 바뀔 때만 조회 — fetchLogs는 매 렌더 새로 만들어져 넣으면 무한 조회
     }, [filters.page])
 
     const handleSearch = () => {

@@ -71,6 +71,7 @@ export function MiscStockListClient({
 
     // 새 데이터가 들어오면 hide 마스크 리셋
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 새 데이터가 오면 삭제 숨김 마스크를 초기화한다
         setHiddenIds(new Set())
     }, [initialStocks])
 

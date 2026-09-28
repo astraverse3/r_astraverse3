@@ -51,10 +51,10 @@ export function EditMiscPackageDialog({ open, onOpenChange, packageId, onSuccess
     const [isSaving, setIsSaving] = useState(false)
 
     // 다이얼로그 open 시 컨텍스트 lazy fetch + prefill
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         if (!open || packageId == null) return
         let cancelled = false
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 서버에서 불러오며 로딩 표시(부모가 open을 직접 바꿔 effect로 잡는다)
         setLoading(true)
         getMiscPackageEditContext(packageId).then(res => {
             if (cancelled) return

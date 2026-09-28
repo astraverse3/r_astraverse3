@@ -68,6 +68,7 @@ export function MiscStockFilters({ varieties }: Props) {
     useEffect(() => {
         if (open) {
             const yearParam = searchParams.get('productionYear')
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 URL(또는 편집값)을 입력칸에 복원하는 의도된 동기화
             setYears(yearParam ? parseMulti(yearParam) : defaultYears)
             setVarietyIds(parseMulti(searchParams.get('varietyId')))
             setFarmerName(searchParams.get('farmerName') || '')

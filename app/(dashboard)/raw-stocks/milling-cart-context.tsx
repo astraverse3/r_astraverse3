@@ -61,6 +61,7 @@ export function MillingCartProvider({ children }: { children: ReactNode }) {
         const savedMillingType = localStorage.getItem('milling-editing-type')
 
         if (savedBatchId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 후 localStorage의 장바구니·편집 상태 복원(SSR엔 없다)
             setEditingBatchId(Number(savedBatchId))
             if (savedDate) setEditingDate(new Date(savedDate))
             if (savedRemarks) setEditingRemarks(savedRemarks)

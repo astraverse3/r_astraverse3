@@ -33,6 +33,7 @@ export function LastUpdated() {
 
     useEffect(() => {
         // Initial load
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트·경로 변경 시 서버에서 최종 수정 시각을 가져온다
         fetchLatestTime();
 
         // Custom event for same-tab updates (when user mutates data)

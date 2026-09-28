@@ -63,6 +63,7 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
     useEffect(() => {
         if (open) {
             const yearParam = searchParams.get('productionYear')
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 URL(또는 편집값)을 입력칸에 복원하는 의도된 동기화
             setYears(yearParam ? parseMulti(yearParam) : defaultYears)
             setVarieties2(parseMulti(searchParams.get('varietyId')))
             setFarmerName(searchParams.get('farmerName') || '')
@@ -91,6 +92,7 @@ export function StockFilters({ varieties }: { varieties: { id: number; name: str
             }).length === 0
 
             if (isMobile && hasNoFilters) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- 모바일 첫 진입 때 한 번만 자동으로 연다(화면폭은 브라우저에서만)
                 setOpen(true)
             }
             setHasAttemptedAutoOpen(true)

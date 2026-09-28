@@ -28,6 +28,7 @@ function formatMonthDay(date: Date | string) {
 }
 
 function NoticeTicker({ notices }: { notices: Notice[] }) {
+    // eslint-disable-next-line react-hooks/purity -- NEW 뱃지 판정용 현재 시각 — 렌더마다 달라져도 표시에 무해
     const now = Date.now();
     return (
         <>
@@ -70,6 +71,7 @@ export function NoticeMarquee({ notices, speed = 1 }: NoticeMarqueeProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 브라우저에서만 알 수 있는 값을 마운트 후 반영(SSR 불일치 방지)
         setIsMounted(true);
     }, []);
 

@@ -77,6 +77,7 @@ export function PackageSearchDialog({ category, varieties, disabled = false }: P
     // URL → 위젯 sync. open 시점뿐 아니라 URL 변경 시에도 동기화.
     // useState 초기값은 빈 값 — SSR/CSR hydration 안전성 + 단일 진실 원천(URL).
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- URL → 검색 위젯 동기화(URL이 단일 원천)
         setYears(parseMulti(searchParams.get('productionYear')))
         setVarietyIds(parseMulti(searchParams.get('varietyId')))
         setSources(parseMulti(searchParams.get('source')))

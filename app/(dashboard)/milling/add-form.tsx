@@ -49,6 +49,7 @@ export function AddMillingLogForm({ availableStocks }: Props) {
             if (ids.length > 0) {
                 const validIds = ids.filter(id => availableStocks.some(s => s.id === id))
                 if (validIds.length > 0) {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL ids로 넘어온 톤백을 미리 선택한다
                     setSelectedStockIds(validIds)
                 }
             }
