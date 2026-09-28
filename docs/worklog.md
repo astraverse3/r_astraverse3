@@ -2,6 +2,22 @@
 
 ## 2026-09-28
 
+### 날짜가 하루 전날로 뜬다 — KST 공용 헬퍼로 일괄 교체 (백로그 §39)
+
+커밋 `2776c92` · `22a03b5` · `20f03df` · `7e85e2c` · `667eae7` · `a136b3b`.
+계획서 `docs/plan/plan-날짜-KST.md`, 보고서 `docs/report-날짜-KST-2026-09-28.md`.
+
+- `lib/kst-date.ts`(신규) — `toKstDate`·`todayKst`·`toKstMonth`·`kstDayRange`·`kstYearRange`·`formatKstKo`. 프로세스 TZ 무관. `todayIsoKst`는 위임
+- 서버 표시 15곳: `package-movement`(차감 발생일) · `purchase-order`/`purchase-order-matrix`/`purchase-order-allocation`(발주일·상차일·중복키, 한 커밋) · `packages` · `misc-stock` · `milling`
+- 입력칸 10곳: `misc-purchase-dialog` · `stock-list-dialog` · `add-stock-dialog` · `edit-stock-dialog` · `add-misc-stock-dialog` · `start-milling-dialog`
+- 로컬시간 의존: `package-where`(검색 범위·생산연도) · `packages` `toIsoDate` 삭제 · `milling-excel`/`milling`/`release-excel`/`audit`(toLocale* → formatKstKo) · `output-statistics` 월 키
+- 파일명 8곳 · `lot-generation` YYMMDD · `stock-excel` 입고일자
+- 🔴 DB 실측: 저장이 UTC 자정/KST 자정으로 섞임 → KST로 읽으면 둘 다 맞아 데이터 이전 없음. 실제 틀렸던 행 = 차감 102 · 원물출고 9 · 매입 1
+- 🔴 `package-where` 기존 테스트는 기대값도 로컬이라 어느 TZ에서나 통과 → UTC 순간으로 고정
+- 남은 것: `statistics.ts` 버킷 · `production-year` `getMonth` (백로그 §39)
+
+검증 tsc 0 · eslint 0 · test 482/482 (TZ=UTC · Asia/Seoul). 브라우저 확인 전.
+
 ### 발주서 엑셀 내보내기 — 화면과 같은 SKU 열·머리글 (`4e45fc3`)
 
 머리글 분리 직후 사용자 「엑셀도 화면처럼. 나중에 회의하겠지만 이 방향으로」. D5의 「열은 원본 열」 결정 폐기.
