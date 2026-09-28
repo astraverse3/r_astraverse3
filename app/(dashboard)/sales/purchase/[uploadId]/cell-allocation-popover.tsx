@@ -10,12 +10,17 @@
 //
 // 결정 D — 매칭실패는 안내만 한다(D2e). 톤백은 `tonbag-popover.tsx`의 `TonbagBody`로 위임한다(D2d).
 // 완료 셀은 내역 + 취소.
+//
+// M1-5 — **라인 카드**를 눌러 열면 팝오버가 아니라 바텀시트다(`anchor === null`). 폰에는 셀이 없어
+// 카드가 유일한 입구다. 🔴 **시트냐 팝오버냐는 진입점이 정한다** — 화면 폭을 JS로 재지 않는다
+// (브레이크포인트를 복제하면 CSS와 어긋나는 날이 온다). 본문은 한 벌이고 크기만 `useSheetMode`로 가른다.
 
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Check, Minus, Plus, Sparkles, Undo2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import type { Allocation } from '@/lib/purchase-order-allocation'
 import type { CellStatus } from '@/lib/purchase-order-matrix'
@@ -35,8 +40,12 @@ export type ActiveCell = {
     itemIds: number[]
     status: CellStatus
     bulk: boolean
-    /** 팝오버가 붙을 셀 요소 */
-    anchor: HTMLElement
+    /**
+     * 팝오버가 붙을 셀 요소. **`null`이면 바텀시트**다 — 라인 카드에서 연 경우(M1-5).
+     * 카드는 셀 하나가 아니라 **라인 하나**라, 그때 `itemIds`는 길이 1이다(같은 규격 라인이 둘인
+     * 건에서 셀 전체를 열면 카드 숫자와 시트 숫자가 달라진다).
+     */
+    anchor: HTMLElement | null
     who: string
     /** `백옥찰 · 10kg` */
     what: string
@@ -44,6 +53,10 @@ export type ActiveCell = {
 
 const fmt = (n: number) => n.toLocaleString()
 const md = (iso: string) => iso.slice(5).replace('-', '.')
+
+/** 바텀시트 안인가 — 손가락 크기(44px)로 키울지를 본문 곳곳이 묻는다 */
+const SheetMode = createContext(false)
+export const useSheetMode = () => useContext(SheetMode)
 
 export function CellAllocationPopover({
     cell,
@@ -56,28 +69,55 @@ export function CellAllocationPopover({
     onFail: () => void
     onClose: () => void
 }) {
+    const popCell = cell?.anchor ? cell : null
+    const sheetCell = cell && !cell.anchor ? cell : null
+    const body = (c: ActiveCell) => (
+        <Body key={c.key} cell={c} onPatch={onPatch} onFail={onFail} onClose={onClose} />
+    )
     return (
-        <Popover open={cell !== null} onOpenChange={(o) => !o && onClose()}>
-            {cell && <PopoverAnchor virtualRef={{ current: cell.anchor }} />}
-            <PopoverContent
-                align="start"
-                side="bottom"
-                sideOffset={2}
-                collisionPadding={12}
-                className="w-[320px] p-0 text-[12px]"
-                onOpenAutoFocus={(e) => e.preventDefault()}
-            >
-                {cell && (
-                    <Body
-                        key={cell.key}
-                        cell={cell}
-                        onPatch={onPatch}
-                        onFail={onFail}
-                        onClose={onClose}
-                    />
-                )}
-            </PopoverContent>
-        </Popover>
+        <>
+            <Popover open={popCell !== null} onOpenChange={(o) => !o && onClose()}>
+                {popCell && <PopoverAnchor virtualRef={{ current: popCell.anchor! }} />}
+                <PopoverContent
+                    align="start"
+                    side="bottom"
+                    sideOffset={2}
+                    collisionPadding={12}
+                    className="w-[320px] p-0 text-[12px]"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
+                    {popCell && body(popCell)}
+                </PopoverContent>
+            </Popover>
+
+            <Sheet open={sheetCell !== null} onOpenChange={(o) => !o && onClose()}>
+                {/*
+                 * `max-h-[80svh]` — `vh`는 iOS 주소창을 빼지 않아 푸터가 화면 밖으로 밀린다.
+                 * 🔴 `flex flex-col` + 본문 `min-h-0` — 후보가 많으면 **목록만** 줄어 스크롤되고
+                 *    확정 버튼은 늘 보인다(grid였으면 푸터가 잘린다).
+                 * 데스크탑에서 카드를 누르면 건상세 패널(468px) 폭으로 오른쪽 아래에서 올라온다 —
+                 * 전체 폭 시트는 모니터에서 눈이 따라가지 못한다.
+                 * 🔴 `bg-white`를 박지 않는다 — 배경은 토큰(`bg-card`)으로.
+                 */}
+                <SheetContent
+                    side="bottom"
+                    showCloseButton={false}
+                    className="max-h-[80svh] gap-0 rounded-t-2xl bg-card p-0 pb-[env(safe-area-inset-bottom)] text-[12px] sm:left-auto sm:w-[468px] sm:max-w-[468px]"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    aria-describedby={undefined}
+                >
+                    {sheetCell && (
+                        <SheetMode.Provider value={true}>
+                            {/* 보이는 제목은 `Head`가 그린다 — 이건 스크린리더용 이름표다 */}
+                            <SheetTitle className="sr-only">
+                                {sheetCell.what} · {sheetCell.who}
+                            </SheetTitle>
+                            {body(sheetCell)}
+                        </SheetMode.Provider>
+                    )}
+                </SheetContent>
+            </Sheet>
+        </>
     )
 }
 
@@ -96,7 +136,8 @@ function Body({
     onClose: () => void
 }) {
     return (
-        <div className="flex flex-col">
+        // `min-h-0` — 시트의 `max-h` 안에서 이 덩어리가 줄어들 수 있어야 목록이 스크롤된다
+        <div className="flex min-h-0 flex-col">
             <Head cell={cell} onClose={onClose} />
             {/* 매칭실패는 차감할 게 없다 — 어느 마스터를 손봐야 풀리는지 안내만 한다 */}
             {cell.status === 'UNMATCHED' ? (
@@ -111,6 +152,7 @@ function Body({
 }
 
 function Head({ cell, onClose }: { cell: ActiveCell; onClose: () => void }) {
+    const sheet = useSheetMode()
     return (
         <div className="flex items-center gap-1.5 border-b border-slate-100 px-3.5 pt-3 pb-2.5">
             <span className="truncate text-[13px] font-bold text-foreground">{cell.what}</span>
@@ -119,10 +161,13 @@ function Head({ cell, onClose }: { cell: ActiveCell; onClose: () => void }) {
             <button
                 type="button"
                 onClick={onClose}
-                className="ml-auto -mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"
+                className={cn(
+                    'ml-auto -mr-1 flex shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100',
+                    sheet ? '-my-2 h-10 w-10' : 'h-6 w-6',
+                )}
                 aria-label="닫기"
             >
-                <X className="h-3.5 w-3.5" />
+                <X className={sheet ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
             </button>
         </div>
     )
@@ -183,6 +228,7 @@ function Editor({
         Object.fromEntries(data.candidates.map((c) => [c.packageId, c.suggested])),
     )
     const [busy, setBusy] = useState(false)
+    const sheet = useSheetMode()
 
     const sum = data.candidates.reduce((s, c) => s + (counts[c.packageId] ?? 0), 0)
     const over = sum > data.remainingQty
@@ -223,7 +269,12 @@ function Editor({
 
             {data.allocated.length > 0 && <AllocatedList items={data.allocated} compact />}
 
-            <div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5">
+            <div
+                className={cn(
+                    'flex flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5',
+                    sheet ? 'min-h-0' : 'max-h-[260px]',
+                )}
+            >
                 {data.candidates.length === 0 && (
                     <p className="py-1 text-slate-400">이 규격의 가용 재고가 없습니다.</p>
                 )}
@@ -258,7 +309,11 @@ function Editor({
                                     max={c.available}
                                     value={n}
                                     onChange={(e) => setCount(c.packageId, Number(e.target.value) || 0, c.available)}
-                                    className="h-6 w-11 rounded-md border border-slate-200 bg-card text-center text-[13px] font-bold tabular-nums text-foreground outline-none focus:border-primary"
+                                    className={cn(
+                                        'rounded-md border border-slate-200 bg-card text-center font-bold tabular-nums text-foreground outline-none focus:border-primary',
+                                        // 16px 미만 입력칸은 iOS가 누르는 순간 화면을 확대한다
+                                        sheet ? 'h-11 w-14 text-[16px]' : 'h-6 w-11 text-[13px]',
+                                    )}
                                 />
                                 <Step
                                     onClick={() => setCount(c.packageId, n + 1, c.available)}
@@ -285,10 +340,18 @@ function Editor({
                     type="button"
                     disabled={!canConfirm}
                     onClick={submit}
-                    className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-primary text-[13px] font-semibold text-white disabled:bg-slate-200 disabled:text-slate-400"
+                    className={cn(
+                        'flex w-full items-center justify-center gap-1.5 rounded-md bg-primary font-semibold text-white disabled:bg-slate-200 disabled:text-slate-400',
+                        sheet ? 'h-11 text-[14px]' : 'h-9 text-[13px]',
+                    )}
                 >
                     <Check className="h-3.5 w-3.5" />
-                    {busy ? '차감 중…' : `이 셀 차감 확정 · ${fmt(sum)}개`}
+                    {busy
+                        ? '차감 중…'
+                        : sheet
+                          ? // 폰엔 「셀」이 없다. 남은 수에 못 미치면 부분으로 남는다는 걸 버튼이 말한다
+                            `${fmt(sum)}개 ${sum > 0 && sum < data.remainingQty ? '부분 차감' : '차감 확정'}`
+                          : `이 셀 차감 확정 · ${fmt(sum)}개`}
                 </button>
                 {data.allocatedQty > 0 && (
                     <CancelButton cell={cell} count={data.allocatedQty} onPatch={onPatch} onFail={onFail} onClose={onClose} />
@@ -340,7 +403,13 @@ function AllocatedList({
     compact?: boolean
 }) {
     return (
-        <div className={cn('flex flex-col gap-1 px-3.5', compact ? 'border-b border-slate-100 py-2' : 'py-2.5')}>
+        // `min-h-0 overflow-y-auto` — 시트 높이를 넘으면 여기가 스크롤된다(팝오버엔 높이 상한이 없어 무효)
+        <div
+            className={cn(
+                'flex min-h-0 flex-col gap-1 overflow-y-auto px-3.5',
+                compact ? 'border-b border-slate-100 py-2' : 'py-2.5',
+            )}
+        >
             {compact && <div className="text-[10px] font-semibold text-slate-400">이미 차감</div>}
             {items.map((a) => (
                 <div key={a.packageId} className="flex items-center justify-between text-[11px]">
@@ -371,6 +440,7 @@ export function CancelButton({
     onClose: () => void
 }) {
     const [busy, setBusy] = useState(false)
+    const sheet = useSheetMode()
     const run = async () => {
         const ok = await confirmDialog({
             title: '차감 취소',
@@ -397,7 +467,10 @@ export function CancelButton({
             type="button"
             disabled={busy}
             onClick={run}
-            className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 text-[12px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className={cn(
+                'flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50',
+                sheet ? 'h-11 text-[13px]' : 'h-8 text-[12px]',
+            )}
         >
             <Undo2 className="h-3.5 w-3.5" />
             {busy ? '취소 중…' : '차감 취소'}
@@ -414,12 +487,16 @@ function Step({
     disabled?: boolean
     children: React.ReactNode
 }) {
+    const sheet = useSheetMode()
     return (
         <button
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
+            className={cn(
+                'flex items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40',
+                sheet ? 'h-11 w-11' : 'h-6 w-6',
+            )}
         >
             {children}
         </button>

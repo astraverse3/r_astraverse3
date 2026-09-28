@@ -38,6 +38,7 @@ import {
     type Matrix,
     type MatrixRow,
     type MatrixSort,
+    type OrderLine,
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
@@ -57,6 +58,7 @@ export function OrderListMobile({
     onRematch,
     onOpenDetail,
     onOpenGate,
+    onOpenLine,
     input,
 }: {
     header: MatrixHeader
@@ -76,6 +78,8 @@ export function OrderListMobile({
      */
     onOpenDetail: (row: MatrixRow, siblings: number[]) => void
     onOpenGate: (orderIds: number[]) => void
+    /** 펼친 행의 라인 탭 — 부모가 그 라인 하나로 배분 시트를 연다(M1-5) */
+    onOpenLine: (line: OrderLine) => void
     /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
     input: BuildMatrixInput
 }) {
@@ -265,6 +269,7 @@ export function OrderListMobile({
                                         orderId={row.orderId}
                                         nextId={nextOf(open)}
                                         onBatch={() => onOpenGate([row.orderId])}
+                                        onOpenLine={onOpenLine}
                                         onNext={(id) => setOpen({ id, siblings: open.siblings })}
                                     />
                                 )}
@@ -421,19 +426,21 @@ function InlineLines({
     nextId,
     onBatch,
     onNext,
+    onOpenLine,
 }: {
     input: BuildMatrixInput
     orderId: number
     nextId: number | undefined
     onBatch: () => void
     onNext: (id: number) => void
+    onOpenLine: (line: OrderLine) => void
 }) {
     const lines = useMemo(() => buildOrderLines(input, orderId), [input, orderId])
     const totals = sumOrderLines(lines)
     return (
         <div className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
             {lines.map((line) => (
-                <LineCard key={line.itemId} line={line} />
+                <LineCard key={line.itemId} line={line} onOpen={() => onOpenLine(line)} />
             ))}
             <div className="mt-0.5 flex items-center gap-2">
                 <Button type="button" className="h-10 flex-1" disabled={totals.batchLines === 0} onClick={onBatch}>

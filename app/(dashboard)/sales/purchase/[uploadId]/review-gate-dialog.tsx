@@ -199,9 +199,9 @@ export function ReviewGateDialog({
                                         {/*
                                           * 🔴 폰엔 매트릭스 셀이 없다(`hidden sm:contents`) — **갈 수 없는 길을
                                           * 가리키면 안 된다.** D3 `data-cell` 무반응·M1-3 「이 줄」 무반응과 같은 자리다.
-                                          * 모바일 자루 선택은 M1-5 바텀시트에서 붙는다.
+                                          * 폰은 라인 카드 → 배분 바텀시트(M1-5)가 그 길이다.
                                           */}
-                                        <span className="sm:hidden">PC에서 자루를 고르세요.</span>
+                                        <span className="sm:hidden">품목을 눌러 자루를 고르세요.</span>
                                         <span className="hidden sm:inline">셀을 눌러 처리하세요.</span>
                                     </span>
                                 </p>

@@ -3,8 +3,11 @@
 // 라인(품목) 한 장. **건 상세 패널과 건 목록이 함께 쓴다** —
 // 택배는 건 상세를 열지 않고 목록 안에서 펼치므로(`ChannelDecl.detail === 'inline'`)
 // 카드가 패널에만 있으면 두 벌이 된다.
+//
+// `onOpen`을 주면 카드가 버튼이 된다 — 누르면 그 라인의 배분 시트(M1-5). 폰에는 셀이 없어
+// 톤백 자루 선택·차감 취소·FIFO 손보기가 **이 카드로만** 된다.
 
-import { Check } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OrderLine } from '@/lib/purchase-order-matrix'
 import { STATUS_META } from './status-meta'
@@ -17,11 +20,20 @@ export function specOf(line: OrderLine): string {
     return line.bulk ? `${fmtKg(line.unitWeightKg ?? 0)}kg` : line.packageType
 }
 
-export function LineCard({ line }: { line: OrderLine }) {
+export function LineCard({ line, onOpen }: { line: OrderLine; onOpen?: () => void }) {
     const meta = STATUS_META[line.status]
+    // 버튼 안에는 div를 둘 수 없어 안쪽은 전부 span이다
+    const Tag = onOpen ? 'button' : 'div'
     return (
-        <div className={cn('rounded-xl border px-3.5 py-2.5', meta.card)}>
-            <div className="flex flex-wrap items-center gap-1.5">
+        <Tag
+            {...(onOpen && { type: 'button' as const, onClick: onOpen })}
+            className={cn(
+                'block w-full rounded-xl border px-3.5 py-2.5 text-left',
+                meta.card,
+                onOpen && 'transition active:brightness-95',
+            )}
+        >
+            <span className="flex flex-wrap items-center gap-1.5">
                 <span
                     className={cn(
                         'text-[13px] font-bold',
@@ -35,8 +47,10 @@ export function LineCard({ line }: { line: OrderLine }) {
                 <span className={cn('ml-auto rounded px-1.5 py-0.5 text-[10.5px] font-semibold', meta.badge)}>
                     {meta.label}
                 </span>
-            </div>
-            <div className="mt-1.5 text-[11.5px] text-slate-500">
+                {/* 폰은 호버가 없다 — 「눌린다」는 단서가 이것뿐이다 */}
+                {onOpen && <ChevronRight className="-mr-1 h-4 w-4 shrink-0 text-slate-300" />}
+            </span>
+            <span className="mt-1.5 block text-[11.5px] text-slate-500">
                 {line.status === 'COMPLETED' && (
                     <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                         <Check className="h-3 w-3" />
@@ -58,7 +72,7 @@ export function LineCard({ line }: { line: OrderLine }) {
                         )}
                     </>
                 )}
-            </div>
-        </div>
+            </span>
+        </Tag>
     )
 }

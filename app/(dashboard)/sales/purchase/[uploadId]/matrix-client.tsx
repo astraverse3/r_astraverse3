@@ -40,6 +40,7 @@ import {
     type MatrixColumn,
     type MatrixRow,
     type MatrixSort,
+    type OrderLine,
 } from '@/lib/purchase-order-matrix'
 import type { PurchaseChannel } from '@prisma/client'
 import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matrix'
@@ -273,6 +274,37 @@ export function MatrixClient({
         })
     }
 
+    /**
+     * 라인 카드 탭 → 그 라인 하나로 배분 **시트**를 연다(M1-5). `anchor: null`이 시트라는 뜻이다.
+     * 🔴 셀(`cell.itemIds`)이 아니라 **라인 하나**다 — 같은 규격 라인이 둘인 건에서 셀을 열면
+     *    카드가 말한 숫자(라인)와 시트 숫자(합계)가 달라진다. 서버 액션은 원래 `itemIds[]`라 길이만 1이다.
+     */
+    const openLine = (line: OrderLine) => {
+        const at = lineIndex.get(line.itemId)
+        setActive({
+            key: `item|${line.itemId}`,
+            itemIds: [line.itemId],
+            status: line.status,
+            bulk: line.bulk,
+            anchor: null,
+            who: at?.who ?? '',
+            what: at?.what ?? '',
+        })
+    }
+
+    /*
+     * 🔴 **닫기는 이 클릭이 끝난 뒤다**(`setTimeout 0`) — 게이트 `onJump`와 같은 이유.
+     * 시트는 건상세 패널 **위**에 뜨고, 그동안 패널은 `blockOutsideClose`로 막혀 있다.
+     * 시트의 X를 누르는 순간 `active`를 지우면 가드가 그 자리에서 풀리고, 터치일 때 Radix가
+     * click까지 미뤄 둔 바깥 판정이 **같은 click**으로 패널에 닿아 패널까지 닫힌다.
+     * 🔴 미룬 동안 **다른 셀이 열렸으면 건드리지 않는다**(key 비교). 팝오버가 열린 채 옆 셀을 탭하면
+     *    바깥 판정(닫기)과 그 셀의 onClick(열기)이 같은 click에서 나고, 미룬 닫기가 새 팝오버를 닫는다.
+     */
+    const closeCell = () => {
+        const key = active?.key
+        setTimeout(() => setActive((cur) => (cur?.key === key ? null : cur)), 0)
+    }
+
     // 톤백 열은 서버가 행마다 곱해 온 kg 합을 그대로 쓴다 — 개수 × 열 중량은 틀린다(C0-a)
     const availKg = useMemo(
         () =>
@@ -303,6 +335,7 @@ export function MatrixClient({
                     rematching={rematching}
                     onRematch={runRematch}
                     onOpenDetail={openDetail}
+                    onOpenLine={openLine}
                     input={input}
                     onOpenGate={(ids) => {
                         setSelected(new Set(ids))
@@ -528,7 +561,7 @@ export function MatrixClient({
                 cell={active}
                 onPatch={applyPatch}
                 onFail={() => router.refresh()}
-                onClose={() => setActive(null)}
+                onClose={closeCell}
             />
             <OrderDetailPanel
                 orderId={detail?.orderId ?? null}
@@ -536,8 +569,9 @@ export function MatrixClient({
                  * 🔴 게이트가 열려 있는 동안엔 바깥 클릭으로 닫히면 안 된다 — 게이트가 **이 패널 위**에
                  * 열리는데(M1-3), 그 안의 「이 줄」을 누르면 그 pointerdown이 패널의 **바깥**으로 잡혀
                  * 패널이 스스로 닫혔다. 자세한 내용은 `order-detail-panel.tsx`의 `blockOutsideClose`.
+                 * 라인 탭으로 연 배분 시트(M1-5)도 이 패널 위에 뜬다 — 같은 이유로 막는다.
                  */
-                blockOutsideClose={gateOpen}
+                blockOutsideClose={gateOpen || active !== null}
                 lines={detailLines}
                 title={detail?.head ?? ''}
                 subtitle={detail?.tail ?? null}
@@ -555,6 +589,7 @@ export function MatrixClient({
                     setSelected(new Set([detail.orderId]))
                     setGateOpen(true)
                 }}
+                onOpenLine={openLine}
                 onClose={() => setDetail(null)}
             />
         </div>

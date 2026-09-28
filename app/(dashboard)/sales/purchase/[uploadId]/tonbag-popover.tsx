@@ -22,7 +22,7 @@ import {
     type BulkCellOptions,
     type CellPatch,
 } from '@/app/actions/purchase-order-matrix'
-import { CancelButton, type ActiveCell } from './cell-allocation-popover'
+import { CancelButton, useSheetMode, type ActiveCell } from './cell-allocation-popover'
 
 const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 const md = (iso: string) => iso.slice(5).replace('-', '.')
@@ -46,6 +46,7 @@ export function TonbagBody({
     /** packageId → 통째로 쓰는 자루 수 */
     const [picked, setPicked] = useState<Record<number, number>>({})
     const [busy, setBusy] = useState(false)
+    const sheet = useSheetMode()
 
     useEffect(() => {
         let alive = true
@@ -138,7 +139,12 @@ export function TonbagBody({
             )}
 
             {!done && (
-                <div className="flex max-h-[280px] flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5">
+                <div
+                    className={cn(
+                        'flex flex-col gap-1.5 overflow-y-auto px-3.5 py-2.5',
+                        sheet ? 'min-h-0' : 'max-h-[280px]',
+                    )}
+                >
                     <div className="text-[10px] font-semibold text-slate-400">
                         남은 발주 {data.remainingQty}자루 × {fmtKg(unitKg)}kg · 오래된 자루부터 · {fmtKg(unitKg)}~{fmtKg(unitKg + BULK_FIT_KG)}kg면 맞음
                     </div>
@@ -170,10 +176,17 @@ export function TonbagBody({
                         type="button"
                         disabled={bags === 0 || busy}
                         onClick={submit}
-                        className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-primary text-[13px] font-semibold text-white disabled:bg-slate-200 disabled:text-slate-400"
+                        className={cn(
+                            'flex w-full items-center justify-center gap-1.5 rounded-md bg-primary font-semibold text-white disabled:bg-slate-200 disabled:text-slate-400',
+                            sheet ? 'h-11 text-[14px]' : 'h-9 text-[13px]',
+                        )}
                     >
                         <Check className="h-3.5 w-3.5" />
-                        {busy ? '처리 중…' : `이 셀 차감 확정 · ${bags}자루 · ${fmtKg(pickedKg)}kg`}
+                        {busy
+                            ? '처리 중…'
+                            : sheet
+                              ? `${bags}자루 · ${fmtKg(pickedKg)}kg 차감 확정` // 폰엔 「셀」이 없다
+                              : `이 셀 차감 확정 · ${bags}자루 · ${fmtKg(pickedKg)}kg`}
                     </button>
                 )}
                 {data.allocated.length > 0 && (
@@ -196,6 +209,7 @@ function CandidateRow({
     fits: boolean
     onPick: (n: number) => void
 }) {
+    const sheet = useSheetMode()
     return (
         <div className={cn('rounded-lg border px-2.5 py-1.5', n > 0 ? 'border-primary/40 bg-primary/5' : 'border-slate-200')}>
             <div className="flex items-center gap-2">
@@ -204,7 +218,7 @@ function CandidateRow({
                         type="checkbox"
                         checked={n > 0}
                         onChange={(e) => onPick(e.target.checked ? 1 : 0)}
-                        className="h-3.5 w-3.5 shrink-0 accent-primary"
+                        className={cn('shrink-0 accent-primary', sheet ? 'h-5 w-5' : 'h-3.5 w-3.5')}
                     />
                     <span className="min-w-0 flex-1">
                         {/* 날짜는 윗줄, 아랫줄은 로트 · 생산자 — 잘라내지 않고 줄바꿈한다(잘리면 로트를 못 읽는다) */}
@@ -235,12 +249,16 @@ function CandidateRow({
 }
 
 function Step({ onClick, disabled, children }: { onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
+    const sheet = useSheetMode()
     return (
         <button
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
+            className={cn(
+                'flex shrink-0 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40',
+                sheet ? 'h-11 w-11' : 'h-5 w-5',
+            )}
         >
             {children}
         </button>

@@ -3,7 +3,8 @@
 // 수령인 주문 상세 패널 (계획서 D2c C4 · M1-1 · M1-3) — 행 머리글(이름칸)을 누르면 오른쪽에서 열린다.
 //
 // 그 건의 전 라인을 「작업필요 / 차감 완료」 두 묶음으로 보여주고, 푸터에서 건 단위로 일괄차감한다.
-// 라인 탭 → FIFO 시트는 M1-5에서 붙는다.
+// 라인 탭 → 그 라인의 배분 바텀시트(M1-5, `onOpenLine`). 시트는 이 패널 **위**에 뜬다 —
+// 부모가 그동안 `blockOutsideClose`를 켜야 시트 안을 누른 게 이 패널의 바깥 클릭이 되지 않는다.
 //
 // 🔴 **서버를 부르지 않는다**(M1-1). 라인은 부모가 `buildOrderLines(input, orderId)`로 파생해 넘긴다.
 //    옛 경로(`getPurchaseOrderDetail`)는 라인마다 쿼리를 2회 돌아, 「다음 건 ›」으로 67건을 연속
@@ -35,6 +36,7 @@ export function OrderDetailPanel({
     siblings,
     onNavigate,
     onBatch,
+    onOpenLine,
     blockOutsideClose,
     onClose,
 }: {
@@ -56,6 +58,8 @@ export function OrderDetailPanel({
     onNavigate: (orderId: number) => void
     /** 푸터 일괄차감 — 부모가 이 건 하나로 검토 게이트를 연다 */
     onBatch: () => void
+    /** 라인 탭 — 부모가 그 라인 하나로 배분 시트를 연다(M1-5) */
+    onOpenLine: (line: OrderLine) => void
     /**
      * 바깥 클릭으로 닫히는 것을 막는다 — **검토 게이트가 이 패널 위에 열려 있는 동안** 켠다.
      *
@@ -107,6 +111,7 @@ export function OrderDetailPanel({
                         siblings={siblings}
                         onNavigate={onNavigate}
                         onBatch={onBatch}
+                        onOpenLine={onOpenLine}
                         onClose={onClose}
                     />
                 )}
@@ -123,6 +128,7 @@ function Body({
     siblings,
     onNavigate,
     onBatch,
+    onOpenLine,
     onClose,
 }: {
     orderId: number
@@ -132,6 +138,7 @@ function Body({
     siblings: number[]
     onNavigate: (orderId: number) => void
     onBatch: () => void
+    onOpenLine: (line: OrderLine) => void
     onClose: () => void
 }) {
     const work = lines.filter((l) => l.status !== 'COMPLETED')
@@ -192,9 +199,16 @@ function Body({
 
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
                 {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
-                {work.length > 0 && <Group label={`작업필요 · ${work.length}품목`} lines={work} />}
+                {work.length > 0 && (
+                    <Group label={`작업필요 · ${work.length}품목`} lines={work} onOpenLine={onOpenLine} />
+                )}
                 {done.length > 0 && (
-                    <DoneGroup lines={done} doneKg={totals.doneKg} collapsed={work.length > 0} />
+                    <DoneGroup
+                        lines={done}
+                        doneKg={totals.doneKg}
+                        collapsed={work.length > 0}
+                        onOpenLine={onOpenLine}
+                    />
                 )}
             </div>
 
@@ -287,14 +301,8 @@ function Footer({
                             {totals.batchLines > 0 ? (
                                 `${fmt(totals.batchLines)}품목 일괄차감`
                             ) : totals.bulkLines > 0 ? (
-                                /*
-                                 * 🔴 **폰엔 매트릭스 셀이 없다** — 자루 선택은 M1-5(바텀시트) 전까지 PC 전용이다.
-                                 * 이 파일은 폰·데스크탑이 함께 쓰므로 CSS로 가른다(JS 폭 감지는 SSR에서 틀린다).
-                                 */
-                                <>
-                                    <span className="sm:hidden">톤백은 PC에서 자루 선택</span>
-                                    <span className="hidden sm:inline">톤백은 셀에서 자루 선택</span>
-                                </>
+                                // 폰·데스크탑 모두 카드가 눌리므로(M1-5) 한 벌이다 — 예전엔 폰만 「PC에서」였다
+                                '톤백은 품목을 눌러 자루 선택'
                             ) : (
                                 '차감할 품목이 없습니다'
                             )}
@@ -318,13 +326,21 @@ function Footer({
     )
 }
 
-function Group({ label, lines }: { label: string; lines: OrderLine[] }) {
+function Group({
+    label,
+    lines,
+    onOpenLine,
+}: {
+    label: string
+    lines: OrderLine[]
+    onOpenLine: (line: OrderLine) => void
+}) {
     return (
         <div className="mb-5">
             <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
             <div className="flex flex-col gap-2">
                 {lines.map((l) => (
-                    <LineCard key={l.itemId} line={l} />
+                    <LineCard key={l.itemId} line={l} onOpen={() => onOpenLine(l)} />
                 ))}
             </div>
         </div>
@@ -339,10 +355,13 @@ function DoneGroup({
     lines,
     doneKg,
     collapsed: initial,
+    onOpenLine,
 }: {
     lines: OrderLine[]
     doneKg: number
     collapsed: boolean
+    /** 완료 라인도 연다 — 폰에서 차감 취소로 가는 유일한 길이다 */
+    onOpenLine: (line: OrderLine) => void
 }) {
     const [open, setOpen] = useState(!initial)
     const head = lines[0]
@@ -371,7 +390,7 @@ function DoneGroup({
             {open && (
                 <div className="mt-2 flex flex-col gap-2">
                     {lines.map((l) => (
-                        <LineCard key={l.itemId} line={l} />
+                        <LineCard key={l.itemId} line={l} onOpen={() => onOpenLine(l)} />
                     ))}
                 </div>
             )}
