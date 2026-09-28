@@ -314,6 +314,36 @@ export async function toggleProductTypeActive(id: number) {
 /**
  * 등록 화면용: 주어진 (품종+도정+규격)의 기본 SKU·후보 SKU + 선택 가능한 포장지 목록.
  */
+/**
+ * 품종별 활성 SKU 규격 — 포장·재포장 「만들 규격」 버튼이 고정 목록에 더할 것(백로그 §48).
+ * 고정 목록에 이미 있는지는 화면(`mergeSpecButtons`)이 거른다 — 여기는 있는 그대로 준다.
+ * @returns `{ [varietyId]: packageType[] }` — SKU가 없는 품종은 키가 없다
+ */
+export async function listSkuSpecs(
+  varietyIds: number[],
+  millingType: string,
+): Promise<{ success: true; data: Record<number, string[]> } | { success: false; error: string }> {
+  await requireSession()
+  try {
+    // 시스템 경계 — 화면이 넘긴 값은 믿지 않는다
+    const ids = [...new Set(varietyIds)].filter((id) => Number.isInteger(id) && id > 0)
+    const mt = millingType?.trim() || '기타'
+    if (ids.length === 0) return { success: true, data: {} }
+
+    const rows = await prisma.productType.findMany({
+      where: { varietyId: { in: ids }, millingType: mt, active: true },
+      select: { varietyId: true, packageType: true },
+      distinct: ['varietyId', 'packageType'],
+    })
+    const data: Record<number, string[]> = {}
+    for (const r of rows) (data[r.varietyId] ??= []).push(r.packageType)
+    return { success: true, data }
+  } catch (error) {
+    console.error('Failed to list SKU specs:', error)
+    return { success: false, error: 'SKU 규격 조회에 실패했어요.' }
+  }
+}
+
 export async function suggestProductType(
   varietyId: number,
   millingType: string,

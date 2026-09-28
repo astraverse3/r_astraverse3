@@ -21,6 +21,7 @@ import {
     type RepackLotOption,
 } from '@/app/actions/repack'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
+import { useSkuSpecButtons } from '../use-sku-spec-buttons'
 import { triggerDataUpdate } from '@/components/last-updated'
 import {
     RepackResultRow,
@@ -169,6 +170,10 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
 
     const head = sources[0]
 
+    // 만들 규격 = 고정 목록 + 이 품종·도정의 SKU 규격(백로그 §48 — IPS 백미 907g 등). 소스는 한 품종이다
+    const specsOf = useSkuSpecButtons(open, head ? [head.varietyId] : [], head?.millingType, REPACK_SPECS)
+    const specs = specsOf(head?.varietyId ?? 0)
+
     // -- 중량 집계 --
     const sourceKg = useMemo(
         () =>
@@ -213,7 +218,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
      *    (위 「고치기」). 뭉쳐서 잔량으로 만들면 실물 자루 수와 장부가 어긋난다.
      *    이때는 제안 자체를 하지 않는다.
      */
-    const srcSpec = REPACK_SPECS.find(sp => sp.label === sources[0]?.packageType)
+    const srcSpec = specs.find(sp => sp.label === sources[0]?.packageType)
     const srcUnitKg = sources[0]?.weightPerUnit ?? 0
     const remainderSpec =
         srcSpec && srcSpec.weight === null
@@ -590,7 +595,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                         : '버튼을 누르면 아래에 줄이 생겨요'}
                                 </h3>
                                 <div className="grid grid-cols-5 gap-1 sm:grid-cols-9">
-                                    {REPACK_SPECS.map(s => (
+                                    {specs.map(s => (
                                         <Button
                                             key={s.label}
                                             type="button"

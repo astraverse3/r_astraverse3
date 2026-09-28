@@ -16,6 +16,7 @@
 
 import * as XLSX from 'xlsx'
 import { z } from 'zod'
+import { specWeightKg } from './package-spec'
 
 // ------------------------------------------------------
 // 출력 DTO + Zod 스키마 (시스템 경계 검증)
@@ -120,11 +121,8 @@ function stripSpaces(s: string): string {
  */
 export function normalizeSpec(raw: unknown): { spec: string; weightKg: number | null } {
   const spec = normalizeCell(raw).replace(/[\s,]/g, '')
-  const m = /^([\d.]+)(kg|g)$/i.exec(spec)
-  if (!m) return { spec, weightKg: null }
-  const n = Number(m[1])
-  if (!Number.isFinite(n) || n <= 0) return { spec, weightKg: null }
-  return { spec, weightKg: m[2].toLowerCase() === 'kg' ? n : n / 1000 }
+  // 🔴 kg 환산 규칙은 `specWeightKg` 한 곳이다 — 포장·재포장 버튼(§48)이 같은 규칙을 xlsx 없이 쓴다
+  return { spec, weightKg: specWeightKg(spec) }
 }
 
 // ------------------------------------------------------

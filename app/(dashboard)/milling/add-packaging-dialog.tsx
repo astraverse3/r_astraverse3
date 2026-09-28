@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
+import { useSkuSpecButtons } from '../use-sku-spec-buttons'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
 import { SpecSummaryBand } from './spec-summary'
@@ -322,6 +323,9 @@ export function AddPackagingDialog({
         }
     }, [open])
 
+    // 만들 규격 = 고정 목록 + 그룹 품종의 SKU 규격(백로그 §48 — IPS 백미 907g 등). 그룹마다 품종이 다를 수 있다
+    const specsOf = useSkuSpecButtons(open, lotGroups.map(g => g.varietyId), millingType, PACKAGE_TEMPLATES)
+
     // 초기화는 위 재조회 effect가 맡는다 — 여기서 낡은 prop으로 다시 채우면 그걸 덮어쓴다.
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen)
@@ -608,7 +612,7 @@ export function AddPackagingDialog({
                                         )}
                                         {/* 규격 버튼: 모바일 5열 2행, 데스크탑 10열 1행 */}
                                         <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
-                                            {PACKAGE_TEMPLATES.map(t => (
+                                            {specsOf(group.varietyId).map(t => (
                                                 <Button key={t.label} variant="secondary"
                                                     className="h-7 w-full px-0 text-[11px] hover:bg-stone-200 transition-colors"
                                                     onClick={() => addToGroup(group, t)}>
