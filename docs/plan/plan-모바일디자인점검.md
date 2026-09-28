@@ -133,7 +133,7 @@ Claude Design 모바일 점검에서 발견된 **20건**(P0 4 / P1 11 / P2 5)을
 - 본 계획서: `docs/plan-모바일디자인점검.md`
 - 점검 원본: `docs/모바일-디자인점검.html` (사용자 업로드 예정)
 - 각 PR 완료 후 `docs/worklog.md` 갱신
-- 전체 완료 시 `docs/report-모바일디자인점검-{날짜}.md`
+- 전체 완료 시 `docs/report/report-모바일디자인점검-{날짜}.md`
 
 ---
 

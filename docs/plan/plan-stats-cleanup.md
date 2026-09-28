@@ -101,7 +101,7 @@ app/(dashboard)/statistics/stock/
 - 개발 환경 셋업 (의존성 설치, `.env` 변수, Prisma 마이그레이션, 개발 서버 실행)
 - 폴더 구조 요약
 - 배포: Vercel
-- 기여 가이드: `docs/plan-*.md` 작성 → 승인 → 작업 → `docs/report-*.md` + `docs/worklog.md` 업데이트
+- 기여 가이드: `docs/plan-*.md` 작성 → 승인 → 작업 → `docs/report/report-*.md` + `docs/worklog.md` 업데이트
 
 ### 위험도
 없음.
@@ -115,7 +115,7 @@ app/(dashboard)/statistics/stock/
 3. milling-stats-client.tsx 리팩토링 (분리 + 공유 컴포넌트 사용)
 4. stock-stats-client.tsx 리팩토링 (분리 + 공유 컴포넌트 사용)
 5. 타입 체크 (`tsc --noEmit`) + 데브서버 통합 확인
-6. 결과보고서 작성 (`docs/report-stats-cleanup-2026-04-15.md`)
+6. 결과보고서 작성 (`docs/report/report-stats-cleanup-2026-04-15.md`)
 7. worklog.md 업데이트
 
 ---
@@ -132,5 +132,5 @@ app/(dashboard)/statistics/stock/
 | 수정 | `app/(dashboard)/statistics/stock/stock-stats-client.tsx` |
 | 수정 | `app/(dashboard)/statistics/milling/milling-stats-client.tsx` |
 | 수정 | `README.md` |
-| 신규 | `docs/report-stats-cleanup-2026-04-15.md` |
+| 신규 | `docs/report/report-stats-cleanup-2026-04-15.md` |
 | 수정 | `docs/worklog.md` |

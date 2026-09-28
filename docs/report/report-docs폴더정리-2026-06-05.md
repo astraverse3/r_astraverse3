@@ -38,7 +38,7 @@ docs/
 | `components/ui/milling-status-badge.tsx` | 주석 경로 `docs/handoff/디자인시스템/status-migration.md` |
 | `.gitignore` | `/docs/handoff-*/` → `/docs/handoff/잡곡재고관리/` |
 | `README.md` | 워크플로 가이드 경로 `docs/plan/`·`docs/report/` 반영 |
-| 자동 메모리 | `docs/plan-`·`docs/report-`·`docs/research-`·`docs/handoff-잡곡재고관리/` 일괄 보정 |
+| 자동 메모리 | `docs/plan-`·`docs/report/report-`·`docs/research-`·`docs/handoff-잡곡재고관리/` 일괄 보정 |
 
 ## 주요 결정 사항
 - **handoff 완전 정리 채택**: 현 활성 번들도 `handoff/디자인시스템/`으로 묶어 모든 핸드오프를 작업별 폴더로 통일 (사용자 요청)

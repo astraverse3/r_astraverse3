@@ -89,4 +89,4 @@
 
 - `npx eslint .` → **0 errors, 0 warnings** (P5까지 끝났을 때. P4까지면 react-hooks 33건만 남음)
 - `npx tsc --noEmit` 통과 · `npm test` 통과
-- 결과보고서 `docs/report-eslint정리-{날짜}.md` · worklog 갱신
+- 결과보고서 `docs/report/report-eslint정리-{날짜}.md` · worklog 갱신

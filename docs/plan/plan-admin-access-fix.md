@@ -88,7 +88,7 @@
    - FARMER_MANAGE만 있는 계정: `/admin/farmers` 진입 OK, 생산자 CRUD OK, `/admin/varieties`는 홈으로 리다이렉트
    - 권한 없는 일반 계정: `/admin/varieties`, `/admin/farmers` 전부 홈으로 리다이렉트
    - `/admin/settings` 진입: ADMIN만 통과
-4. **결과 보고서 작성**: `docs/report-admin-access-fix-2026-04-20.md`
+4. **결과 보고서 작성**: `docs/report/report-admin-access-fix-2026-04-20.md`
 5. **worklog 업데이트**: `docs/worklog.md`에 당일 항목 추가
 
 ## 5. 리스크 / 주의사항

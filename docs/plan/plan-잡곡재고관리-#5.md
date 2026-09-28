@@ -230,7 +230,7 @@ export const MiscStockFormSchema = z.discriminatedUnion('sourceType', [
 - 타입체크(`npx tsc --noEmit`) 통과
 - 수동 테스트 시나리오 1~15 모두 정상
 - `docs/worklog.md`에 #5 작업 기록 (커밋별 줄 추가)
-- `docs/report-잡곡재고관리-#5-2026-04-30.md` 결과보고서 작성
+- `docs/report/report-잡곡재고관리-#5-2026-04-30.md` 결과보고서 작성
 
 ## 백로그 메모
 

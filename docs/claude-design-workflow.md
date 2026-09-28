@@ -68,7 +68,7 @@ Claude Design에서 복사한 프롬프트를 그대로 이 창에 붙여넣으�
 
 기존 규칙 그대로:
 - `docs/plan-{작업명}.md` 승인 후 작업
-- `docs/report-{작업명}-{날짜}.md` 작성
+- `docs/report/report-{작업명}-{날짜}.md` 작성
 - `docs/worklog.md` 업데이트
 - 커밋 메시지: `feat: ...` / `fix: ...` 관례 유지
 

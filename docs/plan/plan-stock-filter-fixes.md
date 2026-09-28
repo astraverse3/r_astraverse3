@@ -94,7 +94,7 @@
    - 4b. 각 통계 서버 액션에 `exportXxxStats` 함수 추가 (재고분석부터 시작 — 가장 정적)
    - 4c. 각 클라이언트에 버튼 배치 + 필터/탭 상태 연동
 4. **검증** — `npx tsc --noEmit`, 각 페이지에서 실제 다운로드 확인 (PC + 모바일 뷰포트)
-5. **결과보고서** — `docs/report-stock-filter-fixes-2026-04-21.md`
+5. **결과보고서** — `docs/report/report-stock-filter-fixes-2026-04-21.md`
 6. **커밋 + worklog 업데이트**
 
 ---

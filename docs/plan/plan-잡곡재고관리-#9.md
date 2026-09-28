@@ -175,6 +175,6 @@ MANAGEMENT (border-t로 분리)
 - [ ] #9a 구현 + 동작 확인 + 커밋
 - [ ] #9b 구현 + 동작 확인 + 커밋
 - [ ] #9c 구현 + 동작 확인 + 커밋
-- [ ] 결과보고서 `docs/report-잡곡재고관리-#9-2026-05-07.md`
+- [ ] 결과보고서 `docs/report/report-잡곡재고관리-#9-2026-05-07.md`
 - [ ] worklog 업데이트
 - [ ] memory `project_misc_grain_feature.md` 갱신 (#9 완료 + #11 폐기 확정 + 다음 재개 지점)

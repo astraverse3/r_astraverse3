@@ -91,7 +91,7 @@ PC 사이드바와 모바일 헤더의 "관리자 메뉴" 전체를 **`USER_MANA
 추가:
   middleware.ts
   docs/plan-admin-access-fix.md
-  docs/report-admin-access-fix-2026-04-20.md
+  docs/report/report-admin-access-fix-2026-04-20.md
 
 수정:
   app/actions/admin.ts

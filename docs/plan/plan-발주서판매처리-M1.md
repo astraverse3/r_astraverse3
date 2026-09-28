@@ -217,7 +217,7 @@ M1-2에서 모바일 게이트 진입이 생기며 들어왔고, M1-3이 진입�
 
 ### M1-5. FIFO 바텀시트 (`cell-allocation-popover.tsx` 내부 분기) ✅ **완료 (2026-09-28 `178d9e7`)**
 
-> 폰 분기는 CSS도 JS 폭 감지도 아닌 **진입점**으로 갈랐다(`anchor === null` = 시트). 카드는 라인 하나를 연다. 상세는 `plan-발주서-M1-5-바텀시트.md`·`docs/report-발주서-M1-5-2026-09-28.md`.
+> 폰 분기는 CSS도 JS 폭 감지도 아닌 **진입점**으로 갈랐다(`anchor === null` = 시트). 카드는 라인 하나를 연다. 상세는 `plan-발주서-M1-5-바텀시트.md`·`docs/report/report-발주서-M1-5-2026-09-28.md`.
 
 - 폰 = `Sheet side="bottom"` / 데스크탑 = 기존 `Popover` — **파일명 유지, 내부 분기**(지시서 §10 우려 해소)
 - `max-h-[80svh]`(`vh` 아님 — iOS 주소창) · **`flex flex-col`**(grid는 푸터가 잘린다)

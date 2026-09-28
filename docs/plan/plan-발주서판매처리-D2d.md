@@ -169,7 +169,7 @@ K·L을 거치며 「실업무를 완벽히 커버할 수도 없고 너무 복�
   - `getCellAllocation`의 톤백 차단 문구는 유지(일반 경로에 톤백이 들어오면 여전히 막는다)
 - 532줄 → 약 650줄. 800 이내
 
-### D3. 팝오버 ✅ **구현 완료 `0f9c88e`** · 브라우저 확인은 D5(결정 M)로 대체 — 보고서 `docs/report-발주서-D2d-2026-09-14.md`
+### D3. 팝오버 ✅ **구현 완료 `0f9c88e`** · 브라우저 확인은 D5(결정 M)로 대체 — 보고서 `docs/report/report-발주서-D2d-2026-09-14.md`
 
 - 신규 `tonbag-popover.tsx`(상위 계획서 리스크 표가 지정한 파일명) — `TonbagBody` export
   - 헤더 밑 요약: **요구 1,000kg · 고른 1,005kg · +5 (+0.5%)**
@@ -181,7 +181,7 @@ K·L을 거치며 「실업무를 완벽히 커버할 수도 없고 너무 복�
 
 ### D4. 문서 ✅
 
-- 계획서 본 파일 상태 · `docs/report-발주서-D2d-2026-09-XX.md` · worklog · 백로그 §40에 「D2d에서 `lib/purchase-order-bulk.ts`로 뺐음, D5는 이걸 쓸 것」 한 줄
+- 계획서 본 파일 상태 · `docs/report/report-발주서-D2d-2026-09-XX.md` · worklog · 백로그 §40에 「D2d에서 `lib/purchase-order-bulk.ts`로 뺐음, D5는 이걸 쓸 것」 한 줄
 
 ---
 

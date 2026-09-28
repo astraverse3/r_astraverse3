@@ -440,4 +440,4 @@ model Variety {
 
 ### 참고 문서
 - 디자인 워크플로우: [docs/claude-design-workflow.md](../claude-design-workflow.md)
-- 마이그레이션 리포트(진행 시 기록): `docs/report-잡곡재고관리-YYYY-MM-DD.md`
+- 마이그레이션 리포트(진행 시 기록): `docs/report/report-잡곡재고관리-YYYY-MM-DD.md`

@@ -100,7 +100,7 @@ Step 0 dry-run에서 92건이 정확히 나오는지 검증.
 
 1. **DB 백업** — `/admin/backup` 페이지 사용 또는 `pg_dump` 1회
 2. `--commit` 플래그로 실제 실행
-3. 결과 로그 저장 → `docs/report-lot번호통일-윤영식유기농-2026-05-20.md`
+3. 결과 로그 저장 → `docs/report/report-lot번호통일-윤영식유기농-2026-05-20.md`
 
 ### Step 4. 검증 [0.4h]
 
@@ -128,7 +128,7 @@ Step 0 dry-run에서 92건이 정확히 나오는지 검증.
 
 ### 신규
 - `scripts/backfill-lot-yoonyoungsik-organic.js` — 백필 스크립트 (일회성)
-- `docs/report-lot번호통일-윤영식유기농-2026-05-20.md` — 결과 보고서
+- `docs/report/report-lot번호통일-윤영식유기농-2026-05-20.md` — 결과 보고서
 
 ### 수정
 - 없음 (코드 변경 없는 데이터 마이그레이션)
@@ -165,6 +165,6 @@ Step 0 dry-run에서 92건이 정확히 나오는지 검증.
 ## 9. 작업 후 산출물
 
 - `scripts/backfill-lot-yoonyoungsik-organic.js`
-- `docs/report-lot번호통일-윤영식유기농-2026-05-20.md`
+- `docs/report/report-lot번호통일-윤영식유기농-2026-05-20.md`
 - `docs/worklog.md` 항목 추가
 - 단일 커밋: `chore: 윤영식 유기농 92건 lot 번호 통일 마이그레이션 (#YYYY-MM-DD)`

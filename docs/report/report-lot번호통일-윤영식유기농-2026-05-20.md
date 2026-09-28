@@ -124,7 +124,7 @@ batch 108·110은 마감 상태(`isClosed=true`). 사용자 요구사항대로 �
 - `scripts/inspect-lot-yoonyoungsik-ips.js` — 사전 조사 (read-only)
 - `scripts/backfill-lot-yoonyoungsik-ips.js` — 백필 스크립트 (dry-run / --commit)
 - `docs/plan-lot번호통일-윤영식유기농.md` — 계획서
-- `docs/report-lot번호통일-윤영식유기농-2026-05-20.md` — 본 보고서
+- `docs/report/report-lot번호통일-윤영식유기농-2026-05-20.md` — 본 보고서
 
 ### 수정
 - `docs/worklog.md` — 2026-05-20 항목 추가

@@ -148,7 +148,7 @@ C0로 열을 중량까지 갈라 세우면 그 2건은 각자 다른 열로 흩�
 
 ### C0-c. 채널별 발주처·수령인 표기 규칙 ✅ **확정 (2026-09-11) · 구현 완료 `8940092` · 브라우저 확인 2026-09-14**
 
-구현: `lib/purchase-channel.ts`(`CHANNEL_DECL` · `nameTiersOf`) + `matrix-client.tsx`(`NameCell`) + 용어 통일. 보고서 `docs/report-발주서-D2c-C0c-2026-09-14.md`.
+구현: `lib/purchase-channel.ts`(`CHANNEL_DECL` · `nameTiersOf`) + `matrix-client.tsx`(`NameCell`) + 용어 통일. 보고서 `docs/report/report-발주서-D2c-C0c-2026-09-14.md`.
 
 근거: `docs/handoff/발주서판매처리/표기규칙-핸드오프.md` (디자인 2차 의논 결과)
 + 아래 DB 실측(묶음 #15~#19 전수).
@@ -322,7 +322,7 @@ lib/purchase-order-parser.ts:362   if (items.length > 0) orders.push(…)   // �
   - 합이 안 맞으면 던진다(계산 오류를 조용히 넘기지 않는다)
 - 신규 `lib/purchase-order-cell.test.ts` — 라인1개 / 라인2개 / 경계 걸침 / 부분차감 후 재차감 / 초과
 
-### C3. 셀 액션 3종 ✅ **구현 완료 `ae7c1ff` · 브라우저 확인 2026-09-14** — 🔴 `revalidatePath` 삭제 `0e53abd`(Next가 액션 응답에 현재 페이지를 재렌더해 결정 C가 무효였다). 보고서 `docs/report-발주서-D2c-C1-C4-2026-09-14.md`
+### C3. 셀 액션 3종 ✅ **구현 완료 `ae7c1ff` · 브라우저 확인 2026-09-14** — 🔴 `revalidatePath` 삭제 `0e53abd`(Next가 액션 응답에 현재 페이지를 재렌더해 결정 C가 무효였다). 보고서 `docs/report/report-발주서-D2c-C1-C4-2026-09-14.md`
 
 `app/actions/purchase-order-matrix.ts`에 추가(209줄이라 여유):
 

@@ -154,7 +154,7 @@ export type PackageItem =
 ## 7. 산출물
 - 본 계획서 (`docs/plan-잡곡재고관리-#6.md`)
 - 4개 커밋 (#6a / #6b / #6c / #6d) — 각 커밋 후 `docs/worklog.md` 업데이트
-- 결과보고서 `docs/report-잡곡재고관리-#6-2026-05-XX.md`
+- 결과보고서 `docs/report/report-잡곡재고관리-#6-2026-05-XX.md`
 
 ## 8. 확정 사항 (2026-05-04 사용자 확인 완료)
 

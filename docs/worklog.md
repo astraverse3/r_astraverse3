@@ -5,7 +5,7 @@
 ### 날짜가 하루 전날로 뜬다 — KST 공용 헬퍼로 일괄 교체 (백로그 §39)
 
 커밋 `2776c92` · `22a03b5` · `20f03df` · `7e85e2c` · `667eae7` · `a136b3b`.
-계획서 `docs/plan/plan-날짜-KST.md`, 보고서 `docs/report-날짜-KST-2026-09-28.md`.
+계획서 `docs/plan/plan-날짜-KST.md`, 보고서 `docs/report/report-날짜-KST-2026-09-28.md`.
 
 - `lib/kst-date.ts`(신규) — `toKstDate`·`todayKst`·`toKstMonth`·`kstDayRange`·`kstYearRange`·`formatKstKo`. 프로세스 TZ 무관. `todayIsoKst`는 위임
 - 서버 표시 15곳: `package-movement`(차감 발생일) · `purchase-order`/`purchase-order-matrix`/`purchase-order-allocation`(발주일·상차일·중복키, 한 커밋) · `packages` · `misc-stock` · `milling`
@@ -21,7 +21,7 @@
 ### 발주서 엑셀 내보내기 — 화면과 같은 SKU 열·머리글 (`4e45fc3`)
 
 머리글 분리 직후 사용자 「엑셀도 화면처럼. 나중에 회의하겠지만 이 방향으로」. D5의 「열은 원본 열」 결정 폐기.
-계획서 `docs/plan/plan-발주서-엑셀-화면열.md`, 보고서 `docs/report-발주서-엑셀-화면열-2026-09-28.md`.
+계획서 `docs/plan/plan-발주서-엑셀-화면열.md`, 보고서 `docs/report/report-발주서-엑셀-화면열-2026-09-28.md`.
 
 - `lib/purchase-order-export.ts` — 열 = `matrix.columns`, 칸 = `row.cells`. 머리글 A안 `품목·포장지·규격·농가명·로트번호·소계`(위 3줄 = 화면), 1행 `matrix.titles`·포장지 줄 `matrix.groups`로 병합. 원본 열 장치 6개 삭제(408→327줄)
 - 칸 상태 = 매트릭스 셀 그대로 → 엑셀 전용 판정 `exportCellStatus` 삭제(판정 한 벌)
@@ -34,7 +34,7 @@
 ### 발주서 매트릭스 머리글 — 제목 행 / 포장지 행 분리 (`7b4e6e8`)
 
 직전 품종 모으기 후속. 머리글 1행이 그룹(품종·도정·포장지)마다 한 칸이라 같은 품종 이름이 칸마다 반복됐다.
-계획서 `docs/plan/plan-매트릭스-머리글-품종행.md`, 보고서 `docs/report-매트릭스-머리글-품종행-2026-09-28.md`.
+계획서 `docs/plan/plan-매트릭스-머리글-품종행.md`, 보고서 `docs/report/report-매트릭스-머리글-품종행-2026-09-28.md`.
 
 - `lib/purchase-order-matrix.ts` — `Matrix.titles`(`MatrixTitleSpan`) · `titleSpansOf`: 이웃한 제목 같은 그룹을 한 칸으로. `gatherByVariety` 2차 정렬(품종 안에서 제목끼리)
 - `matrix-head.tsx` · `matrix-layout.ts` — 머리글 5행(제목·포장지·규격·소계·가용), `H_GROUP` → `H_TITLE`+`H_PACK`, 모서리 `rowSpan` 3
@@ -47,7 +47,7 @@
 ### 발주서 매트릭스 열 — 같은 품종 모으기 (`b722a61`)
 
 D5 확인 중 사용자 「같은 품종인데 떨어져 있다」. 원인 = 그룹이 품종·도정·**실제 포장지**라, 원본 포장지 빈칸 → 규격마다 기본 포장지가 달라 갈라짐.
-계획서 `docs/plan/plan-매트릭스-열순서-품종모으기.md`, 보고서 `docs/report-매트릭스-열순서-품종모으기-2026-09-28.md`.
+계획서 `docs/plan/plan-매트릭스-열순서-품종모으기.md`, 보고서 `docs/report/report-매트릭스-열순서-품종모으기-2026-09-28.md`.
 
 - `lib/purchase-order-matrix.ts` — `gatherByVariety`(신규): 그룹을 품종 첫 등장 순 안정 정렬 · 테스트 3건
 - 후보 3개를 실DB 5장에 돌려 비교 → A안(품종 모으기) 선택. B(규격 오름차순)는 해남·시아스 원본을 깨서 기각
@@ -58,7 +58,7 @@ D5 확인 중 사용자 「같은 품종인데 떨어져 있다」. 원인 = 그
 
 ### 발주서 D5 — 시트 엑셀 다운로드 (`03176bb`)
 
-시트 목록 ⋮ 「엑셀 다운로드」 활성화. 통일양식 모양 + **농가명·로트번호 두 줄**(내부 증빙, 도메인 목표 #4). 계획서 `docs/plan/plan-발주서-D5-엑셀내보내기.md`, 보고서 `docs/report-발주서-D5-엑셀내보내기-2026-09-28.md`.
+시트 목록 ⋮ 「엑셀 다운로드」 활성화. 통일양식 모양 + **농가명·로트번호 두 줄**(내부 증빙, 도메인 목표 #4). 계획서 `docs/plan/plan-발주서-D5-엑셀내보내기.md`, 보고서 `docs/report/report-발주서-D5-엑셀내보내기-2026-09-28.md`.
 
 - 선행 점검: 시안 3개가 낡음 — 원본 파일 미저장·파서가 0 행/열 버림(「그대로 복원」 불가) · `xlsx` 무료판은 셀 색 불가 · 시트 5탭(→업로드=시트 1장) · 통일양식엔 농가명 줄이 없다
 - 사용자 결정: 내부 증빙 · 발주서 모양 안에 농가명 줄 · 색 없음(발주 난 건 거의 다 나간다) · 시트 단위
@@ -70,7 +70,7 @@ D5 확인 중 사용자 「같은 품종인데 떨어져 있다」. 원인 = 그
 
 ### eslint 기존 오류 정리 — 517 → 0 (`83cb2d0`~`f3e9c6e`, 8커밋)
 
-`npx eslint .`(프로젝트 전체) 517건 → **0**. 동작 변경 없음(타입·주석·미사용 코드). 계획서 `docs/plan/plan-eslint정리.md`, 보고서 `docs/report-eslint정리-2026-09-28.md`.
+`npx eslint .`(프로젝트 전체) 517건 → **0**. 동작 변경 없음(타입·주석·미사용 코드). 계획서 `docs/plan/plan-eslint정리.md`, 보고서 `docs/report/report-eslint정리-2026-09-28.md`.
 
 - P0 `83cb2d0` — `eslint.config.mjs`: `docs/**` 제외 · CJS require 허용 · img 규칙 끔
 - P1 `8876d9d` — `types/next-auth.d.ts` `permissions` 선언 → `@ts-ignore` 41건(실제 억제는 3건) 삭제
@@ -113,7 +113,7 @@ M1-6 남은 것(해제 후 확정 시 체크한 건만 차감 · 데스크탑 �
 - `lib/purchase-order-matrix.ts` — `orderLineSpec`(카드·게이트 규격 표기 한 벌)
 - 🔴 **1차 확인에서 「kg이 처음부터 0」** — 계산은 맞았다(16품목 전부 가용 0). 행에 주문 기준 kg을 적어 둔 게 「나간다」로 읽혔다 → 행은 상태만(`재고없음`/`일부 부족`), kg은 합계 한 곳
 - 곁: 재고 변경 배너가 새 계산 뒤에도 눌러앉던 것 — 결과에 묶음
-- 계획서 `docs/plan/plan-발주서-M1-6-게이트선택.md` · 보고서 `docs/report-발주서-M1-6-2026-09-28.md`
+- 계획서 `docs/plan/plan-발주서-M1-6-게이트선택.md` · 보고서 `docs/report/report-발주서-M1-6-2026-09-28.md`
 
 검증 tsc 0 · eslint(변경 파일) 0 · test 436/436. ✅ 브라우저 확인(배지 · 재계산 45.8kg). ⏸ 해제 후 확정·데스크탑 회귀는 M1-7.
 
@@ -136,7 +136,7 @@ M1-6 확인 중 사용자 발견: IPS 잔량 16kg을 907g으로 재포장할 수
 - `review-gate-dialog.tsx` — 폰 문구
 - 🔴 **시트냐 팝오버냐는 진입점이 가른다**(JS 폭 감지 없음) · **카드는 셀이 아니라 라인 하나**(셀은 같은 규격 라인을 합친다)
 - 🔴 **닫기 지연만 넣으면 새 결함** — 팝오버 열린 채 옆 셀 탭 시 미룬 닫기가 새 팝오버를 닫는다 → key 비교
-- 계획서 `docs/plan/plan-발주서-M1-5-바텀시트.md` · 보고서 `docs/report-발주서-M1-5-2026-09-28.md`
+- 계획서 `docs/plan/plan-발주서-M1-5-바텀시트.md` · 보고서 `docs/report/report-발주서-M1-5-2026-09-28.md`
 
 검증 tsc 0 · eslint(변경 폴더) 0 · test 424/424. ✅ 브라우저 1~4 통과(싱싱유통 66개 · 닫기 3경로 · 취소 확인창 · 시아스 톤백). ⏸ 5~8은 M1-7에서.
 
@@ -152,7 +152,7 @@ D2e 「도정 접두 분리는 사용자 결정 대기」가 수동지정에 가
 - `lib/purchase-order-matcher.test.ts` — 4개 추가(🔴 `현미 천지향5세`가 백미로 굳지 않는지 포함)
 - 실 DB 드라이런(126줄): 매칭된 122줄 변화 0 · 실패 4줄 전부 붙음
 - 🔴 **별건**: #15 가바현미 800g 2줄은 **9/23 SKU 58 삭제로 풀린 것**(옵셔널 관계라 조용히 null). 차감 0건이라 손상 없음, 재매칭 시 SKU 28(땅끝미가)로 붙는다
-- 계획서 `docs/plan/plan-발주서-도정접두분리.md` · 보고서 `docs/report-발주서-도정접두분리-2026-09-28.md`
+- 계획서 `docs/plan/plan-발주서-도정접두분리.md` · 보고서 `docs/report/report-발주서-도정접두분리-2026-09-28.md`
 
 검증 test 424/424 · tsc 0 · eslint 0. ✅ 재매칭 브라우저 확인 완료(#20·#15 둘 다 붙음).
 
@@ -537,7 +537,7 @@ Next는 Server Action을 **순차**로 보내므로 **4회가 줄줄이** — Ne
 뒀다: `upload-dialog:375`의 「다음 단계」는 **업로드 모달의 2단계**(#31)를 가리키는
 말이고, `upload-row-menu:82`의 「준비 중」은 엑셀 다운로드가 실제로 D5 미구현이다.
 
-`tsc` 0 · `eslint` 0 · `test` **401/401**. 보고서 `docs/report-발주서용어정리-2026-09-22.md`.
+`tsc` 0 · `eslint` 0 · `test` **401/401**. 보고서 `docs/report/report-발주서용어정리-2026-09-22.md`.
 
 - ⚠️ **브라우저 확인 대기** — 360px 푸터 2버튼(B-3) · 게이트 상단 요약 줄 넘침 ·
   업로드 2단계 모달 푸터(3줄 → 2줄) · ⋮ 메뉴 · 빈 상태 · 에러 토스트
@@ -890,7 +890,7 @@ JS에 복제하는 대신 **그려져 있는지를 DOM에 묻고**(`offsetParent
 
 파일: `order-detail-panel.tsx`(180→376) · `matrix-client.tsx` · `order-list-mobile.tsx`
 `tsc` 0 · `eslint` 0 · **test 389/389**. ⚠️ `matrix-client.tsx` **1022줄**(별도 분리 작업 필요).
-보고서 `docs/report-발주서-M1-3-2026-09-21.md`. **브라우저 확인 전이라 푸시 보류.**
+보고서 `docs/report/report-발주서-M1-3-2026-09-21.md`. **브라우저 확인 전이라 푸시 보류.**
 
 ## 2026-09-18
 
@@ -1095,7 +1095,7 @@ uploadId=15의 SALE movement **51건 전부 하드삭제**(오늘 31 + 어제 19
 
 매트릭스에서 **행(수령처)을 여러 개 골라 한 번에 차감**하는 흐름. 차감 직전 **검토 게이트**가
 「얼마가 빠지고 무엇이 막혔는지」를 보여주고 확정은 거기서만 된다. 계획서
-`docs/plan/plan-발주서판매처리-D3.md`, 보고서 `docs/report-발주서-D3-2026-09-16.md`.
+`docs/plan/plan-발주서판매처리-D3.md`, 보고서 `docs/report/report-발주서-D3-2026-09-16.md`.
 
 **🔴 착수 전 전수 대조 — 계획서·시안이 7곳 틀려 있었다**
 
@@ -1165,7 +1165,7 @@ sticky 좌표는 상수 한 곳만) · `purchase-order.ts`(죽은 코드 삭제)
 
 「모바일에서 원물재고 검색 중 도정목록으로 튄다」를 **다음 발생 1회로 확정**하기 위한 임시 계측.
 버그 수정이 아니라 **원인 특정용**이다. 계획서 `docs/plan/plan-네비게이션-덫.md`,
-보고서 `docs/report-네비게이션덫-20260916.md`. 🔴 **원인 확정 즉시 제거**(계획서 §7, 이 커밋 revert).
+보고서 `docs/report/report-네비게이션덫-20260916.md`. 🔴 **원인 확정 즉시 제거**(계획서 §7, 이 커밋 revert).
 
 **왜 계측인가 — 코드 정적 분석으로 두 번 빗나갔다**
 
@@ -1220,7 +1220,7 @@ sticky 좌표는 상수 한 곳만) · `purchase-order.ts`(죽은 코드 삭제)
 
 체크박스·일괄삭제를 걷어내고 **행 끝 ⋯ 메뉴(수정·삭제)**로 옮겼다. 곡종 **필터 칩**(기본 전체)과
 **품종명·별칭 검색**을 얹었다. 계획서 `docs/plan/plan-품종관리-행메뉴-곡종칩.md`,
-보고서 `docs/report-품종관리-행메뉴-곡종칩-20260916.md`, 시안 `docs/handoff/품종관리-행메뉴-곡종탐색-3안.html`(B안).
+보고서 `docs/report/report-품종관리-행메뉴-곡종칩-20260916.md`, 시안 `docs/handoff/품종관리-행메뉴-곡종탐색-3안.html`(B안).
 
 **🔴 핸드오프가 현재 코드와 9곳 어긋나 그대로 따르지 않았다**
 
@@ -1357,7 +1357,7 @@ Label·Input은 14px, 다른 화면은 12.5px). 그래서 유독 커 보였고 7
 - D2e 계획서의 결정 N·O·P·S·T는 **지우지 않고 취소선 + 철회 사유**로 남겼다(왜 만들었다 없앴는지가 기록)
 - 검증: 코드 순감소 293줄 · `tsc` ✅ · 변경 7개 파일 `eslint` ✅ · 테스트 **297/297**(299→297, 삭제 2건) ·
   잔재 grep 0건 · 브라우저 확인 완료
-- 계획서 `docs/plan/plan-발주서-수동지정-제거.md` · 보고서 `docs/report-발주서-수동지정-제거-2026-09-16.md`
+- 계획서 `docs/plan/plan-발주서-수동지정-제거.md` · 보고서 `docs/report/report-발주서-수동지정-제거-2026-09-16.md`
 
 📌 **다음**: 품종 별칭 관리 화면(`plan-품종별칭-관리화면.md`) — 학습 경로를 없앴으므로
 **별칭을 만들 수 있는 유일한 수단**이 됐다. §8 ② 확정(사용자: 「목록에 빈자리도 많은데 표시해줘」
@@ -1450,13 +1450,13 @@ D2c가 「다음 단계(D2e)에서 지정합니다」로 막아 두었던 자리
 - 호출 화면이 없던 `setOrderItemProductType`·`autoMatchOrderItem` **삭제**(새 액션이 대체. 둘 다 `revalidatePath`를 불러
   매트릭스에서 쓰면 결정 C가 무효가 되는 함정이었다)
 
-계획서 `docs/plan/plan-발주서판매처리-D2e.md` · 보고서 `docs/report-발주서-D2e-2026-09-15.md`.
+계획서 `docs/plan/plan-발주서판매처리-D2e.md` · 보고서 `docs/report/report-발주서-D2e-2026-09-15.md`.
 tsc·eslint 통과, 테스트 **299/299**(신규 7). 🔴 **브라우저 확인·푸시는 아직.**
 
 ### D2d 종결 — 계획서 상태 정리 · 결과보고서 `docs` `3d06c8f`
 
 사용자 브라우저 확인 M1~M5 완료(M3·M4는 데이터상 재현 불가 → 실제 부족 상황 때). 계획서 머리에 종결 배너, §1·D3·D5·§7 상태 갱신.
-결과보고서 `docs/report-발주서-D2d-리셋-2026-09-15.md`. 오늘 커밋 전부 origin/main 푸시.
+결과보고서 `docs/report/report-발주서-D2d-리셋-2026-09-15.md`. 오늘 커밋 전부 origin/main 푸시.
 
 ### 발주서 매트릭스 — 「← 제품판매」 뒤로가기 링크 삭제(브레드크럼이 맡음) `chore` `f724a20`
 
@@ -2265,7 +2265,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 다이얼로그 바탕 회색 정리 (백로그 §22) `fix` `c55ff8c`
 
-계획서 [plan-다이얼로그배경정리.md](plan/plan-다이얼로그배경정리.md) · 보고서 [report-다이얼로그배경정리-20260902.md](report-다이얼로그배경정리-20260902.md).
+계획서 [plan-다이얼로그배경정리.md](plan/plan-다이얼로그배경정리.md) · 보고서 [report-다이얼로그배경정리-20260902.md](report/report-다이얼로그배경정리-20260902.md).
 
 **모바일 점검보다 먼저 한 이유** — 모바일 대상이 거의 다 다이얼로그다. 순서를 뒤집으면 모바일 보다가 배경 이상을 발견해 또 개별 `bg-white`를 박고, §22 정리 때 그걸 다시 걷어낸다(= 같은 파일 2회 수정).
 
@@ -2410,7 +2410,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 재고차감 화면 (D4~D6) + 브라우저 검증 3라운드 `feat`
 
-보고서 [report-재고차감-2026-09-01.md](report-재고차감-2026-09-01.md) · 시안 `docs/handoff/재고차감/`.
+보고서 [report-재고차감-2026-09-01.md](report/report-재고차감-2026-09-01.md) · 시안 `docs/handoff/재고차감/`.
 **신규 4**: `lib/movement-label.ts`(사유 라벨 단일 원천 — 'use server' 파일은 상수 export가 안 된다) · `deduct-toggle-button` · `deduct-dialog` · `movement-history-dialog`.
 **수정 9**: 선택 모드 `boolean` → `'repack'|'deduct'|null` 2종화(동질성 제약은 재포장 전용), 차감된 행 표시(흐림+「차감됨」+포장일자 자리에 「03-14 판매」), 「차감된 재고 보기」 스위치(URL 유지), 벼 탭 ⋮ 메뉴 부활(이력 1항목).
 
@@ -2522,7 +2522,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 백로그 §19·§20 — 차감된 포장의 정체 보호 + 가용재고 단일화 `fix` `refactor`
 
-계획서 [plan-백로그19-20.md](docs/plan/plan-백로그19-20.md) (결정 #72~#78) · 보고서 [report-백로그19-20-2026-08-31.md](docs/report/report-백로그19-20-2026-08-31.md).
+계획서 [plan-백로그19-20.md](docs/plan/plan-백로그19-20.md) (결정 #72~#78) · 보고서 [report-백로그19-20-2026-08-31.md](report/report-백로그19-20-2026-08-31.md).
 
 **§20 먼저 — 가용재고 계산을 한 곳으로** (`63dc6c3`). `가용 = count - SUM(movements.count)`가 **6곳**에 손으로 쓰여 있었다(백로그는 4곳이라 적었는데, `packages.ts`의 로컬 `toGuarded`와 `repack.ts`의 로컬 `availableOf`가 더 있었다). `lib/batch-outputs.ts`(#61)와 같은 냄새다 — 그때도 지점마다 붙이다 두 번 놓쳤고 수율·통계가 이중 계상됐다. **`lib/package-available.ts` 신설** + select 조각(`MOVEMENT_COUNT_SELECT`)을 계산 함수와 짝으로 뒀다.
 
@@ -2556,7 +2556,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 잡곡 제품재고 수정·삭제에 차감 보호 `fix`
 
-계획서 [plan-잡곡차감보호.md](docs/plan/plan-잡곡차감보호.md) (결정 #66~#71) · 보고서 [report-잡곡차감보호-2026-08-28.md](docs/report/report-잡곡차감보호-2026-08-28.md).
+계획서 [plan-잡곡차감보호.md](docs/plan/plan-잡곡차감보호.md) (결정 #66~#71) · 보고서 [report-잡곡차감보호-2026-08-28.md](report/report-잡곡차감보호-2026-08-28.md).
 
 벼 포장 수정을 diff로 막고 나니 **같은 문이 잡곡에 열려 있었다.** 벼는 제품재고에 수정·삭제 UI가 아예 없는데, 잡곡은 `/packages` 잡곡 탭에서 아무 때나 고치고 지울 수 있다.
 
@@ -2582,7 +2582,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 포장 내역 수정을 diff 방식으로 `fix`
 
-계획서 [plan-포장수정-diff.md](docs/plan/plan-포장수정-diff.md) (결정 #62~#65) · 보고서 [report-포장수정diff-2026-08-28.md](docs/report/report-포장수정diff-2026-08-28.md).
+계획서 [plan-포장수정-diff.md](docs/plan/plan-포장수정-diff.md) (결정 #62~#65) · 보고서 [report-포장수정diff-2026-08-28.md](report/report-포장수정diff-2026-08-28.md).
 
 `updatePackagingLogs`가 저장할 때마다 **배치의 포장 행을 전부 지우고 새로 만들던 것**을 id 기반 diff로 바꿨다. 포장 내역을 「배치에 딸린 단순 값」으로 본 초기 설계였는데, 그 뒤 `PackageMovement`(판매·재포장 차감)·`productTypeId`(SKU)·`Repack`이 이 행을 **참조**하면서 전제가 깨졌다 — 참조당하는 행은 FK(Restrict)에 걸려 저장이 통째로 실패했고(실측 **16/181 배치**), 성공해도 행 id와 `createdAt`이 매번 새로 잡혔다.
 
@@ -2619,7 +2619,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 재포장 R3 — 정합성 수정 (되돌리기 기각) `fix`
 
-계획서 [plan-재고재포장-R3.md](docs/plan/plan-재고재포장-R3.md) (결정 #57~#61) · 보고서 [report-재포장정합성-2026-08-27.md](docs/report/report-재포장정합성-2026-08-27.md).
+계획서 [plan-재고재포장-R3.md](docs/plan/plan-재고재포장-R3.md) (결정 #57~#61) · 보고서 [report-재포장정합성-2026-08-27.md](report/report-재포장정합성-2026-08-27.md).
 
 **원안(배지 + 되돌리기)을 통째로 기각하고 정합성 수정으로 바꿨다.** 계획서를 다 쓴 뒤 사용자가 「되돌리기가 꼭 필요한 기능인가」를 물었고, 따져보니 아니었다. 그 과정에서 **이미 숫자를 틀리게 하고 있던 버그**가 드러나 작업 내용이 통째로 바뀌었다.
 
@@ -2651,7 +2651,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 재포장 R2-후속 UI 개선 `fix`
 
-계획서 [plan-재고재포장-R2후속UI.md](docs/plan/plan-재고재포장-R2후속UI.md) (결정 #44~#52) · 보고서 [report-재포장UI개선-2026-08-27.md](docs/report/report-재포장UI개선-2026-08-27.md).
+계획서 [plan-재고재포장-R2후속UI.md](docs/plan/plan-재고재포장-R2후속UI.md) (결정 #44~#52) · 보고서 [report-재포장UI개선-2026-08-27.md](report/report-재포장UI개선-2026-08-27.md).
 
 실사용 지적 6건에서 출발했는데, 파보니 **재고를 조용히 망가뜨리는 버그 2건**이 함께 나왔다.
 
@@ -2757,7 +2757,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 배송·상차 S3·S4 — 등록 모달 배송 블록 + 목록 상차 열 `feat` `fix`
 
-계획서 [plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S3·S4. 보고서 [report-배송상차-S3S4-2026-08-26.md](docs/report/report-배송상차-S3S4-2026-08-26.md).
+계획서 [plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S3·S4. 보고서 [report-배송상차-S3S4-2026-08-26.md](report/report-배송상차-S3S4-2026-08-26.md).
 
 **S3 — 등록 모달**
 1. **추천 배송업체** [shipping-recommend.ts](lib/shipping-recommend.ts) — 채널별 최근 3건 **최빈값이 유일할 때만** 추천(결정 #38). 계획서 §6은 「파일에 등장하는 채널만」이었으나 **5채널 전부** 조회로 바꿨다 — 사용자가 화면에서 채널을 바꿀 수 있어(#31) 등장 채널만 조회하면 바꾼 채널의 추천이 비고, 채널당 `take: 3`이라 전부 조회해도 최대 15행으로 비용이 같다. 비활성 업체가 추천되면 걸러낸다.
@@ -2790,7 +2790,7 @@ Error: P1002 ... Timed out trying to acquire a postgres advisory lock
 
 ### 배송·상차 S2 — 배송업체 관리화면 + 설정 2단 레이아웃 `feat`
 
-[plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S2. 보고서 [report-배송상차-S2관리화면-2026-08-26.md](docs/report/report-배송상차-S2관리화면-2026-08-26.md).
+[plan-배송상차정보.md](docs/plan/plan-배송상차정보.md) §4-S2. 보고서 [report-배송상차-S2관리화면-2026-08-26.md](report/report-배송상차-S2관리화면-2026-08-26.md).
 
 1. **서버 액션** [shipping-vendor.ts](app/actions/shipping-vendor.ts) — `list`(requireSession) / `create`·`rename`·`move`·`toggleActive`(requireAdmin) 5종.
    감사로그는 create·rename·toggle 3종에만(`move`는 표시 순서일 뿐). **삭제 없음**(결정 #39 — 과거 묶음이 참조).
@@ -2887,7 +2887,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **미구현 1건**: 시안 1단계 푸터의 **「양식 내려받기」** — 링크 대상 파일이 없고 양식 배포 기능이 계획에 없어 뺐다(별도 결정 필요).
 
-**다음**: D2 매트릭스 + 셀 FIFO 배분. **착수 전 🔴재고 분할 차감 결정 선행 필요.** 상세: [docs/report/report-발주서판매처리-D1c화면-2026-08-20.md](<docs/report/report-발주서판매처리-D1c화면-2026-08-20.md>)
+**다음**: D2 매트릭스 + 셀 FIFO 배분. **착수 전 🔴재고 분할 차감 결정 선행 필요.** 상세: [docs/report/report-발주서판매처리-D1c화면-2026-08-20.md](<report/report-발주서판매처리-D1c화면-2026-08-20.md>)
 
 ---
 
@@ -2907,7 +2907,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **🔴 미검증**: 계획서의 D1b 기준인 **「실파일 다채널 2시트 선택 → 묶음 2건」 실왕복은 못 했다.** 이 액션을 부르는 화면이 아직 없고, 액션은 세션·권한을 요구해 스크립트로 대신 호출할 수 없다. **D1c 업로드 모달을 붙이는 즉시 검증한다.**
 
-**다음**: D1c — 업로드 모달(드롭존 → 시트 표) + 묶음 목록 테이블 + `/admin/product-types` `unitsPerBox` 입력칸(#35). 상세: [docs/report/report-발주서판매처리-D1b액션-2026-08-20.md](<docs/report/report-발주서판매처리-D1b액션-2026-08-20.md>)
+**다음**: D1c — 업로드 모달(드롭존 → 시트 표) + 묶음 목록 테이블 + `/admin/product-types` `unitsPerBox` 입력칸(#35). 상세: [docs/report/report-발주서판매처리-D1b액션-2026-08-20.md](<report/report-발주서판매처리-D1b액션-2026-08-20.md>)
 
 ---
 
@@ -2927,7 +2927,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **⚠️ 남는 구멍**: `orderDate`가 null인 시트는 PostgreSQL NULL 특성상 **DB unique가 안 잡는다**(앱의 `bundleDuplicateKey`가 방어 중). D1b에서 발주일을 사용자가 확정하게 하면 닫힌다.
 
-**다음**: D1b — `previewPurchaseOrder` 신설 + `uploadPurchaseOrder`를 「선택 시트 + 확정 채널·발주일」 수신형으로 개정(#31). 🔴 **미결 = 재고 분할 차감**(D2 착수 전 결정). 상세: [docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md](<docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md>)
+**다음**: D1b — `previewPurchaseOrder` 신설 + `uploadPurchaseOrder`를 「선택 시트 + 확정 채널·발주일」 수신형으로 개정(#31). 🔴 **미결 = 재고 분할 차감**(D2 착수 전 결정). 상세: [docs/report/report-발주서판매처리-D1a스키마-2026-08-20.md](<report/report-발주서판매처리-D1a스키마-2026-08-20.md>)
 
 ---
 
@@ -2956,7 +2956,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - 새 템플릿 5시트 전부 인식, **소계 전 시트 전 열 일치**. 시아스 톤백 `unitWeightKg` 1000/200 분리, 서울급식 서식 단위 `1kg`·`500g` 정규화, `서울급식_060818` 오타 경고 확인(→ 사용자가 `서울급식_260818`로 수정, 테스트도 갱신).
 - 구 양식 실파일 `2026.08.xlsx` 20시트 **전부 미인식** → 「공장동만 올리기」가 별도 작업 없이 성립.
 
-**다음**: D1a 스키마(`sheetName`·`channel`·`note`·`unitWeightKg`·`unitsPerBox`) + Neon 마이그레이션. 🔴 **미결 = 재고 분할 차감**(1,004kg 자루에서 1,000kg만 빼기, `PackageMovement.count`가 정수 개수만) — D2 착수 전 결정 필요. 상세: [docs/report/report-발주서판매처리-D0파서재구성-2026-08-20.md](<docs/report/report-발주서판매처리-D0파서재구성-2026-08-20.md>)
+**다음**: D1a 스키마(`sheetName`·`channel`·`note`·`unitWeightKg`·`unitsPerBox`) + Neon 마이그레이션. 🔴 **미결 = 재고 분할 차감**(1,004kg 자루에서 1,000kg만 빼기, `PackageMovement.count`가 정수 개수만) — D2 착수 전 결정 필요. 상세: [docs/report/report-발주서판매처리-D0파서재구성-2026-08-20.md](<report/report-발주서판매처리-D0파서재구성-2026-08-20.md>)
 
 ---
 
@@ -2974,7 +2974,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **검증**: `npm test` 31 pass / 0 fail, `npx tsc --noEmit` 통과, `npx eslint`(변경 4파일) 경고 없음, `prisma migrate deploy` 적용 확인.
 
-**⚠️ 미결(다음 작업 전 확인)**: **표준 양식 미확정.** 사용자가 표준으로 지목한 `해남급식_20260619.xlsx`의 `공장동06.19` 시트는 D0에서 맞춘 통일양식 템플릿과 헤더 구조가 다름(농가명·소계·`(발주처)` 행 있음, 품목명에 농가명 괄호 포함). 현재 파서는 이 양식을 미인식으로 버림. **양식 재협의 후 `detectHeaderLayout`·파서 테스트만 재조정 예정** — D0의 나머지는 양식과 무관하게 유효. 음수 수량(보관요청 -50)은 일단 무시로 결정. 상세: [docs/report-발주서판매처리-D0파서통일양식-20260818.md](<docs/report-발주서판매처리-D0파서통일양식-20260818.md>)
+**⚠️ 미결(다음 작업 전 확인)**: **표준 양식 미확정.** 사용자가 표준으로 지목한 `해남급식_20260619.xlsx`의 `공장동06.19` 시트는 D0에서 맞춘 통일양식 템플릿과 헤더 구조가 다름(농가명·소계·`(발주처)` 행 있음, 품목명에 농가명 괄호 포함). 현재 파서는 이 양식을 미인식으로 버림. **양식 재협의 후 `detectHeaderLayout`·파서 테스트만 재조정 예정** — D0의 나머지는 양식과 무관하게 유효. 음수 수량(보관요청 -50)은 일단 무시로 결정. 상세: [docs/report/report-발주서판매처리-D0파서통일양식-20260818.md](<report/report-발주서판매처리-D0파서통일양식-20260818.md>)
 
 ---
 
@@ -3719,7 +3719,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **남은 작업**: P1~(합계 slate-900 톤다운, 그룹 펼침 톤, 모바일 좌측라인 제거, 인증뱃지 CERT_BADGE_CLASS 공용화, 1줄 헤더, 행 액션 Dropdown 통일, 다이얼로그 shell), statistics 순수 hex, 제품재고 벼 탭(판매관리 연동 시).
 
-**문서**: `docs/벼탭-디자인점검.html`(점검 원본), `docs/plan-벼탭-색상치환.md`, `docs/report-벼탭-색상치환-2026-05-21.md`
+**문서**: `docs/벼탭-디자인점검.html`(점검 원본), `docs/plan-벼탭-색상치환.md`, `docs/report/report-벼탭-색상치환-2026-05-21.md`
 
 ---
 
@@ -3731,7 +3731,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **검증**: `tsc --noEmit` 통과. 디자인 문서 §6은 아직 `GrainIcon`이라 코드와 불일치 — 핸드오프 산출물이라 코드 우선, 추후 디자인 측 정합.
 
-**문서**: `docs/plan-탭아이콘통일-사이드바자동펼침.md`, `docs/report-탭아이콘통일-사이드바자동펼침-2026-05-21.md`
+**문서**: `docs/plan-탭아이콘통일-사이드바자동펼침.md`, `docs/report/report-탭아이콘통일-사이드바자동펼침-2026-05-21.md`
 
 ---
 
@@ -3750,7 +3750,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - 122배치 중 **67배치, 180건** 표시 누락 확인 — **데이터 손실 아님**(DB output은 정상, 화면 매칭만 깨짐)
 - 수정안 적용 후 안 보이는 건수 **0** (180건 전부 복구), `tsc --noEmit` 통과
 
-**문서**: `docs/report-도정포장내역표시버그-2026-05-21.md`
+**문서**: `docs/report/report-도정포장내역표시버그-2026-05-21.md`
 
 ---
 
@@ -3774,7 +3774,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **검증**: 트랜잭션 적용 후 inspect 재실행 → 92건 모두 단일 lot 확인 ✅
 
-**문서**: `docs/plan-lot번호통일-윤영식유기농.md`, `docs/report-lot번호통일-윤영식유기농-2026-05-20.md`
+**문서**: `docs/plan-lot번호통일-윤영식유기농.md`, `docs/report/report-lot번호통일-윤영식유기농-2026-05-20.md`
 
 **후속 검토 필요**:
 - 외부 출하 라벨/송장과 lot 불일치 여부 (마감 배치 108·110의 패키지 2건)
@@ -3811,7 +3811,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `auditLog` 백필 없음 — 신규 변경분부터 세분화
 
 **근거**: `docs/handoff/status-migration.md` (3단계 시안)
-**문서**: `docs/plan-도정상태3단계.md`, `docs/report-도정상태3단계-2026-05-20.md`
+**문서**: `docs/plan-도정상태3단계.md`, `docs/report/report-도정상태3단계-2026-05-20.md`
 **검증**: `tsc --noEmit` 통과 / 실서버 QA(필터·배지 전환·엑셀)는 사용자 측 미실시
 
 ---
@@ -3855,7 +3855,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **검증**: `tsc --noEmit` 통과 / 본 작업으로 새로 발생한 lint 에러 0건.
 
-**계획서**: `docs/plan-잡곡재고관리-#9.5.md` / **결과보고서**: `docs/report-잡곡재고관리-#9.5-2026-05-08.md` / **매트릭스**: `docs/permission-matrix.md`
+**계획서**: `docs/plan-잡곡재고관리-#9.5.md` / **결과보고서**: `docs/report/report-잡곡재고관리-#9.5-2026-05-08.md` / **매트릭스**: `docs/permission-matrix.md`
 
 ---
 
@@ -3878,7 +3878,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **검증**: `tsc --noEmit` 통과 / 본 작업으로 새로 발생한 lint 에러 0건 (이동 파일들의 기존 경고는 수술적 변경 원칙으로 유지).
 
-**계획서**: `docs/plan-releases-디렉토리정리.md` / **결과보고서**: `docs/report-releases-디렉토리정리-2026-05-08.md`
+**계획서**: `docs/plan-releases-디렉토리정리.md` / **결과보고서**: `docs/report/report-releases-디렉토리정리-2026-05-08.md`
 
 ## 2026-05-07
 
@@ -4334,7 +4334,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 **배경**: #5-pre / #5a~#5e 본 흐름 + 후속 디자인·UX 정리 완료. DoD 마지막 항목인 종합 결과보고서 작성.
 
 **변경**:
-- `docs/report-잡곡재고관리-#5-2026-05-04.md` 신규 — 19개 커밋 단계별 변경 상세 / 핵심 설계 결정(계획 vs 실제) / 검증 / 영향 범위 / 미반영·이월 항목
+- `docs/report/report-잡곡재고관리-#5-2026-05-04.md` 신규 — 19개 커밋 단계별 변경 상세 / 핵심 설계 결정(계획 vs 실제) / 검증 / 영향 범위 / 미반영·이월 항목
 
 **다음 재개 지점**: #6 제품재고 페이지 신설 (`/packages` 라우트, 벼/잡곡 탭).
 
@@ -4605,7 +4605,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - 브라우저 1차 검수 완료(PC), 2~3차 통합본은 커밋 후 검수 예정
 
 **계획서**: [docs/plan-잡곡재고관리-#5.md](plan/plan-잡곡재고관리-#5.md) §단계별 #5-pre
-**보고서**: [docs/report-잡곡재고관리-#5-pre-2026-04-30.md](report/report-잡곡재고관리-#5-pre-2026-04-30.md)
+**보고서**: [docs/report/report-잡곡재고관리-#5-pre-2026-04-30.md](report/report-잡곡재고관리-#5-pre-2026-04-30.md)
 
 ## 2026-04-29
 
@@ -4628,7 +4628,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - 브라우저 스모크 9 시나리오는 사용자 검수 (보고서 §3.2)
 
 **계획서**: [docs/plan-잡곡재고관리-#4.md](plan/plan-잡곡재고관리-#4.md)
-**결과보고서**: [docs/report-잡곡재고관리-#4-2026-04-29.md](report/report-잡곡재고관리-#4-2026-04-29.md)
+**결과보고서**: [docs/report/report-잡곡재고관리-#4-2026-04-29.md](report/report-잡곡재고관리-#4-2026-04-29.md)
 
 ### 잡곡 재고관리 #3 — 포장단위 정책 확정 (코드 변경 0건) `docs`
 
@@ -4643,7 +4643,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `docs/plan-잡곡재고관리.md` 5곳 갱신: §139 packageType 주석 / §249 잡곡 포장 옵션 / §307 변경 파일 / §368 작업 단계 #3 / §405 위험요소
 - `docs/research-잡곡재고관리-#3.md` 신규 (정책 반영본)
 - `docs/리팩토링-백로그.md` 신규 — 사전조사 중 발견한 부수 이슈 2건 이관 (`add-form.tsx` dead PACKAGE_TEMPLATES, `output-statistics.ts` `Tonbag`↔`톤백` 미스매치)
-- `docs/report-잡곡재고관리-#3-2026-04-29.md` 결과보고서
+- `docs/report/report-잡곡재고관리-#3-2026-04-29.md` 결과보고서
 
 **다음**: 작업 단계 #4 (`/stocks` → `/raw-stocks` 라우팅 이동) 사전조사로 이동.
 
@@ -4674,7 +4674,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - 2차 실행 (멱등 검증): 신규 0건, 스킵 15건
 - 최종 Variety 분포: RICE=23 (그대로) + MISC_GRAIN=15
 
-**결과보고서**: [docs/report-잡곡재고관리-#2-2026-04-29.md](report/report-잡곡재고관리-#2-2026-04-29.md)
+**결과보고서**: [docs/report/report-잡곡재고관리-#2-2026-04-29.md](report/report-잡곡재고관리-#2-2026-04-29.md)
 
 ### 잡곡 재고관리 #1 — Prisma 스키마 + RICE 필터 호출부 안전화 `feat` `schema`
 
@@ -4700,7 +4700,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **충돌 처리**: 사전조사와 계획서 사이에서 매입 필드명(`purchaseFrom` vs `purchaseVendor`), CHECK 조건(AND vs OR)이 어긋났는데 단일 진실 원천(계획서) 우선 적용.
 
-**결과보고서**: [docs/report-잡곡재고관리-#1-2026-04-29.md](report/report-잡곡재고관리-#1-2026-04-29.md)
+**결과보고서**: [docs/report/report-잡곡재고관리-#1-2026-04-29.md](report/report-잡곡재고관리-#1-2026-04-29.md)
 
 ### 잡곡 재고관리 #1 사전조사 산출물 커밋 `docs`
 
@@ -4721,7 +4721,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 **파일 추가**:
 - `docs/claude-design-workflow.md`
 - `docs/plan-claude-design-migration.md`
-- `docs/report-claude-design-migration-2026-04-23.md`
+- `docs/report/report-claude-design-migration-2026-04-23.md`
 
 **제외**: `docs/잡곡대장 (25년산).xlsx`는 잡곡 재고관리 #11(엑셀 Seed) 단계에서 import 스크립트와 함께 커밋 예정이라 untracked 유지.
 
@@ -4770,7 +4770,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `~/.claude.json`에서 `mcpServers.stitch` 제거 (`mcpServers: {}`)
 - `~/.claude/settings.json`의 `permissions.allow`에서 `mcp__stitch__*` 8개 제거
 - 양쪽 모두 `.bak-20260423` 백업 보관
-- `docs/plan-claude-design-migration.md`, `docs/claude-design-workflow.md`, `docs/report-claude-design-migration-2026-04-23.md` 신규 작성
+- `docs/plan-claude-design-migration.md`, `docs/claude-design-workflow.md`, `docs/report/report-claude-design-migration-2026-04-23.md` 신규 작성
 
 **검증**: 두 JSON 파일 `JSON.parse` 통과, `mcpServers` 및 `allow` 배열 정상 확인.
 
@@ -4781,7 +4781,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `C:\Users\nbcue\.claude\settings.json`
 - `docs/plan-claude-design-migration.md` (신규)
 - `docs/claude-design-workflow.md` (신규)
-- `docs/report-claude-design-migration-2026-04-23.md` (신규)
+- `docs/report/report-claude-design-migration-2026-04-23.md` (신규)
 
 ## 2026-04-21
 
@@ -4835,7 +4835,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `components/admin/NoticeViewDialog.tsx`
 - `app/(dashboard)/_components/notice-marquee.tsx`
 - `docs/plan-notice-list.md` (계획서)
-- `docs/report-notice-list-2026-04-21.md` (결과보고서)
+- `docs/report/report-notice-list-2026-04-21.md` (결과보고서)
 
 ### 재고에 농가명(actualFarmer) 필드 추가 `feat`
 
@@ -4867,7 +4867,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 - `app/(dashboard)/stocks/stock-filters.tsx`
 - `package.json`
 - `docs/plan-stock-farmhouse.md` (계획서)
-- `docs/report-stock-farmhouse-2026-04-21.md` (결과보고서)
+- `docs/report/report-stock-farmhouse-2026-04-21.md` (결과보고서)
 
 ### 재고 검색결과 품종 칩이 ID로 표시되던 버그 `fix` `ux`
 
@@ -4903,7 +4903,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **문서**:
 - `docs/plan-stock-filter-fixes.md`
-- `docs/report-stock-filter-fixes-2026-04-21.md`
+- `docs/report/report-stock-filter-fixes-2026-04-21.md`
 
 **변경 파일** (9개):
 - `components/ui/multi-select.tsx`
@@ -4935,7 +4935,7 @@ D2 매트릭스(🔴 재고 분할 차감 결정 대기)와는 독립이라 먼�
 
 **문서**:
 - `docs/plan-admin-access-fix.md`
-- `docs/report-admin-access-fix-2026-04-20.md`
+- `docs/report/report-admin-access-fix-2026-04-20.md`
 
 **변경 파일**:
 - `middleware.ts` (신규)
@@ -4973,7 +4973,7 @@ SYSTEM_MANAGE 권한자가 모바일에서도 활동 로그 페이지에 접근�
 
 **파일 추가:**
 - `docs/plan-forge-cleanup.md`
-- `docs/report-forge-cleanup-2026-04-09.md`
+- `docs/report/report-forge-cleanup-2026-04-09.md`
 
 ## 2026-04-15
 
@@ -5012,7 +5012,7 @@ SYSTEM_MANAGE 권한자가 모바일에서도 활동 로그 페이지에 접근�
 
 **계획/보고서:**
 - `docs/plan-stats-cleanup.md` (신규)
-- `docs/report-stats-cleanup-2026-04-15.md` (신규)
+- `docs/report/report-stats-cleanup-2026-04-15.md` (신규)
 
 **신규 파일:**
 - `components/statistics/MultiSelectDropdown.tsx` (121줄) — 제네릭 공유 멀티셀렉트, `maxSelect`/`onClearAll`/`activeClass` prop 지원
@@ -5045,7 +5045,7 @@ SYSTEM_MANAGE 권한자가 모바일에서도 활동 로그 페이지에 접근�
 
 **계획/보고서:**
 - `docs/plan-security-fix.md` (신규)
-- `docs/report-security-fix-2026-04-14.md` (신규)
+- `docs/report/report-security-fix-2026-04-14.md` (신규)
 
 **신규 파일:**
 - `lib/auth-guard.ts` — `requireSession`/`requireAdmin`/`requirePermission` 공용 헬퍼
@@ -5089,7 +5089,7 @@ SYSTEM_MANAGE 권한자가 모바일에서도 활동 로그 페이지에 접근�
 
 **프로젝트 파일 추가:**
 - `docs/plan-forge-cleanup.md` (신규)
-- `docs/report-forge-cleanup-2026-04-09.md` (신규)
+- `docs/report/report-forge-cleanup-2026-04-09.md` (신규)
 
 **백업 위치:** `~/.claude/backups/forge-cleanup-2026-04-09/`
 

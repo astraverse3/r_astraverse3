@@ -82,7 +82,7 @@
    - `npm run lint`.
    - dev 서버 띄워서 `/sales` 출고 탭 정상 렌더 확인.
    - `/releases` 직접 진입 → `/sales` 308 리다이렉트 확인.
-6. **결과보고서 작성** — `docs/report-releases-디렉토리정리-2026-05-08.md`.
+6. **결과보고서 작성** — `docs/report/report-releases-디렉토리정리-2026-05-08.md`.
 7. **커밋** — 메시지: `chore: /releases 디렉토리 정리 — sales/release/ 이전 + dead route 삭제`. worklog 업데이트.
 
 ## 위험 요소

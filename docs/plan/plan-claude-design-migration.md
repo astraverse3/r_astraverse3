@@ -62,7 +62,7 @@
 5. **JSON 유효성 검증** — 두 파일 모두 `node -e "JSON.parse(require('fs').readFileSync('...'))"` 확인
 6. **재시작 안내** — VSCode Claude Code 세션 재시작 시 stitch 툴이 사라지는 걸 사용자가 확인
 7. **워크플로우 가이드 작성** — `docs/claude-design-workflow.md` 신규 생성
-8. **결과보고서 + worklog** — `docs/report-claude-design-migration-2026-04-23.md` 작성, `docs/worklog.md`에 2026-04-23 항목 추가
+8. **결과보고서 + worklog** — `docs/report/report-claude-design-migration-2026-04-23.md` 작성, `docs/worklog.md`에 2026-04-23 항목 추가
 
 ## 리스크 / 확인 필요 사항
 

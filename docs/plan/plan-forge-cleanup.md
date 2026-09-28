@@ -123,7 +123,7 @@ cp ~/.claude/settings.json ~/.claude/backups/forge-cleanup-2026-04-09/settings.j
 - `claude mcp list` → stitch만 있는지 확인 (안 건드렸지만 검증)
 
 ### 4단계: 결과보고서 작성
-- `docs/report-forge-cleanup-2026-04-09.md` 작성
+- `docs/report/report-forge-cleanup-2026-04-09.md` 작성
 - 변경 사항 요약, 백업 위치, 새 세션 시작 시 주의사항
 
 ### 5단계: worklog 업데이트

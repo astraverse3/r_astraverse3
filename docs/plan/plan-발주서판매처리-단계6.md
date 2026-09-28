@@ -143,4 +143,4 @@ D0 파서 통일양식 대응  →  D1 업로드+묶음목록  →  D2 매트릭
 
 - 순수 로직(파서·매처·배분·매트릭스 피벗·모드 판정)은 `lib/*.test.ts`에 단위테스트, `npm test`로 확인
 - 화면은 실제 발주서 파일로 업로드→차감→취소 왕복 후 `/packages` 가용재고 수치로 확인
-- 각 단계 완료 시 결과보고서(`docs/report-*.md`) + `docs/worklog.md` 갱신
+- 각 단계 완료 시 결과보고서(`docs/report/report-*.md`) + `docs/worklog.md` 갱신
