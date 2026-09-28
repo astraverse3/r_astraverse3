@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireSession } from '@/lib/auth-guard'
-import { formatKstKo } from '@/lib/kst-date'
+import { formatKstKo, todayKst } from '@/lib/kst-date'
 
 export async function exportReleaseLogs(filters?: {
     startDate?: Date
@@ -111,7 +111,7 @@ export async function exportReleaseLogs(filters?: {
             description: `출고 내역 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, data: buf, fileName: `release_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `release_logs_${todayKst()}.xlsx` }
 
     } catch (error) {
         console.error('Export release logs failed:', error)

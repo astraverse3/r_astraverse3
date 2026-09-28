@@ -3,6 +3,7 @@
 import * as XLSX from 'xlsx'
 import { requireSession } from '@/lib/auth-guard'
 import { recordAuditLog } from '@/lib/audit'
+import { todayKst } from '@/lib/kst-date'
 
 export type StatsExcelRow = Record<string, string | number>
 
@@ -37,7 +38,7 @@ export async function exportStatsRows(
         return {
             success: true as const,
             data: buf,
-            fileName: `${fileNamePrefix}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+            fileName: `${fileNamePrefix}_${todayKst()}.xlsx`,
         }
     } catch (error) {
         console.error('Stats export failed:', error)

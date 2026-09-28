@@ -7,7 +7,7 @@ import { GetMillingLogsParams } from './milling'
 import { requireSession } from '@/lib/auth-guard'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
-import { formatKstKo } from '@/lib/kst-date'
+import { formatKstKo, todayKst } from '@/lib/kst-date'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
@@ -209,7 +209,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
         const buf = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' })
 
-        return { success: true, data: buf, fileName: `milling_logs_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `milling_logs_${todayKst()}.xlsx` }
 
     } catch (error) {
         console.error('Export milling logs failed:', error)

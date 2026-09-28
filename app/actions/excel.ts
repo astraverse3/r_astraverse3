@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
+import { todayKst } from '@/lib/kst-date'
 
 // --- EXPORT LOGIC ---
 export async function exportFarmers() {
@@ -61,7 +62,7 @@ export async function exportFarmers() {
             description: `생산자(작목반 포함) 목록 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, data: buf, fileName: `producer_groups_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `producer_groups_${todayKst()}.xlsx` }
 
     } catch (error) {
         console.error('Export failed:', error)

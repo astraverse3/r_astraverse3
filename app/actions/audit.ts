@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireAdmin, requireSession } from '@/lib/auth-guard'
-import { formatKstKo } from '@/lib/kst-date'
+import { formatKstKo, todayKst } from '@/lib/kst-date'
 
 export type GetAuditLogsParams = {
     userId?: string
@@ -129,7 +129,7 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
         return { 
             success: true, 
             data: buf, 
-            fileName: `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx` 
+            fileName: `audit_logs_${todayKst()}.xlsx` 
         }
     } catch (error) {
         console.error('Export logs failed:', error)

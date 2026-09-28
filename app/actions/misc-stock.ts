@@ -9,7 +9,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { generateLotNo } from '@/lib/lot-generation'
-import { toKstDate } from '@/lib/kst-date'
+import { todayKst, toKstDate } from '@/lib/kst-date'
 
 /**
  * 잡곡 원물재고 액션
@@ -589,7 +589,7 @@ export async function exportMiscStocks(
         return {
             success: true,
             data: buf,
-            fileName: `misc_stock_list_${new Date().toISOString().slice(0, 10)}.xlsx`,
+            fileName: `misc_stock_list_${todayKst()}.xlsx`,
         }
     } catch (error) {
         console.error('[exportMiscStocks] failed:', error)

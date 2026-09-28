@@ -9,6 +9,7 @@ import { generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
+import { todayKst } from '@/lib/kst-date'
 
 import { GetStocksParams } from './stock'
 
@@ -119,7 +120,7 @@ export async function exportStocks(params?: GetStocksParams) {
             description: `재고 목록 엑셀 내보내기 (${rows.length}건)`
         })
 
-        return { success: true, data: buf, fileName: `stock_list_${new Date().toISOString().slice(0, 10)}.xlsx` }
+        return { success: true, data: buf, fileName: `stock_list_${todayKst()}.xlsx` }
 
     } catch (error) {
         console.error('Export failed:', error)

@@ -26,7 +26,7 @@ import {
     type PackageSource as PkgSource,
     type PackageCategory as PkgCategory,
 } from '@/lib/package-where'
-import { toKstDate } from '@/lib/kst-date'
+import { todayKst, toKstDate } from '@/lib/kst-date'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
@@ -1186,7 +1186,7 @@ export async function exportPackages(
         return {
             success: true,
             data: buf,
-            fileName: `package_list_${slug}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+            fileName: `package_list_${slug}_${todayKst()}.xlsx`,
         }
     } catch (error) {
         console.error('[exportPackages] failed:', error)
