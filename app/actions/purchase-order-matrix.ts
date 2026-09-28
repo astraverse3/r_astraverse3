@@ -53,6 +53,7 @@ import type {
   MatrixItemInput,
   MatrixSkuInput,
 } from '@/lib/purchase-order-matrix'
+import { toKstDate } from '@/lib/kst-date'
 
 /** 매트릭스 상단 요약 — 어느 묶음을 보고 있는지 */
 export type MatrixHeader = {
@@ -173,15 +174,12 @@ export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixRes
         fileName: upload.fileName,
         sheetName: upload.sheetName,
         channel: upload.channel,
-        // ⚠️ `toISOString().slice(0,10)`은 UTC로 잘라 하루 밀릴 수 있다(백로그 §39).
-        //    기존 조회(`listUploads`)와 **같은 방식**을 쓴다 — 여기만 고치면 같은 묶음이
-        //    목록과 매트릭스에서 다른 날짜로 보인다. §39에서 한꺼번에 바꾼다.
-        orderDate: upload.orderDate ? upload.orderDate.toISOString().slice(0, 10) : null,
+        orderDate: upload.orderDate ? toKstDate(upload.orderDate) : null,
         note: upload.note,
         orderCount: upload.orderCount,
         loading: describeLoading(
           {
-            loadingDate: upload.loadingDate ? upload.loadingDate.toISOString().slice(0, 10) : null,
+            loadingDate: upload.loadingDate ? toKstDate(upload.loadingDate) : null,
             loadingTimeSlot: upload.loadingTimeSlot,
             loadingTime: upload.loadingTime,
             vendorName: upload.shippingVendor?.name ?? null,

@@ -26,6 +26,7 @@ import {
     type PackageSource as PkgSource,
     type PackageCategory as PkgCategory,
 } from '@/lib/package-where'
+import { toKstDate } from '@/lib/kst-date'
 
 // ProductType(SKU) sentinel — 잡곡은 도정구분이 없어 millingType='기타'(NOT NULL 유니크 구멍 방지).
 // 매입은 포장지 관리 불필요 → '매입포장'(active=false) Packaging 행을 가리킨다. (plan-제품유형마스터.md §2)
@@ -338,7 +339,7 @@ export async function getAvailableMiscStocks(): Promise<
                     bagNo: s.bagNo,
                     weightKg: s.weightKg,
                     remainingKg,
-                    incomingDate: s.incomingDate.toISOString().slice(0, 10),
+                    incomingDate: toKstDate(s.incomingDate),
                     lotNo: s.lotNo,
                     sourceType: s.sourceType as 'CONSIGNMENT' | 'FARMER_MILLED' | 'GERMINATION' | null,
                     variety: { id: s.variety.id, name: s.variety.name },
@@ -949,7 +950,7 @@ export async function getMiscPurchaseEditContext(
                 purchaseVendor: pkg.purchaseVendor,
                 varietyId: pkg.variety.id,
                 varietyName: pkg.variety.name,
-                incomingDate: pkg.incomingDate.toISOString().slice(0, 10),
+                incomingDate: toKstDate(pkg.incomingDate),
                 packageType: pkg.packageType,
                 weightPerUnit: pkg.weightPerUnit,
                 count: pkg.count,
@@ -1160,9 +1161,9 @@ export async function exportPackages(
             const variety = isPurchased ? p.variety?.name : p.stock?.variety.name
             const producer = isPurchased ? (p.purchaseVendor ?? '') : (p.stock?.farmer.name ?? '')
             const lot = p.lotNo ?? p.stock?.lotNo ?? ''
-            const incoming = isPurchased && p.incomingDate ? p.incomingDate.toISOString().slice(0, 10) : ''
+            const incoming = isPurchased && p.incomingDate ? toKstDate(p.incomingDate) : ''
             return {
-                '포장일자': p.createdAt.toISOString().slice(0, 10),
+                '포장일자': toKstDate(p.createdAt),
                 '출처': SOURCE_LABEL_KO[p.source] ?? p.source,
                 '카테고리': CATEGORY_LABEL_KO[p.category] ?? p.category,
                 '품종': variety ?? '',

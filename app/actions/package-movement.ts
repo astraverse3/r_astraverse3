@@ -23,6 +23,7 @@ import {
   MOVEMENT_TYPE_LABEL,
   type ManualMovementType,
 } from '@/lib/movement-label'
+import { toKstDate } from '@/lib/kst-date'
 
 type MutationResult =
   | { success: true; id: number }
@@ -405,7 +406,7 @@ export async function listMovements(
       type: r.type as MovementRow['type'],
       customer: r.customer,
       note: r.note,
-      occurredAt: r.occurredAt.toISOString().slice(0, 10),
+      occurredAt: toKstDate(r.occurredAt),
       createdName: r.createdName,
       fromOrder: r.orderItemId !== null,
       fromRepack: r.repackId !== null,

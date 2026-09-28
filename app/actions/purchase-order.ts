@@ -31,6 +31,7 @@ import {
   type LoadingDisplay,
   type LoadingInfo,
 } from '@/lib/loading-schedule'
+import { toKstDate } from '@/lib/kst-date'
 
 // ======================================================
 // 내부 헬퍼
@@ -98,7 +99,7 @@ export async function listPurchaseUploads(): Promise<
         movements += o.items.reduce((n, i) => n + i._count.movements, 0)
       }
       const loading: LoadingInfo = {
-        loadingDate: u.loadingDate ? u.loadingDate.toISOString().slice(0, 10) : null,
+        loadingDate: u.loadingDate ? toKstDate(u.loadingDate) : null,
         loadingTimeSlot: u.loadingTimeSlot,
         loadingTime: u.loadingTime,
         vendorName: u.shippingVendor?.name ?? null,
@@ -108,7 +109,7 @@ export async function listPurchaseUploads(): Promise<
         fileName: u.fileName,
         sheetName: u.sheetName,
         channel: u.channel,
-        orderDate: u.orderDate ? u.orderDate.toISOString().slice(0, 10) : null,
+        orderDate: u.orderDate ? toKstDate(u.orderDate) : null,
         loading,
         loadingDisplay: describeLoading(loading, todayIso),
         shippingVendorId: u.shippingVendorId,

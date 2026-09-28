@@ -13,6 +13,7 @@ import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/lib/packaging-diff'
 import { movedCountOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
+import { toKstDate } from '@/lib/kst-date'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -852,7 +853,7 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
             details: {
                 변경전: batch?.isClosed ? '마감' : '진행중',
                 변경후: isClosed ? '마감' : '진행중',
-                도정일: batch?.date ? batch.date.toISOString().split('T')[0] : null,
+                도정일: batch?.date ? toKstDate(batch.date) : null,
                 도정구분: batch?.millingType,
                 투입량: batch?.totalInputKg ? `${batch.totalInputKg}kg` : null,
                 비고: batch?.remarks || null,

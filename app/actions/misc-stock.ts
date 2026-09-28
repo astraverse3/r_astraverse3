@@ -9,6 +9,7 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { generateLotNo } from '@/lib/lot-generation'
+import { toKstDate } from '@/lib/kst-date'
 
 /**
  * 잡곡 원물재고 액션
@@ -549,7 +550,7 @@ export async function exportMiscStocks(
         })
 
         const rows = stocks.map(s => ({
-            '입고일자': s.incomingDate ? s.incomingDate.toISOString().slice(0, 10) : '',
+            '입고일자': s.incomingDate ? toKstDate(s.incomingDate) : '',
             '생산년도': s.productionYear,
             '생산자': s.farmer.name,
             '농가명': s.actualFarmer ?? '',

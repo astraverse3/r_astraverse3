@@ -7,6 +7,8 @@
 //
 // DB·매칭은 하지 않는다. 액션(purchase-order.ts)이 조회 결과를 넣어 호출한다.
 
+import { toKstDate } from './kst-date'
+
 export type LineStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED'
 export type OrderStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED'
 
@@ -102,7 +104,7 @@ export function bundleDuplicateKey(
   sheetName: string,
   orderDate: Date | string | null | undefined,
 ): string {
-  const d = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : ''
+  const d = orderDate ? toKstDate(orderDate) : ''
   return `${fileName.trim()}|${sheetName.trim()}|${d}`
 }
 
@@ -112,7 +114,7 @@ export function orderDuplicateKey(
   vendor: string,
   recipient: string,
 ): string {
-  const d = orderDate ? new Date(orderDate).toISOString().slice(0, 10) : ''
+  const d = orderDate ? toKstDate(orderDate) : ''
   return `${d}|${vendor.trim()}|${recipient.trim()}`
 }
 
