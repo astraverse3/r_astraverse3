@@ -33,7 +33,6 @@ export async function updateUserRole(userId: string, role: string) {
     const session = await requireAdmin()
 
     // 본인 역할 변경 방지
-    // @ts-ignore
     if (session.user.id === userId) {
         return { success: false, error: '본인의 역할은 변경할 수 없습니다.' }
     }
@@ -95,7 +94,6 @@ export async function deleteUser(userId: string) {
     const session = await requireAdmin()
 
     // 본인 삭제 방지
-    // @ts-ignore
     if (session.user.id === userId) {
         return { success: false, error: '본인 계정은 삭제할 수 없습니다.' }
     }

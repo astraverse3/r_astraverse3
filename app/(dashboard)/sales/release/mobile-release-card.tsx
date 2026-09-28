@@ -41,7 +41,6 @@ export function MobileReleaseCard({ log, selected, onSelect }: Props) {
     const [editOpen, setEditOpen] = useState(false)
     const [expanded, setExpanded] = useState(false)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const totalWeight = log.stocks.reduce((sum, s) => sum + s.weightKg, 0)

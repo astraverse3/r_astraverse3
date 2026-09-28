@@ -51,8 +51,7 @@ const STATS_SUB = [
 export function DesktopSidebar() {
     const pathname = usePathname();
     const { data: session } = useSession();
-    // @ts-ignore
-    const user = session?.user as { role?: string; permissions?: string[] } | undefined;
+    const user = session?.user;
 
     const isActive = (path: string) => {
         if (path === '/') {

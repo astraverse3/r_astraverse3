@@ -25,7 +25,6 @@ export async function requireSession(): Promise<Session> {
 
 export async function requireAdmin(): Promise<Session> {
     const session = await requireSession()
-    // @ts-ignore
     if (session.user.role !== 'ADMIN') {
         throw new ForbiddenError('Forbidden: Admin only')
     }
@@ -34,9 +33,7 @@ export async function requireAdmin(): Promise<Session> {
 
 export async function requirePermission(permission: string): Promise<Session> {
     const session = await requireSession()
-    // @ts-ignore
     const role = session.user.role as string
-    // @ts-ignore
     const permissions = (session.user.permissions as string[]) || []
 
     if (role === 'ADMIN') return session

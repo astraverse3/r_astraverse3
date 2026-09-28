@@ -10,7 +10,7 @@ export function HeaderUserProfile() {
 
     if (!session?.user) return null
 
-    const { name, image, department, position } = session.user as any
+    const { name, image, department, position } = session.user
 
     return (
         <Popover>

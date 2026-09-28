@@ -25,7 +25,6 @@ export function StockExcelButtons({ filters }: { filters?: any }) {
     const [importing, setImporting] = useState(false)
     const [exporting, setExporting] = useState(false)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     // Preview State

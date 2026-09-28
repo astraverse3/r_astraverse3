@@ -29,20 +29,10 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async session({ session, token }) {
             if (session.user) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 session.user.id = token.id as string
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 session.user.role = token.role as string || "USER"
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 session.user.permissions = (token.permissions as string[]) || []
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 session.user.department = (token.department as string | null) || null
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 session.user.position = (token.position as string | null) || null
             }
             return session
@@ -72,8 +62,6 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 // 최초 로그인 시 기본 세팅
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
                 token.id = String(user.id)
                 token.role = user.role
                 token.department = user.department || null

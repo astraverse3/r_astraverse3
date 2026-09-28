@@ -16,7 +16,6 @@ interface Props {
 export function CloseBatchButton({ batchId }: Props) {
     const [isLoading, setIsLoading] = useState(false)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const handleClose = async () => {

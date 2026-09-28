@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Settings, Users, Wheat, Tractor, Package, LogOut, MoreVertical, Building, BadgeCheck, Megaphone, History } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
+import type { Session } from "next-auth"
 import { hasPermission, hasAnyPermission } from "@/lib/permissions"
 
 import {
@@ -15,9 +16,8 @@ import {
 
 export function MobileHeader() {
     const { data: session } = useSession()
-    // @ts-ignore
-    const user = session?.user as any
-    const { name, image, department, position } = user || {}
+    const user = session?.user
+    const { name, image, department, position }: Partial<Session["user"]> = user ?? {}
 
     return (
         <header className="fixed top-0 left-0 right-0 bg-white pl-4 h-11 flex items-center justify-between z-40 lg:hidden" style={{boxShadow:'0 1px 0 0 transparent,0 4px 16px rgba(99,102,241,0.1)'}}><div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{background:'linear-gradient(90deg,#94a3b8,#475569,#334155,#475569,#94a3b8)'}} />

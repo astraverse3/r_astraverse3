@@ -35,7 +35,6 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
     const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
     const { data: session } = useSession();
     const yieldRates = useYieldRates();
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE');
 
     return (

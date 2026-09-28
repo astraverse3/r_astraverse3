@@ -7,7 +7,6 @@ import { redirect } from 'next/navigation'
 export default async function AdminUsersPage() {
     const session = await getServerSession(authOptions)
 
-    // @ts-ignore
     if (!session?.user || session.user.role !== 'ADMIN') {
         redirect('/')
     }
@@ -22,7 +21,6 @@ export default async function AdminUsersPage() {
 
             <UserTable
                 users={users}
-                // @ts-ignore
                 currentUserId={session.user.id}
             />
         </div>

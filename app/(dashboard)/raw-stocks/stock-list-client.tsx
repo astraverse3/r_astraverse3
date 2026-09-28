@@ -503,7 +503,6 @@ function MobileStockDetailCard({ stock, farmers, varieties, selected, onSelect, 
     const isAvailable = stock.status === 'AVAILABLE'
     const [editOpen, setEditOpen] = useState(false)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const handleDelete = async () => {

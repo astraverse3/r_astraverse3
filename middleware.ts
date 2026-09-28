@@ -27,9 +27,7 @@ export default withAuth(
 
         // /admin/* 경로별 권한 체크
         if (pathname.startsWith("/admin")) {
-            // @ts-ignore
             const role = token?.role as string | undefined
-            // @ts-ignore
             const permissions = (token?.permissions as string[] | undefined) || []
 
             // ADMIN은 모든 관리 경로 통과

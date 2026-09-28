@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic'
 export default async function AdminNoticesPage() {
     const session = await getServerSession(authOptions)
 
-    // @ts-ignore
     const { role, permissions } = session?.user || {}
 
     if (!session?.user || (role !== 'ADMIN' && !permissions?.includes('NOTICE_MANAGE'))) {

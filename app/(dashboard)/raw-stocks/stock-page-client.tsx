@@ -38,11 +38,8 @@ export function StockPageClient({
     isCanceling
 }: StockPageClientProps) {
     const { data: session } = useSession()
-    // @ts-ignore
     const canStock = hasPermission(session?.user, 'SUPPLY_MANAGE')
-    // @ts-ignore
     const canMilling = hasPermission(session?.user, 'OPERATION_MANAGE')
-    // @ts-ignore
     const canSales = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     return (

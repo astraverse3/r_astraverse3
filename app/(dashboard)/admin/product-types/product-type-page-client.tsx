@@ -46,7 +46,7 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
     const router = useRouter()
     const { data: session } = useSession()
     const canManage = hasPermission(
-        session?.user as { role?: string; permissions?: string[] } | undefined,
+        session?.user,
         'OPERATION_MANAGE',
     )
 

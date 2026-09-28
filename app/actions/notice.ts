@@ -11,7 +11,6 @@ async function requireNoticeManage() {
     const session = await getServerSession(authOptions)
     if (!session?.user) throw new Error('Unauthorized')
     
-    // @ts-ignore
     const { role, permissions } = session.user
     if (role !== 'ADMIN' && !permissions?.includes('NOTICE_MANAGE')) {
         throw new Error('Forbidden: Notice management permission required')
@@ -57,7 +56,7 @@ export async function createNotice(data: { title: string; content: string; isAct
     const notice = await prisma.notice.create({
         data: {
             ...data,
-            authorId: (session.user as any).id
+            authorId: session.user.id
         }
     })
 

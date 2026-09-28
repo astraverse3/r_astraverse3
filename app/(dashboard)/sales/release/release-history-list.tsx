@@ -52,7 +52,6 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
     const [editRelease, setEditRelease] = useState<ReleaseLog | null>(null)
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     const toggleExpand = (id: number) => {

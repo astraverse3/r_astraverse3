@@ -24,7 +24,6 @@ export function MillingPageClient({
     filters
 }: MillingPageClientProps) {
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
     return (

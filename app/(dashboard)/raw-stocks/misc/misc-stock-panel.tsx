@@ -45,7 +45,6 @@ export function MiscStockPanel({
     filters,
 }: Props) {
     const { data: session } = useSession()
-    // @ts-ignore
     const canStock = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     const totalCount = initialStocks.length

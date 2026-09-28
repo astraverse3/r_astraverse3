@@ -40,9 +40,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
     const { data: session } = useSession()
     // 매트릭스: docs/permission-matrix.md
     // 포장 = OPERATION_MANAGE / 매입 = SUPPLY_MANAGE
-    // @ts-ignore
     const canMill = hasPermission(session?.user, 'OPERATION_MANAGE')
-    // @ts-ignore
     const canPurchase = hasPermission(session?.user, 'SUPPLY_MANAGE')
     const canAnyRow = canMill || canPurchase
 

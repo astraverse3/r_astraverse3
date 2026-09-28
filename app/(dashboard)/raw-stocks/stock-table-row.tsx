@@ -39,7 +39,6 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     const [editOpen, setEditOpen] = useState(false)
     const isAvailable = stock.status === 'AVAILABLE' && !isInCart
     const { data: session } = useSession()
-    // @ts-ignore
     const canManage = hasPermission(session?.user, 'SUPPLY_MANAGE')
 
     // Helper to get nested values safely
