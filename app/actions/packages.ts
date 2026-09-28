@@ -285,9 +285,9 @@ export async function getPackages(
         })
 
         return { success: true, data: items }
-    } catch (error: any) {
+    } catch (error) {
         console.error('[getPackages] failed:', error)
-        return { success: false, error: error?.message ?? '제품재고를 불러오지 못했습니다.' }
+        return { success: false, error: error instanceof Error ? error.message : '제품재고를 불러오지 못했습니다.' }
     }
 }
 
@@ -760,9 +760,9 @@ export async function getPurchaseVendors(): Promise<{ success: true; data: strin
             .map(r => r.purchaseVendor)
             .filter((v): v is string => !!v)
         return { success: true, data: vendors }
-    } catch (error: any) {
+    } catch (error) {
         console.error('[getPurchaseVendors] failed:', error)
-        return { success: false, error: error?.message ?? '매입처 목록을 불러오지 못했습니다.' }
+        return { success: false, error: error instanceof Error ? error.message : '매입처 목록을 불러오지 못했습니다.' }
     }
 }
 

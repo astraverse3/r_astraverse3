@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -9,7 +9,7 @@ async function main() {
 
     let fixedCount = 0
     for (const farmer of farmers) {
-        const updates: any = {}
+        const updates: Prisma.FarmerUpdateInput = {}
 
         if (farmer.name !== farmer.name.trim()) {
             updates.name = farmer.name.trim()

@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -281,13 +282,12 @@ export type GetFarmersParams = {
 export async function getFarmersWithGroups(params?: GetFarmersParams) {
     await requireSession()
     try {
-        const where: any = {}
+        const where: Prisma.FarmerWhereInput = {}
+        // 작목반 조건은 한 객체에 모았다가 마지막에 where.group으로 넣는다
+        const groupWhere: Prisma.ProducerGroupWhereInput = {}
 
         if (params?.groupName) {
-            where.group = {
-                ...where.group,
-                name: { contains: params.groupName.trim() }
-            }
+            groupWhere.name = { contains: params.groupName.trim() }
         }
 
         // farmerName: 콤마 구분 다중 생산자 검색 (OR 조건)
@@ -304,9 +304,9 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         if (params?.certType) {
             const certList = params.certType.split(',').map(s => s.trim()).filter(Boolean)
             if (certList.length === 1) {
-                where.group = { ...where.group, certType: certList[0] }
+                groupWhere.certType = certList[0]
             } else if (certList.length > 1) {
-                where.group = { ...where.group, certType: { in: certList } }
+                groupWhere.certType = { in: certList }
             }
         }
 
@@ -314,10 +314,14 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         if (params?.cropYear) {
             const years = params.cropYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
             if (years.length === 1) {
-                where.group = { ...where.group, cropYear: years[0] }
+                groupWhere.cropYear = years[0]
             } else if (years.length > 1) {
-                where.group = { ...where.group, cropYear: { in: years } }
+                groupWhere.cropYear = { in: years }
             }
+        }
+
+        if (Object.keys(groupWhere).length > 0) {
+            where.group = groupWhere
         }
 
         // producesMiscGrain: 잡곡 생산자만 필터
@@ -663,7 +667,7 @@ export async function createFarmerWithGroup(
 
             return { success: true, data: farmer }
         })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to create farmer with group:', error)
         return { success: false, error: sanitizeErrorMessage(error, '작목반 생산자 등록에 실패했습니다.') }
     } finally {
@@ -713,7 +717,7 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
 export async function updateProducerGroup(id: number, data: Partial<ProducerGroupFormData>) {
     await requirePermission('SUPPLY_MANAGE')
     try {
-        const updateData: any = {}
+        const updateData: Prisma.ProducerGroupUpdateInput = {}
 
         if (data.name !== undefined) {
             updateData.name = data.name.trim()

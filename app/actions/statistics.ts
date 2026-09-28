@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { format, startOfWeek } from 'date-fns'
 import { requireSession } from '@/lib/auth-guard'
@@ -157,7 +158,7 @@ export async function getMillingStatistics(
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
 
-  const where: any = { isClosed: true }
+  const where: Prisma.MillingBatchWhereInput = { isClosed: true }
 
   if (cropYear) {
     where.stocks = { some: { productionYear: cropYear } }
@@ -298,7 +299,7 @@ export async function getMillingStatsByVariety(params: {
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
 
-  const where: any = { isClosed: true }
+  const where: Prisma.MillingBatchWhereInput = { isClosed: true }
 
   if (cropYear) {
     where.stocks = { some: { productionYear: cropYear } }
@@ -413,7 +414,7 @@ export async function getMillingStatsByMillingType(params: {
   const toEndOfDay = new Date(to)
   toEndOfDay.setHours(23, 59, 59, 999)
 
-  const where: any = {
+  const where: Prisma.MillingBatchWhereInput = {
     isClosed: true,
     millingType: { in: millingTypes },
   }

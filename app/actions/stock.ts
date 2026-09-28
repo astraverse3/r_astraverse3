@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -171,7 +172,7 @@ export async function updateStock(id: number, data: StockFormData) {
             }
 
             // 4. Update stock
-            const updateData: any = {
+            const updateData: Prisma.StockUncheckedUpdateInput = {
                 productionYear: data.productionYear,
                 bagNo: data.bagNo,
                 weightKg: data.weightKg,
@@ -343,8 +344,8 @@ export async function getStocks(params?: GetStocksParams) {
     try {
         // 벼 전용 페이지(`/raw-stocks` 벼 탭)에서만 호출됨.
         // 잡곡 목록은 별도 액션(`misc-stock.ts`)에서 category='MISC_GRAIN'으로 조회.
-        const where: any = { category: 'RICE' }
-        const andConditions: any[] = []
+        const where: Prisma.StockWhereInput = { category: 'RICE' }
+        const andConditions: Prisma.StockWhereInput[] = []
 
         // 1. Filter Construction
 
@@ -412,7 +413,7 @@ export async function getStocks(params?: GetStocksParams) {
         }
 
         // 2. Sort Construction
-        let orderBy: any = { createdAt: 'desc' } // Default
+        let orderBy: Prisma.StockOrderByWithRelationInput = { createdAt: 'desc' } // Default
         if (params?.sort === 'oldest') {
             orderBy = { createdAt: 'asc' }
         } else if (params?.sort === 'weight_desc') {
@@ -454,8 +455,8 @@ export type StockGroup = {
 export async function getStockGroups(params?: GetStocksParams) {
     await requireSession()
     try {
-        const where: any = { category: 'RICE' }
-        const andConditions: any[] = []
+        const where: Prisma.StockWhereInput = { category: 'RICE' }
+        const andConditions: Prisma.StockWhereInput[] = []
 
         // 1. Filter Construction (멀티값 지원)
         if (params?.productionYear) {
@@ -587,7 +588,7 @@ export async function getStocksByGroup(
 ) {
     await requireSession()
     try {
-        const andConditions: any[] = []
+        const andConditions: Prisma.StockWhereInput[] = []
 
         // 벼 전용 그룹 조회
         andConditions.push({ category: 'RICE' })

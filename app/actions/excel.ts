@@ -38,7 +38,7 @@ export async function exportFarmers() {
             return farmerNoA.localeCompare(farmerNoB, undefined, { numeric: true })
         })
 
-        const rows: any[] = farmers.map(farmer => ({
+        const rows = farmers.map(farmer => ({
             '생산년도': farmer.group?.cropYear || '',
             '작목반번호': farmer.group?.code || '',
             '작목반명': farmer.group?.name || '',
@@ -88,8 +88,8 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
 
         try {
             validateExcelUpload(file)
-        } catch (e: any) {
-            result.errors.push({ row: 0, reason: e.message || '파일 검증 실패' })
+        } catch (e) {
+            result.errors.push({ row: 0, reason: (e instanceof Error && e.message) || '파일 검증 실패' })
             return result
         }
 
@@ -97,10 +97,10 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
         const workbook = XLSX.read(buffer)
 
         // Loop through all sheets
-        let allRows: any[] = []
+        let allRows: Record<string, unknown>[] = []
         for (const sheetName of workbook.SheetNames) {
             const worksheet = workbook.Sheets[sheetName]
-            const sheetData = XLSX.utils.sheet_to_json(worksheet) as any[]
+            const sheetData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet)
             allRows = allRows.concat(sheetData)
         }
 

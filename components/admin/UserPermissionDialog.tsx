@@ -42,7 +42,8 @@ export function UserPermissionDialog({ user, open, onClose }: UserPermissionDial
                 toast.success('권한이 저장되었습니다.')
                 onClose()
             } else {
-                toast.error('error' in result ? (result as any).error : '권한 저장에 실패했습니다.')
+                // updateUserPermissions는 error를 반환하지 않는다(실패는 throw → 아래 catch)
+                toast.error('권한 저장에 실패했습니다.')
             }
         } catch {
             toast.error('권한 저장 중 오류가 발생했습니다.')

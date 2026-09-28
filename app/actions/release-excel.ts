@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
@@ -12,7 +13,7 @@ export async function exportReleaseLogs(filters?: {
 }) {
     await requireSession()
     try {
-        const where: any = {}
+        const where: Prisma.StockReleaseWhereInput = {}
 
         if (filters?.startDate || filters?.endDate) {
             where.date = {}
@@ -46,7 +47,7 @@ export async function exportReleaseLogs(filters?: {
             }
         })
 
-        const rows: any[] = []
+        const rows: Record<string, unknown>[] = []
 
         for (const log of logs) {
             const dateStr = log.date ? new Date(log.date).toLocaleDateString('ko-KR') : ''

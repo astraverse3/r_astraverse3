@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
@@ -20,7 +21,7 @@ export async function getAuditLogs(params?: GetAuditLogsParams) {
     try {
         const { userId, action, entity, startDate, endDate, page = 1, pageSize = 50 } = params || {}
         
-        const where: any = {}
+        const where: Prisma.AuditLogWhereInput = {}
         if (userId) where.userId = userId
         if (action && action !== 'ALL') where.action = action
         if (entity && entity !== 'ALL') where.entity = entity
@@ -163,7 +164,7 @@ export async function getLatestUpdateForPath(pathname: string) {
             entities = undefined; // 기타 경로는 전체 최신
         }
 
-        const where: any = {};
+        const where: Prisma.AuditLogWhereInput = {};
         if (entities) {
             where.entity = { in: entities };
         }

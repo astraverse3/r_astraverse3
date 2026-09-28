@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
@@ -16,8 +17,8 @@ export async function exportStocks(params?: GetStocksParams) {
     await requireSession()
     try {
         // 벼 재고 엑셀 내보내기 (잡곡은 별도 액션 — 이번 단계 범위 밖)
-        const where: any = { category: 'RICE' }
-        const andConditions: any[] = []
+        const where: Prisma.StockWhereInput = { category: 'RICE' }
+        const andConditions: Prisma.StockWhereInput[] = []
 
         if (params) {
             if (params.productionYear) {
@@ -147,8 +148,8 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
 
         try {
             validateExcelUpload(file)
-        } catch (e: any) {
-            result.errors.push({ row: 0, reason: e.message || '파일 검증 실패' })
+        } catch (e) {
+            result.errors.push({ row: 0, reason: (e instanceof Error && e.message) || '파일 검증 실패' })
             return result
         }
 
@@ -163,7 +164,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
         }
 
         const worksheet = workbook.Sheets[firstSheetName]
-        const allRows = XLSX.utils.sheet_to_json(worksheet) as any[]
+        const allRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet)
 
         result.counts.total = allRows.length
 
@@ -238,7 +239,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                 try {
                     // 3. Lookups
                     // Find farmer by Name AND Group Name (if provided)
-                    const whereClause: any = { name: farmerName }
+                    const whereClause: Prisma.FarmerWhereInput = { name: farmerName }
                     if (groupName) {
                         whereClause.group = { name: groupName }
                     } else {

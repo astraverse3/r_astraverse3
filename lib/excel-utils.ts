@@ -1,7 +1,7 @@
 export interface CheckResult {
     row: number
     reason: string
-    data?: any
+    data?: unknown
 }
 
 export interface ExcelImportResult {

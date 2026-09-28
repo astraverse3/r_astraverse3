@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
@@ -127,7 +128,7 @@ export async function getReleaseLogs(filters?: {
 }) {
     await requireSession()
     try {
-        const where: any = {}
+        const where: Prisma.StockReleaseWhereInput = {}
 
         if (filters?.startDate || filters?.endDate) {
             where.date = {}

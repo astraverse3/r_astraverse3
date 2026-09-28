@@ -189,7 +189,7 @@ export type GetMillingLogsParams = {
 export async function getMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
     try {
-        const where: any = {}
+        const where: Prisma.MillingBatchWhereInput = {}
 
         if (params?.startDate && params?.endDate) {
             where.date = {
@@ -224,7 +224,7 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
             }
         }
 
-        const andConditions: any[] = []
+        const andConditions: Prisma.MillingBatchWhereInput[] = []
 
         // Variety filter: 콤마 구분 멀티값 지원 (OR 조건)
         if (params?.variety) {
@@ -1098,7 +1098,7 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
 export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string, millingType?: string }) {
     await requirePermission('OPERATION_MANAGE')
     try {
-        const updateData: any = {
+        const updateData: Prisma.MillingBatchUpdateInput = {
             date: data.date,
             remarks: data.remarks.trim() || null,
         }

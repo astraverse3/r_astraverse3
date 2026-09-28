@@ -44,7 +44,7 @@ export async function getBackups(): Promise<{ success: boolean; data?: BackupFil
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
         return { success: true, data: files }
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to list backups:', error)
         return { success: false, error: 'Failed to list backups' }
     }
@@ -79,7 +79,7 @@ export async function createBackup(): Promise<{ success: boolean; message?: stri
         await execAsync(command)
         revalidatePath('/admin')
         return { success: true, message: `Backup created: ${filename}` }
-    } catch (error: any) {
+    } catch (error) {
         console.error('Backup failed:', error)
         return { success: false, error: '백업 작업에 실패했습니다.' }
     }
@@ -127,7 +127,7 @@ export async function restoreBackup(filename: string): Promise<{ success: boolea
         await execAsync(command)
         revalidatePath('/admin')
         return { success: true, message: `Database restored from ${filename}` }
-    } catch (error: any) {
+    } catch (error) {
         console.error('Restore failed:', error)
         return { success: false, error: '복원 작업에 실패했습니다.' }
     }

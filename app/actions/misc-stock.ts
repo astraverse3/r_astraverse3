@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma, SourceType } from '@prisma/client'
 import { z } from 'zod'
 import * as XLSX from 'xlsx'
 import { prisma } from '@/lib/prisma'
@@ -307,8 +308,8 @@ export type GetMiscStocksParams = {
 
 // 공통 where 빌더 (그룹화·평면 조회 모두 사용)
 function buildMiscWhere(params?: GetMiscStocksParams) {
-    const where: any = { category: 'MISC_GRAIN' }
-    const andConditions: any[] = []
+    const where: Prisma.StockWhereInput = { category: 'MISC_GRAIN' }
+    const andConditions: Prisma.StockWhereInput[] = []
 
     if (params?.productionYear) {
         const years = params.productionYear.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
@@ -332,8 +333,9 @@ function buildMiscWhere(params?: GetMiscStocksParams) {
 
     if (params?.sourceType) {
         const types = params.sourceType.split(',').map(s => s.trim()).filter(Boolean)
-        if (types.length === 1) where.sourceType = types[0]
-        else if (types.length > 1) where.sourceType = { in: types }
+        // 값 검증은 Prisma에 맡긴다(엉뚱한 값이면 조회가 실패) — 타입만 맞춘다
+        if (types.length === 1) where.sourceType = types[0] as SourceType
+        else if (types.length > 1) where.sourceType = { in: types as SourceType[] }
     }
 
     if (params?.farmerName) {
@@ -371,7 +373,7 @@ export async function getMiscStocks(params?: GetMiscStocksParams) {
     try {
         const where = buildMiscWhere(params)
 
-        let orderBy: any = { createdAt: 'desc' }
+        let orderBy: Prisma.StockOrderByWithRelationInput = { createdAt: 'desc' }
         if (params?.sort === 'oldest') orderBy = { createdAt: 'asc' }
         else if (params?.sort === 'weight_desc') orderBy = { weightKg: 'desc' }
         else if (params?.sort === 'weight_asc') orderBy = { weightKg: 'asc' }

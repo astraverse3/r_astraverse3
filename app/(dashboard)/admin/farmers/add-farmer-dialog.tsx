@@ -172,11 +172,11 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                     if (res.success && res.data) setGroups(res.data)
                 })
             } else {
-                toast.error((result as any).error || '저장 실패')
+                toast.error(('error' in result && result.error) || '저장 실패')
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error(error)
-            toast.error(error.message || '오류가 발생했습니다.')
+            toast.error((error instanceof Error && error.message) || '오류가 발생했습니다.')
         } finally {
             setIsLoading(false)
         }

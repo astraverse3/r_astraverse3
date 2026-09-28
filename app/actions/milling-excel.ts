@@ -1,5 +1,6 @@
 'use server'
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 import { GetMillingLogsParams } from './milling'
@@ -10,7 +11,7 @@ import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
     await requireSession()
     try {
-        const where: any = {}
+        const where: Prisma.MillingBatchWhereInput = {}
 
         if (params?.startDate && params?.endDate) {
             where.date = {
@@ -44,7 +45,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
             }
         }
 
-        const andConditions: any[] = []
+        const andConditions: Prisma.MillingBatchWhereInput[] = []
 
         // Variety filter: 콤마 구분 멀티값 지원 (OR 조건)
         if (params?.variety) {
@@ -125,7 +126,7 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
             ? logs.filter(batch => matchesYieldFilter(batch, params.yieldRate))
             : logs
 
-        const rows: any[] = []
+        const rows: Record<string, unknown>[] = []
 
         for (const batch of filteredLogs) {
             const dateStr = batch.date ? new Date(batch.date).toLocaleDateString('ko-KR') : ''
