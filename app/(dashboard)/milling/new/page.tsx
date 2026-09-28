@@ -5,7 +5,7 @@ export default async function NewMillingPage() {
     // Fetch available stocks directly or via action
     const stocksResult = await getStocks()
     const availableStocks = stocksResult.success && stocksResult.data
-        ? stocksResult.data.filter((s: any) => s.status === 'AVAILABLE')
+        ? stocksResult.data.filter((s) => s.status === 'AVAILABLE')
         : []
 
     return (

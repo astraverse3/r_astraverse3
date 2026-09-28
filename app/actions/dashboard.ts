@@ -172,11 +172,11 @@ export async function getDashboardStats() {
 
         if (yearBatches) {
             yearBatches.forEach(b => {
-                const batchOut = b.outputs.reduce((s: number, o: any) => s + o.totalWeight, 0);
-                const batchStockInput = b.stocks.reduce((s: number, st: any) => s + st.weightKg, 0);
+                const batchOut = b.outputs.reduce((s: number, o) => s + o.totalWeight, 0);
+                const batchStockInput = b.stocks.reduce((s: number, st) => s + st.weightKg, 0);
                 if (batchStockInput === 0) return;
 
-                b.stocks.forEach((st: any) => {
+                b.stocks.forEach((st) => {
                     const vName = st.variety.name;
                     const vType = st.variety.type;
 

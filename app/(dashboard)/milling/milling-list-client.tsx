@@ -1,7 +1,8 @@
 'use client'
 
 import { Checkbox } from '@/components/ui/checkbox'
-import { MillingTableRow } from './milling-table-row'
+import { MillingTableRow, type MillingBatch } from './milling-table-row'
+import type { GetMillingLogsParams } from '@/app/actions/milling'
 import { MobileMillingCard } from './mobile-milling-card'
 import {
     Table,
@@ -13,8 +14,8 @@ import {
 import { EmptyState } from '@/components/empty-state'
 
 interface MillingListClientProps {
-    logs: any[]
-    filters: any
+    logs: MillingBatch[]
+    filters: GetMillingLogsParams
     selectedIds: Set<number>
     onSelectionChange: (ids: Set<number>) => void
 }
@@ -43,7 +44,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
             {/* Mobile Card View */}
             <section className="sm:hidden flex flex-col gap-2 px-1">
                 {logs.length > 0 ? (
-                    logs.map((log: any) => (
+                    logs.map((log) => (
                         <MobileMillingCard
                             key={log.id}
                             log={log}
@@ -88,7 +89,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                     </TableHeader>
                     <TableBody>
                         {logs.length > 0 ? (
-                            logs.map((log: any) => (
+                            logs.map((log) => (
                                 <MillingTableRow
                                     key={log.id}
                                     log={log}

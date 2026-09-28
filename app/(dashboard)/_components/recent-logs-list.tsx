@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { MillingStatusBadge } from '@/components/ui/milling-status-badge';
 import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dialog';
 import { AddPackagingDialog } from '@/app/(dashboard)/milling/add-packaging-dialog';
+import type { MillingBatch } from '@/app/(dashboard)/milling/milling-table-row';
 import { useSession } from 'next-auth/react';
 import { hasPermission } from '@/lib/permissions';
 import { getYieldLevel, YIELD_TEXT_CLASS } from '@/lib/milling-yield';
@@ -13,7 +14,7 @@ import { useYieldRates } from '@/app/(dashboard)/yield-rates-context';
 import { getDisplayMillingType } from '@/lib/milling-type-display';
 
 interface RecentLogsListProps {
-    logs: any[];
+    logs: MillingBatch[];
 }
 
 const millingTypeColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -31,8 +32,8 @@ function getMillingTypeStyle(type: string) {
 }
 
 export function RecentLogsList({ logs }: RecentLogsListProps) {
-    const [selectedInputLog, setSelectedInputLog] = useState<any | null>(null);
-    const [packagingOpenLog, setPackagingOpenLog] = useState<any | null>(null);
+    const [selectedInputLog, setSelectedInputLog] = useState<MillingBatch | null>(null);
+    const [packagingOpenLog, setPackagingOpenLog] = useState<MillingBatch | null>(null);
     const { data: session } = useSession();
     const yieldRates = useYieldRates();
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE');
@@ -52,17 +53,17 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
 
             {/* Table Body */}
             <div className="flex flex-col gap-2 md:gap-0">
-                {logs.slice(0, 10).map((log: any, index: number) => {
-                    const productionSum = log.outputs.reduce((sum: number, out: any) => sum + out.totalWeight, 0);
+                {logs.slice(0, 10).map((log, index) => {
+                    const productionSum = log.outputs.reduce((sum, out) => sum + out.totalWeight, 0);
                     const yieldRate = log.totalInputKg > 0 ? (productionSum / log.totalInputKg) * 100 : 0;
                     const dateStr = format(new Date(log.date), 'yyyy-MM-dd');
 
-                    const varietyNames = Array.from(new Set((log.stocks || []).map((s: any) => s.variety?.name).filter(Boolean))) as string[];
+                    const varietyNames = Array.from(new Set((log.stocks || []).map((s) => s.variety?.name).filter(Boolean))) as string[];
                     const varietySummary = varietyNames.length > 1
                         ? `${varietyNames[0]} 외 ${varietyNames.length - 1}종`
                         : varietyNames[0] || '-';
 
-                    const farmerNames = Array.from(new Set((log.stocks || []).map((s: any) => s.farmer?.name).filter(Boolean))) as string[];
+                    const farmerNames = Array.from(new Set((log.stocks || []).map((s) => s.farmer?.name).filter(Boolean))) as string[];
                     const farmerSummary = farmerNames.length > 1
                         ? `${farmerNames[0]} 외 ${farmerNames.length - 1}명`
                         : farmerNames[0] || '알 수 없음';
@@ -187,7 +188,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                     millingType={selectedInputLog.millingType}
                     date={selectedInputLog.date}
                     remarks={selectedInputLog.remarks}
-                    stocks={(selectedInputLog.stocks || []).map((s: any) => ({
+                    stocks={(selectedInputLog.stocks || []).map((s) => ({
                         id: s.id,
                         bagNo: s.bagNo,
                         weightKg: s.weightKg,
@@ -198,7 +199,7 @@ export function RecentLogsList({ logs }: RecentLogsListProps) {
                         },
                         certType: s.farmer?.group?.certType || 'Unknown'
                     }))}
-                    varieties={[...new Set((selectedInputLog.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))].join(', ')}
+                    varieties={[...new Set((selectedInputLog.stocks || []).map((s) => s.variety?.name || 'Unknown'))].join(', ')}
                     canDelete={!selectedInputLog.isClosed && canManage}
                     open={!!selectedInputLog}
                     onOpenChange={(open) => !open && setSelectedInputLog(null)}

@@ -41,7 +41,8 @@ export type MillingOutputInput = {
     weightPerUnit: number
     count: number
     totalWeight: number
-    stockId?: number
+    /** 서버에서 복원한 기존 행은 null일 수 있다(DB 컬럼이 nullable) — 서버는 null이면 대표 톤백으로 푼다 */
+    stockId?: number | null
     /** 라인별 포장지(SKU 매칭키). 잔량은 없음(null), 톤백은 '톤백' 고정, 그 외 기본/선택값. */
     packagingId?: number | null
 }

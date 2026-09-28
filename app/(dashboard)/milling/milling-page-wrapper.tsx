@@ -2,13 +2,15 @@
 
 import { ReactNode } from 'react'
 import { MillingListClient } from './milling-list-client'
+import type { MillingBatch } from './milling-table-row'
+import type { GetMillingLogsParams } from '@/app/actions/milling'
 import { MillingPageClient } from './milling-page-client'
 import { useBulkDeleteMilling } from './use-bulk-delete-milling'
 import { ActiveMillingFilters } from './active-milling-filters'
 
 interface MillingPageWrapperProps {
-    logs: any[]
-    filters: any
+    logs: MillingBatch[]
+    filters: GetMillingLogsParams
     filtersSlot: ReactNode
 }
 

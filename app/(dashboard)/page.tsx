@@ -72,7 +72,7 @@ export default async function Home() {
             <div className="flex-1 min-h-0 relative">
               <div className="absolute inset-0 overflow-y-auto pr-2 pb-2 -mr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                 <div className="flex flex-col gap-4">
-                  {stats?.stockByVariety.map((item: any) => {
+                  {stats?.stockByVariety.map((item) => {
                     const availableWeight = item.currentWeight;
                     const totalWeight = item.totalWeight || 1;
                     const relativePercent = (availableWeight / totalWeight) * 100;

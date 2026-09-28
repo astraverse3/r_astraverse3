@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import { MillingStatusBadge } from '@/components/ui/milling-status-badge'
 import { ArrowRight, StickyNote } from 'lucide-react'
 import { AddPackagingDialog } from './add-packaging-dialog'
-import { reopenMillingBatch } from '@/app/actions/milling'
+import { reopenMillingBatch, type MillingOutputInput } from '@/app/actions/milling'
 import { MillingStockListDialog } from './stock-list-dialog'
+import type { MillingLogStock } from './milling-table-row'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
@@ -20,14 +21,13 @@ import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 interface MillingBatch {
     id: number
-    title: string
     remarks: string | null
     millingType: string
     date: Date | string
     totalInputKg: number
     isClosed: boolean
-    stocks: any[]
-    outputs: any[]
+    stocks: MillingLogStock[]
+    outputs: MillingOutputInput[]
 }
 
 interface Props {
@@ -58,20 +58,20 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
     const { data: session } = useSession()
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
 
-    const totalRiceKg = log.outputs.reduce((sum: number, o: any) => sum + o.totalWeight, 0)
+    const totalRiceKg = log.outputs.reduce((sum: number, o) => sum + o.totalWeight, 0)
     const yieldRate = log.totalInputKg > 0 ? (totalRiceKg / log.totalInputKg) * 100 : 0
 
     const varietiesSummary = useMemo(() => {
-        const unique = [...new Set((log.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))]
+        const unique = [...new Set((log.stocks || []).map((s) => s.variety?.name || 'Unknown'))]
         if (unique.length > 1) return `${unique[0]} 외 ${unique.length - 1}종`
         return unique[0] || '-'
     }, [log.stocks])
 
-    const varietiesFull = [...new Set((log.stocks || []).map((s: any) => s.variety?.name || 'Unknown'))].join(', ')
+    const varietiesFull = [...new Set((log.stocks || []).map((s) => s.variety?.name || 'Unknown'))].join(', ')
     const tonbagCount = (log.stocks || []).length
 
     const farmersSummary = useMemo(() => {
-        const uniqueFarmers = Array.from(new Set((log.stocks || []).map((s: any) => s.farmer?.name).filter(Boolean)))
+        const uniqueFarmers = Array.from(new Set((log.stocks || []).map((s) => s.farmer?.name).filter(Boolean)))
         if (uniqueFarmers.length > 1) return `${uniqueFarmers[0]} 외 ${uniqueFarmers.length - 1}명`
         return uniqueFarmers[0] || '-'
     }, [log.stocks])
@@ -185,7 +185,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                 millingType={log.millingType}
                 date={log.date}
                 remarks={log.remarks}
-                stocks={(log.stocks || []).map((s: any) => ({
+                stocks={(log.stocks || []).map((s) => ({
                     id: s.id,
                     bagNo: s.bagNo,
                     weightKg: s.weightKg,
