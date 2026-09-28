@@ -348,7 +348,7 @@ function DoneGroup({
     const head = lines[0]
     const summary =
         `${head.title} ${specOf(head)}` +
-        (lines.length > 1 ? ` 외 ${fmt(lines.length - 1)}건` : '') +
+        (lines.length > 1 ? ` 외 ${fmt(lines.length - 1)}품목` : '') +
         ' · 전부 차감 완료' +
         (doneKg > 0 ? ` · ${fmtKg(doneKg)}kg` : '')
 
