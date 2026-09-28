@@ -9,7 +9,7 @@ import { generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
-import { todayKst } from '@/lib/kst-date'
+import { todayKst, toKstDate } from '@/lib/kst-date'
 
 import { GetStocksParams } from './stock'
 
@@ -85,7 +85,7 @@ export async function exportStocks(params?: GetStocksParams) {
         // 업로드 템플릿 필수 필드: 입고일자 / 생산년도 / 생산자명 / 품종 / 톤백번호 / 중량(kg)
         // 나머지는 헤더에 "(선택)" 표기
         const rows = stocks.map(stock => ({
-            '입고일자': stock.incomingDate ? stock.incomingDate.toISOString().split('T')[0] : '',
+            '입고일자': stock.incomingDate ? toKstDate(stock.incomingDate) : '',
             '생산년도': stock.productionYear,
             '생산자명': stock.farmer.name,
             '농가명(선택)': stock.actualFarmer || '',

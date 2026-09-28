@@ -1,3 +1,5 @@
+import { toKstDate } from './kst-date'
+
 
 /**
  * 도정유형별 기대수율 반환.
@@ -81,7 +83,7 @@ export function generateLotNo({
     farmerNo
 }: LotGenerationParams): string {
     // 1. Date: YYMMDD
-    const yymmdd = incomingDate.toISOString().slice(2, 10).replace(/-/g, '');
+    const yymmdd = toKstDate(incomingDate).slice(2).replace(/-/g, ''); // KST — UTC로 자르면 KST 00~09시가 전날(§39)
 
     // 2. Product Code
     const productCode = getProductCode(varietyType, varietyName, millingType);
