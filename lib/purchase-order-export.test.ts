@@ -3,18 +3,16 @@ import assert from 'node:assert/strict'
 import * as XLSX from 'xlsx'
 import {
   buildExportSheet,
-  exportCellStatus,
   formatKstDateTime,
   formatTitleDate,
   headerLabelOf,
-  orderRawColumns,
   safeSheetName,
   summarizeLots,
   toWorksheet,
   type ExportAllocation,
   type ExportSheetInput,
 } from './purchase-order-export'
-import { buildMatrix, type CellStatus, type MatrixItemInput, type MatrixOrderInput } from './purchase-order-matrix'
+import type { CellStatus, MatrixItemInput, MatrixOrderInput, MatrixSkuInput } from './purchase-order-matrix'
 
 const LABEL: Record<CellStatus, string> = {
   UNMATCHED: '매칭실패',
@@ -42,14 +40,21 @@ function alloc(p: Partial<ExportAllocation> & { itemId: number; count: number })
   return { packageId: 100, farmerName: '박태일', lotNo: 'L1', purchaseVendor: null, ...p }
 }
 
+function sku(id: number, varietyName: string, packageType: string, packagingName = '자연주의'): MatrixSkuInput {
+  return { id, varietyName, millingType: '백미', varietyType: null, packageType, packagingName }
+}
+
+const DEFAULT_SKUS = [sku(1, '새청무', '10kg'), sku(2, '가바백미', '10kg')]
+
 function input(
   orders: MatrixOrderInput[],
   items: MatrixItemInput[],
   allocations: ExportAllocation[],
-  availability: Record<number, number> = { 1: 999, 2: 999 },
+  availability: Record<number, number> = { 1: 999, 2: 999, 3: 999 },
+  skus: MatrixSkuInput[] = DEFAULT_SKUS,
 ): ExportSheetInput {
   return {
-    matrix: { orders, items, skus: [], availability, availabilityKg: {} },
+    matrix: { orders, items, skus, availability, availabilityKg: {} },
     allocations,
     title: '26/08/18 (화)\n서울급식',
     footerLines: ['내보낸 시각 2026-09-28 10:00'],
@@ -58,46 +63,59 @@ function input(
 }
 
 // ------------------------------------------------------
-// 열 순서
+// 열 · 머리글 = 매트릭스 화면 (2026-09-28 A안)
 // ------------------------------------------------------
 
-test('열 순서 — 매트릭스 화면 순서를 따른다(같은 품종·도정·포장지 그룹이 이웃)', () => {
-  // 처음 나온 순이면 새청무1kg · 귀리 · 새청무10kg. 화면은 새청무 그룹을 묶는다
-  const a = item({ orderId: 1, rawItemName: '유기농 새청무', packageType: '1kg', productTypeId: 1 })
-  const b = item({ orderId: 1, rawItemName: '유기농 귀리', packageType: '1kg', productTypeId: 3 })
-  const c = item({ orderId: 2, rawItemName: '유기농 새청무', packageType: '10kg', productTypeId: 2 })
-  const sku = (id: number, varietyName: string, packageType: string) => ({
-    id, varietyName, millingType: '백미', varietyType: null, packageType, packagingName: '기본',
-  })
-  const m = buildMatrix({
-    orders: [{ id: 1, vendor: 'v', recipient: 'r' }, { id: 2, vendor: 'v2', recipient: 'r' }],
-    items: [a, b, c],
-    skus: [sku(1, '새청무', '1kg'), sku(2, '새청무', '10kg'), sku(3, '귀리', '1kg')],
-    availability: {},
-    availabilityKg: {},
-  })
-  const cols = orderRawColumns([a, b, c], m.columns.map((col) => col.key))
-  assert.deepEqual(cols.map((col) => col.packageType + col.rawItemName), [
-    '1kg유기농 새청무', '10kg유기농 새청무', '1kg유기농 귀리',
-  ])
+test('열 — 원본 품목명이 달라도 한 SKU면 한 열, 1행은 SKU 품종명', () => {
+  const orders = [{ id: 1, vendor: 'v1', recipient: 'r1' }, { id: 2, vendor: 'v2', recipient: 'r2' }]
+  const a = item({ orderId: 1, rawItemName: '유기농 IPS', productTypeId: 1, orderedQty: 2 })
+  const b = item({ orderId: 2, rawItemName: '유기농 프로틴 라이스 IPS', productTypeId: 1, orderedQty: 3 })
+  const sheet = buildExportSheet(input(orders, [a, b], []))
+  assert.equal(sheet.rows[0].length, 3) // 이름 두 칸 + 열 하나
+  assert.equal(sheet.rows[0][2], '새청무')
+  assert.deepEqual(sheet.rows[5], ['소계', null, 5])
 })
 
-test('열 순서 — 한 SKU 열에 원본 열이 둘이면 처음 나온 순', () => {
-  const a = item({ orderId: 1, rawItemName: '가바백미', packageType: '1kg', productTypeId: 1 })
-  const b = item({ orderId: 2, rawItemName: '유기농 가바백미', packageType: '1kg', productTypeId: 1 })
-  const cols = orderRawColumns([a, b], ['pt:1'])
-  assert.deepEqual(cols.map((col) => col.rawItemName), ['가바백미', '유기농 가바백미'])
-})
-
-test('열 순서 — 같은 품목명이라도 규격·포장지가 다르면 다른 열', () => {
-  const items = [
-    item({ orderId: 1, rawItemName: '천지향', packageType: '1kg' }),
-    item({ orderId: 1, rawItemName: '천지향', packageType: '4kg', rawPackaging: '자연주의' }),
-    item({ orderId: 2, rawItemName: '천지향', packageType: '4kg', rawPackaging: null }),
+test('머리글 — 1행은 제목 같은 칸 병합, 포장지 줄은 포장지 같은 칸 병합', () => {
+  // 택배 천지향 모양 — 10kg는 「천지향」, 5·1kg는 「땅끝에서보냅니다」
+  const orders = [{ id: 1, vendor: 'v', recipient: 'r' }]
+  const items = [1, 2, 3].map((id) => item({ orderId: 1, rawItemName: '유기농 천지향', productTypeId: id }))
+  const skus = [
+    sku(1, '천지향1세', '10kg', '천지향'),
+    sku(2, '천지향1세', '5kg', '땅끝에서보냅니다'),
+    sku(3, '천지향1세', '1kg', '땅끝에서보냅니다'),
   ]
-  const cols = orderRawColumns(items, [])
-  assert.equal(cols.length, 3)
-  assert.deepEqual(cols.map((c) => c.rawPackaging), [null, '자연주의', null])
+  const sheet = buildExportSheet(input(orders, items, [], undefined, skus))
+  assert.deepEqual(sheet.rows[1], ['포장지', null, '천지향', '땅끝에서보냅니다', '땅끝에서보냅니다'])
+  assert.deepEqual(sheet.rows[2], ['규격', null, '10kg', '5kg', '1kg'])
+  assert.deepEqual(
+    sheet.merges.filter((m) => m.s.c >= 2),
+    [
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 4 } },
+      { s: { r: 1, c: 3 }, e: { r: 1, c: 4 } },
+    ],
+  )
+})
+
+test('머리글 — 매칭실패 열은 원본 품목명 · 포장지 줄 「매칭실패」', () => {
+  const orders = [{ id: 1, vendor: 'v', recipient: 'r' }]
+  const a = item({ orderId: 1, rawItemName: '유기농 율무', productTypeId: null })
+  const sheet = buildExportSheet(input(orders, [a], []))
+  assert.equal(sheet.rows[0][2], '유기농 율무')
+  assert.equal(sheet.rows[1][2], '매칭실패')
+})
+
+test('열 폭 — 로트번호는 폭에 안 넣고(잘려도 됨), 한글은 두 자 몫', () => {
+  const orders = [{ id: 1, vendor: 'v', recipient: 'r' }]
+  const a = item({ orderId: 1, rawItemName: '천지향', productTypeId: 1, allocatedQty: 1 })
+  const b = item({ orderId: 1, rawItemName: '천지향', productTypeId: 2, allocatedQty: 1 })
+  const skus = [sku(1, '천지향1세', '10kg', '천지향'), sku(2, '천지향1세', '5kg', '땅끝에서보냅니다')]
+  const lot = '251119-11-15103885-4113'
+  const allocs = [alloc({ itemId: a.id, count: 1, lotNo: lot }), alloc({ itemId: b.id, count: 1, lotNo: lot })]
+  const sheet = buildExportSheet(input(orders, [a, b], allocs, undefined, skus))
+  assert.equal(sheet.rows[4][2], lot) // 값은 온전하다
+  // 천지향(6)·박태일(6) → 최소 10 · 땅끝에서보냅니다(16) → 18
+  assert.deepEqual(sheet.colWidths.slice(2), [10, 18])
 })
 
 // ------------------------------------------------------
@@ -134,22 +152,6 @@ test('머리글 — 하나면 그대로, 여럿이면 「대표 외 N」, 없으
 })
 
 // ------------------------------------------------------
-// 칸 상태
-// ------------------------------------------------------
-
-test('칸 상태 — 다 나갔으면 매트릭스 상태와 무관하게 완료', () => {
-  assert.equal(exportCellStatus({ ordered: 3, allocated: 3, itemIds: [1] }, 'PARTIAL'), 'COMPLETED')
-})
-
-test('칸 상태 — 매칭실패·재고부족은 매트릭스를 따르고, 나머지는 칸 자신', () => {
-  const agg = { ordered: 5, allocated: 0, itemIds: [1] }
-  assert.equal(exportCellStatus(agg, 'SHORTAGE'), 'SHORTAGE')
-  assert.equal(exportCellStatus(agg, 'UNMATCHED'), 'UNMATCHED')
-  // 원본 두 열이 한 SKU 칸으로 합쳐져 매트릭스는 「부분」이어도 이 칸은 하나도 안 나갔다
-  assert.equal(exportCellStatus(agg, 'PARTIAL'), 'PENDING')
-})
-
-// ------------------------------------------------------
 // 시트 조립
 // ------------------------------------------------------
 
@@ -164,9 +166,10 @@ test('시트 — 머리글 7줄 + 데이터, 셀 값은 주문 수량, 소계는
     input(orders, [a, b], [alloc({ itemId: a.id, count: 91 }), alloc({ itemId: b.id, count: 75 })]),
   )
   assert.deepEqual(sheet.rows[0], ['26/08/18 (화)\n서울급식', null, '새청무'])
-  assert.deepEqual(sheet.rows[1], ['농가명', null, '박태일'])
-  assert.deepEqual(sheet.rows[2], ['로트번호', null, 'L1'])
-  assert.deepEqual(sheet.rows[4], ['중량', null, '10kg'])
+  assert.deepEqual(sheet.rows[1], ['포장지', null, '자연주의'])
+  assert.deepEqual(sheet.rows[2], ['규격', null, '10kg'])
+  assert.deepEqual(sheet.rows[3], ['농가명', null, '박태일'])
+  assert.deepEqual(sheet.rows[4], ['로트번호', null, 'L1'])
   assert.deepEqual(sheet.rows[5], ['소계', null, 166])
   assert.deepEqual(sheet.rows[6], ['(발주처)', '(수령인)', null])
   assert.deepEqual(sheet.rows[7], ['은평구', '행복플러스', 91])
@@ -189,8 +192,8 @@ test('시트 — 로트가 섞인 열은 머리글 「외 N」 + 그 열 칸마�
       alloc({ itemId: b.id, count: 6, lotNo: 'L2', farmerName: '김종원', packageId: 2 }),
     ]),
   )
-  assert.equal(sheet.rows[1][2], '박태일 외 1') // L1 20개 > L2 17개 → L1이 대표
-  assert.equal(sheet.rows[2][2], 'L1 외 1')
+  assert.equal(sheet.rows[3][2], '박태일 외 1') // L1 20개 > L2 17개 → L1이 대표
+  assert.equal(sheet.rows[4][2], 'L1 외 1')
   assert.equal(sheet.memos.length, 2)
   assert.equal(sheet.memos[0].text, '박태일 · L1 · 20개\n김종원 · L2 · 11개')
   assert.deepEqual([sheet.memos[1].row, sheet.memos[1].col], [8, 2])
@@ -225,11 +228,14 @@ test('시트 — 수령인이 전부 발주처와 같으면(시아스형) 이름
     orderId: 1, rawItemName: '가바백미', packageType: '톤백', rawPackaging: '톤백',
     unitWeightKg: 200, allocatedQty: 1,
   })
-  const sheet = buildExportSheet(input(orders, [a, b], []))
-  assert.deepEqual(sheet.rows[4], ['중량', '1,000kg', '200kg'])
+  const sheet = buildExportSheet(input(orders, [a, b], [], undefined, [sku(1, '서농22호', '톤백', '톤백')]))
+  assert.deepEqual(sheet.rows[2], ['규격', '1,000kg', '200kg'])
   assert.deepEqual(sheet.rows[6], ['시아스', 1, 1]) // 라벨 줄 없음
-  // 같은 품목명 두 열은 1행에서 병합
-  assert.deepEqual(sheet.merges, [{ s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }])
+  // 같은 SKU 두 열(자루중량만 다름)은 1행 제목·포장지 줄 모두 병합
+  assert.deepEqual(sheet.merges, [
+    { s: { r: 0, c: 1 }, e: { r: 0, c: 2 } },
+    { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } },
+  ])
 })
 
 test('워크시트 — 메모가 xlsx에 실리고 다시 읽힌다', () => {
