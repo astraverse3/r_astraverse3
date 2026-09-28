@@ -2,6 +2,23 @@
 
 ## 2026-09-28
 
+### 발주서 M1-5 — 라인 카드 탭 → 배분 바텀시트 (`178d9e7`)
+
+폰에는 매트릭스 셀이 없어(`hidden sm:contents`) **톤백 자루 선택 · 차감 취소 · FIFO 손보기로 가는 길이 0**이었다
+(푸터·게이트가 「PC에서 자루를 고르세요」로 떠넘기고 있었다).
+
+- `cell-allocation-popover.tsx` — `anchor: null`이면 `Sheet side="bottom"`(`max-h-[80svh]`·`bg-card`·`sm:` 468px 우측) · `useSheetMode` 컨텍스트로 44px 버튼·`min-h-0` 목록·16px 입력칸 · 시트 문구 `n개 차감 확정`/`n개 부분 차감`
+- `tonbag-popover.tsx` — 같은 컨텍스트로 크기·문구
+- `order-line-card.tsx` — `onOpen?` → 카드가 버튼 + `›`
+- `order-detail-panel.tsx`·`order-list-mobile.tsx` — 작업·완료·택배 펼침 카드 연결 · 푸터 `톤백은 품목을 눌러 자루 선택`
+- `matrix-client.tsx` — `openLine`(라인 하나 `[itemId]`) · `closeCell` · 패널 가드 `gateOpen || active !== null`
+- `review-gate-dialog.tsx` — 폰 문구
+- 🔴 **시트냐 팝오버냐는 진입점이 가른다**(JS 폭 감지 없음) · **카드는 셀이 아니라 라인 하나**(셀은 같은 규격 라인을 합친다)
+- 🔴 **닫기 지연만 넣으면 새 결함** — 팝오버 열린 채 옆 셀 탭 시 미룬 닫기가 새 팝오버를 닫는다 → key 비교
+- 계획서 `docs/plan/plan-발주서-M1-5-바텀시트.md` · 보고서 `docs/report-발주서-M1-5-2026-09-28.md`
+
+검증 tsc 0 · eslint(변경 폴더) 0 · test 424/424. ✅ 브라우저 1~4 통과(싱싱유통 66개 · 닫기 3경로 · 취소 확인창 · 시아스 톤백). ⏸ 5~8은 M1-7에서.
+
 ### 발주서 매처 — 도정 접두 분리 (`4fd9408`)
 
 마지막 테스트에서 #20 해남급식 「유기농 백미 천지향5세」 10kg 2품목이 매칭실패로 발견됐다.
