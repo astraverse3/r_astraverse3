@@ -264,23 +264,18 @@ function PackageSubRow({
     row,
     actions,
     selection,
-    isLast = false,
 }: {
     row: PackageRowData
     actions?: PackageRowActions
     selection?: PackageSelection
-    /** 묶음의 마지막 서브행인가 — 여기에만 아래 경계를 돌려준다 (§4.2.6) */
-    isLast?: boolean
 }) {
     const selected = selection?.selectedIds.has(row.id)
     const deducted = isDeducted(row)
     return (
         <div
-            // 2026-09-29 밝은 톤 개정: 서브행만 옅은 톤(bg-slate-50/40) + 흰 톤 위 기본 선 slate-100,
-            // 묶음 끝은 마지막 서브행의 slate-200 선이 닫는다 (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md)
+            // 2026-09-29 밝은 톤 개정: 서브행만 옅은 톤(bg-slate-50/40) + 흰 톤 위 기본 선 slate-100
+            // (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md). 묶음 끝선은 여기가 아니라 그룹 래퍼가 맡는다 — 아래 PackageGroupRow
             className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center border-t border-slate-100 ${
-                isLast ? 'border-b border-slate-200' : ''
-            } ${
                 deducted
                     ? 'bg-slate-50/70 text-slate-400'
                     : `text-slate-600 ${selected ? 'bg-primary/5' : 'bg-slate-50/40 hover:bg-slate-50'}`
@@ -345,7 +340,10 @@ export function PackageGroupRow({
     return (
         // 2026-09-29 밝은 톤 개정: 그룹은 접힘·펼침 모두 흰 바탕, 묶음은 서브행 톤 + 끝선이 만든다
         // (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md — 「접힌 그룹 흰 배경 금지」·「펼친 묶음 bg-slate-100」 폐기)
-        <div className="bg-white border-t border-slate-100">
+        // 🔴 선은 부모의 divide-y 하나만 쓴다. Tailwind v4의 divide-y는 v3와 반대로 **각 행의 아래**에 선을 긋는다 —
+        //    여기서 border-t를 또 주면 행 사이가 2px, 서브행에 끝선까지 주면 묶음 끝이 3px이 됐다(2026-09-29 실화면).
+        //    묶음 끝선 = 펼쳤을 때 이 래퍼의 아래 선(divide)을 slate-200으로. 목록 맨 끝이면 카드 테두리가 대신한다
+        <div className={`bg-white ${isOpen ? 'border-b-slate-200' : ''}`}>
             <button
                 type="button"
                 onClick={onToggle}
@@ -374,13 +372,12 @@ export function PackageGroupRow({
             </button>
 
             {isOpen &&
-                item.rows.map((row, i) => (
+                item.rows.map(row => (
                     <PackageSubRow
                         key={row.id}
                         row={row}
                         actions={actions}
                         selection={selection}
-                        isLast={i === item.rows.length - 1}
                     />
                 ))}
         </div>
