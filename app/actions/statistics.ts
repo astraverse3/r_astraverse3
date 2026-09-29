@@ -2,7 +2,8 @@
 
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { format, startOfWeek } from 'date-fns'
+import { bucketKeyOf, bucketsBetween, kstPeriodWhere } from '@/lib/stats-bucket'
+import { toKstDate } from '@/lib/kst-date'
 import { requireSession } from '@/lib/auth-guard'
 import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
 
@@ -92,60 +93,7 @@ export type MultiSeriesChartData = {
   groupBy: GroupBy
 }
 
-// ── 내부 헬퍼 ───────────────────────────────────────────
-
-// groupBy별 X축 레이블 생성
-function getBucketKey(date: Date, groupBy: GroupBy): string {
-  if (groupBy === 'day') return format(date, 'MM/dd')
-  if (groupBy === 'week') {
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 })
-    return format(weekStart, 'MM/dd')
-  }
-  return format(date, 'yyyy-MM')
-}
-
-// 툴팁용 레이블 (주별은 범위 표시)
-function getTooltipLabel(bucketKey: string, groupBy: GroupBy): string {
-  if (groupBy !== 'week') return bucketKey
-  const [m, d] = bucketKey.split('/').map(Number)
-  const year = new Date().getFullYear()
-  const weekStart = new Date(year, m - 1, d)
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 6)
-  return `${format(weekStart, 'MM/dd')} ~ ${format(weekEnd, 'MM/dd')}`
-}
-
-// 기간 내 전체 버킷 키 목록 생성 (빈 포인트 포함을 위해)
-function generateAllBucketKeys(from: Date, to: Date, groupBy: GroupBy): string[] {
-  const keys: string[] = []
-
-  if (groupBy === 'day') {
-    const cur = new Date(from)
-    cur.setHours(0, 0, 0, 0)
-    const end = new Date(to)
-    end.setHours(23, 59, 59, 999)
-    while (cur <= end) {
-      keys.push(format(cur, 'MM/dd'))
-      cur.setDate(cur.getDate() + 1)
-    }
-  } else if (groupBy === 'week') {
-    const cur = startOfWeek(new Date(from), { weekStartsOn: 1 })
-    const end = new Date(to)
-    while (cur <= end) {
-      keys.push(format(cur, 'MM/dd'))
-      cur.setDate(cur.getDate() + 7)
-    }
-  } else {
-    const cur = new Date(from.getFullYear(), from.getMonth(), 1)
-    const end = new Date(to.getFullYear(), to.getMonth(), 1)
-    while (cur <= end) {
-      keys.push(format(cur, 'yyyy-MM'))
-      cur.setMonth(cur.getMonth() + 1)
-    }
-  }
-
-  return keys
-}
+// X축 버킷(일·주·월)은 lib/stats-bucket.ts — KST 기준 (백로그 §39)
 
 // ── 메인 통계 조회 ──────────────────────────────────────
 
@@ -155,15 +103,12 @@ export async function getMillingStatistics(
   await requireSession()
   const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
-  const toEndOfDay = new Date(to)
-  toEndOfDay.setHours(23, 59, 59, 999)
-
   const where: Prisma.MillingBatchWhereInput = { isClosed: true }
 
   if (cropYear) {
     where.stocks = { some: { productionYear: cropYear } }
   } else {
-    where.date = { gte: from, lte: toEndOfDay }
+    where.date = kstPeriodWhere(from, to)
   }
 
   if (millingTypes && millingTypes.length > 0) {
@@ -211,7 +156,7 @@ export async function getMillingStatistics(
   // 차트 데이터 — 실제 데이터 집계
   const bucketMap = new Map<string, { inputKg: number; outputKg: number }>()
   for (const batch of batches) {
-    const key     = getBucketKey(new Date(batch.date), groupBy)
+    const key     = bucketKeyOf(new Date(batch.date), groupBy)
     const outputKg = batch.outputs.reduce((s, o) => s + o.totalWeight, 0)
     const prev    = bucketMap.get(key) ?? { inputKg: 0, outputKg: 0 }
     bucketMap.set(key, {
@@ -230,18 +175,18 @@ export async function getMillingStatistics(
   }
 
   // 전체 버킷 키(빈 포인트 포함)로 chartData 생성
-  const allKeys = cropYear && batches.length === 0
+  const allBuckets = cropYear && batches.length === 0
     ? []
-    : generateAllBucketKeys(bucketFrom, bucketTo, groupBy)
+    : bucketsBetween(bucketFrom, bucketTo, groupBy)
 
-  const chartData: ChartDataPoint[] = allKeys.map(label => {
+  const chartData: ChartDataPoint[] = allBuckets.map(({ key: label, tooltipLabel }) => {
     const d = bucketMap.get(label)
     if (!d) {
-      return { label, tooltipLabel: getTooltipLabel(label, groupBy), inputKg: 0, outputKg: 0, yieldRate: 0, hasData: false }
+      return { label, tooltipLabel, inputKg: 0, outputKg: 0, yieldRate: 0, hasData: false }
     }
     return {
       label,
-      tooltipLabel: getTooltipLabel(label, groupBy),
+      tooltipLabel,
       inputKg:   Math.round(d.inputKg  * 10) / 10,
       outputKg:  Math.round(d.outputKg * 10) / 10,
       yieldRate: d.inputKg > 0 ? Math.round((d.outputKg / d.inputKg) * 1000) / 10 : 0,
@@ -271,7 +216,7 @@ export async function getMillingStatistics(
       }
     })
     return {
-      id: batch.id, date: format(new Date(batch.date), 'yyyy-MM-dd'),
+      id: batch.id, date: toKstDate(batch.date),
       millingType: batch.millingType, inputKg: batch.totalInputKg,
       outputKg: Math.round(outputKg * 10) / 10, yieldRate,
       varieties: varietyNames || '-', farmers: farmerNames || '-',
@@ -296,15 +241,12 @@ export async function getMillingStatsByVariety(params: {
   await requireSession()
   const { from, to, groupBy, varieties, millingTypes, farmers, cropYear } = params
 
-  const toEndOfDay = new Date(to)
-  toEndOfDay.setHours(23, 59, 59, 999)
-
   const where: Prisma.MillingBatchWhereInput = { isClosed: true }
 
   if (cropYear) {
     where.stocks = { some: { productionYear: cropYear } }
   } else {
-    where.date = { gte: from, lte: toEndOfDay }
+    where.date = kstPeriodWhere(from, to)
   }
 
   if (millingTypes && millingTypes.length > 0) {
@@ -340,7 +282,7 @@ export async function getMillingStatsByVariety(params: {
   const bucketMap = new Map<string, Map<string, { inputKg: number; outputKg: number }>>()
 
   for (const batch of batches) {
-    const key = getBucketKey(new Date(batch.date), groupBy)
+    const key = bucketKeyOf(new Date(batch.date), groupBy)
     if (!bucketMap.has(key)) bucketMap.set(key, new Map())
     const seriesMap = bucketMap.get(key)!
 
@@ -370,13 +312,13 @@ export async function getMillingStatsByVariety(params: {
     bucketTo   = new Date(Math.max(...dates.map(d => d.getTime())))
   }
 
-  const allKeys = cropYear && batches.length === 0
+  const allBuckets = cropYear && batches.length === 0
     ? []
-    : generateAllBucketKeys(bucketFrom, bucketTo, groupBy)
+    : bucketsBetween(bucketFrom, bucketTo, groupBy)
 
-  const periods: MultiSeriesPoint[] = allKeys.map(label => {
+  const periods: MultiSeriesPoint[] = allBuckets.map(({ key: label, tooltipLabel }) => {
     const seriesMap = bucketMap.get(label)
-    const point: MultiSeriesPoint = { label, tooltipLabel: getTooltipLabel(label, groupBy) }
+    const point: MultiSeriesPoint = { label, tooltipLabel }
     for (const vName of varieties) {
       const d = seriesMap?.get(vName)
       if (d && d.inputKg > 0) {
@@ -411,9 +353,6 @@ export async function getMillingStatsByMillingType(params: {
   await requireSession()
   const { from, to, groupBy, millingTypes, varieties, farmers, cropYear } = params
 
-  const toEndOfDay = new Date(to)
-  toEndOfDay.setHours(23, 59, 59, 999)
-
   const where: Prisma.MillingBatchWhereInput = {
     isClosed: true,
     millingType: { in: millingTypes },
@@ -422,7 +361,7 @@ export async function getMillingStatsByMillingType(params: {
   if (cropYear) {
     where.stocks = { some: { productionYear: cropYear } }
   } else {
-    where.date = { gte: from, lte: toEndOfDay }
+    where.date = kstPeriodWhere(from, to)
   }
 
   if (varieties && varieties.length > 0) {
@@ -455,7 +394,7 @@ export async function getMillingStatsByMillingType(params: {
   const bucketMap = new Map<string, Map<string, { inputKg: number; outputKg: number }>>()
 
   for (const batch of batches) {
-    const key = getBucketKey(new Date(batch.date), groupBy)
+    const key = bucketKeyOf(new Date(batch.date), groupBy)
     if (!bucketMap.has(key)) bucketMap.set(key, new Map())
     const seriesMap = bucketMap.get(key)!
 
@@ -475,13 +414,13 @@ export async function getMillingStatsByMillingType(params: {
     bucketTo   = new Date(Math.max(...dates.map(d => d.getTime())))
   }
 
-  const allKeys = cropYear && batches.length === 0
+  const allBuckets = cropYear && batches.length === 0
     ? []
-    : generateAllBucketKeys(bucketFrom, bucketTo, groupBy)
+    : bucketsBetween(bucketFrom, bucketTo, groupBy)
 
-  const periods: MultiSeriesPoint[] = allKeys.map(label => {
+  const periods: MultiSeriesPoint[] = allBuckets.map(({ key: label, tooltipLabel }) => {
     const seriesMap = bucketMap.get(label)
-    const point: MultiSeriesPoint = { label, tooltipLabel: getTooltipLabel(label, groupBy) }
+    const point: MultiSeriesPoint = { label, tooltipLabel }
     for (const mType of millingTypes) {
       const d = seriesMap?.get(mType)
       if (d && d.inputKg > 0) {

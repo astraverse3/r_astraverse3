@@ -156,3 +156,27 @@ test('대시보드 기준 연도는 언제나 연도 선택 목록 안에 있다
         assert.ok(productionYearOptions(at(2026, m)).includes(dashboardProductionYear(at(2026, m))), `${m}월`)
     }
 })
+
+// ------------------------------------------------------
+// 시간대 경계 (백로그 §39 잔여) — TZ=UTC·TZ=Asia/Seoul 둘 다에서 같아야 한다
+// 🔴 입력은 UTC 순간 리터럴. 로컬 시각으로 쓰면(위 `at()`처럼) 어느 TZ에서나 통과해 버린다
+// ------------------------------------------------------
+
+test('KST 9월 1일 00:30(UTC 8월 31일 15:30)이면 이미 9월 — 벼 등록 기본값이 올해로 넘어간다', () => {
+    const now = new Date('2026-08-31T15:30:00Z')
+    assert.equal(defaultProductionYear('RICE', now), 2026)
+    assert.deepEqual(defaultProductionYears('RICE', now), ['2026', '2025'])
+})
+
+test('KST 8월 31일 23:30(UTC 14:30)은 아직 8월', () => {
+    assert.equal(defaultProductionYear('RICE', new Date('2026-08-31T14:30:00Z')), 2025)
+})
+
+test('KST 11월 1일 00:30이면 대시보드 기준 연도가 넘어간다', () => {
+    assert.equal(dashboardProductionYear(new Date('2026-10-31T15:30:00Z')), 2026)
+    assert.equal(dashboardProductionYear(new Date('2026-10-31T14:30:00Z')), 2025)
+})
+
+test('KST 새해 00:30(UTC 12월 31일)이면 연도 목록이 새해부터', () => {
+    assert.equal(productionYearOptions(new Date('2026-12-31T15:30:00Z'))[0], 2027)
+})

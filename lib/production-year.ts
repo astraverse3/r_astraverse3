@@ -9,7 +9,19 @@
 // 검색(복수)과 등록 폼(단일)은 고르는 방식이 달라 함수를 나눴다.
 // 등록은 한 해만 찍어야 하므로 "새 수확분이 실제로 들어오기 시작하는 달"을 쓴다.
 
+import { todayKst } from './kst-date'
+
 export type YearCategory = 'RICE' | 'MISC_GRAIN'
+
+/**
+ * 지금의 연·월 (KST).
+ * 🔴 `getFullYear()`/`getMonth()`는 프로세스 시간대를 따른다 — Vercel(UTC)은 9월 1일 00~09시(KST)에
+ *    아직 8월이라 수확 경계가 9시간 늦게 넘어갔다(백로그 §39 잔여). 개발 PC(KST)에선 재현되지 않는다.
+ */
+function kstYearMonth(now: Date): { year: number; month: number } {
+    const [year, month] = todayKst(now).split('-').map(Number)
+    return { year, month }
+}
 
 // 🔴 2026-09-21: 벼 경계를 10월·11월 → 둘 다 9월로 당겼다.
 //    옛 주석은 "10월엔 아직 당해년도 벼가 안 들어온다"였는데, 2026-09-15에 조생종
@@ -45,8 +57,7 @@ const DASHBOARD_NEW_CROP_MONTH = 11
  * [올해, 전년]으로 두면 한 해가 늘 0건이라 사실상 1년분만 보인다.
  */
 export function defaultProductionYears(category: YearCategory, now: Date = new Date()): string[] {
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
+    const { year, month } = kstYearMonth(now)
 
     if (category === 'MISC_GRAIN') {
         return month >= MISC_NEW_CROP_MONTH
@@ -64,8 +75,7 @@ export function defaultProductionYears(category: YearCategory, now: Date = new D
  *   잡곡  6월부터 당해년도
  */
 export function defaultProductionYear(category: YearCategory, now: Date = new Date()): number {
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
+    const { year, month } = kstYearMonth(now)
     const boundary = category === 'MISC_GRAIN' ? MISC_NEW_CROP_MONTH : RICE_NEW_CROP_MONTH
     return month >= boundary ? year : year - 1
 }
@@ -78,8 +88,7 @@ export function defaultProductionYear(category: YearCategory, now: Date = new Da
  * 한 해를 통으로 봐야 의미가 있는 값들(진행률·수율)을 다루므로 **두 해를 섞지 않는다**.
  */
 export function dashboardProductionYear(now: Date = new Date()): number {
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
+    const { year, month } = kstYearMonth(now)
     return month >= DASHBOARD_NEW_CROP_MONTH ? year : year - 1
 }
 
@@ -99,7 +108,7 @@ const YEAR_OPTION_SPAN = 4
 
 /** 연도 선택 목록. 올해부터 과거로 내려가며 최신이 앞에 온다. */
 export function productionYearOptions(now: Date = new Date()): number[] {
-    const year = now.getFullYear()
+    const { year } = kstYearMonth(now)
     return Array.from({ length: YEAR_OPTION_SPAN }, (_, i) => year - i)
 }
 
