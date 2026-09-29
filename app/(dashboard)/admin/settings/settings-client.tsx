@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { saveYieldRates } from '@/app/actions/settings';
 import { Button } from '@/components/ui/button';
 import { SettingSection } from './setting-section';
@@ -11,6 +11,7 @@ import {
     DEFAULT_VARIETY_YIELD_RATES,
     varietyYieldKey,
 } from '@/lib/settings-constants';
+import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition';
 
 interface Props {
     initialRates: Record<string, number>;
@@ -62,7 +63,7 @@ function RateInput({
 
 export function SettingsClient({ initialRates, millingTypes, defaultRates }: Props) {
     const [rates, setRates] = useState<Record<string, number>>(initialRates);
-    const [isPending, startTransition] = useTransition();
+    const [isPending, startTransition] = useSafeTransition('저장하지 못했어요. 새로고침 후 다시 시도해 주세요.');
     const [saved, setSaved] = useState(false);
 
     function handleChange(key: string, value: string) {

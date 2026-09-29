@@ -19,6 +19,7 @@ import {
 import { suggestProductType } from '@/app/actions/product-type'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { settle } from '@/lib/settle-action'
 
 // 잡곡 포장 SKU는 도정구분이 없어 millingType='기타' sentinel로 묶인다. (plan-제품유형마스터.md §2)
 const MISC_MILLING_SENTINEL = '기타'
@@ -98,7 +99,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
         let cancelled = false
         // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 서버에서 불러오며 로딩 표시(부모가 open을 직접 바꿔 effect로 잡는다)
         setLoadingStocks(true)
-        getAvailableMiscStocks().then(res => {
+        settle(getAvailableMiscStocks()).then(res => {
             if (cancelled) return
             if (res.success) setAvailableStocks(res.data)
             else toast.error(res.error)
@@ -139,7 +140,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
     useEffect(() => {
         if (!open || !varietyId || !resolvedPackageType) return
         let cancelled = false
-        suggestProductType(varietyId, MISC_MILLING_SENTINEL, resolvedPackageType).then(res => {
+        settle(suggestProductType(varietyId, MISC_MILLING_SENTINEL, resolvedPackageType)).then(res => {
             if (cancelled || !res.success || !res.data) return
             setPackagings(res.data.packagings.map(p => ({ id: p.id, name: p.name })))
             const def = res.data.default?.packagingId ?? null

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { ChevronDown, RotateCcw, Search, X, RefreshCw, SlidersHorizontal } from 'lucide-react'
 import {
   PackageTypePieChart,
@@ -14,6 +14,7 @@ import type {
   VarietyOption,
 } from '@/app/actions/output-statistics'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
+import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -187,7 +188,7 @@ export function OutputStatsClient({ initialData, varietyOptions }: Props) {
   const [periodMonths, setPeriodMonths]             = useState<number | null>(DEFAULT_PERIOD_MONTHS)
   const [selectedVarietyIds, setSelectedVarietyIds] = useState<number[]>([])
   const [showFilter, setShowFilter]                 = useState(false)
-  const [isPending, startTransition]                = useTransition()
+  const [isPending, startTransition]                = useSafeTransition('통계를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')
 
   // ── 기간 변경: 즉시 fetch (품종 필터 유지) ─────────────────────────────
   function handlePeriodChange(months: number | null) {

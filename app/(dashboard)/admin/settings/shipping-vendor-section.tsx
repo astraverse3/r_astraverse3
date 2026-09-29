@@ -13,6 +13,7 @@ import {
     toggleShippingVendorActive,
     type ShippingVendorRow,
 } from '@/app/actions/shipping-vendor'
+import { settle } from '@/lib/settle-action'
 
 interface Props {
     vendors: ShippingVendorRow[]
@@ -44,7 +45,7 @@ export function ShippingVendorSection({ vendors }: Props) {
     // 액션 결과가 실패면 토스트만 띄우고 화면은 그대로 둔다
     function run(action: () => Promise<{ success: boolean; error?: string }>, onDone?: () => void) {
         startTransition(async () => {
-            const result = await action()
+            const result = await settle(action())
             if (!result.success) {
                 toast.error(result.error || '처리에 실패했어요.')
                 return
@@ -78,7 +79,7 @@ export function ShippingVendorSection({ vendors }: Props) {
         })
 
         saveQueue.current = saveQueue.current
-            .then(() => moveShippingVendor(vendor.id, direction))
+            .then(() => settle(moveShippingVendor(vendor.id, direction)))
             .then((result) => {
                 if (!result.success) {
                     toast.error(result.error || '순서 변경에 실패했어요.')

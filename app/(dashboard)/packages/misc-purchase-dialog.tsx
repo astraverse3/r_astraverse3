@@ -20,6 +20,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { todayKst } from '@/lib/kst-date'
+import { settle } from '@/lib/settle-action'
 
 // 잡곡 포장 다이얼로그와 동일 셋 (잡곡 매입도 같은 포장단위)
 const PACKAGE_TEMPLATES_MISC = [
@@ -76,7 +77,7 @@ export function MiscPurchaseDialog({ open, onOpenChange, onSuccess }: Props) {
     useEffect(() => {
         if (!open) return
         let cancelled = false
-        Promise.all([getPurchaseVendors(), getPurchaseVarieties()]).then(([vRes, varRes]) => {
+        Promise.all([settle(getPurchaseVendors()), settle(getPurchaseVarieties())]).then(([vRes, varRes]) => {
             if (cancelled) return
             if (vRes.success) setVendors(vRes.data)
             if (varRes.success) setVarieties(varRes.data)

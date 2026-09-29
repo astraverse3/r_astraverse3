@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { settle } from '@/lib/settle-action'
 
 interface Notice {
     id: number
@@ -29,7 +30,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
     const handleDelete = async (notice: Notice) => {
         if (!(await confirmDialog({ description: `정말로 이 공지를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`, destructive: true, confirmText: '삭제' }))) return
 
-        const result = await deleteNotice(notice.id)
+        const result = await settle(deleteNotice(notice.id))
         if (result.success) {
             triggerDataUpdate()
             toast.success('공지가 삭제되었습니다.')
@@ -39,7 +40,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
     }
 
     const handleToggleActive = async (notice: Notice, currentActive: boolean) => {
-        const result = await updateNotice(notice.id, { isActive: !currentActive })
+        const result = await settle(updateNotice(notice.id, { isActive: !currentActive }))
         if (result.success) {
             triggerDataUpdate()
             toast.success(currentActive ? '공지가 비활성화되었습니다.' : '공지가 활성화되었습니다.')

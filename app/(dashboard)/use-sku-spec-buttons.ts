@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listSkuSpecs } from '@/app/actions/product-type'
 import { mergeSpecButtons } from '@/lib/package-spec'
+import { settle } from '@/lib/settle-action'
 
 type SpecButton = { label: string; weight: number | null }
 
@@ -33,7 +34,7 @@ export function useSkuSpecButtons<T extends SpecButton>(
         const [idPart, mt] = key.split('|')
         if (!open || !idPart || !mt) return
         let alive = true
-        void listSkuSpecs(idPart.split(',').map(Number), mt).then(res => {
+        void settle(listSkuSpecs(idPart.split(',').map(Number), mt)).then(res => {
             if (alive) setGot({ key, byVariety: res.success ? res.data : {} })
         })
         return () => {

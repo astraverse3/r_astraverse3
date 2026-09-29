@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronDown, RotateCcw, Search, X, SlidersHorizontal, RefreshCw } from 'lucide-react'
 import { StockChart } from '@/components/statistics/StockChart'
 import { MultiSelectDropdown, type MultiSelectOption } from '@/components/statistics/MultiSelectDropdown'
@@ -24,6 +24,7 @@ import { StockSummaryCards } from './_parts/stock-summary-cards'
 import { ChartLegend, FarmerTable, GroupTable, VarietyTable } from './_parts/stock-tables'
 import { StockFilterSheet } from './_parts/stock-filter-sheet'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
+import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 
 type Props = {
   initialData: StockStatisticsData
@@ -52,7 +53,7 @@ export function StockStatsClient({
   const [farmerNameInput, setFarmerNameInput]       = useState('')
   const [activeTab, setActiveTab]                   = useState<StockTab>('variety')
   const [showFilter, setShowFilter]                 = useState(false)
-  const [isPending, startTransition]                = useTransition()
+  const [isPending, startTransition]                = useSafeTransition('통계를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')
 
   // ── 드롭다운 옵션 변환 (MultiSelectDropdown 형식) ─────────────────────
   const certDropdownOptions = useMemo<MultiSelectOption<string>[]>(

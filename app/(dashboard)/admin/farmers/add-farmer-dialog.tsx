@@ -23,6 +23,7 @@ import { triggerDataUpdate } from '@/components/last-updated'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
+import { settle } from '@/lib/settle-action'
 
 // Extended Farmer type to match list
 interface Farmer {
@@ -80,7 +81,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
     // Fetch Groups on open
     useEffect(() => {
         if (open) {
-            getProducerGroups().then(res => {
+            settle(getProducerGroups()).then(res => {
                 if (res.success && res.data) setGroups(res.data)
             })
             // Reset state when opening
@@ -168,7 +169,7 @@ export function AddFarmerDialog({ farmer, open: controlledOpen, onOpenChange: se
                 triggerDataUpdate()
                 setOpen(false)
                 // Refresh groups for next time
-                getProducerGroups().then(res => {
+                settle(getProducerGroups()).then(res => {
                     if (res.success && res.data) setGroups(res.data)
                 })
             } else {

@@ -18,6 +18,7 @@ import {
 } from '@/app/actions/packages'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
+import { settle } from '@/lib/settle-action'
 
 const PACKAGE_TEMPLATES_MISC = [
     { label: '10kg', weight: 10 },
@@ -56,7 +57,7 @@ export function EditMiscPackageDialog({ open, onOpenChange, packageId, onSuccess
         let cancelled = false
         // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 서버에서 불러오며 로딩 표시(부모가 open을 직접 바꿔 effect로 잡는다)
         setLoading(true)
-        getMiscPackageEditContext(packageId).then(res => {
+        settle(getMiscPackageEditContext(packageId)).then(res => {
             if (cancelled) return
             if (res.success) {
                 const data = res.data

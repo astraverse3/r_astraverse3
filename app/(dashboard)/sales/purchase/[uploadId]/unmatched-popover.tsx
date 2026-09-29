@@ -22,6 +22,7 @@ import {
     type UnmatchedCellOptions,
 } from '@/app/actions/purchase-order-assign'
 import type { ActiveCell } from './cell-allocation-popover'
+import { settle } from '@/lib/settle-action'
 
 const fmt = (n: number) => n.toLocaleString()
 
@@ -69,7 +70,7 @@ export function UnmatchedBody({ cell }: { cell: ActiveCell }) {
 
     useEffect(() => {
         let alive = true
-        getUnmatchedCellOptions(cell.itemIds).then((r) => {
+        settle(getUnmatchedCellOptions(cell.itemIds)).then((r) => {
             if (!alive) return
             if (r.success) setData(r.data)
             else setError(r.error)

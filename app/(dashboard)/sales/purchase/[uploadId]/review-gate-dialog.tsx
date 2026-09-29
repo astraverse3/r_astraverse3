@@ -43,6 +43,7 @@ import {
     type BatchPreview,
 } from '@/app/actions/purchase-order-batch'
 import { GateOrderPicker } from './gate-order-picker'
+import { settle } from '@/lib/settle-action'
 
 /** 라인 한 줄을 사람 말로 — 매트릭스가 채운다. 못 찾으면 null */
 export type LineLookup = (itemId: number) => { who: string; what: string } | null
@@ -116,7 +117,7 @@ export function ReviewGateDialog({
         const delay = firstRun.current ? 0 : 400
         firstRun.current = false
         const timer = setTimeout(() => {
-            previewBatch(activeIds).then((r) => {
+            settle(previewBatch(activeIds)).then((r) => {
                 // 🔴 체크가 또 바뀌었으면 늦게 온 옛 응답은 버린다(cleanup이 alive를 끈다)
                 if (!alive) return
                 setResult({

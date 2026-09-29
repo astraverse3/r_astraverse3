@@ -29,6 +29,7 @@ import {
 import type { PackageRow } from '@/app/actions/packages'
 import { REPACK_CANCEL_BLOCKED } from '@/lib/package-guard'
 import { MOVEMENT_TYPE_LABEL } from '@/lib/movement-label'
+import { settle } from '@/lib/settle-action'
 
 const ORDER_CANCEL_BLOCKED = '발주서 차감은 발주서 상세에서 취소해주세요.'
 
@@ -73,7 +74,7 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
         let alive = true
         setLoading(true)
         setLoadError(null)
-        void listMovements(packageId).then(res => {
+        void settle(listMovements(packageId)).then(res => {
             if (!alive) return
             setLoading(false)
             if (res.success) setItems(res.data)

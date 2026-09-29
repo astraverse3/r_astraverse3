@@ -33,6 +33,7 @@ import {
 } from '@/app/actions/purchase-order-matrix'
 import { TonbagBody } from './tonbag-popover'
 import { UnmatchedBody } from './unmatched-popover'
+import { settle } from '@/lib/settle-action'
 
 /** 부모가 넘기는 「어느 셀인가」 — 표시용 라벨과 액션에 필요한 itemIds */
 export type ActiveCell = {
@@ -190,7 +191,7 @@ function Loaded({
 
     useEffect(() => {
         let alive = true
-        getCellAllocation(cell.itemIds).then((r) => {
+        settle(getCellAllocation(cell.itemIds)).then((r) => {
             if (!alive) return
             if (r.success) setData(r.data)
             else setError(r.error)

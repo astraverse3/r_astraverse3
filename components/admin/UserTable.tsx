@@ -10,6 +10,7 @@ import { Shield, ShieldOff, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { ALL_PERMISSIONS } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { settle } from '@/lib/settle-action'
 
 interface User {
     id: string
@@ -36,7 +37,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
 
         if (!(await confirmDialog(confirmMsg))) return
 
-        const result = await updateUserRole(user.id, newRole)
+        const result = await settle(updateUserRole(user.id, newRole))
         if (result.success) {
             triggerDataUpdate()
             toast.success(`${user.name}님의 역할이 ${newRole}로 변경되었습니다.`)
@@ -48,7 +49,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
     const handleDelete = async (user: User) => {
         if (!(await confirmDialog({ description: `정말로 ${user.name}님의 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`, destructive: true, confirmText: '삭제' }))) return
 
-        const result = await deleteUser(user.id)
+        const result = await settle(deleteUser(user.id))
         if (result.success) {
             triggerDataUpdate()
             toast.success(`${user.name}님의 계정이 삭제되었습니다.`)

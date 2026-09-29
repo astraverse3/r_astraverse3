@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { Calendar, RefreshCw, ChevronDown, X } from 'lucide-react'
 import { SummaryCards } from '@/components/statistics/SummaryCards'
@@ -16,6 +16,7 @@ import type {
   GroupBy,
 } from '@/app/actions/statistics'
 import { resolveQuickPeriod, resolveGroupBy } from '@/lib/statistics-utils'
+import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 
 // ── 상수 ──────────────────────────────────────────
 const QUICK_PERIODS: { key: QuickPeriod; label: string }[] = [
@@ -71,7 +72,7 @@ export function MillingTypeStatsClient({
   const varietyRef = useRef<HTMLDivElement>(null)
   const typeRef    = useRef<HTMLDivElement>(null)
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useSafeTransition('통계를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {

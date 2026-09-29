@@ -23,6 +23,7 @@ import {
     type CellPatch,
 } from '@/app/actions/purchase-order-matrix'
 import { CancelButton, useSheetMode, type ActiveCell } from './cell-allocation-popover'
+import { settle } from '@/lib/settle-action'
 
 const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
 const md = (iso: string) => iso.slice(5).replace('-', '.')
@@ -50,7 +51,7 @@ export function TonbagBody({
 
     useEffect(() => {
         let alive = true
-        getBulkCellOptions(cell.itemIds).then((r) => {
+        settle(getBulkCellOptions(cell.itemIds)).then((r) => {
             if (!alive) return
             if (!r.success) {
                 setError(r.error)

@@ -27,6 +27,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { hasPermission } from '@/lib/permissions'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { settle } from '@/lib/settle-action'
 
 /**
  * `computeLotGroups`가 실제로 읽는 필드만 추린 구조 타입.
@@ -248,7 +249,9 @@ export function AddPackagingDialog({
     )
     useEffect(() => {
         if (!millingType) return
-        getYieldRate(millingType).then(rate => setYieldRate(rate / 100))
+        getYieldRate(millingType)
+            .then(rate => setYieldRate(rate / 100))
+            .catch(error => console.error('[getYieldRate] failed — 기본 수율 유지:', error))
     }, [millingType])
 
     const isControlled = controlledOpen !== undefined
@@ -275,7 +278,7 @@ export function AddPackagingDialog({
         let cancelled = false
         setOutputsLoading(true)
         setOutputsFailed(false)
-        getBatchOutputs(batchId).then(res => {
+        settle(getBatchOutputs(batchId)).then(res => {
             if (cancelled) return
             setOutputsLoading(false)
             // 🔴 조용히 넘어가지 않는다. 못 읽은 채로 저장하면 남의 행을 지운다.
@@ -314,7 +317,7 @@ export function AddPackagingDialog({
     useEffect(() => {
         if (!open) return
         let cancelled = false
-        listPackagings().then(res => {
+        settle(listPackagings()).then(res => {
             if (cancelled || !res.success || !res.data) return
             setPackagings(res.data.filter(p => p.active).map(p => ({ id: p.id, name: p.name })))
         })
@@ -434,7 +437,7 @@ export function AddPackagingDialog({
         }])
         // (품종+도정+규격) 기본 포장지 추천은 백그라운드로 조회 → 응답이 오면 해당 라인의
         // 포장지가 아직 미지정일 때만 채운다(사용자가 먼저 골랐으면 그 선택을 유지).
-        suggestProductType(group.varietyId, millingType, label).then(res => {
+        settle(suggestProductType(group.varietyId, millingType, label)).then(res => {
             const defaultPackagingId = res.success && res.data ? (res.data.default?.packagingId ?? null) : null
             if (defaultPackagingId == null) return
             setOutputs(prev => prev.map(o =>

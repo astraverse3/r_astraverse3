@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import { Calendar, RefreshCw, Search, X, SlidersHorizontal } from 'lucide-react'
 import { SummaryCards } from '@/components/statistics/SummaryCards'
@@ -31,6 +31,7 @@ import {
 } from './_parts/constants'
 import { MillingFilterSheet } from './_parts/milling-filter-sheet'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
+import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 
 type Props = {
   initialData: MillingStatisticsData
@@ -77,7 +78,7 @@ export function MillingStatsClient({
   // 필터 팝업 (모바일 전용)
   const [showFilter, setShowFilter] = useState(false)
 
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useSafeTransition('통계를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')
 
   // ── 드롭다운 옵션 변환 (MultiSelectDropdown 형식) ─
   const varietyDropdownOptions = useMemo<MultiSelectOption<string>[]>(

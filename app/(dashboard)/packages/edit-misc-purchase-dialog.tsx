@@ -21,6 +21,7 @@ import {
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { settle } from '@/lib/settle-action'
 
 const PACKAGE_TEMPLATES_MISC = [
     { label: '10kg', weight: 10 },
@@ -68,9 +69,9 @@ export function EditMiscPurchaseDialog({ open, onOpenChange, packageId, onSucces
         // eslint-disable-next-line react-hooks/set-state-in-effect -- 열릴 때 서버에서 불러오며 로딩 표시(부모가 open을 직접 바꿔 effect로 잡는다)
         setLoading(true)
         Promise.all([
-            getMiscPurchaseEditContext(packageId),
-            getPurchaseVendors(),
-            getPurchaseVarieties(),
+            settle(getMiscPurchaseEditContext(packageId)),
+            settle(getPurchaseVendors()),
+            settle(getPurchaseVarieties()),
         ]).then(([ctxRes, vendorsRes, varietiesRes]) => {
             if (cancelled) return
             if (ctxRes.success) {
