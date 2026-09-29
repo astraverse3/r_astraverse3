@@ -241,7 +241,12 @@ test('causeOfCluster: popstate가 after에 있어도 뒤로가기로 잡는다 �
         after: [entry(2111, 'popstate', '현재 /raw-stocks')],
     }
     assert.equal(causeOfCluster(c), 'back')
-    assert.equal(isSuspectCause('back'), true)
+})
+
+// 🔴 2026-09-29 오탐: 사용자가 브라우저 뒤로 버튼으로 간 2건이 빨갛게 떴다 — 용의자 D는 09-22에 기각
+test('isSuspectCause: 뒤로가기는 의심하지 않는다 — 원인이 설명되는 이동이다', () => {
+    assert.equal(isSuspectCause('back'), false)
+    assert.equal(isSuspectCause('code'), false)
 })
 
 // 🔴 실측 결함 ③: popstate를 무조건 우선하면 그 뒤의 클릭을 무시한다(2026-09-16)

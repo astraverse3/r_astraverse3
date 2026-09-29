@@ -108,8 +108,8 @@ export function TraceView() {
                     <h2 className="text-sm font-bold text-slate-700">화면이 바뀐 순간</h2>
                     <p className="text-xs text-slate-500">
                         굵은 줄이 <strong>경로 변경</strong>이고, 그 위아래가 앞뒤로 일어난 일이에요.
-                        빨간 <strong>원인 불명</strong>·<strong>뒤로가기</strong>가 찾는 것이고,
-                        <strong>클릭</strong>은 직접 눌러서 간 정상 이동입니다.
+                        빨간 <strong>원인 불명</strong>이 찾는 것이고,
+                        <strong>클릭</strong>·<strong>뒤로가기</strong>는 직접 해서 간 정상 이동입니다.
                     </p>
                     {clusters.map((c) => {
                         const cause = causeOfCluster(c)

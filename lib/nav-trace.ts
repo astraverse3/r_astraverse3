@@ -173,9 +173,15 @@ export const CAUSE_LABEL: Record<RouteCause, string> = {
     unknown: '원인 불명',
 }
 
-/** 원인이 설명되지 않으면 의심한다 — 뒤로가기도 이번 조사에선 확인 대상이라 포함. */
+/**
+ * 원인이 설명되지 않을 때만 의심한다.
+ *
+ * 🔴 뒤로가기(용의자 D)는 뺐다 — 2026-09-22 실측에서 튄 2건에 `popstate`가 0건이라 기각됐고,
+ * 앱 코드엔 `router.back`·`history.back`이 한 곳도 없어 `popstate`는 브라우저 조작에서만 온다.
+ * 남겨 두면 사용자가 직접 누른 뒤로가기가 빨갛게 떠 진짜 튐을 파묻는다(2026-09-29 오탐 신고).
+ */
 export function isSuspectCause(cause: RouteCause): boolean {
-    return cause === 'unknown' || cause === 'back'
+    return cause === 'unknown'
 }
 
 /**
