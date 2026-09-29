@@ -338,12 +338,16 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
         revalidatePath('/raw-stocks')
         result.success = true
 
-        await recordAuditLog({
-            action: 'IMPORT',
-            entity: 'Stock', // 또는 'System'
-            description: `재고 데이터 엑셀 가져오기 완료 (총 ${result.counts.total}건 중 성공: ${result.counts.success}, 실패: ${result.counts.failed}, 건너뜀: ${result.counts.skipped})`,
-            details: result.counts
-        })
+        // 미리보기(dryRun)는 아무것도 안 바꿨으니 남기지 않는다 — 화면이 미리보기 → 실제로 두 번 불러
+        // 한 번 가져오기에 「완료」 로그가 2건씩 쌓였다
+        if (!dryRun) {
+            await recordAuditLog({
+                action: 'IMPORT',
+                entity: 'Stock', // 또는 'System'
+                description: `재고 데이터 엑셀 가져오기 완료 (총 ${result.counts.total}건 중 성공: ${result.counts.success}, 실패: ${result.counts.failed}, 건너뜀: ${result.counts.skipped})`,
+                details: result.counts
+            })
+        }
 
         return result
 
