@@ -84,6 +84,11 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
 
     const classStyle = getMillingTypeStyle(classification)
 
+    // 비고는 2번째 줄 왼쪽에 앞 10자만 (백로그 §6) — 전체는 카드를 눌러 여는 투입 원물 목록에 나온다
+    const remarkChars = log.remarks ? [...log.remarks.trim()] : []
+    const remarkShort = remarkChars.length === 0 ? null
+        : remarkChars.length > 10 ? `${remarkChars.slice(0, 10).join('')}…` : remarkChars.join('')
+
     const handleCardClick = () => {
         setStockListOpen(true)
     }
@@ -117,7 +122,8 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                 className={`relative rounded-xl border bg-white shadow-sm transition-all ${selected ? 'border-primary ring-1 ring-primary/20 bg-blue-50' : 'border-slate-200'} cursor-pointer active:scale-[0.99]`}
                 onClick={handleCardClick}
             >
-                {/* Row 1: Checkbox + Variety + Classification + Date + Status */}
+                {/* Row 1: Checkbox + Variety + Classification + Farmer + Date + Status
+                    생산자는 품종·도정구분 뒤 (백로그 §6). 좁으면 생산자만 말줄임 — 품종·날짜·상태는 안 줄인다 */}
                 <div className="flex items-center px-2.5 pt-2 pb-0.5">
                     <div onClick={(e) => e.stopPropagation()} className="shrink-0 mr-2 flex items-center">
                         <Checkbox
@@ -130,6 +136,7 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ml-1.5 shrink-0 whitespace-nowrap rounded-sm font-bold border ${classStyle.bg} ${classStyle.text} ${classStyle.border}`}>
                         {classification}
                     </Badge>
+                    <span className="text-[12px] text-slate-500 truncate min-w-0 ml-1.5">{farmersSummary}</span>
                     <span className="flex-1 min-w-[1rem]" />
                     <span className="text-[11px] text-slate-500 font-medium shrink-0 mr-2">
                         {format(new Date(log.date), 'yy.MM.dd')}
@@ -140,9 +147,14 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                     </button>
                 </div>
 
-                {/* Row 2: Farmer + TonbagCount + Input → Output + Yield */}
+                {/* Row 2: Remarks(앞 10자) + TonbagCount + Input → Output + Yield — 비고가 있어도 2줄 고정 (백로그 §6) */}
                 <div className="flex items-center px-2.5 pb-1.5 pt-0.5" style={{ paddingLeft: 'calc(0.625rem + 1rem + 0.5rem)' }}>
-                    <span className="text-[12px] text-slate-500 truncate shrink-0 min-w-[3.5rem]">{farmersSummary}</span>
+                    {remarkShort && (
+                        <span className="flex items-center gap-1 text-[10px] text-slate-400 min-w-0 mr-2">
+                            <StickyNote className="w-3 h-3 shrink-0" strokeWidth={1.8} />
+                            <span className="truncate">{remarkShort}</span>
+                        </span>
+                    )}
                     <span className="flex-1" />
                     <div className="flex items-center ml-auto shrink-0">
                         <span className="text-[10px] text-slate-400 shrink-0 mr-1">
@@ -169,14 +181,6 @@ export function MobileMillingCard({ log, selected, onSelect }: Props) {
                         )}
                     </div>
                 </div>
-
-                {/* Row 3: Remarks (optional) */}
-                {log.remarks && (
-                    <div className="px-2.5 pb-1.5 flex items-center gap-1 text-[10px] text-slate-400" style={{ paddingLeft: 'calc(0.625rem + 1rem + 0.5rem)' }}>
-                        <StickyNote className="w-3 h-3 shrink-0" strokeWidth={1.8} />
-                        <span className="truncate">{log.remarks}</span>
-                    </div>
-                )}
             </div>
 
             {/* Dialogs */}
