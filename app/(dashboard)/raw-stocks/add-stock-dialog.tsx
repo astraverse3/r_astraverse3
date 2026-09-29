@@ -281,9 +281,14 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     </div>
 
                     {firstLot && (incomingDate === firstLot.date ? (
-                        <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 border border-slate-100 -mt-2">
-                            <span className="font-bold text-slate-800">첫 로트와 같은 로트로 들어가요</span> — 첫 입고 {monthDay(firstLot.date)} · 이미 {firstLot.count}건 · {firstLot.lotNo}
-                            <br />새 로트로 하려면 입고일자를 바꾸세요.
+                        <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 border border-slate-100 -mt-2 space-y-0.5">
+                            <div>
+                                <span className="font-bold text-slate-800">첫 로트와 같은 로트로 들어가요</span>
+                                {' · '}
+                                {/* 로트번호는 하이픈에서 줄이 끊기면 읽기 어렵다 — 통째로 넘긴다 */}
+                                <span className="whitespace-nowrap">{firstLot.lotNo}</span>
+                            </div>
+                            <div>첫 입고 {monthDay(firstLot.date)} · 이미 {firstLot.count}건 · 새 로트로 하려면 입고일자를 바꾸세요.</div>
                         </div>
                     ) : (
                         <div className="bg-amber-50 p-2 rounded text-xs text-amber-800 border border-amber-200 -mt-2 flex items-center justify-between gap-2">
