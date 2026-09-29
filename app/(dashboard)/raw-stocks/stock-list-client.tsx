@@ -78,7 +78,7 @@ export function StockListClient({
                         <col className="w-[6%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead className="px-1 text-center">
                                 {/* Global Select All Removed */}
                             </TableHead>

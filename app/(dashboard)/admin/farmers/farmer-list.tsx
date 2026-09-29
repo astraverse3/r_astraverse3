@@ -95,7 +95,7 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
                         </colgroup>
                     )}
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             {canManageFromParent && (
                                 <TableHead>
                                     <Checkbox

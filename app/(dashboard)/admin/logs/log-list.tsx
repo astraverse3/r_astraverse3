@@ -311,7 +311,7 @@ export function LogList() {
                         <col className="w-[12%]" /><col className="w-[35%]" /><col className="w-[15%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead className="text-center">일시</TableHead>
                             <TableHead className="text-center">작업자</TableHead>
                             <TableHead className="text-center">구분</TableHead>

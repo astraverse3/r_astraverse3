@@ -142,7 +142,7 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
             <div className="hidden lg:block bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead>사용자</TableHead>
                             <TableHead>역할</TableHead>
                             <TableHead>부서</TableHead>

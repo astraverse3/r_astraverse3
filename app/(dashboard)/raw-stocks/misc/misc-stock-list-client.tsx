@@ -183,7 +183,7 @@ export function MiscStockListClient({
                         <col className="w-[4%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">
+                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
                             <TableHead className="px-1 text-center"></TableHead>
                             <TableHead className="text-center hidden sm:table-cell">년도</TableHead>
                             <TableHead className="text-center">품종</TableHead>

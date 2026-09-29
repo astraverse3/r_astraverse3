@@ -323,7 +323,7 @@ export function MillingStockListDialog({ batchId, millingType, date, remarks, st
                         )}
                         {/* sticky 헤더는 유지. 배경은 §22에 따라 bg-card */}
                         <TableHeader className="sticky top-0 bg-card z-10">
-                            <TableRow className="bg-slate-50 hover:bg-transparent">
+                            <TableRow className="bg-slate-50 hover:bg-slate-50">
                                 <TableHead className="text-center">번호</TableHead>
                                 <TableHead className="text-center">생산자명</TableHead>
                                 <TableHead className="text-center">품종</TableHead>
