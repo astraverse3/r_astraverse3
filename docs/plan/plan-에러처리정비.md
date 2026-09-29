@@ -1,6 +1,6 @@
 # 계획서 — 에러 처리 정비 (+ dry-run 감사로그 · §39 잔여)
 
-> 작성: 2026-09-29 · 상태: **승인 대기**
+> 작성: 2026-09-29 · 상태: ✅ **완료 2026-09-29** (`7acc20a` · `7de4c46` · `d88c5a6` · `0a3586c`) — 보고서 [report-에러처리정비-2026-09-29.md](../report/report-에러처리정비-2026-09-29.md)
 > 발단: 9/28 할일 전수 「2. 알려진 결함」 A·B·C ([[session_initial_injection]] · [[permission_system_2way]] · [[date_utc_slice_off_by_one]])
 
 ---

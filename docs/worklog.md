@@ -1,5 +1,25 @@
 # 작업일지
 
+## 2026-09-29
+
+### 에러 처리 정비 — 가드 try 안으로 · reject 받기 · dry-run 감사로그 · §39 잔여
+
+커밋 `7acc20a` · `7de4c46` · `d88c5a6` · `0a3586c`.
+계획서 `docs/plan/plan-에러처리정비.md`, 보고서 `docs/report/report-에러처리정비-2026-09-29.md`.
+발단: 9/28 할일 전수에서 추린 「알려진 결함」. 오늘 사용자와 순서 확정 → 이게 1번.
+
+- **A-1 서버** (`7acc20a`): 가드가 `try` 밖이던 액션 **108개**(메모엔 28) → `try` 안. `lib/error-sanitize` `guardErrorMessage` — 세션 「로그인이 만료됐어요…」 · 권한 「이 작업을 할 권한이 없어요.」. 고정 문구 65곳은 가드 오류만 갈라냄. 가드 없던 읽기 4개에 `requireSession`. `getPackages`·`getPurchaseVendors`가 `error.message` 원문을 내보내던 것 → `sanitizeErrorMessage`
+  - 🔴 옮기기 전 catch 108개 분류 — `return []`이면 「권한 없음」이 「0건」으로 둔갑한다. 0곳이라 안전
+  - 🔴 「가드 뒤 첫 try」가 루프·헬퍼 안 try일 수 있다 → 들여쓰기 같은 것만 자동, 엑셀 가져오기 2개는 수작업
+- **A-2·A-3 클라이언트** (`7de4c46`): `lib/settle-action` `settle()` — reject → `{success:false}`라 기존 실패 분기가 받는다. `.catch` 없던 `.then` **17곳**(메모엔 10) · 사용자·공지 관리 4곳. `app/(dashboard)/use-safe-transition` — 통계 4화면 20곳·수율 저장(React 19가 transition 안 throw를 에러 경계로 올리는데 `(dashboard)`엔 경계가 없어 **페이지 전체가 기본 에러 화면**이었다)
+  - 🔴 배송업체 순서 저장 큐: 한 번 reject되면 체인이 굳어 그 뒤 순서 변경이 전부 조용히 안 됐다
+- **B** (`d88c5a6`): `importStocks` dryRun이면 감사로그 안 남김(한 번 가져오기에 2건씩 쌓였다). 기존 로그는 안 지움
+- **C** (`0a3586c`): `lib/stats-bucket`(신규) — 도정 통계 버킷·조회 범위 KST. `production-year` `getMonth` → `todayKst`. `statistics-utils` `resolveQuickPeriod`도(서버에서 부르는 첫 화면이 월말에 다음 달 빈 칸을 만들 뻔했다 — 계획서 밖 1건)
+  - 🔴 새 경계 테스트를 옛 코드로 돌리면 TZ=UTC 3건 실패 · KST 통과 — 개발 PC에서 재현 안 되던 이유 그대로
+- 범위 밖 → 백로그 **§51 신설**(핸들러 `await action()` try 밖 추정 73곳 · `(dashboard)` error.tsx 없음). §39 잔여 해소 표시
+
+검증 tsc 0 · `eslint .` 0/0 · test 506/506 (TZ=UTC · Asia/Seoul). 브라우저 확인 전(Offline 시나리오는 보고서 §4).
+
 ## 2026-09-28
 
 ### 보고서 위치 통일 — docs/report/ 로 이동 + 프로젝트 CLAUDE.md (`d933383`)
