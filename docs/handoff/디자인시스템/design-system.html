@@ -123,6 +123,9 @@ const TOC = [
   { id: 'buttons',     label: 'Actions' },
   { id: 'chips',       label: 'Chips' },
   { id: 'patterns',    label: 'List Pattern' },
+  { id: 'voice',       label: 'Voice & Tone' },
+  { id: 'dialog',      label: 'Dialog Shell' },
+  { id: 'fab',         label: 'Floating Cart' },
 ];
 
 function App() {
@@ -573,88 +576,94 @@ const [adminOpen, setAdminOpen] = useState(active.startsWith('/admin/'));`}>
       </Section>
 
       {/* 8. Variety Group Table */}
-      <Section id="table" title="8. 품종 그룹 펼침 테이블 (PC)" subtitle="목록 표준규격 적용 · 헤더 40px / 행 44px / 14px · 펼친 묶음 bg-slate-100">
-        <Card title="Live Preview" code={`{/* 펼친 그룹 헤더 — 서브행과 같은 묶음톤, 내부 경계는 지운다 */}
-<tr onClick={toggle} className={isOpen
-  ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0 cursor-pointer'
-  : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80 cursor-pointer'}>
-  <TableCell className="text-center"><ChevronRight className={isOpen ? 'rotate-90' : ''} /></TableCell>
-  <TableCell className="font-bold text-slate-900">{variety}</TableCell>
-  <TableCell className="text-slate-400">{rows.length}종</TableCell>
-  <TableCell className="text-right font-bold tabular-nums">{total}kg</TableCell>
-</tr>
+      <Section id="table" title="8. 품종 그룹 펼침 테이블 (PC)" subtitle="목록 표준규격 · 2026-09-29 밝은 톤 개정 · 헤더 흰 바탕/slate-500 · 모든 행 44px · 그룹은 흰색, 서브행만 옅은 톤 + 묶음 끝선">
+        <Card title="Live Preview" note="펼쳐도 어두워지지 않는다 — 묶음은 서브행 톤 + 끝선" code={`// handoff.md §4.2.6 (2026-09-29 개정) — primary 액센트 사용 금지
+<div className="bg-white border-t border-slate-100">
+  {/* 그룹 헤더 행 — 다른 행과 같은 44px */}
+  <div onClick={toggle} className="grid grid-cols-[...] px-3 h-11 items-center cursor-pointer hover:bg-slate-50">
+    <ChevronRight className={isOpen ? 'rotate-90 text-slate-900' : 'text-slate-400'} />
+    <span className="font-semibold text-slate-900">{variety}</span>
+    <span className="ml-auto font-semibold tabular-nums">{total}kg</span>
+  </div>
+  {/* 펼침 시 서브행 — 옅은 톤, 마지막 행에 묶음 끝선 */}
+  {isOpen && rows.map((r, i) => (
+    <div className={\`grid grid-cols-[...] px-3 h-11 text-sm bg-slate-50/40 hover:bg-slate-50 border-t border-slate-100 \${i === rows.length - 1 ? 'border-b border-slate-200' : ''}\`}>
+      {/* 들여쓰기 + 짧은 ─ 라인 — primary border-l 사용 X */}
+    </div>
+  ))}
+</div>
 
-{/* 서브행 — 그룹 키와 겹치는 컬럼은 비운다 */}
-<tr className="bg-slate-100 hover:bg-slate-200/70 border-b-0">…</tr>
-
-{/* 하위 1건 그룹은 헤더를 만들지 않고 낱개 흰 행으로 */}
-<tr className="bg-white hover:bg-slate-50">…</tr>`}>
+{/* 하위 1건뿐이면 그룹 헤더를 만들지 않고 낱개 흰 행으로 */}`}>
           <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-3 h-10 w-8"></th>
-                  <th className="px-3 h-10 text-left font-medium text-slate-900">품종 / 규격</th>
-                  <th className="px-3 h-10 text-left font-medium text-slate-900 w-32">생산자</th>
-                  <th className="px-3 h-10 text-left font-medium text-slate-900 w-36">LOT</th>
-                  <th className="px-3 h-10 text-right font-medium text-slate-900 w-24">수량</th>
-                  <th className="px-3 h-10 text-right font-medium text-slate-900 w-24">합계</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* 펼친 그룹 헤더 — 묶음톤, 위쪽에만 경계 */}
-                <tr className="bg-slate-100 border-t border-slate-200/80">
-                  <td className="px-3 h-11 text-center"><svg className="w-3.5 h-3.5 text-slate-400 rotate-90 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
-                  <td className="px-3 h-11 font-bold text-slate-900">검정보리 <span className="text-[11.5px] text-slate-400 font-normal">2종</span></td>
-                  <td className="px-3 h-11 text-slate-500">김재훈</td>
-                  <td className="px-3 h-11 text-slate-300">—</td>
-                  <td className="px-3 h-11 text-right text-slate-300">—</td>
-                  <td className="px-3 h-11 text-right font-bold tabular-nums text-slate-900">260kg</td>
-                </tr>
-                {/* 서브행 — 같은 묶음톤. 생산자는 그룹이 이미 말했으므로 비운다 */}
-                <tr className="bg-slate-100">
-                  <td className="px-3 h-11"></td>
-                  <td className="px-3 h-11 text-slate-700 pl-8">5kg × 40포</td>
-                  <td className="px-3 h-11"></td>
-                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-21-001</td>
-                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">40포</td>
-                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">200kg</td>
-                </tr>
-                {/* 묶음의 마지막 서브행에만 아래 경계를 돌려준다 */}
-                <tr className="bg-slate-100 border-b border-slate-200/80">
-                  <td className="px-3 h-11"></td>
-                  <td className="px-3 h-11 text-slate-700 pl-8">1kg × 60포</td>
-                  <td className="px-3 h-11"></td>
-                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-21-004</td>
-                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">60포</td>
-                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">60kg</td>
-                </tr>
-                {/* 접힌 그룹 — 흰 배경 금지 */}
-                <tr className="bg-slate-50 border-y border-slate-200/80">
-                  <td className="px-3 h-11 text-center"><svg className="w-3.5 h-3.5 text-slate-400 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg></td>
-                  <td className="px-3 h-11 font-bold text-slate-900">귀리 <span className="text-[11.5px] text-slate-400 font-normal">2종</span></td>
-                  <td className="px-3 h-11 text-slate-500">오점기</td>
-                  <td className="px-3 h-11 text-slate-300">—</td>
-                  <td className="px-3 h-11 text-right text-slate-300">—</td>
-                  <td className="px-3 h-11 text-right font-bold tabular-nums text-slate-900">108kg</td>
-                </tr>
-                {/* 하위 1건 → 그룹을 만들지 않고 낱개 흰 행 */}
-                <tr className="bg-white border-b border-slate-100">
-                  <td className="px-3 h-11"></td>
-                  <td className="px-3 h-11 font-semibold text-slate-900">기장</td>
-                  <td className="px-3 h-11 text-slate-500">박태일</td>
-                  <td className="px-3 h-11 font-mono text-[12.5px] text-slate-500">25-MG-33-002</td>
-                  <td className="px-3 h-11 text-right tabular-nums text-slate-700">12포</td>
-                  <td className="px-3 h-11 text-right font-semibold tabular-nums text-slate-700">60kg</td>
-                </tr>
-              </tbody>
-            </table>
+            {/* 컬럼 헤더 */}
+            <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] bg-white text-slate-500 text-sm font-medium border-b border-slate-200 px-3 h-10 items-center">
+              <span></span>
+              <span>품종 / 규격</span>
+              <span>생산자</span>
+              <span>LOT</span>
+              <span className="text-right">수량</span>
+              <span className="text-right">합계</span>
+            </div>
+
+            {/* 그룹 1 — 펼침 상태 (묶음 컨테이너) */}
+            <div className="bg-white border-b border-slate-200">
+              <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] items-center px-3 h-11 hover:bg-slate-50 cursor-pointer text-sm">
+                <svg className="w-3 h-3 text-slate-900 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg>
+                <span className="font-semibold text-slate-900">검정보리 <span className="text-[12px] text-slate-500 font-normal ml-1.5">2종</span></span>
+                <span className="text-slate-400">—</span>
+                <span></span>
+                <span></span>
+                <span className="text-right font-semibold tabular-nums text-slate-900">260kg</span>
+              </div>
+              <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] items-center px-3 h-11 border-t border-slate-100 text-sm bg-slate-50/40 hover:bg-slate-50">
+                <span className="flex items-center justify-center"><span className="w-2 h-px bg-slate-300" /></span>
+                <span className="flex items-baseline gap-2"><span className="text-[12px] text-slate-400">규격</span><span className="text-slate-700">5kg × 40포</span></span>
+                <span className="text-slate-600">김재훈</span>
+                <span className="font-mono text-[12.5px] text-slate-500">25-MG-21-001</span>
+                <span className="text-right tabular-nums text-slate-600">40포</span>
+                <span className="text-right font-semibold tabular-nums text-slate-900">200kg</span>
+              </div>
+              <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] items-center px-3 h-11 border-t border-slate-100 text-sm bg-slate-50/40 hover:bg-slate-50">
+                <span className="flex items-center justify-center"><span className="w-2 h-px bg-slate-300" /></span>
+                <span className="flex items-baseline gap-2"><span className="text-[12px] text-slate-400">규격</span><span className="text-slate-700">1kg × 60포</span></span>
+                <span className="text-slate-600">김재훈</span>
+                <span className="font-mono text-[12.5px] text-slate-500">25-MG-21-004</span>
+                <span className="text-right tabular-nums text-slate-600">60포</span>
+                <span className="text-right font-semibold tabular-nums text-slate-900">60kg</span>
+              </div>
+            </div>
+
+            {/* 그룹 2 — 접힘 상태 */}
+            <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] items-center px-3 h-11 bg-white hover:bg-slate-50 cursor-pointer border-b border-slate-100 text-sm">
+              <svg className="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg>
+              <span className="font-semibold text-slate-900">귀리 <span className="text-[12px] text-slate-500 font-normal ml-1.5">2종</span></span>
+              <span className="text-slate-400">—</span>
+              <span></span>
+              <span></span>
+              <span className="text-right font-semibold tabular-nums text-slate-900">108kg</span>
+            </div>
+
+            {/* 낱개 행 (single) — 그룹 컨테이너 없음 */}
+            <div className="grid grid-cols-[32px_1.6fr_1fr_1.4fr_0.8fr_0.9fr] items-center px-3 h-11 bg-white hover:bg-slate-50 text-sm">
+              <span></span>
+              <span className="font-semibold text-slate-900">기장 <span className="text-[12px] text-slate-400 font-normal ml-1.5">2.5kg × 12포</span></span>
+              <span className="text-slate-600">박철수</span>
+              <span className="font-mono text-[12.5px] text-slate-500">25-MG-19-002</span>
+              <span className="text-right tabular-nums text-slate-600">12포</span>
+              <span className="text-right font-semibold tabular-nums text-slate-900">30kg</span>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11.5px] text-amber-900 leading-relaxed">
+            <strong>⚠ NOTE</strong> — 초기 시안에서 펼친 그룹을 시안톤·primary 좌측 라인으로 강조했으나, 같은 테이블에 낱개 행이 섞이면 톤이 어긋나서 폐기했습니다.
+            <strong> primary·시안톤 액센트(border-l-primary, bg-primary/5, bg-[#00a2e8]/20 등) 사용 금지</strong>. <strong>2026-09-29 개정</strong>: 펼칠수록 어두워지던 <code className="font-mono">bg-slate-100</code> 묶음톤을 폐기했습니다. 그룹 헤더는 흰색, 서브행만 <code className="font-mono">bg-slate-50/40</code>, 묶음 끝은 <code className="font-mono">border-slate-200</code> 선으로 닫습니다. 호버는 전부 <code className="font-mono">hover:bg-slate-50</code>.
+            <div className="mt-2 pt-2 border-t border-amber-200/70">
+              <strong>목록 표준규격 적용분</strong> — 헤더 40px / 14px / <code className="font-mono">font-medium</code> / <code className="font-mono">text-muted-foreground</code> · <code className="font-mono">bg-white</code>, 모든 행 44px(그룹 헤더 포함), 좌우 <code className="font-mono">px-3</code>, 로트 <code className="font-mono">text-[12.5px]</code>.
+              접힌 그룹도 흰 배경 — 낱개와는 셰브론·굵은 품종명·<code className="font-mono">—</code>/<code className="font-mono">N종</code> 요약 셀로 구분합니다(「흰 배경 금지」 폐기). 하위 1건뿐인 그룹은 그룹 헤더를 만들지 않고 낱개 행으로 토글 없이 표시합니다.
+              상세는 <code className="font-mono">handoff/list-standard/밝은톤-개정-2026-09-29.md</code>.
+            </div>
           </div>
         </Card>
-        <p className="mt-3 text-[12.5px] text-slate-500 leading-relaxed">
-          🔴 값의 정본은 <code className="font-mono text-[11.5px] bg-slate-100 px-1 rounded">components/ui/table.tsx</code> 프리미티브다.
-          화면에서 헤더·셀 클래스를 덧붙이지 않는다. 펼친 묶음의 <b>primary 액센트·세로 컬러바는 쓰지 않는다</b>(§4.2.6 NOTE).
-        </p>
       </Section>
 
       {/* 9. Header Actions */}
@@ -726,6 +735,68 @@ const [adminOpen, setAdminOpen] = useState(active.startsWith('/admin/'));`}>
             </div>
           </div>
         </Card>
+
+        {/* === CERT BADGE (유기 / 무농약 / 일반) === */}
+        <Card title="CERT_BADGE — 인증 뱃지 (유기·무농·일반)" note="공용 상수 사용, 셀 내부 hex 분기 금지" code={`// components/badges/cert-badge.tsx
+export const CERT_BADGE_CLASS = {
+  ORGANIC:  'bg-emerald-50 text-emerald-700 border-emerald-200',  // 유기농
+  PESTFREE: 'bg-blue-50 text-blue-700 border-blue-200',           // 무농약 = primary 톤
+  REGULAR:  'bg-slate-100 text-slate-600 border-slate-200',        // 일반/관행
+} as const;
+
+export function CertBadge({ cert }: { cert: 'ORGANIC'|'PESTFREE'|'REGULAR' }) {
+  const label = { ORGANIC: '유기농', PESTFREE: '무농약', REGULAR: '일반' }[cert];
+  return (
+    <span className={\`inline-flex items-center h-5 px-2 rounded-full
+      text-[10.5px] font-semibold border tabular-nums \${CERT_BADGE_CLASS[cert]}\`}>
+      {label}
+    </span>
+  );
+}
+
+// 잡곡·벼 두 탭 모두 import 해서 사용 (셀 안 hex 분기 ❌)
+import { CertBadge } from '@/components/badges/cert-badge';`}>
+          <div className="space-y-5">
+            <div>
+              <div className="text-[11px] text-slate-400 mb-2 font-semibold tracking-wider">3종 (좌→우: 유기/무농/일반)</div>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">유기농</span>
+                <span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">무농약</span>
+                <span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">일반</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[11px] text-slate-400 mb-2 font-semibold tracking-wider">테이블 셀 안 사용 예</div>
+              <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                <div className="grid grid-cols-[1.4fr_1fr_0.8fr_0.7fr] text-[12.5px] px-3 py-2 border-b border-slate-100 bg-slate-50/50 text-[10.5px] text-slate-400 font-medium">
+                  <span>품종</span><span>생산자</span><span>인증</span><span className="text-right">수량</span>
+                </div>
+                <div className="grid grid-cols-[1.4fr_1fr_0.8fr_0.7fr] text-[12.5px] px-3 py-2 border-b border-slate-50 items-center">
+                  <span className="text-slate-700">검정보리</span>
+                  <span className="text-slate-500">김재훈</span>
+                  <span><span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">유기농</span></span>
+                  <span className="text-right tabular-nums font-semibold text-slate-700">200kg</span>
+                </div>
+                <div className="grid grid-cols-[1.4fr_1fr_0.8fr_0.7fr] text-[12.5px] px-3 py-2 border-b border-slate-50 items-center">
+                  <span className="text-slate-700">귀리</span>
+                  <span className="text-slate-500">박철수</span>
+                  <span><span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">무농약</span></span>
+                  <span className="text-right tabular-nums font-semibold text-slate-700">108kg</span>
+                </div>
+                <div className="grid grid-cols-[1.4fr_1fr_0.8fr_0.7fr] text-[12.5px] px-3 py-2 items-center">
+                  <span className="text-slate-700">기장</span>
+                  <span className="text-slate-500">박철수</span>
+                  <span><span className="inline-flex items-center h-5 px-2 rounded-full text-[10.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">일반</span></span>
+                  <span className="text-right tabular-nums font-semibold text-slate-700">30kg</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-[11.5px] text-red-900 leading-relaxed">
+              <strong>금지</strong> — 셀 안에서 인증값별로 <code className="font-mono bg-white px-1 rounded border border-red-200">유기농 → #8dc540</code>, <code className="font-mono bg-white px-1 rounded border border-red-200">무농약 → #00a2e8</code> 같이 hex 분기하지 말 것.
+              반드시 <code className="font-mono bg-white px-1 rounded border border-red-200">CERT_BADGE_CLASS</code> 상수 import.
+            </div>
+          </div>
+        </Card>
       </Section>
 
       {/* 11. List Page Pattern */}
@@ -779,33 +850,369 @@ const [adminOpen, setAdminOpen] = useState(active.startsWith('/admin/'));`}>
 
               {/* 테이블 축약 */}
               <div className="mt-3 bg-white border border-slate-200 rounded-lg overflow-hidden">
-                <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
-                  <svg className="w-3 h-3 text-slate-400 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg>
-                  <span className="text-[12.5px] font-bold text-slate-900">검정보리</span>
-                  <span className="text-[10px] text-slate-400">2종</span>
-                  <span className="flex-1"></span>
-                  <span className="text-[12.5px] font-bold tabular-nums">260kg</span>
+                {/* 펼친 그룹 — 묶음 컨테이너 */}
+                <div className="bg-slate-50/60 ring-1 ring-inset ring-slate-200/70 border-b border-slate-200">
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    <svg className="w-3 h-3 text-slate-400 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m9 18 6-6-6-6"/></svg>
+                    <span className="text-[12.5px] font-bold text-slate-900">검정보리</span>
+                    <span className="text-[10px] text-slate-400">2종</span>
+                    <span className="flex-1"></span>
+                    <span className="text-[12.5px] font-bold tabular-nums text-slate-900">260kg</span>
+                  </div>
+                  <div className="px-3 py-2 border-t border-slate-200/60 flex items-center gap-3 text-[12.5px]">
+                    <span className="w-3 flex justify-center"><span className="w-2 h-px bg-slate-300" /></span>
+                    <span className="flex-1 text-slate-700"><span className="text-[10.5px] text-slate-400 mr-1.5">규격</span>5kg × 40포</span>
+                    <span className="w-24 text-slate-500">김재훈</span>
+                    <span className="w-32 font-mono text-[11px] text-slate-500">25-MG-21-001</span>
+                    <span className="w-16 text-right tabular-nums text-slate-600">40포</span>
+                    <span className="w-16 text-right font-semibold tabular-nums text-slate-700">200kg</span>
+                  </div>
+                  <div className="px-3 py-2 border-t border-slate-200/60 flex items-center gap-3 text-[12.5px]">
+                    <span className="w-3 flex justify-center"><span className="w-2 h-px bg-slate-300" /></span>
+                    <span className="flex-1 text-slate-700"><span className="text-[10.5px] text-slate-400 mr-1.5">규격</span>1kg × 60포</span>
+                    <span className="w-24 text-slate-500">김재훈</span>
+                    <span className="w-32 font-mono text-[11px] text-slate-500">25-MG-21-004</span>
+                    <span className="w-16 text-right tabular-nums text-slate-600">60포</span>
+                    <span className="w-16 text-right font-semibold tabular-nums text-slate-700">60kg</span>
+                  </div>
                 </div>
-                <div className="px-3 py-2 border-l-2 border-primary/40 bg-slate-50/30 flex items-center gap-3 text-[12.5px]">
+                {/* 낱개 행 — single (그룹 컨테이너 밖) */}
+                <div className="px-3 py-2 flex items-center gap-3 text-[12.5px] hover:bg-slate-50">
                   <span className="w-3"></span>
-                  <span className="flex-1 text-slate-700">5kg × 40포</span>
-                  <span className="w-24 text-slate-500">김재훈</span>
-                  <span className="w-32 font-mono text-[11px] text-slate-500">25-MG-21-001</span>
-                  <span className="w-16 text-right tabular-nums">40포</span>
-                  <span className="w-16 text-right font-semibold tabular-nums">200kg</span>
-                </div>
-                <div className="px-3 py-2 border-l-2 border-primary/40 bg-slate-50/30 flex items-center gap-3 text-[12.5px]">
-                  <span className="w-3"></span>
-                  <span className="flex-1 text-slate-700">1kg × 60포</span>
-                  <span className="w-24 text-slate-500">김재훈</span>
-                  <span className="w-32 font-mono text-[11px] text-slate-500">25-MG-21-004</span>
-                  <span className="w-16 text-right tabular-nums">60포</span>
-                  <span className="w-16 text-right font-semibold tabular-nums">60kg</span>
+                  <span className="flex-1 text-slate-700">기장 <span className="text-[10.5px] text-slate-400 ml-1.5">2.5kg × 12포</span></span>
+                  <span className="w-24 text-slate-500">박철수</span>
+                  <span className="w-32 font-mono text-[11px] text-slate-500">25-MG-19-002</span>
+                  <span className="w-16 text-right tabular-nums text-slate-600">12포</span>
+                  <span className="w-16 text-right font-semibold tabular-nums text-slate-900">30kg</span>
                 </div>
               </div>
             </div>
           </div>
         </Card>
+      </Section>
+
+      {/* ====================================================== */}
+      {/*  12. Voice & Tone                                       */}
+      {/* ====================================================== */}
+      <Section id="voice" title="12. Voice & Tone" subtitle="버튼 카피 · 빈 상태 메시지 · 섹션 라벨 표기 규칙 (§7)">
+        <Card title="원칙">
+          <ul className="space-y-2 text-[12.5px] text-slate-700 leading-relaxed">
+            <li>· <strong>반말 금지, 친절한 존댓말</strong>. "~하세요", "~입니다" 기본.</li>
+            <li>· <strong>전문용어 유지</strong>. 도정·LOT·원물·수율 등 도메인 용어는 그대로. 과하게 풀어쓰지 않음.</li>
+            <li>· <strong>숫자 우선</strong>. 설명보다 숫자(건수·kg·%)를 먼저 보여주는 게 사용자에게 더 빠르게 읽힘.</li>
+            <li>· <strong>이모지 금지</strong>. 의미 전달은 lucide 아이콘으로.</li>
+          </ul>
+        </Card>
+
+        <Card title="버튼 카피 — Good / Bad">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr className="border-b border-slate-200 text-left">
+                <th className="py-2 text-[10.5px] font-bold uppercase tracking-wider text-emerald-700 w-1/2">✅ Good</th>
+                <th className="py-2 text-[10.5px] font-bold uppercase tracking-wider text-red-600 w-1/2">❌ Bad</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-700">
+              {[
+                ['+ 포장하기', '포장 추가 / Package'],
+                ['+ 매입 등록', '입고 등록 (혼용 X)'],
+                ['+ 도정 시작', '도정 추가 / Start Milling'],
+                ['저장', 'Save / 적용'],
+                ['초기화', '리셋 (영어 지양)'],
+                ['취소', '닫기 (의도가 다름)'],
+              ].map((r, i) => (
+                <tr key={i} className="border-b border-slate-100 last:border-b-0">
+                  <td className="py-2 pr-4 font-medium text-slate-800">{r[0]}</td>
+                  <td className="py-2 text-slate-500">{r[1]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card title="빈 상태 메시지">
+          <div className="space-y-3">
+            {[
+              { ctx: '등록된 데이터 없음', msg: '아직 등록된 벼 원물재고가 없어요.', tone: 'slate' },
+              { ctx: '필터 결과 없음', msg: '조건에 맞는 결과가 없어요. 필터를 바꿔보세요.', tone: 'slate' },
+              { ctx: '데이터 로딩 에러', msg: '불러오지 못했어요. 잠시 후 다시 시도해주세요.', tone: 'red' },
+              { ctx: '권한 없음', msg: '이 정보를 볼 수 있는 권한이 없어요.', tone: 'amber' },
+            ].map((r, i) => (
+              <div key={i} className="flex items-start gap-3 py-2 border-b border-slate-100 last:border-b-0">
+                <span className="w-32 shrink-0 text-[11px] text-slate-400 pt-0.5">{r.ctx}</span>
+                <span className="text-[12.5px] text-slate-800 leading-relaxed">{r.msg}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11.5px] text-amber-900 leading-relaxed">
+            <strong>주의</strong> — "검색 결과가 없습니다." 같은 사무적인 한 줄은 사용 금지. 반드시 아이콘 + 친근 카피(<code className="font-mono">EmptyState</code> 컴포넌트) 형태로.
+          </div>
+        </Card>
+
+        <Card title="섹션 그룹 라벨 (PC Sidebar)">
+          <div className="flex flex-wrap gap-3 items-center">
+            {['MAIN MENU', 'MANAGEMENT', 'WORKFLOW', 'INSIGHTS'].map(t => (
+              <span key={t} className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t}</span>
+            ))}
+          </div>
+          <p className="mt-3 text-[11.5px] text-slate-500 leading-relaxed">
+            대문자 영문 + <code className="font-mono">tracking-wider</code>. 한글 라벨 사용 금지 (시각 위계 약해짐).
+          </p>
+        </Card>
+
+        <Card title="공지 / 안내 작성 규칙 (마퀴 배너)">
+          <ul className="space-y-2 text-[12.5px] text-slate-700 leading-relaxed">
+            <li>· 명사 종결 (<span className="text-emerald-700 font-semibold">"잡곡관리 기능 개발"</span> ✅ / <span className="text-red-600">"개발되었습니다"</span> ❌)</li>
+            <li>· 날짜 표기: <code className="font-mono text-[11px] bg-slate-100 px-1 rounded">[MM-DD]</code> 대괄호</li>
+            <li>· 한 항목 32자 이내, 항목 최대 5개</li>
+            <li>· 이모지 금지</li>
+          </ul>
+        </Card>
+      </Section>
+
+      {/* ====================================================== */}
+      {/*  13. Dialog Shell                                       */}
+      {/* ====================================================== */}
+      <Section id="dialog" title="13. Dialog Shell" subtitle="shadcn Dialog 위 공통 shell · 검색 · 입고/도정/출고/포장 (§4.4 / §4.6)">
+        <Card title="공통 구조">
+          <div className="grid md:grid-cols-2 gap-4 text-[12.5px]">
+            <div>
+              <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">레이아웃</div>
+              <ul className="space-y-1.5 text-slate-700 list-disc list-inside">
+                <li>최대 너비: <code className="font-mono text-[11px]">max-w-2xl</code> (입고), <code className="font-mono text-[11px]">max-w-md</code> (검색)</li>
+                <li>패딩: <code className="font-mono text-[11px]">p-6</code>, 헤더↔본문 <code className="font-mono text-[11px]">space-y-4</code></li>
+                <li>본문 그리드: <code className="font-mono text-[11px]">grid grid-cols-2 gap-3</code>, 한 줄 필드는 <code className="font-mono text-[11px]">col-span-2</code></li>
+                <li>푸터: <code className="font-mono text-[11px]">flex justify-end gap-2 pt-4 border-t</code></li>
+              </ul>
+            </div>
+            <div>
+              <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">버튼·색</div>
+              <ul className="space-y-1.5 text-slate-700 list-disc list-inside">
+                <li>저장 = <code className="font-mono text-[11px]">{`<Button>`}</code> 기본 (primary). hex 강제 ❌</li>
+                <li>취소 = <code className="font-mono text-[11px]">{`<Button variant="ghost">`}</code></li>
+                <li>삭제 = <code className="font-mono text-[11px]">{`<Button variant="destructive">`}</code></li>
+                <li>강조 박스(요약/수율/예상): <code className="font-mono text-[11px]">bg-blue-50 border-blue-200</code> — 단, 푸터 버튼은 항상 기본 primary</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="A. 입고/도정/출고 — 일반 Form Dialog" note="잡곡 add-misc-stock-dialog 기준">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 max-w-[520px] mx-auto overflow-hidden">
+              <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+                <h3 className="text-[16px] font-bold text-slate-900">원물 매입 등록</h3>
+                <p className="text-[12px] text-slate-500 mt-1">생산자에게서 매입한 원물재고를 등록합니다.</p>
+              </div>
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">매입 유형</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[['위탁도정', true],['농가도정', false],['발아용', false]].map(([t, on]) => (
+                      <button key={t} className={`h-9 rounded-md text-[12px] font-semibold border ${on ? 'bg-blue-50 border-blue-200 text-primary' : 'bg-white border-slate-200 text-slate-600'}`}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] text-slate-500 mb-1 block">품종</label>
+                    <div className="h-9 px-3 rounded-md border border-slate-200 bg-white flex items-center text-[12.5px] text-slate-700">검정보리</div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 mb-1 block">생산자</label>
+                    <div className="h-9 px-3 rounded-md border border-slate-200 bg-white flex items-center text-[12.5px] text-slate-700">김재훈</div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 mb-1 block">원물 중량 (kg)</label>
+                    <div className="h-9 px-3 rounded-md border border-slate-200 bg-white flex items-center text-[12.5px] text-slate-700 tabular-nums">1,200</div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 mb-1 block">도정 수율 (%)</label>
+                    <div className="h-9 px-3 rounded-md border border-slate-200 bg-blue-50 flex items-center text-[12.5px] text-primary font-semibold tabular-nums">68.0 <span className="text-[10px] text-slate-400 font-normal ml-1.5">자동</span></div>
+                  </div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-[11.5px] text-blue-900">
+                  <strong>예상 산출</strong> · 약 <span className="font-bold tabular-nums">816kg</span> (= 원물 1,200kg × 수율 68%)
+                </div>
+              </div>
+              <div className="px-6 py-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/40">
+                <button className="h-8 px-4 text-[12.5px] font-medium text-slate-600 hover:bg-slate-100 rounded-md">취소</button>
+                <button className="h-8 px-4 text-[12.5px] font-semibold bg-primary text-white rounded-md hover:bg-blue-700">저장</button>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="B. 검색 다이얼로그" note="헤더 [검색] 버튼으로 열림 · max-w-md">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 max-w-[420px] mx-auto overflow-hidden">
+              <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+                <h3 className="text-[14.5px] font-bold text-slate-900">검색 / 필터</h3>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div>
+                  <label className="text-[11px] text-slate-500 mb-1 block">연도</label>
+                  <div className="flex gap-1.5">
+                    {['전체','2025','2024','2023'].map((y, i) => (
+                      <button key={y} className={`h-7 px-2.5 text-[11.5px] font-semibold rounded-md border ${i===1 ? 'bg-blue-50 border-blue-200 text-primary' : 'bg-white border-slate-200 text-slate-600'}`}>{y}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 mb-1 block">품종</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['검정보리','귀리','기장','수수'].map(v => (
+                      <span key={v} className="inline-flex items-center h-6 px-2 rounded-full text-[11px] text-slate-600 bg-white border border-slate-200">{v}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 mb-1 block">상태</label>
+                  <div className="flex gap-1.5">
+                    {['전체','보유','출고','소진'].map((s, i) => (
+                      <button key={s} className={`h-7 px-2.5 text-[11.5px] font-semibold rounded-md border ${i===1 ? 'bg-blue-50 border-blue-200 text-primary' : 'bg-white border-slate-200 text-slate-600'}`}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
+                <button className="text-[11.5px] font-medium text-slate-500 hover:text-slate-700">초기화</button>
+                <div className="flex gap-2">
+                  <button className="h-8 px-3 text-[12px] font-medium text-slate-600 hover:bg-slate-100 rounded-md">취소</button>
+                  <button className="h-8 px-3 text-[12px] font-semibold bg-primary text-white rounded-md hover:bg-blue-700">적용 <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-white/20 text-[10px] font-bold">3</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="C. Confirm Dialog (삭제 / 마감 해제)">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 max-w-[400px] mx-auto p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-[14.5px] font-bold text-slate-900">선택한 도정 작업을 삭제할까요?</h3>
+                  <p className="text-[12px] text-slate-500 mt-1 leading-relaxed">삭제하면 투입된 원물 톤백이 재고로 복원되고, 이 작업으로 생성된 포장 내역은 삭제되지 않아요.</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button className="h-8 px-3 text-[12px] font-medium text-slate-600 hover:bg-slate-100 rounded-md">취소</button>
+                <button className="h-8 px-3 text-[12px] font-semibold bg-red-600 text-white rounded-md hover:bg-red-700">삭제</button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </Section>
+
+      {/* ====================================================== */}
+      {/*  14. Floating Cart                                      */}
+      {/* ====================================================== */}
+      <Section id="fab" title="14. Floating Cart (선택 누적 액션)" subtitle="원물재고 다중 선택 → 도정 투입 누적 · 우하단 fixed · 벼 탭 전용 (잡곡은 미사용)">
+        <Card title="Spec">
+          <div className="grid md:grid-cols-2 gap-4 text-[12.5px]">
+            <div>
+              <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">포지션 & 크기</div>
+              <ul className="space-y-1.5 text-slate-700 list-disc list-inside">
+                <li>위치: <code className="font-mono text-[11px]">fixed bottom-6 right-6</code> (모바일 = bottom-20)</li>
+                <li>높이: <code className="font-mono text-[11px]">h-12</code>, 가로 가변 (콘텐츠에 맞춤)</li>
+                <li>radius: <code className="font-mono text-[11px]">rounded-full</code></li>
+                <li>shadow: <code className="font-mono text-[11px]">shadow-[0_8px_24px_rgba(37,99,235,0.30)]</code></li>
+              </ul>
+            </div>
+            <div>
+              <div className="text-[10.5px] font-bold text-slate-400 tracking-wider uppercase mb-2">색 · 카운트 배지</div>
+              <ul className="space-y-1.5 text-slate-700 list-disc list-inside">
+                <li>배경: <code className="font-mono text-[11px]">bg-primary hover:bg-blue-700</code> — hex 강제 ❌</li>
+                <li>카운트: <code className="font-mono text-[11px]">min-w-5 h-5 px-1.5 rounded-full bg-white/20 text-white text-[11px] font-bold tabular-nums</code></li>
+                <li>전환: <code className="font-mono text-[11px]">transition-all 200ms ease-out</code></li>
+                <li>0개 = 숨김 (<code className="font-mono text-[11px]">opacity-0 pointer-events-none</code>)</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Live Preview" code={`// raw-stocks/floating-milling-cart.tsx
+<button
+  className="fixed bottom-6 right-6 z-40 h-12 px-5
+    inline-flex items-center gap-2.5 rounded-full
+    bg-primary hover:bg-blue-700 text-white
+    shadow-[0_8px_24px_rgba(37,99,235,0.30)]
+    transition-all duration-200 ease-out
+    motion-reduce:transition-none"
+  onClick={openMillingSheet}
+>
+  <ShoppingBag className="w-4 h-4" />
+  <span className="text-[13px] font-semibold">도정 투입</span>
+  <span className="min-w-5 h-5 px-1.5 rounded-full bg-white/20
+    text-[11px] font-bold tabular-nums">
+    {selectedCount}
+  </span>
+  <span className="text-[11.5px] text-white/80 tabular-nums">
+    {totalKg.toLocaleString()}kg
+  </span>
+</button>`}>
+          <div className="relative h-[260px] bg-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+            {/* 가짜 테이블 배경 */}
+            <div className="absolute inset-0 p-4 space-y-1.5">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="h-7 rounded bg-white border border-slate-200 flex items-center gap-3 px-3 text-[11.5px] text-slate-300">
+                  <div className="w-3.5 h-3.5 rounded border-2 border-slate-300"></div>
+                  <div className="flex-1">···</div>
+                </div>
+              ))}
+            </div>
+            {/* Floating Cart */}
+            <button className="absolute bottom-5 right-5 h-12 px-5 inline-flex items-center gap-2.5 rounded-full bg-primary hover:bg-blue-700 text-white shadow-[0_8px_24px_rgba(37,99,235,0.30)] transition-all">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span className="text-[13px] font-semibold">도정 투입</span>
+              <span className="min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-white/20 text-[11px] font-bold tabular-nums">3</span>
+              <span className="text-[11.5px] text-white/80 tabular-nums">2,460kg</span>
+            </button>
+          </div>
+        </Card>
+
+        <Card title="Bottom Sheet (열림 상태)">
+          <div className="bg-slate-100 rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-t-2xl shadow-lg border border-slate-200 max-w-[520px] mx-auto overflow-hidden">
+              <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-[14.5px] font-bold text-slate-900">도정 투입 카트</h3>
+                  <p className="text-[11.5px] text-slate-500 mt-0.5">선택한 톤백 3개 · 합계 <span className="tabular-nums font-semibold">2,460kg</span></p>
+                </div>
+                <button className="text-slate-400 hover:text-slate-700">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div className="px-5 py-3 space-y-2 max-h-[160px] overflow-auto">
+                {[
+                  ['25-RC-21-001', '신동진', '820kg'],
+                  ['25-RC-21-002', '신동진', '820kg'],
+                  ['25-RC-21-003', '신동진', '820kg'],
+                ].map(([lot, v, w]) => (
+                  <div key={lot} className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-slate-50 border border-slate-100">
+                    <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{lot}</span>
+                    <span className="text-[12px] text-slate-700 flex-1">{v}</span>
+                    <span className="tabular-nums text-[12px] font-semibold text-slate-700">{w}</span>
+                    <button className="text-slate-300 hover:text-red-500">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/40">
+                <button className="h-8 px-3 text-[12px] font-medium text-slate-600 hover:bg-slate-100 rounded-md">전체 비우기</button>
+                <button className="h-8 px-3 text-[12px] font-semibold bg-primary text-white rounded-md hover:bg-blue-700">도정 시작 →</button>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 text-[11.5px] text-blue-900 leading-relaxed">
+          <strong>도메인 메모</strong> — 잡곡 탭은 매입 시점에 이미 도정 완료 상태로 들어오므로 floating cart가 필요 없습니다. 벼 탭에서만 사용 — 톤백 단위 원물을 여러 개 선택해 한 번에 도정에 투입하는 워크플로우.
+        </div>
       </Section>
 
       <footer className="mt-16 pt-8 border-t border-slate-200 text-center text-[11.5px] text-slate-400">

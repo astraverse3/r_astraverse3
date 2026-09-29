@@ -386,9 +386,10 @@ type InventoryRow = {
 - **단일 테이블**: 그룹 헤더·서브행·낱개 행을 모두 **하나의 그리드(같은 컬럼 배치)** 안에 흘림. 그룹과 낱개가 어색하게 분리되지 않도록.
 - **공통 그리드**: `grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]` (품종 / 규격 / 개수 / 생산자 / 로트 / 날짜 / 합계)
 - **행 높이 44px 고정**: 낱개 행 · 그룹 헤더 행 · 서브행이 **모두 같은 높이**. 그룹 헤더를 크게 만들지 않는다.
-- **펼쳐진 그룹은 한 덩어리**: 그룹 헤더 + 서브행에 **같은 `bg-slate-100`** 을 주고, 묶음 위쪽에 `border-t border-slate-200/80`. 시안톤(primary) 강조 X.
-- 🔴 **묶음 안에서도 행 구분선은 유지한다** — `border-b border-slate-200/70`.
-  묶음톤 위에서 기본 `border-slate-100`은 보이지 않으므로 **색을 `/70`으로 올려서** 준다.
+- **펼쳐진 그룹 (2026-09-29 개정)**: 그룹 헤더는 **흰색**, 서브행만 **`bg-slate-50/40`**, 묶음 끝은 마지막 서브행의 **`border-b border-slate-200`**. 시안톤(primary) 강조 X.
+  ~~그룹 헤더 + 서브행에 같은 `bg-slate-100`~~ — 폐기(아래 2026-09-29 블록).
+- 🔴 **묶음 안에서도 행 구분선은 유지한다** — 흰 톤 위 기본 선 `border-slate-100`(2026-09-29 개정).
+  ~~묶음톤 위에서 `border-slate-200/70`~~ — 묶음톤이 없어져 기본 선이 다시 보인다.
   > **2026-09-04 개정 — 초안을 뒤집었다.** 초안은 「내부 경계를 `border-b-0`으로 지운다」였으나,
   > 실화면에서 **행이 구분되지 않는 회색 덩어리**가 됐다(제품재고 9줄 그룹에서 먼저 드러났고,
   > 이어서 원물재고·생산자관리도 같은 판단으로 되돌렸다).
@@ -397,7 +398,23 @@ type InventoryRow = {
   > ⚠️ 초안의 `bg-slate-50/75`는 흰 배경과 **밝기 차이가 2%**라 실화면에서 묶음으로 읽히지 않았다.
   > `bg-slate-100`(약 5.5%)으로 확정 — 실화면 확인을 거친 값이다.
   > `ring-1 ring-inset ring-slate-200/70`은 쓰지 않는다 → `border-t`.
-- **접힌 그룹은 흰 배경 금지**: `bg-slate-50` + `border-y border-slate-200/80`. 낱개 행과 구분돼야 한다.
+
+  > **2026-09-29 개정 — 밝은 톤 (A안).** 정본 `docs/handoff/list-standard/밝은톤-개정-2026-09-29.md`.
+  > 사용자 「펼치면 행이 더 어두워진다 — 목록 전체가 탁하다」. **펼칠수록 어두워지던 목록을 전부 흰 바탕으로 올린다.**
+  >
+  > | 요소 | 이전 | 개정 |
+  > |---|---|---|
+  > | 컬럼 헤더 | `bg-slate-50` · `text-foreground` | `bg-white` · `text-muted-foreground`(slate-500) |
+  > | 접힌 그룹 | `bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80` | `bg-white hover:bg-slate-50` |
+  > | 펼친 그룹 헤더 | `bg-slate-100 hover:bg-slate-200/70` | `bg-white hover:bg-slate-50` · 셰브론 `text-slate-900` |
+  > | 서브행 | `bg-slate-100 hover:bg-slate-200/70 border-slate-200/70` | `bg-slate-50/40 hover:bg-slate-50 border-slate-100` |
+  > | 묶음 끝 | 마지막 서브행 `border-slate-200/80` | 마지막 서브행 `border-slate-200` |
+  >
+  > ⚠️ 위 2026-09-04의 「`bg-slate-50/75`는 흰색과 2% 차이라 묶음으로 안 읽혔다」와 충돌하지 않는다 — 그때는 헤더+서브행 전체를
+  > 옅은 톤으로 묶고 경계선이 없었다. 이번엔 배경에 묶음을 맡기지 않는다: **묶음 끝 `slate-200` 선**과 **흰 그룹 헤더 ↔ 옅은 서브행의 대비**가 묶음을 만든다.
+  > 코드 반영 `08dacfc` (2026-09-29).
+- **접힌 그룹 (2026-09-29 개정)**: `bg-white hover:bg-slate-50`. 낱개 행과는 **셰브론 + 굵은 품종명 + `—`/`N종 규격` 요약 셀**로 구분된다.
+  ~~접힌 그룹은 흰 배경 금지(`bg-slate-50`)~~ — 폐기. 아래 「반복 컬럼 비우기가 배경보다 효과적」과 같은 원리.
 - **단일 건 그룹은 그룹을 만들지 않는다**: 하위가 1건이면 헤더·토글 없이 낱개 흰 행(`bg-white hover:bg-slate-50`)으로 흘린다.
 - **서브행에서 그룹 키와 중복되는 컬럼은 비운다**: 그룹이 이미 말해 준 값(년도·작목반·인증번호 등)을 서브행에서 반복하지 않는다.
   **묶음을 인지시키는 데는 배경색보다 이쪽이 훨씬 효과적이다.**
@@ -407,8 +424,8 @@ type InventoryRow = {
 
 ```tsx
 <div className="grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
-                h-10 items-center px-3 text-sm font-medium text-foreground
-                bg-slate-50 border-b border-slate-200">
+                h-10 items-center px-3 text-sm font-medium text-muted-foreground
+                bg-white border-b border-slate-200">  {/* 2026-09-29 개정 */}
   <span>품종</span><span>규격</span><span>개수</span>
   <span>생산자</span><span>로트</span><span>날짜</span>
   <span className="text-right">합계</span>
@@ -419,8 +436,9 @@ type InventoryRow = {
 > Typography의 **Micro Bold(섹션 그룹 헤더)** 토큰이었다 — 영문 라벨("MAIN MENU")용을 한글 헤더에 쓰고 있었다.
 > `uppercase`·`tracking-wider`는 한글에 아무 효과가 없고 글자만 10.5px로 작아진다.
 >
-> **`text-slate-900`이 아니라 `text-foreground`인 이유**: 두 값은 같지만(#0f172a) 토큰 방향(§22)을 보존한다.
-> 스펙에 slate-900으로 적힌 것은 **렌더 값 표기**이며, 새 하드코딩을 넣으라는 뜻이 아니다.
+> ~~**`text-slate-900`이 아니라 `text-foreground`인 이유**: 두 값은 같지만(#0f172a) 토큰 방향(§22)을 보존한다.~~
+> **2026-09-29 개정 → `text-muted-foreground`(slate-500)**: 헤더 배경이 흰색이 되면 본문과 구분할 수단이 글자색뿐이다.
+> 여전히 **토큰**이므로 §22 토큰 방향은 지켜진다.
 
 #### 4.2.4 낱개 행 (`type: 'single'`)
 
@@ -447,18 +465,17 @@ type InventoryRow = {
 
 같은 그리드·같은 높이(44px). 좌측에 `▶/▼` 토글, 합계만 굵게 강조. 규격·생산자·로트·날짜 컬럼은 `—` (그룹 단계에선 단일 값이 없음).
 
-접힘/펼침의 배경이 다르다 — 접힘은 `bg-slate-50`, 펼침은 묶음톤 `bg-slate-100`.
+**접힘·펼침 모두 `bg-white`** (2026-09-29 개정 — 전엔 접힘 `bg-slate-50` / 펼침 `bg-slate-100`로 갈랐다). 펼침은 셰브론만 진하게.
 
 ```tsx
+<div className="bg-white border-t border-slate-100">
 <button onClick={toggle}
-  className={`w-full grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
+  className="w-full grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
              h-11 items-center px-3 text-sm text-left transition-colors cursor-pointer
-             ${isOpen
-               ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0'
-               : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'}`}>
+             hover:bg-slate-50">
   <span className="font-bold text-slate-900 flex items-center gap-2">
     <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform
-      ${isOpen ? 'rotate-90 text-slate-700' : 'text-slate-400'}`} />
+      ${isOpen ? 'rotate-90 text-slate-900' : 'text-slate-400'}`} />
     {it.variety}
   </span>
   <span className="text-slate-400 text-[11.5px]">{it.rows.length}종 규격</span>
@@ -470,17 +487,19 @@ type InventoryRow = {
   <span className="text-slate-300">—</span>
   <span className="tabular-nums font-bold text-slate-900 text-right">{it.total}kg</span>
 </button>
+{/* 펼치면 여기 아래로 §4.2.6 서브행 */}
+</div>
 ```
 
 > 하위가 **1건뿐이면 이 헤더를 렌더하지 않는다.** 토글할 것이 없는 그룹은 만들지 않고 §4.2.4 낱개 행으로 흘린다.
 
 #### 4.2.6 펼쳐진 그룹의 일체감 처리
 
-**그룹 헤더와 서브행에 같은 `bg-slate-100`** 을 주어 "한 묶음"임을 표현한다.
-묶음 **위쪽에** `border-t border-slate-200/80`을 두어 앞 행과 끊는다.
+**2026-09-29 개정**: 그룹 헤더는 흰색, **서브행만 `bg-slate-50/40`**, 묶음 끝은 **마지막 서브행 `border-b border-slate-200`**.
+서브행 사이 선은 흰 톤 위 기본 `border-slate-100`. 들여쓰기 `─`가 소속을 보여준다.
+~~그룹 헤더와 서브행에 같은 `bg-slate-100`, 서브행 `border-b border-slate-200/70`~~ — 폐기(§4.2.2 2026-09-29 블록).
 
-🔴 **묶음 안의 행 구분선은 지우지 않는다** — 서브행에 `border-b border-slate-200/70`.
-묶음톤 위에서 기본 `border-slate-100`은 보이지 않으므로 색을 한 단 올려서 준다.
+🔴 **묶음 안의 행 구분선은 지우지 않는다** — 2026-09-04 결정 유지(아래). 선 색만 기본값으로 돌아왔다.
 
 > **2026-09-04 — 초안을 뒤집었다.** 초안은 「내부 경계를 `border-b-0`으로 지운다.
 > 가로선이 남으면 묶음이 다시 잘려 보인다」였다. 실제로는 반대였다:
@@ -488,17 +507,17 @@ type InventoryRow = {
 > **묶음은 배경색이, 행 구분은 선이 한다.** 하나로 두 가지를 하려다 둘 다 잃었다.
 > 적용: `package-row.tsx` · `stock-table-row.tsx` · `misc-stock-table-row.tsx` · `farmer-list.tsx`.
 
-**서브행에도 호버를 준다** — `hover:bg-slate-200/70`(묶음톤보다 한 단 어둡게).
-🔴 묶음톤 위에 **더 밝은** 호버·배경을 얹으면 얼룩으로 보인다. 그룹 헤더의 호버도 펼침 상태에서는
-`hover:bg-slate-50`이 아니라 `hover:bg-slate-200/70`으로 분기해야 한다.
+**서브행에도 호버를 준다** — `hover:bg-slate-50`.
+🔴 「바탕보다 **밝은** 호버는 얼룩」 원칙은 그대로다. 2026-09-29 개정으로 모든 바탕이 흰색·`slate-50/40`이 되어
+호버는 **`hover:bg-slate-50` 하나로 통일**되고, 펼침/접힘 호버 분기(`hover:bg-slate-200/70`)는 **삭제**됐다.
 
 ```tsx
 {/* 그룹 헤더 행 (위 4.2.5, isOpen=true) */}
 {isOpen && it.rows.map((r, i) => (
   <div className={`grid grid-cols-[1.1fr_0.7fr_0.7fr_1fr_1.2fr_0.9fr_0.9fr]
                   h-11 items-center px-3 text-sm text-slate-600
-                  bg-slate-100 hover:bg-slate-200/70 border-b-0
-                  ${i === it.rows.length - 1 ? 'border-b border-slate-200/80' : ''}`}>
+                  bg-slate-50/40 hover:bg-slate-50 border-t border-slate-100
+                  ${i === it.rows.length - 1 ? 'border-b border-slate-200' : ''}`}>
     <span className="flex items-center gap-2 pl-5">
       <span className="w-2 h-px bg-slate-300" />
       <span className="text-[12.5px] text-slate-400">규격</span>

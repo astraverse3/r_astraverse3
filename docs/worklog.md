@@ -2,6 +2,20 @@
 
 ## 2026-09-29
 
+### 목록 표준 밝은 톤 개정 — 디자이너 A안 (펼치면 어두워지던 목록을 흰 바탕으로)
+
+커밋 `08dacfc`(코드) + 기준서·문서 커밋.
+정본 `docs/handoff/list-standard/밝은톤-개정-2026-09-29.md`, 계획서 `docs/plan/plan-목록-밝은톤.md`, 보고서 `docs/report/report-목록-밝은톤-2026-09-29.md`.
+발단: 디자인 3건 직후 사용자 「그룹 펼치면 행이 더 어두워지는데 더 밝아지는 게 낫지 않아?」 → 기준(묶음톤 slate-100) 설명 → 디자이너 개정.
+
+- `TableHead` 글자 `text-muted-foreground` · 헤더 행 `bg-white hover:bg-transparent` **12곳**(🔴 개정 문서는 7곳 — 빠진 5곳 사용자 승인) + grid 헤더 2곳
+- 그룹 헤더 4화면 분기 삭제 → `bg-white hover:bg-slate-50`, 펼침 셰브론 `text-slate-900`
+- 서브행 4화면 `bg-slate-50/40 hover:bg-slate-50`, 마지막 행 `border-slate-200` — `isLast` prop 2곳 신설. `StockTableRow`는 선 색을 한 곳에서만 고른다(자체 `border-slate-100`과 겹침)
+- 폐기 규칙 3개: 접힌 그룹 흰 배경 금지 · 펼친 묶음 slate-100 · 헤더 글자 text-foreground. 오늘 `c9c06e8`은 대체됨
+- 기준서 3개 개정(list-spec-instructions · README · handoff §4.2 — 09-04 블록은 이력 유지) · 디자이너 파일 2개 동봉
+
+검증 tsc 0 · `eslint .` 0/0 · test 512/512. 브라우저 확인 전.
+
 ### 디자인 간단 3건 — 헤더 호버 · 제품재고 접힌 그룹 · outline 회색
 
 커밋 `b1b68cc` · `c9c06e8` · `6d9f4f3`.

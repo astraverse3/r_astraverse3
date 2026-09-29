@@ -2,6 +2,10 @@
 
 시안: `handoff/list-standard/list-spec.html`
 
+> 🔴 **2026-09-29 밝은 톤 개정 반영** — 헤더·그룹·서브행 색은 [`밝은톤-개정-2026-09-29.md`](밝은톤-개정-2026-09-29.md)가 정본이다.
+> 폐기된 규칙: 「접힌 그룹 흰 배경 금지」 · 「펼친 그룹 = 헤더+서브행 `bg-slate-100`」 · 「헤더 글자 `text-foreground` 유지」.
+> 아래 표·코드·체크리스트는 개정값으로 고쳤다. 그리드·높이·패딩·폰트 크기는 그대로다. 코드 반영 `08dacfc`.
+
 ## 배경
 
 목록 테이블 11곳의 헤더/행 스펙과 펼침 그룹 표현이 전부 다르다. 헤더 폰트가 `text-sm`/`text-xs`/`text-[11px]`, 웨이트가 `bold`/`semibold`/`medium`, 좌우 패딩이 `px-1`/`px-2`/`px-3`/`px-5`로 섞여 있고, 펼침 그룹은 화면마다 색(시안톤 vs slate)과 서브행 처리가 다르다.
@@ -15,15 +19,15 @@
 
 | 항목 | 값 |
 | --- | --- |
-| 헤더 | 40px 높이 / 14px / `font-medium`(500) / `text-slate-900` / 좌측정렬 |
-| 헤더 배경 | `bg-slate-50` + 하단 `border-slate-200`, 호버 없음 |
+| 헤더 | 40px 높이 / 14px / `font-medium`(500) / `text-muted-foreground`(slate-500) / 좌측정렬 — 2026-09-29 개정 |
+| 헤더 배경 | `bg-white` + 하단 `border-slate-200`, 호버 없음 — 2026-09-29 개정 |
 | 본문 | 14px / `text-slate-700` |
 | 행 높이 | **44px 고정** — 그룹 헤더 행도 44px |
 | 좌우 패딩 | 12px (`px-3`) |
 | 행 구분 | 구분선만 (`border-b border-slate-100`) + 호버 `bg-slate-50`. 짝수행 음영 없음 |
 | 컬럼 폭 | `colgroup`에 **% 비율** + `table-layout:fixed`. 가로 스크롤 없음 |
-| 펼침 그룹 | 헤더+서브행 같은 `bg-slate-100` 묶음톤 (흰색 대비 5.5%) |
-| 접힌 그룹 | `bg-slate-50` + 상하 `border-slate-200/80`. **흰 배경 금지** |
+| 펼침 그룹 | 그룹 헤더 흰색, 서브행 `bg-slate-50/40`, 묶음 끝 `border-slate-200` — 2026-09-29 개정 |
+| 접힌 그룹 | `bg-white hover:bg-slate-50`. 낱개와는 셰브론·요약 셀로 구분 (2026-09-29 「흰 배경 금지」 폐기) |
 | 단일 건 그룹 | 그룹 헤더를 만들지 않고 낱개 흰 행으로 표시 |
 | `#00a2e8` | 펼침 그룹 2건만 삭제 — 의미색 29건은 범위 밖 |
 | 정렬 | **페이지별 현행 유지** — 이번 작업에서 손대지 않는다 |
@@ -35,19 +39,21 @@
 `components/ui/table.tsx`를 표준으로 올린다. 각 목록에서 개별 클래스로 덧붙이던 것을 걷어내는 것이 목적.
 
 ```
-TableHead: h-10 px-3 text-left align-middle font-medium text-foreground whitespace-nowrap
+TableHead: h-10 px-3 text-left align-middle font-medium text-muted-foreground whitespace-nowrap   (2026-09-29 개정)
 TableCell: h-11 px-3 py-0 align-middle whitespace-nowrap text-slate-700
 TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 ```
 
 - `Table`의 `text-sm`은 유지 → 헤더·본문 모두 14px 상속
 - **`TableCell`의 `p-2` → `px-3 py-0` + `h-11`** 로 교체. `p-2`가 남으면 높이 고정이 안 된다
-- 헤더 행: `<TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-transparent">`
+- 헤더 행: `<TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">` (2026-09-29 개정 — 전엔 `bg-slate-50`)
 - 정렬은 기본 `text-left`, 우측정렬 필요한 셀만 호출부에서 `text-right`
 - 체크박스·아이콘 전용 컬럼만 `px-1` 예외 허용
 - 2줄 셀이 필요한 행은 `h-11` 대신 `min-h-11 py-2`
 
 > **헤더는 사실상 `px-2` → `px-3` 하나만 바뀐다.** 스펙의 `text-slate-900`은 현행 기본값 `text-foreground`(#0f172a)와 같은 값이다 — 토큰 방향(§22)을 보존하기 위해 **`text-foreground`를 유지**한다. 시안에 slate-900으로 적은 것은 렌더 값 표기이며, 새 하드코딩을 넣으라는 뜻이 아니다. `TableCell`·`TableRow`는 실변경이 있다.
+>
+> **2026-09-29 개정**: 헤더 배경이 흰색이 되면 본문과 구분할 수단이 글자색뿐이라 `text-muted-foreground`(slate-500)로 바꾼다. 하드코딩이 아니라 **토큰**이므로 §22 토큰 방향은 그대로 지켜진다.
 
 ### 컬럼 폭
 
@@ -83,18 +89,18 @@ TableRow:  border-b border-slate-100 hover:bg-slate-50 transition-colors
 세 화면(생산자관리 / 원물재고 벼 / 원물재고 잡곡)의 펼침 표현을 **잡곡 방식**으로 맞춘다.
 
 ```tsx
-// 펼친 그룹 헤더
-<TableRow className="bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b-0 cursor-pointer">
+// ── 2026-09-29 밝은 톤 개정 (밝은톤-개정-2026-09-29.md §2-3·§2-4) ──
+// 그룹 헤더 — 접힘·펼침 분기 없음. 펼침 셰브론만 text-slate-900
+<TableRow className="bg-white hover:bg-slate-50 cursor-pointer">
 
-// 펼친 그룹 서브행 — 헤더와 같은 톤
-<TableRow className={`bg-slate-100 hover:bg-slate-200/70 border-b-0 ${isLast ? 'border-b border-slate-200/80' : ''}`}>
-
-// 접힌 그룹 헤더 — 흰 배경 금지
-<TableRow className="bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80 cursor-pointer">
+// 펼친 그룹 서브행 — 옅은 톤, 마지막 행에 묶음 끝선
+<TableRow className={`bg-slate-50/40 hover:bg-slate-50 ${isLast ? 'border-b border-slate-200' : ''}`}>
 
 // 단일 건 그룹 → 그룹 헤더 없이 낱개 행
 <TableRow className="bg-white hover:bg-slate-50">
 ```
+
+> 폐기(2026-09-29): 펼친 그룹 헤더·서브행 `bg-slate-100 hover:bg-slate-200/70` · 접힌 그룹 `bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80`.
 
 화면별 변경:
 
@@ -179,7 +185,7 @@ text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-sla
 
 함께 개정할 것:
 - §4.2 도입부 — 목록 표준규격 적용 사실과 상위 정본 경로 안내
-- §4.2.2 시각 원칙 — 행 44px, 묶음톤 `bg-slate-100` + `border-t`, 접힌 그룹 흰 배경 금지, 단일건 낱개 그룹
+- §4.2.2 시각 원칙 — 행 44px, ~~묶음톤 `bg-slate-100` + `border-t`, 접힌 그룹 흰 배경 금지~~ → 2026-09-29 개정: 그룹 흰색 · 서브행 `bg-slate-50/40` · 묶음 끝 `border-slate-200`, 단일건 낱개 그룹
 - §4.2.4/§4.2.5/§4.2.6 — `text-[12.5px]` → `text-sm`, `px-4 py-2.5` → `px-3 h-11`, 로트 `text-[11px]` → `text-[12.5px]`
 - §4.2.6 묶음 — `ring-1 ring-inset ring-slate-200/70` → `border-t border-slate-200/80`
 - §4.2.6 NOTE — 생산자관리에 `#00a2e8`이 잔존했고 R3에서 제거된 경위 기록. 그룹 헤더에 남기는 청록은 밑줄 하나뿐임을 명시
@@ -191,11 +197,13 @@ text-[10.5px] uppercase tracking-wider text-slate-400 font-bold px-4 py-2 bg-sla
 ## 검수 체크리스트
 
 - [ ] 모든 목록의 헤더 높이가 40px, 본문·그룹 헤더 행이 모두 44px로 실측되는가 (세 화면 모두 `h-12` 사라짐)
-- [ ] 헤더 텍스트가 전부 14px / `font-medium` / `text-foreground` 톤인가 (연한 회색 bold가 남은 곳 없는가)
-- [ ] 헤더 배경이 `bg-slate-50` 이고 호버에 반응하지 않는가
+- [ ] 헤더 텍스트가 전부 14px / `font-medium` / `text-muted-foreground`(slate-500)인가 — 2026-09-29 개정
+- [ ] 헤더 배경이 흰색이고 호버에 반응하지 않는가 — 2026-09-29 개정
 - [ ] `farmer-list.tsx` L371·L405에서 `#00a2e8`이 사라졌는가 — **나머지 29건 의미색은 건드리지 않았는가**
-- [ ] 펼친 그룹의 헤더와 서브행이 같은 톤인가
-- [ ] 접힌 그룹 헤더가 흰 배경이 아닌가 (낱개 행과 구분되는가)
+- [ ] 목록 어디에도 `bg-slate-100` 그룹/서브행, `hover:bg-slate-200/70`이 남지 않았는가 — 2026-09-29 개정
+- [ ] 접힌 그룹 ↔ 낱개가 셰브론·굵기·`—` 셀로 구분되는가 (제품재고 「천지향5세」↔「아미향」) — 2026-09-29 개정
+- [ ] 펼친 묶음의 끝이 `slate-200` 선으로 닫히는가 — 다음 그룹이 묶음 안처럼 보이지 않는가
+- [ ] 차감 행(`bg-slate-50/70`)·선택 행이 서브행 톤 위에서 여전히 구분되는가
 - [ ] 하위 1건인 그룹에 토글이 없는가
 - [ ] 로트번호가 어느 목록에서도 잘리지 않는가 (컬럼 ≥24%)
 - [ ] `*-table-row.tsx` 3개의 개별 `TableCell` 클래스가 제거됐는가 — 이게 남으면 본문 44px가 무효
