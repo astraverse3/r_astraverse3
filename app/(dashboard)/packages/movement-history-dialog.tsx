@@ -285,7 +285,7 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
                                                 size="sm"
                                                 aria-label="되돌리기"
                                                 title="되돌리기"
-                                                className="h-8 w-8 shrink-0 gap-1.5 bg-white p-0 sm:w-auto sm:px-3"
+                                                className="h-8 w-8 shrink-0 gap-1.5 p-0 sm:w-auto sm:px-3"
                                                 disabled={cancellingId !== null}
                                                 onClick={() => void undo(mv)}
                                             >
@@ -351,7 +351,7 @@ export function MovementHistoryDialog({ open, onOpenChange, row, canCancel = fal
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 bg-white px-5 sm:h-8 sm:px-4"
+                        className="h-9 px-5 sm:h-8 sm:px-4"
                         onClick={() => onOpenChange(false)}
                     >
                         닫기

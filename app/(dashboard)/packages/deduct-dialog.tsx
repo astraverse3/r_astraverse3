@@ -455,7 +455,7 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-11 flex-none border-amber-300 bg-white px-4 text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:px-3"
+                                    className="h-11 flex-none border-amber-300 px-4 text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:px-3"
                                     disabled={saving}
                                     onClick={() => setConfirming(false)}
                                 >
@@ -499,7 +499,7 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-11 flex-none bg-white sm:h-8"
+                                    className="h-11 flex-none sm:h-8"
                                     onClick={() => onOpenChange(false)}
                                     disabled={saving}
                                 >

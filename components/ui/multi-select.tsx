@@ -81,7 +81,7 @@ export function MultiSelect({
                     >
                         <div className={cn(
                             'h-4 w-4 rounded border border-primary flex items-center justify-center shrink-0',
-                            value.includes(option.value) ? 'bg-primary' : 'bg-background'
+                            value.includes(option.value) ? 'bg-primary' : 'bg-card'
                         )}>
                             {value.includes(option.value) && (
                                 <Check className="h-3 w-3 text-primary-foreground" />

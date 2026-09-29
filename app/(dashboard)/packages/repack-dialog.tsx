@@ -707,7 +707,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            className="h-9 flex-none bg-white"
+                                            className="h-9 flex-none"
                                             disabled={saving}
                                             onClick={() => setLossPrompt(null)}
                                         >
@@ -717,7 +717,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            className="h-9 flex-1 border-amber-400 bg-white text-amber-900 hover:bg-amber-50 hover:text-amber-900"
+                                            className="h-9 flex-1 border-amber-400 text-amber-900 hover:bg-amber-50 hover:text-amber-900"
                                             disabled={saving}
                                             onClick={() => {
                                                 setLossConfirmed(true)
@@ -759,7 +759,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            className="h-11 w-full border-amber-400 bg-white font-bold text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:w-auto"
+                                            className="h-11 w-full border-amber-400 font-bold text-amber-900 hover:bg-amber-50 hover:text-amber-900 sm:h-8 sm:w-auto"
                                             disabled={saving}
                                             onClick={addRemainderRow}
                                         >
@@ -771,7 +771,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        className="h-11 flex-none bg-white sm:h-8"
+                                        className="h-11 flex-none sm:h-8"
                                         onClick={() => onOpenChange(false)}
                                         disabled={saving}
                                     >
