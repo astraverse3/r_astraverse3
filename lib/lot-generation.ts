@@ -94,3 +94,40 @@ export function generateLotNo({
     // Final Lot No
     return `${yymmdd}-${productCode}-${certNo}-${personalNo}`;
 }
+
+// ------------------------------------------------------
+// 첫 로트 재사용 (plan-로트재사용경고.md)
+//
+// 같은 농가·품종·인증이면 로트는 앞 6자리(입고일)만 다르다 → 사흘에 나눠 들어오면 로트가 셋.
+// 등록 때 입고일을 첫 로트 날짜로 맞춰 한 로트로 모은다(입고일자 칸 = 「Lot 기준」, 입력 시각은 createdAt).
+// ------------------------------------------------------
+
+/** 로트 뒷자리(품목코드-인증번호-개인번호). 같은 농가·품종·인증이면 같다 */
+export function lotTail(lotNo: string): string {
+    return lotNo.slice(lotNo.indexOf('-') + 1)
+}
+
+export type LotCandidate = { lotNo: string; incomingDate: Date }
+
+/** 첫 로트 — date는 KST 'yyyy-mm-dd', count는 그 로트에 이미 묶인 원물 수 */
+export type FirstLot = { date: string; lotNo: string; count: number }
+
+/**
+ * 뒷자리가 같은 후보 중 입고일이 가장 이른 로트. 없으면 null.
+ * 🔴 뒷자리로 거르는 이유: 작목반(인증)이 바뀌었거나 옛 규칙으로 저장된 로트(품목코드가 다른 것)는 같은 로트가 아니다.
+ */
+export function pickFirstLot(candidates: readonly LotCandidate[], tail: string): FirstLot | null {
+    const same = candidates.filter(c => lotTail(c.lotNo) === tail)
+    if (same.length === 0) return null
+    const first = same.reduce((a, b) => (toKstDate(b.incomingDate) < toKstDate(a.incomingDate) ? b : a))
+    return {
+        date: toKstDate(first.incomingDate),
+        lotNo: first.lotNo,
+        count: same.filter(c => c.lotNo === first.lotNo).length,
+    }
+}
+
+/** 새 입고일(KST 'yyyy-mm-dd')을 첫 로트에 맞춰야 하나 — 첫 로트보다 늦을 때만. 같은 날이면 이미 같은 로트, 이르면(소급) 새 로트 */
+export function shouldAlignToFirstLot(first: FirstLot | null, ymd: string): first is FirstLot {
+    return first !== null && ymd > first.date
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,11 +20,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { createStock, type StockFormData } from '@/app/actions/stock'
+import { createStock, findFirstLot, type StockFormData } from '@/app/actions/stock'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
 import { defaultProductionYear, productionYearOptions } from '@/lib/production-year'
 import { todayKst } from '@/lib/kst-date'
+import { shouldAlignToFirstLot, type FirstLot } from '@/lib/lot-generation'
+import { settle } from '@/lib/settle-action'
+
+/** 'yyyy-mm-dd' → '10/20' */
+const monthDay = (ymd: string) => `${Number(ymd.slice(5, 7))}/${Number(ymd.slice(8, 10))}`
 
 interface Farmer {
     id: number
@@ -71,6 +76,36 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
     // Derived state for certifications based on selected farmer
     const selectedFarmer = farmers.find(f => f.id.toString() === selectedFarmerId)
+
+    const [varietyId, setVarietyId] = useState<string>('')
+    const [incomingDate, setIncomingDate] = useState<string>(todayKst())
+
+    // 첫 로트 재사용 (plan-로트재사용경고.md) — 같은 연도·생산자·품종의 로트가 이미 있으면
+    // 입고일자를 그 날짜로 채워 같은 로트로 모은다. 새 로트로 하려면 날짜만 바꾸면 된다.
+    // 받은 값에 「어느 조합 것인지」를 붙여 둔다 — 생산자·품종을 바꾸면 옛 안내가 잠깐 남지 않게
+    const lotKey = `${productionYear}|${selectedFarmerId}|${varietyId}`
+    const [firstLotGot, setFirstLotGot] = useState<{ key: string; data: FirstLot | null } | null>(null)
+    const firstLot = firstLotGot?.key === lotKey ? firstLotGot.data : null
+
+    useEffect(() => {
+        if (!open || !selectedFarmerId || !varietyId) return
+        let alive = true
+        void settle(findFirstLot({
+            productionYear,
+            farmerId: parseInt(selectedFarmerId),
+            varietyId: parseInt(varietyId),
+        })).then(res => {
+            if (!alive) return
+            // 못 읽으면 안내 없이 지금처럼 등록된다(새 로트) — 등록 자체를 막을 일은 아니다
+            const data = res.success ? res.data : null
+            setFirstLotGot({ key: lotKey, data })
+            if (data) setIncomingDate(prev => (shouldAlignToFirstLot(data, prev) ? data.date : prev))
+        })
+        return () => {
+            alive = false
+        }
+    }, [open, productionYear, selectedFarmerId, varietyId, lotKey])
+
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
         setIsLoading(true)
@@ -110,6 +145,9 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
 
     function resetForm() {
         setSelectedFarmerId('')
+        // 예전엔 두 칸이 비제어라 창을 닫으면 저절로 초기화됐다 — 제어로 바꿨으니 여기서 맞춘다
+        setVarietyId('')
+        setIncomingDate(todayKst())
     }
 
     return (
@@ -215,7 +253,7 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="min-w-0 space-y-2">
                             <Label htmlFor="varietyId" className="text-[13px]">품종</Label>
-                            <Select name="varietyId" required>
+                            <Select name="varietyId" required value={varietyId} onValueChange={setVarietyId}>
                                 <SelectTrigger className="text-[13px]">
                                     <SelectValue placeholder="품종 선택" />
                                 </SelectTrigger>
@@ -230,9 +268,39 @@ export function AddStockDialog({ varieties, farmers }: { varieties: Variety[], f
                         </div>
                         <div className="min-w-0 space-y-2">
                             <Label htmlFor="incomingDate" className="text-[13px]">입고일자 (Lot 기준)</Label>
-                            <Input id="incomingDate" name="incomingDate" type="date" required defaultValue={todayKst()} className="text-[13px]" />
+                            <Input
+                                id="incomingDate"
+                                name="incomingDate"
+                                type="date"
+                                required
+                                value={incomingDate}
+                                onChange={(e) => setIncomingDate(e.target.value)}
+                                className="text-[13px]"
+                            />
                         </div>
                     </div>
+
+                    {firstLot && (incomingDate === firstLot.date ? (
+                        <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 border border-slate-100 -mt-2">
+                            <span className="font-bold text-slate-800">첫 로트와 같은 로트로 들어가요</span> — 첫 입고 {monthDay(firstLot.date)} · 이미 {firstLot.count}건 · {firstLot.lotNo}
+                            <br />새 로트로 하려면 입고일자를 바꾸세요.
+                        </div>
+                    ) : (
+                        <div className="bg-amber-50 p-2 rounded text-xs text-amber-800 border border-amber-200 -mt-2 flex items-center justify-between gap-2">
+                            <span>
+                                첫 로트({monthDay(firstLot.date)}, {firstLot.count}건)와 날짜가 달라 <span className="font-bold">새 로트</span>가 생겨요.
+                            </span>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-7 shrink-0 text-xs"
+                                onClick={() => setIncomingDate(firstLot.date)}
+                            >
+                                {monthDay(firstLot.date)}로 맞추기
+                            </Button>
+                        </div>
+                    ))}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="min-w-0 space-y-2">

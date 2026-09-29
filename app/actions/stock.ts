@@ -8,7 +8,7 @@ import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 
 // Updated definition to match new schema relations
-import { generateLotNo } from '@/lib/lot-generation'
+import { generateLotNo, lotTail, pickFirstLot, type FirstLot } from '@/lib/lot-generation'
 export type StockFormData = {
     productionYear: number
     bagNo: number
@@ -17,6 +17,52 @@ export type StockFormData = {
     weightKg: number
     incomingDate: Date
     actualFarmer?: string // 실제 농가명 (선택)
+}
+
+/**
+ * 벼 입고 등록 화면의 「첫 로트」 — 같은 생산연도·생산자·품종으로 이미 로트가 있으면 가장 이른 것 (plan-로트재사용경고.md).
+ * 관행(로트 없음)이면 null. 등록 화면이 입고일자를 이 날짜로 채워 같은 로트로 모은다.
+ */
+export async function findFirstLot(params: {
+    productionYear: number
+    farmerId: number
+    varietyId: number
+}): Promise<{ success: true; data: FirstLot | null } | { success: false; error: string }> {
+    try {
+        await requireSession()
+        const [farmer, variety] = await Promise.all([
+            prisma.farmer.findUnique({ where: { id: params.farmerId }, include: { group: true } }),
+            prisma.variety.findUnique({ where: { id: params.varietyId } }),
+        ])
+        if (!farmer || !variety || !farmer.group || farmer.group.certType === '일반') {
+            return { success: true, data: null }
+        }
+        // 뒷자리만 쓰므로 날짜는 아무거나 — createStock과 같은 인자로 만든다
+        const tail = lotTail(generateLotNo({
+            incomingDate: new Date(),
+            varietyType: variety.type,
+            varietyName: variety.name,
+            millingType: '백미',
+            certNo: farmer.group.certNo,
+            farmerGroupCode: farmer.group.code,
+            farmerNo: farmer.farmerNo || '',
+        }))
+        const rows = await prisma.stock.findMany({
+            where: {
+                category: 'RICE',
+                productionYear: params.productionYear,
+                farmerId: params.farmerId,
+                varietyId: params.varietyId,
+                lotNo: { not: null },
+            },
+            select: { lotNo: true, incomingDate: true },
+        })
+        const candidates = rows.flatMap(r => (r.lotNo ? [{ lotNo: r.lotNo, incomingDate: r.incomingDate }] : []))
+        return { success: true, data: pickFirstLot(candidates, tail) }
+    } catch (error) {
+        console.error('[findFirstLot] failed:', error)
+        return { success: false, error: sanitizeErrorMessage(error, '기존 로트를 확인하지 못했습니다.') }
+    }
 }
 
 export async function createStock(data: StockFormData) {
