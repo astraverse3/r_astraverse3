@@ -2,6 +2,18 @@
 
 ## 2026-09-29
 
+### 디자인 간단 3건 — 헤더 호버 · 제품재고 접힌 그룹 · outline 회색
+
+커밋 `b1b68cc` · `c9c06e8` · `6d9f4f3`.
+계획서 `docs/plan/plan-디자인-간단3건.md`, 보고서 `docs/report/report-디자인-간단3건-2026-09-29.md`.
+
+- A 백로그 §35 (`b1b68cc`): 목록 헤더 `hover:bg-transparent` → `hover:bg-slate-50` — **12곳 / 11파일**(백로그 10곳 이후 2곳 증가)
+- B (`c9c06e8`): `package-row.tsx` 접힌 그룹 흰색 → `bg-slate-50`·호버 `bg-slate-100`(표준 `list-spec-instructions.md:26`, R6 보류분). 모바일 카드는 표준상 흰색 유지
+- C 백로그 §25 (`6d9f4f3`): `button` outline · `switch` 손잡이 · `multi-select` 체크박스 `bg-background` → `bg-card`, 중복 `bg-white` 8곳 삭제. outline 68개 중 43개가 회색 → 흰색
+- 백로그 §25·§35 해소 표시
+
+검증 tsc 0 · `eslint .` 0/0 · test 512/512. 브라우저 확인 전.
+
 ### 벼 입고 첫 로트 재사용 + 낡은 로트 품목코드 정정
 
 커밋 `c608d48` · `777ea22` · `cc0ab61`(스크립트).
