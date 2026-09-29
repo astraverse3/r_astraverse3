@@ -28,11 +28,13 @@ interface Props {
 
     hideCheckbox?: boolean
     isInCart?: boolean
-    /** 펼친 그룹 안의 행인가 — 묶음톤을 입히고 그룹 헤더가 이미 보여주는 컬럼을 비운다 */
+    /** 펼친 그룹 안의 행인가 — 서브행 옅은 톤을 입히고 그룹 헤더가 이미 보여주는 컬럼을 비운다 */
     inExpandedGroup?: boolean
+    /** 묶음의 마지막 서브행인가 — 여기에 묶음 끝선(slate-200)을 준다 (2026-09-29 밝은 톤 개정) */
+    isLast?: boolean
 }
 
-export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart, inExpandedGroup = false }: Props) {
+export function StockTableRow({ stock, farmers, varieties, selected, onSelect, hideCheckbox, isInCart, inExpandedGroup = false, isLast = false }: Props) {
     const [editOpen, setEditOpen] = useState(false)
     const isAvailable = stock.status === 'AVAILABLE' && !isInCart
     const { data: session } = useSession()
@@ -57,8 +59,9 @@ export function StockTableRow({ stock, farmers, varieties, selected, onSelect, h
     return (
         <>
             <TableRow
-                className={`group transition-all duration-300 ease-in-out border-b border-slate-100 last:border-0
-                    ${isAvailable ? `cursor-pointer ${selected ? '' : `hover:bg-primary/10 ${inExpandedGroup ? 'bg-slate-100 border-slate-200/70' : ''}`}` : 'opacity-60 bg-slate-50'}
+                // 선 색은 여기 한 곳에서만 고른다 — 두 색 클래스가 겹치면 어느 쪽이 이길지 보장이 없다
+                className={`group transition-all duration-300 ease-in-out border-b ${inExpandedGroup && isLast ? 'border-slate-200' : 'border-slate-100'} last:border-0
+                    ${isAvailable ? `cursor-pointer ${selected ? '' : `hover:bg-primary/10 ${inExpandedGroup ? 'bg-slate-50/40' : ''}`}` : 'opacity-60 bg-slate-50'}
                     ${selected ? 'bg-primary/20 hover:bg-primary/25 border-primary/30 shadow-sm' : ''}
                     ${isInCart ? 'bg-slate-50 opacity-50 cursor-not-allowed' : ''}
                 `}

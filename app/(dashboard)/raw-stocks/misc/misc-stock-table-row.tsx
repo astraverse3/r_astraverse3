@@ -58,12 +58,14 @@ interface Props {
     canManage?: boolean
     canMill?: boolean
     inExpandedGroup?: boolean
+    /** 묶음의 마지막 서브행인가 — 여기에 묶음 끝선(slate-200)을 준다 (2026-09-29 밝은 톤 개정) */
+    isLast?: boolean
     onEdit?: () => void
     onDelete?: () => void
     onPackage?: () => void
 }
 
-export function MiscStockTableRow({ stock, canManage = false, canMill = false, inExpandedGroup = false, onEdit, onDelete, onPackage }: Props) {
+export function MiscStockTableRow({ stock, canManage = false, canMill = false, inExpandedGroup = false, isLast = false, onEdit, onDelete, onPackage }: Props) {
     const isConsumed = stock.status === 'CONSUMED'
     const sourceConf = stock.sourceType ? SOURCE_BADGE[stock.sourceType] : null
     const isAvailable = stock.status === 'AVAILABLE'
@@ -78,10 +80,10 @@ export function MiscStockTableRow({ stock, canManage = false, canMill = false, i
 
     const certType = stock.farmer.group?.certType
 
-    // §4.2.6 펼친 그룹 일체감: 헤더 + 서브행 모두 bg-slate-100 (같은 톤 묶음).
+    // 2026-09-29 밝은 톤 개정: 펼친 그룹 서브행만 옅은 톤(bg-slate-50/40), 묶음 끝은 마지막 행의 slate-200 선.
     // 단일 건(낱개 행, §4.2.4)은 흰 배경.
     return (
-        <TableRow className={inExpandedGroup ? 'bg-slate-100 hover:bg-slate-200/70 border-b border-slate-200/70' : 'bg-white hover:bg-slate-50'}>
+        <TableRow className={inExpandedGroup ? `bg-slate-50/40 hover:bg-slate-50 ${isLast ? 'border-b border-slate-200' : ''}` : 'bg-white hover:bg-slate-50'}>
             <TableCell className="px-1 text-center text-slate-400">—</TableCell>
             {/* 다중 그룹 서브행은 년도·품종 셀 비워 그룹 시각 구분 강화 (그리드 정렬은 유지) */}
             <TableCell className="text-center tabular-nums text-slate-400 hidden sm:table-cell">

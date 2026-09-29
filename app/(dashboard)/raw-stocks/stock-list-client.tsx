@@ -78,7 +78,7 @@ export function StockListClient({
                         <col className="w-[6%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="px-1 text-center">
                                 {/* Global Select All Removed */}
                             </TableHead>
@@ -254,9 +254,8 @@ function GroupedStockRows({
                     <Fragment key={group.key}>
                         {/* Summary Row */}
                         <TableRow
-                            className={`${isExpanded
-                                ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'
-                                : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'} cursor-pointer font-bold text-slate-800`}
+                            // 2026-09-29 밝은 톤 개정 — 그룹은 접힘·펼침 모두 흰 바탕 (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md)
+                            className="bg-white hover:bg-slate-50 cursor-pointer font-bold text-slate-800"
                             onClick={() => toggleGroup(group)}
                         >
                             {/* Checkbox Column */}
@@ -278,7 +277,7 @@ function GroupedStockRows({
                             {/* Year */}
                             <TableCell className="text-center hidden sm:table-cell">
                                 <div className="flex items-center justify-center gap-1">
-                                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                    {isExpanded ? <ChevronDown className="h-4 w-4 text-slate-900" /> : <ChevronRight className="h-4 w-4" />}
                                     {group.year}
                                 </div>
                             </TableCell>
@@ -315,10 +314,11 @@ function GroupedStockRows({
                         </TableRow>
 
                         {/* Detailed Rows */}
-                        {isExpanded && items.map((stock) => (
+                        {isExpanded && items.map((stock, i) => (
                             <StockTableRow
                                 key={stock.id}
                                 inExpandedGroup
+                                isLast={i === items.length - 1}
                                 stock={stock}
                                 farmers={farmers}
                                 varieties={varieties}

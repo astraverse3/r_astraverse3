@@ -129,7 +129,7 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
                         <col className="w-[13%]" /><col className="w-[7%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="px-1 text-center">
                                 <Checkbox
                                     checked={selectedIds.size === logs.length && logs.length > 0}
@@ -218,7 +218,7 @@ export function ReleaseHistoryList({ logs, selectedIds, onSelectionChange }: Rel
                                                                 <col className="w-[12%]" /><col className="w-[16%]" /><col className="w-[9%]" />
                                                             </colgroup>
                                                             <TableHeader>
-                                                                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                                                                <TableRow className="bg-white hover:bg-transparent">
                                                                     <TableHead className="text-center">년도</TableHead>
                                                                     <TableHead>품종</TableHead>
                                                                     <TableHead>생산자 (작목반)</TableHead>

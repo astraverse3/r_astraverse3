@@ -95,7 +95,7 @@ export function FarmerList({ farmers, selectedIds, onSelectionChange, canManage:
                         </colgroup>
                     )}
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             {canManageFromParent && (
                                 <TableHead>
                                     <Checkbox
@@ -387,15 +387,14 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         {/* Group Header (Only if > 1 items) */}
                         {hasHeader && group.group && (
                             <TableRow
-                                className={`cursor-pointer font-bold text-slate-800 transition-colors ${isExpanded
-                                    ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'
-                                    : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'}`}
+                                // 2026-09-29 밝은 톤 개정 — 그룹은 접힘·펼침 모두 흰 바탕 (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md)
+                                className="cursor-pointer font-bold text-slate-800 transition-colors bg-white hover:bg-slate-50"
                                 onClick={() => toggleGroup(group.key)}
                             >
                                 {canManage && <TableCell />}
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-1">
-                                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                        {isExpanded ? <ChevronDown className="h-4 w-4 text-slate-900" /> : <ChevronRight className="h-4 w-4" />}
                                         {group.group.cropYear}
                                     </div>
                                 </TableCell>
@@ -417,9 +416,9 @@ function GroupedFarmerRows({ farmers, selectedIds, onSelectOne, setEditingFarmer
                         )}
 
                         {/* Farmer Rows */}
-                        {(!hasHeader || isExpanded) && group.items.map((farmer: Farmer) => (
+                        {(!hasHeader || isExpanded) && group.items.map((farmer: Farmer, i: number) => (
                             <TableRow key={farmer.id} className={inGroup
-                                ? 'bg-slate-100 hover:bg-slate-200/70 border-b border-slate-200/70'
+                                ? `bg-slate-50/40 hover:bg-slate-50 ${i === group.items.length - 1 ? 'border-b border-slate-200' : ''}`
                                 : 'bg-white hover:bg-slate-50'}>
                                 {canManage && (
                                     <TableCell>

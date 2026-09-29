@@ -120,7 +120,7 @@ export function VarietyListClient({ varieties, q, onResetSearch }: {
                         </colgroup>
                     )}
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="text-center">No</TableHead>
                             <TableHead>품종명</TableHead>
                             <TableHead>별칭</TableHead>

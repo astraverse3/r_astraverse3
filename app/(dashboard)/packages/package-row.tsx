@@ -92,7 +92,7 @@ export function deductionSummary(row: PackageRowData): string {
 // -- 컬럼 헤더 (정렬은 데이터 셀과 동일) --
 export function PackageColumnHeader({ selectMode = false }: { selectMode?: boolean }) {
     return (
-        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} h-10 items-center px-3 text-sm font-medium text-foreground bg-slate-50 border-b border-slate-200`}>
+        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} h-10 items-center px-3 text-sm font-medium text-muted-foreground bg-white border-b border-slate-200`}>
             {selectMode && <span />}
             <span>품종</span>
             <span>도정구분</span>
@@ -276,14 +276,14 @@ function PackageSubRow({
     const deducted = isDeducted(row)
     return (
         <div
-            // §4.2.6은 묶음 내부 가로선을 지우라고 하지만, 제품재고는 한 그룹에 서브행이 열 줄 가까이
-            // 붙어 회색 덩어리가 된다 (2026-09-04 실화면 확인). 묶음톤 위에서 은은한 선으로 되살린다.
-            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center border-t border-slate-200/70 ${
-                isLast ? 'border-b border-slate-200/80' : ''
+            // 2026-09-29 밝은 톤 개정: 서브행만 옅은 톤(bg-slate-50/40) + 흰 톤 위 기본 선 slate-100,
+            // 묶음 끝은 마지막 서브행의 slate-200 선이 닫는다 (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md)
+            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center border-t border-slate-100 ${
+                isLast ? 'border-b border-slate-200' : ''
             } ${
                 deducted
                     ? 'bg-slate-50/70 text-slate-400'
-                    : `text-slate-600 ${selected ? 'bg-primary/5' : 'hover:bg-slate-200/70'}`
+                    : `text-slate-600 ${selected ? 'bg-primary/5' : 'bg-slate-50/40 hover:bg-slate-50'}`
             }`}
         >
             {selection && <RowCheckbox row={row} selection={selection} />}
@@ -343,23 +343,20 @@ export function PackageGroupRow({
     const specCount = new Set(item.rows.map(r => r.spec)).size
 
     return (
-        // 펼친 묶음 = 헤더 + 서브행이 같은 톤. ring이 아니라 위쪽 경계만 (§4.2.6)
-        // 접힌 그룹도 흰 배경 금지 — bg-slate-50 (표준 list-spec-instructions.md:26, 잡곡 원물 목록과 같은 값).
-        // 목록이 divide-y라 위 경계만 준다 — 아래는 다음 행의 경계가 맡는다(이중선 방지)
-        <div className={`border-t border-slate-200/80 ${isOpen ? 'bg-slate-100' : 'bg-slate-50'}`}>
+        // 2026-09-29 밝은 톤 개정: 그룹은 접힘·펼침 모두 흰 바탕, 묶음은 서브행 톤 + 끝선이 만든다
+        // (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md — 「접힌 그룹 흰 배경 금지」·「펼친 묶음 bg-slate-100」 폐기)
+        <div className="bg-white border-t border-slate-100">
             <button
                 type="button"
                 onClick={onToggle}
                 // 호버가 바탕보다 밝으면 얼룩이 된다 — 바탕 위로 한 단 어둡게
-                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center text-left transition-colors ${
-                    isOpen ? 'hover:bg-slate-200/70' : 'hover:bg-slate-100'
-                }`}
+                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center text-left transition-colors hover:bg-slate-50`}
             >
                 {/* 그룹은 품종 묶음이라 그 자체를 재포장할 수 없다 — 안의 행만 고른다 */}
                 {selection && <span />}
                 <span className="font-bold text-slate-900 flex items-center gap-2 truncate">
                     <ChevronRight
-                        className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? 'rotate-90 text-slate-700' : 'text-slate-400'}`}
+                        className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? 'rotate-90 text-slate-900' : 'text-slate-400'}`}
                     />
                     <span className="truncate">{item.variety}</span>
                 </span>

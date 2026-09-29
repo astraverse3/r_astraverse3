@@ -68,7 +68,7 @@ export function MillingListClient({ logs, filters, selectedIds, onSelectionChang
                         <col className="w-[14%]" /><col className="w-[6%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="px-1 text-center">
                                 <Checkbox
                                     checked={selectedIds.size === logs.length && logs.length > 0}

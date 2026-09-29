@@ -279,7 +279,7 @@ export function MillingTable({ data }: Props) {
           <Table className="w-full text-sm">
             <TableHeader>
               {table.getHeaderGroups().map(hg => (
-                <UiTableRow key={hg.id} className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                <UiTableRow key={hg.id} className="bg-white border-b border-slate-200 hover:bg-transparent">
                   {hg.headers.map(header => (
                     <TableHead
                       key={header.id}

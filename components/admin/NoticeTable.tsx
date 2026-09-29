@@ -128,7 +128,7 @@ export function NoticeTable({ notices }: { notices: Notice[] }) {
             <div className="hidden lg:block bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="text-center w-20">상태</TableHead>
                             <TableHead>제목 및 내용</TableHead>
                             <TableHead className="text-center w-32">작성자</TableHead>

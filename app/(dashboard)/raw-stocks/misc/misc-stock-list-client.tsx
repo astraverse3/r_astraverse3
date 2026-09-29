@@ -183,7 +183,7 @@ export function MiscStockListClient({
                         <col className="w-[4%]" />
                     </colgroup>
                     <TableHeader>
-                        <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                        <TableRow className="bg-white border-b border-slate-200 hover:bg-transparent">
                             <TableHead className="px-1 text-center"></TableHead>
                             <TableHead className="text-center hidden sm:table-cell">년도</TableHead>
                             <TableHead className="text-center">품종</TableHead>
@@ -209,20 +209,16 @@ export function MiscStockListClient({
                                 return (
                                     <Fragment key={group.key}>
                                         {/* Summary Row — handoff §4.2.6 (단일 건은 헤더 안 보임)
-                                            펼침 시 헤더와 서브를 같은 bg-slate-100 톤으로 통일 → 한 묶음 시각화.
+                                            2026-09-29 밝은 톤 개정: 그룹은 접힘·펼침 모두 흰 바탕, 묶음은 서브행 톤 + 끝선.
                                             primary 액센트 사용 X (§4.2.6 NOTE). */}
                                         {isMulti && (
                                             <TableRow
-                                                className={`cursor-pointer font-bold text-slate-800 ${
-                                                    isExpanded
-                                                        ? 'bg-slate-100 hover:bg-slate-200/70 border-t border-slate-200/80 border-b border-slate-200/70'
-                                                        : 'bg-slate-50 hover:bg-slate-100 border-y border-slate-200/80'
-                                                }`}
+                                                className="cursor-pointer font-bold text-slate-800 bg-white hover:bg-slate-50"
                                                 onClick={() => toggleGroup(group.key)}
                                             >
                                                 <TableCell className="text-center">
                                                     <ChevronRight
-                                                        className={`w-3.5 h-3.5 mx-auto text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                                        className={`w-3.5 h-3.5 mx-auto transition-transform duration-200 ${isExpanded ? 'rotate-90 text-slate-900' : 'text-slate-400'}`}
                                                     />
                                                 </TableCell>
                                                 <TableCell className="text-center tabular-nums hidden sm:table-cell">{group.year}</TableCell>
@@ -252,14 +248,15 @@ export function MiscStockListClient({
                                         )}
 
                                         {/* Detail Rows — 단일 건 그룹은 무조건 표시, 다중은 isExpanded일 때만
-                                            inExpandedGroup: 다중 그룹의 서브행만 묶음 톤(slate-100). 단일 건은 흰 배경(낱개). */}
-                                        {isOpen && group.items.map((stock) => (
+                                            inExpandedGroup: 다중 그룹의 서브행만 옅은 톤(slate-50/40) + 마지막 행 끝선. 단일 건은 흰 배경(낱개). */}
+                                        {isOpen && group.items.map((stock, i) => (
                                             <MiscStockTableRow
                                                 key={stock.id}
                                                 stock={stock}
                                                 canManage={canManage}
                                                 canMill={canMill}
                                                 inExpandedGroup={isMulti}
+                                                isLast={isMulti && i === group.items.length - 1}
                                                 onEdit={() => handleEdit(stock)}
                                                 onDelete={() => handleDelete(stock)}
                                                 onPackage={() => handlePackage(stock)}
