@@ -14,6 +14,8 @@ export interface ExcelImportResult {
     }
     errors: CheckResult[] // List of skipped/failed rows with reasons
     message?: string // Optional summary message
+    /** 벼 원물 가져오기: 입고일자를 같은 농가·품종의 첫 로트 날짜로 맞춘 행 수 (plan-로트재사용경고.md) */
+    alignedToFirstLot?: number
 }
 
 export function formatImportResult(result: ExcelImportResult): string {
@@ -22,6 +24,10 @@ export function formatImportResult(result: ExcelImportResult): string {
         `- 성공: ${success}건\n` +
         `- 건너뜀(필수값 누락 등): ${skipped}건\n` +
         `- 실패(오류): ${failed}건`
+
+    if (result.alignedToFirstLot) {
+        message += `\n- 첫 로트 날짜로 입고일자 맞춤: ${result.alignedToFirstLot}건`
+    }
 
     if (result.errors.length > 0) {
         message += '\n\n[상세 내역 (상위 20건)]'

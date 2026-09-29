@@ -199,6 +199,13 @@ export function StockExcelButtons({ filters }: { filters?: GetStocksParams }) {
                                             </div>
                                         </div>
 
+                                        {!!previewResult.alignedToFirstLot && (
+                                            <div className="bg-slate-50 border border-slate-100 rounded-md p-3 text-xs text-slate-600">
+                                                <span className="font-bold text-slate-800">첫 로트 날짜로 입고일자를 맞춤: {previewResult.alignedToFirstLot}건</span>
+                                                <br />같은 생산연도·생산자·품종의 로트가 이미 있어 그 날짜로 모읍니다(로트 하나).
+                                            </div>
+                                        )}
+
                                         {(previewResult.counts.skipped > 0 || previewResult.counts.failed > 0) && (
                                             <div className="bg-red-50 border border-red-100 rounded-md p-3 text-xs space-y-2">
                                                 <p className="font-bold text-red-700 mb-1">⚠️ 다음 데이터는 등록되지 않습니다:</p>

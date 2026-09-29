@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import { ExcelImportResult } from '@/lib/excel-utils'
-import { generateLotNo } from '@/lib/lot-generation'
+import { generateLotNo, lotTail, pickFirstLot, shouldAlignToFirstLot, type FirstLot } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
@@ -176,6 +176,11 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
         // Let's cache them for performance if list is not huge. 
         // But simply finding by name is fine for now.
 
+        // 첫 로트 재사용 (plan-로트재사용경고.md) — 같은 연도·생산자·품종·로트 뒷자리의 첫 로트.
+        // DB에서 한 번 읽고, 이 파일에서 더 이른 날짜가 나오면 그걸로 바꾼다(미리보기도 같은 수가 나오게 dryRun과 무관하게 갱신)
+        const firstLots = new Map<string, FirstLot | null>()
+        let aligned = 0
+
         // Transaction for data integrity
         await prisma.$transaction(async (tx) => {
             let rowIndex = 1
@@ -291,17 +296,43 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
 
                     // 5. Create Stock
                     let lotNo: string | null = null
+                    let firstLotKey: string | null = null
+                    let alignedThisRow = false
 
                     if (farmer.group && farmer.group.certType !== '일반') {
-                        lotNo = generateLotNo({
-                            incomingDate: incomingDate!,
+                        const lotArgs = {
                             varietyType: variety!.type,
                             varietyName: variety!.name,
                             millingType: '백미', // Default assumption
                             certNo: farmer.group.certNo,
                             farmerGroupCode: farmer.group.code,
                             farmerNo: farmer.farmerNo || ''
-                        });
+                        }
+                        lotNo = generateLotNo({ incomingDate: incomingDate!, ...lotArgs })
+
+                        // 첫 로트보다 늦은 행은 입고일자를 첫 로트 날짜로 — 로트가 하나로 모인다
+                        const tail = lotTail(lotNo)
+                        firstLotKey = `${productionYear}|${farmer.id}|${variety!.id}|${tail}`
+                        if (!firstLots.has(firstLotKey)) {
+                            const rows = await tx.stock.findMany({
+                                where: {
+                                    category: 'RICE',
+                                    productionYear: productionYear!,
+                                    farmerId: farmer.id,
+                                    varietyId: variety!.id,
+                                    lotNo: { not: null },
+                                },
+                                select: { lotNo: true, incomingDate: true },
+                            })
+                            const candidates = rows.flatMap(r => (r.lotNo ? [{ lotNo: r.lotNo, incomingDate: r.incomingDate }] : []))
+                            firstLots.set(firstLotKey, pickFirstLot(candidates, tail))
+                        }
+                        const first = firstLots.get(firstLotKey) ?? null
+                        if (shouldAlignToFirstLot(first, toKstDate(incomingDate!))) {
+                            incomingDate = new Date(first.date) // 화면 입력과 같은 UTC 자정
+                            lotNo = generateLotNo({ incomingDate, ...lotArgs })
+                            alignedThisRow = true
+                        }
                     }
 
                     if (!dryRun) {
@@ -322,6 +353,14 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
                     }
 
                     result.counts.success++
+                    if (alignedThisRow) aligned++
+                    // 이 행이 첫 로트가 된다 — 후보가 없었거나 이 파일에서 더 이른 날짜가 나왔을 때
+                    if (firstLotKey && lotNo) {
+                        const first = firstLots.get(firstLotKey) ?? null
+                        const ymd = toKstDate(incomingDate!)
+                        if (!first || ymd < first.date) firstLots.set(firstLotKey, { date: ymd, lotNo, count: 1 })
+                        else if (ymd === first.date) firstLots.set(firstLotKey, { ...first, count: first.count + 1 })
+                    }
 
 
                 } catch (innerError) {
@@ -337,6 +376,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
 
         revalidatePath('/raw-stocks')
         result.success = true
+        result.alignedToFirstLot = aligned
 
         // 미리보기(dryRun)는 아무것도 안 바꿨으니 남기지 않는다 — 화면이 미리보기 → 실제로 두 번 불러
         // 한 번 가져오기에 「완료」 로그가 2건씩 쌓였다
