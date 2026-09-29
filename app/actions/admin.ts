@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 import { validateAliasList, validateVarietyName } from '@/lib/variety-alias'
 
 // --- VARIETY ACTIONS ---
@@ -22,22 +22,22 @@ function deriveVarietyCategory(type: string): 'RICE' | 'MISC_GRAIN' {
 }
 
 export async function getVarieties() {
-    await requireSession()
     try {
+        await requireSession()
         const varieties = await prisma.variety.findMany({
             orderBy: { name: 'asc' }
         })
         return { success: true, data: varieties }
     } catch (error) {
         console.error('Failed to get varieties:', error)
-        return { success: false, error: 'Failed to get varieties' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get varieties') }
     }
 }
 
 // 벼 화면 전용 — category='RICE'만. 매입(PURCHASED, category=MISC_GRAIN)도 자동 제외됨.
 export async function getRiceVarieties() {
-    await requireSession()
     try {
+        await requireSession()
         const varieties = await prisma.variety.findMany({
             where: { category: 'RICE' },
             orderBy: { name: 'asc' },
@@ -45,13 +45,13 @@ export async function getRiceVarieties() {
         return { success: true, data: varieties }
     } catch (error) {
         console.error('Failed to get rice varieties:', error)
-        return { success: false, error: 'Failed to get rice varieties' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get rice varieties') }
     }
 }
 
 export async function createVariety(data: VarietyFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         // 🔴 이름 중복만이 아니라 **다른 품종의 별칭과 겹치는지**도 본다.
         //    매처는 name을 먼저 보므로, 겹치면 그 별칭이 그 순간 무력화된다(efdbeb7).
         const all = await prisma.variety.findMany({
@@ -81,13 +81,13 @@ export async function createVariety(data: VarietyFormData) {
         return { success: true, data: variety }
     } catch (error) {
         console.error('Failed to create variety:', error)
-        return { success: false, error: 'Failed to create variety' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to create variety') }
     }
 }
 
 export async function updateVariety(id: number, data: VarietyFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const all = await prisma.variety.findMany({
             select: { id: true, name: true, aliases: true }
         })
@@ -151,7 +151,7 @@ export async function updateVariety(id: number, data: VarietyFormData) {
         return { success: true, data: variety }
     } catch (error) {
         console.error('Failed to update variety:', error)
-        return { success: false, error: 'Failed to update variety' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update variety') }
     }
 }
 
@@ -192,8 +192,8 @@ async function checkVarietyReferences(
 }
 
 export async function deleteVariety(id: number) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const guard = await checkVarietyReferences(id)
         if (guard.blocked) {
             return { success: false, error: guard.reason }
@@ -215,15 +215,15 @@ export async function deleteVariety(id: number) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete variety:', error)
-        return { success: false, error: '품종 삭제에 실패했어요.' }
+        return { success: false, error: guardErrorMessage(error, '품종 삭제에 실패했어요.') }
     }
 }
 
 // ⚠️ 호출부 없음 — 2026-09-16 품종 일괄삭제 UI를 없애고 행 ⋯ 메뉴 단건 삭제로 옮겼다.
 //    되살릴 여지가 있어 액션은 남겨 둔다.
 export async function deleteVarieties(ids: number[]) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const results = {
             success: [] as number[],
             failed: [] as { id: number; reason: string }[]
@@ -262,7 +262,7 @@ export async function deleteVarieties(ids: number[]) {
         }
     } catch (error) {
         console.error('Failed to delete varieties:', error)
-        return { success: false, error: '품종 다중 삭제에 실패했어요.' }
+        return { success: false, error: guardErrorMessage(error, '품종 다중 삭제에 실패했어요.') }
     }
 }
 
@@ -280,8 +280,8 @@ export type GetFarmersParams = {
 }
 
 export async function getFarmersWithGroups(params?: GetFarmersParams) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.FarmerWhereInput = {}
         // 작목반 조건은 한 객체에 모았다가 마지막에 where.group으로 넣는다
         const groupWhere: Prisma.ProducerGroupWhereInput = {}
@@ -365,20 +365,20 @@ export async function getFarmersWithGroups(params?: GetFarmersParams) {
         return { success: true, data: farmers }
     } catch (error) {
         console.error('Failed to get farmers:', error)
-        return { success: false, error: 'Failed to get farmers' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get farmers') }
     }
 }
 
 export async function getProducerGroups() {
-    await requireSession()
     try {
+        await requireSession()
         const groups = await prisma.producerGroup.findMany({
             orderBy: { code: 'asc' }
         })
         return { success: true, data: groups }
     } catch (error) {
         console.error('Failed to get groups:', error)
-        return { success: false, error: 'Failed to get groups' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get groups') }
     }
 }
 
@@ -395,8 +395,8 @@ export type FarmerFormData = {
 }
 
 export async function createFarmer(data: FarmerFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const farmerNo = data.farmerNo?.trim() || null
 
         // 1. If Group exists, check duplicate farmerNo within group
@@ -442,13 +442,13 @@ export async function createFarmer(data: FarmerFormData) {
         return { success: true, data: farmer }
     } catch (error) {
         console.error('Failed to create farmer:', error)
-        return { success: false, error: 'Failed to create farmer' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to create farmer') }
     }
 }
 
 export async function updateFarmer(id: number, data: FarmerFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const farmerNo = data.farmerNo?.trim() || null
 
         // If changing to a group, check duplicate
@@ -490,13 +490,13 @@ export async function updateFarmer(id: number, data: FarmerFormData) {
         return { success: true, data: farmer }
     } catch (error) {
         console.error('Failed to update farmer:', error)
-        return { success: false, error: 'Failed to update farmer' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update farmer') }
     }
 }
 
 export async function deleteFarmer(id: number) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const used = await prisma.stock.findFirst({
             where: { farmerId: id }
         })
@@ -520,13 +520,13 @@ export async function deleteFarmer(id: number) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete farmer:', error)
-        return { success: false, error: 'Failed to delete farmer' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete farmer') }
     }
 }
 
 export async function deleteFarmers(ids: number[]) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const results = {
             success: [] as number[],
             failed: [] as { id: number; reason: string }[]
@@ -573,7 +573,7 @@ export async function deleteFarmers(ids: number[]) {
         }
     } catch (error) {
         console.error('Failed to delete farmers:', error)
-        return { success: false, error: 'Failed to delete farmers' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete farmers') }
     }
 }
 
@@ -590,8 +590,8 @@ export async function createFarmerWithGroup(
     farmerData: Omit<FarmerFormData, 'groupId'>,
     groupData: ProducerGroupFormData
 ) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         return await prisma.$transaction(async (tx) => {
             // Trim Data
             const gCode = groupData.code.trim()
@@ -677,8 +677,8 @@ export async function createFarmerWithGroup(
 }
 
 export async function createProducerGroup(data: ProducerGroupFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const code = data.code.trim()
         const name = data.name.trim()
         const certNo = data.certNo.trim()
@@ -710,13 +710,13 @@ export async function createProducerGroup(data: ProducerGroupFormData) {
         return { success: true, data: group }
     } catch (error) {
         console.error('Failed to create group:', error)
-        return { success: false, error: 'Failed to create group' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to create group') }
     }
 }
 
 export async function updateProducerGroup(id: number, data: Partial<ProducerGroupFormData>) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const updateData: Prisma.ProducerGroupUpdateInput = {}
 
         if (data.name !== undefined) {
@@ -758,7 +758,7 @@ export async function updateProducerGroup(id: number, data: Partial<ProducerGrou
         return { success: true, data: group }
     } catch (error) {
         console.error('Failed to update group:', error)
-        return { success: false, error: 'Failed to update group' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update group') }
     }
 }
 

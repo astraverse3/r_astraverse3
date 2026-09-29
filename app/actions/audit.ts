@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireAdmin, requireSession } from '@/lib/auth-guard'
 import { formatKstKo, todayKst } from '@/lib/kst-date'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 export type GetAuditLogsParams = {
     userId?: string
@@ -18,8 +19,8 @@ export type GetAuditLogsParams = {
 }
 
 export async function getAuditLogs(params?: GetAuditLogsParams) {
-    await requireAdmin()
     try {
+        await requireAdmin()
         const { userId, action, entity, startDate, endDate, page = 1, pageSize = 50 } = params || {}
         
         const where: Prisma.AuditLogWhereInput = {}
@@ -55,13 +56,13 @@ export async function getAuditLogs(params?: GetAuditLogsParams) {
         }
     } catch (error) {
         console.error('Failed to get audit logs:', error)
-        return { success: false, error: '활동 로그를 불러오는데 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '활동 로그를 불러오는데 실패했습니다.') }
     }
 }
 
 export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' | 'pageSize'>) {
-    await requireAdmin()
     try {
+        await requireAdmin()
         // Fetch ALL matching logs for export
         const result = await getAuditLogs({ ...params, page: 1, pageSize: 5000 })
         if (!result.success || !result.data) throw new Error('Failed to fetch data')
@@ -133,14 +134,14 @@ export async function exportAuditLogs(params?: Omit<GetAuditLogsParams, 'page' |
         }
     } catch (error) {
         console.error('Export logs failed:', error)
-        return { success: false, error: '엑셀 내보내기에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 내보내기에 실패했습니다.') }
     }
 }
 
 // 현재 경로(메뉴)에 맞는 데이터의 가장 마지막 업데이트 시각 조회
 export async function getLatestUpdateForPath(pathname: string) {
-    await requireSession()
     try {
+        await requireSession()
         let entities: string[] | undefined = undefined;
 
         if (pathname.startsWith('/raw-stocks')) {
@@ -183,6 +184,6 @@ export async function getLatestUpdateForPath(pathname: string) {
         return { success: true, timestamp: null };
     } catch (error) {
         console.error('Failed to get latest update context:', error);
-        return { success: false, error: '시간을 불러오는데 실패했습니다.' };
+        return { success: false, error: guardErrorMessage(error, '시간을 불러오는데 실패했습니다.') };
     }
 }

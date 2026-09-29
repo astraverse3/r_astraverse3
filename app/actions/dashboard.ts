@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 import { dashboardProductionYear } from '@/lib/production-year'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 export async function getDashboardStats() {
-    await requireSession()
     try {
+        await requireSession()
         // 0. 집계 기준 연도 (벼 기준) — 규칙의 단일 원천은 `lib/production-year.ts`
         //
         // 🔴 예전엔 "DB에 있는 가장 최신 productionYear"를 썼는데, 그러면 **신곡이 한 톤백만
@@ -267,6 +268,6 @@ export async function getDashboardStats() {
         }
     } catch (error) {
         console.error('Failed to fetch dashboard stats:', error)
-        return { success: false, error: '통계 정보를 불러오는데 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '통계 정보를 불러오는데 실패했습니다.') }
     }
 }

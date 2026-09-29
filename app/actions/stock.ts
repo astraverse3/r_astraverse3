@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 
 // Updated definition to match new schema relations
 import { generateLotNo } from '@/lib/lot-generation'
@@ -20,8 +20,8 @@ export type StockFormData = {
 }
 
 export async function createStock(data: StockFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         // 1. Fetch related info for Lot Generation
         const farmer = await prisma.farmer.findUnique({
             where: { id: data.farmerId },
@@ -92,13 +92,13 @@ export async function createStock(data: StockFormData) {
         return { success: true, data: stock }
     } catch (error) {
         console.error('Failed to create stock:', error)
-        return { success: false, error: 'Failed to create stock' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to create stock') }
     }
 }
 
 export async function updateStock(id: number, data: StockFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Get current stock info
             const currentStock = await tx.stock.findUnique({
@@ -222,8 +222,8 @@ export async function updateStock(id: number, data: StockFormData) {
 }
 
 export async function deleteStock(id: number) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const stock = await prisma.stock.findUnique({
             where: { id },
             select: { status: true }
@@ -250,13 +250,13 @@ export async function deleteStock(id: number) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete stock:', error)
-        return { success: false, error: 'Failed to delete stock' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete stock') }
     }
 }
 
 export async function deleteStocks(ids: number[]) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const results = {
             success: [] as number[],
             failed: [] as { id: number; reason: string }[]
@@ -313,7 +313,7 @@ export async function deleteStocks(ids: number[]) {
         }
     } catch (error) {
         console.error('Failed to delete stocks:', error)
-        return { success: false, error: 'Failed to delete stocks' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete stocks') }
     }
 }
 
@@ -340,8 +340,8 @@ function parseWeightFilter(value?: string): number | null {
 }
 
 export async function getStocks(params?: GetStocksParams) {
-    await requireSession()
     try {
+        await requireSession()
         // 벼 전용 페이지(`/raw-stocks` 벼 탭)에서만 호출됨.
         // 잡곡 목록은 별도 액션(`misc-stock.ts`)에서 category='MISC_GRAIN'으로 조회.
         const where: Prisma.StockWhereInput = { category: 'RICE' }
@@ -437,7 +437,7 @@ export async function getStocks(params?: GetStocksParams) {
         return { success: true, data: stocks }
     } catch (error) {
         console.error('Failed to get stocks:', error)
-        return { success: false, error: 'Failed to get stocks' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get stocks') }
     }
 }
 
@@ -452,8 +452,8 @@ export type StockGroup = {
 }
 
 export async function getStockGroups(params?: GetStocksParams) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.StockWhereInput = { category: 'RICE' }
         const andConditions: Prisma.StockWhereInput[] = []
 
@@ -576,7 +576,7 @@ export async function getStockGroups(params?: GetStocksParams) {
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to get stock groups:', error)
-        return { success: false, error: 'Failed to get stock groups' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get stock groups') }
     }
 }
 
@@ -584,8 +584,8 @@ export async function getStocksByGroup(
     groupKey: { year: number, variety: string, certType: string },
     params?: GetStocksParams
 ) {
-    await requireSession()
     try {
+        await requireSession()
         const andConditions: Prisma.StockWhereInput[] = []
 
         // 벼 전용 그룹 조회
@@ -645,6 +645,6 @@ export async function getStocksByGroup(
 
     } catch (error) {
         console.error('Failed to get stocks by group:', error)
-        return { success: false, error: 'Failed to get stocks by group' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get stocks by group') }
     }
 }

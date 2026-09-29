@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 
 export async function createStockRelease(
     stockIds: number[],
@@ -13,8 +13,8 @@ export async function createStockRelease(
     destination: string,
     purpose: string | undefined
 ) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Stocks
             const stocks = await tx.stock.findMany({
@@ -75,8 +75,8 @@ export async function createStockRelease(
 }
 
 export async function cancelStockRelease(stockIds: number[]) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Stocks
             const stocks = await tx.stock.findMany({
@@ -126,8 +126,8 @@ export async function getReleaseLogs(filters?: {
     endDate?: Date
     keyword?: string
 }) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.StockReleaseWhereInput = {}
 
         if (filters?.startDate || filters?.endDate) {
@@ -164,7 +164,7 @@ export async function getReleaseLogs(filters?: {
         return { success: true, data: logs }
     } catch (error) {
         console.error('Failed to fetch release logs:', error)
-        return { success: false, error: '출고 내역을 불러오는데 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '출고 내역을 불러오는데 실패했습니다.') }
     }
 }
 
@@ -172,8 +172,8 @@ export async function updateStockRelease(
     id: number,
     data: { date: Date; destination: string; purpose?: string }
 ) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.stockRelease.update({
             where: { id },
             data: {
@@ -194,13 +194,13 @@ export async function updateStockRelease(
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to update stock release:', error)
-        return { success: false, error: '출고 내역 수정 실패' }
+        return { success: false, error: guardErrorMessage(error, '출고 내역 수정 실패') }
     }
 }
 
 export async function deleteStockReleases(ids: number[]) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         await prisma.$transaction(async (tx) => {
             // 1. Revert all associated stocks
             await tx.stock.updateMany({
@@ -227,13 +227,13 @@ export async function deleteStockReleases(ids: number[]) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete stock releases:', error)
-        return { success: false, error: '출고 내역 삭제 실패' }
+        return { success: false, error: guardErrorMessage(error, '출고 내역 삭제 실패') }
     }
 }
 
 export async function removeStockFromRelease(stockId: number) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         await prisma.$transaction(async (tx) => {
             // 1. Find the release associated with this stock
             const stock = await tx.stock.findUnique({

@@ -6,14 +6,15 @@ import * as XLSX from 'xlsx'
 import { recordAuditLog } from '@/lib/audit'
 import { requireSession } from '@/lib/auth-guard'
 import { formatKstKo, todayKst } from '@/lib/kst-date'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 export async function exportReleaseLogs(filters?: {
     startDate?: Date
     endDate?: Date
     keyword?: string
 }) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.StockReleaseWhereInput = {}
 
         if (filters?.startDate || filters?.endDate) {
@@ -115,6 +116,6 @@ export async function exportReleaseLogs(filters?: {
 
     } catch (error) {
         console.error('Export release logs failed:', error)
-        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }

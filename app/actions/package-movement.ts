@@ -14,7 +14,7 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-import { requirePermission } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { MOVEMENT_COUNT_SELECT, availableOf } from '@/lib/package-available'
 import { REPACK_CANCEL_BLOCKED, blockedMessage } from '@/lib/package-guard'
@@ -105,8 +105,8 @@ const CreateSaleSchema = z.object({
 export async function createSale(
   input: z.input<typeof CreateSaleSchema>,
 ): Promise<MutationResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const data = CreateSaleSchema.parse(input)
     const created = await prisma.$transaction((tx) =>
       createMovementChecked(tx, {
@@ -152,8 +152,8 @@ const CreateNonSaleSchema = z.object({
 export async function createNonSaleMovement(
   input: z.input<typeof CreateNonSaleSchema>,
 ): Promise<MutationResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const data = CreateNonSaleSchema.parse(input)
     const created = await prisma.$transaction((tx) =>
       createMovementChecked(tx, {
@@ -214,8 +214,8 @@ export type BulkMovementResult =
 export async function createBulkMovements(
   input: z.input<typeof CreateBulkSchema>,
 ): Promise<BulkMovementResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const data = CreateBulkSchema.parse(input)
     // 거래처는 판매에서만 의미가 있다 — 금액은 관리하지 않는다(#25).
     const customer = data.type === 'SALE' ? (data.customer ?? null) : null
@@ -300,8 +300,8 @@ export async function createBulkMovements(
 export async function cancelMovement(
   movementId: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const mv = await prisma.packageMovement.findUnique({ where: { id: movementId } })
     if (!mv) return { success: false, error: '차감 기록을 찾을 수 없습니다.' }
     // 발주서 라인에 묶인 movement는 발주서 흐름(cancelOrderItemMovements)에서 취소 — 혼선 방지.
@@ -369,6 +369,7 @@ export async function listMovements(
   packageId: number,
 ): Promise<{ success: true; data: MovementRow[] } | { success: false; error: string }> {
   try {
+    await requireSession()
     const rows = await prisma.packageMovement.findMany({
       where: { packageId },
       orderBy: { occurredAt: 'desc' },

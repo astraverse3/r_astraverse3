@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { requireSession } from '@/lib/auth-guard'
 import { recordAuditLog } from '@/lib/audit'
 import { todayKst } from '@/lib/kst-date'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 export type StatsExcelRow = Record<string, string | number>
 
@@ -13,8 +14,8 @@ export async function exportStatsRows(
     fileNamePrefix: string,
     auditDescription?: string,
 ) {
-    await requireSession()
     try {
+        await requireSession()
         const headers = rows.length > 0 ? Object.keys(rows[0]) : []
 
         let worksheet
@@ -42,6 +43,6 @@ export async function exportStatsRows(
         }
     } catch (error) {
         console.error('Stats export failed:', error)
-        return { success: false as const, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false as const, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }

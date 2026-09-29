@@ -78,8 +78,8 @@ export type UploadMatrixResult =
  * 이 화면은 셀을 눌러 바로 차감하는 작업 화면이라 읽기 단계에서 막는다.
  */
 export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     // ① 묶음 + 건 + 라인 + 차감 — 중첩 include로 한 번에
     const upload = await prisma.purchaseOrderUpload.findUnique({
       where: { id: uploadId },
@@ -286,8 +286,8 @@ function fifoDateOf(p: { source: string; createdAt: Date; incomingDate: Date | n
  * 톤백(`unitWeightKg` 있음)은 여기서 막는다 — 자루가 제각각이라 개수 추천이 성립하지 않는다(D2d).
  */
 export async function getCellAllocation(itemIds: number[]): Promise<CellAllocationResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const { items, productTypeId } = await loadCellItems(prisma, itemIds)
     if (items.some((it) => it.unitWeightKg !== null)) {
       return { success: false, error: '톤백은 로트를 직접 지정해야 합니다.' }
@@ -413,8 +413,8 @@ export async function confirmCell(
   itemIds: number[],
   allocations: Allocation[],
 ): Promise<CellMutationResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const total = allocations.reduce((s, a) => s + a.count, 0)
     if (total <= 0) return { success: false, error: '차감할 개수가 없습니다.' }
 
@@ -470,8 +470,8 @@ export async function confirmCell(
 
 /** 셀 차감 취소 — 라인들의 SALE movement 하드삭제 + 건 status 재계산 + 감사로그. 반환은 `confirmCell`과 같다. */
 export async function cancelCell(itemIds: number[]): Promise<CellMutationResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const { productTypeId, orderId, removed } = await prisma.$transaction(async (tx) => {
       const { productTypeId, orderId } = await loadCellItems(tx, itemIds)
       const del = await tx.packageMovement.deleteMany({
@@ -547,8 +547,8 @@ export type BulkCellOptionsResult =
  * 후보는 **FIFO 순**(도정/입고일 → id). 클라이언트 suggestBulkAllocation이 이 순서로 kg을 채운다(사용자 결정 2026-09-14).
  */
 export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOptionsResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const { items, productTypeId } = await loadCellItems(prisma, itemIds)
     if (items.some((it) => it.unitWeightKg === null)) {
       return { success: false, error: '톤백 품목이 아닙니다.' }

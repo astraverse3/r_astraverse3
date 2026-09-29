@@ -22,7 +22,7 @@ import type { PurchaseChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
-import { requirePermission } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import {
   compareLoading,
@@ -71,6 +71,7 @@ export async function listPurchaseUploads(): Promise<
   { success: true; data: UploadSummaryRow[] } | { success: false; error: string }
 > {
   try {
+    await requireSession()
     const todayIso = todayIsoKst()
     const uploads = await prisma.purchaseOrderUpload.findMany({
       // 정렬은 아래에서 상차 임박순으로 다시 잡는다. 여기서는 동순위를 이을 업로드 최신순만 정해둔다
@@ -139,8 +140,8 @@ export async function listPurchaseUploads(): Promise<
 export async function deletePurchaseUpload(
   uploadId: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const movementCount = await prisma.packageMovement.count({
       where: { orderItem: { order: { uploadId } } },
     })
@@ -168,8 +169,8 @@ export async function deletePurchaseUpload(
 export async function deletePurchaseOrder(
   orderId: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const movementCount = await prisma.packageMovement.count({
       where: { orderItem: { orderId } },
     })

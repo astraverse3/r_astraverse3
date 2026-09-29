@@ -107,8 +107,8 @@ export type GetRepackSourcesResult =
     | { success: false; error: string; errors?: RepackError[] }
 
 export async function getRepackSources(packageIds: number[]): Promise<GetRepackSourcesResult> {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const ids = Array.from(new Set(packageIds.filter(id => Number.isInteger(id) && id > 0)))
         if (ids.length === 0) return { success: false, error: '재포장할 재고를 선택해 주세요.' }
 
@@ -251,8 +251,8 @@ class RepackLossConfirmRequired extends Error {
 }
 
 export async function createRepack(input: CreateRepackInput): Promise<CreateRepackResult> {
-    const session = await requirePermission('OPERATION_MANAGE')
     try {
+        const session = await requirePermission('OPERATION_MANAGE')
         const data = CreateRepackSchema.parse(input)
 
         const outcome = await prisma.$transaction(
@@ -478,8 +478,8 @@ export async function createRepack(input: CreateRepackInput): Promise<CreateRepa
 export async function cancelRepack(
     repackId: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         if (!Number.isInteger(repackId) || repackId <= 0) {
             return { success: false, error: '잘못된 요청입니다.' }
         }

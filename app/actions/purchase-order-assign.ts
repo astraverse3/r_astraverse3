@@ -79,8 +79,8 @@ export type UnmatchedCellOptionsResult =
 export async function getUnmatchedCellOptions(
   itemIds: number[],
 ): Promise<UnmatchedCellOptionsResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     if (itemIds.length === 0) return { success: false, error: '셀에 품목이 없습니다.' }
 
     const clicked = await prisma.purchaseOrderItem.findMany({
@@ -196,8 +196,8 @@ export type RematchResult =
  * 🔴 라인 루프 안에서 쿼리하지 않는다 — 매칭은 메모리에서 끝내고, 쓰기는 **SKU별 `updateMany`**로 묶는다.
  */
 export async function rematchUpload(uploadId: number): Promise<RematchResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const items = await prisma.purchaseOrderItem.findMany({
       where: { productTypeId: null, order: { uploadId } },
       select: { id: true, rawItemName: true, packageType: true, rawPackaging: true },

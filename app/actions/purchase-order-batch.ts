@@ -191,8 +191,8 @@ const validOrderIds = (orderIds: number[]) =>
 
 /** 검토 게이트용. 쓰지 않는다 — 왕복 3회(라인 → 기차감·가용 병렬). */
 export async function previewBatch(orderIds: number[]): Promise<BatchPreviewResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const ids = validOrderIds(orderIds)
     if (ids.length === 0) return { success: false, error: '선택된 수령처가 없습니다.' }
 
@@ -226,8 +226,8 @@ export async function confirmBatch(
   orderIds: number[],
   fingerprint: string,
 ): Promise<BatchConfirmResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const ids = validOrderIds(orderIds)
     if (ids.length === 0) return { success: false, error: '선택된 수령처가 없습니다.' }
 

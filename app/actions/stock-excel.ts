@@ -12,11 +12,12 @@ import { validateExcelUpload } from '@/lib/file-validation'
 import { todayKst, toKstDate } from '@/lib/kst-date'
 
 import { GetStocksParams } from './stock'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 // --- EXPORT LOGIC ---
 export async function exportStocks(params?: GetStocksParams) {
-    await requireSession()
     try {
+        await requireSession()
         // 벼 재고 엑셀 내보내기 (잡곡은 별도 액션 — 이번 단계 범위 밖)
         const where: Prisma.StockWhereInput = { category: 'RICE' }
         const andConditions: Prisma.StockWhereInput[] = []
@@ -124,7 +125,7 @@ export async function exportStocks(params?: GetStocksParams) {
 
     } catch (error) {
         console.error('Export failed:', error)
-        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }
 
@@ -132,7 +133,6 @@ export async function exportStocks(params?: GetStocksParams) {
 export async function importStocks(formData: FormData, options: { dryRun?: boolean } = {}): Promise<ExcelImportResult> {
     // 버튼 노출 조건(stock-excel-buttons.tsx)·수동 등록(createStock)·생산자 엑셀(importFarmers)과 같은 권한.
     // 이 한 곳만 requireAdmin이라 ADMIN 1명 외에는 "버튼은 보이는데 항상 실패"했다 (2026-09-21)
-    await requirePermission('SUPPLY_MANAGE')
     const dryRun = options.dryRun || false
     const result: ExcelImportResult = {
         success: false,
@@ -141,6 +141,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
     }
 
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const file = formData.get('file') as File
         if (!file) {
             result.errors.push({ row: 0, reason: '파일이 없습니다.' })
@@ -349,7 +350,7 @@ export async function importStocks(formData: FormData, options: { dryRun?: boole
     } catch (error) {
         console.error('Import failed:', error)
         result.success = false
-        result.message = '엑셀 데이터 처리 중 치명적인 오류가 발생했습니다.'
+        result.message = guardErrorMessage(error, '엑셀 데이터 처리 중 치명적인 오류가 발생했습니다.')
         return result
     }
 }

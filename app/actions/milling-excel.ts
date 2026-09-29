@@ -8,10 +8,11 @@ import { requireSession } from '@/lib/auth-guard'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS } from '@/lib/batch-outputs'
 import { formatKstKo, todayKst } from '@/lib/kst-date'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 export async function exportMillingLogs(params?: GetMillingLogsParams) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.MillingBatchWhereInput = {}
 
         if (params?.startDate && params?.endDate) {
@@ -213,6 +214,6 @@ export async function exportMillingLogs(params?: GetMillingLogsParams) {
 
     } catch (error) {
         console.error('Export milling logs failed:', error)
-        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }

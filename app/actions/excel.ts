@@ -7,11 +7,12 @@ import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { validateExcelUpload } from '@/lib/file-validation'
 import { todayKst } from '@/lib/kst-date'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 // --- EXPORT LOGIC ---
 export async function exportFarmers() {
-    await requireSession()
     try {
+        await requireSession()
         const farmers = await prisma.farmer.findMany({
             include: {
                 group: true
@@ -66,13 +67,12 @@ export async function exportFarmers() {
 
     } catch (error) {
         console.error('Export failed:', error)
-        return { success: false, error: '엑셀 내보내기에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 내보내기에 실패했습니다.') }
     }
 }
 
 // --- IMPORT LOGIC ---
 export async function importFarmers(formData: FormData): Promise<import('@/lib/excel-utils').ExcelImportResult> {
-    await requirePermission('SUPPLY_MANAGE')
     const result: import('@/lib/excel-utils').ExcelImportResult = {
         success: false, // Will be set to true if process completes without catastrophic failure
         counts: { total: 0, success: 0, skipped: 0, failed: 0 },
@@ -80,6 +80,7 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
     }
 
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const file = formData.get('file') as File
 
         if (!file) {
@@ -257,7 +258,7 @@ export async function importFarmers(formData: FormData): Promise<import('@/lib/e
     } catch (error) {
         console.error('Import failed:', error)
         result.success = false
-        result.message = '엑셀 데이터 처리 중 치명적인 오류가 발생했습니다.'
+        result.message = guardErrorMessage(error, '엑셀 데이터 처리 중 치명적인 오류가 발생했습니다.')
         return result
     }
 }

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { getProductCode, generateLotNo } from '@/lib/lot-generation'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 import { findOrCreateProductType } from '@/lib/product-type'
 import { matchesYieldFilter } from '@/lib/milling-yield'
 import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
@@ -53,8 +53,8 @@ export type MillingOutputInput = {
 
 
 export async function startMillingBatch(data: MillingBatchFormData) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 0. Update Mode Check
             if (data.id) {
@@ -189,8 +189,8 @@ export type GetMillingLogsParams = {
 }
 
 export async function getMillingLogs(params?: GetMillingLogsParams) {
-    await requireSession()
     try {
+        await requireSession()
         const where: Prisma.MillingBatchWhereInput = {}
 
         if (params?.startDate && params?.endDate) {
@@ -328,14 +328,14 @@ export async function getMillingLogs(params?: GetMillingLogsParams) {
         return { success: true, data: filtered }
     } catch (error) {
         console.error('Failed to get milling logs:', error)
-        return { success: false, error: 'Failed to get milling logs' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to get milling logs') }
     }
 }
 
 // Helper: Remove stock from batch
 export async function removeStockFromMilling(batchId: number, stockId: number) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             const batch = await tx.millingBatch.findUnique({ where: { id: batchId }, include: { stocks: true } });
             if (!batch) throw new Error('Batch not found');
@@ -367,13 +367,13 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
         return result;
     } catch (error) {
         console.error('Failed to remove stock:', error);
-        return { success: false, error: 'Failed to remove stock' };
+        return { success: false, error: guardErrorMessage(error, 'Failed to remove stock') };
     }
 }
 
 export async function addPackagingLog(batchId: number, data: MillingOutputInput) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         // Fetch Batch and related Stock info for LOT NUMBER GENERATION
         const batch = await prisma.millingBatch.findUnique({
             where: { id: batchId },
@@ -453,8 +453,8 @@ export async function addPackagingLog(batchId: number, data: MillingOutputInput)
  * 어긋나면 화면에 없는 행을 지우게 된다 (결정 #61이 경고한 그것).
  */
 export async function getBatchOutputs(batchId: number) {
-    await requireSession()
     try {
+        await requireSession()
         const outputs = await prisma.millingOutputPackage.findMany({
             where: { batchId, ...MILLED_OUTPUT_ONLY },
             orderBy: { id: 'asc' },
@@ -471,7 +471,7 @@ export async function getBatchOutputs(batchId: number) {
         return { success: true as const, data: outputs }
     } catch (error) {
         console.error('Failed to get batch outputs:', error)
-        return { success: false as const, error: '포장 내역을 불러오지 못했습니다.' }
+        return { success: false as const, error: guardErrorMessage(error, '포장 내역을 불러오지 못했습니다.') }
     }
 }
 
@@ -550,8 +550,8 @@ function buildPackagingAudit(
 // 「화면에서 지운 행」과 「열린 뒤 남이 추가해 뜬 적 없는 행」을 가르는 유일한 정보다.
 // 🔴 선택 인자로 두지 않는다 — undefined면 옛 동작으로 빠져 구멍이 그대로 남는다.
 export async function updatePackagingLogs(batchId: number, outputs: MillingOutputInput[], baselineIds: number[]) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Fetch Batch and Stock info for LOT generation
             const batch = await tx.millingBatch.findUnique({
@@ -804,8 +804,8 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
 }
 
 export async function deletePackagingLog(outputId: number) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const deleted = await prisma.millingOutputPackage.delete({
             where: { id: outputId }
         })
@@ -821,7 +821,7 @@ export async function deletePackagingLog(outputId: number) {
         return { success: true }
     } catch (error) {
         console.error('Failed to delete packaging log:', error)
-        return { success: false, error: 'Failed to delete packaging log' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete packaging log') }
     }
 }
 
@@ -834,8 +834,8 @@ export async function reopenMillingBatch(batchId: number) {
 }
 
 export async function updateMillingBatchStatus(batchId: number, isClosed: boolean) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const batch = await prisma.millingBatch.findUnique({
             where: { id: batchId },
             select: { id: true, date: true, millingType: true, totalInputKg: true, isClosed: true, remarks: true }
@@ -866,13 +866,13 @@ export async function updateMillingBatchStatus(batchId: number, isClosed: boolea
         return { success: true }
     } catch (error) {
         console.error('Failed to update status:', error)
-        return { success: false, error: 'Failed to update status' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update status') }
     }
 }
 
 export async function deleteMillingBatch(batchId: number) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Check if safe to delete
             const batch = await tx.millingBatch.findUnique({
@@ -924,8 +924,8 @@ export async function deleteMillingBatch(batchId: number) {
 }
 
 export async function deleteMillingBatches(ids: number[]) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const results = {
             success: [] as number[],
             failed: [] as { id: number; reason: string }[]
@@ -1015,14 +1015,14 @@ export async function deleteMillingBatches(ids: number[]) {
         }
     } catch (error) {
         console.error('Failed to delete milling batches:', error)
-        return { success: false, error: 'Failed to delete milling batches' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to delete milling batches') }
     }
 }
 
 
 export async function updateMillingBatchStocks(batchId: number, stockIds: number[]) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const result = await prisma.$transaction(async (tx) => {
             // 1. Validate Batch
             const batch = await tx.millingBatch.findUnique({
@@ -1093,13 +1093,13 @@ export async function updateMillingBatchStocks(batchId: number, stockIds: number
         return { success: true, data: result }
     } catch (error) {
         console.error('Failed to update milling batch stocks:', error)
-        return { success: false, error: 'Failed to update batch stocks' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update batch stocks') }
     }
 }
 
 export async function updateMillingBatchMetadata(batchId: number, data: { date: Date, remarks: string, millingType?: string }) {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const updateData: Prisma.MillingBatchUpdateInput = {
             date: data.date,
             remarks: data.remarks.trim() || null,
@@ -1115,6 +1115,6 @@ export async function updateMillingBatchMetadata(batchId: number, data: { date: 
         return { success: true }
     } catch (error) {
         console.error('Failed to update milling batch metadata:', error)
-        return { success: false, error: 'Failed to update' }
+        return { success: false, error: guardErrorMessage(error, 'Failed to update') }
     }
 }

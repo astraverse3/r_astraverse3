@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { findOrCreateProductType } from '@/lib/product-type'
@@ -120,6 +120,7 @@ export async function getPackages(
     params: GetPackagesParams,
 ): Promise<{ success: true; data: PackageItem[] } | { success: false; error: string }> {
     try {
+        await requireSession()
         const { sort = DEFAULT_PACKAGE_SORT, includeDeducted = false } = params
 
         // where 조립은 엑셀(`exportPackages`)과 공유한다 — `lib/package-where.ts`
@@ -277,7 +278,7 @@ export async function getPackages(
         return { success: true, data: items }
     } catch (error) {
         console.error('[getPackages] failed:', error)
-        return { success: false, error: error instanceof Error ? error.message : '제품재고를 불러오지 못했습니다.' }
+        return { success: false, error: sanitizeErrorMessage(error, '제품재고를 불러오지 못했습니다.') }
     }
 }
 
@@ -306,8 +307,8 @@ export interface AvailableMiscStock {
 export async function getAvailableMiscStocks(): Promise<
     { success: true; data: AvailableMiscStock[] } | { success: false; error: string }
 > {
-    await requireSession()
     try {
+        await requireSession()
         const stocks = await prisma.stock.findMany({
             where: { category: 'MISC_GRAIN', status: 'AVAILABLE' },
             include: {
@@ -344,7 +345,7 @@ export async function getAvailableMiscStocks(): Promise<
         return { success: true, data }
     } catch (error) {
         console.error('[getAvailableMiscStocks] failed:', error)
-        return { success: false, error: '포장 가능한 재고 목록을 불러오지 못했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '포장 가능한 재고 목록을 불러오지 못했습니다.') }
     }
 }
 
@@ -375,8 +376,8 @@ export type CreateMiscPackageInput = z.infer<typeof CreateMiscPackageSchema>
 export async function createMiscPackage(
     input: CreateMiscPackageInput,
 ): Promise<{ success: true; id: number } | { success: false; error: string }> {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const data = CreateMiscPackageSchema.parse(input)
         const totalWeight = +(data.weightPerUnit * data.count).toFixed(3)
 
@@ -477,8 +478,8 @@ export interface MiscPackageEditContext {
 export async function getMiscPackageEditContext(
     id: number,
 ): Promise<{ success: true; data: MiscPackageEditContext } | { success: false; error: string }> {
-    await requireSession()
     try {
+        await requireSession()
         const pkg = await prisma.millingOutputPackage.findUnique({
             where: { id },
             include: {
@@ -515,7 +516,7 @@ export async function getMiscPackageEditContext(
         }
     } catch (error) {
         console.error('[getMiscPackageEditContext] failed:', error)
-        return { success: false, error: '컨텍스트 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '컨텍스트 조회에 실패했습니다.') }
     }
 }
 
@@ -541,8 +542,8 @@ export async function updateMiscPackage(
     id: number,
     input: UpdateMiscPackageInput,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const data = UpdateMiscPackageSchema.parse(input)
         const newTotalWeight = +(data.weightPerUnit * data.count).toFixed(3)
 
@@ -664,8 +665,8 @@ export async function updateMiscPackage(
 export async function deleteMiscPackage(
     id: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requirePermission('OPERATION_MANAGE')
     try {
+        await requirePermission('OPERATION_MANAGE')
         const audit = await prisma.$transaction(async (tx) => {
             const pkg = await tx.millingOutputPackage.findUnique({
                 where: { id },
@@ -740,6 +741,7 @@ export async function deleteMiscPackage(
 
 export async function getPurchaseVendors(): Promise<{ success: true; data: string[] } | { success: false; error: string }> {
     try {
+        await requireSession()
         const rows = await prisma.millingOutputPackage.findMany({
             where: { source: 'PURCHASED', purchaseVendor: { not: null } },
             select: { purchaseVendor: true },
@@ -752,7 +754,7 @@ export async function getPurchaseVendors(): Promise<{ success: true; data: strin
         return { success: true, data: vendors }
     } catch (error) {
         console.error('[getPurchaseVendors] failed:', error)
-        return { success: false, error: error instanceof Error ? error.message : '매입처 목록을 불러오지 못했습니다.' }
+        return { success: false, error: sanitizeErrorMessage(error, '매입처 목록을 불러오지 못했습니다.') }
     }
 }
 
@@ -763,8 +765,8 @@ export async function getPurchaseVendors(): Promise<{ success: true; data: strin
 export async function getPurchaseVarieties(): Promise<
     { success: true; data: { id: number; name: string }[] } | { success: false; error: string }
 > {
-    await requireSession()
     try {
+        await requireSession()
         const varieties = await prisma.variety.findMany({
             where: { type: 'PURCHASED' },
             select: { id: true, name: true },
@@ -773,7 +775,7 @@ export async function getPurchaseVarieties(): Promise<
         return { success: true, data: varieties }
     } catch (error) {
         console.error('[getPurchaseVarieties] failed:', error)
-        return { success: false, error: '매입 품종 목록을 불러오지 못했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '매입 품종 목록을 불러오지 못했습니다.') }
     }
 }
 
@@ -832,8 +834,8 @@ async function findOrCreatePurchaseVariety(
 export async function createMiscPurchase(
     rawInput: unknown,
 ): Promise<{ success: true; data: { id: number; varietyCreated: boolean } } | { success: false; error: string }> {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const parsed = CreateMiscPurchaseSchema.safeParse(rawInput)
         if (!parsed.success) {
             return { success: false, error: parsed.error.issues[0]?.message ?? '입력값을 확인해주세요.' }
@@ -919,8 +921,8 @@ export interface MiscPurchaseEditContext {
 export async function getMiscPurchaseEditContext(
     id: number,
 ): Promise<{ success: true; data: MiscPurchaseEditContext } | { success: false; error: string }> {
-    await requireSession()
     try {
+        await requireSession()
         const pkg = await prisma.millingOutputPackage.findUnique({
             where: { id },
             include: { variety: { select: { id: true, name: true } } },
@@ -947,7 +949,7 @@ export async function getMiscPurchaseEditContext(
         }
     } catch (error) {
         console.error('[getMiscPurchaseEditContext] failed:', error)
-        return { success: false, error: '컨텍스트 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '컨텍스트 조회에 실패했습니다.') }
     }
 }
 
@@ -961,8 +963,8 @@ export async function updateMiscPurchase(
     id: number,
     rawInput: unknown,
 ): Promise<{ success: true; data: { varietyCreated: boolean } } | { success: false; error: string }> {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const parsed = UpdateMiscPurchaseSchema.safeParse(rawInput)
         if (!parsed.success) {
             return { success: false, error: parsed.error.issues[0]?.message ?? '입력값을 확인해주세요.' }
@@ -1057,8 +1059,8 @@ export async function updateMiscPurchase(
 export async function deleteMiscPurchase(
     id: number,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         // 조회 → 검사 → 삭제를 한 트랜잭션에 둔다. 밖에 두면 그 사이 차감이 끼어들 수 있다.
         const existing = await prisma.$transaction(async (tx) => {
             const row = await tx.millingOutputPackage.findUnique({
@@ -1128,8 +1130,8 @@ export async function exportPackages(
 ): Promise<
     { success: true; data: string; fileName: string } | { success: false; error: string }
 > {
-    await requireSession()
     try {
+        await requireSession()
         const { category } = params
 
         // where 조립은 목록(`getPackages`)과 공유한다 — 화면과 엑셀이 어긋나면 안 된다
@@ -1190,6 +1192,6 @@ export async function exportPackages(
         }
     } catch (error) {
         console.error('[exportPackages] failed:', error)
-        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }

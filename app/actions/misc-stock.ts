@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 import { generateLotNo } from '@/lib/lot-generation'
 import { todayKst, toKstDate } from '@/lib/kst-date'
 
@@ -92,8 +92,8 @@ async function deriveLotNo(
 // CREATE — 잡곡 입고
 // -----------------------------
 export async function createMiscStock(input: MiscStockFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const data = MiscStockFormSchema.parse(input)
 
         // 품종이 MISC_GRAIN인지 확인
@@ -171,8 +171,8 @@ export async function createMiscStock(input: MiscStockFormData) {
 // UPDATE — 잡곡 입고 수정
 // -----------------------------
 export async function updateMiscStock(id: number, input: MiscStockFormData) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const data = MiscStockFormSchema.parse(input)
 
         const variety = await prisma.variety.findUnique({
@@ -254,8 +254,8 @@ export async function updateMiscStock(id: number, input: MiscStockFormData) {
 // DELETE — 잡곡 입고 삭제 (CONSUMED 또는 포장 연결 시 거절)
 // -----------------------------
 export async function deleteMiscStock(id: number) {
-    await requirePermission('SUPPLY_MANAGE')
     try {
+        await requirePermission('SUPPLY_MANAGE')
         const current = await prisma.stock.findUnique({
             where: { id },
             select: {
@@ -370,8 +370,8 @@ function buildMiscWhere(params?: GetMiscStocksParams) {
 // READ — 평면 조회
 // -----------------------------
 export async function getMiscStocks(params?: GetMiscStocksParams) {
-    await requireSession()
     try {
+        await requireSession()
         const where = buildMiscWhere(params)
 
         let orderBy: Prisma.StockOrderByWithRelationInput = { createdAt: 'desc' }
@@ -400,7 +400,7 @@ export async function getMiscStocks(params?: GetMiscStocksParams) {
         return { success: true, data: withRemaining }
     } catch (error) {
         console.error('Failed to get misc stocks:', error)
-        return { success: false, error: '잡곡 재고 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '잡곡 재고 조회에 실패했습니다.') }
     }
 }
 
@@ -430,8 +430,8 @@ export type MiscStockGroup = {
 // 헬퍼 쿼리: 도정업체 자동완성 (sourceType=CONSIGNMENT)
 // -----------------------------
 export async function getMillingVendors() {
-    await requireSession()
     try {
+        await requireSession()
         const rows = await prisma.stock.findMany({
             where: {
                 category: 'MISC_GRAIN',
@@ -448,7 +448,7 @@ export async function getMillingVendors() {
         return { success: true, data: vendors }
     } catch (error) {
         console.error('Failed to get milling vendors:', error)
-        return { success: false, error: '도정업체 목록 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '도정업체 목록 조회에 실패했습니다.') }
     }
 }
 
@@ -456,8 +456,8 @@ export async function getMillingVendors() {
 // 헬퍼 쿼리: 발아업체 자동완성 (sourceType=GERMINATION)
 // -----------------------------
 export async function getSproutingVendors() {
-    await requireSession()
     try {
+        await requireSession()
         const rows = await prisma.stock.findMany({
             where: {
                 category: 'MISC_GRAIN',
@@ -474,7 +474,7 @@ export async function getSproutingVendors() {
         return { success: true, data: vendors }
     } catch (error) {
         console.error('Failed to get sprouting vendors:', error)
-        return { success: false, error: '발아업체 목록 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '발아업체 목록 조회에 실패했습니다.') }
     }
 }
 
@@ -483,8 +483,8 @@ export async function getSproutingVendors() {
 // 매입 전용 품종(type='PURCHASED')은 잡곡 입고 화면에 노출되지 않도록 제외 (#8 격리 정책)
 // -----------------------------
 export async function getMiscVarieties() {
-    await requireSession()
     try {
+        await requireSession()
         const varieties = await prisma.variety.findMany({
             where: { category: 'MISC_GRAIN', type: { not: 'PURCHASED' } },
             orderBy: { name: 'asc' },
@@ -492,7 +492,7 @@ export async function getMiscVarieties() {
         return { success: true, data: varieties }
     } catch (error) {
         console.error('Failed to get misc varieties:', error)
-        return { success: false, error: '잡곡 품종 목록 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '잡곡 품종 목록 조회에 실패했습니다.') }
     }
 }
 
@@ -500,8 +500,8 @@ export async function getMiscVarieties() {
 // 헬퍼 쿼리: 잡곡 다이얼로그용 농가 목록 (producesMiscGrain=true)
 // -----------------------------
 export async function getMiscFarmers() {
-    await requireSession()
     try {
+        await requireSession()
         const farmers = await prisma.farmer.findMany({
             where: { producesMiscGrain: true },
             include: { group: true },
@@ -510,7 +510,7 @@ export async function getMiscFarmers() {
         return { success: true, data: farmers }
     } catch (error) {
         console.error('Failed to get misc farmers:', error)
-        return { success: false, error: '잡곡 농가 목록 조회에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '잡곡 농가 목록 조회에 실패했습니다.') }
     }
 }
 
@@ -536,8 +536,8 @@ export async function exportMiscStocks(
 ): Promise<
     { success: true; data: string; fileName: string } | { success: false; error: string }
 > {
-    await requireSession()
     try {
+        await requireSession()
         const where = buildMiscWhere(params)
 
         const stocks = await prisma.stock.findMany({
@@ -593,6 +593,6 @@ export async function exportMiscStocks(
         }
     } catch (error) {
         console.error('[exportMiscStocks] failed:', error)
-        return { success: false, error: '엑셀 다운로드에 실패했습니다.' }
+        return { success: false, error: guardErrorMessage(error, '엑셀 다운로드에 실패했습니다.') }
     }
 }

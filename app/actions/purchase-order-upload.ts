@@ -136,8 +136,8 @@ async function loadShippingRecommendations(
 }
 
 export async function previewPurchaseOrder(formData: FormData): Promise<PreviewResult> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const file = formData.get('file') as File | null
     if (!file) return { success: false, error: '파일이 없습니다.' }
     validateExcelUpload(file)
@@ -356,8 +356,8 @@ export async function uploadPurchaseOrder(
   formData: FormData,
   selections: UploadSelection[],
 ): Promise<UploadResult> {
-  const session = await requirePermission('OPERATION_MANAGE')
   try {
+    const session = await requirePermission('OPERATION_MANAGE')
     const file = formData.get('file') as File | null
     if (!file) return { success: false, error: '파일이 없습니다.' }
     validateExcelUpload(file)
@@ -464,8 +464,8 @@ export async function updateUploadNote(
   uploadId: number,
   note: string | null,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const parsed = NoteSchema.safeParse(note)
     if (!parsed.success) return { success: false, error: '비고는 500자까지 입력할 수 있습니다.' }
     const value = parsed.data && parsed.data.length > 0 ? parsed.data : null
@@ -500,8 +500,8 @@ export async function updateUploadLoading(
   uploadId: number,
   patch: LoadingPatch,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const parsed = LoadingPatchSchema.safeParse(patch)
     if (!parsed.success) {
       return { success: false, error: parsed.error.issues[0]?.message ?? '상차 정보가 올바르지 않습니다.' }

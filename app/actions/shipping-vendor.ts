@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { guardErrorMessage } from '@/lib/error-sanitize'
 
 // 관리 화면 경로 (revalidate 대상) — 배송업체는 설정 화면 안 섹션 (결정 #40)
 const ADMIN_PATH = '/admin/settings'
@@ -17,8 +18,8 @@ export type ShippingVendorRow = {
 
 /** 배송업체 목록 — 활성 먼저, 그 안에서 지정 순서 (결정 #39: 비활성은 숨기지 않고 뒤로) */
 export async function listShippingVendors() {
-  await requireSession()
   try {
+    await requireSession()
     const data = await prisma.shippingVendor.findMany({
       orderBy: [{ active: 'desc' }, { sortOrder: 'asc' }, { name: 'asc' }],
       select: { id: true, name: true, sortOrder: true, active: true },
@@ -26,14 +27,14 @@ export async function listShippingVendors() {
     return { success: true, data }
   } catch (error) {
     console.error('Failed to list shipping vendors:', error)
-    return { success: false, error: '배송업체 목록을 불러오지 못했어요.' }
+    return { success: false, error: guardErrorMessage(error, '배송업체 목록을 불러오지 못했어요.') }
   }
 }
 
 /** 배송업체 등록 — sortOrder는 맨 뒤 +10 (시드가 10단위) */
 export async function createShippingVendor(name: string) {
-  await requireAdmin()
   try {
+    await requireAdmin()
     const trimmed = name.trim()
     if (!trimmed) return { success: false, error: '업체명을 입력해주세요.' }
 
@@ -56,14 +57,14 @@ export async function createShippingVendor(name: string) {
     return { success: true, data: created }
   } catch (error) {
     console.error('Failed to create shipping vendor:', error)
-    return { success: false, error: '배송업체 등록에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '배송업체 등록에 실패했어요.') }
   }
 }
 
 /** 업체명 변경 — 과거 묶음은 id로 참조하므로 이름만 바뀐다 */
 export async function renameShippingVendor(id: number, name: string) {
-  await requireAdmin()
   try {
+    await requireAdmin()
     const trimmed = name.trim()
     if (!trimmed) return { success: false, error: '업체명을 입력해주세요.' }
 
@@ -90,7 +91,7 @@ export async function renameShippingVendor(id: number, name: string) {
     return { success: true, data: updated }
   } catch (error) {
     console.error('Failed to rename shipping vendor:', error)
-    return { success: false, error: '업체명 변경에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '업체명 변경에 실패했어요.') }
   }
 }
 
@@ -103,8 +104,8 @@ export async function renameShippingVendor(id: number, name: string) {
  * 정렬은 목록 조회와 같아야 한다(동순위 tie-break가 다르면 화면에 보이는 이웃과 어긋난다).
  */
 export async function moveShippingVendor(id: number, direction: 'up' | 'down') {
-  await requireAdmin()
   try {
+    await requireAdmin()
     const all = await prisma.shippingVendor.findMany({
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       select: { id: true, sortOrder: true, active: true },
@@ -136,14 +137,14 @@ export async function moveShippingVendor(id: number, direction: 'up' | 'down') {
     return { success: true }
   } catch (error) {
     console.error('Failed to move shipping vendor:', error)
-    return { success: false, error: '순서 변경에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '순서 변경에 실패했어요.') }
   }
 }
 
 /** 사용 여부 토글 — 삭제는 제공하지 않는다 (결정 #39: 과거 묶음이 참조) */
 export async function toggleShippingVendorActive(id: number) {
-  await requireAdmin()
   try {
+    await requireAdmin()
     const vendor = await prisma.shippingVendor.findUnique({ where: { id } })
     if (!vendor) return { success: false, error: '배송업체를 찾을 수 없어요.' }
 
@@ -163,6 +164,6 @@ export async function toggleShippingVendorActive(id: number) {
     return { success: true, data: updated }
   } catch (error) {
     console.error('Failed to toggle shipping vendor:', error)
-    return { success: false, error: '사용 여부 변경에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '사용 여부 변경에 실패했어요.') }
   }
 }

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
 import { requirePermission, requireSession } from '@/lib/auth-guard'
-import { sanitizeErrorMessage } from '@/lib/error-sanitize'
+import { sanitizeErrorMessage, guardErrorMessage } from '@/lib/error-sanitize'
 
 // 관리 화면 경로 (revalidate 대상)
 const ADMIN_PATH = '/admin/product-types'
@@ -14,21 +14,21 @@ const ADMIN_PATH = '/admin/product-types'
 // ------------------------------------------------------
 
 export async function listPackagings() {
-  await requireSession()
   try {
+    await requireSession()
     const data = await prisma.packaging.findMany({
       orderBy: [{ active: 'desc' }, { name: 'asc' }],
     })
     return { success: true, data }
   } catch (error) {
     console.error('Failed to list packagings:', error)
-    return { success: false, error: '포장지 목록을 불러오지 못했어요.' }
+    return { success: false, error: guardErrorMessage(error, '포장지 목록을 불러오지 못했어요.') }
   }
 }
 
 export async function createPackaging(name: string) {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const trimmed = name.trim()
     if (!trimmed) return { success: false, error: '포장지명을 입력해주세요.' }
 
@@ -48,13 +48,13 @@ export async function createPackaging(name: string) {
     return { success: true, data: created }
   } catch (error) {
     console.error('Failed to create packaging:', error)
-    return { success: false, error: '포장지 등록에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '포장지 등록에 실패했어요.') }
   }
 }
 
 export async function togglePackagingActive(id: number) {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const pkg = await prisma.packaging.findUnique({ where: { id } })
     if (!pkg) return { success: false, error: '포장지를 찾을 수 없어요.' }
 
@@ -74,7 +74,7 @@ export async function togglePackagingActive(id: number) {
     return { success: true, data: updated }
   } catch (error) {
     console.error('Failed to toggle packaging:', error)
-    return { success: false, error: '포장지 상태 변경에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '포장지 상태 변경에 실패했어요.') }
   }
 }
 
@@ -90,8 +90,8 @@ export type ProductTypeFilter = {
 }
 
 export async function listProductTypes(filter?: ProductTypeFilter) {
-  await requireSession()
   try {
+    await requireSession()
     const where: {
       varietyId?: number
       millingType?: string
@@ -116,7 +116,7 @@ export async function listProductTypes(filter?: ProductTypeFilter) {
     return { success: true, data }
   } catch (error) {
     console.error('Failed to list product types:', error)
-    return { success: false, error: '제품유형 목록을 불러오지 못했어요.' }
+    return { success: false, error: guardErrorMessage(error, '제품유형 목록을 불러오지 못했어요.') }
   }
 }
 
@@ -135,8 +135,8 @@ export type UpsertProductTypeInput = {
  * SKU 추가/수정. isDefault=true면 동일 (품종+도정+규격)의 기존 기본을 해제(트랜잭션).
  */
 export async function upsertProductType(input: UpsertProductTypeInput) {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const millingType = input.millingType.trim() || '기타'
     const packageType = input.packageType.trim()
     if (!packageType) return { success: false, error: '규격을 입력해주세요.' }
@@ -226,8 +226,8 @@ export type ProductTypeUsage = {
 export async function getProductTypeUsage(
   id: number,
 ): Promise<{ success: true; data: ProductTypeUsage } | { success: false; error: string }> {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const [packages, items] = await Promise.all([
       prisma.millingOutputPackage.count({ where: { productTypeId: id } }),
       prisma.purchaseOrderItem.findMany({
@@ -249,13 +249,13 @@ export async function getProductTypeUsage(
     }
   } catch (error) {
     console.error('Failed to get product type usage:', error)
-    return { success: false, error: '제품유형 사용처를 불러오지 못했어요.' }
+    return { success: false, error: guardErrorMessage(error, '제품유형 사용처를 불러오지 못했어요.') }
   }
 }
 
 export async function deleteProductType(id: number) {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const used = await prisma.millingOutputPackage.count({ where: { productTypeId: id } })
     if (used > 0) {
       return {
@@ -281,13 +281,13 @@ export async function deleteProductType(id: number) {
     return { success: true }
   } catch (error) {
     console.error('Failed to delete product type:', error)
-    return { success: false, error: '제품유형 삭제에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '제품유형 삭제에 실패했어요.') }
   }
 }
 
 export async function toggleProductTypeActive(id: number) {
-  await requirePermission('OPERATION_MANAGE')
   try {
+    await requirePermission('OPERATION_MANAGE')
     const pt = await prisma.productType.findUnique({ where: { id } })
     if (!pt) return { success: false, error: '제품유형을 찾을 수 없어요.' }
 
@@ -307,7 +307,7 @@ export async function toggleProductTypeActive(id: number) {
     return { success: true, data: updated }
   } catch (error) {
     console.error('Failed to toggle product type:', error)
-    return { success: false, error: '제품유형 상태 변경에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '제품유형 상태 변경에 실패했어요.') }
   }
 }
 
@@ -323,8 +323,8 @@ export async function listSkuSpecs(
   varietyIds: number[],
   millingType: string,
 ): Promise<{ success: true; data: Record<number, string[]> } | { success: false; error: string }> {
-  await requireSession()
   try {
+    await requireSession()
     // 시스템 경계 — 화면이 넘긴 값은 믿지 않는다
     const ids = [...new Set(varietyIds)].filter((id) => Number.isInteger(id) && id > 0)
     const mt = millingType?.trim() || '기타'
@@ -340,7 +340,7 @@ export async function listSkuSpecs(
     return { success: true, data }
   } catch (error) {
     console.error('Failed to list SKU specs:', error)
-    return { success: false, error: 'SKU 규격 조회에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, 'SKU 규격 조회에 실패했어요.') }
   }
 }
 
@@ -349,8 +349,8 @@ export async function suggestProductType(
   millingType: string,
   packageType: string,
 ) {
-  await requireSession()
   try {
+    await requireSession()
     const mt = millingType?.trim() || '기타'
     const pt = packageType?.trim()
 
@@ -374,6 +374,6 @@ export async function suggestProductType(
     return { success: true, data: { default: defaultType, candidates, packagings } }
   } catch (error) {
     console.error('Failed to suggest product type:', error)
-    return { success: false, error: '제품유형 추천 조회에 실패했어요.' }
+    return { success: false, error: guardErrorMessage(error, '제품유형 추천 조회에 실패했어요.') }
   }
 }
