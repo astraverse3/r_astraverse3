@@ -344,13 +344,15 @@ export function PackageGroupRow({
 
     return (
         // 펼친 묶음 = 헤더 + 서브행이 같은 톤. ring이 아니라 위쪽 경계만 (§4.2.6)
-        <div className={isOpen ? 'bg-slate-100 border-t border-slate-200/80' : ''}>
+        // 접힌 그룹도 흰 배경 금지 — bg-slate-50 (표준 list-spec-instructions.md:26, 잡곡 원물 목록과 같은 값).
+        // 목록이 divide-y라 위 경계만 준다 — 아래는 다음 행의 경계가 맡는다(이중선 방지)
+        <div className={`border-t border-slate-200/80 ${isOpen ? 'bg-slate-100' : 'bg-slate-50'}`}>
             <button
                 type="button"
                 onClick={onToggle}
-                // 펼침 시 호버가 묶음톤보다 밝으면 얼룩이 된다 — 톤 위로 한 단 어둡게
+                // 호버가 바탕보다 밝으면 얼룩이 된다 — 바탕 위로 한 단 어둡게
                 className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center text-left transition-colors ${
-                    isOpen ? 'hover:bg-slate-200/70' : 'hover:bg-slate-50'
+                    isOpen ? 'hover:bg-slate-200/70' : 'hover:bg-slate-100'
                 }`}
             >
                 {/* 그룹은 품종 묶음이라 그 자체를 재포장할 수 없다 — 안의 행만 고른다 */}
