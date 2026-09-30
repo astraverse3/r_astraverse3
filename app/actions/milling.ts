@@ -14,6 +14,7 @@ import { MILLED_OUTPUTS, MILLED_OUTPUT_ONLY } from '@/lib/batch-outputs'
 import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/lib/packaging-diff'
 import { movedCountOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 import { formatKstKo, toKstDate } from '@/lib/kst-date'
+import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -527,7 +528,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 tonbagPackagingId = pkg.id;
             }
 
-            // 잔량=SKU 미부여(null), 톤백='톤백' 포장지 강제, 그 외=라인 포장지(미선택 허용).
+            // 잔량=SKU 미부여(null), 톤백='톤백' 포장지 강제, 그 외=라인 포장지(없으면 아래에서 거부 — §54).
             const normalizePackagingId = (o: MillingOutputInput): number | null => {
                 if (o.packageType === PACKAGE_TYPE_REMAINDER) return null;
                 if (o.packageType === PACKAGE_TYPE_TONBAG) return tonbagPackagingId;
@@ -543,6 +544,18 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
                 stockId: resolveStock(o.stockId).id,
                 packagingId: normalizePackagingId(o),
             }));
+
+            // 포장지 없는 일반 줄은 SKU가 안 붙어 발주서에서 영영 「재고 부족」이 된다(백로그 §54).
+            // 화면이 먼저 막지만 낡은 화면·다른 탭에서 와도 여기서 막는다 — 화면 검증과 한 쌍.
+            const missing = linesMissingPackaging(lines);
+            if (missing.length > 0) {
+                return {
+                    success: false as const,
+                    error: missingPackagingMessage(missing),
+                    errors: [],
+                    conflict: undefined,
+                };
+            }
 
             // 3. 기존 행 + 차감량.
             // MILLED_OUTPUT_ONLY — 재포장 결과는 이 배치의 batchId를 승계했을 뿐 도정 포장이 아니다.
@@ -632,7 +645,7 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
             const productTypeCache = new Map<string, number | null>();
             const resolveProductType = async (line: PackagingLine): Promise<number | null> => {
                 if (line.packageType === PACKAGE_TYPE_REMAINDER) return null;
-                // 포장지가 정해진 라인만 SKU 연동(미선택 일반 라인은 null 허용).
+                // 포장지 없는 일반 줄은 위에서 이미 거부했다(§54). 남은 방어선.
                 if (line.packagingId === null) return null;
                 const stock = resolveStock(line.stockId);
                 const key = `${stock.varietyId}|${line.packageType}|${line.packagingId}`;

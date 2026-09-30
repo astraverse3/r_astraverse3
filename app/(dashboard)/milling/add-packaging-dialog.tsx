@@ -17,6 +17,7 @@ import { listPackagings, suggestProductType } from '@/app/actions/product-type'
 import { useSkuSpecButtons } from '../use-sku-spec-buttons'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
+import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
 import { SpecSummaryBand } from './spec-summary'
 import { generateLotNo } from '@/lib/lot-generation'
 import { getYieldRate } from '@/app/actions/settings'
@@ -165,6 +166,8 @@ export function AddPackagingDialog({
     // 목록이 오기 전엔 드롭다운에 선택지가 없어 브라우저가 첫 옵션 「포장지 미지정」을 보여줬다(값은 그대로인데
     // 표시만 미지정). 오기 전엔 「…」, 실패면 그렇게 적는다 — 미지정은 실제로 미지정일 때만 보인다
     const [packagingsState, setPackagingsState] = useState<'loading' | 'ready' | 'failed'>('loading')
+    // 새 줄의 기본 포장지 추천을 기다리는 줄(`규격|stockId`) — 그동안 「포장지 선택」 대신 회전 아이콘
+    const [suggesting, setSuggesting] = useState<ReadonlySet<string>>(new Set())
     const scrollRef = useRef<HTMLDivElement>(null)
     // 규격 버튼 클릭 후 방금 추가/증가한 행의 입력칸으로 포커스 이동(맨아래 스크롤 대신)
     const pendingFocus = useRef<{ index: number; field: 'count' | 'weight' } | null>(null)
@@ -202,6 +205,12 @@ export function AddPackagingDialog({
             toast.info(`개수가 없는 ${dropped.length}줄은 저장하지 않았습니다.`)
         }
         const valid = outputs.filter(o => o.count > 0)
+        // 포장지 없는 일반 줄은 SKU가 안 붙는다 — 서버도 같은 함수로 막는다(백로그 §54)
+        const missing = linesMissingPackaging(valid)
+        if (missing.length > 0) {
+            toast.warning(missingPackagingMessage(missing))
+            return null
+        }
         if (valid.length === 0) {
             // 서버에도 아무것도 없으면 저장할 게 없다.
             if (serverOutputs.length === 0) {
@@ -445,7 +454,15 @@ export function AddPackagingDialog({
         }])
         // (품종+도정+규격) 기본 포장지 추천은 백그라운드로 조회 → 응답이 오면 해당 라인의
         // 포장지가 아직 미지정일 때만 채운다(사용자가 먼저 골랐으면 그 선택을 유지).
+        // 기본 SKU가 없으면 비어 남는다 → 「포장지 선택」이 뜨고 저장이 막힌다(§54)
+        const suggestKey = `${label}|${stockId}`
+        setSuggesting(prev => new Set(prev).add(suggestKey))
         settle(suggestProductType(group.varietyId, millingType, label)).then(res => {
+            setSuggesting(prev => {
+                const next = new Set(prev)
+                next.delete(suggestKey)
+                return next
+            })
             const defaultPackagingId = res.success && res.data ? (res.data.default?.packagingId ?? null) : null
             if (defaultPackagingId == null) return
             setOutputs(prev => prev.map(o =>
@@ -698,11 +715,11 @@ export function AddPackagingDialog({
                                                 <span className="text-[11px] text-stone-400 pl-0.5 truncate">포장지: 톤백</span>
                                             ) : o.packageType === PKG_REMAINDER ? (
                                                 <span className="text-[11px] text-stone-300 pl-0.5">—</span>
-                                            ) : packagingsState !== 'ready' ? (
+                                            ) : packagingsState !== 'ready' || (o.packagingId == null && suggesting.has(`${o.packageType}|${o.stockId}`)) ? (
                                                 <span className="h-7 w-full min-w-0 flex items-center rounded-md border border-stone-200 bg-stone-50 px-2 text-[11px] text-stone-400 truncate">
-                                                    {packagingsState === 'loading'
-                                                        ? <Loader2 className="h-3 w-3 animate-spin" aria-label="포장지 불러오는 중" />
-                                                        : '포장지 불러오기 실패'}
+                                                    {packagingsState === 'failed'
+                                                        ? '포장지 불러오기 실패'
+                                                        : <Loader2 className="h-3 w-3 animate-spin" aria-label="포장지 불러오는 중" />}
                                                 </span>
                                             ) : isClosed || !canManage ? (
                                                 <span className="text-[11px] text-stone-400 truncate">
@@ -712,14 +729,15 @@ export function AddPackagingDialog({
                                                 <select
                                                     value={o.packagingId ?? ''}
                                                     onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
-                                                    className="h-7 w-full min-w-0 truncate rounded-md border border-stone-200 bg-white pl-2 pr-5 text-[11px] text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none"
+                                                    className={`h-7 w-full min-w-0 truncate rounded-md border bg-white pl-2 pr-5 text-[11px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none ${o.packagingId == null ? 'border-rose-300 text-rose-700' : 'border-stone-200 text-stone-600'}`}
                                                     style={{
                                                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                                                         backgroundRepeat: 'no-repeat',
                                                         backgroundPosition: 'right 5px center',
                                                     }}
                                                 >
-                                                    <option value="">포장지 미지정</option>
+                                                    {/* 「미지정」은 고를 수 없다(§54) — 기본 SKU가 없는 규격일 때만 이 안내가 보인다 */}
+                                                    <option value="" disabled>포장지 선택</option>
                                                     {packagings.map(p => (
                                                         <option key={p.id} value={p.id}>{p.name}</option>
                                                     ))}
