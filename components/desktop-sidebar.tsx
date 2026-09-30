@@ -48,11 +48,7 @@ const STATS_SUB = [
     { href: '/statistics/output', label: '판매분석' },
 ]
 
-/**
- * `pendingUsers` — 승인 대기 인원(레이아웃이 ADMIN에게만 센다, 그 밖엔 0). §83 T4 뱃지.
- * 🔴 임시다 — 헤더 종 아이콘으로 옮길 예정(`docs/handoff/요청-헤더-알림아이콘.md`)
- */
-export function DesktopSidebar({ showBackup = true, pendingUsers = 0 }: { showBackup?: boolean; pendingUsers?: number }) {
+export function DesktopSidebar({ showBackup = true }: { showBackup?: boolean }) {
     const pathname = usePathname();
     const { data: session } = useSession();
     const user = session?.user;
@@ -184,9 +180,6 @@ export function DesktopSidebar({ showBackup = true, pendingUsers = 0 }: { showBa
                             >
                                 <Server className="w-4 h-4" />
                                 <span className="flex-1 text-left">관리자 메뉴</span>
-                                {!adminOpen && pendingUsers > 0 && (
-                                    <span className="h-2 w-2 rounded-full bg-amber-600" aria-label={`승인 대기 ${pendingUsers}명`} />
-                                )}
                                 {adminOpen
                                     ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                                     : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
@@ -207,13 +200,12 @@ export function DesktopSidebar({ showBackup = true, pendingUsers = 0 }: { showBa
                                 {user?.role === 'ADMIN' && (
                                     <Link
                                         href="/admin/users"
-                                        className={`flex items-center text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
+                                        className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/users')
                                             ? 'text-primary bg-blue-50'
                                             : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                             }`}
                                     >
                                         사용자 관리
-                                        {pendingUsers > 0 && <span className="ml-auto rounded-full bg-amber-600 px-1.5 font-mono text-[11px] font-bold leading-[18px] text-white">{pendingUsers}</span>}
                                     </Link>
                                 )}
                                 {hasPermission(user, 'NOTICE_MANAGE') && (

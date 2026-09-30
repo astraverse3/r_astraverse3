@@ -31,7 +31,7 @@ export async function getUsers() {
 }
 
 /**
- * 승인 대기 인원 — 레이아웃이 ADMIN에게만 부른다(사이드바·모바일 메뉴 뱃지, §83).
+ * 승인 대기 인원 — 헤더 알림(종, `lib/notifications.ts`)이 ADMIN에게만 부른다(§83 · 작업지시 ⑥).
  * 뱃지일 뿐이라 실패하면 0 — 화면 전체를 깨뜨리지 않는다.
  */
 export async function countPendingUsers(): Promise<number> {

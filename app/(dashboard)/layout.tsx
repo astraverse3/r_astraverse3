@@ -8,11 +8,12 @@ import { MillingCartProvider } from "./raw-stocks/milling-cart-context"
 import { LastUpdated } from "@/components/last-updated"
 import { YieldRatesProvider } from "./yield-rates-context"
 import { getYieldRates } from "@/app/actions/settings"
-import { countPendingUsers } from "@/app/actions/user"
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/auth"
-import { isApprovedRole, USER_ROLE } from "@/lib/user-role"
+import { isApprovedRole } from "@/lib/user-role"
+import { getHeaderNotifications } from "@/lib/notifications"
+import { HeaderBell } from "@/components/header/header-bell"
 
 export default async function DashboardLayout({
     children,
@@ -23,13 +24,12 @@ export default async function DashboardLayout({
     //    여기서 본다 — getServerSession이 jwt 콜백을 거쳐 DB의 최신 역할을 읽는다
     const session = await getServerSession(authOptions);
     if (!isApprovedRole(session?.user?.role)) redirect("/pending");
-    const isAdmin = session?.user?.role === USER_ROLE.ADMIN;
 
     // 도정구분별 수율 기준값 — 소비 화면(대시보드·도정목록·통계)이 모두 이 그룹 안이라
-    // 여기서 한 번만 읽어 내려준다. 승인 대기 인원(뱃지)은 ADMIN만, 같이 읽어 왕복을 늘리지 않는다
-    const [yieldRates, pendingUsers] = await Promise.all([
+    // 여기서 한 번만 읽어 내려준다. 헤더 알림(종, 작업지시 ⑥)도 같이 읽어 왕복을 늘리지 않는다
+    const [yieldRates, notifications] = await Promise.all([
         getYieldRates(),
-        isAdmin ? countPendingUsers() : Promise.resolve(0),
+        getHeaderNotifications(session?.user?.role),
     ]);
 
     return (
@@ -37,11 +37,11 @@ export default async function DashboardLayout({
             <YieldRatesProvider rates={yieldRates}>
             <MillingCartProvider>
                 {/* Mobile Header (Fixed Top) */}
-                <MobileHeader pendingUsers={pendingUsers} />
+                <MobileHeader notifications={notifications} />
 
                 {/* Desktop Sidebar (Hidden on Mobile) */}
                 {/* 시스템 백업은 로컬 전용(pg_dump) — 실서버에선 메뉴째 숨긴다. VERCEL은 서버에서만 보인다 */}
-                <DesktopSidebar showBackup={!process.env.VERCEL} pendingUsers={pendingUsers} />
+                <DesktopSidebar showBackup={!process.env.VERCEL} />
 
                 {/* Main Content Area */}
                 {/* pb = nav h-[60px] + mb-4(16px) + env(safe) + 8px breathing = 84px + safe (mobile-nav.tsx와 동기화) */}
@@ -50,7 +50,16 @@ export default async function DashboardLayout({
                     {/* Desktop Header (Hidden on Mobile) — handoff.md §3.3: h-12 1줄 브레드크럼 */}
                     <header className="hidden lg:flex h-12 bg-white border-b border-slate-200 items-center justify-between gap-4 px-6 z-40">
                         <BreadcrumbDisplay />
-                        <HeaderUserProfile />
+                        {/* 종(32) · 구분선 · 프로필 — 일반 사용자는 종·구분선 없이 지금과 같다(작업지시 ⑥ N4) */}
+                        <div className="flex items-center gap-2">
+                            {notifications.eligible && (
+                                <>
+                                    <HeaderBell items={notifications.items} variant="desktop" />
+                                    <span className="h-5 w-px bg-slate-200" aria-hidden />
+                                </>
+                            )}
+                            <HeaderUserProfile />
+                        </div>
                     </header>
 
                     {/* Scrollable Page Content */}

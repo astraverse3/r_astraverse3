@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>헤더 알림(종) 시안</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif;margin:0}.font-mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}a{color:#2563eb}a:hover{color:#1d4ed8}</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="header-bell-parts.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="place" title="① 아이콘 자리" subtitle="모바일: 로고 | 종 · 아바타 · 톱니 — 버튼 40×40 세 개 = 120px, 390폭에서 여유 있음. PC: 브레드크럼 | 종(32) · 구분선 · 프로필.">
+        <DCArtboard id="m-closed" label="모바일 390 — 닫힘 (승인 대기 2)" width={390} height={700}><HbMobile n={2} /></DCArtboard>
+        <DCArtboard id="m-open" label="모바일 — 열림 (좌우 8px 여백 · 탭바 위까지)" width={390} height={700}><HbMobile n={2} open items={[['pending', 2]]} /></DCArtboard>
+        <DCArtboard id="d-open" label="PC — 열림 (w-340 · 종 기준 오른쪽 정렬)" width={1040} height={520}><HbDesktop n={2} open items={[['pending', 2]]} /></DCArtboard>
+      </DCSection>
+      <DCSection id="badge" title="② 뱃지" subtitle="숫자 알약 · 99+ · 0이면 회색 · 해당 없는 사람은 숨김">
+        <DCArtboard id="badge-rules" label="뱃지 규칙" width={760} height={400}><HbBadgeRules /></DCArtboard>
+      </DCSection>
+      <DCSection id="list" title="③ 목록" subtitle="한 줄 = 색 타일(32) · 제목 13 semibold · 화살표. 행 높이 모바일 48 / PC 40. 최대 높이 모바일 = 화면 − 헤더 − 탭바 − 16, PC 420, 넘치면 안에서 스크롤.">
+        <DCArtboard id="list-one" label="승인 대기" width={360} height={140}><div className="p-2"><HbPanel items={[['pending', 2]]} maxH={400} /></div></DCArtboard>
+        <DCArtboard id="list-empty" label="빈 상태 (ADMIN · 0건)" width={360} height={220}><div className="p-2"><HbPanel items={[]} maxH={400} /></div></DCArtboard>
+      </DCSection>
+      <DCSection id="noperm" title="④ 해당 알림이 없는 일반 사용자" subtitle="1단계엔 ADMIN 전용 알림뿐 → 일반 사용자는 종을 아예 안 보여 줌(눌러도 늘 빈 목록이라 혼란).">
+        <DCArtboard id="noperm-m" label="모바일 — 종 없음" width={390} height={220}><HbMobile showBell={false} h={220} /></DCArtboard>
+        <DCArtboard id="noperm-d" label="PC — 종 없음" width={1040} height={220}><HbDesktop showBell={false} /></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

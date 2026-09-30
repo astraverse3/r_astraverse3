@@ -101,3 +101,37 @@ export function StatsIcon({ active = false, ...props }: DuotoneIconProps) {
         </Base>
     )
 }
+
+// ── 헤더 알림(작업지시 ⑥) ─────────────────────────────────────────
+
+/** 헤더 알림 종 — 목록이 열리면 active */
+export function BellIcon({ active = false, ...props }: DuotoneIconProps) {
+    return (
+        <Base {...props} active={active}>
+            <path d="M6 9.5a6 6 0 0 1 12 0c0 4.2 1 6.4 2.1 7.5H3.9C5 15.9 6 13.7 6 9.5Z" fill={active ? 'currentColor' : 'none'} />
+            <path d="M10 20.2a2.3 2.3 0 0 0 4 0" />
+            <path d="M12 3.5V2.6" />
+        </Base>
+    )
+}
+
+/** 알림 목록 「승인 대기」 타일 — 시안은 채움형(active) */
+export function UserPlusIcon({ active = false, ...props }: DuotoneIconProps) {
+    return (
+        <Base {...props} active={active}>
+            <circle cx="9.5" cy="8" r="3.6" fill={active ? 'currentColor' : 'none'} />
+            <path d="M3.2 20c.4-3.6 3-6 6.3-6s5.9 2.4 6.3 6Z" fill={active ? 'currentColor' : 'none'} />
+            <path d="M19 8.5v5M16.5 11h5" />
+        </Base>
+    )
+}
+
+/** 알림 목록 빈 상태 — 시안은 채움형(active, 안쪽 체크는 흰색) */
+export function CheckCircleIcon({ active = false, ...props }: DuotoneIconProps) {
+    return (
+        <Base {...props} active={active}>
+            <circle cx="12" cy="12" r="8.5" fill={active ? 'currentColor' : 'none'} />
+            <path d="m8.3 12.2 2.5 2.5 5-5" stroke={active ? '#fff' : 'currentColor'} />
+        </Base>
+    )
+}

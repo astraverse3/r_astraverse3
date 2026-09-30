@@ -5,6 +5,8 @@ import { Settings, Users, Wheat, Tractor, Package, LogOut, Building, BadgeCheck,
 import { useSession, signOut } from "next-auth/react"
 import type { Session } from "next-auth"
 import { hasPermission, hasAnyPermission } from "@/lib/permissions"
+import { HeaderBell } from "@/components/header/header-bell"
+import type { HeaderNotifications } from "@/lib/notifications"
 
 import {
     DropdownMenu,
@@ -14,8 +16,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-/** `pendingUsers` — 승인 대기 인원(ADMIN만, 그 밖엔 0). §83 T4 뱃지 — 임시, 헤더 종 아이콘으로 옮길 예정 */
-export function MobileHeader({ pendingUsers = 0 }: { pendingUsers?: number }) {
+/** `notifications` — 레이아웃이 계산한 헤더 알림(작업지시 ⑥). eligible이 아니면 종을 안 그린다 */
+export function MobileHeader({ notifications }: { notifications: HeaderNotifications }) {
     const { data: session } = useSession()
     const user = session?.user
     const { name, image, department, position }: Partial<Session["user"]> = user ?? {}
@@ -26,10 +28,13 @@ export function MobileHeader({ pendingUsers = 0 }: { pendingUsers?: number }) {
                 <img src="/logo-full.png" alt="MILL LOG" className="h-[26px] w-auto object-contain" />
             </Link>
 
-            <div className="flex items-center gap-1.5 pr-1.5">
+            {/* 종 · 아바타 · 톱니 — 셋 다 40×40 버튼, 간격 0 (작업지시 ⑥ N4) */}
+            <div className="flex items-center gap-0 pr-1">
+                {notifications.eligible && <HeaderBell items={notifications.items} variant="mobile" />}
+
                 {/* 1. Profile & Logout (항상 표시) */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center justify-center focus:outline-none">
+                    <DropdownMenuTrigger className="flex h-10 w-10 items-center justify-center focus:outline-none">
                         {image ? (
                             <img src={image} alt={name || "User"} className="w-7 h-7 rounded-full border border-slate-200 object-cover" />
                         ) : (
@@ -63,12 +68,8 @@ export function MobileHeader({ pendingUsers = 0 }: { pendingUsers?: number }) {
 
                 {/* 2. Admin Settings (관리자 전용 혹은 안내 메시지) */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="relative p-1 text-slate-400 hover:text-slate-600 focus:outline-none">
+                    <DropdownMenuTrigger className="flex h-10 w-10 items-center justify-center text-slate-400 hover:text-slate-600 focus:outline-none">
                         <Settings className="w-5 h-5" />
-                        {/* 톱니 안에 숨어 있으면 모른다 — 대기자가 있으면 점 */}
-                        {pendingUsers > 0 && (
-                            <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-600 ring-2 ring-white" aria-label={`승인 대기 ${pendingUsers}명`} />
-                        )}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                         {/* 모든 사용자에게 표시: 품종, 생산자 */}
@@ -101,7 +102,6 @@ export function MobileHeader({ pendingUsers = 0 }: { pendingUsers?: number }) {
                                         <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
                                             <Users className="w-4 h-4 text-slate-500" />
                                             <span>사용자 관리</span>
-                                            {pendingUsers > 0 && <span className="ml-auto rounded-full bg-amber-600 px-1.5 font-mono text-[11px] font-bold leading-[18px] text-white">{pendingUsers}</span>}
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
