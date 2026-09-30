@@ -5,6 +5,9 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  // 기본값(true)은 네트워크가 돌아올 때 페이지를 통째로 새로고침한다 — 창고에서 신호가 끊겼다
+  // 붙으면 입력 중이던 포장 내역이 날아간다(백로그 §58). 연결 복구는 각 화면의 재시도에 맡긴다.
+  reloadOnOnline: false,
   disable: process.env.NODE_ENV === 'development', // Disable PWA in dev
 });
 
