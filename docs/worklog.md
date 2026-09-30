@@ -62,6 +62,16 @@
 - **§54 처리 `fb27022`** — 사용자 결정 「기본 포장지로」. 「포장지 미지정」 선택지 삭제 → 「포장지 선택」 + 저장 막음(화면·서버 같은 함수 `lib/packaging-required.ts`) · 추천 대기 회전 아이콘. 소급 `backfill-product-type.ts --apply` **20줄**. 남은 2줄은 사용자가 만든 SKU #92·#93이 기본 지정이 안 돼 스킵 → 사용자가 기본 지정 후 재실행 → **2줄 채움, 잔량 외 미지정 0건**(§89 신설). 백로그 §88(제품유형 목록 규격순 — 문자열 정렬) 신설. 보고서 `docs/report/report-포장지-미지정-기본포장지-2026-09-30.md`. tsc 0 · eslint 0 · test 523/523
 - 이민화 「데스크탑 로그인 안 됨」: 읽기 전용 조회 — 계정 1개·카카오 연결 1개, 오늘 11:07 로그인 1건, 6월 이후 새 사용자 0 → 다른 카카오 계정이면 새 사용자가 생겼어야 해서 **두 계정 가설은 약함**. 우리 앱에 닿기 전(주소·카카오) 단계로 추정 — 사용자에게 주소·에러 화면 확인 요청
 
+### 포장 다이얼로그 서버 왕복 4 → 1 · 인디카 예상치 (§57)
+
+커밋 `261cf1f`. 계획서 `docs/plan/plan-포장다이얼로그-왕복.md`, 보고서 `docs/report/report-포장다이얼로그-왕복-2026-09-30.md`.
+발단: 사용자 「포장내역 다이얼로그 서버 왕복하는거 그거부터 하자」.
+
+- `app/actions/milling.ts`: 새 액션 `getPackagingDialogData` — 기존 `getBatchOutputs`·`listPackagings`·`listSkuSpecs`를 서버 안에서 `Promise.all`로 부른다(쿼리 복사 안 함 → `getMillingLogs`와 같은 select 약속 유지). 부분 실패는 각자의 `{ success }`로. 바깥 가드는 직렬 세션 확인이 붙어서 일부러 안 둠
+- `add-packaging-dialog.tsx`: 열 때 effect 3개 + 수율 effect → 하나. 수율은 `useYieldRates()` + 그룹별 `getYieldTarget(…, varietyType)` → **인디카 68% → 61%**. 규격 버튼은 `mergeSpecButtons` 직접(재포장의 `useSkuSpecButtons`는 그대로)
+- 개발 서버 브라우저 확인: 4~5초 → **약 1초** · SKU 규격 버튼 · 인디카 61% · 포장지 로딩 정상. tsc 0 · eslint 0 · test 523/523
+- 백로그: §57 닫음 · 색인에서 §54·§57 뺌 · §56에 호출 0이 된 `settings.ts` `getYieldRate` 추가
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
