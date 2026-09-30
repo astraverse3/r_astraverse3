@@ -162,6 +162,9 @@ export function AddPackagingDialog({
     const [customInputs, setCustomInputs] = useState<Record<string, boolean>>({})
     // 활성 포장지 목록 (라인별 드롭다운 옵션)
     const [packagings, setPackagings] = useState<{ id: number; name: string }[]>([])
+    // 목록이 오기 전엔 드롭다운에 선택지가 없어 브라우저가 첫 옵션 「포장지 미지정」을 보여줬다(값은 그대로인데
+    // 표시만 미지정). 오기 전엔 「…」, 실패면 그렇게 적는다 — 미지정은 실제로 미지정일 때만 보인다
+    const [packagingsState, setPackagingsState] = useState<'loading' | 'ready' | 'failed'>('loading')
     const scrollRef = useRef<HTMLDivElement>(null)
     // 규격 버튼 클릭 후 방금 추가/증가한 행의 입력칸으로 포커스 이동(맨아래 스크롤 대신)
     const pendingFocus = useRef<{ index: number; field: 'count' | 'weight' } | null>(null)
@@ -318,8 +321,13 @@ export function AddPackagingDialog({
         if (!open) return
         let cancelled = false
         settle(listPackagings()).then(res => {
-            if (cancelled || !res.success || !res.data) return
+            if (cancelled) return
+            if (!res.success || !res.data) {
+                setPackagingsState(prev => (prev === 'ready' ? prev : 'failed'))
+                return
+            }
             setPackagings(res.data.filter(p => p.active).map(p => ({ id: p.id, name: p.name })))
+            setPackagingsState('ready')
         })
         return () => {
             cancelled = true
@@ -690,6 +698,10 @@ export function AddPackagingDialog({
                                                 <span className="text-[11px] text-stone-400 pl-0.5 truncate">포장지: 톤백</span>
                                             ) : o.packageType === PKG_REMAINDER ? (
                                                 <span className="text-[11px] text-stone-300 pl-0.5">—</span>
+                                            ) : packagingsState !== 'ready' ? (
+                                                <span className="h-7 w-full min-w-0 flex items-center rounded-md border border-stone-200 bg-stone-50 px-2 text-[11px] text-stone-400 truncate">
+                                                    {packagingsState === 'loading' ? '…' : '포장지 불러오기 실패'}
+                                                </span>
                                             ) : isClosed || !canManage ? (
                                                 <span className="text-[11px] text-stone-400 truncate">
                                                     {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
