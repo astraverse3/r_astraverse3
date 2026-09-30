@@ -87,6 +87,16 @@
 - tsc 0 · eslint 0 · test 523/523 · 브라우저 390/1280px 사용자 확인
 - 백로그: §34 해소 · §86 D4에 「iOS 확대 처리 컴포넌트를 같이」 기록
 
+### 제품유형 규격순 정렬 · 관리 화면 첫 SKU 자동 기본 (§88 · §89)
+
+커밋 `8492796`. 계획서 `docs/plan/plan-SKU-규격정렬-첫기본.md`, 보고서 `docs/report/report-SKU-규격정렬-첫기본-2026-09-30.md`.
+
+- `lib/package-spec.ts`: `compareSpec` 신규(톤백 → 무게 내림차순 → 무게 못 읽는 규격 → 잔량) + 테스트 2개
+- `admin/product-types/product-type-page-client.tsx`: 품종 → 도정 → 규격 → 기본 먼저 → 포장지 순으로 한 번 정렬(벼 그룹·잡곡 표 공용)
+- `milling/spec-summary.tsx`: 합계 밴드 정렬을 `compareSpec`으로 — 907g 같은 SKU 규격이 잔량 뒤에 붙던 것(§21 ⑥) · `packaging-constants.ts` 주석 정정
+- `app/actions/product-type.ts`: `upsertProductType` 신규 생성 때 그 조합에 활성 기본이 없으면 자동 기본(수정은 제외)
+- 검증: test 525/525 · tsc 0 · eslint 0/0. 브라우저 확인은 사용자
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
