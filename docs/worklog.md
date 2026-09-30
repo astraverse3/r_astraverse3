@@ -97,6 +97,19 @@
 - `app/actions/product-type.ts`: `upsertProductType` 신규 생성 때 그 조합에 활성 기본이 없으면 자동 기본(수정은 제외)
 - 검증: test 525/525 · tsc 0 · eslint 0/0. 브라우저 확인은 사용자
 
+### 제품판매 탭 읽기 전용 — 권한 없으면 차감 입구를 숨긴다 (§60)
+
+커밋 `82761c9`. 계획서 `docs/plan/plan-제품판매-읽기전용.md`, 보고서 `docs/report/report-제품판매-읽기전용-2026-09-30.md`.
+발단: 가공·판매 권한 없는 계정(11명 중 4명)이 시트를 누르면 에러 카드, 등록·⋮·상차 편집은 보이는데 누르면 실패. 사용자 결정 「읽기 전용」.
+
+- `app/actions/purchase-order-matrix.ts`: `getUploadMatrix` → `requireSession` (쓰기·팝오버 조회 가드는 그대로)
+- `sales/page.tsx` · `sales/purchase/[uploadId]/page.tsx`: `getServerSession`으로 `canManage` 계산 → prop
+- 목록 `product-sales-section` · `upload-table` · `loading-cell` · `upload-row-menu`: 등록 · 상차 편집 · 비고/삭제 숨김(엑셀 다운로드만)
+- 매트릭스 `matrix-client` · `matrix-head` · `matrix-header` · `matrix-bits` · `order-list-mobile` · `order-detail-panel`: 체크박스(칸 폭 유지) · 셀 클릭 · 재매칭 · 일괄차감 · 품목 카드 탭 숨김 — 콜백을 안 넘기는 방식
+- `docs/permission-matrix.md`: export 함수별 첫 가드를 스크립트로 뽑아 전수 대조 — 빠진 가드 추가 · 지워진 액션 7개 삭제
+- 백로그 §60 ✅, §83에 「매트릭스 수령처 이름도 로그인만으로 보인다(엑셀은 원래 그랬다)」 추가
+- 검증: test 525/525 · tsc 0 · eslint 0/0. 브라우저 확인은 사용자
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
