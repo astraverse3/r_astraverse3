@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Plus, Minus, Package, Trash2, Lock, X } from 'lucide-react'
+import { Plus, Minus, Package, Trash2, Lock, X, Loader2 } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
 import { listPackagings, suggestProductType } from '@/app/actions/product-type'
 import { useSkuSpecButtons } from '../use-sku-spec-buttons'
@@ -700,7 +700,9 @@ export function AddPackagingDialog({
                                                 <span className="text-[11px] text-stone-300 pl-0.5">—</span>
                                             ) : packagingsState !== 'ready' ? (
                                                 <span className="h-7 w-full min-w-0 flex items-center rounded-md border border-stone-200 bg-stone-50 px-2 text-[11px] text-stone-400 truncate">
-                                                    {packagingsState === 'loading' ? '…' : '포장지 불러오기 실패'}
+                                                    {packagingsState === 'loading'
+                                                        ? <Loader2 className="h-3 w-3 animate-spin" aria-label="포장지 불러오는 중" />
+                                                        : '포장지 불러오기 실패'}
                                                 </span>
                                             ) : isClosed || !canManage ? (
                                                 <span className="text-[11px] text-stone-400 truncate">

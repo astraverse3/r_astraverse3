@@ -30,8 +30,10 @@ function App() {
       </DCSection>
       <DCSection id="pack" title="③ 포장 등록 다이얼로그 — 모바일 터치 영역" subtitle="add-packaging-dialog.tsx. 현장에서 장갑 낀 채로 입력. PC(sm 이상)는 현재 1행 유지.">
         <DCArtboard id="pack-now" label="현재 (390)" width={390} height={700}><PackNow /></DCArtboard>
-        <DCArtboard id="pack-A" label="A안 — 2줄 행, 모든 타깃 44px" width={390} height={700}><PackA /></DCArtboard>
-        <DCArtboard id="pack-B" label="B안 — 1행 유지, 규격+포장지 합친 셀, 40px" width={390} height={700}><PackB /></DCArtboard>
+        <DCArtboard id="pack-A" label="A안 — 2줄 행, 모든 타깃 44px" width={390} height={740}><PackA /></DCArtboard>
+        <DCArtboard id="pack-B" label="B안 ✓ 편집 — 규격별 합계 · 규격버튼 36px" width={390} height={780}><PackB /></DCArtboard>
+        <DCArtboard id="pack-B-closed" label="B안 ✓ 마감된 배치 (읽기 전용 + 마감 해제)" width={390} height={780}><PackRO closed={true} /></DCArtboard>
+        <DCArtboard id="pack-B-view" label="B안 ✓ 운영 권한 없음 (읽기 전용)" width={390} height={780}><PackRO closed={false} /></DCArtboard>
       </DCSection>
       <DCSection id="pending" title="④ 승인 대기 (보안 S1 짝)" subtitle="새 카카오 계정 첫 로그인 → /pending. 관리자는 사용자 관리 상단에서 승인.">
         <DCArtboard id="pending-m" label="/pending — 모바일" width={390} height={720}><div className="h-full bg-slate-100 flex items-center justify-center p-4"><PendingCard /></div></DCArtboard>
