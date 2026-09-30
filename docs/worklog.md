@@ -30,6 +30,17 @@
 
 검증 tsc 0 · `eslint .` 0 · test 513/513. §52 벼 재고조사는 사용자 진행.
 
+### 백업 복원을 스크립트로만 (§84) · 잡곡 원물 #2277 삭제
+
+커밋 `7f0dff7`(#2277) · `0bbbf9b`(백업). 계획서 `docs/plan/plan-백업복원-스크립트화.md`, 보고서 `docs/report/report-백업복원-스크립트화-2026-09-30.md`.
+발단: 사용자 「(복원은) 스크립트로만 하게 해줘. 잘못 누를 수도 있는 거니까」 · 「소진된 기장 건은 삭제 처리해줘」.
+
+- **#2277**(기장·박태일·25년산·400kg): 5/6 사용자 지시로 직접 소진 처리된 행(포장 0) — 앱은 CONSUMED 삭제를 막아 스크립트로. 조건 9개 확인 · 저장소 밖 백업 · 감사로그. 9/29 초기화와는 무관 확인(그때 지운 잡곡 포장이 가리킨 원물 8건은 전부 AVAILABLE이었다)
+- **백업**: 「복구」 버튼 + 서버 액션 `restoreBackup` 삭제 · `createBackup` `execFile` + `PGPASSWORD` 환경변수 · `scripts/restore-backup.ts`(dry-run 기본, `--apply` 때 복원 직전 자동 백업) · `lib/backup-file.ts` + 테스트 6
+- 🔴 스크립트가 처음엔 `Invalid URL` — `@prisma/client`가 import 순간 `.env`를 먼저 넣는데 **`.env`의 `DIRECT_URL`이 불완전**(실제 값은 `.env.local`). 스크립트는 `.env.local`을 직접 읽게 함. `.env` 정리는 사용자 판단(§82)
+
+검증 tsc 0 · `eslint .` 0 · test 519/519 · 복원 스크립트 목록·dry-run·`../.env` 거부 · `psql select 1`(환경변수 접속). `--apply`는 안 돌림.
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
