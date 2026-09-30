@@ -49,20 +49,21 @@ export function SpecSummaryBand({
     if (!isMultiGroup && summary.length < 2) return null
 
     return (
-        <div className="mt-2 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/60 shadow-sm px-3 py-2.5">
-            <div className="text-[10.5px] font-semibold text-slate-400 tracking-wide mb-1.5">규격별 합계</div>
+        // 표시는 §87 T3(디자이너 B안) — 11px 미만 없음 · stone 대신 slate · 그라데이션·그림자 없음
+        <div className="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+            <div className="text-[11px] font-semibold text-slate-500 mb-1.5">규격별 합계</div>
             <div className="flex flex-wrap gap-1.5">
                 {summary.map(s => (
-                    <div key={s.packageType} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${s.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700' : 'bg-stone-100 text-stone-600'}`}>
+                    <div key={s.packageType} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-semibold ${s.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-700'}`}>
                             {s.packageType}
                         </span>
-                        <span className="text-[12px] font-bold text-slate-600 font-mono tabular-nums">
-                            {s.count.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">개</span>
+                        <span className="text-[13px] text-slate-700 font-mono tabular-nums">
+                            {s.count.toLocaleString()}<span className="text-[11px] text-slate-500 font-sans ml-px">개</span>
                         </span>
-                        <span className="text-slate-200">|</span>
-                        <span className="text-[12px] font-black text-slate-800 font-mono tabular-nums">
-                            {s.weight.toLocaleString()}<span className="text-[9px] text-slate-400 ml-px">kg</span>
+                        <span className="text-slate-300">|</span>
+                        <span className="text-[13px] font-bold text-slate-900 font-mono tabular-nums">
+                            {s.weight.toLocaleString()}<span className="text-[11px] text-slate-500 font-sans ml-px">kg</span>
                         </span>
                     </div>
                 ))}

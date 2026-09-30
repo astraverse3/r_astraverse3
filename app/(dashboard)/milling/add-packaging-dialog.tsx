@@ -9,9 +9,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Plus, Minus, Package, Trash2, Lock, X, Loader2 } from 'lucide-react'
+import { Package, Lock, X } from 'lucide-react'
 import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getPackagingDialogData, type MillingOutputInput } from '@/app/actions/milling'
 import { suggestProductType } from '@/app/actions/product-type'
 import { mergeSpecButtons } from '@/lib/package-spec'
@@ -19,6 +18,8 @@ import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
 import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
 import { SpecSummaryBand } from './spec-summary'
+import { PackagingFooter } from './packaging-footer'
+import { PackagingRowsHeader, PackagingRowDesktop, PackagingRowReadOnlyDesktop, PackagingRowMobile, PackagingRowReadOnlyMobile, type RowHandlers } from './packaging-rows'
 import { generateLotNo } from '@/lib/lot-generation'
 import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 import { getYieldTarget } from '@/lib/milling-yield'
@@ -178,6 +179,7 @@ export function AddPackagingDialog({
     const pendingFocus = useRef<{ index: number; field: 'count' | 'weight' } | null>(null)
     const { data: session } = useSession()
     const canManage = hasPermission(session?.user, 'OPERATION_MANAGE')
+    const editable = !isClosed && canManage
 
     // 저장·마감·초기화를 막는 조건. 재조회가 끝나기 전이거나 실패했으면 쓰기를 열지 않는다.
     const writeBlocked = isLoading || outputsLoading || outputsFailed
@@ -330,9 +332,10 @@ export function AddPackagingDialog({
         if (!target) return
         pendingFocus.current = null
         requestAnimationFrame(() => {
-            const el = scrollRef.current?.querySelector<HTMLInputElement>(
+            // PC·모바일 행이 CSS로 갈려 같은 입력칸이 두 벌이다 — 숨은 쪽(offsetParent=null)을 잡으면 포커스가 안 간다
+            const el = Array.from(scrollRef.current?.querySelectorAll<HTMLInputElement>(
                 `[data-${target.field}-index="${target.index}"]`
-            )
+            ) ?? []).find(e => e.offsetParent !== null)
             if (!el) return
             el.scrollIntoView({ block: 'nearest' })
             el.focus()
@@ -513,6 +516,8 @@ export function AddPackagingDialog({
         setOutputs(prev => prev.filter((_, i) => i !== index))
     }
 
+    const rowHandlers: RowHandlers = { updateCount, setCount, setWeight, setPackaging, remove: removePackage }
+
     async function handleSubmit() {
         const validOutputs = await collectValidOutputs()
         if (!validOutputs) return
@@ -559,7 +564,14 @@ export function AddPackagingDialog({
 
             <DialogContent className="sm:max-w-[500px] flex flex-col max-h-[90dvh] px-4 sm:px-6">
                 <DialogHeader>
-                    <DialogTitle>포장 기록 관리</DialogTitle>
+                    <DialogTitle>
+                        포장 기록 관리
+                        {isClosed && (
+                            <span className="ml-2 inline-flex items-center gap-1 align-middle rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[12px] font-semibold text-slate-700">
+                                <Lock className="h-3 w-3" /> 마감됨
+                            </span>
+                        )}
+                    </DialogTitle>
                     <div className="flex items-center gap-2 mt-1.5">
                         {millingType && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/20 text-primary">
@@ -593,38 +605,35 @@ export function AddPackagingDialog({
                         )
 
                         return (
-                            <div key={group.groupKey} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
-                                {/* 그룹 헤더 — 모바일: LOT은 1줄 인라인, 입력→예상은 2번째 줄 우측 정렬 / PC: 모두 1줄 */}
+                            <div key={group.groupKey} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-slate-200' : 'border-transparent'}`}>
+                                {/* 그룹 헤더 — 모바일: 로트번호는 둘째 줄 풀폭 / PC: 한 줄(작업지시 ⑤ P4). 크기는 sm:로 PC만 바꾼다 */}
                                 {(isMultiGroup || group.farmerName) && (
-                                    <div className="bg-stone-50 border-b border-stone-100 px-3 py-2">
-                                        {/* 첫줄: 생산자·품종(좌) / 투입→예상(우). 데스크탑은 로트번호도 인라인 */}
+                                    <div className="bg-slate-50 border-b border-slate-100 sm:border-slate-200 px-3 py-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[12px] font-bold text-stone-700 shrink-0">{group.farmerName}</span>
+                                            <span className="text-[12px] sm:text-[13px] font-bold text-slate-700 sm:text-slate-800 shrink-0">{group.farmerName}</span>
                                             {group.varietyName && (
-                                                <span className="text-stone-400 text-[11px] shrink-0">{group.varietyName}</span>
+                                                <span className="text-slate-500 text-[11px] sm:text-[12px] shrink-0">{group.varietyName}</span>
                                             )}
                                             {group.lotNo && (
-                                                <span className="hidden sm:inline-block font-mono text-[11px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 shrink-0">
+                                                <span className="hidden sm:block min-w-0 truncate font-mono text-[11px] text-slate-500">
                                                     {group.lotNo}
                                                 </span>
                                             )}
-                                            <div className="flex-1" />
                                             {isMultiGroup && (
-                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                    {/* 투입량·화살표는 데스크탑만, 예상은 공통 */}
-                                                    <span className="hidden sm:inline text-[11px] text-stone-500">
-                                                        {group.totalInputKg.toLocaleString()}kg
-                                                    </span>
-                                                    <span className="hidden sm:inline text-stone-300 text-[10px]">→</span>
-                                                    <span className="text-[11px] font-bold text-primary">
+                                                <>
+                                                    <span className="sm:hidden ml-auto shrink-0 text-[11px] font-bold text-primary">
                                                         예상 {expectedKg.toLocaleString()}kg
                                                     </span>
-                                                </div>
+                                                    <span className="hidden sm:inline ml-auto shrink-0 whitespace-nowrap text-[12px] text-slate-600">
+                                                        <span className="font-mono">{group.totalInputKg.toLocaleString()}</span> → 예상{' '}
+                                                        <b className="font-mono text-blue-700">{expectedKg.toLocaleString()}</b>kg
+                                                    </span>
+                                                </>
                                             )}
                                         </div>
                                         {/* 모바일: 로트번호 풀폭 둘째줄 */}
                                         {group.lotNo && (
-                                            <span className="sm:hidden block w-full font-mono text-[11.5px] text-stone-500 bg-white border border-stone-200 rounded px-1.5 py-0.5 mt-1.5">
+                                            <span className="sm:hidden block w-full font-mono text-[11.5px] text-slate-500 bg-white border border-slate-200 rounded px-1.5 py-0.5 mt-1.5">
                                                 {group.lotNo}
                                             </span>
                                         )}
@@ -633,21 +642,21 @@ export function AddPackagingDialog({
 
                                 {/* 규격 버튼 (편집 가능할 때만) */}
                                 {!isClosed && canManage && (
-                                    <div className="px-3 pt-3 pb-3 space-y-1.5 border-b border-stone-200">
+                                    <div className="px-2 py-2 sm:px-3 space-y-1.5 border-b border-slate-200">
                                         {!isMultiGroup && (
-                                            <Label className="text-[12px] text-stone-500 block">규격 선택</Label>
+                                            <Label className="text-[12px] text-slate-500 block">규격 선택</Label>
                                         )}
-                                        {/* 규격 버튼: 모바일 5열 2행, 데스크탑 10열 1행 */}
+                                        {/* 규격 버튼: 32px·13px — 모바일 5열(작업지시 ④ C3), 데스크탑 10열(⑤ P3) */}
                                         <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
                                             {specsOf(group.varietyId).map(t => (
                                                 <Button key={t.label} variant="secondary"
-                                                    className="h-7 w-full px-0 text-[11px] hover:bg-stone-200 transition-colors"
+                                                    className="h-8 w-full px-0 text-[13px] hover:bg-slate-200 transition-colors"
                                                     onClick={() => addToGroup(group, t)}>
                                                     {t.label}
                                                 </Button>
                                             ))}
                                             <Button variant="outline"
-                                                className="h-7 w-full px-0 text-[11px] border-dashed border-stone-300 hover:bg-stone-100 text-stone-500"
+                                                className="h-8 w-full px-0 text-[13px] border-dashed border-slate-300 hover:bg-slate-50 text-slate-600"
                                                 onClick={() => setCustomInputs(prev => ({ ...prev, [group.groupKey]: true }))}>
                                                 기타
                                             </Button>
@@ -667,11 +676,11 @@ export function AddPackagingDialog({
                                                     autoFocus
                                                     className="flex-1 h-9 text-[13px] text-right"
                                                 />
-                                                <span className="text-[12px] text-stone-500 font-bold shrink-0">kg</span>
+                                                <span className="text-[12px] text-slate-500 font-bold shrink-0">kg</span>
                                                 <Button className="h-9 px-4 text-[13px] shrink-0" onClick={() => handleCustomAdd(group)}>
                                                     추가
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-stone-400"
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-slate-400"
                                                     onClick={() => setCustomInputs(prev => ({ ...prev, [group.groupKey]: false }))}>
                                                     <X className="h-4 w-4" />
                                                 </Button>
@@ -680,133 +689,44 @@ export function AddPackagingDialog({
                                     </div>
                                 )}
 
-                                {/* 컬럼 헤더 힌트 (데스크탑 전용) */}
-                                {groupOutputs.length > 0 && (
-                                    <div className="hidden sm:grid grid-cols-[40px_140px_1fr_58px_24px] gap-1 px-3 pt-1.5 pb-0.5">
-                                        <span className="text-[9px] font-semibold text-stone-300 text-center tracking-tight">규격</span>
-                                        <span className="text-[9px] font-semibold text-stone-300 tracking-tight">포장지</span>
-                                        <span className="text-[9px] font-semibold text-stone-300 text-center tracking-tight">수량</span>
-                                        <span className="text-[9px] font-semibold text-stone-300 text-right tracking-tight">중량</span>
-                                        <span />
-                                    </div>
-                                )}
+                                {groupOutputs.length > 0 && <PackagingRowsHeader editable={editable} />}
 
-                                {/* 포장 목록 */}
-                                <div className="divide-y divide-stone-100">
+                                {/* 포장 목록 — PC·모바일 행을 CSS로 가른다(같은 행이 두 벌, packaging-rows.tsx 머리 주석) */}
+                                <div className="divide-y divide-slate-100">
                                     {groupOutputs.length === 0 && (
-                                        <div className="text-center text-[12px] text-stone-300 py-4">
-                                            {!isClosed && canManage ? '위 버튼으로 추가하세요' : '포장 내역 없음'}
+                                        <div className="text-center text-[12px] text-slate-500 py-4">
+                                            {editable ? '위 버튼으로 추가하세요' : '포장 내역 없음'}
                                         </div>
                                     )}
-                                    {groupOutputs.map(({ o, i }) => (
-                                        // 충돌로 합쳐 들어온 줄은 배경으로 짚어준다 — 어느 줄이 남의 것인지
-                                        // 보이지 않으면 배너만으로는 확인이 되지 않는다 (P4).
-                                        <div key={i} className={`px-2 sm:px-3 py-1.5 ${o.id !== undefined && incomingIds.has(o.id) ? 'bg-amber-50' : ''}`}>
-                                          {/* 모바일: 36/1fr/64/58/22 — 데스크탑: 40/140/1fr/64/24 (반응형 1행 유지) */}
-                                          <div className="grid grid-cols-[36px_1fr_88px_58px_22px] sm:grid-cols-[40px_120px_1fr_64px_24px] items-center gap-1">
-                                            {/* 1. 규격 badge (잔량=노랑) */}
-                                            <Badge variant="secondary" className={`w-full justify-center px-0 py-0.5 rounded text-[11px] ${o.packageType === PKG_REMAINDER ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' : 'bg-stone-100 text-stone-600 hover:bg-stone-100'}`}>
-                                                {o.packageType}
-                                            </Badge>
-
-                                            {/* 2. 포장지 — 잔량=—, 톤백=고정, 그 외 드롭다운(기본 자동) */}
-                                            {o.packageType === PKG_TONBAG ? (
-                                                <span className="text-[11px] text-stone-400 pl-0.5 truncate">포장지: 톤백</span>
-                                            ) : o.packageType === PKG_REMAINDER ? (
-                                                <span className="text-[11px] text-stone-300 pl-0.5">—</span>
-                                            ) : packagingsState !== 'ready' || (o.packagingId == null && suggesting.has(`${o.packageType}|${o.stockId}`)) ? (
-                                                <span className="h-7 w-full min-w-0 flex items-center rounded-md border border-stone-200 bg-stone-50 px-2 text-[11px] text-stone-400 truncate">
-                                                    {packagingsState === 'failed'
-                                                        ? '포장지 불러오기 실패'
-                                                        : <Loader2 className="h-3 w-3 animate-spin" aria-label="포장지 불러오는 중" />}
-                                                </span>
-                                            ) : isClosed || !canManage ? (
-                                                <span className="text-[11px] text-stone-400 truncate">
-                                                    {packagings.find(p => p.id === o.packagingId)?.name ?? '미지정'}
-                                                </span>
-                                            ) : (
-                                                <select
-                                                    value={o.packagingId ?? ''}
-                                                    onChange={(e) => setPackaging(i, e.target.value ? Number(e.target.value) : null)}
-                                                    className={`h-7 w-full min-w-0 truncate rounded-md border bg-white pl-2 pr-5 text-[11px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring appearance-none ${o.packagingId == null ? 'border-rose-300 text-rose-700' : 'border-stone-200 text-stone-600'}`}
-                                                    style={{
-                                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a8a29e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                                                        backgroundRepeat: 'no-repeat',
-                                                        backgroundPosition: 'right 5px center',
-                                                    }}
-                                                >
-                                                    {/* 「미지정」은 고를 수 없다(§54) — 기본 SKU가 없는 규격일 때만 이 안내가 보인다 */}
-                                                    <option value="" disabled>포장지 선택</option>
-                                                    {packagings.map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                                    ))}
-                                                </select>
-                                            )}
-
-                                            {/* 3. 수량 stepper (입력 동작 유지) */}
-                                            {isClosed || !canManage ? (
-                                                <span className="text-[12px] font-mono font-bold text-stone-700 text-center">{o.count}</span>
-                                            ) : (
-                                                <div className="flex items-center justify-center">
-                                                    <Button variant="ghost" size="icon" className="h-[22px] w-[22px] shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, -1)}>
-                                                        <Minus className="h-3 w-3" />
-                                                    </Button>
-                                                    <Input
-                                                        type="number"
-                                                        data-count-index={i}
-                                                        value={o.count === 0 ? '' : o.count}
-                                                        onChange={(e) => setCount(i, parseInt(e.target.value))}
-                                                        onFocus={(e) => e.target.select()}
-                                                        className="w-11 h-6 text-center text-[12px] font-bold bg-transparent border-none shadow-none font-mono px-0"
-                                                    />
-                                                    <Button variant="ghost" size="icon" className="h-[22px] w-[22px] shrink-0 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full" onClick={() => updateCount(i, 1)}>
-                                                        <Plus className="h-3 w-3" />
-                                                    </Button>
+                                    {groupOutputs.map(({ o, i }) => {
+                                        const rowProps = {
+                                            o, i, editable, packagings, packagingsState,
+                                            suggesting: suggesting.has(`${o.packageType}|${o.stockId}`),
+                                            on: rowHandlers,
+                                        }
+                                        return (
+                                            // 충돌로 합쳐 들어온 줄은 배경으로 짚어준다 — 어느 줄이 남의 것인지
+                                            // 보이지 않으면 배너만으로는 확인이 되지 않는다 (P4).
+                                            <div key={i} className={o.id !== undefined && incomingIds.has(o.id) ? 'bg-amber-50' : ''}>
+                                                <div className="hidden sm:block">
+                                                    {editable ? <PackagingRowDesktop {...rowProps} /> : <PackagingRowReadOnlyDesktop {...rowProps} />}
                                                 </div>
-                                            )}
-
-                                            {/* 4. 중량 */}
-                                            <div className="flex items-center gap-0.5 justify-end">
-                                                {(o.packageType === '톤백' || o.packageType === '잔량') ? (
-                                                    isClosed || !canManage ? (
-                                                        <span className="text-[12px] font-bold text-stone-700 whitespace-nowrap">{o.weightPerUnit.toLocaleString()}<span className="text-[9px] text-stone-400 ml-px">kg</span></span>
-                                                    ) : (
-                                                        <>
-                                                            <Input
-                                                                type="number"
-                                                                data-weight-index={i}
-                                                                value={o.weightPerUnit}
-                                                                onChange={(e) => setWeight(i, parseFloat(e.target.value))}
-                                                                onFocus={(e) => e.target.select()}
-                                                                className="h-6 w-11 text-right text-[11px] border-stone-200 rounded px-1"
-                                                            />
-                                                            <span className="text-[9px] text-stone-400">kg</span>
-                                                        </>
-                                                    )
-                                                ) : (
-                                                    <span className="text-[12px] font-bold text-stone-700 whitespace-nowrap">{(o.weightPerUnit * o.count).toLocaleString()}<span className="text-[9px] text-stone-400 ml-px">kg</span></span>
-                                                )}
+                                                <div className="sm:hidden">
+                                                    {editable ? <PackagingRowMobile {...rowProps} /> : <PackagingRowReadOnlyMobile {...rowProps} />}
+                                                </div>
                                             </div>
-
-                                            {/* 5. 삭제 */}
-                                            {!isClosed && canManage ? (
-                                                <Button variant="ghost" size="icon" className="h-[22px] w-[22px] mx-auto text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full" onClick={() => removePackage(i)}>
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            ) : <div />}
-                                          </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
 
                                 {/* 그룹 소계 (다중일 때만) */}
                                 {isMultiGroup && groupOutputs.length > 0 && (
-                                    <div className="flex justify-end px-3 py-1.5 bg-stone-50 border-t border-stone-100">
-                                        <span className="text-[12px] text-stone-500">
-                                            소계 <span className={`font-bold ${groupTotal > expectedKg ? 'text-amber-600' : 'text-stone-700'}`}>
+                                    <div className="flex justify-end px-3 py-1.5 bg-slate-50 border-t border-slate-200">
+                                        <span className="text-[12px] text-slate-600">
+                                            소계 <b className={`font-mono ${groupTotal > expectedKg ? 'text-amber-700' : 'text-slate-900'}`}>
                                                 {groupTotal.toLocaleString()}
-                                            </span>
-                                            <span className="text-stone-400"> / {expectedKg.toLocaleString()} kg</span>
+                                            </b>
+                                            {' / '}<span className="font-mono">{expectedKg.toLocaleString()}</span> kg
                                         </span>
                                     </div>
                                 )}
@@ -815,56 +735,23 @@ export function AddPackagingDialog({
                     })}
                 </div>
 
-                {/* Footer */}
-                {canManage && (
-                    <div className="pt-3 border-t space-y-3">
-                        <div className="flex justify-between items-center">
-                            <div className="text-[13px] font-medium">
-                                총 포장:{' '}
-                                <span className="font-bold text-[15px] sm:text-lg">
-                                    {outputs.reduce((sum, o) => sum + o.totalWeight, 0).toLocaleString()} kg
-                                </span>
-                            </div>
-                            {/* 저장 버튼은 화면에도 서버에도 아무것도 없을 때만 막는다 —
-                                화면만 비었다면 「전부 지우겠다」는 뜻이라 저장이 열려 있어야 한다.
-                                (예전엔 화면이 비면 무조건 막혀 마지막 한 줄을 지울 방법이 없었다) */}
-                            {isClosed ? (
-                                <Button variant="outline" onClick={handleReopenAndOpen} disabled={isLoading}>
-                                    <Lock className="mr-1 h-3 w-3" /> 마감 해제
-                                </Button>
-                            ) : (
-                                <Button onClick={handleSubmit} disabled={writeBlocked || (outputs.length === 0 && serverOutputs.length === 0)}>
-                                    {isLoading ? '저장 중...' : outputsLoading ? '불러오는 중...' : '기록 저장'}
-                                </Button>
-                            )}
-                        </div>
-
-                        {!isClosed && (
-                            <div className="flex justify-between items-center pt-2 border-t border-dashed">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-auto p-0 px-2 py-1 text-[12px] font-semibold"
-                                    disabled={writeBlocked}
-                                    onClick={handleCloseBatch}
-                                >
-                                    <Lock className="mr-1 h-3 w-3" /> 작업 마감
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-auto p-0 px-2 py-1 ml-auto text-[12px] font-semibold"
-                                    disabled={writeBlocked || serverOutputs.length === 0}
-                                    onClick={handleClearPackaging}
-                                >
-                                    <Trash2 className="mr-1 h-3 w-3" /> 포장 초기화
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                )}
+                {/* 하단 바 — 막는 조건과 핸들러는 여기서 계산해 넘긴다(표시는 packaging-footer.tsx).
+                    저장 버튼은 화면에도 서버에도 아무것도 없을 때만 막는다 — 화면만 비었다면 「전부 지우겠다」는
+                    뜻이라 저장이 열려 있어야 한다(예전엔 화면이 비면 무조건 막혀 마지막 한 줄을 지울 방법이 없었다) */}
+                <PackagingFooter
+                    canManage={canManage}
+                    isClosed={!!isClosed}
+                    totalKg={outputs.reduce((sum, o) => sum + o.totalWeight, 0)}
+                    isLoading={isLoading}
+                    outputsLoading={outputsLoading}
+                    saveDisabled={writeBlocked || (outputs.length === 0 && serverOutputs.length === 0)}
+                    closeDisabled={writeBlocked}
+                    clearDisabled={writeBlocked || serverOutputs.length === 0}
+                    onSave={handleSubmit}
+                    onClose={handleCloseBatch}
+                    onClear={handleClearPackaging}
+                    onReopen={handleReopenAndOpen}
+                />
             </DialogContent>
         </Dialog>
     )
