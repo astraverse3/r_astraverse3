@@ -371,76 +371,6 @@ export async function removeStockFromMilling(batchId: number, stockId: number) {
     }
 }
 
-export async function addPackagingLog(batchId: number, data: MillingOutputInput) {
-    try {
-        await requirePermission('OPERATION_MANAGE')
-        // Fetch Batch and related Stock info for LOT NUMBER GENERATION
-        const batch = await prisma.millingBatch.findUnique({
-            where: { id: batchId },
-            include: {
-                stocks: {
-                    include: {
-                        variety: true,
-                        farmer: {
-                            include: { group: true }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (!batch) throw new Error('Batch not found')
-
-        // --- LOT NUMBER GENERATION LOGIC ---
-        // 1. Find matching stock or fallback to primary stock
-        const targetStock = batch.stocks.find(s => s.id === data.stockId) || batch.stocks[0];
-        if (!targetStock) throw new Error('No stock linked to this batch');
-
-        const productCode = getProductCode(targetStock.variety.type, targetStock.variety.name, batch.millingType);
-
-        // Use helper to generate Lot No consistent with Stock logic
-        // 관행(일반) 생산자는 로트번호 없음
-        const isConventional = targetStock.farmer.group?.certType === '일반';
-        const lotNo = isConventional ? null : generateLotNo({
-            incomingDate: targetStock.incomingDate,
-            varietyType: targetStock.variety.type,
-            varietyName: targetStock.variety.name,
-            millingType: batch.millingType,
-            certNo: targetStock.farmer.group?.certNo || '00',
-            farmerGroupCode: targetStock.farmer.group?.code || '00',
-            farmerNo: targetStock.farmer.farmerNo || '00'
-        });
-        // -----------------------------------
-
-        const output = await prisma.millingOutputPackage.create({
-            data: {
-                batchId,
-                packageType: data.packageType,
-                weightPerUnit: data.weightPerUnit,
-                count: data.count,
-                totalWeight: data.totalWeight,
-                productCode, // Save derived code
-                lotNo,       // Save generated LOT
-                stockId: targetStock.id,
-            }
-        })
-
-        await recordAuditLog({
-            action: 'CREATE',
-            entity: 'MillingOutputPackage',
-            entityId: output.id,
-            details: data,
-            description: `도정 생산품 등록: ${data.packageType} ${data.weightPerUnit}kg x ${data.count}`
-        })
-
-        revalidatePath('/milling')
-        return { success: true, data: output }
-    } catch (error) {
-        console.error('Failed to add packaging log:', error)
-        return { success: false, error: sanitizeErrorMessage(error, '포장 기록 추가에 실패했습니다.') }
-    }
-}
-
 /**
  * 배치 하나의 도정 포장 행을 **지금 시점으로** 다시 읽는다 (2026-09-02, P3).
  *
@@ -800,28 +730,6 @@ export async function updatePackagingLogs(batchId: number, outputs: MillingOutpu
     } catch (error) {
         console.error('Failed to update packaging logs:', error)
         return { success: false, error: sanitizeErrorMessage(error, '포장 기록 수정에 실패했습니다.') }
-    }
-}
-
-export async function deletePackagingLog(outputId: number) {
-    try {
-        await requirePermission('OPERATION_MANAGE')
-        const deleted = await prisma.millingOutputPackage.delete({
-            where: { id: outputId }
-        })
-
-        await recordAuditLog({
-            action: 'DELETE',
-            entity: 'MillingOutputPackage',
-            entityId: outputId,
-            description: `도정 생산품 삭제: ${deleted.packageType} ${deleted.weightPerUnit}kg x ${deleted.count}`
-        })
-
-        revalidatePath('/milling')
-        return { success: true }
-    } catch (error) {
-        console.error('Failed to delete packaging log:', error)
-        return { success: false, error: guardErrorMessage(error, 'Failed to delete packaging log') }
     }
 }
 

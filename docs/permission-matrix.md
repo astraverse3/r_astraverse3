@@ -103,7 +103,7 @@
 | 파일 | 함수 |
 | --- | --- |
 | `app/actions/packages.ts` | `createMiscPackage`, `updateMiscPackage`, `deleteMiscPackage` |
-| `app/actions/milling.ts` | `startMillingBatch`, `removeStockFromMilling`, `addPackagingLog`, `updatePackagingLogs`, `deletePackagingLog`, `closeMillingBatch`, `reopenMillingBatch`, `updateMillingBatchStatus`, `deleteMillingBatch`, `deleteMillingBatches`, `updateMillingBatchStocks`, `updateMillingBatchMetadata` |
+| `app/actions/milling.ts` | `startMillingBatch`, `removeStockFromMilling`, `updatePackagingLogs`, `closeMillingBatch`, `reopenMillingBatch`, `updateMillingBatchStatus`, `deleteMillingBatch`, `deleteMillingBatches`, `updateMillingBatchStocks`, `updateMillingBatchMetadata` |
 | `app/actions/release.ts` | `createStockRelease`, `cancelStockRelease`, `updateStockRelease`, `deleteStockReleases`, `removeStockFromRelease` |
 | `app/actions/product-type.ts` | `createPackaging`, `togglePackagingActive`, `upsertProductType`, `deleteProductType`, `toggleProductTypeActive` · `findOrCreateProductType`은 내부 헬퍼(무가드, 상위 액션이 가드) |
 | `app/actions/purchase-order.ts` | `uploadPurchaseOrder`, `autoMatchOrderItem`, `setOrderItemProductType`, `confirmOrderItem`, `confirmOrder`, `cancelOrderItemMovements`, `deletePurchaseUpload`, `deletePurchaseOrder` · 조회(`listPurchaseUploads`/`listPurchaseOrders`/`getPurchaseOrderDetail`)는 공개 |
