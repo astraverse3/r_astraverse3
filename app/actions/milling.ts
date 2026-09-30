@@ -15,6 +15,7 @@ import { diffPackaging, formatPackagingDiffErrors, type PackagingLine } from '@/
 import { movedCountOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
 import { formatKstKo, toKstDate } from '@/lib/kst-date'
 import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
+import { listPackagings, listSkuSpecs } from './product-type'
 
 // 도정산 SKU 연동 sentinel.
 // - 잔량: 자체 판매 안 함(재포장 소진) → SKU 미부여(productTypeId=null 유지).
@@ -404,6 +405,26 @@ export async function getBatchOutputs(batchId: number) {
         console.error('Failed to get batch outputs:', error)
         return { success: false as const, error: guardErrorMessage(error, '포장 내역을 불러오지 못했습니다.') }
     }
+}
+
+/**
+ * 포장 다이얼로그가 열릴 때 필요한 것 한 번에 — 포장 내역(P3 재조회) · 포장지 목록 · SKU 규격 (백로그 §57).
+ *
+ * 화면에서 셋을 따로 부르면 서버 액션이 한 줄로 서서(한 탭의 액션은 하나씩 처리된다) 왕복이 세 번 난다.
+ * 여기서는 기존 액션을 **그대로** 병렬로 부른다 — 쿼리를 복사하지 않아야 `getBatchOutputs`의
+ * 「`getMillingLogs`와 같은 select」 약속이 지켜진다. 결과도 각자의 `{ success }`째 돌려줘서
+ * 부분 실패를 화면이 따로 다룬다(내역 실패=쓰기 막음 · 포장지 실패=「불러오지 못함」 · 규격 실패=고정 목록).
+ *
+ * ⚠️ 바깥 가드를 일부러 두지 않았다 — 안쪽 셋이 각자 `try` 안 첫 줄에서 세션을 확인한다.
+ * 여기 하나 더 두면 세션 확인이 병렬 앞에 **직렬로** 붙는다.
+ */
+export async function getPackagingDialogData(batchId: number, varietyIds: number[], millingType: string) {
+    const [outputs, packagings, specs] = await Promise.all([
+        getBatchOutputs(batchId),
+        listPackagings(),
+        listSkuSpecs(varietyIds, millingType),
+    ])
+    return { success: true as const, outputs, packagings, specs }
 }
 
 /** 감사 스냅샷에 필요한 필드만. 실제 조회 결과는 이보다 넓다(구조적 타입). */

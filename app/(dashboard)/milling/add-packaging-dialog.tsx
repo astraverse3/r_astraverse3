@@ -12,16 +12,16 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Package, Trash2, Lock, X, Loader2 } from 'lucide-react'
-import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getBatchOutputs, type MillingOutputInput } from '@/app/actions/milling'
-import { listPackagings, suggestProductType } from '@/app/actions/product-type'
-import { useSkuSpecButtons } from '../use-sku-spec-buttons'
+import { updatePackagingLogs, reopenMillingBatch, closeMillingBatch, getPackagingDialogData, type MillingOutputInput } from '@/app/actions/milling'
+import { suggestProductType } from '@/app/actions/product-type'
+import { mergeSpecButtons } from '@/lib/package-spec'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
 import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
 import { SpecSummaryBand } from './spec-summary'
 import { generateLotNo } from '@/lib/lot-generation'
-import { getYieldRate } from '@/app/actions/settings'
-import { DEFAULT_YIELD_RATES } from '@/lib/settings-constants'
+import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
+import { getYieldTarget } from '@/lib/milling-yield'
 import { useRouter } from 'next/navigation'
 import { triggerDataUpdate } from '@/components/last-updated'
 import { toast } from 'sonner'
@@ -70,6 +70,8 @@ type LotGroup = {
     lotNo: string
     representativeStockId: number
     varietyId: number
+    /** Variety.type — 예상 생산량의 수율 기준값이 품종축을 먼저 본다(인디카 61% 등) */
+    varietyType: string | null
     stockIds: number[]
     farmerName: string
     varietyName: string
@@ -100,6 +102,7 @@ function computeLotGroups(stocks: PackagingStock[], millingType: string): LotGro
                 lotNo: displayLotNo,
                 representativeStockId: stock.id,
                 varietyId: stock.variety?.id ?? stock.varietyId ?? 0,
+                varietyType: stock.variety?.type ?? null,
                 stockIds: [],
                 farmerName: stock.farmerName || stock.farmer?.name || '알수없음',
                 varietyName: stock.variety?.name || '',
@@ -166,6 +169,8 @@ export function AddPackagingDialog({
     // 목록이 오기 전엔 드롭다운에 선택지가 없어 브라우저가 첫 옵션 「포장지 미지정」을 보여줬다(값은 그대로인데
     // 표시만 미지정). 오기 전엔 「…」, 실패면 그렇게 적는다 — 미지정은 실제로 미지정일 때만 보인다
     const [packagingsState, setPackagingsState] = useState<'loading' | 'ready' | 'failed'>('loading')
+    // 품종별 SKU 규격 — 오기 전엔 비어 있어 고정 목록만 보인다
+    const [skuSpecs, setSkuSpecs] = useState<Record<number, string[]>>({})
     // 새 줄의 기본 포장지 추천을 기다리는 줄(`규격|stockId`) — 그동안 「포장지 선택」 대신 회전 아이콘
     const [suggesting, setSuggesting] = useState<ReadonlySet<string>>(new Set())
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -255,16 +260,8 @@ export function AddPackagingDialog({
 
     const lotGroups = computeLotGroups(stocks, millingType)
     const isMultiGroup = lotGroups.length > 1
-    // DB에서 수율 조회 (없으면 기본값으로 시작, 비동기로 교체)
-    const [yieldRate, setYieldRate] = useState<number>(
-        (DEFAULT_YIELD_RATES[millingType ?? ''] ?? 68) / 100
-    )
-    useEffect(() => {
-        if (!millingType) return
-        getYieldRate(millingType)
-            .then(rate => setYieldRate(rate / 100))
-            .catch(error => console.error('[getYieldRate] failed — 기본 수율 유지:', error))
-    }, [millingType])
+    // 수율 기준값은 layout이 내려준다(왕복 없음). 품종축 키도 들어 있어 그룹 품종으로 판정한다(백로그 §57)
+    const yieldRates = useYieldRates()
 
     const isControlled = controlledOpen !== undefined
     const open = isControlled ? controlledOpen : internalOpen
@@ -281,6 +278,9 @@ export function AddPackagingDialog({
     //
     // ⚠️ deps에서 `initialOutputs`를 일부러 뺐다 — 열려 있는 동안 prop이 갱신되면
     // **입력 중인 값을 덮어써서** 그게 또 「입력 날림」이 된다. 열리는 순간에만 맞춘다.
+    //
+    // 포장지 목록·SKU 규격도 같은 호출로 받는다(백로그 §57) — 따로 부르면 서버 액션이 한 줄로 서서
+    // 개발 서버에선 열 때마다 4~5초 걸렸다. 규격도 그래서 **열 때만** 받는다(투입 재고는 열려 있는 동안 안 바뀐다).
     useEffect(() => {
         if (!open) return
         // 서버 응답 전까지는 스냅샷을 보여준다(빈 화면 깜빡임 방지). 곧 최신으로 교체된다.
@@ -290,18 +290,33 @@ export function AddPackagingDialog({
         let cancelled = false
         setOutputsLoading(true)
         setOutputsFailed(false)
-        settle(getBatchOutputs(batchId)).then(res => {
+        const varietyIds = lotGroups.map(g => g.varietyId)
+        settle(getPackagingDialogData(batchId, varietyIds, millingType)).then(res => {
             if (cancelled) return
+            // 호출 자체가 끊겼으면 셋 다 실패로 — 각자의 실패 분기가 그대로 받는다
+            const parts = res.success ? res : { outputs: res, packagings: res, specs: res }
+
             setOutputsLoading(false)
             // 🔴 조용히 넘어가지 않는다. 못 읽은 채로 저장하면 남의 행을 지운다.
-            if (!res.success) {
+            if (!parts.outputs.success) {
                 setOutputsFailed(true)
                 toast.error('포장 내역을 불러오지 못했습니다. 창을 닫고 다시 열어 주세요.')
-                return
+            } else {
+                const fresh = restoreOutputs(parts.outputs.data as MillingOutputInput[])
+                setOutputs(fresh)
+                setServerOutputs(fresh)
             }
-            const fresh = restoreOutputs(res.data as MillingOutputInput[])
-            setOutputs(fresh)
-            setServerOutputs(fresh)
+
+            // 포장지 목록 (라인별 드롭다운 옵션)
+            if (!parts.packagings.success || !('data' in parts.packagings) || !parts.packagings.data) {
+                setPackagingsState(prev => (prev === 'ready' ? prev : 'failed'))
+            } else {
+                setPackagings(parts.packagings.data.filter(p => p.active).map(p => ({ id: p.id, name: p.name })))
+                setPackagingsState('ready')
+            }
+
+            // 실패면 고정 목록만 — 버튼이 줄 뿐이라 로딩을 막지 않는다
+            setSkuSpecs(parts.specs.success ? parts.specs.data : {})
         })
         return () => {
             cancelled = true
@@ -325,26 +340,8 @@ export function AddPackagingDialog({
         })
     }, [outputs])
 
-    // 활성 포장지 목록 lazy fetch (라인별 드롭다운 옵션)
-    useEffect(() => {
-        if (!open) return
-        let cancelled = false
-        settle(listPackagings()).then(res => {
-            if (cancelled) return
-            if (!res.success || !res.data) {
-                setPackagingsState(prev => (prev === 'ready' ? prev : 'failed'))
-                return
-            }
-            setPackagings(res.data.filter(p => p.active).map(p => ({ id: p.id, name: p.name })))
-            setPackagingsState('ready')
-        })
-        return () => {
-            cancelled = true
-        }
-    }, [open])
-
     // 만들 규격 = 고정 목록 + 그룹 품종의 SKU 규격(백로그 §48 — IPS 백미 907g 등). 그룹마다 품종이 다를 수 있다
-    const specsOf = useSkuSpecButtons(open, lotGroups.map(g => g.varietyId), millingType, PACKAGE_TEMPLATES)
+    const specsOf = (varietyId: number) => mergeSpecButtons(PACKAGE_TEMPLATES, skuSpecs[varietyId] ?? [])
 
     // 초기화는 위 재조회 effect가 맡는다 — 여기서 낡은 prop으로 다시 채우면 그걸 덮어쓴다.
     const handleOpenChange = (newOpen: boolean) => {
@@ -544,7 +541,7 @@ export function AddPackagingDialog({
     // 단일 그룹이면 stocks가 없어도 빈 그룹 하나로 처리
     const displayGroups: LotGroup[] = lotGroups.length > 0
         ? lotGroups
-        : [{ groupKey: 'single', lotNo: '', representativeStockId: 0, varietyId: 0, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
+        : [{ groupKey: 'single', lotNo: '', representativeStockId: 0, varietyId: 0, varietyType: null, stockIds: [], farmerName: '', varietyName: '', totalInputKg: totalInputKg ?? 0 }]
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -591,7 +588,9 @@ export function AddPackagingDialog({
                     {displayGroups.map((group) => {
                         const groupOutputs = getGroupOutputs(group)
                         const groupTotal = groupOutputs.reduce((sum, { o }) => sum + (o.totalWeight || 0), 0)
-                        const expectedKg = Math.round(group.totalInputKg * yieldRate)
+                        const expectedKg = Math.round(
+                            group.totalInputKg * getYieldTarget(millingType, yieldRates, group.varietyType) / 100
+                        )
 
                         return (
                             <div key={group.groupKey} className={`rounded-xl border overflow-hidden ${isMultiGroup ? 'border-stone-200' : 'border-transparent'}`}>
