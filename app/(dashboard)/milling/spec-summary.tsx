@@ -3,7 +3,8 @@
 // 여러 생산자를 함께 투입한 배치는 화면이 로트별로 쪼개져 있어 규격별 총량이 안 보인다.
 // 그걸 헤더에 한 줄로 얹는 것이 이 밴드다.
 
-import { PACKAGE_TEMPLATES, PKG_REMAINDER } from './packaging-constants'
+import { compareSpec } from '@/lib/package-spec'
+import { PKG_REMAINDER } from './packaging-constants'
 
 type SummaryLine = { packageType: string; count: number; weight: number }
 
@@ -11,7 +12,7 @@ type SummaryLine = { packageType: string; count: number; weight: number }
 type CountableOutput = { packageType: string; count: number; totalWeight: number }
 
 /**
- * 규격별 합계 — 전체 생산자 합산. 규격 템플릿 순서로 세운다(템플릿에 없는 규격은 뒤로).
+ * 규격별 합계 — 전체 생산자 합산. 톤백 → 무게 내림차순 → 잔량으로 세운다(`compareSpec`, §88 — 고정 버튼에 없는 907g 같은 SKU 규격도 무게 자리에 들어간다).
  *
  * 수량·중량이 **둘 다** 비어 있는 줄은 아직 입력 중인 빈 줄이라 세지 않는다.
  */
@@ -24,13 +25,9 @@ export function computeSpecSummary(outputs: CountableOutput[]): SummaryLine[] {
         cur.weight += o.totalWeight || 0
         map.set(o.packageType, cur)
     }
-    const order = PACKAGE_TEMPLATES.map(t => t.label)
     return [...map.entries()]
         .map(([packageType, v]) => ({ packageType, ...v }))
-        .sort((a, b) => {
-            const ia = order.indexOf(a.packageType), ib = order.indexOf(b.packageType)
-            return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
-        })
+        .sort((a, b) => compareSpec(a.packageType, b.packageType))
 }
 
 /**

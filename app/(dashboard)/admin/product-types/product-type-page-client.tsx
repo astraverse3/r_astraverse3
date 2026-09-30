@@ -12,6 +12,7 @@ import { hasPermission } from '@/lib/permissions'
 import { getVarietyTypeLabel } from '@/lib/variety-labels'
 import { getDisplayMillingType } from '@/lib/milling-type-display'
 import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { compareSpec } from '@/lib/package-spec'
 import {
     createPackaging,
     togglePackagingActive,
@@ -116,9 +117,19 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
 
     // ── 탭 (벼 / 잡곡) ──
     const [tab, setTab] = useState<'rice' | 'misc'>('rice')
-    const visibleTypes = productTypes.filter((r) =>
-        tab === 'rice' ? r.variety.category === 'RICE' : r.variety.category === 'MISC_GRAIN',
-    )
+    // 정렬: 품종 → 도정 → 규격(무게순, §88) → 기본 먼저 → 포장지. 벼 탭 그룹도 이 순서를 그대로 물려받는다
+    const visibleTypes = productTypes
+        .filter((r) =>
+            tab === 'rice' ? r.variety.category === 'RICE' : r.variety.category === 'MISC_GRAIN',
+        )
+        .sort(
+            (a, b) =>
+                a.variety.name.localeCompare(b.variety.name, 'ko') ||
+                a.millingType.localeCompare(b.millingType, 'ko') ||
+                compareSpec(a.packageType, b.packageType) ||
+                Number(b.isDefault) - Number(a.isDefault) ||
+                a.packaging.name.localeCompare(b.packaging.name, 'ko'),
+        )
 
     // 벼 탭 — 품종별 그룹 (가나다순)
     const riceGroups = (() => {
@@ -355,30 +366,28 @@ export function ProductTypePageClient({ packagings, productTypes, varieties }: P
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {[...visibleTypes]
-                                    .sort((a, b) => a.variety.name.localeCompare(b.variety.name, 'ko'))
-                                    .map((row) => (
-                                        <TableRow
-                                            key={row.id}
-                                            className={`border-b border-slate-50 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
-                                        >
-                                            <TableCell className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</TableCell>
-                                            <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">
-                                                {row.packageType}
-                                                {row.unitsPerBox != null && (
-                                                    <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</TableCell>
-                                            <TableCell className="py-2 px-2 text-center">
-                                                {row.isDefault && (
-                                                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="py-2 px-2 text-center">{statusButton(row)}</TableCell>
-                                            <TableCell className="py-2 px-2 text-right whitespace-nowrap">{actionButtons(row)}</TableCell>
-                                        </TableRow>
-                                    ))}
+                                {visibleTypes.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        className={`border-b border-slate-50 hover:bg-primary/5 transition-colors ${row.active ? '' : 'opacity-50'}`}
+                                    >
+                                        <TableCell className="py-2 px-2 font-medium text-slate-800 whitespace-nowrap">{row.variety.name}</TableCell>
+                                        <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">
+                                            {row.packageType}
+                                            {row.unitsPerBox != null && (
+                                                <span className="ml-1.5 text-[10.5px] text-slate-400">{row.unitsPerBox}개/박스</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 text-slate-600 whitespace-nowrap">{row.packaging.name}</TableCell>
+                                        <TableCell className="py-2 px-2 text-center">
+                                            {row.isDefault && (
+                                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 inline" />
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 text-center">{statusButton(row)}</TableCell>
+                                        <TableCell className="py-2 px-2 text-right whitespace-nowrap">{actionButtons(row)}</TableCell>
+                                    </TableRow>
+                                ))}
                                 {visibleTypes.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={6} className="py-8 text-center text-xs text-slate-400">

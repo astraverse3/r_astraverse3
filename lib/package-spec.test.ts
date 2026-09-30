@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mergeSpecButtons, specWeightKg } from './package-spec'
+import { compareSpec, mergeSpecButtons, specWeightKg } from './package-spec'
 
 // ------------------------------------------------------
 // specWeightKg
@@ -74,4 +74,20 @@ test('mergeSpecButtons: 원본 배열을 건드리지 않는다', () => {
   const before = labels(REPACK)
   mergeSpecButtons(REPACK, ['907g'])
   assert.deepEqual(labels(REPACK), before)
+})
+
+// ------------------------------------------------------
+// compareSpec (백로그 §88)
+// ------------------------------------------------------
+test('compareSpec: 톤백 → 무게 내림차순 → 무게 못 읽는 규격 → 잔량', () => {
+  // 문자열 정렬이면 10kg · 1kg · 20kg · 500g · 5kg · 907g · 기타 · 잔량 · 톤백 순이 된다
+  const input = ['10kg', '잔량', '1kg', '907g', '톤백', '20kg', '기타', '500g', '5kg']
+  assert.deepEqual(
+    [...input].sort(compareSpec),
+    ['톤백', '20kg', '10kg', '5kg', '1kg', '907g', '500g', '기타', '잔량'],
+  )
+})
+
+test('compareSpec: 표기만 다른 같은 무게는 0', () => {
+  assert.equal(compareSpec('1kg', '1 kg'), 0)
 })

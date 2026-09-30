@@ -16,6 +16,23 @@ export function specWeightKg(spec: string): number | null {
   return m[2].toLowerCase() === 'kg' ? n : n / 1000
 }
 
+// 센티널 규격 — 다이얼로그 상수(`milling/packaging-constants.ts`)와 값이 같아야 한다.
+// 이쪽이 의존성 없는 순수 모듈이라 그 파일을 import하지 않고 따로 둔다.
+const SPEC_TONBAG = '톤백'
+const SPEC_REMAINDER = '잔량'
+
+/**
+ * 규격 정렬 비교 — **톤백 → 무게 내림차순 → 무게 못 읽는 규격(가나다) → 잔량**(백로그 §88).
+ * 포장 규격 버튼(`PACKAGE_TEMPLATES`)과 같은 방향이다. 문자열 정렬이면 `10kg`이 `1kg`·`20kg`보다 앞선다.
+ */
+export function compareSpec(a: string, b: string): number {
+  const rank = (s: string) => (s === SPEC_TONBAG ? 0 : s === SPEC_REMAINDER ? 3 : specWeightKg(s) === null ? 2 : 1)
+  const ra = rank(a), rb = rank(b)
+  if (ra !== rb) return ra - rb
+  if (ra === 1) return (specWeightKg(b) as number) - (specWeightKg(a) as number)
+  return a.localeCompare(b, 'ko')
+}
+
 type SpecButton = { label: string; weight: number | null }
 
 /** 톤백·잔량·기타처럼 무게가 정해지지 않은 버튼(`null` 또는 0 sentinel) */

@@ -13,7 +13,7 @@
 export const PKG_REMAINDER = '잔량'
 export const PKG_TONBAG = '톤백'
 
-/** 규격 버튼 목록이자 **정렬 기준**이다 (합계 밴드가 이 순서로 줄을 세운다). */
+/** 규격 버튼 목록. 순서는 `lib/package-spec.ts` `compareSpec`(합계 밴드·SKU 관리 화면 정렬)과 같은 방향이다. */
 export const PACKAGE_TEMPLATES = [
     { label: '톤백', weight: 0 },
     { label: '20kg', weight: 20 },

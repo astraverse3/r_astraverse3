@@ -133,6 +133,7 @@ export type UpsertProductTypeInput = {
 
 /**
  * SKU 추가/수정. isDefault=true면 동일 (품종+도정+규격)의 기존 기본을 해제(트랜잭션).
+ * 신규는 그 조합에 활성 기본이 없으면 체크 안 해도 기본이 된다(§89).
  */
 export async function upsertProductType(input: UpsertProductTypeInput) {
   try {
@@ -164,8 +165,21 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
         throw new Error('이미 동일한 제품유형(SKU)이 존재합니다.')
       }
 
-      // 기본 지정 시 동일 (품종+도정+규격)의 기존 기본 해제
-      if (input.isDefault) {
+      // 신규 SKU인데 그 조합에 활성 기본이 없으면 자동 기본(§89) — 도정 포장 저장의
+      // `promoteDefaultIfNone`과 같은 규칙. 없으면 백필·기본 포장지 추천(suggestProductType)이 못 찾는다.
+      // 수정(id 있음)은 제외 — 사용자가 일부러 끈 기본을 되살리면 안 된다
+      const active = input.active ?? true
+      let isDefault = input.isDefault ?? false
+      if (!input.id && !isDefault && active) {
+        const activeDefault = await tx.productType.findFirst({
+          where: { varietyId: input.varietyId, millingType, packageType, isDefault: true, active: true },
+          select: { id: true },
+        })
+        isDefault = !activeDefault
+      }
+
+      // 기본 지정 시 동일 (품종+도정+규격)의 기존 기본 해제 (자동 기본이면 남아 있던 비활성 기본이 해제된다)
+      if (isDefault) {
         await tx.productType.updateMany({
           where: {
             varietyId: input.varietyId,
@@ -183,8 +197,8 @@ export async function upsertProductType(input: UpsertProductTypeInput) {
         millingType,
         packageType,
         packagingId: input.packagingId,
-        isDefault: input.isDefault ?? false,
-        active: input.active ?? true,
+        isDefault,
+        active,
         unitsPerBox,
       }
 
