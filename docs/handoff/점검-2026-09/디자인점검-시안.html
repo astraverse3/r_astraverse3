@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>디자인 점검 시안 — 보조색 · 타입 · 포장 터치 · 승인대기</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif;margin:0}.font-mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}a{color:#2563eb}a:hover{color:#1d4ed8}</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+<template id="__bundler_thumbnail"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#2563eb"></rect><rect x="26" y="30" width="48" height="40" rx="6" fill="#fff"></rect><rect x="34" y="40" width="32" height="6" rx="2" fill="#93c5fd"></rect><rect x="34" y="52" width="20" height="6" rx="2" fill="#93c5fd"></rect></svg></template>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="design-audit-parts.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="accent" title="① 보조색 통일" subtitle="보라 계열이 purple(통계 칩·로그)·violet(생산자 태그·발아위탁)·indigo(헤더 그림자)로 흩어져 있음. 칩마다 의미가 다름.">
+        <DCArtboard id="accent-now" label="현재" width={460} height={470}><div className="bg-slate-100 h-full"><AccentBoard k="now" /></div></DCArtboard>
+        <DCArtboard id="accent-A" label="A안 — 필터=파랑, 분류 태그만 보라(violet)" width={460} height={470}><div className="bg-slate-100 h-full"><AccentBoard k="A" /></div></DCArtboard>
+        <DCArtboard id="accent-B" label="B안 — 보라 폐기, 분류는 회색 외곽선" width={460} height={470}><div className="bg-slate-100 h-full"><AccentBoard k="B" /></div></DCArtboard>
+      </DCSection>
+      <DCSection id="type" title="② 최소 글자 크기 · 명암" subtitle="5단계 스케일 + 텍스트 색 하한. 모든 화면에 적용되는 규칙.">
+        <DCArtboard id="type-scale" label="타입 스케일 제안" width={760} height={560}><div className="bg-slate-100 h-full"><TypeScale /></div></DCArtboard>
+      </DCSection>
+      <DCSection id="pack" title="③ 포장 등록 다이얼로그 — 모바일 터치 영역" subtitle="add-packaging-dialog.tsx. 현장에서 장갑 낀 채로 입력. PC(sm 이상)는 현재 1행 유지.">
+        <DCArtboard id="pack-now" label="현재 (390)" width={390} height={700}><PackNow /></DCArtboard>
+        <DCArtboard id="pack-A" label="A안 — 2줄 행, 모든 타깃 44px" width={390} height={700}><PackA /></DCArtboard>
+        <DCArtboard id="pack-B" label="B안 — 1행 유지, 규격+포장지 합친 셀, 40px" width={390} height={700}><PackB /></DCArtboard>
+      </DCSection>
+      <DCSection id="pending" title="④ 승인 대기 (보안 S1 짝)" subtitle="새 카카오 계정 첫 로그인 → /pending. 관리자는 사용자 관리 상단에서 승인.">
+        <DCArtboard id="pending-m" label="/pending — 모바일" width={390} height={720}><div className="h-full bg-slate-100 flex items-center justify-center p-4"><PendingCard /></div></DCArtboard>
+        <DCArtboard id="pending-admin" label="/admin/users — 승인 대기 상단 고정" width={860} height={620}><div className="h-full bg-slate-100"><UsersAdmin /></div></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
