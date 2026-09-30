@@ -110,6 +110,23 @@
 - 백로그 §60 ✅, §83에 「매트릭스 수령처 이름도 로그인만으로 보인다(엑셀은 원래 그랬다)」 추가
 - 검증: test 525/525 · tsc 0 · eslint 0/0. 브라우저 확인은 사용자
 
+### 가입 승인제 · 삭제 사용자 세션 차단 · /admin 기본 거부 (§83 1단계)
+
+커밋 `1731452`. 계획서 `docs/plan/plan-가입승인제.md`, 보고서 `docs/report/report-가입승인제-2026-09-30.md`.
+발단: 디자이너 점검 S1 — 카카오 계정만 있으면 누구나 로그인해 조회·엑셀까지 됐다. 사용자 결정: 스키마는 안 바꾼다 · 관리자 알림은 나중에 헤더 종 아이콘으로(디자이너 요청).
+
+- `lib/user-role.ts`(신규): 역할 상수 · `isApprovedRole`(허용 목록) + 테스트
+- `auth.ts`: `profile()` → PENDING · 세션 기본값 PENDING · DB에 없는 사용자는 REVOKED
+- `lib/auth-guard.ts`: `requireSession()`이 승인 안 된 역할을 막음 → 서버 액션 전부
+- `(dashboard)/layout.tsx`: 승인 안 됐으면 `/pending` · ADMIN이면 대기 인원 병렬 조회
+- `app/pending/`(신규): T4 승인 대기 카드 · REVOKED 문구
+- `app/actions/user.ts`: `approveUser` · `countPendingUsers` · 레이아웃 revalidate
+- `admin/users/page.tsx` · `components/admin/PendingUsersBlock.tsx`(신규): 승인 대기 블록
+- `desktop-sidebar.tsx` · `mobile-header.tsx`: 대기 뱃지(임시)
+- `middleware.ts`: /admin 기본 거부 · `notice.ts`: `getActiveNotices` 가드 · `kst-date.ts`: `toKstDateTime`
+- 문서: `permission-matrix.md` 역할 절 · 요청서 `docs/handoff/요청-헤더-알림아이콘.md` · 백로그 §83 🔄 · §90 개인 알림·쪽지 · §91 `user.ts` 가드 try 밖
+- 검증: test 529/529(TZ=UTC 재실행 포함) · tsc 0 · eslint 0/0. 🔴 **배포 후 기존 계정 로그인 확인 전**
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
