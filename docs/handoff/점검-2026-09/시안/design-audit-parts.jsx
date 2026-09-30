@@ -340,4 +340,84 @@ function PackRO({ closed }) {
   );
 }
 
-Object.assign(window, { PackRO, Note, Cap, AccentBoard, TypeScale, PackNow, PackA, PackB, PendingCard, UsersAdmin });
+/* ───────── 3-2. 실측 반영 압축안 (다이얼로그 폭 360) ───────── */
+const PKR = [{ t: '톤백', pk: null, ton: true, n: 1, w: 1086 }, { t: '4kg', pk: '자연주의', n: 1, w: 4 }, { t: '1kg', pk: '자연주의', n: 1, w: 1 }];
+const SPECS2 = ['톤백', '20kg', '10kg', '8kg', '5kg', '4kg', '3kg', '1kg', '잔량'];
+function RealShell({ children, foot }) {
+  return (
+    <div className="h-full bg-slate-500/40 flex justify-center pt-4">
+      <div className="w-[360px] bg-white rounded-t-2xl flex flex-col overflow-hidden">
+        <div className="px-4 pt-4 pb-2 text-center text-[17px] font-bold text-slate-900">포장 기록 관리</div>
+        <div className="px-4 pb-2 flex items-center gap-2 text-[13px]"><span className="text-[12px] font-semibold bg-blue-50 text-blue-700 rounded px-1.5 py-0.5">백미</span><b className="text-slate-800">총 투입 <span className="font-mono">2,404</span>kg</b></div>
+        <div className="flex-1 overflow-hidden px-4">{children}</div>
+        {foot}
+      </div>
+    </div>
+  );
+}
+function LotHead() {
+  return (
+    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
+      <div className="flex items-center gap-2"><b className="text-[13px] text-slate-800">박오주</b><span className="text-[12px] text-slate-500">서농22호</span></div>
+      <div className="mt-1 font-mono text-[12px] text-slate-600 bg-white border border-slate-200 rounded px-2 py-0.5">251016-11-15107943-501</div>
+    </div>
+  );
+}
+function PackBReal() {
+  return (
+    <RealShell foot={<div className="border-t border-slate-200 px-4 pt-3 pb-3 flex flex-col gap-2"><div className="flex items-center"><span className="text-[13px]">총 포장: <b className="font-mono text-[16px]">1,091 kg</b></span><button className="ml-auto h-11 px-5 rounded-lg bg-blue-600 text-white text-[15px] font-semibold">기록 저장</button></div><div className="flex pt-2 border-t border-dashed border-slate-200"><button className="h-10 px-3 rounded-lg text-[13px] font-semibold text-amber-800 bg-amber-50 border border-amber-200">작업 마감</button><button className="ml-auto h-10 px-3 text-[13px] font-semibold text-rose-700">포장 초기화</button></div></div>}>
+      <div className="mb-2 rounded-xl border border-slate-200 px-3 py-2">
+        <div className="text-[11px] font-semibold text-slate-500 mb-1.5">규격별 합계</div>
+        <div className="flex flex-wrap gap-1.5">{PKR.map((o) => <div key={o.t} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1"><span className="text-[12px] font-semibold bg-slate-100 rounded px-1.5">{o.t}</span><span className="font-mono text-[13px]">{o.n}<span className="text-[11px] text-slate-500">개</span></span><span className="text-slate-300">|</span><span className="font-mono text-[13px] font-bold">{(o.n * o.w).toLocaleString()}<span className="text-[11px] text-slate-500 font-normal">kg</span></span></div>)}</div>
+      </div>
+      <div className="rounded-xl border border-slate-200 overflow-hidden">
+        <LotHead />
+        <div className="px-3 py-2 border-b border-slate-200 grid grid-cols-5 gap-1.5">{[...SPECS2, '기타'].map((s) => <span key={s} className="h-9 rounded-lg bg-slate-100 text-[13px] flex items-center justify-center">{s}</span>)}</div>
+        {PKR.map((o) => (
+          <div key={o.t} className="px-2 py-2 grid grid-cols-[1fr_128px_50px_40px] gap-1.5 items-center border-b border-slate-100">
+            <div className="h-10 rounded-lg border border-slate-200 px-2 flex flex-col justify-center min-w-0"><span className="text-[13px] font-semibold leading-4">{o.t}</span><span className="text-[11px] text-slate-500 leading-4 truncate">{o.ton ? '톤백' : o.pk + ' ▾'}</span></div>
+            <Stepper n={o.n} size={40} />
+            {o.ton ? <span className="h-10 rounded-lg border border-slate-300 px-2 flex items-center justify-end overflow-hidden font-mono font-bold text-[16px] whitespace-nowrap">{o.w}</span> : <span className="text-right font-mono font-bold text-[13px]">{o.n * o.w}</span>}
+            <TrashBtn size={40} />
+          </div>
+        ))}
+      </div>
+    </RealShell>
+  );
+}
+function PackC() {
+  return (
+    <RealShell foot={
+      <div className="border-t border-slate-200 px-4 py-2.5 flex items-center gap-2">
+        <div className="min-w-0"><div className="text-[11px] text-slate-500 leading-4">총 포장</div><div className="font-mono text-[16px] font-bold text-slate-900 leading-5">1,091<span className="text-[12px] font-sans font-normal text-slate-500 ml-0.5">kg</span></div></div>
+        <button className="ml-auto h-10 px-2.5 rounded-lg text-[13px] font-semibold text-rose-700 flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>초기화</button>
+        <button className="h-10 px-3 rounded-lg text-[13px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 flex items-center gap-1"><LockIco />마감</button>
+        <button className="h-10 px-4 rounded-lg bg-blue-600 text-white text-[14px] font-semibold">저장</button>
+      </div>
+    }>
+      <div className="mb-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+        <div className="text-[11px] font-semibold text-slate-500 mb-1.5">규격별 합계</div>
+        <div className="flex flex-wrap gap-1.5">{PKR.map((o) => <div key={o.t} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1"><span className="text-[12px] font-semibold bg-slate-100 text-slate-700 rounded px-1.5">{o.t}</span><span className="font-mono text-[13px] text-slate-700">{o.n}<span className="text-[11px] text-slate-500 font-sans ml-px">개</span></span><span className="text-slate-300">|</span><span className="font-mono text-[13px] font-bold text-slate-900">{(o.n * o.w).toLocaleString()}<span className="text-[11px] text-slate-500 font-sans font-normal ml-px">kg</span></span></div>)}</div>
+      </div>
+      <div className="rounded-xl border border-slate-200 overflow-hidden">
+        <LotHead />
+        <div className="px-2 py-2 border-b border-slate-200 grid grid-cols-5 gap-1">{[...SPECS2].map((s) => <span key={s} className="h-8 rounded-md bg-slate-100 text-[13px] text-slate-800 flex items-center justify-center">{s}</span>)}<span className="h-8 rounded-md border border-dashed border-slate-300 text-[13px] text-slate-600 flex items-center justify-center">기타</span></div>
+        <div className="px-2 pt-1.5 grid grid-cols-[1fr_108px_64px_28px] gap-1 text-[11px] font-semibold text-slate-500"><span>규격 · 포장지</span><span className="text-center">수량</span><span className="text-right pr-1">중량(kg)</span><span></span></div>
+        {PKR.map((o) => (
+          <div key={o.t} className="px-2 py-1.5 grid grid-cols-[1fr_108px_64px_28px] gap-1 items-center border-b border-slate-100 last:border-0">
+            {o.ton
+              ? <div className="h-9 px-2 flex items-center"><span className="text-[13px] font-semibold text-slate-800">톤백</span></div>
+              : <div className="h-9 rounded-lg border border-slate-200 px-2 flex flex-col justify-center min-w-0"><span className="text-[13px] font-semibold leading-4">{o.t}</span><span className="text-[11px] text-slate-500 leading-[14px] truncate">{o.pk} ▾</span></div>}
+            <div className="flex h-9 items-stretch rounded-lg border border-slate-200 overflow-hidden"><button className="w-9 text-[18px] text-slate-600 bg-slate-50">−</button><span className="flex-1 border-x border-slate-200 flex items-center justify-center font-mono font-bold text-[14px]">{o.n}</span><button className="w-9 text-[18px] text-slate-600 bg-slate-50">+</button></div>
+            {o.ton
+              ? <span className="h-9 rounded-lg border border-slate-300 px-1.5 flex items-center justify-end font-mono font-bold text-[14px] text-slate-900">1086</span>
+              : <span className="text-right pr-1 font-mono font-bold text-[14px] text-slate-900">{(o.n * o.w).toLocaleString()}</span>}
+            <button className="h-9 w-7 flex items-center justify-center text-slate-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg></button>
+          </div>
+        ))}
+      </div>
+    </RealShell>
+  );
+}
+
+Object.assign(window, { PackRO, PackC, PackBReal, Note, Cap, AccentBoard, TypeScale, PackNow, PackA, PackB, PendingCard, UsersAdmin });

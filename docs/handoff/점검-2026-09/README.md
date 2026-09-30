@@ -8,6 +8,8 @@ millinglog 전체 점검 결과를 Claude Code 작업 3건으로 나눴습니다
 | ① | `작업지시-1-보안.md` | P0 · 승인제, 백업 명령 주입, 세션 무효화, /admin 기본 거부, CSP, 민감 파일 | 승인대기 화면만(③ T4) |
 | ② | `작업지시-2-디자인토큰-정리.md` | P1 · 화면 변화 거의 없는 기계적 정리 | 없음 |
 | ③ | `작업지시-3-디자인결정.md` | P1 · 확정된 디자인 변경 | `시안/디자인점검-시안.html` |
+| ④ | `작업지시-4-포장다이얼로그-C안.md` | ③ T3 실기기 보정 — 압축 · 중량칸 잘림 · 입력 14px(iOS 확대 처리) | 시안 ③-2 C안 |
+| ⑤ | `작업지시-5-포장다이얼로그-PC.md` | 포장 다이얼로그 PC(sm+) 표시 정리 — 32px · 글자/명암 · 하단 바 1줄 · 읽기 전용 행 분리 | 시안 ③-3 PC |
 
 각 문서에 **변경 · 완료 기준 · 체크리스트**가 있습니다. 항목별로 커밋을 나누고, 끝나면 `docs/worklog.md`와 `docs/permission-matrix.md`를 갱신하세요.
 
@@ -20,7 +22,8 @@ millinglog 전체 점검 결과를 Claude Code 작업 3건으로 나눴습니다
 ## 확정 결정 (③ 요약)
 - **T1 보조색: B안.** purple/violet/indigo를 폐기합니다. 필터 칩은 blue, 분류 태그(다중그룹·발아위탁·내보내기)는 회색 외곽선 `border-slate-300 text-slate-700 bg-white`로 바꿉니다.
 - **T2 타입 스케일 승인.** 11 caption / 12 meta / 13 body-sm / 14 body / 16 input의 5단계만 씁니다. 11px 미만은 금지하고, 텍스트 색은 slate-500 이상(4.5:1)이어야 합니다.
-- **T3 포장 다이얼로그 모바일: B안.** 1행 구성은 `[규격+포장지 셀] [스테퍼] [중량] [삭제]`이고 높이는 40px입니다. 규격 버튼은 36px이며, 규격별 합계 밴드는 표시만 정리합니다. 하단 바는 3가지 상태(편집 / 마감됨 / 조회 전용)로 나뉘고, 읽기 전용 행은 3열 36px입니다. PC(`sm` 이상)는 바꾸지 않습니다.
+- **T3 포장 다이얼로그 모바일** — B안 적용 후 **④ C안으로 보정**: 행 36 · 칼럼 `[1fr_108_64_28]` · 규격 버튼 32 · 입력 숫자 14px(iOS만 `maximum-scale=1`) · 하단 바 1줄 · 규격별 합계 카드 유지. 하단 바 3상태·읽기 전용 행은 ③ 그대로. PC 불변.
+- **포장 다이얼로그 PC** — ⑤: 누르는 곳 32px, 칸 `[52_1fr_104_76_28]`, 글자 11~14px·slate, 하단 바 1줄(문구 유지), 읽기 전용 행 컴포넌트 분리. 모바일(④) 불변.
 - **T4 승인 대기.** `/pending` 화면, `/admin/users` 상단의 승인 대기 블록, 사이드바 대기 인원 뱃지를 만듭니다.
 
 ## 시안 보는 법
@@ -30,7 +33,9 @@ millinglog 전체 점검 결과를 Claude Code 작업 3건으로 나눴습니다
 |---|---|---|
 | ① 보조색 | 현재 / A안 / **B안** | B |
 | ② 타입 스케일 | 스케일 표 + 현재·제안 비교 | 승인 |
-| ③ 포장 다이얼로그 (390px) | 현재 / A안 / **B안 편집** / **B안 마감됨** / **B안 조회 전용** | B |
+| ③ 포장 다이얼로그 (390px) | 현재 / A안 / B안 편집 / **B안 마감됨** / **B안 조회 전용** | B (하단 바 상태·읽기 전용) |
+| ③-2 실기기 반영 (폭 360) | B안 실제 적용 / **C안** | C (편집 행·하단 바) |
+| ③-3 PC (폭 500) | 현재 / **제안 편집** / **마감됨** / **조회 전용** | 제안 |
 | ④ 승인 대기 | `/pending` 모바일 / `/admin/users` | 채택 |
 
 A안과 "현재" 아트보드는 비교용입니다. 구현하지 마세요.
@@ -65,9 +70,12 @@ A안과 "현재" 아트보드는 비교용입니다. 구현하지 마세요.
 ├─ 작업지시-1-보안.md
 ├─ 작업지시-2-디자인토큰-정리.md
 ├─ 작업지시-3-디자인결정.md
+├─ 작업지시-4-포장다이얼로그-C안.md
+├─ 작업지시-5-포장다이얼로그-PC.md
 ├─ 시안/
 │  ├─ 디자인점검-시안.html          ← 진입점
-│  ├─ design-audit-parts.jsx       ← 아트보드 컴포넌트 (PackB, PackRO, SpecBand, PendingCard, UsersAdmin …)
+│  ├─ design-audit-parts.jsx       ← 아트보드 컴포넌트 (PackB, PackC, PackRO, SpecBand, PendingCard, UsersAdmin …)
+│  ├─ design-audit-desktop.jsx     ← PC 포장 다이얼로그 (DkNow, DkNew)
 │  └─ design-canvas.jsx            ← 캔버스 틀 (구현 대상 아님)
 └─ assets/logo-full.png
 ```
@@ -80,5 +88,5 @@ A안과 "현재" 아트보드는 비교용입니다. 구현하지 마세요.
 | ② D1–D4 | `app/globals.css`, `app/layout.tsx`, `components/ui/input.tsx`·`textarea.tsx`·`select.tsx`, stone·gray 사용 파일 9개 |
 | ③ T1 | 통계 4개 파일, `farmer-list.tsx`, `misc-stock-table-row.tsx`, `log-list.tsx` |
 | ③ T2 | 임의 px 약 200곳 (문서에 우선순위 있음) |
-| ③ T3 | `app/(dashboard)/milling/add-packaging-dialog.tsx`, `spec-summary.tsx` |
+| ③ T3 · ④ · ⑤ | `app/(dashboard)/milling/add-packaging-dialog.tsx`, `packaging-rows.tsx`, `spec-summary.tsx`, `components/ios-input-zoom-fix.tsx`(신규) |
 | ③ T4 | `app/pending/page.tsx`(신규), `app/(dashboard)/admin/users/*`, `components/desktop-sidebar.tsx` |
