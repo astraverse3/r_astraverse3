@@ -57,9 +57,9 @@ export function OrderDetailPanel({
     siblings: number[]
     onNavigate: (orderId: number) => void
     /** 푸터 일괄차감 — 부모가 이 건 하나로 검토 게이트를 연다 */
-    onBatch: () => void
+    onBatch?: () => void
     /** 라인 탭 — 부모가 그 라인 하나로 배분 시트를 연다(M1-5) */
-    onOpenLine: (line: OrderLine) => void
+    onOpenLine?: (line: OrderLine) => void
     /**
      * 바깥 클릭으로 닫히는 것을 막는다 — **검토 게이트가 이 패널 위에 열려 있는 동안** 켠다.
      *
@@ -137,8 +137,8 @@ function Body({
     subtitle: string | null
     siblings: number[]
     onNavigate: (orderId: number) => void
-    onBatch: () => void
-    onOpenLine: (line: OrderLine) => void
+    onBatch?: () => void
+    onOpenLine?: (line: OrderLine) => void
     onClose: () => void
 }) {
     const work = lines.filter((l) => l.status !== 'COMPLETED')
@@ -243,7 +243,7 @@ function Footer({
     totals: ReturnType<typeof sumOrderLines>
     nextId: number | undefined
     onNavigate: (orderId: number) => void
-    onBatch: () => void
+    onBatch?: () => void
     onClose: () => void
 }) {
     const nextButton =
@@ -291,22 +291,25 @@ function Footer({
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            type="button"
-                            className="h-11 flex-1"
-                            disabled={totals.batchLines === 0}
-                            onClick={onBatch}
-                        >
-                            {totals.batchLines > 0 ? (
-                                `${fmt(totals.batchLines)}품목 일괄차감`
-                            ) : totals.bulkLines > 0 ? (
-                                // 폰·데스크탑 모두 카드가 눌리므로(M1-5) 한 벌이다 — 예전엔 폰만 「PC에서」였다
-                                '톤백은 품목을 눌러 자루 선택'
-                            ) : (
-                                '차감할 품목이 없습니다'
-                            )}
-                        </Button>
+                    {/* 읽기 전용(§60)이면 일괄차감 없이 「다음 건」만 — 오른쪽 끝에 둔다 */}
+                    <div className="flex items-center justify-end gap-2">
+                        {onBatch && (
+                            <Button
+                                type="button"
+                                className="h-11 flex-1"
+                                disabled={totals.batchLines === 0}
+                                onClick={onBatch}
+                            >
+                                {totals.batchLines > 0 ? (
+                                    `${fmt(totals.batchLines)}품목 일괄차감`
+                                ) : totals.bulkLines > 0 ? (
+                                    // 폰·데스크탑 모두 카드가 눌리므로(M1-5) 한 벌이다 — 예전엔 폰만 「PC에서」였다
+                                    '톤백은 품목을 눌러 자루 선택'
+                                ) : (
+                                    '차감할 품목이 없습니다'
+                                )}
+                            </Button>
+                        )}
                         {nextButton}
                     </div>
                 </>
@@ -333,14 +336,14 @@ function Group({
 }: {
     label: string
     lines: OrderLine[]
-    onOpenLine: (line: OrderLine) => void
+    onOpenLine?: (line: OrderLine) => void
 }) {
     return (
         <div className="mb-5">
             <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
             <div className="flex flex-col gap-2">
                 {lines.map((l) => (
-                    <LineCard key={l.itemId} line={l} onOpen={() => onOpenLine(l)} />
+                    <LineCard key={l.itemId} line={l} onOpen={onOpenLine && (() => onOpenLine(l))} />
                 ))}
             </div>
         </div>
@@ -361,7 +364,7 @@ function DoneGroup({
     doneKg: number
     collapsed: boolean
     /** 완료 라인도 연다 — 폰에서 차감 취소로 가는 유일한 길이다 */
-    onOpenLine: (line: OrderLine) => void
+    onOpenLine?: (line: OrderLine) => void
 }) {
     const [open, setOpen] = useState(!initial)
     const head = lines[0]
@@ -390,7 +393,7 @@ function DoneGroup({
             {open && (
                 <div className="mt-2 flex flex-col gap-2">
                     {lines.map((l) => (
-                        <LineCard key={l.itemId} line={l} onOpen={() => onOpenLine(l)} />
+                        <LineCard key={l.itemId} line={l} onOpen={onOpenLine && (() => onOpenLine(l))} />
                     ))}
                 </div>
             )}

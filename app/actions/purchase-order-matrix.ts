@@ -27,7 +27,7 @@
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { requirePermission } from '@/lib/auth-guard'
+import { requirePermission, requireSession } from '@/lib/auth-guard'
 import { recordAuditLog } from '@/lib/audit'
 import { sanitizeErrorMessage } from '@/lib/error-sanitize'
 import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
@@ -74,12 +74,12 @@ export type UploadMatrixResult =
 /**
  * 묶음 하나의 매트릭스 입력을 모은다. 피벗(`buildMatrix`)은 클라이언트가 돌린다(결정 C).
  *
- * 권한은 **`OPERATION_MANAGE`**다. 같은 파일의 다른 조회(`list*`/`get*`)는 공개지만
- * 이 화면은 셀을 눌러 바로 차감하는 작업 화면이라 읽기 단계에서 막는다.
+ * 순수 조회라 **로그인만** 요구한다(백로그 §60 — 권한 없는 사람도 매트릭스를 읽기 전용으로 본다).
+ * 차감으로 가는 입구(셀 클릭·게이트·재매칭)는 화면이 `canManage`로 숨기고, 그 뒤 액션은 여전히 `OPERATION_MANAGE`.
  */
 export async function getUploadMatrix(uploadId: number): Promise<UploadMatrixResult> {
   try {
-    await requirePermission('OPERATION_MANAGE')
+    await requireSession()
     // ① 묶음 + 건 + 라인 + 차감 — 중첩 include로 한 번에
     const upload = await prisma.purchaseOrderUpload.findUnique({
       where: { id: uploadId },

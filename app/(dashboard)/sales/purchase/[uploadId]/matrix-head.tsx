@@ -30,7 +30,8 @@ export function MatrixHead({
     nameLabel: string
     allChecked: boolean
     someChecked: boolean
-    onToggleAll: (v: boolean | 'indeterminate') => void
+    /** 없으면(읽기 전용, §60) 전체선택 칸을 비운다 */
+    onToggleAll?: (v: boolean | 'indeterminate') => void
 }) {
     const colByKey = new Map(matrix.columns.map((c) => [c.key, c]))
     return (
@@ -39,12 +40,14 @@ export function MatrixHead({
             <tr>
                 <HeadCorner left={0} width={W_CHECK}>
                     {/* 전체선택 — 부분선택은 가운데 막대로(Radix `indeterminate`) */}
-                    <Checkbox
-                        checked={allChecked ? true : someChecked ? 'indeterminate' : false}
-                        onCheckedChange={onToggleAll}
-                        aria-label="전체 선택"
-                        className="bg-card"
-                    />
+                    {onToggleAll && (
+                        <Checkbox
+                            checked={allChecked ? true : someChecked ? 'indeterminate' : false}
+                            onCheckedChange={onToggleAll}
+                            aria-label="전체 선택"
+                            className="bg-card"
+                        />
+                    )}
                 </HeadCorner>
                 <HeadCorner left={L_NAME} width={W_NAME} label={nameLabel} align="left" />
                 <HeadCorner left={L_STATUS} width={W_STATUS} label="상태" />

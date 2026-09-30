@@ -29,7 +29,8 @@ export function Header({
     onSort: (s: MatrixSort) => void
     unmatchedLines: number
     rematching: boolean
-    onRematch: () => void
+    /** 없으면(읽기 전용, §60) 재매칭 버튼을 안 그린다 */
+    onRematch?: () => void
 }) {
     return (
         <div className="flex flex-col gap-2.5">
@@ -82,15 +83,17 @@ export function Header({
                                 매칭실패 {fmt(unmatchedLines)}품목
                             </span>
                             {/* 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R) */}
-                            <button
-                                type="button"
-                                onClick={onRematch}
-                                disabled={rematching}
-                                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-                            >
-                                <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
-                                {rematching ? '재매칭 중…' : '재매칭'}
-                            </button>
+                            {onRematch && (
+                                <button
+                                    type="button"
+                                    onClick={onRematch}
+                                    disabled={rematching}
+                                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                                >
+                                    <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
+                                    {rematching ? '재매칭 중…' : '재매칭'}
+                                </button>
+                            )}
                         </>
                     )}
                 </div>

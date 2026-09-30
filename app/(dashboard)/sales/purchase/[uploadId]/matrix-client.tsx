@@ -73,9 +73,15 @@ const CELL_TONE: Record<CellStatus, string> = {
 export function MatrixClient({
     header,
     input: serverInput,
+    canManage,
 }: {
     header: MatrixHeader
     input: BuildMatrixInput
+    /**
+     * 가공·판매 권한. 없으면 **읽기 전용**(백로그 §60) — 차감으로 가는 콜백을 자식에게 안 넘긴다.
+     * 자식은 콜백이 없으면 그 버튼을 안 그린다. 차감·게이트 로직 자체는 그대로다.
+     */
+    canManage: boolean
 }) {
     const router = useRouter()
     // 서버가 준 input을 로컬 상태로 든다. 차감 성공은 여기만 고치고, 실패는 router.refresh()로
@@ -360,16 +366,20 @@ export function MatrixClient({
                     onSort={setSort}
                     unmatchedLines={unmatchedLines}
                     rematching={rematching}
-                    onRematch={runRematch}
+                    onRematch={canManage ? runRematch : undefined}
                     onOpenDetail={openDetail}
-                    onOpenLine={openLine}
+                    onOpenLine={canManage ? openLine : undefined}
                     input={input}
-                    onOpenGate={(ids) => {
-                        setSelected(new Set(ids))
-                        // 목록 푸터(`작업필요 n건 검토`)는 여러 건, 택배 펼침의 일괄차감은 건 하나다
-                        setGatePick(ids.length > 1)
-                        setGateOpen(true)
-                    }}
+                    onOpenGate={
+                        canManage
+                            ? (ids) => {
+                                  setSelected(new Set(ids))
+                                  // 목록 푸터(`작업필요 n건 검토`)는 여러 건, 택배 펼침의 일괄차감은 건 하나다
+                                  setGatePick(ids.length > 1)
+                                  setGateOpen(true)
+                              }
+                            : undefined
+                    }
                 />
             </div>
 
@@ -381,7 +391,7 @@ export function MatrixClient({
                 onSort={setSort}
                 unmatchedLines={unmatchedLines}
                 rematching={rematching}
-                onRematch={runRematch}
+                onRematch={canManage ? runRematch : undefined}
             />
 
             <div className="overflow-auto rounded-xl border border-slate-200 bg-card max-h-[calc(100dvh-230px)]">
@@ -392,7 +402,7 @@ export function MatrixClient({
                         nameLabel={decl.columnLabel}
                         allChecked={allChecked}
                         someChecked={someChecked}
-                        onToggleAll={toggleAll}
+                        onToggleAll={canManage ? toggleAll : undefined}
                     />
                     <tbody>
                         {rows.map((row) => {
@@ -408,14 +418,17 @@ export function MatrixClient({
                                         )}
                                         style={{ left: 0, ...fixedW(W_CHECK) }}
                                     >
-                                        {/* 🔴 터치영역은 label/패딩으로 — absolute 오버레이는 클릭을 삼킨다 */}
-                                        <label className="flex cursor-pointer items-center justify-center py-1">
-                                            <Checkbox
-                                                checked={checked}
-                                                onCheckedChange={() => toggleRow(row.orderId)}
-                                                aria-label={`${nameTiersOf(decl, row)[0]} 선택`}
-                                            />
-                                        </label>
+                                        {/* 🔴 터치영역은 label/패딩으로 — absolute 오버레이는 클릭을 삼킨다.
+                                            읽기 전용이면 칸은 **폭 그대로 비운다** — sticky `left` 상수와 한 쌍이다 */}
+                                        {canManage && (
+                                            <label className="flex cursor-pointer items-center justify-center py-1">
+                                                <Checkbox
+                                                    checked={checked}
+                                                    onCheckedChange={() => toggleRow(row.orderId)}
+                                                    aria-label={`${nameTiersOf(decl, row)[0]} 선택`}
+                                                />
+                                            </label>
+                                        )}
                                     </Th>
                                     <Th
                                         as="td"
@@ -470,7 +483,9 @@ export function MatrixClient({
                                                 key={col.key}
                                                 data-cell={cellKey}
                                                 className={cn(
-                                                    'cursor-pointer text-right tabular-nums hover:ring-2 hover:ring-inset hover:ring-primary/50',
+                                                    'text-right tabular-nums',
+                                                    canManage &&
+                                                        'cursor-pointer hover:ring-2 hover:ring-inset hover:ring-primary/50',
                                                     CELL_TONE[cell.status],
                                                     active?.key === cellKey && 'ring-2 ring-inset ring-primary',
                                                     // 게이트에서 「이 줄」을 눌러 찾아온 셀 — 잠깐만 튄다
@@ -478,7 +493,7 @@ export function MatrixClient({
                                                         'ring-2 ring-inset ring-primary ring-offset-0 animate-pulse',
                                                 )}
                                                 title={`주문 ${cell.orderedQty} · 차감 ${cell.allocatedQty}`}
-                                                onClick={(e) => openCell(row, col, e.currentTarget)}
+                                                onClick={canManage ? (e) => openCell(row, col, e.currentTarget) : undefined}
                                             >
                                                 {fmt(cell.orderedQty)}
                                             </Th>
@@ -499,7 +514,7 @@ export function MatrixClient({
                 </table>
             </div>
 
-            <Legend />
+            <Legend canManage={canManage} />
             </div>
 
             {/*
@@ -621,13 +636,17 @@ export function MatrixClient({
                  * 🔴 패널은 **열어 둔 채**다. 확정 결과가 패널 숫자에 바로 반영되고,
                  *    이어서 「다음 건 ›」으로 넘어가는 것이 이 화면의 흐름이다.
                  */
-                onBatch={() => {
-                    if (!detail) return
-                    setSelected(new Set([detail.orderId]))
-                    setGatePick(false)
-                    setGateOpen(true)
-                }}
-                onOpenLine={openLine}
+                onBatch={
+                    canManage
+                        ? () => {
+                              if (!detail) return
+                              setSelected(new Set([detail.orderId]))
+                              setGatePick(false)
+                              setGateOpen(true)
+                          }
+                        : undefined
+                }
+                onOpenLine={canManage ? openLine : undefined}
                 onClose={() => setDetail(null)}
             />
         </div>

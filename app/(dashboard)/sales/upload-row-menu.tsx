@@ -29,7 +29,8 @@ import { exportPurchaseSheet } from '@/app/actions/purchase-order-export'
 
 const NOTE_MAX = 500
 
-export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
+/** `canManage`가 없으면 엑셀 다운로드만 남는다(백로그 §60 — 비고·삭제는 서버가 `OPERATION_MANAGE`로 막는다) */
+export function UploadRowMenu({ row, canManage }: { row: UploadSummaryRow; canManage: boolean }) {
     const router = useRouter()
     const [noteOpen, setNoteOpen] = useState(false)
     const [note, setNote] = useState(row.note ?? '')
@@ -105,23 +106,27 @@ export function UploadRowMenu({ row }: { row: UploadSummaryRow }) {
                         <Download className="w-3.5 h-3.5" />
                         엑셀 다운로드
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setNoteOpen(true)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                        비고 수정
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        disabled={!row.deletable}
-                        onClick={handleDelete}
-                        className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        시트 삭제
-                    </DropdownMenuItem>
-                    {!row.deletable && (
-                        <p className="px-2 pt-1 pb-1.5 text-[10.5px] text-slate-400 leading-snug">
-                            차감된 품목이 있어 삭제할 수 없어요
-                        </p>
+                    {canManage && (
+                        <>
+                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => setNoteOpen(true)}>
+                                <Pencil className="w-3.5 h-3.5" />
+                                비고 수정
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                disabled={!row.deletable}
+                                onClick={handleDelete}
+                                className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                시트 삭제
+                            </DropdownMenuItem>
+                            {!row.deletable && (
+                                <p className="px-2 pt-1 pb-1.5 text-[10.5px] text-slate-400 leading-snug">
+                                    차감된 품목이 있어 삭제할 수 없어요
+                                </p>
+                            )}
+                        </>
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>

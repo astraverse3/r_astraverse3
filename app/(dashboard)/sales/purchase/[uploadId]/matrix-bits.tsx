@@ -106,7 +106,7 @@ export function Progress({ done, total }: { done: number; total: number }) {
     )
 }
 
-export function Legend() {
+export function Legend({ canManage }: { canManage: boolean }) {
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11.5px]">
             {ROW_STATUS_ORDER.map((key) => {
@@ -118,7 +118,9 @@ export function Legend() {
                     </span>
                 )
             })}
-            <span className="text-slate-400">셀 = 주문 수량 · 소계 = 주문 중량 · 셀 클릭 = 차감 · 이름 클릭 = 주문 상세</span>
+            <span className="text-slate-400">
+                셀 = 주문 수량 · 소계 = 주문 중량 · {canManage && '셀 클릭 = 차감 · '}이름 클릭 = 주문 상세
+            </span>
         </div>
     )
 }

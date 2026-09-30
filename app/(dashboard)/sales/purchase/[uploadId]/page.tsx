@@ -1,4 +1,7 @@
 import { notFound } from 'next/navigation'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/auth'
+import { hasPermission } from '@/lib/permissions'
 import { getUploadMatrix } from '@/app/actions/purchase-order-matrix'
 import { MatrixClient } from './matrix-client'
 
@@ -29,5 +32,8 @@ export default async function PurchaseMatrixPage({
         )
     }
 
-    return <MatrixClient header={result.header} input={result.input} />
+    // 권한이 없으면 읽기 전용 — 셀 차감·일괄차감·재매칭 입구를 숨긴다(백로그 §60)
+    const canManage = hasPermission((await getServerSession(authOptions))?.user, 'OPERATION_MANAGE')
+
+    return <MatrixClient header={result.header} input={result.input} canManage={canManage} />
 }

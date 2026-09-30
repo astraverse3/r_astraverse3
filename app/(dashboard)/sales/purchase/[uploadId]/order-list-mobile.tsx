@@ -70,16 +70,17 @@ export function OrderListMobile({
     onSort: (s: MatrixSort) => void
     unmatchedLines: number
     rematching: boolean
-    onRematch: () => void
+    /** 이 아래 세 콜백은 읽기 전용(§60)이면 안 온다 — 없으면 그 버튼·카드 탭을 안 그린다 */
+    onRematch?: () => void
     /**
      * 건 상세 열기. 🔴 두 번째 인자로 **지금 화면에 보이는 순서**를 같이 넘긴다 —
      * 건상세의 「다음 건 ›」이 따라갈 형제 목록이다. 필터(`onlyWork`)가 여기 로컬 상태라
      * 부모의 `rows`와 다르고, 부모가 대신 만들 수 없다(§4.2).
      */
     onOpenDetail: (row: MatrixRow, siblings: number[]) => void
-    onOpenGate: (orderIds: number[]) => void
+    onOpenGate?: (orderIds: number[]) => void
     /** 펼친 행의 라인 탭 — 부모가 그 라인 하나로 배분 시트를 연다(M1-5) */
-    onOpenLine: (line: OrderLine) => void
+    onOpenLine?: (line: OrderLine) => void
     /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
     input: BuildMatrixInput
 }) {
@@ -190,7 +191,7 @@ export function OrderListMobile({
                             </span>
                         )
                     })}
-                    {unmatchedLines > 0 && (
+                    {unmatchedLines > 0 && onRematch && (
                         // 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R)
                         <button
                             type="button"
@@ -231,7 +232,7 @@ export function OrderListMobile({
             </div>
 
             {/* 목록 — 검토 버튼이 뜨면 마지막 행이 그 아래 깔리지 않게 자리를 비운다 */}
-            <div className={cn('flex flex-col', workRows.length >= 5 && 'pb-16')}>
+            <div className={cn('flex flex-col', workRows.length >= 5 && onOpenGate && 'pb-16')}>
                 {shown.length === 0 && (
                     <p className="px-4 py-10 text-center text-[12.5px] text-slate-400">
                         {onlyWork ? '전부 차감됐습니다.' : '건이 없습니다.'}
@@ -268,7 +269,7 @@ export function OrderListMobile({
                                         input={input}
                                         orderId={row.orderId}
                                         nextId={nextOf(open)}
-                                        onBatch={() => onOpenGate([row.orderId])}
+                                        onBatch={onOpenGate && (() => onOpenGate([row.orderId]))}
                                         onOpenLine={onOpenLine}
                                         onNext={(id) => setOpen({ id, siblings: open.siblings })}
                                     />
@@ -289,7 +290,7 @@ export function OrderListMobile({
              * 올릴 높이는 레이아웃이 본문에 주는 하단 여백과 **같은 식**을 쓴다
              * (`app/(dashboard)/layout.tsx:33`) — 한쪽만 바뀌면 다시 겹친다.
              */}
-            {workRows.length >= 5 && (
+            {workRows.length >= 5 && onOpenGate && (
                 <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom)+1.5rem)] z-30 px-4">
                     <button
                         type="button"
@@ -431,26 +432,28 @@ function InlineLines({
     input: BuildMatrixInput
     orderId: number
     nextId: number | undefined
-    onBatch: () => void
+    onBatch?: () => void
     onNext: (id: number) => void
-    onOpenLine: (line: OrderLine) => void
+    onOpenLine?: (line: OrderLine) => void
 }) {
     const lines = useMemo(() => buildOrderLines(input, orderId), [input, orderId])
     const totals = sumOrderLines(lines)
     return (
         <div className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
             {lines.map((line) => (
-                <LineCard key={line.itemId} line={line} onOpen={() => onOpenLine(line)} />
+                <LineCard key={line.itemId} line={line} onOpen={onOpenLine && (() => onOpenLine(line))} />
             ))}
             <div className="mt-0.5 flex items-center gap-2">
-                <Button type="button" className="h-10 flex-1" disabled={totals.batchLines === 0} onClick={onBatch}>
-                    {totals.batchLines > 0 ? `${fmt(totals.batchLines)}품목 일괄차감` : '차감할 품목이 없습니다'}
-                </Button>
+                {onBatch && (
+                    <Button type="button" className="h-10 flex-1" disabled={totals.batchLines === 0} onClick={onBatch}>
+                        {totals.batchLines > 0 ? `${fmt(totals.batchLines)}품목 일괄차감` : '차감할 품목이 없습니다'}
+                    </Button>
+                )}
                 {nextId !== undefined && (
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-10 shrink-0 gap-1 px-3.5"
+                        className="ml-auto h-10 shrink-0 gap-1 px-3.5"
                         onClick={() => onNext(nextId)}
                     >
                         다음 건

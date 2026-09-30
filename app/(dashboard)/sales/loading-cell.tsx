@@ -26,14 +26,19 @@ export function LoadingCell({
     display,
     shippingVendorId,
     vendors,
+    canManage,
 }: {
     uploadId: number
     loading: LoadingInfo
     display: LoadingDisplay
     shippingVendorId: number | null
     vendors: ShippingVendorOption[]
+    /** 없으면 표시만 — 누를 곳도, 고칠 수 있다는 단서도 없다(백로그 §60) */
+    canManage: boolean
 }) {
     const [open, setOpen] = useState(false)
+
+    if (!canManage) return <LoadingLabel display={display} editable={false} />
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -43,7 +48,7 @@ export function LoadingCell({
                     className="group text-left min-w-0 cursor-pointer rounded-md transition-colors hover:bg-slate-100"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <LoadingLabel display={display} />
+                    <LoadingLabel display={display} editable />
                 </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[300px] p-3">
@@ -59,8 +64,10 @@ export function LoadingCell({
     )
 }
 
-function LoadingLabel({ display }: { display: LoadingDisplay }) {
+function LoadingLabel({ display, editable }: { display: LoadingDisplay; editable: boolean }) {
     if (display.tone === 'unset') {
+        // 채울 수 없는 사람에겐 점선 버튼 모양 대신 글자만
+        if (!editable) return <span className="text-[11.5px] font-bold text-amber-700">배차 미정</span>
         return (
             <span className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-700 text-[11.5px] font-bold">
                 <Plus className="w-3 h-3" />
@@ -73,7 +80,7 @@ function LoadingLabel({ display }: { display: LoadingDisplay }) {
             <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 text-[12px] font-medium text-slate-400">
                 <Check className="w-3 h-3 shrink-0" />
                 {display.label}
-                <EditHint />
+                {editable && <EditHint />}
             </span>
         )
     }
@@ -86,7 +93,7 @@ function LoadingLabel({ display }: { display: LoadingDisplay }) {
                     {display.label}
                     {display.vendorName && ` · ${display.vendorName}`}
                 </span>
-                <EditHint tone="today" />
+                {editable && <EditHint tone="today" />}
             </span>
         )
     }
@@ -97,7 +104,7 @@ function LoadingLabel({ display }: { display: LoadingDisplay }) {
                 {display.label}
                 {display.vendorName && ` · ${display.vendorName}`}
             </span>
-            <EditHint />
+            {editable && <EditHint />}
         </span>
     )
 }

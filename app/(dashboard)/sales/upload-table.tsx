@@ -23,9 +23,12 @@ const GRID = 'grid grid-cols-[92px_minmax(0,1fr)_56px_44px] sm:grid-cols-[100px_
 export function UploadTable({
     rows,
     vendors,
+    canManage,
 }: {
     rows: UploadSummaryRow[]
     vendors: ShippingVendorOption[]
+    /** 가공·판매 권한 — 없으면 상차 편집·비고·삭제를 숨긴다(백로그 §60) */
+    canManage: boolean
 }) {
     const [channel, setChannel] = useState<PurchaseChannel | 'ALL'>('ALL')
     const filtered = channel === 'ALL' ? rows : rows.filter((r) => r.channel === channel)
@@ -126,6 +129,7 @@ export function UploadTable({
                                     display={r.loadingDisplay}
                                     shippingVendorId={r.shippingVendorId}
                                     vendors={vendors}
+                                    canManage={canManage}
                                 />
                             </div>
                             <div className="text-right pr-3 text-[13px] text-slate-700">{r.orderCount}</div>
@@ -143,7 +147,7 @@ export function UploadTable({
                             </div>
                             <div className="hidden sm:block text-[12px] text-slate-500">{r.createdAt}</div>
                             <div className="flex justify-center">
-                                <UploadRowMenu row={r} />
+                                <UploadRowMenu row={r} canManage={canManage} />
                             </div>
                         </div>
 
@@ -155,6 +159,7 @@ export function UploadTable({
                                 display={r.loadingDisplay}
                                 shippingVendorId={r.shippingVendorId}
                                 vendors={vendors}
+                                canManage={canManage}
                             />
                             <ProgressBadges row={r} />
                             {r.unmatched > 0 && (

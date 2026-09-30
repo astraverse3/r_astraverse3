@@ -1,7 +1,7 @@
 # 권한 매트릭스 (Permission Matrix)
 
 > **단일 진실 원천**: 권한 변경/추가/제거 시 **이 문서를 먼저** 갱신한 뒤 코드 수정.
-> **마지막 갱신**: 2026-09-21 (원물 엑셀 업로드 `importStocks` ADMIN → `SUPPLY_MANAGE`)
+> **마지막 갱신**: 2026-09-30 (제품판매 탭 읽기 전용 · `getUploadMatrix` → `requireSession` · 9/21 이후 빠진 가드 전수 반영 — 백로그 §60)
 > **관련 코드**: [lib/permissions.ts](../lib/permissions.ts), [lib/auth-guard.ts](../lib/auth-guard.ts), [middleware.ts](../middleware.ts)
 > **관련 계획서**: [docs/plan/plan-권한단순화.md](plan/plan-권한단순화.md)
 
@@ -12,6 +12,7 @@
 3. **이중 가드**: 클라이언트(`hasPermission`)는 UI 노출 제어, 서버(`requirePermission`)는 실제 차단. **반드시 둘 다** 적용해야 우회 차단 가능
 4. **ADMIN 자동 전권**: `role==='ADMIN'`은 모든 권한 자동 보유 (헬퍼 내부 처리). 사용자 관리·시스템(백업/복구/로그)·설정은 **ADMIN 전용**(별도 권한 키 없음)
 5. **조회는 가드하지 않음**: 페이지 진입 가능한 사용자라면 데이터 조회는 자유. 등록/수정/삭제만 제어
+   - 예외: **쓰기 화면 안에서만 부르는 조회**는 그 쓰기와 같은 권한이다(차감 팝오버의 `getCellAllocation`·`getBulkCellOptions`·`getUnmatchedCellOptions`, 게이트의 `previewBatch`, 재포장 다이얼로그의 `getRepackSources`, 삭제 전 `getProductTypeUsage`). 입구 버튼이 권한으로 숨으니 쌍이 맞는다
 6. **메뉴 가시성은 현상 유지**: 업무 메뉴(원물재고/도정/제품재고/판매/통계)는 모든 로그인 사용자에게 노출. 권한 없으면 등록/수정/삭제 버튼만 숨김. 관리(/admin/*) 메뉴만 권한별 가시성 적용
 
 ## 권한 키 정의
@@ -69,8 +70,14 @@
 | 출고 탭 | 출고 취소 (단일/일괄) | `OPERATION_MANAGE` |
 | 출고 탭 행 | 수정 다이얼로그 | `OPERATION_MANAGE` |
 | 출고 탭 행 | 항목(톤백) 제외 | `OPERATION_MANAGE` |
-| 제품판매 탭 | 발주서 업로드·매칭·차감 | `OPERATION_MANAGE` |
-| 제품판매/제품재고 행 | 개별 판매등록·비판매차감·취소 | `OPERATION_MANAGE` |
+| 제품판매 탭 | 목록 · 시트 매트릭스 · 주문 상세 · 엑셀 다운로드 (**읽기 전용**, 2026-09-30 §60) | — |
+| 제품판매 탭 헤더 | 발주서 등록 (PC 버튼 · 모바일 아이콘) | `OPERATION_MANAGE` |
+| 제품판매 탭 행 | 상차 편집 · ⋮ 비고 수정 · 시트 삭제 | `OPERATION_MANAGE` |
+| 시트 매트릭스 | 행 체크박스 · 선택 바 · 셀 클릭(차감 팝오버) · 재매칭 | `OPERATION_MANAGE` |
+| 시트 모바일 목록 · 주문 상세 | 품목 카드 탭(차감 시트) · 「N품목 일괄차감」 · 「작업필요 N건 검토」 · 재매칭 | `OPERATION_MANAGE` |
+| 제품재고 행 | 재고차감(`createBulkMovements`) · 차감 취소 · 재포장 | `OPERATION_MANAGE` |
+
+> 제품판매·매트릭스는 **서버 컴포넌트가 `getServerSession`으로 `canManage`를 한 번 계산해 prop으로 내린다**(`sales/page.tsx`, `sales/purchase/[uploadId]/page.tsx`). 자식은 콜백이 안 오면 그 버튼을 안 그린다.
 
 ### 관리 (`/admin/*`) — 미들웨어가 라우트 단위로 가드
 | 라우트 | 권한 |
@@ -105,17 +112,24 @@
 | `app/actions/packages.ts` | `createMiscPackage`, `updateMiscPackage`, `deleteMiscPackage` |
 | `app/actions/milling.ts` | `startMillingBatch`, `removeStockFromMilling`, `updatePackagingLogs`, `closeMillingBatch`, `reopenMillingBatch`, `updateMillingBatchStatus`, `deleteMillingBatch`, `deleteMillingBatches`, `updateMillingBatchStocks`, `updateMillingBatchMetadata` |
 | `app/actions/release.ts` | `createStockRelease`, `cancelStockRelease`, `updateStockRelease`, `deleteStockReleases`, `removeStockFromRelease` |
-| `app/actions/product-type.ts` | `createPackaging`, `togglePackagingActive`, `upsertProductType`, `deleteProductType`, `toggleProductTypeActive` · `findOrCreateProductType`은 내부 헬퍼(무가드, 상위 액션이 가드) |
-| `app/actions/purchase-order.ts` | `uploadPurchaseOrder`, `autoMatchOrderItem`, `setOrderItemProductType`, `confirmOrderItem`, `confirmOrder`, `cancelOrderItemMovements`, `deletePurchaseUpload`, `deletePurchaseOrder` · 조회(`listPurchaseUploads`/`listPurchaseOrders`/`getPurchaseOrderDetail`)는 공개 |
+| `app/actions/product-type.ts` | `createPackaging`, `togglePackagingActive`, `upsertProductType`, `getProductTypeUsage`(삭제 전 확인), `deleteProductType`, `toggleProductTypeActive` · 조회(`listPackagings`/`listProductTypes`/`listSkuSpecs`/`suggestProductType`)는 `requireSession` · `findOrCreateProductType`(`lib/product-type.ts`)은 내부 헬퍼(무가드, 상위 액션이 가드) |
+| `app/actions/repack.ts` | `getRepackSources`(재포장 다이얼로그 전용 조회), `createRepack`, `cancelRepack` |
+| `app/actions/purchase-order.ts` | `deletePurchaseUpload`, `deletePurchaseOrder`(호출 0 — 백로그 §56) · 조회 `listPurchaseUploads`는 `requireSession` |
+| `app/actions/purchase-order-upload.ts` | `previewPurchaseOrder`, `uploadPurchaseOrder`, `updateUploadNote`, `updateUploadLoading` |
+| `app/actions/purchase-order-matrix.ts` | `confirmCell`, `cancelCell` · 팝오버 조회 `getCellAllocation`, `getBulkCellOptions` · **`getUploadMatrix`는 `requireSession`**(2026-09-30 §60 — 매트릭스 읽기 전용) |
+| `app/actions/purchase-order-assign.ts` | `rematchUpload` · 팝오버 조회 `getUnmatchedCellOptions` |
+| `app/actions/purchase-order-batch.ts` | `confirmBatch` · 게이트 dry-run `previewBatch` |
 | `app/actions/purchase-order-export.ts` | `exportPurchaseSheet` (D5 시트 엑셀 — 생산자·로트가 채워지는 내부 증빙)는 `requireSession` |
-| `app/actions/package-movement.ts` | `createSale`, `createNonSaleMovement`, `cancelMovement` · 조회(`listMovements`)는 공개 |
+| `app/actions/package-movement.ts` | `createBulkMovements`(재고차감 화면), `cancelMovement`, `createSale`·`createNonSaleMovement`(호출 0 — 백로그 §56) · 조회(`listMovements`)는 `requireSession` |
 
 ### ADMIN 전용 (`requireAdmin`)
 | 파일 | 함수 |
 | --- | --- |
 | `app/actions/backup.ts` | `getBackups`, `createBackup` (복원은 화면에서 뺐다 — `scripts/restore-backup.ts`로만, 2026-09-30) |
-| `app/actions/user.ts` | 모든 함수 (`updateUserPermissions` 등) |
-| `app/actions/settings.ts` | `saveYieldRates` |
+| `app/actions/user.ts` | 모든 함수 (`getUsers`, `updateUserPermissions` 등) |
+| `app/actions/settings.ts` | `saveYieldRates` · 조회(`getYieldRates`/`getYieldRate`)는 `requireSession` |
+| `app/actions/shipping-vendor.ts` | `createShippingVendor`, `renameShippingVendor`, `moveShippingVendor`, `toggleShippingVendorActive` · 조회 `listShippingVendors`는 `requireSession` |
+| `app/actions/audit.ts` | `getAuditLogs`, `exportAuditLogs` · `getLatestUpdateForPath`(레이아웃 「마지막 갱신」)는 `requireSession` |
 
 ### 인라인 체크 (특이 케이스)
 - `app/actions/notice.ts` — `createNotice`/`updateNotice`/`deleteNotice` 내부에서 `role !== 'ADMIN' && !permissions?.includes('NOTICE_MANAGE')` 직접 체크. 동작 동일하지만 패턴 비일관 — 별도 PR로 통일 검토.
@@ -136,6 +150,12 @@
 - **세션 JWT 캐싱**: 기존 로그인 사용자는 토큰에 옛 permissions가 남음 → **재로그인 시 갱신**.
 
 ## 변경 이력
+
+### 2026-09-30 — 제품판매 탭 읽기 전용 · 문서 전수 대조 (백로그 §60)
+- 증상: 가공·판매 권한이 없는 계정(11명 중 4명)이 시트를 누르면 매트릭스 대신 「이 작업을 할 권한이 없어요」 카드. 발주서 등록·⋮ 메뉴·상차 편집은 보이는데 누르면 실패
+- 결정(사용자): **읽기 전용** — 원물출고 탭과 같은 방식. `getUploadMatrix`만 `requireSession`으로 풀고, 차감 입구(셀·체크박스·게이트·재매칭·품목 카드)는 `canManage`로 숨김. 쓰기·팝오버 조회 가드는 그대로
+- 문서: 9/21 이후 빠진 가드(`repack`·`purchase-order-upload/matrix/assign/batch`·`shipping-vendor`·`audit`) 추가, 지워진 액션(`autoMatchOrderItem`·`setOrderItemProductType`·`confirmOrderItem`·`confirmOrder`·`cancelOrderItemMovements`·`listPurchaseOrders`·`getPurchaseOrderDetail`) 삭제. 대조는 `app/actions/*.ts`의 export 함수별 첫 가드를 스크립트로 뽑아서
+- 계획서: [plan-제품판매-읽기전용.md](plan/plan-제품판매-읽기전용.md)
 
 ### 2026-09-21 — 원물 엑셀 업로드 `importStocks` ADMIN → `SUPPLY_MANAGE`
 - 증상: 원물 엑셀 등록 버튼을 눌러도 "파일 분석 중 오류가 발생했습니다"만 뜨고 미리보기 요약조차 안 나옴. 특정 PC 문제로 보였으나 **계정 권한 문제**였다
