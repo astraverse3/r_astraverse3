@@ -47,7 +47,13 @@ export function UserTable({ users, currentUserId }: { users: User[]; currentUser
     }
 
     const handleDelete = async (user: User) => {
-        if (!(await confirmDialog({ description: `정말로 ${user.name}님의 계정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`, destructive: true, confirmText: '삭제' }))) return
+        // 🔴 「연결이 다 끊기나」 걱정을 막는다 — 업무 데이터엔 계정 FK가 없고 기록은 이름을 글자로 갖고 있다(§83)
+        if (!(await confirmDialog({
+            title: '계정 삭제',
+            description: `${user.name}님의 계정을 삭제할까요?\n\n· 등록한 업무 기록과 활동 로그는 그대로 남아요\n· 부서·직책·권한은 사라져요\n· 같은 카카오 계정으로 다시 로그인하면 승인 대기로 올라와요`,
+            destructive: true,
+            confirmText: '삭제',
+        }))) return
 
         const result = await settle(deleteUser(user.id))
         if (result.success) {
