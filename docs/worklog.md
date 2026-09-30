@@ -136,6 +136,19 @@
 - `components/admin/UserTable.tsx`: 삭제 확인 창에 「업무 기록은 남아요 · 부서·직책·권한은 사라져요 · 다시 로그인하면 승인 대기」
 - 백로그: §83 실확인 기록 · §92 사용자 비활성(조건부 — 퇴사자·반복 가입 생기면) · 색인에 §90~§92
 
+### 헤더 알림(종) — 승인 대기를 종 아이콘 하나로 (작업지시 ⑥ · §83 2단계)
+
+커밋 `d92bc3a`. 계획서 `docs/plan/plan-헤더알림.md`, 보고서 `docs/report/report-헤더알림-2026-09-30.md`.
+발단: 사용자 「개인별 알림이 필요할 것 같으니 펜딩도 작은 아이콘 하나로」 → 요청서 → 디자이너 작업지시 ⑥. 첫 시안은 `header-bell-parts.jsx`가 빠져 안 그려졌고, 사용자가 **간단안**으로 다시 받아 왔다(둘째 줄·「지금 상태 기준」 제외).
+
+- `lib/notifications.ts`(신규): `getHeaderNotifications(role)` — 저장 안 하고 요청 때 계산, ADMIN만
+- `components/header/header-bell.tsx`(신규): 종 · 빨강 뱃지(합계 · 99+) · PC Popover / 모바일 DropdownMenu(collisionPadding 8) · 빈 상태
+- `components/icons/duotone.tsx`: `BellIcon` · `UserPlusIcon` · `CheckCircleIcon`
+- `(dashboard)/layout.tsx`: 종·구분선·프로필 · `mobile-header.tsx`: 종·아바타·톱니 40×40
+- `desktop-sidebar.tsx` · `mobile-header.tsx`: §83 임시 뱃지 제거(사이드바는 §83 직전 상태로 복원)
+- 문서: 작업지시 ⑥·시안 추가 · `plan-가입승인제.md` 2단계 완료 · `permission-matrix.md` · 백로그 §83 ✅
+- 검증: tsc 0 · eslint 0/0 · test 529/529. 화면은 사용자 확인
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
