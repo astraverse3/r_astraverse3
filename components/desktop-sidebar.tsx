@@ -48,7 +48,7 @@ const STATS_SUB = [
     { href: '/statistics/output', label: '판매분석' },
 ]
 
-export function DesktopSidebar() {
+export function DesktopSidebar({ showBackup = true }: { showBackup?: boolean }) {
     const pathname = usePathname();
     const { data: session } = useSession();
     const user = session?.user;
@@ -240,15 +240,17 @@ export function DesktopSidebar() {
                                         >
                                             네비게이션 덫
                                         </Link>
-                                        <Link
-                                            href="/admin/backup"
-                                            className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/backup')
-                                                ? 'text-primary bg-blue-50'
-                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            시스템 백업
-                                        </Link>
+                                        {showBackup && (
+                                            <Link
+                                                href="/admin/backup"
+                                                className={`block text-xs font-medium py-1.5 px-2 rounded-md transition-colors ${isActive('/admin/backup')
+                                                    ? 'text-primary bg-blue-50'
+                                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                시스템 백업
+                                            </Link>
+                                        )}
                                     </>
                                 )}
                                 {user?.role === 'ADMIN' && (

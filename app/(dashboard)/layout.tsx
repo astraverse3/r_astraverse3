@@ -26,7 +26,8 @@ export default async function DashboardLayout({
                 <MobileHeader />
 
                 {/* Desktop Sidebar (Hidden on Mobile) */}
-                <DesktopSidebar />
+                {/* 시스템 백업은 로컬 전용(pg_dump) — 실서버에선 메뉴째 숨긴다. VERCEL은 서버에서만 보인다 */}
+                <DesktopSidebar showBackup={!process.env.VERCEL} />
 
                 {/* Main Content Area */}
                 {/* pb = nav h-[60px] + mb-4(16px) + env(safe) + 8px breathing = 84px + safe (mobile-nav.tsx와 동기화) */}
