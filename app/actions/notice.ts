@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/auth'
 import { revalidatePath } from 'next/cache'
 import { recordAuditLog } from '@/lib/audit'
+import { requireSession } from '@/lib/auth-guard'
 
 // 공지사항 권한 체크 헬퍼
 async function requireNoticeManage() {
@@ -34,8 +35,14 @@ export async function getNotices() {
     return notices
 }
 
-// 2. 활성화된 공지만 조회 (메인 대시보드 전광판용, 권한 필요 없음)
+// 2. 활성화된 공지만 조회 (메인 대시보드 전광판용, 업무 권한 필요 없음)
+// 로그인(승인된 사용자)은 본다 — 예전엔 가드가 아예 없어 승인 대기 계정도 직접 부를 수 있었다(§83)
 export async function getActiveNotices() {
+    try {
+        await requireSession()
+    } catch {
+        return { success: false, data: [] }
+    }
     const notices = await prisma.notice.findMany({
         where: { isActive: true },
         orderBy: { createdAt: 'desc' },

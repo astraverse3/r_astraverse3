@@ -1,7 +1,7 @@
 # 권한 매트릭스 (Permission Matrix)
 
 > **단일 진실 원천**: 권한 변경/추가/제거 시 **이 문서를 먼저** 갱신한 뒤 코드 수정.
-> **마지막 갱신**: 2026-09-30 (제품판매 탭 읽기 전용 · `getUploadMatrix` → `requireSession` · 9/21 이후 빠진 가드 전수 반영 — 백로그 §60)
+> **마지막 갱신**: 2026-09-30 (가입 승인제 — 역할 PENDING·REVOKED · /admin 기본 거부 §83 · 제품판매 탭 읽기 전용 §60)
 > **관련 코드**: [lib/permissions.ts](../lib/permissions.ts), [lib/auth-guard.ts](../lib/auth-guard.ts), [middleware.ts](../middleware.ts)
 > **관련 계획서**: [docs/plan/plan-권한단순화.md](plan/plan-권한단순화.md)
 
@@ -27,6 +27,20 @@
 | 코드 | label | description |
 | --- | --- | --- |
 | `NOTICE_MANAGE` | 공지사항 관리 | 대시보드 전광판 공지 |
+
+### 역할 (`User.role` · `lib/user-role.ts`) — 2026-09-30 가입 승인제(백로그 §83)
+| 역할 | 뜻 | 들어가는 곳 |
+| --- | --- | --- |
+| `ADMIN` | 전권 | 전부 |
+| `USER` | 승인됨. 업무 권한은 `permissions` | 대시보드 |
+| `PENDING` | 첫 카카오 로그인 · 관리자 승인 대기 (`auth.ts` `profile()`이 넣는다) | `/pending`만 |
+| `REVOKED` | DB에서 지워진 사용자의 남은 세션 — **토큰 전용 값, DB엔 없다** (`jwt` 콜백) | `/pending`만 |
+
+- 판정은 `isApprovedRole()` 하나 — **허용 목록**(`ADMIN`·`USER`만 통과, 모르는 값·빈 값도 막힘)
+- 서버: `requireSession()`이 승인 안 된 역할이면 `AuthError` → `requirePermission`·`requireAdmin`도 거치므로 **모든 서버 액션 자동 차단**
+- 화면: `(dashboard)/layout.tsx`가 `redirect('/pending')` (미들웨어 쿠키 토큰은 낡을 수 있어 레이아웃에서 본다)
+- 승인: `/admin/users` 위 「승인 대기」 블록 → `approveUser`(ADMIN, PENDING → USER · 권한 빈 채로). 거절 = `deleteUser`(다시 로그인하면 또 대기)
+- 🔴 스키마 기본값은 여전히 `"USER"` — 사용자를 만드는 경로가 `profile()` 하나라 마이그레이션 없이 갔다. **사용자를 만드는 경로를 새로 만들면 PENDING을 직접 넣을 것**
 
 ### 특별 권한
 - **`ADMIN` role**: 모든 권한 자동 보유 (`hasPermission`/`requirePermission` 내부 처리)
@@ -79,7 +93,7 @@
 
 > 제품판매·매트릭스는 **서버 컴포넌트가 `getServerSession`으로 `canManage`를 한 번 계산해 prop으로 내린다**(`sales/page.tsx`, `sales/purchase/[uploadId]/page.tsx`). 자식은 콜백이 안 오면 그 버튼을 안 그린다.
 
-### 관리 (`/admin/*`) — 미들웨어가 라우트 단위로 가드
+### 관리 (`/admin/*`) — 미들웨어가 라우트 단위로 가드 · **표에 없는 경로는 ADMIN 외 거부**(2026-09-30 §83 S4 — 새 관리 화면은 `middleware.ts` 표에 먼저 등록)
 | 라우트 | 권한 |
 | --- | --- |
 | `/admin/varieties` | `SUPPLY_MANAGE` |
@@ -150,6 +164,12 @@
 - **세션 JWT 캐싱**: 기존 로그인 사용자는 토큰에 옛 permissions가 남음 → **재로그인 시 갱신**.
 
 ## 변경 이력
+
+### 2026-09-30 — 가입 승인제 · 삭제 사용자 세션 차단 · /admin 기본 거부 (백로그 §83)
+- 전: 카카오 계정만 있으면 누구나 로그인해 조회·엑셀 다운로드까지 됐다(`signIn` 무조건 통과 + 「조회는 가드 안 함」). 삭제한 사용자도 옛 토큰으로 계속 썼다. `/admin` 아래 매핑 안 된 경로는 세션만 있으면 통과
+- 후: 위 「역할」 절. 기존 11명(ADMIN 1 · USER 10)은 행을 안 바꿨다. `getActiveNotices`(가드 없음)에 `requireSession` 추가
+- 관리자 알림: 사이드바·모바일 메뉴 「사용자 관리」 뱃지(임시) → 헤더 종 아이콘으로 옮길 예정(`docs/handoff/요청-헤더-알림아이콘.md`)
+- 계획서: [plan-가입승인제.md](plan/plan-가입승인제.md)
 
 ### 2026-09-30 — 제품판매 탭 읽기 전용 · 문서 전수 대조 (백로그 §60)
 - 증상: 가공·판매 권한이 없는 계정(11명 중 4명)이 시트를 누르면 매트릭스 대신 「이 작업을 할 권한이 없어요」 카드. 발주서 등록·⋮ 메뉴·상차 편집은 보이는데 누르면 실패

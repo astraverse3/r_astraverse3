@@ -36,17 +36,19 @@ export default withAuth(
             // 매핑 테이블에서 가장 구체적인 prefix 매칭 탐색
             const matched = ADMIN_ROUTE_PERMISSIONS.find(r => pathname.startsWith(r.prefix))
 
-            if (matched) {
-                // ADMIN 전용 경로인데 ADMIN이 아님 → 홈으로
-                if (matched.permission === null) {
-                    return NextResponse.redirect(new URL("/", req.url))
-                }
-                // 필요한 권한 미보유 → 홈으로
-                if (!permissions.includes(matched.permission)) {
-                    return NextResponse.redirect(new URL("/", req.url))
-                }
+            // 🔴 매칭 없는 /admin 하위(/admin 루트 · 새로 만들고 매핑을 빠뜨린 화면)는 **기본 거부**(§83 S4).
+            //    예전엔 세션만 있으면 통과였다. 새 관리 화면은 위 표에 먼저 등록할 것
+            if (!matched) {
+                return NextResponse.redirect(new URL("/", req.url))
             }
-            // 매칭 없는 /admin 하위(/admin 루트 등)는 세션만 있으면 통과
+            // ADMIN 전용 경로인데 ADMIN이 아님 → 홈으로
+            if (matched.permission === null) {
+                return NextResponse.redirect(new URL("/", req.url))
+            }
+            // 필요한 권한 미보유 → 홈으로
+            if (!permissions.includes(matched.permission)) {
+                return NextResponse.redirect(new URL("/", req.url))
+            }
         }
     },
     {

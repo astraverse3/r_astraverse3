@@ -8,26 +8,40 @@ import { MillingCartProvider } from "./raw-stocks/milling-cart-context"
 import { LastUpdated } from "@/components/last-updated"
 import { YieldRatesProvider } from "./yield-rates-context"
 import { getYieldRates } from "@/app/actions/settings"
+import { countPendingUsers } from "@/app/actions/user"
+import { getServerSession } from "next-auth/next"
+import { redirect } from "next/navigation"
+import { authOptions } from "@/auth"
+import { isApprovedRole, USER_ROLE } from "@/lib/user-role"
 
 export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    // 🔴 승인 대기·삭제된 사용자는 대시보드에 못 들어온다(백로그 §83). 미들웨어의 쿠키 토큰은 낡을 수 있어
+    //    여기서 본다 — getServerSession이 jwt 콜백을 거쳐 DB의 최신 역할을 읽는다
+    const session = await getServerSession(authOptions);
+    if (!isApprovedRole(session?.user?.role)) redirect("/pending");
+    const isAdmin = session?.user?.role === USER_ROLE.ADMIN;
+
     // 도정구분별 수율 기준값 — 소비 화면(대시보드·도정목록·통계)이 모두 이 그룹 안이라
-    // 여기서 한 번만 읽어 내려준다. middleware가 전 경로를 막고 있어 세션은 보장된다.
-    const yieldRates = await getYieldRates();
+    // 여기서 한 번만 읽어 내려준다. 승인 대기 인원(뱃지)은 ADMIN만, 같이 읽어 왕복을 늘리지 않는다
+    const [yieldRates, pendingUsers] = await Promise.all([
+        getYieldRates(),
+        isAdmin ? countPendingUsers() : Promise.resolve(0),
+    ]);
 
     return (
         <>
             <YieldRatesProvider rates={yieldRates}>
             <MillingCartProvider>
                 {/* Mobile Header (Fixed Top) */}
-                <MobileHeader />
+                <MobileHeader pendingUsers={pendingUsers} />
 
                 {/* Desktop Sidebar (Hidden on Mobile) */}
                 {/* 시스템 백업은 로컬 전용(pg_dump) — 실서버에선 메뉴째 숨긴다. VERCEL은 서버에서만 보인다 */}
-                <DesktopSidebar showBackup={!process.env.VERCEL} />
+                <DesktopSidebar showBackup={!process.env.VERCEL} pendingUsers={pendingUsers} />
 
                 {/* Main Content Area */}
                 {/* pb = nav h-[60px] + mb-4(16px) + env(safe) + 8px breathing = 84px + safe (mobile-nav.tsx와 동기화) */}

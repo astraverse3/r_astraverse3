@@ -2,6 +2,7 @@ import { NextAuthOptions, type User } from "next-auth"
 import KakaoProvider from "next-auth/providers/kakao"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import { USER_ROLE } from "@/lib/user-role"
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -15,7 +16,9 @@ export const authOptions: NextAuthOptions = {
                     name: profile.kakao_account?.profile?.nickname,
                     email: profile.kakao_account?.email,
                     image: profile.kakao_account?.profile?.profile_image_url,
-                    role: "USER"
+                    // 첫 로그인은 승인 대기 — 관리자가 사용자 관리에서 승인해야 쓸 수 있다(백로그 §83).
+                    // 🔴 사용자를 만드는 경로는 여기뿐이라 DB 기본값("USER")은 바꾸지 않았다(마이그레이션 회피)
+                    role: USER_ROLE.PENDING
                     // permissions·department·position은 DB 기본값에 맡긴다(어댑터가 사용자 생성)
                 } as User
             },
@@ -31,7 +34,8 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string
-                session.user.role = token.role as string || "USER"
+                // 역할이 비면 승인 안 된 것으로 본다 — 예전엔 "USER"로 채워 줬다(§83)
+                session.user.role = token.role as string || USER_ROLE.PENDING
                 session.user.permissions = (token.permissions as string[]) || []
                 session.user.department = (token.department as string | null) || null
                 session.user.position = (token.position as string | null) || null
@@ -80,6 +84,11 @@ export const authOptions: NextAuthOptions = {
                     token.permissions = dbUser.permissions || []
                     token.department = dbUser.department || null
                     token.position = dbUser.position || null
+                } else {
+                    // 삭제된 사용자 — 예전엔 옛 역할·권한을 그대로 둬서 **계속 쓸 수 있었다**(§83 S3).
+                    // REVOKED는 토큰 전용 값이다. 가드(requireSession)·레이아웃이 받아 막는다
+                    token.role = USER_ROLE.REVOKED
+                    token.permissions = []
                 }
             }
 

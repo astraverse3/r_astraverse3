@@ -14,7 +14,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function MobileHeader() {
+/** `pendingUsers` — 승인 대기 인원(ADMIN만, 그 밖엔 0). §83 T4 뱃지 — 임시, 헤더 종 아이콘으로 옮길 예정 */
+export function MobileHeader({ pendingUsers = 0 }: { pendingUsers?: number }) {
     const { data: session } = useSession()
     const user = session?.user
     const { name, image, department, position }: Partial<Session["user"]> = user ?? {}
@@ -62,8 +63,12 @@ export function MobileHeader() {
 
                 {/* 2. Admin Settings (관리자 전용 혹은 안내 메시지) */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="p-1 text-slate-400 hover:text-slate-600 focus:outline-none">
+                    <DropdownMenuTrigger className="relative p-1 text-slate-400 hover:text-slate-600 focus:outline-none">
                         <Settings className="w-5 h-5" />
+                        {/* 톱니 안에 숨어 있으면 모른다 — 대기자가 있으면 점 */}
+                        {pendingUsers > 0 && (
+                            <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-600 ring-2 ring-white" aria-label={`승인 대기 ${pendingUsers}명`} />
+                        )}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                         {/* 모든 사용자에게 표시: 품종, 생산자 */}
@@ -96,6 +101,7 @@ export function MobileHeader() {
                                         <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
                                             <Users className="w-4 h-4 text-slate-500" />
                                             <span>사용자 관리</span>
+                                            {pendingUsers > 0 && <span className="ml-auto rounded-full bg-amber-600 px-1.5 font-mono text-[11px] font-bold leading-[18px] text-white">{pendingUsers}</span>}
                                         </Link>
                                     </DropdownMenuItem>
                                 )}

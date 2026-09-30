@@ -20,6 +20,11 @@ export function toKstDate(d: Date | string): string {
   return new Date(new Date(d).getTime() + KST_OFFSET_MS).toISOString().slice(0, 10)
 }
 
+/** 날짜 → 'yyyy-mm-dd HH:mm' (KST, 24시간) — 첫 로그인 시각 같은 한 줄 표기 */
+export function toKstDateTime(d: Date | string): string {
+  return new Date(new Date(d).getTime() + KST_OFFSET_MS).toISOString().slice(0, 16).replace('T', ' ')
+}
+
 /** 오늘 'yyyy-mm-dd' (KST) */
 export function todayKst(now: Date = new Date()): string {
   return toKstDate(now)

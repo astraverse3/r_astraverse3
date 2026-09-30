@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { formatKstKo, kstDayRange, kstYearRange, todayKst, toKstDate, toKstMonth } from './kst-date'
+import { formatKstKo, kstDayRange, kstYearRange, todayKst, toKstDate, toKstDateTime, toKstMonth } from './kst-date'
 
 // 🔴 이 파일은 TZ=UTC(실서버)와 TZ=Asia/Seoul(개발 PC) 두 환경에서 같은 결과여야 한다.
 
@@ -76,4 +76,9 @@ test('formatKstKo: 프로세스 시간대와 무관하게 KST 날짜', () => {
 
 test('formatKstKo: 시각 포함은 KST 시각', () => {
   assert.equal(formatKstKo(new Date('2026-09-08T06:00:00Z'), true), '2026. 9. 8. 오후 3:00:00')
+})
+
+test('toKstDateTime: UTC 15:12는 KST 다음 날 00:12 — 날짜도 넘어간다', () => {
+  assert.equal(toKstDateTime(new Date('2026-09-29T15:12:00Z')), '2026-09-30 00:12')
+  assert.equal(toKstDateTime('2026-09-30T05:12:30Z'), '2026-09-30 14:12')
 })
