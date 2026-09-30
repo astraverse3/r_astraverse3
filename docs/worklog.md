@@ -15,6 +15,21 @@
 
 코드 변경 0. `docs/handoff/millinglog.zip`(추적 안 됨)은 무관해 커밋에서 뺐다.
 
+### 디자이너 점검 병합 · 죽은 포장 액션 삭제 · PWA reloadOnOnline 끔 · 26년산 로트 확인
+
+커밋 `6dd535e` · `91fffc0` · `b500fa8`. 보고서 `docs/report/report-백로그-전수정리-2026-09-30.md` §3-2.
+발단: 사용자 「(zip은) 디자이너한테 점검 시킨 건데 백로그에 병합해줘 · 바로 할 수 있는 건 해주고 · 로트는 확인해줘」.
+
+- **디자이너 점검**(`docs/handoff/점검-2026-09/` 작업지시 ①보안 S1~S6 · ②디자인토큰 D1~D6) → 전부 코드로 확인 후 백로그 **§83~§86**
+  - 🔴 **§83 S1 사실** — `auth.ts` `signIn`이 항상 true, 새 사용자 `USER`, `requireSession`은 세션만 → 카카오 계정만 있으면 조회·엑셀 다운로드까지. 실측: 사용자 11명, 6/1 이후 신규 0명(외부인 흔적 없음). S3(삭제 사용자 토큰 유지)·S4(/admin 기본 허용)도 사실
+  - §84 S2 사실(단 `requireAdmin` 뒤). 🔴 추가: 백업은 로컬 전용인데 로컬=운영 DB라 「복원」이 운영 DB를 `DROP SCHEMA` 한다
+  - §86 D3 stone/gray 표가 불완전 — `pwa-install-guard.tsx` 38 · `MillingTable.tsx` 19 누락
+- **§53 로트**: 읽기 전용 실측 — 26년산 벼 원물 15건 전부 관행(로트 없음) → 해당 없음
+- **`6dd535e`** §56 죽은 액션 `deletePackagingLog`·`addPackagingLog` 삭제(차감 보호 우회, 호출 0) · permission-matrix 정리. milling.ts 1,120 → 1,028줄
+- **`91fffc0`** §58 `reloadOnOnline: false` — 네트워크 복구 때 화면 새로고침으로 입력이 날아가던 위험. 옵션명은 `node_modules/next-pwa/index.js:52`에서 확인
+
+검증 tsc 0 · `eslint .` 0 · test 513/513. §52 벼 재고조사는 사용자 진행.
+
 ## 2026-09-29
 
 ### 제품판매·잡곡 제품재고 테스트 데이터 초기화 (실서버 DB)
