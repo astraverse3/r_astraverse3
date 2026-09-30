@@ -113,7 +113,7 @@
 ### ADMIN 전용 (`requireAdmin`)
 | 파일 | 함수 |
 | --- | --- |
-| `app/actions/backup.ts` | `getBackups`, `createBackup`, `restoreBackup` |
+| `app/actions/backup.ts` | `getBackups`, `createBackup` (복원은 화면에서 뺐다 — `scripts/restore-backup.ts`로만, 2026-09-30) |
 | `app/actions/user.ts` | 모든 함수 (`updateUserPermissions` 등) |
 | `app/actions/settings.ts` | `saveYieldRates` |
 
