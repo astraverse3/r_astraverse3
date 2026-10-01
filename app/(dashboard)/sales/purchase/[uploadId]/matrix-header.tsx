@@ -68,7 +68,7 @@ export function Header({
                 </div>
             </div>
 
-            {(matrix.totals.needsWorkRows > 0 || unmatchedLines > 0) && (
+            {(matrix.totals.needsWorkRows > 0 || unmatchedLines > 0 || onRematch) && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     {matrix.totals.needsWorkRows > 0 && (
                         <p className="text-[12.5px] text-slate-500">
@@ -78,23 +78,23 @@ export function Header({
                         </p>
                     )}
                     {unmatchedLines > 0 && (
-                        <>
-                            <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11.5px] font-bold text-red-600">
-                                매칭실패 {fmt(unmatchedLines)}품목
-                            </span>
-                            {/* 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R) */}
-                            {onRematch && (
-                                <button
-                                    type="button"
-                                    onClick={onRematch}
-                                    disabled={rematching}
-                                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-                                >
-                                    <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
-                                    {rematching ? '재매칭 중…' : '재매칭'}
-                                </button>
-                            )}
-                        </>
+                        <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11.5px] font-bold text-red-600">
+                            매칭실패 {fmt(unmatchedLines)}품목
+                        </span>
+                    )}
+                    {/* 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다(결정 R).
+                        🔴 매칭실패가 없어도 띄운다 — 기본 포장지가 틀려 엉뚱한 SKU에 붙은 줄은 「실패」가 아니라서,
+                        실패가 있을 때만 띄우면 고칠 길이 화면에 아예 없다(2026-10-01 실사용 첫날) */}
+                    {onRematch && (
+                        <button
+                            type="button"
+                            onClick={onRematch}
+                            disabled={rematching}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                        >
+                            <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
+                            {rematching ? '재매칭 중…' : '재매칭'}
+                        </button>
                     )}
                 </div>
             )}

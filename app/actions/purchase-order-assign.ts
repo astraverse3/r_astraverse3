@@ -28,6 +28,7 @@ import {
 import { loadMatcherMasters } from '@/lib/purchase-order-masters'
 import { loadAvailability, loadSkuMeta } from '@/lib/purchase-order-db'
 import type { MatchPatch } from '@/lib/purchase-order-matrix'
+import { planRematch, type RematchPlan } from '@/lib/purchase-order-rematch'
 
 /** 잡곡 도정유형 sentinel — 사람에게 보여줄 값이 아니다(화면에서 감춘다). */
 const MISC_MILLING_SENTINEL = '기타'
@@ -177,58 +178,58 @@ export async function getUnmatchedCellOptions(
 // ======================================================
 
 export type RematchResult =
-  | {
-      success: true
-      patches: MatchPatch[]
-      /** 새로 붙은 라인 수 */
-      matchedLines: number
-      /** 아직 남은 매칭실패 라인 수 */
-      stillUnmatched: number
-    }
+  | ({ success: true; patches: MatchPatch[] } & Omit<RematchPlan, 'writes'>)
   | { success: false; error: string }
 
 /**
- * 묶음 전체 재매칭(결정 R) — 업로드 뒤에 등록된 SKU·별칭을 다시 적용한다.
+ * 묶음 전체 재매칭(결정 R) — 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다.
  *
- * 업로드 시점의 매칭 결과가 그대로 굳어 있어서, 마스터를 보완해도 화면은 실패인 채로 남는다.
+ * 업로드 시점의 매칭 결과가 그대로 굳어 있어서, 마스터를 보완해도 화면은 그대로 남는다.
  * 실측(2026-09-15)에서 27라인 중 2종이 이 상태였다.
  *
+ * 🔴 2026-10-01 범위 확장: 매칭실패 줄만이 아니라 **차감이 없는 줄 전부**를 다시 본다.
+ *    기본 포장지가 틀려 엉뚱한 SKU에 붙은 줄은 「실패」가 아니어서 예전 재매칭이 건드리지 않았다
+ *    (판정 = `lib/purchase-order-rematch.ts`, 계획서 plan-매트릭스-포장지규격-수정 ①).
  * 🔴 라인 루프 안에서 쿼리하지 않는다 — 매칭은 메모리에서 끝내고, 쓰기는 **SKU별 `updateMany`**로 묶는다.
  */
 export async function rematchUpload(uploadId: number): Promise<RematchResult> {
   try {
     await requirePermission('OPERATION_MANAGE')
     const items = await prisma.purchaseOrderItem.findMany({
-      where: { productTypeId: null, order: { uploadId } },
-      select: { id: true, rawItemName: true, packageType: true, rawPackaging: true },
+      where: { order: { uploadId } },
+      select: {
+        id: true,
+        rawItemName: true,
+        packageType: true,
+        rawPackaging: true,
+        productTypeId: true,
+        _count: { select: { movements: true } },
+      },
     })
-    if (items.length === 0) {
-      return { success: true, patches: [], matchedLines: 0, stillUnmatched: 0 }
-    }
 
     const masters = await loadMatcherMasters()
-    const bySku = new Map<number, number[]>()
-    for (const it of items) {
-      const m = matchPurchaseOrderItem(
-        { rawItemName: it.rawItemName, packageType: it.packageType, rawPackaging: it.rawPackaging },
-        masters.varieties,
-        masters.productTypes,
-      )
-      if (!m.matched) continue
-      const list = bySku.get(m.productTypeId)
-      if (list) list.push(it.id)
-      else bySku.set(m.productTypeId, [it.id])
-    }
+    const { writes, ...counts } = planRematch(
+      items.map((it) => {
+        const m = matchPurchaseOrderItem(
+          { rawItemName: it.rawItemName, packageType: it.packageType, rawPackaging: it.rawPackaging },
+          masters.varieties,
+          masters.productTypes,
+        )
+        return {
+          id: it.id,
+          productTypeId: it.productTypeId,
+          deducted: it._count.movements > 0,
+          matchedTo: m.matched ? m.productTypeId : null,
+        }
+      }),
+    )
+    if (writes.size === 0) return { success: true, patches: [], ...counts }
 
-    const matchedLines = [...bySku.values()].reduce((s, ids) => s + ids.length, 0)
-    if (matchedLines === 0) {
-      return { success: true, patches: [], matchedLines: 0, stillUnmatched: items.length }
-    }
-
+    // 조회와 쓰기 사이에 차감이 생긴 줄은 옮기지 않는다 — 차감된 줄의 SKU가 바뀌면 판매 기록이 어긋난다
     await prisma.$transaction(
-      [...bySku.entries()].map(([productTypeId, ids]) =>
+      [...writes.entries()].map(([productTypeId, ids]) =>
         prisma.purchaseOrderItem.updateMany({
-          where: { id: { in: ids }, productTypeId: null },
+          where: { id: { in: ids }, movements: { none: {} } },
           data: { productTypeId },
         }),
       ),
@@ -237,18 +238,15 @@ export async function rematchUpload(uploadId: number): Promise<RematchResult> {
     await recordAuditLog({
       action: 'UPDATE',
       entity: 'PurchaseOrderItem',
-      description: `발주서 재매칭 uploadId=${uploadId} ${matchedLines}라인 (SKU ${bySku.size}종)`,
+      description:
+        `발주서 재매칭 uploadId=${uploadId} 새로 붙음 ${counts.newlyMatched} · 옮김 ${counts.moved}` +
+        ` (SKU ${writes.size}종)`,
     })
 
     const patches = await Promise.all(
-      [...bySku.entries()].map(([productTypeId, ids]) => loadMatchPatch(ids, productTypeId)),
+      [...writes.entries()].map(([productTypeId, ids]) => loadMatchPatch(ids, productTypeId)),
     )
-    return {
-      success: true,
-      patches,
-      matchedLines,
-      stillUnmatched: items.length - matchedLines,
-    }
+    return { success: true, patches, ...counts }
   } catch (error) {
     console.error('[rematchUpload] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '재매칭에 실패했습니다.') }

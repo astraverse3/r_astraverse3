@@ -53,7 +53,6 @@ export function OrderListMobile({
     decl,
     sort,
     onSort,
-    unmatchedLines,
     rematching,
     onRematch,
     onOpenDetail,
@@ -68,7 +67,6 @@ export function OrderListMobile({
     decl: ChannelDecl
     sort: MatrixSort
     onSort: (s: MatrixSort) => void
-    unmatchedLines: number
     rematching: boolean
     /** 이 아래 세 콜백은 읽기 전용(§60)이면 안 온다 — 없으면 그 버튼·카드 탭을 안 그린다 */
     onRematch?: () => void
@@ -191,8 +189,9 @@ export function OrderListMobile({
                             </span>
                         )
                     })}
-                    {unmatchedLines > 0 && onRematch && (
-                        // 업로드 뒤에 등록한 SKU·별칭을 다시 적용한다(결정 R)
+                    {onRematch && (
+                        // 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다(결정 R).
+                        // 매칭실패가 없어도 띄운다 — 엉뚱한 SKU에 붙은 줄은 「실패」가 아니다(2026-10-01)
                         <button
                             type="button"
                             onClick={onRematch}

@@ -207,15 +207,28 @@ export function MatrixClient({
                 toast.error(r.error)
                 return
             }
-            if (r.matchedLines === 0) {
-                toast.info(`새로 붙은 품목이 없어요. ${r.stillUnmatched}품목이 그대로 실패입니다.`)
-                return
+            // 차감이 없는 줄 전부를 다시 본다 — 새로 붙은 것과 다른 SKU로 옮긴 것을 따로 알린다
+            const left = r.stillUnmatched > 0 ? ` · 매칭실패 ${r.stillUnmatched}품목 남음` : ''
+            if (r.newlyMatched + r.moved === 0) {
+                toast.info(`바뀐 품목이 없어요.${left}`)
+            } else {
+                applyMatches(r.patches)
+                const parts = [
+                    r.newlyMatched > 0 && `${r.newlyMatched}품목 새로 매칭`,
+                    r.moved > 0 && `${r.moved}품목 다른 SKU로 옮김`,
+                ].filter(Boolean)
+                toast.success(`${parts.join(' · ')}${left}`)
             }
-            applyMatches(r.patches)
-            toast.success(
-                `${r.matchedLines}품목이 매칭됐어요` +
-                    (r.stillUnmatched > 0 ? ` · ${r.stillUnmatched}품목 남음` : ''),
-            )
+            if (r.blockedByDeduction > 0) {
+                toast.warning(
+                    `차감된 ${r.blockedByDeduction}품목은 옮기지 않았어요. 바꾸려면 그 칸의 차감을 먼저 취소하세요.`,
+                )
+            }
+            if (r.needsReview > 0) {
+                toast.warning(
+                    `${r.needsReview}품목은 지금 기준으로 매칭이 안 돼요(SKU 비활성 등). 그대로 두었으니 확인해 주세요.`,
+                )
+            }
         })
 
     /**
@@ -364,7 +377,6 @@ export function MatrixClient({
                     decl={decl}
                     sort={sort}
                     onSort={setSort}
-                    unmatchedLines={unmatchedLines}
                     rematching={rematching}
                     onRematch={canManage ? runRematch : undefined}
                     onOpenDetail={openDetail}
