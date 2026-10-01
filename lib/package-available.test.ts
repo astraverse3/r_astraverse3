@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   movedCountOf,
   availableOf,
+  availableKgOf,
   toGuarded,
   MOVEMENT_COUNT_SELECT,
 } from './package-available'
@@ -83,4 +84,38 @@ test('안 넣은 축은 undefined — guard가 그 축을 검사하지 않는다
 
 test('select 조각이 계산 함수가 읽는 모양과 일치한다', () => {
   assert.deepEqual(MOVEMENT_COUNT_SELECT, { movements: { select: { count: true } } })
+})
+
+// ------------------------------------------------------
+// availableKgOf — 목록·엑셀이 보여 주는 「남은 중량」
+// ------------------------------------------------------
+
+const pkg = (count: number, weightPerUnit: number, totalWeight: number, ...moved: number[]) => ({
+  count,
+  weightPerUnit,
+  totalWeight,
+  movements: mv(...moved),
+})
+
+test('차감이 없으면 totalWeight 그대로 — 곱셈 오차를 들이지 않는다', () => {
+  assert.equal(availableKgOf(pkg(115, 10, 1150)), 1150)
+})
+
+test('일부 차감이면 가용 × 단중 (새청무 10kg 115개 중 52개 차감 → 630kg)', () => {
+  assert.equal(availableKgOf(pkg(115, 10, 1150, 52)), 630)
+})
+
+test('소수 단중은 3자리로 반올림한다', () => {
+  // 0.907 × 7 = 6.348999… 같은 부동소수 꼬리가 화면에 안 나오게
+  assert.equal(availableKgOf(pkg(10, 0.907, 9.07, 3)), 6.349)
+})
+
+test('전부 차감·초과 차감이면 0 — 중량은 음수로 보이지 않는다', () => {
+  assert.equal(availableKgOf(pkg(5, 10, 50, 5)), 0)
+  assert.equal(availableKgOf(pkg(5, 10, 50, 7)), 0)
+})
+
+test('잔량 줄(개수 1)은 차감 전엔 totalWeight, 차감되면 0', () => {
+  assert.equal(availableKgOf(pkg(1, 3.4, 3.4)), 3.4)
+  assert.equal(availableKgOf(pkg(1, 3.4, 3.4, 1)), 0)
 })

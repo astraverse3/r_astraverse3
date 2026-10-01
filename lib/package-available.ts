@@ -62,6 +62,24 @@ export function availableOf(row: CountedRow): number {
 }
 
 /**
+ * 남은 중량(kg) — 제품재고 목록·엑셀이 보여 주는 값.
+ *
+ * 🔴 일부만 차감된 줄이 원래 중량(`totalWeight`)으로 보이던 결함(2026-10-01, 새청무 115개 중 52개
+ * 차감 → 목록엔 115개·1,150kg)의 단일 원천이다. 화면·엑셀·그룹 합계가 각자 곱하지 않게 여기서 낸다.
+ *
+ * 차감이 없으면 `totalWeight`를 그대로 돌려준다 — 곱셈 오차를 들이지 않고, 종전 값과 어긋나지 않게.
+ * 다 차감됐으면(음수 포함) 0 — 개수와 달리 중량은 음수로 보여 줄 이유가 없다.
+ */
+export function availableKgOf(
+  row: CountedRow & { weightPerUnit: number; totalWeight: number },
+): number {
+  const available = availableOf(row)
+  if (available === row.count) return row.totalWeight
+  if (available <= 0) return 0
+  return Math.round(available * row.weightPerUnit * 1000) / 1000
+}
+
+/**
  * 조회 결과를 guard가 볼 수 있는 모양으로 옮긴다.
  * `app/actions/packages.ts`의 로컬 헬퍼였던 것을 승격했다 — 파일 밖에서 못 썼다.
  *

@@ -19,7 +19,7 @@ import {
     deleteBlockedMessage,
     identityBlockedMessage,
 } from '@/lib/package-guard'
-import { toGuarded, availableOf, MOVEMENT_COUNT_SELECT, MOVEMENT_SUMMARY_SELECT } from '@/lib/package-available'
+import { toGuarded, availableOf, availableKgOf, MOVEMENT_COUNT_SELECT, MOVEMENT_SUMMARY_SELECT } from '@/lib/package-available'
 import {
     buildPackageWhere,
     type PackageFilterParams,
@@ -76,7 +76,9 @@ export type PackageRow = {
     producer: string // MILLED: farmer.name (+ "외 N명") / PURCHASED: purchaseVendor
     lot: string | null
     date: string // ISO yyyy-mm-dd
-    sub: number // totalWeight (kg)
+    sub: number // totalWeight (kg) — 포장 자체의 원래 중량. 삭제 확인 문구처럼 「포장」을 말하는 곳만 쓴다
+    /** 남은 중량(kg) = `availableKgOf`. 목록 kg·그룹 합계·무게순 정렬은 이 값이다(일부 차감 줄, 2026-10-01) */
+    availableKg: number
     source: PackageSource
     /**
      * 마지막 차감일(ISO). `includeDeducted`로 조회했을 때만 채워진다 — 평소엔 항상 null.
@@ -208,6 +210,7 @@ export async function getPackages(
                 lot: r.lotNo,
                 date,
                 sub: r.totalWeight,
+                availableKg: availableKgOf(r),
                 source: r.source as PackageSource,
                 deductedAt,
                 deductedTypes,
@@ -233,7 +236,7 @@ export async function getPackages(
                 // 날짜가 1순위, 같은 날짜 안에서만 규격 asc로 묶는다.
                 const sortedRows = [...list].sort((a, b) => {
                     if (sort === 'weight_desc') {
-                        return b.sub - a.sub || a.date.localeCompare(b.date)
+                        return b.availableKg - a.availableKg || a.date.localeCompare(b.date)
                     }
                     const d =
                         sort === 'oldest'
@@ -241,9 +244,9 @@ export async function getPackages(
                             : b.date.localeCompare(a.date)
                     return d || a.weightPerUnit - b.weightPerUnit
                 })
-                // 차감 완료 행은 합계에서 뺀다 — 「차감된 재고 보기」를 켰다고 재고 합계가 튀면 안 된다.
-                // 끈 상태에선 그런 행이 애초에 없어 종전과 같은 값이다.
-                const total = sortedRows.reduce((s, r) => (r.available > 0 ? s + r.sub : s), 0)
+                // 남은 중량의 합 — 일부 차감 줄은 남은 만큼, 차감 완료 줄은 0(`availableKgOf`)이라
+                // 「차감된 재고 보기」를 켜도 합계가 튀지 않는다.
+                const total = +sortedRows.reduce((s, r) => s + r.availableKg, 0).toFixed(3)
                 items.push({
                     type: 'group',
                     varietyId: vid,
@@ -266,8 +269,8 @@ export async function getPackages(
         }
         items.sort((a, b) => {
             if (sort === 'weight_desc') {
-                const aw = a.type === 'group' ? a.total : a.sub
-                const bw = b.type === 'group' ? b.total : b.sub
+                const aw = a.type === 'group' ? a.total : a.availableKg
+                const bw = b.type === 'group' ? b.total : b.availableKg
                 return bw - aw
             }
             const ad = repDate(a)
@@ -1112,7 +1115,7 @@ export async function deleteMiscPurchase(
 
 const PACKAGE_EXPORT_HEADERS = [
     '포장일자', '출처', '카테고리', '품종', '생산자/매입처', '로트번호',
-    '규격', '단중(kg)', '개수', '총중량(kg)', '매입일',
+    '규격', '단중(kg)', '포장개수', '개수', '총중량(kg)', '매입일',
 ] as const
 
 const SOURCE_LABEL_KO: Record<string, string> = {
@@ -1132,7 +1135,7 @@ export async function exportPackages(
 > {
     try {
         await requireSession()
-        const { category } = params
+        const { category, includeDeducted = false } = params
 
         // where 조립은 목록(`getPackages`)과 공유한다 — 화면과 엑셀이 어긋나면 안 된다
         const where = buildPackageWhere(params)
@@ -1143,11 +1146,15 @@ export async function exportPackages(
                 stock: { include: { variety: true, farmer: true } },
                 variety: true,
                 batch: true,
+                ...MOVEMENT_COUNT_SELECT,
             },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         })
 
-        const rows = packages.map(p => {
+        // 화면(`getPackages`)과 같은 기준 — 차감 완료 줄은 빼고(「차감된 재고 보기」를 켰으면 남긴다),
+        // 개수·총중량은 남은 양. 원래 포장 개수는 「포장개수」 열로 남긴다.
+        // 🔴 예전엔 차감을 계산하지 않아 다 차감된 줄까지 원래 개수로 나갔다(2026-10-01).
+        const rows = packages.filter(p => includeDeducted || availableOf(p) > 0).map(p => {
             const isPurchased = p.source === 'PURCHASED'
             const variety = isPurchased ? p.variety?.name : p.stock?.variety.name
             const producer = isPurchased ? (p.purchaseVendor ?? '') : (p.stock?.farmer.name ?? '')
@@ -1162,8 +1169,9 @@ export async function exportPackages(
                 '로트번호': lot,
                 '규격': p.packageType,
                 '단중(kg)': p.weightPerUnit,
-                '개수': p.count,
-                '총중량(kg)': p.totalWeight,
+                '포장개수': p.count,
+                '개수': availableOf(p),
+                '총중량(kg)': availableKgOf(p),
                 '매입일': incoming,
             }
         })

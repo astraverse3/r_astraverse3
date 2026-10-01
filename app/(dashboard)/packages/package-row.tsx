@@ -241,10 +241,10 @@ export function PackageSingleRow({
             </span>
             <span className="text-right pr-2">{item.spec}</span>
             <span className="tabular-nums text-right pr-12">
-                {(deducted ? item.available : item.qty).toLocaleString()}개
+                {item.available.toLocaleString()}개
             </span>
             <span className="tabular-nums font-semibold text-right">
-                {deducted ? '0kg' : `${item.sub.toLocaleString()}kg`}
+                {item.availableKg.toLocaleString()}kg
             </span>
             {/* 차감된 행은 포장일자 대신 「03-14 판매」 — 소진된 재고에선 언제·왜가 더 궁금한 값 (미결 A) */}
             {deducted ? (
@@ -299,10 +299,10 @@ function PackageSubRow({
             </span>
             <span className={`font-medium text-right pr-2 ${deducted ? '' : 'text-slate-700'}`}>{row.spec}</span>
             <span className="tabular-nums text-right pr-12">
-                {(deducted ? row.available : row.qty).toLocaleString()}개
+                {row.available.toLocaleString()}개
             </span>
             <span className={`tabular-nums font-semibold text-right ${deducted ? '' : 'text-slate-700'}`}>
-                {deducted ? '0kg' : `${row.sub.toLocaleString()}kg`}
+                {row.availableKg.toLocaleString()}kg
             </span>
             {deducted ? (
                 <span className="text-[12.5px] text-slate-500 tabular-nums text-right">
@@ -330,7 +330,8 @@ export function PackageGroupRow({
     actions?: PackageRowActions
     selection?: PackageSelection
 }) {
-    const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
+    // 남은 개수의 합 — 일부 차감 줄은 남은 만큼, 차감 완료 줄은 0 (줄 표시·kg 합계와 같은 기준)
+    const totalQty = item.rows.reduce((a, r) => a + Math.max(0, r.available), 0)
     // 생산자는 섞일 수 있어 값 대신 인원수 — 원물재고 그룹 헤더(`farmerSetSize`)와 같은 표기
     const producerCount = new Set(item.rows.map(r => r.producer)).size
     // 🔴 「N종 규격」은 행 수가 아니라 **규격 종류 수**다. 재포장을 반복하면 같은 규격이

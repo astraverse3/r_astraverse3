@@ -156,14 +156,14 @@ function RowDetail({
                     {selection && <RowCheckbox row={row} selection={selection} />}
                     <span>
                         {row.spec} ×{' '}
-                        <span className="tabular-nums">{deducted ? row.available : row.qty}</span>개
+                        <span className="tabular-nums">{row.available}</span>개
                     </span>
                     {deducted && <DeductedBadge />}
                 </span>
                 <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{row.producer}</span>
                 <span className="flex items-center gap-1 justify-end">
                     <span className={`font-bold tabular-nums ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
-                        {deducted ? '0kg' : `${row.sub.toLocaleString()}kg`}
+                        {row.availableKg.toLocaleString()}kg
                     </span>
                     <RowActionMenu row={row} actions={actions} />
                 </span>
@@ -218,7 +218,7 @@ export function MobilePackageSingleCard({
                 <span />
                 <span className="flex items-center gap-1 justify-end">
                     <span className={`text-[12.5px] font-bold tabular-nums ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
-                        {deducted ? '0kg' : `${item.sub.toLocaleString()}kg`}
+                        {item.availableKg.toLocaleString()}kg
                     </span>
                     <RowActionMenu row={row} actions={actions} />
                 </span>
@@ -227,7 +227,7 @@ export function MobilePackageSingleCard({
             <div className={`${ROW_GRID} text-[12px] ${deducted ? '' : 'text-slate-700'}`}>
                 <span className="shrink-0">
                     {item.spec} ×{' '}
-                    <span className="tabular-nums">{deducted ? item.available : item.qty}</span>개
+                    <span className="tabular-nums">{item.available}</span>개
                 </span>
                 <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{item.producer}</span>
                 <span />
@@ -263,7 +263,8 @@ export function MobilePackageGroupCard({
     /** 그룹 자체는 고를 수 없다 — 펼친 안쪽 행에만 체크박스가 붙는다 */
     selection?: PackageSelection
 }) {
-    const totalQty = item.rows.reduce((a, r) => a + r.qty, 0)
+    // 남은 개수의 합 — 일부 차감 줄은 남은 만큼, 차감 완료 줄은 0 (줄 표시·kg 합계와 같은 기준)
+    const totalQty = item.rows.reduce((a, r) => a + Math.max(0, r.available), 0)
     // 규격 「종류」 수 — 행 수가 아니다(재포장을 반복하면 같은 규격이 여러 행으로 갈린다)
     const specCount = new Set(item.rows.map(r => r.spec)).size
 
