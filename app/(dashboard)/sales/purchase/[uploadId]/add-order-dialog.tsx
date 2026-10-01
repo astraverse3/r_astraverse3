@@ -57,7 +57,7 @@ export function AddOrderDialog({
             <DialogContent className="flex max-h-[90svh] flex-col gap-3 sm:max-w-[440px]">
                 <DialogHeader>
                     <DialogTitle>주문 추가</DialogTitle>
-                    <DialogDescription>이 시트에 주문 한 건을 첫 품목과 함께 넣어요. 품목은 건 상세에서 더 추가할 수 있어요.</DialogDescription>
+                    <DialogDescription>주문 한 건을 첫 품목과 함께 넣어요. 품목은 건 상세에서 더 넣을 수 있어요.</DialogDescription>
                 </DialogHeader>
                 {/* 열 때마다 새로 마운트 — 지난번 입력이 남지 않게 */}
                 {open && <Form decl={decl} orders={orders} onSubmit={onSubmit} onCancel={() => onOpenChange(false)} />}
@@ -117,9 +117,9 @@ function Form({
                 />
                 <div className="flex flex-col gap-1.5">
                     <span className="text-[12px] font-semibold text-slate-700">첫 품목</span>
-                    <SkuPicker value={sku?.id ?? null} onChange={setSku} disabled={busy} />
+                    {/* 새 건이라 이미 있는 품목(taken)이 없다 */}
+                    <SkuPicker value={sku} onChange={setSku} qty={qtyText} onQty={setQtyText} disabled={busy} />
                 </div>
-                <QtyRow sku={sku} qtyText={qtyText} onQty={setQtyText} disabled={busy} />
             </div>
             <DialogFooter className="gap-2">
                 <Button type="button" variant="outline" className="h-10" onClick={onCancel} disabled={busy}>
@@ -153,10 +153,10 @@ function NameFields({
         return <NameField label="거래처" value={vendor} onChange={onVendor} disabled={disabled} required />
     }
     const v = (
-        <NameField label="발주처" value={vendor} onChange={onVendor} disabled={disabled} required={decl.primary === 'vendor'} />
+        <NameField label="발주처" value={vendor} onChange={onVendor} disabled={disabled} required={decl.primary === 'vendor'} emptyHint="비우면 수령인과 같음" />
     )
     const r = (
-        <NameField label="수령인" value={recipient} onChange={onRecipient} disabled={disabled} required={decl.primary === 'recipient'} />
+        <NameField label="수령인" value={recipient} onChange={onRecipient} disabled={disabled} required={decl.primary === 'recipient'} emptyHint="비우면 발주처와 같음" />
     )
     return decl.primary === 'vendor' ? (
         <>
@@ -171,62 +171,31 @@ function NameFields({
     )
 }
 
-function QtyRow({
-    sku,
-    qtyText,
-    onQty,
-    disabled,
-}: {
-    sku: AddableSku | null
-    qtyText: string
-    onQty: (v: string) => void
-    disabled: boolean
-}) {
-    return (
-        <label className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-[12px] text-slate-500">
-                {sku ? `${sku.name} ${sku.spec} · ${sku.packaging}` : '위에서 제품을 골라 주세요'}
-            </span>
-            <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={MAX_ORDER_QTY}
-                value={qtyText}
-                onChange={(e) => onQty(e.target.value)}
-                disabled={disabled}
-                aria-label="수량"
-                className="h-10 w-16 text-center font-mono text-[14px] font-semibold sm:h-9"
-            />
-            <span className="text-[12px] text-slate-500">개</span>
-        </label>
-    )
-}
-
 function NameField({
     label,
     value,
     onChange,
     disabled,
     required,
+    emptyHint,
 }: {
     label: string
     value: string
     onChange: (v: string) => void
     disabled: boolean
     required: boolean
+    /** 비워도 되는 칸의 안내 — 라벨이 아니라 칸 안 placeholder로만(작업지시 ⑧ P2). 미리 채운 값과는 다르다 */
+    emptyHint?: string
 }) {
     return (
         <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-slate-700">
-                {label}
-                {!required && <span className="ml-1 font-normal text-slate-500">(비우면 위와 같게)</span>}
-            </span>
+            <span className="text-[12px] font-semibold text-slate-700">{label}</span>
             <Input
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled}
                 maxLength={100}
+                placeholder={required ? undefined : emptyHint}
                 className="h-10 text-[14px] sm:h-9"
             />
         </label>

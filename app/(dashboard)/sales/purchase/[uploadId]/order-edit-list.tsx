@@ -3,6 +3,7 @@
 // 건 상세 「고치기」 모드 — 주문 수량 수정 · 품목 취소 · 건 취소 (계획서 `plan-발주서-건상세-수정추가.md` 1단계)
 // 모양은 디자이너 작업지시 ⑦(`docs/handoff/점검-2026-09/작업지시-7-건상세-고치기.md`, 계획서 `plan-건상세-고치기-디자인.md`):
 // 카드 한 장 안에 줄을 나열하고, 줄마다 [−][수량][+] · 바꾼 줄만 「저장」 · 그 밖엔 휴지통.
+// 맨 아래 줄은 「+ 품목 추가」(작업지시 ⑧ P3 — `plan-품목고르기-디자인.md`).
 //
 // 평소 줄 카드는 누르면 배분 시트가 열린다(M1-5). 그 동작과 섞이지 않게, 고칠 때만 이 목록으로 바꿔 그린다.
 // 판정(차감보다 적게 못 줄임 · 마지막 품목 = 건 취소)은 서버가 `lib/purchase-order-edit.ts`로 한 번 더 한다 —
@@ -12,16 +13,16 @@
 //    칸이 새 값으로 다시 마운트된다 — effect로 값을 맞추지 않는다.
 // 🔴 0으로 「저장」도 휴지통과 같은 확인창을 거친다 — − 버튼이 생겨 0이 되기 쉬워졌다.
 
-import { useState, type ReactNode } from 'react'
-import { Lock, Minus, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Lock, Plus, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { ConfirmOptions } from '@/components/ui/confirm-dialog'
 import { MAX_ORDER_QTY } from '@/lib/purchase-order-edit'
 import type { OrderLine } from '@/lib/purchase-order-matrix'
 import { specOf } from './order-line-card'
 import { SkuPicker } from './sku-picker'
+import { QtyStepper } from './qty-stepper'
 import type { AddableSku } from '@/app/actions/purchase-order-add'
 
 const fmt = (n: number) => n.toLocaleString()
@@ -85,31 +86,55 @@ export function OrderEditList({
                         onCancel={() => cancelLine(l)}
                     />
                 ))}
+                {/* 품목 추가 = 이 카드의 마지막 줄(작업지시 ⑧ P3) */}
+                <AddItemRow
+                    busy={busy}
+                    taken={lines.flatMap((l) => (l.productTypeId === null ? [] : [l.productTypeId]))}
+                    onAdd={(id, qty) => run(() => edit.onAddItem(id, qty))}
+                />
             </div>
-            <AddItemForm busy={busy} onAdd={(id, qty) => run(() => edit.onAddItem(id, qty))} />
         </div>
     )
 }
 
 /**
- * 「+ 품목 추가」 — 접어 두었다가 펼치면 제품 검색 목록 + 수량. 처음 보는 규격이면 매트릭스에 열이 저절로 생긴다
- * (매트릭스는 줄 목록으로 다시 그려진다). 성공하면 접고 비운다.
+ * 「+ 품목 추가」 — 목록 카드 맨 아래 한 줄로 접혀 있다가, 같은 자리에서 펼친다(작업지시 ⑧ P3).
+ * 처음 보는 규격이면 매트릭스에 열이 저절로 생긴다(매트릭스는 줄 목록으로 다시 그려진다).
+ * 성공하면 접고 비운다. 거부되면(같은 품목이 이미 있음 등) 입력을 남긴다 — 토스트가 이유를 말한다.
  */
-function AddItemForm({ busy, onAdd }: { busy: boolean; onAdd: (productTypeId: number, qty: number) => Promise<boolean> }) {
+function AddItemRow({
+    busy,
+    taken,
+    onAdd,
+}: {
+    busy: boolean
+    taken: number[]
+    onAdd: (productTypeId: number, qty: number) => Promise<boolean>
+}) {
     const [open, setOpen] = useState(false)
     const [sku, setSku] = useState<AddableSku | null>(null)
     const [qtyText, setQtyText] = useState('1')
+    const boxRef = useRef<HTMLDivElement>(null)
     const qty = Number(qtyText)
     const valid = sku !== null && Number.isInteger(qty) && qty >= 1 && qty <= MAX_ORDER_QTY
+
+    // 펼치면 패널 본문을 내려 이 영역이 보이게 — 결과 목록이 포커스로 펼쳐진 뒤(2프레임 뒤)에 잰다
+    useEffect(() => {
+        if (!open) return
+        let id = requestAnimationFrame(() => {
+            id = requestAnimationFrame(() => revealInPanel(boxRef.current))
+        })
+        return () => cancelAnimationFrame(id)
+    }, [open])
 
     if (!open) {
         return (
             <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-[13px] font-semibold text-slate-600 hover:bg-card sm:h-10"
+                className="flex h-12 w-full items-center gap-1.5 pl-4 text-[13px] font-semibold text-blue-700 hover:bg-blue-50"
             >
-                <Plus className="h-4 w-4 text-primary" />
+                <Plus className="h-[15px] w-[15px]" />
                 품목 추가
             </button>
         )
@@ -120,41 +145,49 @@ function AddItemForm({ busy, onAdd }: { busy: boolean; onAdd: (productTypeId: nu
         setQtyText('1')
     }
     const submit = async () => {
-        if (!sku || !valid) return
-        // 거부되면(같은 품목이 이미 있음 등) 입력을 남긴다 — 토스트가 이유를 말한다
-        if (await onAdd(sku.id, qty)) close()
+        if (sku && valid && (await onAdd(sku.id, qty))) close()
     }
     return (
-        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-card p-3">
-            <p className="text-[12px] font-semibold text-slate-700">품목 추가</p>
-            <SkuPicker value={sku?.id ?? null} onChange={setSku} disabled={busy} />
-            <div className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-[12px] text-slate-500">
-                    {sku ? `${sku.name} ${sku.spec} · ${sku.packaging}` : '위에서 제품을 골라 주세요'}
-                </span>
-                <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={MAX_ORDER_QTY}
-                    value={qtyText}
-                    onChange={(e) => setQtyText(e.target.value)}
+        <div ref={boxRef} className="bg-slate-50 px-4 pt-3 pb-4">
+            <div className="mb-2 flex items-center">
+                <span className="text-[12px] font-semibold text-slate-700">품목 추가</span>
+                <button
+                    type="button"
+                    onClick={close}
                     disabled={busy}
-                    aria-label="추가할 수량"
-                    className="h-10 w-16 text-center font-mono text-[14px] font-semibold sm:h-8"
-                />
-                <span className="text-[12px] text-slate-500">개</span>
+                    aria-label="품목 추가 닫기"
+                    className="ml-auto flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-200/60"
+                >
+                    <X className="h-4 w-4" />
+                </button>
             </div>
-            <div className="flex items-center justify-end gap-2">
-                <Button type="button" variant="outline" className="h-10 sm:h-8" onClick={close} disabled={busy}>
-                    닫기
-                </Button>
-                <Button type="button" className="h-10 sm:h-8" onClick={submit} disabled={!valid || busy}>
-                    추가
-                </Button>
-            </div>
+            <SkuPicker
+                autoFocus
+                value={sku}
+                onChange={setSku}
+                taken={taken}
+                qty={qtyText}
+                onQty={setQtyText}
+                disabled={busy}
+                action={
+                    <Button type="button" className="h-10 shrink-0 sm:h-8" onClick={submit} disabled={!valid || busy}>
+                        추가
+                    </Button>
+                }
+            />
         </div>
     )
+}
+
+/**
+ * 건 상세 본문(`data-panel-scroll`)을 내려 이 요소 아래끝이 보이게. `scrollIntoView`는 쓰지 않는다 —
+ * 시트·페이지까지 같이 움직인다(작업지시 ⑧ P3).
+ */
+function revealInPanel(el: HTMLElement | null) {
+    const panel = el?.closest<HTMLElement>('[data-panel-scroll]')
+    if (!el || !panel) return
+    const over = el.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom
+    if (over > 0) panel.scrollTop += over + 12
 }
 
 function EditRow({
@@ -175,9 +208,6 @@ function EditRow({
     const valid = isInt && !tooLow && qty <= MAX_ORDER_QTY
     const changed = valid && qty !== line.orderedQty
     const locked = line.allocatedQty > 0
-    const current = isInt ? qty : line.orderedQty
-    const step = (d: number) =>
-        setValue(String(Math.min(MAX_ORDER_QTY, Math.max(line.allocatedQty, current + d))))
 
     return (
         <div
@@ -195,15 +225,15 @@ function EditRow({
                 </p>
             </div>
 
+            {/* − 는 차감 수 아래로 못 내려간다 */}
             <QtyStepper
-                line={line}
                 value={value}
                 onValue={setValue}
-                busy={busy}
-                changed={changed}
-                valid={valid}
-                current={current}
-                onStep={step}
+                min={line.allocatedQty}
+                max={MAX_ORDER_QTY}
+                disabled={busy}
+                tone={changed ? 'changed' : valid ? 'normal' : 'invalid'}
+                label={`${line.title} ${specOf(line)} 주문 수량`}
             />
 
             {/* 동작 칸 — 폭을 고정해 줄마다 정렬이 맞게 */}
@@ -230,70 +260,6 @@ function EditRow({
                     </button>
                 )}
             </div>
-        </div>
-    )
-}
-
-/** [−][수량][+] 한 덩어리 — 바뀌면 파랑, 잘못된 값이면 빨강 테두리. − 는 차감 수 아래로 못 내려간다 */
-function QtyStepper({
-    line,
-    value,
-    onValue,
-    busy,
-    changed,
-    valid,
-    current,
-    onStep,
-}: {
-    line: OrderLine
-    value: string
-    onValue: (v: string) => void
-    busy: boolean
-    changed: boolean
-    valid: boolean
-    current: number
-    onStep: (d: number) => void
-}) {
-    const sep = changed ? 'border-blue-200' : 'border-slate-200'
-    return (
-        <div
-            className={cn(
-                'inline-flex shrink-0 items-center overflow-hidden rounded-md border bg-card',
-                changed ? 'border-blue-500 ring-2 ring-blue-100' : !valid ? 'border-red-300' : 'border-slate-300',
-            )}
-        >
-            <StepButton
-                label="하나 줄이기"
-                disabled={busy || current <= line.allocatedQty}
-                onClick={() => onStep(-1)}
-                className={cn('border-r', sep)}
-            >
-                <Minus className="h-3.5 w-3.5" />
-            </StepButton>
-            <Input
-                type="number"
-                inputMode="numeric"
-                min={line.allocatedQty}
-                max={MAX_ORDER_QTY}
-                value={value}
-                disabled={busy}
-                onChange={(e) => onValue(e.target.value)}
-                aria-label={`${line.title} ${specOf(line)} 주문 수량`}
-                // 14px는 작업지시 ④를 따른다 — layout이 확대를 막고 있어(maximumScale 1) iOS 확대가 안 일어난다
-                className={cn(
-                    'h-10 w-11 rounded-none border-0 bg-transparent px-0 text-center font-mono text-[14px] font-semibold shadow-none focus-visible:ring-0 sm:h-8',
-                    '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-                    changed ? 'text-blue-700' : 'text-slate-800',
-                )}
-            />
-            <StepButton
-                label="하나 늘리기"
-                disabled={busy || current >= MAX_ORDER_QTY}
-                onClick={() => onStep(1)}
-                className={cn('border-l', sep)}
-            >
-                <Plus className="h-3.5 w-3.5" />
-            </StepButton>
         </div>
     )
 }
@@ -330,35 +296,6 @@ function RowNote({
         )
     }
     return <span className="text-slate-500">{line.packagingName ?? '—'}</span>
-}
-
-function StepButton({
-    label,
-    disabled,
-    onClick,
-    className,
-    children,
-}: {
-    label: string
-    disabled: boolean
-    onClick: () => void
-    className: string
-    children: ReactNode
-}) {
-    return (
-        <button
-            type="button"
-            aria-label={label}
-            disabled={disabled}
-            onClick={onClick}
-            className={cn(
-                'flex h-10 w-10 items-center justify-center text-slate-500 hover:bg-slate-50 disabled:text-slate-300 disabled:hover:bg-transparent sm:h-8 sm:w-8',
-                className,
-            )}
-        >
-            {children}
-        </button>
-    )
 }
 
 /** 고치기 모드 푸터 — 「이 건 모두 취소」(글자 버튼) + 완료 */

@@ -267,7 +267,11 @@ function Body({
                 )}
             </SheetHeader>
 
-            <div className={cn('min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4', editing ? 'py-3' : 'py-4')}>
+            {/* data-panel-scroll — 「품목 추가」를 펼칠 때 이 상자의 scrollTop만 내린다(scrollIntoView 대신, 작업지시 ⑧ P3) */}
+            <div
+                data-panel-scroll
+                className={cn('min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4', editing ? 'py-3' : 'py-4')}
+            >
                 {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
                 {editing && edit && lines.length > 0 && <OrderEditList lines={lines} edit={edit} confirm={confirm} />}
                 {!editing && work.length > 0 && (
