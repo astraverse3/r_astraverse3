@@ -135,7 +135,7 @@
 - `lib/purchase-order-add.ts` `rawItemFor`(+테스트 7) — 고른 SKU로 원본 값을 만들고 매처로 같은 SKU가 나와야 저장(표시용 「찹쌀」 안 씀, 포장지는 SKU 포장지명)
 - `app/actions/purchase-order-add.ts` `listAddableSkus`(검증 통과만) · `addOrderItem`(같은 SKU 줄 거부) · `addPurchaseOrder`(첫 품목까지, 같은 발주처+수령인 거부, `orderCount` +1) — 30초
 - `sku-picker.tsx` · `add-order-dialog.tsx`(채널 선언대로 이름 칸, 고정 쪽 미리 채움) 신규 · 고치기 목록 「+ 품목 추가」 · 매트릭스·폰 「+ 주문 추가」
-- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면 사용자 확인 전
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. ✅ 사용자 확인(기능) · 디자인은 사용자가 Claude Design에 검토 요청(핸드오프 대기)
 
 ## 2026-09-30
 
