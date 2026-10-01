@@ -160,7 +160,11 @@ function RowDetail({
                     </span>
                     {deducted && <DeductedBadge />}
                 </span>
-                <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{row.producer}</span>
+                {/* 빈 칸이 없어 포장지는 생산자 뒤에 붙인다(plan-제품재고-포장지열) — 길면 포장지부터 잘린다 */}
+                <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>
+                    {row.producer}
+                    {row.packaging && <span className="text-slate-400"> · {row.packaging}</span>}
+                </span>
                 <span className="flex items-center gap-1 justify-end">
                     <span className={`font-bold tabular-nums ${deducted ? 'text-slate-500' : 'text-slate-900'}`}>
                         {row.availableKg.toLocaleString()}kg
@@ -223,14 +227,16 @@ export function MobilePackageSingleCard({
                     <RowActionMenu row={row} actions={actions} />
                 </span>
             </div>
-            {/* 본문 1: 규격×수량 / 생산자 / (빈) */}
+            {/* 본문 1: 규격×수량 / 생산자 / 포장지 (비어 있던 칸) */}
             <div className={`${ROW_GRID} text-[12px] ${deducted ? '' : 'text-slate-700'}`}>
                 <span className="shrink-0">
                     {item.spec} ×{' '}
                     <span className="tabular-nums">{item.available}</span>개
                 </span>
                 <span className={`truncate min-w-0 ${deducted ? '' : 'text-slate-600'}`}>{item.producer}</span>
-                <span />
+                <span className="max-w-[7rem] truncate text-right text-[11px] text-slate-500">
+                    {item.packaging ?? ''}
+                </span>
             </div>
             {/* 본문 2: LOT/매입칩 / 도정구분 / 날짜(차감된 행은 「03-14 판매」) */}
             <div className={ROW_GRID}>

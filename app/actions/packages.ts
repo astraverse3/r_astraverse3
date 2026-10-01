@@ -75,6 +75,8 @@ export type PackageRow = {
     available: number // 가용 개수 = count - SUM(PackageMovement.count). 차감 도입(#19) 후 표시 기준
     producer: string // MILLED: farmer.name (+ "외 N명") / PURCHASED: purchaseVendor
     lot: string | null
+    /** 포장지 이름(SKU의 packaging). 잔량 등 SKU 없는 행은 null. 잡곡 매입은 sentinel '매입포장' 그대로 */
+    packaging: string | null
     date: string // ISO yyyy-mm-dd
     sub: number // totalWeight (kg) — 포장 자체의 원래 중량. 삭제 확인 문구처럼 「포장」을 말하는 곳만 쓴다
     /** 남은 중량(kg) = `availableKgOf`. 목록 kg·그룹 합계·무게순 정렬은 이 값이다(일부 차감 줄, 2026-10-01) */
@@ -147,6 +149,7 @@ export async function getPackages(
                     },
                 },
                 batch: { select: { millingType: true } }, // 재포장 동질성 판정용 (결정 #43)
+                productType: { select: { packaging: { select: { name: true } } } }, // 포장지 열
                 // 가용수량 계산용(차감 합산, #19). 「차감된 재고 보기」일 때만 사유·일자까지 함께.
                 ...(includeDeducted ? MOVEMENT_SUMMARY_SELECT : MOVEMENT_COUNT_SELECT),
             },
@@ -208,6 +211,7 @@ export async function getPackages(
                 available,
                 producer,
                 lot: r.lotNo,
+                packaging: r.productType?.packaging.name ?? null,
                 date,
                 sub: r.totalWeight,
                 availableKg: availableKgOf(r),
@@ -1115,7 +1119,7 @@ export async function deleteMiscPurchase(
 
 const PACKAGE_EXPORT_HEADERS = [
     '포장일자', '출처', '카테고리', '품종', '생산자/매입처', '로트번호',
-    '규격', '단중(kg)', '포장개수', '개수', '총중량(kg)', '매입일',
+    '포장지', '규격', '단중(kg)', '포장개수', '개수', '총중량(kg)', '매입일',
 ] as const
 
 const SOURCE_LABEL_KO: Record<string, string> = {
@@ -1146,6 +1150,7 @@ export async function exportPackages(
                 stock: { include: { variety: true, farmer: true } },
                 variety: true,
                 batch: true,
+                productType: { select: { packaging: { select: { name: true } } } },
                 ...MOVEMENT_COUNT_SELECT,
             },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -1167,6 +1172,7 @@ export async function exportPackages(
                 '품종': variety ?? '',
                 '생산자/매입처': producer,
                 '로트번호': lot,
+                '포장지': p.productType?.packaging.name ?? '',
                 '규격': p.packageType,
                 '단중(kg)': p.weightPerUnit,
                 '포장개수': p.count,

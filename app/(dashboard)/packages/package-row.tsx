@@ -16,17 +16,18 @@ import { MOVEMENT_TYPE_LABEL } from '@/lib/movement-label'
  * 같은 그리드를 공유해 그룹·낱개 정렬이 어긋나지 않게 함.
  */
 
-// 컬럼 비율: 품종 / 도정구분 / 생산자 / 로트번호 / 규격 / 개수 / 총량 / 포장일자 / 액션
+// 컬럼 비율: 품종 / 도정구분 / 생산자 / 로트번호 / 포장지 / 규격 / 개수 / 총량 / 포장일자 / 액션
 //  - 사용자 결정 순서 (핸드오프 §4.2.3 대비 순서·라벨 재정의)
 //  - 도정구분은 재포장 도입(결정 #43)과 함께 추가. 잡곡·sentinel은 '—'
+//  - 포장지는 2026-10-01 사용자 요청으로 규격 왼쪽에 추가(plan-제품재고-포장지열). SKU 없는 행(잔량)은 '—'
 //  - 액션 셀(36px 고정): 콜백 prop이 있을 때만 메뉴 노출 (벼 탭은 콜백 미전달 → 빈 셀)
 export const PKG_GRID =
-    'grid grid-cols-[0.65fr_0.5fr_0.75fr_1.4fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+    'grid grid-cols-[0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
 
 // 재포장 선택 모드 — 맨 앞에 체크박스 열을 덧댄다 (결정 #43 R2).
 // 평소엔 쓰지 않아 기존 레이아웃은 그대로다.
 export const PKG_GRID_SELECT =
-    'grid grid-cols-[28px_0.65fr_0.5fr_0.75fr_1.4fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+    'grid grid-cols-[28px_0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
 
 /**
  * 재포장 선택 상태 — list-client 한 곳에서만 관리하고 하위는 prop으로 받는다.
@@ -98,12 +99,24 @@ export function PackageColumnHeader({ selectMode = false }: { selectMode?: boole
             <span>도정구분</span>
             <span>생산자</span>
             <span className="text-center">로트번호</span>
+            <span>포장지</span>
             <span className="text-right pr-2">규격</span>
             <span className="text-right pr-12">개수</span>
             <span className="text-right">총량</span>
             <span className="text-right">포장일자</span>
             <span></span>
         </div>
+    )
+}
+
+/** 포장지 칸 — 이름이 길 수 있어 자르고 전체는 title로. SKU 없는 행(잔량)은 「—」 */
+function PackagingCell({ name }: { name: string | null }) {
+    return name ? (
+        <span className="truncate" title={name}>
+            {name}
+        </span>
+    ) : (
+        <span className="text-slate-300">—</span>
     )
 }
 
@@ -239,6 +252,7 @@ export function PackageSingleRow({
                     <span className="text-slate-300">—</span>
                 )}
             </span>
+            <PackagingCell name={item.packaging} />
             <span className="text-right pr-2">{item.spec}</span>
             <span className="tabular-nums text-right pr-12">
                 {item.available.toLocaleString()}개
@@ -297,6 +311,7 @@ function PackageSubRow({
                     <span className="text-slate-300">—</span>
                 )}
             </span>
+            <PackagingCell name={row.packaging} />
             <span className={`font-medium text-right pr-2 ${deducted ? '' : 'text-slate-700'}`}>{row.spec}</span>
             <span className="tabular-nums text-right pr-12">
                 {row.available.toLocaleString()}개
@@ -359,10 +374,11 @@ export function PackageGroupRow({
                     />
                     <span className="truncate">{item.variety}</span>
                 </span>
-                {/* 그룹은 도정구분·로트가 섞일 수 있어 비운다. 생산자만 인원수로 요약 */}
+                {/* 그룹은 도정구분·로트·포장지가 섞일 수 있어 비운다. 생산자만 인원수로 요약 */}
                 <span className="text-slate-300">—</span>
                 <span className="text-slate-400 text-[12.5px] tabular-nums truncate">{producerCount}명</span>
                 <span className="text-slate-300 text-center">—</span>
+                <span className="text-slate-300">—</span>
                 <span className="text-slate-400 text-[12.5px] text-right pr-2">{specCount}종 규격</span>
                 <span className="tabular-nums text-slate-400 text-[12.5px] text-right pr-12">{totalQty.toLocaleString()}개</span>
                 <span className="tabular-nums font-bold text-slate-900 text-right">
