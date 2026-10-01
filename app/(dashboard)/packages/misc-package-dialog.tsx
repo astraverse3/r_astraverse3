@@ -257,7 +257,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
                                     <Input
                                         value={customLabelStr}
                                         onChange={(e) => setCustomLabelStr(e.target.value)}
-                                        placeholder="예: 200g, 30kg"
+                                        placeholder="예) 톤백, 200g"
                                         maxLength={20}
                                         className="h-9 text-[13px]"
                                     />
@@ -271,7 +271,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
                                         min="0"
                                         value={customWeightStr}
                                         onChange={(e) => setCustomWeightStr(e.target.value)}
-                                        placeholder="0.2"
+                                        placeholder="kg 숫자 (200g → 0.2)"
                                         className="h-9 text-[13px] tabular-nums"
                                     />
                                 </div>
