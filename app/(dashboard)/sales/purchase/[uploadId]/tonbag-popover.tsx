@@ -127,8 +127,12 @@ export function TonbagBody({
                     <div className="text-[10px] font-semibold text-slate-400">{done ? '차감 완료' : '이미 차감'}</div>
                     {data.allocated.map((a) => (
                         <div key={a.packageId} className="flex items-center justify-between text-[11px]">
-                            <span className="truncate font-mono text-slate-500">
-                                {a.lotNo ?? '로트 없음'} · {fmtKg(a.weightPerUnit)}kg × {a.count}
+                            {/* 생산자는 후보 줄과 같은 표기 — 길면 로트만 잘리고 생산자·단중은 남는다 */}
+                            <span className="flex min-w-0 items-baseline gap-1 text-slate-500">
+                                <span className="truncate font-mono">{a.lotNo ?? '로트 없음'}</span>
+                                <span className="shrink-0">
+                                    · {a.producer} · {fmtKg(a.weightPerUnit)}kg × {a.count}
+                                </span>
                             </span>
                             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-emerald-700">
                                 <Check className="h-3 w-3" />

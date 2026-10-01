@@ -225,6 +225,8 @@ export type CellCandidate = {
 export type CellAllocated = {
   packageId: number
   lotNo: string | null
+  /** 후보(`CellCandidate.producer`)와 같은 표기 — 로트만으론 바로 대조가 안 된다 */
+  producer: string
   date: string
   count: number
 }
@@ -281,6 +283,15 @@ function fifoDateOf(p: { source: string; createdAt: Date; incomingDate: Date | n
   return p.source === 'PURCHASED' && p.incomingDate ? p.incomingDate : p.createdAt
 }
 
+/** 생산자 표기 — MILLED=농가, PURCHASED=매입처. 후보 줄과 「이미 차감」 줄이 같은 함수를 쓴다(plan-매트릭스-차감줄-생산자). */
+function producerOf(p: {
+  source: string
+  purchaseVendor: string | null
+  stock: { farmer: { name: string } } | null
+}): string {
+  return p.source === 'PURCHASED' ? (p.purchaseVendor ?? '—') : (p.stock?.farmer.name ?? '—')
+}
+
 /**
  * 셀 팝오버 데이터 — 라인별 주문·기차감, 재고 후보(FIFO 순), 추천 배분, 부족분.
  * 톤백(`unitWeightKg` 있음)은 여기서 막는다 — 자루가 제각각이라 개수 추천이 성립하지 않는다(D2d).
@@ -300,7 +311,16 @@ export async function getCellAllocation(itemIds: number[]): Promise<CellAllocati
           orderItemId: true,
           packageId: true,
           count: true,
-          package: { select: { lotNo: true, source: true, createdAt: true, incomingDate: true } },
+          package: {
+            select: {
+              lotNo: true,
+              source: true,
+              createdAt: true,
+              incomingDate: true,
+              purchaseVendor: true,
+              stock: { select: { farmer: { select: { name: true } } } },
+            },
+          },
         },
       }),
       prisma.millingOutputPackage.findMany({
@@ -339,7 +359,7 @@ export async function getCellAllocation(itemIds: number[]): Promise<CellAllocati
         available: Math.max(0, availableOf(p)),
         sortKey: d,
         lotNo: p.lotNo,
-        producer: p.source === 'PURCHASED' ? (p.purchaseVendor ?? '—') : (p.stock?.farmer.name ?? '—'),
+        producer: producerOf(p),
         date: todayIsoKst(d),
         source: p.source,
       }
@@ -366,6 +386,7 @@ export async function getCellAllocation(itemIds: number[]): Promise<CellAllocati
         allocatedByPkg.set(m.packageId, {
           packageId: m.packageId,
           lotNo: m.package.lotNo,
+          producer: producerOf(m.package),
           date: todayIsoKst(fifoDateOf(m.package)),
           count: m.count,
         })
@@ -519,6 +540,7 @@ export type BulkCandidate = {
 export type BulkAllocated = {
   packageId: number
   lotNo: string | null
+  producer: string
   weightPerUnit: number
   count: number
   kg: number
@@ -561,7 +583,15 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
           orderItemId: true,
           packageId: true,
           count: true,
-          package: { select: { lotNo: true, weightPerUnit: true } },
+          package: {
+            select: {
+              lotNo: true,
+              weightPerUnit: true,
+              source: true,
+              purchaseVendor: true,
+              stock: { select: { farmer: { select: { name: true } } } },
+            },
+          },
         },
       }),
       prisma.millingOutputPackage.findMany({
@@ -599,7 +629,7 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
         weightPerUnit: p.weightPerUnit,
         available: Math.max(0, availableOf(p)),
         lotNo: p.lotNo,
-        producer: p.source === 'PURCHASED' ? (p.purchaseVendor ?? '—') : (p.stock?.farmer.name ?? '—'),
+        producer: producerOf(p),
         date: todayIsoKst(fifoDateOf(p)),
         source: p.source,
         repackId: p.repackId,
@@ -627,6 +657,7 @@ export async function getBulkCellOptions(itemIds: number[]): Promise<BulkCellOpt
         allocatedByPkg.set(m.packageId, {
           packageId: m.packageId,
           lotNo: m.package.lotNo,
+          producer: producerOf(m.package),
           weightPerUnit: m.package.weightPerUnit,
           count: m.count,
           kg: Math.round(m.count * m.package.weightPerUnit * 10) / 10,
