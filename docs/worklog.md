@@ -69,7 +69,7 @@
 - `package-row.tsx` 그리드 0.7fr 열(로트번호와 규격 사이, 사용자 결정) · 헤더 · 낱개·서브행 `PackagingCell` · 그룹 행 「—」
 - `mobile-package-card.tsx` 낱개 카드 빈 칸=포장지 · 서브 카드 `생산자 · 포장지`
 - 잔량(SKU 없음) 「—」, 잡곡 매입은 「매입포장」 그대로
-- 검증 test 543/543 · tsc 0 · `eslint .` 0. 🖐 PC 1280(로트 잘림)·폰 390·엑셀 사용자 확인
+- 검증 test 543/543 · tsc 0 · `eslint .` 0. ✅ 사용자 확인
 
 ### 발주서 매트릭스 — 「이미 차감」 줄에 생산자
 
@@ -78,7 +78,7 @@
 
 - `purchase-order-matrix.ts` `CellAllocated`·`BulkAllocated.producer` · 차감 조회 select 확장 · `producerOf()`(후보 2 + 차감 2곳 공용)
 - `cell-allocation-popover.tsx` `로트 · 날짜 · 생산자` · `tonbag-popover.tsx` `로트 · 생산자 · 단중 × 개수` — 길면 로트만 잘린다
-- 검증 test 543/543 · tsc 0 · `eslint .` 0. 🖐 일반 셀·톤백 셀 사용자 확인
+- 검증 test 543/543 · tsc 0 · `eslint .` 0. ✅ 일반 셀 사용자 확인 · 🖐 톤백 셀은 아직 톤백 주문이 없어 확인 전
 
 ## 2026-09-30
 
