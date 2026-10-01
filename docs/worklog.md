@@ -126,6 +126,16 @@
 - `order-detail-panel.tsx` 헤더 `[고치기][X]` 한 묶음(`SheetClose` 직접) · 고치는 중 진행 막대 숨김 · `order-edit-list.tsx` 카드 한 장 · 스테퍼 · 바꾼 줄만 저장 · 「이 건 모두 취소」
 - 지시서와 다르게(사용자 동의): 모바일 수량 14px(④ 규칙과 지시서가 어긋남 — `maximumScale 1`) · `bg-card` · 0 저장도 확인창 · 시안 HTML을 `시안/`으로 이동
 - 검증 test 565/565 · tsc 0 · `eslint .` 0. ✅ 완료 기준 사용자 확인
+- 푸시 `6002910..4f8419e`(8커밋)
+
+### 발주서 품목 추가 · 주문 추가 (건 상세 고치기 2단계, 백로그 §95)
+
+커밋 `bc0ab26`. 계획서 `docs/plan/plan-발주서-건상세-수정추가.md`(「2단계 세부」), 보고서 `docs/report/report-발주서-건상세-추가-2단계-2026-10-01.md`.
+
+- `lib/purchase-order-add.ts` `rawItemFor`(+테스트 7) — 고른 SKU로 원본 값을 만들고 매처로 같은 SKU가 나와야 저장(표시용 「찹쌀」 안 씀, 포장지는 SKU 포장지명)
+- `app/actions/purchase-order-add.ts` `listAddableSkus`(검증 통과만) · `addOrderItem`(같은 SKU 줄 거부) · `addPurchaseOrder`(첫 품목까지, 같은 발주처+수령인 거부, `orderCount` +1) — 30초
+- `sku-picker.tsx` · `add-order-dialog.tsx`(채널 선언대로 이름 칸, 고정 쪽 미리 채움) 신규 · 고치기 목록 「+ 품목 추가」 · 매트릭스·폰 「+ 주문 추가」
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면 사용자 확인 전
 
 ## 2026-09-30
 
