@@ -65,7 +65,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
     const [selectedStockId, setSelectedStockId] = useState<string>('')
 
     // 폼 상태
-    const [packageLabel, setPackageLabel] = useState<string>('5kg')
+    const [packageLabel, setPackageLabel] = useState<string>('1kg')
     const [customWeightStr, setCustomWeightStr] = useState<string>('')
     const [customLabelStr, setCustomLabelStr] = useState<string>('')
     const [countStr, setCountStr] = useState<string>('')
@@ -78,7 +78,7 @@ export function MiscPackageDialog({ open, onOpenChange, initialStock, onSuccess 
 
     function resetForm() {
         setSelectedStockId('')
-        setPackageLabel('5kg')
+        setPackageLabel('1kg')
         setCustomWeightStr('')
         setCustomLabelStr('')
         setCountStr('')
