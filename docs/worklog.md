@@ -137,6 +137,14 @@
 - `sku-picker.tsx` · `add-order-dialog.tsx`(채널 선언대로 이름 칸, 고정 쪽 미리 채움) 신규 · 고치기 목록 「+ 품목 추가」 · 매트릭스·폰 「+ 주문 추가」
 - 검증 test 572/572 · tsc 0 · `eslint .` 0. ✅ 사용자 확인(기능) · 디자인은 사용자가 Claude Design에 검토 요청(핸드오프 대기)
 
+### 품목 고르기 디자인 정리 (디자이너 작업지시 ⑧)
+
+커밋 `ae9f143`. 계획서 `docs/plan/plan-품목고르기-디자인.md`, 보고서 `docs/report/report-품목고르기-디자인-2026-10-01.md`.
+
+- `qty-stepper.tsx`(신규, ⑦ 수량 칸 공용화) · `sku-picker.tsx` 검색칸 → 고른 한 줄 + 수량 · 이미 있는 품목 비활성 · ↑↓ Enter · `add-order-dialog.tsx` placeholder 안내 · `order-edit-list.tsx` 품목 추가 = 카드 마지막 줄 + ✕ · `order-detail-panel.tsx` `data-panel-scroll`
+- P4(고치는 중)는 ⑦에서 이미 반영 · 시안 `sku-picker-parts.jsx` 누락(사용자에게 요청)
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 완료 기준 8개 사용자 확인 전
+
 ## 2026-09-30
 
 ### 백로그 전수 정리 — 흩어진 미뤄둔 일을 `docs/리팩토링-백로그.md` 하나로
