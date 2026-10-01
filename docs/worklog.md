@@ -94,7 +94,7 @@
 - ① `lib/purchase-order-rematch.ts` `planRematch()`(+테스트 7) — 차감 없는 줄 전부 재판정 · 차감 줄은 「옮겨 갈 뻔한 것」만 셈 · 붙어 있다 실패하면 풀지 않고 확인 필요 · 재매칭 버튼 상시 노출(PC·모바일)
 - ② `lib/purchase-order-column-edit.ts`(선택지, +테스트 7) · `app/actions/purchase-order-column-edit.ts`(`getColumnEditOptions`·`editColumnRaw`) · `column-edit-popover.tsx` · `matrix-head.tsx` 2행 포장지·3행 규격 버튼 · `MatchPatch.raw`(+테스트 1) · `loadMatchPatch` → `lib/purchase-order-db.ts`
 - 원본 값을 고치고 SKU는 매처가 정함(어긋나면 전부 거부) · 규격 수정 땐 포장지를 지금 SKU 것으로 못박음 · 차감 있는 범위·톤백·매칭실패 열은 막음
-- 검증 test 558/558 · tsc 0 · `eslint .` 0. 🖐 화면 사용자 확인 전
+- 검증 test 558/558 · tsc 0 · `eslint .` 0. ✅ 사용자 확인 — 재매칭 버튼 상시·기본 포장지 수정 후 열 이동·차감 묶음 막힘 · 포장지·규격 팝업(「맞는 것 같아」)
 
 ## 2026-09-30
 
