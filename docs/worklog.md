@@ -143,7 +143,15 @@
 
 - `qty-stepper.tsx`(신규, ⑦ 수량 칸 공용화) · `sku-picker.tsx` 검색칸 → 고른 한 줄 + 수량 · 이미 있는 품목 비활성 · ↑↓ Enter · `add-order-dialog.tsx` placeholder 안내 · `order-edit-list.tsx` 품목 추가 = 카드 마지막 줄 + ✕ · `order-detail-panel.tsx` `data-panel-scroll`
 - P4(고치는 중)는 ⑦에서 이미 반영 · 시안 `sku-picker-parts.jsx` 누락(사용자에게 요청)
-- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 완료 기준 8개 사용자 확인 전
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. ✅ 완료 기준 사용자 확인
+
+### 재매칭·주문 추가 버튼 (디자이너 작업지시 ⑨ A안)
+
+커밋 `a73c971`. 보고서 `docs/report/report-주문추가-버튼-디자인-2026-10-01.md`(2파일 — 계획서 생략, 지시서 그대로).
+
+- `matrix-header.tsx` `SheetActions`(재매칭 회색 글자 버튼 + 주문 추가 테두리 버튼, PC 32) · 줄 조건에 `onAddOrder` · `order-list-mobile.tsx` 같은 묶음 높이 40
+- `bg-white` → `bg-card`(§25)
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면 확인 전에 사용자 요청으로 묶어 푸시
 
 ## 2026-09-30
 
