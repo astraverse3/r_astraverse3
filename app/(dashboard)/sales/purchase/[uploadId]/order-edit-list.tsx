@@ -21,6 +21,8 @@ import type { ConfirmOptions } from '@/components/ui/confirm-dialog'
 import { MAX_ORDER_QTY } from '@/lib/purchase-order-edit'
 import type { OrderLine } from '@/lib/purchase-order-matrix'
 import { specOf } from './order-line-card'
+import { SkuPicker } from './sku-picker'
+import type { AddableSku } from '@/app/actions/purchase-order-add'
 
 const fmt = (n: number) => n.toLocaleString()
 
@@ -28,6 +30,8 @@ const fmt = (n: number) => n.toLocaleString()
 export type OrderEditHandlers = {
     onQty: (line: OrderLine, qty: number) => Promise<boolean>
     onCancelOrder: () => Promise<boolean>
+    /** 「+ 품목 추가」(2단계) — 같은 SKU 줄이 이미 있으면 서버가 거부한다 */
+    onAddItem: (productTypeId: number, qty: number) => Promise<boolean>
 }
 
 type Confirm = (opts: ConfirmOptions) => Promise<boolean>
@@ -46,7 +50,7 @@ export function OrderEditList({
     const run = async (fn: () => Promise<boolean>) => {
         setBusy(true)
         try {
-            await fn()
+            return await fn()
         } finally {
             setBusy(false)
         }
@@ -81,6 +85,73 @@ export function OrderEditList({
                         onCancel={() => cancelLine(l)}
                     />
                 ))}
+            </div>
+            <AddItemForm busy={busy} onAdd={(id, qty) => run(() => edit.onAddItem(id, qty))} />
+        </div>
+    )
+}
+
+/**
+ * 「+ 품목 추가」 — 접어 두었다가 펼치면 제품 검색 목록 + 수량. 처음 보는 규격이면 매트릭스에 열이 저절로 생긴다
+ * (매트릭스는 줄 목록으로 다시 그려진다). 성공하면 접고 비운다.
+ */
+function AddItemForm({ busy, onAdd }: { busy: boolean; onAdd: (productTypeId: number, qty: number) => Promise<boolean> }) {
+    const [open, setOpen] = useState(false)
+    const [sku, setSku] = useState<AddableSku | null>(null)
+    const [qtyText, setQtyText] = useState('1')
+    const qty = Number(qtyText)
+    const valid = sku !== null && Number.isInteger(qty) && qty >= 1 && qty <= MAX_ORDER_QTY
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-[13px] font-semibold text-slate-600 hover:bg-card sm:h-10"
+            >
+                <Plus className="h-4 w-4 text-primary" />
+                품목 추가
+            </button>
+        )
+    }
+    const close = () => {
+        setOpen(false)
+        setSku(null)
+        setQtyText('1')
+    }
+    const submit = async () => {
+        if (!sku || !valid) return
+        // 거부되면(같은 품목이 이미 있음 등) 입력을 남긴다 — 토스트가 이유를 말한다
+        if (await onAdd(sku.id, qty)) close()
+    }
+    return (
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-card p-3">
+            <p className="text-[12px] font-semibold text-slate-700">품목 추가</p>
+            <SkuPicker value={sku?.id ?? null} onChange={setSku} disabled={busy} />
+            <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[12px] text-slate-500">
+                    {sku ? `${sku.name} ${sku.spec} · ${sku.packaging}` : '위에서 제품을 골라 주세요'}
+                </span>
+                <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_ORDER_QTY}
+                    value={qtyText}
+                    onChange={(e) => setQtyText(e.target.value)}
+                    disabled={busy}
+                    aria-label="추가할 수량"
+                    className="h-10 w-16 text-center font-mono text-[14px] font-semibold sm:h-8"
+                />
+                <span className="text-[12px] text-slate-500">개</span>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+                <Button type="button" variant="outline" className="h-10 sm:h-8" onClick={close} disabled={busy}>
+                    닫기
+                </Button>
+                <Button type="button" className="h-10 sm:h-8" onClick={submit} disabled={!valid || busy}>
+                    추가
+                </Button>
             </div>
         </div>
     )

@@ -12,7 +12,7 @@
 // 🔴 상태 색·라벨은 `status-meta.ts` 한 곳. 판정은 lib `cellStatusOf` 한 곳.
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronRight, RefreshCw, ArrowUpDown, Check, Pencil } from 'lucide-react'
+import { ChevronRight, RefreshCw, ArrowUpDown, Check, Pencil, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -59,6 +59,7 @@ export function OrderListMobile({
     onOpenGate,
     onOpenLine,
     onEditOrder,
+    onAddOrder,
     input,
 }: {
     header: MatrixHeader
@@ -85,6 +86,8 @@ export function OrderListMobile({
      * 고치기 모드로 연다(plan-발주서-건상세-수정추가). 고치는 곳은 건 상세 하나다. 읽기 전용이면 안 온다.
      */
     onEditOrder?: (row: MatrixRow, siblings: number[]) => void
+    /** 「+ 주문 추가」(2단계). 읽기 전용이면 안 온다 */
+    onAddOrder?: () => void
     /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
     input: BuildMatrixInput
 }) {
@@ -206,6 +209,16 @@ export function OrderListMobile({
                         >
                             <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
                             {rematching ? '재매칭 중…' : '재매칭'}
+                        </button>
+                    )}
+                    {onAddOrder && (
+                        <button
+                            type="button"
+                            onClick={onAddOrder}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-primary hover:bg-primary/10"
+                        >
+                            <Plus className="h-3 w-3" />
+                            주문 추가
                         </button>
                     )}
                 </div>

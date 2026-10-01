@@ -2,7 +2,7 @@
 
 // 매트릭스 화면 상단 — 시트 요약 · 정렬 · 매칭실패 배지와 재매칭.
 
-import { ArrowUpDown, RefreshCw } from 'lucide-react'
+import { ArrowUpDown, Plus, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { channelLabel } from '@/lib/purchase-channel'
 import type { Matrix, MatrixSort } from '@/lib/purchase-order-matrix'
@@ -22,6 +22,7 @@ export function Header({
     unmatchedLines,
     rematching,
     onRematch,
+    onAddOrder,
 }: {
     header: MatrixHeader
     matrix: Matrix
@@ -31,6 +32,8 @@ export function Header({
     rematching: boolean
     /** 없으면(읽기 전용, §60) 재매칭 버튼을 안 그린다 */
     onRematch?: () => void
+    /** 「+ 주문 추가」(plan-발주서-건상세-수정추가 2단계). 읽기 전용이면 안 온다 */
+    onAddOrder?: () => void
 }) {
     return (
         <div className="flex flex-col gap-2.5">
@@ -94,6 +97,16 @@ export function Header({
                         >
                             <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
                             {rematching ? '재매칭 중…' : '재매칭'}
+                        </button>
+                    )}
+                    {onAddOrder && (
+                        <button
+                            type="button"
+                            onClick={onAddOrder}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10"
+                        >
+                            <Plus className="h-3 w-3" />
+                            주문 추가
                         </button>
                     )}
                 </div>

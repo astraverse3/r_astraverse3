@@ -49,6 +49,8 @@ import { rematchUpload } from '@/app/actions/purchase-order-assign'
 import { deletePurchaseOrder, updateOrderItemQty } from '@/app/actions/purchase-order'
 import { settle } from '@/lib/settle-action'
 import type { OrderEditHandlers } from './order-edit-list'
+import { addOrderItem, addPurchaseOrder } from '@/app/actions/purchase-order-add'
+import { AddOrderDialog, type NewOrderDraft } from './add-order-dialog'
 import type { BatchPatch } from '@/app/actions/purchase-order-batch'
 import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
 import { OrderListMobile } from './order-list-mobile'
@@ -105,6 +107,8 @@ export function MatrixClient({
     const [active, setActive] = useState<ActiveCell | null>(null)
     /** 머리글 포장지·규격 수정 팝오버(plan-매트릭스-포장지규격-수정 ②) */
     const [editHeader, setEditHeader] = useState<ActiveHeader | null>(null)
+    /** 「+ 주문 추가」 창(plan-발주서-건상세-수정추가 2단계) */
+    const [addOrderOpen, setAddOrderOpen] = useState(false)
     /**
      * 열린 건 상세. `siblings`는 **열 때 찍은 스냅샷**이다 — 「다음 건 ›」이 따라갈 순서.
      *
@@ -328,8 +332,32 @@ export function MatrixClient({
                   router.refresh()
                   return true
               },
+              onAddItem: async (productTypeId, qty) => {
+                  if (!detail) return false
+                  const r = await settle(addOrderItem(detail.orderId, productTypeId, qty))
+                  if (!r.success) {
+                      toast.error(r.error)
+                      return false
+                  }
+                  toast.success(r.message)
+                  router.refresh()
+                  return true
+              },
           }
         : undefined
+
+    /** 「+ 주문 추가」 — 성공하면 창을 닫고 새로 받는다. 새 건은 이름순 정렬 자리에 나타난다 */
+    const addOrder = async (draft: NewOrderDraft) => {
+        const r = await settle(addPurchaseOrder({ uploadId: header.uploadId, ...draft }))
+        if (!r.success) {
+            toast.error(r.error)
+            return false
+        }
+        toast.success(r.message)
+        setAddOrderOpen(false)
+        router.refresh()
+        return true
+    }
 
     /** 취소된 건을 행 선택에서도 뺀다 — 남아 있으면 검토 게이트가 사라진 건을 집는다 */
     const forgetOrder = (orderId: number) => {
@@ -431,6 +459,7 @@ export function MatrixClient({
                     onSort={setSort}
                     rematching={rematching}
                     onRematch={canManage ? runRematch : undefined}
+                    onAddOrder={canManage ? () => setAddOrderOpen(true) : undefined}
                     onOpenDetail={openDetail}
                     onOpenLine={canManage ? openLine : undefined}
                     onEditOrder={canManage ? (row, siblings) => openDetail(row, siblings, { edit: true }) : undefined}
@@ -457,6 +486,7 @@ export function MatrixClient({
                 unmatchedLines={unmatchedLines}
                 rematching={rematching}
                 onRematch={canManage ? runRematch : undefined}
+                onAddOrder={canManage ? () => setAddOrderOpen(true) : undefined}
             />
 
             <div className="overflow-auto rounded-xl border border-slate-200 bg-card max-h-[calc(100dvh-230px)]">
@@ -685,6 +715,15 @@ export function MatrixClient({
             />
             )}
 
+            {canManage && (
+                <AddOrderDialog
+                    open={addOrderOpen}
+                    onOpenChange={setAddOrderOpen}
+                    decl={decl}
+                    orders={input.orders}
+                    onSubmit={addOrder}
+                />
+            )}
             <ColumnEditPopover
                 uploadId={header.uploadId}
                 target={editHeader}
