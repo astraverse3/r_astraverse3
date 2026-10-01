@@ -110,7 +110,22 @@
 - `lib/purchase-order-edit.ts`(+테스트 7) 판정 · `updateOrderItemQty` 신설 · `deletePurchaseOrder` 개정(트랜잭션 · `orderCount` −1 누락 수정 · 화면 호출 0곳이었다)
 - `order-edit-list.tsx`(신규) 고치기 모드 · `order-detail-panel.tsx` 「고치기」 버튼·확인창 닫힘 가드 · `order-list-mobile.tsx` 폰 택배 「고치기」 · `matrix-client.tsx` 연결·`router.refresh()`·취소된 건 선택 해제
 - 2단계(품목 추가·주문 추가)는 백로그 §95
-- 검증 test 565/565 · tsc 0 · `eslint .` 0. 🖐 화면 사용자 확인 전
+- 검증 test 565/565 · tsc 0 · `eslint .` 0. ✅ 사용자 확인 — 단, 수량 수정 1회 「수량을 고치지 못했습니다」(아래)
+
+### 발주서 트랜잭션 5초 → 30초 (P2028)
+
+커밋 `62b66c4` · `a40bfa9`. 사용자 로그 `P2028 Transaction not found … old closed transaction`(`updateOrderItemQty`).
+
+- 원인: 인터랙티브 트랜잭션 기본 5초. `recalcOrderStatus`가 품목마다 왕복 1회라 Neon 250~300ms × N이 닿는다 — 차감 쪽엔 「기본 5초는 적재 사고 때 터졌다」 주석까지 있었는데 새 코드 3곳이 놓쳤다
+- `updateOrderItemQty`·`deletePurchaseOrder`·`editColumnRaw` → `{ timeout: 30_000, maxWait: 10_000 }`, 같은 구조의 기존 `cancelCell`도(사용자 동의)
+
+### 건 상세 「고치기」 디자인 정리 (디자이너 작업지시 ⑦ A안)
+
+커밋 `ff124fe`. 계획서 `docs/plan/plan-건상세-고치기-디자인.md`, 보고서 `docs/report/report-건상세-고치기-디자인-2026-10-01.md`.
+
+- `order-detail-panel.tsx` 헤더 `[고치기][X]` 한 묶음(`SheetClose` 직접) · 고치는 중 진행 막대 숨김 · `order-edit-list.tsx` 카드 한 장 · 스테퍼 · 바꾼 줄만 저장 · 「이 건 모두 취소」
+- 지시서와 다르게(사용자 동의): 모바일 수량 14px(④ 규칙과 지시서가 어긋남 — `maximumScale 1`) · `bg-card` · 0 저장도 확인창 · 시안 HTML을 `시안/`으로 이동
+- 검증 test 565/565 · tsc 0 · `eslint .` 0. 🖐 완료 기준 9개 사용자 확인 전
 
 ## 2026-09-30
 
