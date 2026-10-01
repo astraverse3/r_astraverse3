@@ -16,10 +16,10 @@
 //    다른데(실패 포함 / 제외), 화면에서 두 번 세면 그 분기가 조용히 어긋난다.
 
 import { useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronRight, List, Pencil } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, List, Pencil, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ROW_STATUS_ORDER, sumOrderLines, type OrderLine } from '@/lib/purchase-order-matrix'
 import { STATUS_META } from './status-meta'
 import { LineCard, specOf } from './order-line-card'
@@ -116,6 +116,7 @@ export function OrderDetailPanel({
         >
             <SheetContent
                 side="right"
+                showCloseButton={false}
                 className="flex w-full flex-col gap-0 p-0 sm:max-w-[468px]"
                 onInteractOutside={(e) => {
                     if (blockOutsideClose || confirming.current) e.preventDefault()
@@ -187,32 +188,44 @@ function Body({
 
     return (
         <>
-            <SheetHeader className="shrink-0 gap-2 border-b border-slate-200 px-5 pt-4 pb-3.5">
-                {/* 오른쪽 위 닫기(X)와 겹치지 않게 pr-8 */}
-                <div className="flex items-center gap-2 pr-8">
-                    <SheetDescription className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+            <SheetHeader className="shrink-0 gap-2 border-b border-slate-200 pt-3 pr-3 pb-3.5 pl-5">
+                {/*
+                 * 위 줄 = 눈썹 글자 ……… [고치기][X] 한 묶음(작업지시 ⑦ E1 A안).
+                 * 예전엔 X가 absolute로 떠 있고 고치기는 pr-8로 피해 다녔다 — 높이·간격이 따로 놀았다.
+                 * 기본 닫기 버튼은 `showCloseButton={false}`로 끄고 여기 `SheetClose`를 직접 둔다.
+                 */}
+                <div className="flex min-h-8 items-center gap-2">
+                    <SheetDescription className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                         수령인 주문 상세
                         {at >= 0 && siblings.length > 1 && (
-                            <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-300">
+                            <span className="ml-1.5 font-semibold normal-case tracking-normal tabular-nums">
                                 {at + 1}/{siblings.length}
                             </span>
                         )}
                     </SheetDescription>
-                    {edit && !editing && lines.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => setEditing(true)}
-                            className="ml-auto inline-flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-primary hover:bg-primary/10"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                            고치기
-                        </button>
-                    )}
-                    {editing && (
-                        <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">
-                            고치는 중
-                        </span>
-                    )}
+                    <div className="ml-auto flex items-center gap-1">
+                        {edit && !editing && lines.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setEditing(true)}
+                                className="inline-flex h-10 items-center gap-1.5 rounded-md border border-slate-300 bg-card px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 sm:h-8"
+                            >
+                                <Pencil className="h-3.5 w-3.5 text-primary" />
+                                고치기
+                            </button>
+                        )}
+                        {/* 고치는 중 = 같은 자리에 표시만(누를 수 없다). 나가는 길은 푸터 「완료」 */}
+                        {editing && (
+                            <span className="inline-flex h-6 items-center gap-1 rounded-md bg-blue-50 px-2 text-[12px] font-semibold text-blue-700">
+                                <Pencil className="h-3 w-3" />
+                                고치는 중
+                            </span>
+                        )}
+                        <SheetClose className="flex h-10 w-10 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 sm:h-8 sm:w-8">
+                            <X className="h-[18px] w-[18px]" />
+                            <span className="sr-only">닫기</span>
+                        </SheetClose>
+                    </div>
                 </div>
                 <SheetTitle className="flex items-baseline gap-2 text-[19px] font-bold leading-none text-foreground">
                     {title}
@@ -222,6 +235,9 @@ function Body({
                         </span>
                     )}
                 </SheetTitle>
+                {/* 고치는 동안엔 진행 막대·상태 뱃지를 숨긴다 — 목록에 자리를 내준다(E1) */}
+                {!editing && (
+                <>
                 <div className="flex items-center gap-3 pt-1">
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                         <div
@@ -247,9 +263,11 @@ function Body({
                         )
                     })}
                 </div>
+                </>
+                )}
             </SheetHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
+            <div className={cn('min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4', editing ? 'py-3' : 'py-4')}>
                 {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
                 {editing && edit && lines.length > 0 && <OrderEditList lines={lines} edit={edit} confirm={confirm} />}
                 {!editing && work.length > 0 && (
