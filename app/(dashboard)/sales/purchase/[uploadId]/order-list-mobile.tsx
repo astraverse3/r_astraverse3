@@ -12,7 +12,7 @@
 // 🔴 상태 색·라벨은 `status-meta.ts` 한 곳. 판정은 lib `cellStatusOf` 한 곳.
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronRight, RefreshCw, ArrowUpDown, Check, Pencil, Plus } from 'lucide-react'
+import { ChevronRight, ArrowUpDown, Check, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -43,6 +43,7 @@ import {
 import type { PurchaseChannel } from '@prisma/client'
 import type { MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { STATUS_META, QTY_TONE, MATRIX_SORTS } from './status-meta'
+import { SheetActions } from './matrix-header'
 
 const fmt = (n: number) => n.toLocaleString()
 
@@ -198,29 +199,8 @@ export function OrderListMobile({
                             </span>
                         )
                     })}
-                    {onRematch && (
-                        // 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다(결정 R).
-                        // 매칭실패가 없어도 띄운다 — 엉뚱한 SKU에 붙은 줄은 「실패」가 아니다(2026-10-01)
-                        <button
-                            type="button"
-                            onClick={onRematch}
-                            disabled={rematching}
-                            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-                        >
-                            <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
-                            {rematching ? '재매칭 중…' : '재매칭'}
-                        </button>
-                    )}
-                    {onAddOrder && (
-                        <button
-                            type="button"
-                            onClick={onAddOrder}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-primary hover:bg-primary/10"
-                        >
-                            <Plus className="h-3 w-3" />
-                            주문 추가
-                        </button>
-                    )}
+                    {/* PC 요약 줄과 같은 묶음, 높이만 40(작업지시 ⑨ B2). 360폭에서 안 들어가면 묶음째 다음 줄 오른쪽으로 */}
+                    <SheetActions size="lg" rematching={rematching} onRematch={onRematch} onAddOrder={onAddOrder} />
                 </div>
             </div>
 

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>주문 추가 버튼 시안</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif;margin:0}.font-mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}a{color:#2563eb}a:hover{color:#1d4ed8}</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+const AoIco = {
+  plus: <path d="M12 5v14M5 12h14"/>,
+  refresh: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></>,
+  sort: <><path d="m21 16-4 4-4-4M17 20V4M3 8l4-4 4 4M7 4v16"/></>,
+};
+function AoI({ n, s = 14 }) { return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{AoIco[n]}</svg>; }
+
+const aoAddBtn = (m) => <button className={`${m ? 'h-10' : 'h-8'} px-3 rounded-md border border-slate-300 bg-white text-[13px] font-semibold text-slate-700 inline-flex items-center gap-1.5 hover:bg-slate-50`}><span className="text-blue-600 flex"><AoI n="plus" s={15} /></span>주문 추가</button>;
+const aoRematch = (m) => <button className={`${m ? 'h-10' : 'h-8'} px-2.5 rounded-md text-[13px] font-medium text-slate-600 inline-flex items-center gap-1.5 hover:bg-slate-100`}><AoI n="refresh" s={14} />재매칭</button>;
+
+function AoTitle() {
+  return <div className="flex items-center gap-3">
+    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[12px] font-bold text-blue-700">서울급식</span>
+    <h1 className="text-[17px] font-bold text-slate-900">서울급식_260818</h1>
+    <span className="text-[13px] text-slate-500">3건 · 3수령인 · 18규격</span>
+    <span className="text-[13px] text-slate-500">발주 2026-08-18 · 배차 미정</span>
+    <div className="ml-auto flex items-center gap-1.5"><span className="text-slate-500 flex"><AoI n="sort" s={14} /></span>
+      {['발주처별', '수령인 가나다', '작업필요 먼저'].map((l, i) => <span key={l} className={`rounded-md px-2.5 py-1 text-[12px] font-medium ${i === 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-500'}`}>{l}</span>)}
+    </div>
+  </div>;
+}
+const aoSummary = <p className="text-[13px] text-slate-500">주문 <b className="text-slate-900 font-mono">315개</b> · <b className="text-slate-900 font-mono">1,956.5kg</b> 중 <b className="text-amber-700">3수령인</b>이 작업필요</p>;
+
+const AO_ROWS = [['서대문구', '재고부족', '0/106', '863'], ['은평구', '재고부족', '0/207', '1,073.5'], ['여유', '대기', '0/2', '20']];
+function AoMatrix({ addRow }) {
+  const cols = ['기장', '흑미', '흑미', '차조', '발아현미', '수수', '혼합곡'];
+  const td = 'h-9 border-b border-slate-100 text-right pr-2 font-mono text-[13px] text-slate-700';
+  return <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table className="w-full border-collapse">
+      <thead><tr className="bg-slate-50 text-[12px] text-slate-600">
+        <th className="h-10 text-left pl-3 w-[150px] font-semibold">발주처</th><th className="text-left font-semibold w-[90px]">상태</th><th className="text-left font-semibold w-[120px]">진행</th>
+        {cols.map((c, i) => <th key={i} className="font-semibold text-right pr-2">{c}</th>)}<th className="font-semibold text-right pr-3">소계</th>
+      </tr></thead>
+      <tbody>
+        {AO_ROWS.map(([n, s, p, k]) => <tr key={n}>
+          <td className="h-9 border-b border-slate-100 pl-3 text-[13px] font-semibold text-slate-800">{n}</td>
+          <td className="border-b border-slate-100 text-[12px]"><span className={s === '대기' ? 'text-slate-500' : 'text-amber-700'}>● {s}</span></td>
+          <td className="border-b border-slate-100 text-[12px] font-mono text-slate-500">{p}</td>
+          {cols.map((c, i) => <td key={i} className={td}>{(i * 3 + n.length) % 4 ? (i + 2) % 9 : '·'}</td>)}
+          <td className={td + ' pr-3 font-semibold'}>{k}<span className="text-[11px] text-slate-500 ml-0.5">kg</span></td>
+        </tr>)}
+        {addRow && <tr><td colSpan={11} className="p-0">
+          <button className="w-full h-10 pl-3 flex items-center gap-1.5 text-[13px] font-semibold text-blue-700 hover:bg-blue-50"><AoI n="plus" s={15} />주문 추가<span className="ml-1 text-[12px] font-normal text-slate-500">수령인 한 건을 첫 품목과 함께</span></button>
+        </td></tr>}
+      </tbody>
+    </table>
+  </div>;
+}
+
+function AoNow() {
+  return <div className="h-full bg-slate-100 p-6 flex flex-col gap-3">
+    <AoTitle />
+    <div className="flex items-center gap-3">{aoSummary}
+      <span className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600"><AoI n="refresh" s={12} />재매칭</span>
+      <span className="inline-flex items-center gap-1 text-[12px] font-medium text-blue-600"><AoI n="plus" s={12} />주문 추가</span>
+    </div>
+    <AoMatrix />
+  </div>;
+}
+function AoA() {
+  return <div className="h-full bg-slate-100 p-6 flex flex-col gap-3">
+    <AoTitle />
+    <div className="flex items-center gap-3 min-h-8">{aoSummary}<div className="ml-auto flex items-center gap-1">{aoRematch()}{aoAddBtn()}</div></div>
+    <AoMatrix />
+  </div>;
+}
+function AoB() {
+  return <div className="h-full bg-slate-100 p-6 flex flex-col gap-3">
+    <AoTitle />
+    <div className="flex items-center gap-3 min-h-8">{aoSummary}<div className="ml-auto">{aoRematch()}</div></div>
+    <AoMatrix addRow />
+  </div>;
+}
+function AoMobile({ variant }) {
+  return <div className="h-full bg-white flex flex-col">
+    <div className="px-4 pt-4 pb-3 flex flex-col gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-2"><span className="rounded-md bg-blue-50 px-2 py-0.5 text-[12px] font-bold text-blue-700">서울급식</span><h1 className="text-[16px] font-bold text-slate-900">서울급식_260818</h1></div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="rounded px-1.5 py-0.5 text-[11px] font-semibold bg-amber-50 text-amber-700">● 재고부족 2</span>
+        <span className="rounded px-1.5 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600">● 대기 1</span>
+        <div className="ml-auto flex items-center gap-1">{aoRematch(true)}{variant === 'a' && aoAddBtn(true)}</div>
+      </div>
+    </div>
+    <div className="flex flex-col">
+      {AO_ROWS.map(([n, s, p]) => <div key={n} className="h-14 px-4 flex items-center justify-between border-b border-slate-100"><span className="text-[14px] font-semibold text-slate-800">{n}</span><span className="text-[12px] font-mono text-slate-500">{p}</span></div>)}
+      {variant === 'b' && <button className="h-12 px-4 flex items-center gap-1.5 text-[14px] font-semibold text-blue-700"><AoI n="plus" s={16} />주문 추가</button>}
+    </div>
+  </div>;
+}
+
+function App() {
+  const W = 1100, H = 300;
+  return <DesignCanvas>
+    <DCSection id="now" title="지금" subtitle="요약 문장 끝에 파랑 글자 둘 · 재매칭(고치기)과 주문 추가(새로 만들기)가 같은 무게라 눈에 안 띔">
+      <DCArtboard id="now" label="현재" width={W} height={H}><AoNow /></DCArtboard>
+    </DCSection>
+    <DCSection id="a" title="A안 — 요약 줄 오른쪽 버튼" subtitle="[↻ 재매칭] 회색 글자 버튼 + [+ 주문 추가] 테두리 버튼 h-8 · 건 상세 「고치기」(⑦)와 같은 모양">
+      <DCArtboard id="a" label="PC" width={W} height={H}><AoA /></DCArtboard>
+      <DCArtboard id="am" label="모바일 390" width={390} height={300}><AoMobile variant="a" /></DCArtboard>
+    </DCSection>
+    <DCSection id="b" title="B안 — 표 맨 아래 「+ 주문 추가」 줄" subtitle="새 건이 표의 한 줄로 들어간다는 걸 자리로 보여 줌 · 위엔 재매칭만">
+      <DCArtboard id="b" label="PC" width={W} height={340}><AoB /></DCArtboard>
+      <DCArtboard id="bm" label="모바일 390" width={390} height={300}><AoMobile variant="b" /></DCArtboard>
+    </DCSection>
+  </DesignCanvas>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

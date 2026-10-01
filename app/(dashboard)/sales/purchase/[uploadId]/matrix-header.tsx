@@ -71,8 +71,9 @@ export function Header({
                 </div>
             </div>
 
-            {(matrix.totals.needsWorkRows > 0 || unmatchedLines > 0 || onRematch) && (
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {/* 버튼이 있으면 다 끝난 시트(작업필요 0)에서도 이 줄을 그린다 — 버튼은 오른쪽 끝(작업지시 ⑨ B1) */}
+            {(matrix.totals.needsWorkRows > 0 || unmatchedLines > 0 || onRematch || onAddOrder) && (
+                <div className="flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1.5">
                     {matrix.totals.needsWorkRows > 0 && (
                         <p className="text-[12.5px] text-slate-500">
                             주문 <b className="text-foreground">{fmt(matrix.totals.orderedQty)}개</b> ·{' '}
@@ -85,31 +86,63 @@ export function Header({
                             매칭실패 {fmt(unmatchedLines)}품목
                         </span>
                     )}
-                    {/* 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다(결정 R).
-                        🔴 매칭실패가 없어도 띄운다 — 기본 포장지가 틀려 엉뚱한 SKU에 붙은 줄은 「실패」가 아니라서,
-                        실패가 있을 때만 띄우면 고칠 길이 화면에 아예 없다(2026-10-01 실사용 첫날) */}
-                    {onRematch && (
-                        <button
-                            type="button"
-                            onClick={onRematch}
-                            disabled={rematching}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-                        >
-                            <RefreshCw className={cn('h-3 w-3', rematching && 'animate-spin')} />
-                            {rematching ? '재매칭 중…' : '재매칭'}
-                        </button>
-                    )}
-                    {onAddOrder && (
-                        <button
-                            type="button"
-                            onClick={onAddOrder}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium text-primary hover:bg-primary/10"
-                        >
-                            <Plus className="h-3 w-3" />
-                            주문 추가
-                        </button>
-                    )}
+                    <SheetActions rematching={rematching} onRematch={onRematch} onAddOrder={onAddOrder} />
                 </div>
+            )}
+        </div>
+    )
+}
+
+/**
+ * [↻ 재매칭] [+ 주문 추가] 묶음 — PC 요약 줄과 폰 건 목록이 같이 쓴다(작업지시 ⑨ A안).
+ * 재매칭 = 고치는 일이라 회색 글자 버튼(한 단계 약하게), 주문 추가 = ⑦ 「고치기」와 같은 테두리 버튼.
+ * 폰은 높이만 40(`size="lg"`). 읽기 전용이면 둘 다 안 온다.
+ */
+export function SheetActions({
+    rematching,
+    onRematch,
+    onAddOrder,
+    size = 'md',
+}: {
+    rematching: boolean
+    onRematch?: () => void
+    onAddOrder?: () => void
+    size?: 'md' | 'lg'
+}) {
+    if (!onRematch && !onAddOrder) return null
+    const h = size === 'lg' ? 'h-10' : 'h-8'
+    return (
+        <div className="ml-auto flex items-center gap-1">
+            {/* 업로드 뒤에 고친 SKU·별칭·기본 포장지를 다시 적용한다(결정 R).
+                🔴 매칭실패가 없어도 띄운다 — 기본 포장지가 틀려 엉뚱한 SKU에 붙은 줄은 「실패」가 아니라서,
+                실패가 있을 때만 띄우면 고칠 길이 화면에 아예 없다(2026-10-01 실사용 첫날) */}
+            {onRematch && (
+                <button
+                    type="button"
+                    onClick={onRematch}
+                    disabled={rematching}
+                    className={cn(
+                        'inline-flex items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50',
+                        h,
+                    )}
+                >
+                    <RefreshCw className={cn('h-3.5 w-3.5', rematching && 'animate-spin')} />
+                    {rematching ? '재매칭 중…' : '재매칭'}
+                </button>
+            )}
+            {onAddOrder && (
+                // bg-card — outline류에 bg-white를 박지 않는다(§25). 보이는 건 같다
+                <button
+                    type="button"
+                    onClick={onAddOrder}
+                    className={cn(
+                        'inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-card px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-50',
+                        h,
+                    )}
+                >
+                    <Plus className="h-[15px] w-[15px] text-primary" />
+                    주문 추가
+                </button>
             )}
         </div>
     )
