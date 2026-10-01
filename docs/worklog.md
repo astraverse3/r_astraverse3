@@ -80,6 +80,22 @@
 - `cell-allocation-popover.tsx` `로트 · 날짜 · 생산자` · `tonbag-popover.tsx` `로트 · 생산자 · 단중 × 개수` — 길면 로트만 잘린다
 - 검증 test 543/543 · tsc 0 · `eslint .` 0. ✅ 일반 셀 사용자 확인 · 🖐 톤백 셀은 아직 톤백 주문이 없어 확인 전
 
+### 공지 문안 · 백로그 §52 완료
+
+- 제품재고·판매관리 오픈 공지 문안 작성(5/8 「잡곡관리」 공지 형태 · ★ 예외 출고는 재고·포장 담당자에게) — 사용자가 직접 등록
+- 백로그 §52 벼 제품재고 실물 재고조사 ✅ 사용자 완료 — 커밋 `e45dcf2`
+
+### 발주서 재매칭 확장 · 매트릭스 머리글에서 포장지·규격 수정
+
+커밋 ① `70b271f` · ② `b79c79b`. 계획서 `docs/plan/plan-매트릭스-포장지규격-수정.md`, 보고서 `docs/report/report-매트릭스-포장지규격-수정-2026-10-01.md`.
+발단(실사용 첫날): 엑셀 포장지가 틀려 발주서를 통째로 지우고 다시 올렸다 · SKU 기본 포장지를 고쳐도 재매칭이 안 됐다.
+
+- 원인: 포장지 빈칸 → 기본 포장지 SKU로 매칭 → 틀린 SKU에 「붙은」 줄은 실패가 아니라 재매칭 대상(`productTypeId=null`)에서도, 버튼 노출 조건(매칭실패>0)에서도 빠졌다
+- ① `lib/purchase-order-rematch.ts` `planRematch()`(+테스트 7) — 차감 없는 줄 전부 재판정 · 차감 줄은 「옮겨 갈 뻔한 것」만 셈 · 붙어 있다 실패하면 풀지 않고 확인 필요 · 재매칭 버튼 상시 노출(PC·모바일)
+- ② `lib/purchase-order-column-edit.ts`(선택지, +테스트 7) · `app/actions/purchase-order-column-edit.ts`(`getColumnEditOptions`·`editColumnRaw`) · `column-edit-popover.tsx` · `matrix-head.tsx` 2행 포장지·3행 규격 버튼 · `MatchPatch.raw`(+테스트 1) · `loadMatchPatch` → `lib/purchase-order-db.ts`
+- 원본 값을 고치고 SKU는 매처가 정함(어긋나면 전부 거부) · 규격 수정 땐 포장지를 지금 SKU 것으로 못박음 · 차감 있는 범위·톤백·매칭실패 열은 막음
+- 검증 test 558/558 · tsc 0 · `eslint .` 0. 🖐 화면 사용자 확인 전
+
 ## 2026-09-30
 
 ### 백로그 전수 정리 — 흩어진 미뤄둔 일을 `docs/리팩토링-백로그.md` 하나로
