@@ -500,7 +500,9 @@ export async function cancelCell(itemIds: number[]): Promise<CellMutationResult>
       })
       await recalcOrderStatus(tx, orderId)
       return { productTypeId, orderId, removed: del.count }
-    })
+      // 🔴 recalcOrderStatus가 품목마다 왕복 1회 — 기본 5초는 Neon에서 간헐적으로 P2028로 터진다
+      //    (2026-10-01 같은 구조의 updateOrderItemQty에서 재현). 셀 차감(confirmCell)과 같은 값
+    }, { timeout: 30_000, maxWait: 10_000 })
 
     await recordAuditLog({
       action: 'DELETE',
