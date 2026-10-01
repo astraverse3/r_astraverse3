@@ -125,7 +125,7 @@
 
 - `order-detail-panel.tsx` 헤더 `[고치기][X]` 한 묶음(`SheetClose` 직접) · 고치는 중 진행 막대 숨김 · `order-edit-list.tsx` 카드 한 장 · 스테퍼 · 바꾼 줄만 저장 · 「이 건 모두 취소」
 - 지시서와 다르게(사용자 동의): 모바일 수량 14px(④ 규칙과 지시서가 어긋남 — `maximumScale 1`) · `bg-card` · 0 저장도 확인창 · 시안 HTML을 `시안/`으로 이동
-- 검증 test 565/565 · tsc 0 · `eslint .` 0. 🖐 완료 기준 9개 사용자 확인 전
+- 검증 test 565/565 · tsc 0 · `eslint .` 0. ✅ 완료 기준 사용자 확인
 
 ## 2026-09-30
 
