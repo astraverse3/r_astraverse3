@@ -261,3 +261,66 @@ export function buildLotOptions(sources: RepackSource[]): LotOption[] {
   }
   return Array.from(byLot.values())
 }
+
+// ------------------------------------------------------
+// 손실 최종 확인 문구 — 노란 경고를 지나쳐도 한 번 더 멈추게 한다
+// (docs/plan/plan-재포장-손실-최종확인.md · 재포장 #26 사례)
+// ------------------------------------------------------
+
+/**
+ * 규격 · 단중 표기 — 규격 라벨에 이미 무게가 들어 있으면 겹쳐 쓰지 않는다(「5kg · 5kg」 방지).
+ *
+ * 톤백·잔량은 라벨만으로 무게를 알 수 없어 병기가 필요하고,
+ * 규격이 `5kg`인데 단중이 4.8이면 어긋난 것이니 그대로 드러내는 편이 낫다.
+ */
+export function formatSpec(packageType: string, weightPerUnit: number): string {
+  const kg = weightPerUnit.toLocaleString()
+  return packageType === `${kg}kg` ? packageType : `${packageType} · ${kg}kg`
+}
+
+export type LossConfirmSource = {
+  varietyName: string
+  packageType: string
+  weightPerUnit: number
+  takeCount: number
+}
+
+/**
+ * 손실 확인창 본문. 사람은 개수로 세므로 「N개분」을 같이 쓴다 —
+ * 단, 쓸 재고의 개당 중량이 전부 같을 때만(톤백·잔량은 자루마다 달라 개수분이 의미 없다).
+ */
+export function lossConfirmText(
+  sources: LossConfirmSource[],
+  sourceKg: number,
+  resultKg: number,
+): string {
+  const lossKg = round3(sourceKg - resultKg)
+  const kg = (n: number) => `${n.toLocaleString()}kg`
+
+  const one = sources.length === 1 ? sources[0] : null
+  const first = one
+    ? `${one.varietyName} ${formatSpec(one.packageType, one.weightPerUnit)} ` +
+      `${one.takeCount.toLocaleString()}개(${kg(sourceKg)})를 쓰는데 ${kg(resultKg)}만 만들어요.`
+    : `쓸 양 ${kg(sourceKg)} 중 ${kg(resultKg)}만 만들어요.`
+
+  const head = sources[0]
+  const countable =
+    head !== undefined &&
+    head.weightPerUnit > 0 &&
+    head.packageType !== PACKAGE_TYPE_TONBAG &&
+    head.packageType !== PACKAGE_TYPE_REMAINDER &&
+    sources.every(s => s.packageType === head.packageType && s.weightPerUnit === head.weightPerUnit)
+  let units = ''
+  if (countable) {
+    const label = formatSpec(head.packageType, head.weightPerUnit)
+    const n = round3(lossKg / head.weightPerUnit)
+    units = Number.isInteger(n)
+      ? `(${label} ${n.toLocaleString()}개분)`
+      : `(${label} 약 ${(Math.round(n * 10) / 10).toLocaleString()}개분)`
+  }
+
+  return (
+    `${first}\n남는 ${kg(lossKg)}${units}은 손실로 사라져요.\n\n` +
+    '재포장은 되돌릴 수 없어요. 실제로 없어진 경우에만 기록하세요.'
+  )
+}

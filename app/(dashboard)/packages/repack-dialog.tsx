@@ -13,7 +13,14 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { REPACK_SPECS, PACKAGE_TYPE_REMAINDER, PACKAGE_TYPE_TONBAG } from '@/lib/repack'
+import {
+    REPACK_SPECS,
+    PACKAGE_TYPE_REMAINDER,
+    PACKAGE_TYPE_TONBAG,
+    formatSpec,
+    lossConfirmText,
+} from '@/lib/repack'
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import {
     getRepackSources,
     createRepack,
@@ -43,17 +50,6 @@ interface Props {
 type Packaging = { id: number; name: string; active: boolean }
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000
-
-/**
- * 규격 · 단중 표기 — 규격 라벨에 이미 무게가 들어 있으면 겹쳐 쓰지 않는다(「5kg · 5kg」 방지).
- *
- * 톤백·잔량은 라벨만으로 무게를 알 수 없어 병기가 필요하고,
- * 규격이 `5kg`인데 단중이 4.8이면 어긋난 것이니 그대로 드러내는 편이 낫다.
- */
-function formatSpec(packageType: string, weightPerUnit: number): string {
-    const kg = weightPerUnit.toLocaleString()
-    return packageType === `${kg}kg` ? packageType : `${packageType} · ${kg}kg`
-}
 
 /**
  * 재포장 다이얼로그 (결정 #43 R2 · UI 개편 #44~#48).
@@ -427,6 +423,35 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
         }
     }
 
+    /**
+     * 노란 경고의 「손실로 기록하고 진행」 → 화면 가운데 빨간 확인창을 한 번 더 (plan-재포장-손실-최종확인).
+     * 같은 푸터 안의 경고는 연달아 눌러 지나칠 수 있었다(재포장 #26).
+     *
+     * 🔴 확인창 버튼 터치가 이 다이얼로그의 「바깥 클릭」으로 이어져 같이 닫히지 않도록,
+     * 확인창이 떠 있는 동안 닫기를 막고 가드는 **클릭이 끝난 뒤에** 푼다(중첩 모달 닫힘 순서).
+     */
+    const confirmingLoss = useRef(false)
+    const confirmLossAndSubmit = async () => {
+        confirmingLoss.current = true
+        const ok = await confirmDialog({
+            title: '손실로 기록할까요?',
+            description: lossConfirmText(
+                sources.map(s => ({ ...s, takeCount: Number(takeCounts[s.packageId]) || 0 })),
+                sourceKg,
+                resultKg,
+            ),
+            cancelText: '돌아가기',
+            confirmText: '손실로 기록',
+            destructive: true,
+        })
+        setTimeout(() => {
+            confirmingLoss.current = false
+        }, 0)
+        if (!ok) return
+        setLossConfirmed(true)
+        void submit(true)
+    }
+
     // 잔여 상태를 한 곳에서 정하고 푸터가 그대로 쓴다
     const balance =
         remainKg === 0
@@ -452,7 +477,13 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
     }[balance.tone]
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog
+            open={open}
+            onOpenChange={next => {
+                if (!next && confirmingLoss.current) return
+                onOpenChange(next)
+            }}
+        >
             {/* p-0 + 헤더/요약/본문/푸터. 스크롤은 본문 한 군데만 (이중 스크롤 회피) */}
             {/* 기본 grid를 flex로 — grid는 행이 92dvh에 맞춰 줄지 않아 결과 행이 많으면
                 푸터가 overflow-hidden에 잘려나간다(재고차감 브라우저 검증에서 발견된 같은 결함). */}
@@ -719,10 +750,7 @@ export function RepackDialog({ open, onOpenChange, packageIds, onDone }: Props) 
                                             size="sm"
                                             className="h-9 flex-1 border-amber-400 text-amber-900 hover:bg-amber-50 hover:text-amber-900"
                                             disabled={saving}
-                                            onClick={() => {
-                                                setLossConfirmed(true)
-                                                void submit(true)
-                                            }}
+                                            onClick={() => void confirmLossAndSubmit()}
                                         >
                                             {saving && (
                                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

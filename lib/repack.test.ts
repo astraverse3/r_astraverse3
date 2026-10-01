@@ -5,6 +5,8 @@ import {
   sumSourceKg,
   sumResultKg,
   buildLotOptions,
+  lossConfirmText,
+  formatSpec,
   PACKAGE_TYPE_REMAINDER,
   type RepackSource,
   type RepackResultLine,
@@ -261,4 +263,51 @@ test('buildLotOptions: lotNo가 없는 매입 잡곡은 행마다 별개 후보'
     opts.map((o) => o.packageId),
     [1, 2],
   )
+})
+
+// ------------------------------------------------------
+// 손실 최종 확인 문구 (plan-재포장-손실-최종확인)
+// ------------------------------------------------------
+const lc = (packageType: string, weightPerUnit: number, takeCount: number, varietyName = '서농22호') => ({
+  varietyName,
+  packageType,
+  weightPerUnit,
+  takeCount,
+})
+
+test('lossConfirmText: 재포장 #26 — 한 줄 · 정수 개수분', () => {
+  const text = lossConfirmText([lc('4kg', 4, 132)], 528, 228)
+  assert.equal(
+    text,
+    '서농22호 4kg 132개(528kg)를 쓰는데 228kg만 만들어요.\n' +
+      '남는 300kg(4kg 75개분)은 손실로 사라져요.\n\n' +
+      '재포장은 되돌릴 수 없어요. 실제로 없어진 경우에만 기록하세요.',
+  )
+})
+
+test('lossConfirmText: 나눠떨어지지 않으면 「약」 · 소수 첫째 자리', () => {
+  const text = lossConfirmText([lc('20kg', 20, 10)], 200, 150)
+  assert.match(text, /남는 50kg\(20kg 약 2\.5개분\)은/)
+})
+
+test('lossConfirmText: 여러 줄이면 품종·개수 대신 총량 · 같은 규격이면 개수분 유지', () => {
+  const text = lossConfirmText([lc('10kg', 10, 5), lc('10kg', 10, 3)], 80, 50)
+  assert.match(text, /^쓸 양 80kg 중 50kg만 만들어요\.\n/)
+  assert.match(text, /남는 30kg\(10kg 3개분\)은/)
+})
+
+test('lossConfirmText: 규격이 섞이면 개수분을 쓰지 않는다', () => {
+  const text = lossConfirmText([lc('10kg', 10, 5), lc('20kg', 20, 2)], 90, 60)
+  assert.match(text, /남는 30kg은 손실로/)
+})
+
+test('lossConfirmText: 톤백·잔량은 개수분을 쓰지 않는다', () => {
+  assert.match(lossConfirmText([lc('톤백', 1000, 1)], 1000, 800), /남는 200kg은 손실로/)
+  assert.match(lossConfirmText([lc(PACKAGE_TYPE_REMAINDER, 7, 1)], 7, 4), /남는 3kg은 손실로/)
+})
+
+test('formatSpec: 라벨에 무게가 있으면 겹쳐 쓰지 않는다', () => {
+  assert.equal(formatSpec('5kg', 5), '5kg')
+  assert.equal(formatSpec('톤백', 1000), '톤백 · 1,000kg')
+  assert.equal(formatSpec('5kg', 4.8), '5kg · 4.8kg')
 })
