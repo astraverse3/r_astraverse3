@@ -357,3 +357,21 @@ test('normalizeItemName: 공백 없는 접두·접두+접미 겹침은 분리하
 test('normalizeItemName: 도정 단어만 있으면 접두로 떼지 않는다', () => {
   assert.deepEqual(normalizeItemName('유기농 백미'), { varietyToken: '백미', millingType: null })
 })
+
+// ------------------------------------------------------
+// 규격 대소문자 — 이강바이오 통일양식 (2026-10-01)
+// ------------------------------------------------------
+
+test('규격: 단위 대소문자는 무시한다 (10KG = 10kg)', () => {
+  // 🔴 `10KG`로 저장된 줄이 SKU `10kg`와 안 맞아 조용히 실패했다(경고도 없었다 — kg 환산은 /i라서).
+  // 파서가 소문자로 맞춰도 이미 저장된 줄은 그대로라, 재매칭이 붙으려면 매처도 대소문자를 무시해야 한다.
+  assert.equal(matchedId(m('천지향5세', '10KG', null)), 38)
+  assert.equal(matchedId(m('천지향5세', '10 Kg', null)), 38)
+})
+
+test('품종: 영문 품종명·별칭은 대소문자를 무시한다 (ips = IPS)', () => {
+  assert.equal(m('유기농 ips', '10kg', null).varietyId, 7)
+  assert.equal(m('Cj6', '10kg', null).varietyId, 6)
+  // 정확일치라 접두가 같은 다른 품종(IPS ↔ IPSA)으로 새지 않는다
+  assert.equal(m('ipsa', '10kg', null).varietyId, null)
+})

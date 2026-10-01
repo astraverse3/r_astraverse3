@@ -79,6 +79,14 @@ export function stripSpaces(s: string): string {
   return s.replace(/\s+/g, '')
 }
 
+/** 품종명·별칭·규격 비교 키 — 공백 무시 + 대소문자 무시(`IPS`=`ips` · `10 KG`=`10kg`).
+ *  🔴 별칭 관리 화면의 검증(`lib/variety-alias.ts`)도 이 키로 비교해야 한다 — 어긋나면 화면은
+ *  받아 주는데 매처에선 다른 품종 이름이 먼저 가져가는 죽은 별칭이 생긴다. 그래서 export.
+ *  (포장지명은 한글뿐이라 `stripSpaces`로 둔다.) */
+export function matchKey(s: string): string {
+  return stripSpaces(s).toLowerCase()
+}
+
 /** CRLF·다중공백 정리(정규화 안 된 rawItemName 대비). */
 function tidy(s: string): string {
   return s.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim()
@@ -174,18 +182,18 @@ export function normalizeItemName(rawItemName: string): {
 }
 
 // ------------------------------------------------------
-// ② 품종 해석 — name 정확일치 → aliases (공백 무시 비교)
+// ② 품종 해석 — name 정확일치 → aliases (공백·대소문자 무시 비교)
 // ------------------------------------------------------
 function resolveVariety(
   varietyToken: string,
   varieties: MatcherVariety[],
 ): MatcherVariety | null {
-  const key = stripSpaces(varietyToken)
+  const key = matchKey(varietyToken)
   if (!key) return null
-  const byName = varieties.find((v) => stripSpaces(v.name) === key)
+  const byName = varieties.find((v) => matchKey(v.name) === key)
   if (byName) return byName
   return (
-    varieties.find((v) => v.aliases.some((a) => stripSpaces(a) === key)) ?? null
+    varieties.find((v) => v.aliases.some((a) => matchKey(a) === key)) ?? null
   )
 }
 
@@ -216,13 +224,14 @@ export function matchPurchaseOrderItem(
     millingType ?? (variety.category === 'RICE' ? '백미' : MISC_MILLING_SENTINEL)
 
   // ④ SKU — (품종+도정+규격) 후보 압축 후 포장지로 결정
-  const pkgType = stripSpaces(input.packageType)
+  // 규격은 대소문자 무시(`10KG`=`10kg`) — 파서가 소문자로 맞추기 전에 저장된 줄도 재매칭으로 붙게
+  const pkgType = matchKey(input.packageType)
   const candidates = productTypes.filter(
     (p) =>
       p.active &&
       p.varietyId === variety.id &&
       p.millingType === finalMilling &&
-      stripSpaces(p.packageType) === pkgType,
+      matchKey(p.packageType) === pkgType,
   )
 
   if (input.rawPackaging) {

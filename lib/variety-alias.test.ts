@@ -74,6 +74,19 @@ test('비교는 공백을 무시한다 — 매처와 같은 규칙', () => {
   assert.equal(reasonOf(validateAlias('서농 22호', target(1), VARIETIES)), 'same_as_name')
 })
 
+test('비교는 대소문자를 무시한다 — 매처와 같은 규칙 (2026-10-01)', () => {
+  // 매처가 품종을 대소문자 무시로 찾으므로, 다른 품종에 `ips`를 받으면 이름 `IPS`가 먼저 가져가 죽은 별칭이 된다
+  const vs: AliasVariety[] = [
+    { id: 7, name: 'IPS', aliases: ['프로틴 라이스'] },
+    { id: 6, name: 'CJ6', aliases: [] },
+  ]
+  assert.equal(reasonOf(validateAlias('ips', vs[1], vs)), 'conflict')
+  assert.equal(reasonOf(validateAlias('cj6', vs[1], vs)), 'same_as_name')
+  const n = validateVarietyName('Ips', null, vs)
+  assert.equal(n.ok, false)
+  if (!n.ok) assert.equal(n.reason, 'duplicate_name')
+})
+
 test('normalizeAlias: 앞뒤 공백·줄바꿈·다중공백을 정리한다', () => {
   assert.equal(normalizeAlias('  가바 \n 현미쌀 '), '가바 현미쌀')
 })

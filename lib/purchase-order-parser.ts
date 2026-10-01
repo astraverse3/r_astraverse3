@@ -115,12 +115,17 @@ function stripSpaces(s: string): string {
 }
 
 /**
- * 규격(중량) 정규화 — 공백·콤마 제거(#33).
- * `1 kg`→`1kg` · `1,000kg`→`1000kg` · `420g`→`420g`
+ * 규격(중량) 정규화 — 공백·콤마 제거(#33) + 단위 소문자.
+ * `1 kg`→`1kg` · `1,000kg`→`1000kg` · `420g`→`420g` · `10KG`→`10kg`
  * 단위(kg/g)가 붙어 있으면 kg 환산값도 함께 돌려준다(단위 없으면 weightKg=null → 경고).
+ *
+ * 🔴 단위를 소문자로 맞춘다 — SKU 규격은 `10kg`인데 `10KG`가 그대로 저장돼 매칭이 조용히
+ * 실패했다(2026-10-01 이강바이오). kg 환산은 대소문자를 무시해서 경고도 안 떴다.
  */
 export function normalizeSpec(raw: unknown): { spec: string; weightKg: number | null } {
-  const spec = normalizeCell(raw).replace(/[\s,]/g, '')
+  const spec = normalizeCell(raw)
+    .replace(/[\s,]/g, '')
+    .replace(/^([\d.]+)(kg|g)$/i, (_, n: string, unit: string) => n + unit.toLowerCase())
   // 🔴 kg 환산 규칙은 `specWeightKg` 한 곳이다 — 포장·재포장 버튼(§48)이 같은 규칙을 xlsx 없이 쓴다
   return { spec, weightKg: specWeightKg(spec) }
 }

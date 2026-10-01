@@ -4,10 +4,10 @@
 //    품종 관리 화면 하나뿐이 됐다. 즉 **이 검증이 별칭을 막는 마지막이자 유일한 곳**이다.
 //    화면(즉시 피드백)과 서버 액션(전수 재검증)이 같은 함수를 부른다.
 //
-// 비교 규칙은 매처와 같아야 한다 — 매처가 별칭을 `stripSpaces` 동일비교로 찾기 때문에,
-// 여기서 공백만 다른 값을 통과시키면 화면엔 두 칩인데 매처엔 같은 값이 된다.
+// 비교 규칙은 매처와 같아야 한다 — 매처가 품종·별칭을 `matchKey`(공백·대소문자 무시) 동일비교로
+// 찾기 때문에, 여기서 공백·대소문자만 다른 값을 통과시키면 화면엔 두 칩인데 매처엔 같은 값이 된다.
 
-import { hasMillingToken, stripSpaces } from './purchase-order-matcher'
+import { hasMillingToken, matchKey } from './purchase-order-matcher'
 
 /** 검증에 필요한 품종 최소 형태(전체 목록을 주입 — 순수함수 유지). */
 export type AliasVariety = {
@@ -49,9 +49,9 @@ export function validateAlias(
     return { ok: false, reason: 'empty', message: '별칭을 입력하세요.' }
   }
 
-  const key = stripSpaces(value)
+  const key = matchKey(value)
 
-  if (stripSpaces(target.name) === key) {
+  if (matchKey(target.name) === key) {
     return {
       ok: false,
       reason: 'same_as_name',
@@ -59,7 +59,7 @@ export function validateAlias(
     }
   }
 
-  if (target.aliases.some((a) => stripSpaces(a) === key)) {
+  if (target.aliases.some((a) => matchKey(a) === key)) {
     return { ok: false, reason: 'duplicate', message: '이미 등록된 별칭입니다.' }
   }
 
@@ -67,7 +67,7 @@ export function validateAlias(
   const clash = varieties.find(
     (v) =>
       v.id !== target.id &&
-      (stripSpaces(v.name) === key || v.aliases.some((a) => stripSpaces(a) === key)),
+      (matchKey(v.name) === key || v.aliases.some((a) => matchKey(a) === key)),
   )
   if (clash) {
     return {
@@ -149,11 +149,11 @@ export function validateVarietyName(
     return { ok: false, reason: 'empty', message: '품종명을 입력하세요.' }
   }
 
-  const key = stripSpaces(value)
+  const key = matchKey(value)
 
-  // 공백만 다른 이름은 매처가 구분하지 못한다(같은 값으로 본다) → 막는다.
-  // DB의 name unique는 공백 차이를 다른 값으로 보므로 여기서만 걸린다.
-  const sameName = varieties.find((v) => v.id !== targetId && stripSpaces(v.name) === key)
+  // 공백·대소문자만 다른 이름은 매처가 구분하지 못한다(같은 값으로 본다) → 막는다.
+  // DB의 name unique는 그 차이를 다른 값으로 보므로 여기서만 걸린다.
+  const sameName = varieties.find((v) => v.id !== targetId && matchKey(v.name) === key)
   if (sameName) {
     return {
       ok: false,
@@ -163,7 +163,7 @@ export function validateVarietyName(
   }
 
   const aliasOwner = varieties.find(
-    (v) => v.id !== targetId && v.aliases.some((a) => stripSpaces(a) === key),
+    (v) => v.id !== targetId && v.aliases.some((a) => matchKey(a) === key),
   )
   if (aliasOwner) {
     return {
@@ -174,7 +174,7 @@ export function validateVarietyName(
   }
 
   const self = targetId === null ? null : varieties.find((v) => v.id === targetId)
-  if (self?.aliases.some((a) => stripSpaces(a) === key)) {
+  if (self?.aliases.some((a) => matchKey(a) === key)) {
     return {
       ok: false,
       reason: 'own_alias',
