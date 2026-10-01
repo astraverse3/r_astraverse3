@@ -1,4 +1,4 @@
-// 발주서 차감 공용 DB 헬퍼 — 트랜잭션 클라이언트(`tx`)를 받는 4개.
+// 발주서 차감 공용 DB 헬퍼 — 트랜잭션 클라이언트(`tx`)를 받는 4개 + 매트릭스 입력 조각.
 //
 // 원래 `app/actions/purchase-order.ts`의 비공개 함수였다(D2c C1에서 순수 이동, 동작 변경 없음).
 // 'use server' 파일은 export한 모든 것이 서버 액션이 되므로 `tx`를 받는 헬퍼를 export할 수 없다.
@@ -8,7 +8,7 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { availableOf, MOVEMENT_COUNT_SELECT } from '@/lib/package-available'
-import type { AvailabilityMap, MatrixSkuInput } from '@/lib/purchase-order-matrix'
+import type { AvailabilityMap, MatchPatch, MatrixSkuInput } from '@/lib/purchase-order-matrix'
 import {
   computeOrderStatus,
   type AvailablePackage,
@@ -189,3 +189,26 @@ export async function loadSkuMeta(skuIds: number[]): Promise<MatrixSkuInput[]> {
   }))
 }
 
+
+/**
+ * 매칭이 바뀐 라인을 클라이언트가 갈아끼울 「바뀐 것」으로 읽는다. 트랜잭션 밖(커밋된 진실).
+ * 차감 경로의 `loadCellPatch`와 같은 역할 — 재매칭(`rematchUpload`)과 매트릭스 원본 값 수정
+ * (`editColumnRaw`)이 함께 쓴다. 원래 `purchase-order-assign.ts`의 비공개 함수였다(2026-10-01 이동).
+ */
+export async function loadMatchPatch(
+  itemIds: number[],
+  productTypeId: number,
+  raw?: MatchPatch['raw'],
+): Promise<MatchPatch> {
+  const [avail, skus] = await Promise.all([loadAvailability([productTypeId]), loadSkuMeta([productTypeId])])
+  const sku = skus[0]
+  if (!sku) throw new Error('제품유형을 찾을 수 없습니다.')
+  return {
+    itemIds,
+    productTypeId,
+    sku,
+    availability: avail.qty[productTypeId] ?? 0,
+    availabilityKg: avail.kg[productTypeId] ?? 0,
+    ...(raw && { raw }),
+  }
+}

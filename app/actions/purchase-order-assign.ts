@@ -26,7 +26,7 @@ import {
   type MatchFailReason,
 } from '@/lib/purchase-order-matcher'
 import { loadMatcherMasters } from '@/lib/purchase-order-masters'
-import { loadAvailability, loadSkuMeta } from '@/lib/purchase-order-db'
+import { loadMatchPatch } from '@/lib/purchase-order-db'
 import type { MatchPatch } from '@/lib/purchase-order-matrix'
 import { planRematch, type RematchPlan } from '@/lib/purchase-order-rematch'
 
@@ -250,25 +250,5 @@ export async function rematchUpload(uploadId: number): Promise<RematchResult> {
   } catch (error) {
     console.error('[rematchUpload] failed:', error)
     return { success: false, error: sanitizeErrorMessage(error, '재매칭에 실패했습니다.') }
-  }
-}
-
-/**
- * 재매칭 뒤 클라이언트가 갈아끼울 「바뀐 것」을 읽는다. 트랜잭션 밖(커밋된 진실).
- * 차감 경로의 `loadCellPatch`와 같은 역할이고, 같은 두 헬퍼를 쓴다.
- */
-async function loadMatchPatch(itemIds: number[], productTypeId: number): Promise<MatchPatch> {
-  const [avail, skus] = await Promise.all([
-    loadAvailability([productTypeId]),
-    loadSkuMeta([productTypeId]),
-  ])
-  const sku = skus[0]
-  if (!sku) throw new Error('제품유형을 찾을 수 없습니다.')
-  return {
-    itemIds,
-    productTypeId,
-    sku,
-    availability: avail.qty[productTypeId] ?? 0,
-    availabilityKg: avail.kg[productTypeId] ?? 0,
   }
 }

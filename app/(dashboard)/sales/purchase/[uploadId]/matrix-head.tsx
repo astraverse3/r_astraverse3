@@ -5,7 +5,8 @@
 import type { ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
-import { isColumnShort, type Matrix } from '@/lib/purchase-order-matrix'
+import { isColumnShort, type Matrix, type MatrixColumn } from '@/lib/purchase-order-matrix'
+import { isEditableSpec, type ColumnEditField } from '@/lib/purchase-order-column-edit'
 import {
     fixedW, fmt, fmtKg, W_CHECK, W_NAME, W_STATUS, W_PROGRESS, W_LEFT,
     L_NAME, L_STATUS, L_PROGRESS, LEFT_COLS, H_TITLE, H_PACK, H_SPEC, H_SUM_MAIN, H_SUM_SUB,
@@ -13,6 +14,27 @@ import {
 
 /** 제목·포장지·규격 — 좌측 모서리 칸과 오른쪽 소계 칸이 이만큼 세로로 걸친다 */
 const HEAD_ROWS = 3
+
+/** 머리글 클릭 → 포장지·규격 수정(plan-매트릭스-포장지규격-수정 ②) */
+export type HeaderEditRequest = { field: ColumnEditField; productTypeIds: number[]; el: HTMLElement }
+
+/** 원본 값을 고칠 수 있는 열 — 매칭된 일반 규격만. 톤백(자루중량 축)·매칭실패는 아니다 */
+const editableColumn = (c: MatrixColumn | undefined): c is MatrixColumn & { productTypeId: number } =>
+    !!c && c.productTypeId !== null && !c.bulk && isEditableSpec(c.packageType)
+
+/** 머리글 안 버튼 — 글자 모양은 그대로 두고, 누를 수 있다는 단서만 호버로 준다 */
+function HeadEditButton({ onClick, title, children }: { onClick: (el: HTMLElement) => void; title: string; children: ReactNode }) {
+    return (
+        <button
+            type="button"
+            title={title}
+            onClick={(e) => onClick(e.currentTarget)}
+            className="block w-full truncate rounded px-0.5 underline-offset-2 hover:bg-slate-200/70 hover:text-primary hover:underline"
+        >
+            {children}
+        </button>
+    )
+}
 
 // ------------------------------------------------------
 // 머리글 5행
@@ -24,6 +46,7 @@ export function MatrixHead({
     allChecked,
     someChecked,
     onToggleAll,
+    onEditHeader,
 }: {
     matrix: Matrix
     availKg: number
@@ -32,6 +55,8 @@ export function MatrixHead({
     someChecked: boolean
     /** 없으면(읽기 전용, §60) 전체선택 칸을 비운다 */
     onToggleAll?: (v: boolean | 'indeterminate') => void
+    /** 없으면(읽기 전용) 머리글을 눌러도 아무 일 없다 */
+    onEditHeader?: (req: HeaderEditRequest) => void
 }) {
     const colByKey = new Map(matrix.columns.map((c) => [c.key, c]))
     return (
@@ -78,7 +103,10 @@ export function MatrixHead({
 
             {/* 2행 — 포장지(그룹). 좁은 열에선 잘리므로 올리면 전체가 보이게 `title` */}
             <tr>
-                {matrix.groups.map((g) => (
+                {matrix.groups.map((g) => {
+                    const cols = g.columnKeys.map((k) => colByKey.get(k))
+                    const editable = !!onEditHeader && !g.unmatched && cols.every(editableColumn)
+                    return (
                     <th
                         key={g.key}
                         colSpan={g.columnKeys.length}
@@ -89,9 +117,25 @@ export function MatrixHead({
                         )}
                         style={{ top: H_TITLE, height: H_PACK }}
                     >
-                        <span className="block truncate">{g.packagingName}</span>
+                        {editable ? (
+                            <HeadEditButton
+                                title={`${g.packagingName} — 눌러서 포장지 바꾸기`}
+                                onClick={(el) =>
+                                    onEditHeader({
+                                        field: 'packaging',
+                                        productTypeIds: cols.filter(editableColumn).map((c) => c.productTypeId),
+                                        el,
+                                    })
+                                }
+                            >
+                                {g.packagingName}
+                            </HeadEditButton>
+                        ) : (
+                            <span className="block truncate">{g.packagingName}</span>
+                        )}
                     </th>
-                ))}
+                    )
+                })}
             </tr>
 
             {/* 3행 — 규격 */}
@@ -104,7 +148,18 @@ export function MatrixHead({
                     >
                         {/* 톤백은 자루중량만 적는다 — 「톤백」은 2행 포장지에 이미 있고,
                             중량이 없으면 1,000kg 열과 200kg 열이 안 갈린다 */}
-                        {c.bulk ? `${fmtKg(c.unitWeightKg ?? 0)}kg` : c.packageType}
+                        {onEditHeader && editableColumn(c) ? (
+                            <HeadEditButton
+                                title={`${c.packageType} — 눌러서 규격 바꾸기`}
+                                onClick={(el) => onEditHeader({ field: 'packageType', productTypeIds: [c.productTypeId], el })}
+                            >
+                                {c.packageType}
+                            </HeadEditButton>
+                        ) : c.bulk ? (
+                            `${fmtKg(c.unitWeightKg ?? 0)}kg`
+                        ) : (
+                            c.packageType
+                        )}
                     </th>
                 ))}
             </tr>

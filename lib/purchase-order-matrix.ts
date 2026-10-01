@@ -552,6 +552,11 @@ export type MatchPatch = {
   availability: number
   /** 그 SKU의 지금 가용(kg) */
   availabilityKg: number
+  /**
+   * 매트릭스에서 원본 값(엑셀에서 읽은 규격·포장지)을 고쳤을 때 그 새 값(plan-매트릭스-포장지규격-수정 ②).
+   * 준 필드만 덮어쓴다 — 포장지만 바꾼 묶음은 규격이 줄마다 달라 `packageType`을 주지 않는다.
+   */
+  raw?: { packageType?: string; rawPackaging?: string | null }
 }
 
 /**
@@ -567,8 +572,8 @@ export function applyMatchPatches(
 ): BuildMatrixInput {
   if (patches.length === 0) return input
 
-  const productTypeByItem = new Map<number, number>()
-  for (const p of patches) for (const id of p.itemIds) productTypeByItem.set(id, p.productTypeId)
+  const patchByItem = new Map<number, MatchPatch>()
+  for (const p of patches) for (const id of p.itemIds) patchByItem.set(id, p)
 
   // 기존 SKU는 자리를 지키고 값만 갱신된다(Map은 삽입 순서 유지) — 열 순서가 흔들리지 않는다
   const skuById = new Map(input.skus.map((s) => [s.id, s]))
@@ -584,8 +589,14 @@ export function applyMatchPatches(
   return {
     ...input,
     items: input.items.map((it) => {
-      const pt = productTypeByItem.get(it.id)
-      return pt === undefined ? it : { ...it, productTypeId: pt }
+      const p = patchByItem.get(it.id)
+      if (!p) return it
+      return {
+        ...it,
+        productTypeId: p.productTypeId,
+        ...(p.raw?.packageType !== undefined && { packageType: p.raw.packageType }),
+        ...(p.raw?.rawPackaging !== undefined && { rawPackaging: p.raw.rawPackaging }),
+      }
     }),
     skus: [...skuById.values()],
     availability,

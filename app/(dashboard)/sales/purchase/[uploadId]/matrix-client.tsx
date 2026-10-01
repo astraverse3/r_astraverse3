@@ -53,6 +53,7 @@ import { OrderDetailPanel } from './order-detail-panel'
 import { ReviewGateDialog } from './review-gate-dialog'
 import { fixedW, cellSelector, fmt, fmtKg, W_CHECK, W_NAME, W_STATUS, W_PROGRESS, L_NAME, L_STATUS, L_PROGRESS } from './matrix-layout'
 import { MatrixHead } from './matrix-head'
+import { ColumnEditPopover, type ActiveHeader } from './column-edit-popover'
 import { Header } from './matrix-header'
 import { NameCell, Th, StatusDot, Progress, Legend } from './matrix-bits'
 
@@ -99,6 +100,8 @@ export function MatrixClient({
     const decl = CHANNEL_DECL[header.channel as PurchaseChannel]
 
     const [active, setActive] = useState<ActiveCell | null>(null)
+    /** 머리글 포장지·규격 수정 팝오버(plan-매트릭스-포장지규격-수정 ②) */
+    const [editHeader, setEditHeader] = useState<ActiveHeader | null>(null)
     /**
      * 열린 건 상세. `siblings`는 **열 때 찍은 스냅샷**이다 — 「다음 건 ›」이 따라갈 순서.
      *
@@ -415,6 +418,17 @@ export function MatrixClient({
                         allChecked={allChecked}
                         someChecked={someChecked}
                         onToggleAll={canManage ? toggleAll : undefined}
+                        onEditHeader={
+                            canManage
+                                ? ({ field, productTypeIds, el }) =>
+                                      setEditHeader({
+                                          key: `${field}|${productTypeIds.join(',')}|${Date.now()}`,
+                                          field,
+                                          productTypeIds,
+                                          anchor: el,
+                                      })
+                                : undefined
+                        }
                     />
                     <tbody>
                         {rows.map((row) => {
@@ -621,6 +635,12 @@ export function MatrixClient({
             />
             )}
 
+            <ColumnEditPopover
+                uploadId={header.uploadId}
+                target={editHeader}
+                onPatches={applyMatches}
+                onClose={() => setEditHeader(null)}
+            />
             <CellAllocationPopover
                 cell={active}
                 onPatch={applyPatch}

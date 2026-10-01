@@ -795,6 +795,27 @@ test('applyMatchPatches: 이미 있는 SKU 열과 합쳐진다(중복 SKU 없음
   assert.equal(m.columns[0].orderedQty, 2)
 })
 
+test('applyMatchPatches: raw는 준 필드만 덮어쓴다 (매트릭스 포장지·규격 수정)', () => {
+  const base = input({
+    orders: [order(1, '박가네')],
+    items: [
+      item({ id: 10, orderId: 1, packageType: '10KG', rawPackaging: null, productTypeId: 5 }),
+      item({ id: 11, orderId: 1, packageType: '5kg', rawPackaging: null, productTypeId: 6 }),
+    ],
+  })
+  const after = applyMatchPatches(base, [
+    // 포장지만 바꿈 — 규격은 줄마다 원본 그대로(10KG 대문자 보존)
+    { itemIds: [10], productTypeId: 7, sku: sku(7, '10kg'), availability: 1, availabilityKg: 10, raw: { rawPackaging: 'PP마대' } },
+    // 규격 바꿈 — 규격·포장지 둘 다
+    { itemIds: [11], productTypeId: 8, sku: sku(8, '1kg'), availability: 1, availabilityKg: 1, raw: { packageType: '1kg', rawPackaging: '자연주의' } },
+  ])
+  const [a, b] = after.items
+  assert.deepEqual([a.productTypeId, a.packageType, a.rawPackaging], [7, '10KG', 'PP마대'])
+  assert.deepEqual([b.productTypeId, b.packageType, b.rawPackaging], [8, '1kg', '자연주의'])
+  // 원본 불변
+  assert.equal(base.items[0].rawPackaging, null)
+})
+
 test('applyMatchPatches: 패치가 없으면 입력을 그대로 돌려준다', () => {
   const base = input({ orders: [order(1, '박가네')], items: [item({ id: 10, orderId: 1 })] })
   assert.equal(applyMatchPatches(base, []), base)
