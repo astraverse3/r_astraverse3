@@ -12,7 +12,7 @@
 // 🔴 상태 색·라벨은 `status-meta.ts` 한 곳. 판정은 lib `cellStatusOf` 한 곳.
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronRight, RefreshCw, ArrowUpDown, Check } from 'lucide-react'
+import { ChevronRight, RefreshCw, ArrowUpDown, Check, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -58,6 +58,7 @@ export function OrderListMobile({
     onOpenDetail,
     onOpenGate,
     onOpenLine,
+    onEditOrder,
     input,
 }: {
     header: MatrixHeader
@@ -79,6 +80,11 @@ export function OrderListMobile({
     onOpenGate?: (orderIds: number[]) => void
     /** 펼친 행의 라인 탭 — 부모가 그 라인 하나로 배분 시트를 연다(M1-5) */
     onOpenLine?: (line: OrderLine) => void
+    /**
+     * 택배(펼침 채널)의 「고치기」 — 택배는 폰에서 건 상세를 열지 않으므로, 고칠 때만 건 상세를
+     * 고치기 모드로 연다(plan-발주서-건상세-수정추가). 고치는 곳은 건 상세 하나다. 읽기 전용이면 안 온다.
+     */
+    onEditOrder?: (row: MatrixRow, siblings: number[]) => void
     /** 라인 파생용 — 펼친 행이 `buildOrderLines`를 돌린다(서버 왕복 없음) */
     input: BuildMatrixInput
 }) {
@@ -270,6 +276,7 @@ export function OrderListMobile({
                                         nextId={nextOf(open)}
                                         onBatch={onOpenGate && (() => onOpenGate([row.orderId]))}
                                         onOpenLine={onOpenLine}
+                                        onEdit={onEditOrder && (() => onEditOrder(row, open.siblings))}
                                         onNext={(id) => setOpen({ id, siblings: open.siblings })}
                                     />
                                 )}
@@ -427,6 +434,7 @@ function InlineLines({
     onBatch,
     onNext,
     onOpenLine,
+    onEdit,
 }: {
     input: BuildMatrixInput
     orderId: number
@@ -434,6 +442,7 @@ function InlineLines({
     onBatch?: () => void
     onNext: (id: number) => void
     onOpenLine?: (line: OrderLine) => void
+    onEdit?: () => void
 }) {
     const lines = useMemo(() => buildOrderLines(input, orderId), [input, orderId])
     const totals = sumOrderLines(lines)
@@ -446,6 +455,12 @@ function InlineLines({
                 {onBatch && (
                     <Button type="button" className="h-10 flex-1" disabled={totals.batchLines === 0} onClick={onBatch}>
                         {totals.batchLines > 0 ? `${fmt(totals.batchLines)}품목 일괄차감` : '차감할 품목이 없습니다'}
+                    </Button>
+                )}
+                {onEdit && (
+                    <Button type="button" variant="outline" className="h-10 shrink-0 gap-1 px-3" onClick={onEdit}>
+                        <Pencil className="h-3.5 w-3.5" />
+                        고치기
                     </Button>
                 )}
                 {nextId !== undefined && (

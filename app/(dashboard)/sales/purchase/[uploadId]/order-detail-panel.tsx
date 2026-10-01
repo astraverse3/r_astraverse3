@@ -15,14 +15,16 @@
 // 🔴 **푸터 집계도 여기서 세지 않는다** — `sumOrderLines` 한 벌이다. 라인수와 버튼수는 분모가
 //    다른데(실패 포함 / 제외), 화면에서 두 번 세면 그 분기가 조용히 어긋난다.
 
-import { useState } from 'react'
-import { Check, ChevronDown, ChevronRight, List } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Check, ChevronDown, ChevronRight, List, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ROW_STATUS_ORDER, sumOrderLines, type OrderLine } from '@/lib/purchase-order-matrix'
 import { STATUS_META } from './status-meta'
 import { LineCard, specOf } from './order-line-card'
+import { confirmDialog, type ConfirmOptions } from '@/components/ui/confirm-dialog'
+import { OrderEditFooter, OrderEditList, type OrderEditHandlers } from './order-edit-list'
 
 const fmt = (n: number) => n.toLocaleString()
 const fmtKg = (n: number) => (Math.round(n * 10) / 10).toLocaleString()
@@ -38,6 +40,8 @@ export function OrderDetailPanel({
     onBatch,
     onOpenLine,
     blockOutsideClose,
+    edit,
+    initialEdit = false,
     onClose,
 }: {
     orderId: number | null
@@ -74,8 +78,28 @@ export function OrderDetailPanel({
      * 🔴 **「닫는 방법에 따라 다르다」가 이 결함의 지문이었다.**
      */
     blockOutsideClose?: boolean
+    /** 고치기(수량·품목 취소·건 취소) — 읽기 전용(§60)이면 안 온다. 계획서 plan-발주서-건상세-수정추가 */
+    edit?: OrderEditHandlers
+    /** 열자마자 고치기 모드 — 폰 택배 목록의 「고치기」로 열 때 */
+    initialEdit?: boolean
     onClose: () => void
 }) {
+    /*
+     * 🔴 고치기의 확인창(AlertDialog)이 이 패널 **위**에 뜬다 — 그 안 버튼 터치가 이 패널의 바깥 클릭으로
+     *    잡혀 패널까지 닫히는 9/23 결함과 같은 구조다. 확인창이 떠 있는 동안 닫힘을 거르고,
+     *    가드는 **클릭이 끝난 뒤에**(`setTimeout 0`) 푼다.
+     */
+    const confirming = useRef(false)
+    const guardedConfirm = async (opts: ConfirmOptions) => {
+        confirming.current = true
+        try {
+            return await confirmDialog(opts)
+        } finally {
+            setTimeout(() => {
+                confirming.current = false
+            }, 0)
+        }
+    }
     return (
         <Sheet
             open={orderId !== null}
@@ -86,7 +110,7 @@ export function OrderDetailPanel({
              * 닫히지 않는다(바깥 클릭·ESC 전부). 게이트를 닫는 건 게이트 자신의 몫이다.
              */
             onOpenChange={(o) => {
-                if (o || blockOutsideClose) return
+                if (o || blockOutsideClose || confirming.current) return
                 onClose()
             }}
         >
@@ -94,7 +118,7 @@ export function OrderDetailPanel({
                 side="right"
                 className="flex w-full flex-col gap-0 p-0 sm:max-w-[468px]"
                 onInteractOutside={(e) => {
-                    if (blockOutsideClose) e.preventDefault()
+                    if (blockOutsideClose || confirming.current) e.preventDefault()
                 }}
             >
                 {/*
@@ -112,6 +136,9 @@ export function OrderDetailPanel({
                         onNavigate={onNavigate}
                         onBatch={onBatch}
                         onOpenLine={onOpenLine}
+                        edit={edit}
+                        initialEdit={initialEdit}
+                        confirm={guardedConfirm}
                         onClose={onClose}
                     />
                 )}
@@ -129,6 +156,9 @@ function Body({
     onNavigate,
     onBatch,
     onOpenLine,
+    edit,
+    initialEdit,
+    confirm,
     onClose,
 }: {
     orderId: number
@@ -139,8 +169,12 @@ function Body({
     onNavigate: (orderId: number) => void
     onBatch?: () => void
     onOpenLine?: (line: OrderLine) => void
+    edit?: OrderEditHandlers
+    initialEdit: boolean
+    confirm: (opts: ConfirmOptions) => Promise<boolean>
     onClose: () => void
 }) {
+    const [editing, setEditing] = useState(initialEdit && edit !== undefined)
     const work = lines.filter((l) => l.status !== 'COMPLETED')
     const done = lines.filter((l) => l.status === 'COMPLETED')
     const ordered = lines.reduce((s, l) => s + l.orderedQty, 0)
@@ -154,14 +188,32 @@ function Body({
     return (
         <>
             <SheetHeader className="shrink-0 gap-2 border-b border-slate-200 px-5 pt-4 pb-3.5">
-                <SheetDescription className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                    수령인 주문 상세
-                    {at >= 0 && siblings.length > 1 && (
-                        <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-300">
-                            {at + 1}/{siblings.length}
+                {/* 오른쪽 위 닫기(X)와 겹치지 않게 pr-8 */}
+                <div className="flex items-center gap-2 pr-8">
+                    <SheetDescription className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                        수령인 주문 상세
+                        {at >= 0 && siblings.length > 1 && (
+                            <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-300">
+                                {at + 1}/{siblings.length}
+                            </span>
+                        )}
+                    </SheetDescription>
+                    {edit && !editing && lines.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setEditing(true)}
+                            className="ml-auto inline-flex h-8 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-primary hover:bg-primary/10"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                            고치기
+                        </button>
+                    )}
+                    {editing && (
+                        <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">
+                            고치는 중
                         </span>
                     )}
-                </SheetDescription>
+                </div>
                 <SheetTitle className="flex items-baseline gap-2 text-[19px] font-bold leading-none text-foreground">
                     {title}
                     {subtitle && (
@@ -199,10 +251,11 @@ function Body({
 
             <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
                 {lines.length === 0 && <p className="text-[12.5px] text-slate-400">품목이 없습니다.</p>}
-                {work.length > 0 && (
+                {editing && edit && lines.length > 0 && <OrderEditList lines={lines} edit={edit} confirm={confirm} />}
+                {!editing && work.length > 0 && (
                     <Group label={`작업필요 · ${work.length}품목`} lines={work} onOpenLine={onOpenLine} />
                 )}
-                {done.length > 0 && (
+                {!editing && done.length > 0 && (
                     <DoneGroup
                         lines={done}
                         doneKg={totals.doneKg}
@@ -212,6 +265,15 @@ function Body({
                 )}
             </div>
 
+            {editing && edit ? (
+                <OrderEditFooter
+                    lines={lines}
+                    edit={edit}
+                    confirm={confirm}
+                    title={subtitle ? `${title} · ${subtitle}` : title}
+                    onDone={() => setEditing(false)}
+                />
+            ) : (
             <Footer
                 totals={totals}
                 nextId={nextId}
@@ -219,6 +281,7 @@ function Body({
                 onBatch={onBatch}
                 onClose={onClose}
             />
+            )}
         </>
     )
 }

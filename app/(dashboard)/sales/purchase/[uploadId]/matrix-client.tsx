@@ -46,6 +46,9 @@ import {
 import type { PurchaseChannel } from '@prisma/client'
 import type { CellPatch, MatrixHeader } from '@/app/actions/purchase-order-matrix'
 import { rematchUpload } from '@/app/actions/purchase-order-assign'
+import { deletePurchaseOrder, updateOrderItemQty } from '@/app/actions/purchase-order'
+import { settle } from '@/lib/settle-action'
+import type { OrderEditHandlers } from './order-edit-list'
 import type { BatchPatch } from '@/app/actions/purchase-order-batch'
 import { CellAllocationPopover, type ActiveCell } from './cell-allocation-popover'
 import { OrderListMobile } from './order-list-mobile'
@@ -114,6 +117,8 @@ export function MatrixClient({
         head: string
         tail: string | null
         siblings: number[]
+        /** 열자마자 고치기 모드(폰 택배 「고치기」) */
+        edit?: boolean
     } | null>(null)
 
     // 행 일괄선택(D3) — 키는 orderId라 정렬이 바뀌어도 선택이 유지된다
@@ -283,13 +288,57 @@ export function MatrixClient({
      * `siblings`는 부른 쪽이 「그 화면에 실제로 보이는 순서」를 넘긴다 — 모바일 목록은 필터가
      * 걸려 있어 `rows`와 다르다(§4.2). 안 넘기면 정렬된 전체 행이 형제다.
      */
-    const openDetail = (row: MatrixRow, siblings?: number[]) => {
+    const openDetail = (row: MatrixRow, siblings?: number[], opts?: { edit?: boolean }) => {
         const [head, tail] = nameTiersOf(decl, row)
         setDetail({
             orderId: row.orderId,
             head,
             tail: tail || null,
             siblings: siblings ?? rows.map((r) => r.orderId),
+            edit: opts?.edit,
+        })
+    }
+
+    /**
+     * 건 상세 「고치기」(plan-발주서-건상세-수정추가 1단계). 서버가 판정·쓰기, 성공하면 `router.refresh()`로
+     * 서버 진실을 다시 받는다 — 드문 작업이라 패치 경로를 따로 짓지 않는다(위 prop 변화 감지 패턴이 받는다).
+     */
+    const editOrder: OrderEditHandlers | undefined = canManage
+        ? {
+              onQty: async (line, qty) => {
+                  const r = await settle(updateOrderItemQty(line.itemId, qty))
+                  if (!r.success) {
+                      toast.error(r.error)
+                      return false
+                  }
+                  toast.success(r.message)
+                  if (r.orderRemoved && detail) forgetOrder(detail.orderId)
+                  router.refresh()
+                  return true
+              },
+              onCancelOrder: async () => {
+                  if (!detail) return false
+                  const r = await settle(deletePurchaseOrder(detail.orderId))
+                  if (!r.success) {
+                      toast.error(r.error)
+                      return false
+                  }
+                  toast.success(r.message)
+                  forgetOrder(detail.orderId)
+                  router.refresh()
+                  return true
+              },
+          }
+        : undefined
+
+    /** 취소된 건을 행 선택에서도 뺀다 — 남아 있으면 검토 게이트가 사라진 건을 집는다 */
+    const forgetOrder = (orderId: number) => {
+        setDetail(null)
+        setSelected((prev) => {
+            if (!prev.has(orderId)) return prev
+            const next = new Set(prev)
+            next.delete(orderId)
+            return next
         })
     }
 
@@ -384,6 +433,7 @@ export function MatrixClient({
                     onRematch={canManage ? runRematch : undefined}
                     onOpenDetail={openDetail}
                     onOpenLine={canManage ? openLine : undefined}
+                    onEditOrder={canManage ? (row, siblings) => openDetail(row, siblings, { edit: true }) : undefined}
                     input={input}
                     onOpenGate={
                         canManage
@@ -679,6 +729,8 @@ export function MatrixClient({
                         : undefined
                 }
                 onOpenLine={canManage ? openLine : undefined}
+                edit={editOrder}
+                initialEdit={detail?.edit ?? false}
                 onClose={() => setDetail(null)}
             />
         </div>
