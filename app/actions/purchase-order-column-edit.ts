@@ -243,7 +243,8 @@ export async function editColumnRaw(
           throw new Error('그 사이 차감되었거나 바뀐 품목이 있습니다. 새로고침 후 다시 해 주세요.')
         }
       }
-    })
+      // 🔴 기본 5초는 Neon 왕복(250~300ms)에서 빠듯하다 — 다른 발주서 쓰기와 같은 값
+    }, { timeout: 30_000, maxWait: 10_000 })
 
     const label = t.field === 'packaging' ? '포장지' : '규격'
     await recordAuditLog({

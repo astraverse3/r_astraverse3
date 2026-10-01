@@ -178,6 +178,13 @@ export async function deletePurchaseUpload(
 // ======================================================
 
 /** `orderRemoved` = 건이 통째로 사라졌다 — 화면이 건 상세를 닫는다 */
+/**
+ * 인터랙티브 트랜잭션 시간 — 다른 발주서 쓰기(셀 차감·일괄·업로드)와 같은 값.
+ * 🔴 기본값(5초·연결 대기 2초)으로 두면 Neon 왕복 250~300ms × (건 상태 재계산이 품목마다 1회)라
+ *    DB가 느린 순간에만 「수량을 고치지 못했습니다」로 터진다(2026-10-01 사용자 재현 — 다시 하면 됐다).
+ */
+const TX_OPTIONS = { timeout: 30_000, maxWait: 10_000 }
+
 type EditResult = { success: true; message: string; orderRemoved: boolean } | { success: false; error: string }
 
 const QtyInputSchema = z.object({
@@ -261,7 +268,7 @@ export async function updateOrderItemQty(itemId: number, qty: number): Promise<E
     if (!QtyInputSchema.safeParse({ itemId, qty }).success) {
       return { success: false, error: `수량은 0~${MAX_ORDER_QTY.toLocaleString()} 사이 정수로 넣어 주세요.` }
     }
-    const applied = await prisma.$transaction((tx) => applyQtyChange(tx, itemId, qty))
+    const applied = await prisma.$transaction((tx) => applyQtyChange(tx, itemId, qty), TX_OPTIONS)
     if (applied.kind === 'noop') return { success: true, message: '바뀐 게 없어요.', orderRemoved: false }
 
     const { item, kind } = applied
@@ -299,7 +306,7 @@ export async function deletePurchaseOrder(orderId: number): Promise<EditResult> 
       if (!d.ok) throw new Error(d.reason)
       await removeOrder(tx, orderId, order.uploadId)
       return order
-    })
+    }, TX_OPTIONS)
     await recordAuditLog({
       action: 'DELETE',
       entity: 'PurchaseOrder',
