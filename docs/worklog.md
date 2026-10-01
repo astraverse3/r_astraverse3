@@ -58,7 +58,27 @@
 - `lib/repack.ts` `lossConfirmText()` 신설(개수분 문구 — 같은 규격·단중일 때만, 톤백·잔량 제외) · `formatSpec` 다이얼로그에서 lib로 이동 · 테스트 6
 - `repack-dialog.tsx` 「손실로 기록하고 진행」 → `confirmDialog`(destructive, 「돌아가기」/「손실로 기록」) · 확인창이 떠 있는 동안 다이얼로그 닫기 가드(`setTimeout 0`로 해제 — 중첩 모달 터치 닫힘)
 - 백로그 §76 repack-dialog 804→832줄 갱신
-- 검증 test 543/543 · tsc 0 · `eslint .` 0. 🖐 폰에서 「돌아가기」 시 창 유지 확인 필요
+- 검증 test 543/543 · tsc 0 · `eslint .` 0. ✅ 사용자 확인(실서버, 1kg 기본값과 함께)
+
+### 제품재고 목록 — 포장지 열
+
+커밋 `158a5de`. 계획서 `docs/plan/plan-제품재고-포장지열.md`, 보고서 `docs/report/report-제품재고-포장지열-2026-10-01.md`.
+발단: 사용자 「제품재고 목록에 포장지 열 추가 (포장지 확인할 방법이 없어)」.
+
+- `app/actions/packages.ts` `PackageRow.packaging` · `getPackages`·`exportPackages`에 `productType.packaging.name` · 엑셀 「포장지」 열(규격 왼쪽)
+- `package-row.tsx` 그리드 0.7fr 열(로트번호와 규격 사이, 사용자 결정) · 헤더 · 낱개·서브행 `PackagingCell` · 그룹 행 「—」
+- `mobile-package-card.tsx` 낱개 카드 빈 칸=포장지 · 서브 카드 `생산자 · 포장지`
+- 잔량(SKU 없음) 「—」, 잡곡 매입은 「매입포장」 그대로
+- 검증 test 543/543 · tsc 0 · `eslint .` 0. 🖐 PC 1280(로트 잘림)·폰 390·엑셀 사용자 확인
+
+### 발주서 매트릭스 — 「이미 차감」 줄에 생산자
+
+커밋 `21cfd1f`. 계획서 `docs/plan/plan-매트릭스-차감줄-생산자.md`, 보고서 `docs/report/report-매트릭스-차감줄-생산자-2026-10-01.md`.
+발단: 사용자 「매트릭스 로트에 생산자 이름 표시」 → 후보 줄엔 이미 있었고(사용자 「잘못 봤네」), 차감 줄에도 넣기로.
+
+- `purchase-order-matrix.ts` `CellAllocated`·`BulkAllocated.producer` · 차감 조회 select 확장 · `producerOf()`(후보 2 + 차감 2곳 공용)
+- `cell-allocation-popover.tsx` `로트 · 날짜 · 생산자` · `tonbag-popover.tsx` `로트 · 생산자 · 단중 × 개수` — 길면 로트만 잘린다
+- 검증 test 543/543 · tsc 0 · `eslint .` 0. 🖐 일반 셀·톤백 셀 사용자 확인
 
 ## 2026-09-30
 
