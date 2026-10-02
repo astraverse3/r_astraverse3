@@ -94,9 +94,10 @@ export function StockChart({ data, height = 360, truncateLabels = false }: Props
   const [expandedLabel, setExpandedLabel] = useState<string | null>(null)
 
   if (!data.length) {
+    // 「없다」는 화면에서 여기 한 곳만 말한다 — 표는 부모가 숨기고 카드는 0(백로그 §97)
     return (
-      <div className="flex items-center justify-center text-sm text-slate-400" style={{ height }}>
-        데이터가 없습니다
+      <div className="flex items-center justify-center text-sm font-semibold text-slate-600" style={{ height }}>
+        이 조건에 맞는 재고가 없어요
       </div>
     )
   }

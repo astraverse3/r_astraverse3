@@ -85,11 +85,6 @@ export function FarmerTable({ rows }: { rows: FarmerStockRow[] }) {
               </TableCell>
             </TableRow>
           ))}
-          {rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
     </div>
@@ -131,11 +126,6 @@ export function GroupTable({ rows }: { rows: GroupStockRow[] }) {
               </TableCell>
             </TableRow>
           ))}
-          {rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
     </div>
@@ -171,11 +161,6 @@ export function VarietyTable({ rows }: { rows: VarietyStockRow[] }) {
               </TableCell>
             </TableRow>
           ))}
-          {rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center text-slate-400 text-sm">데이터가 없습니다</TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
     </div>

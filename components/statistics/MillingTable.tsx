@@ -296,26 +296,19 @@ export function MillingTable({ data }: Props) {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.length === 0 ? (
-                <UiTableRow>
-                  <TableCell colSpan={columns.length} className="h-32 text-center text-slate-400">
-                    조회된 데이터가 없습니다
-                  </TableCell>
+              {/* 비면 부모가 표를 숨긴다 — 「없다」는 차트 자리 한 곳에서만(백로그 §97) */}
+              {table.getRowModel().rows.map(row => (
+                <UiTableRow
+                  key={row.id}
+                  className="hover:bg-primary/5"
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
                 </UiTableRow>
-              ) : (
-                table.getRowModel().rows.map(row => (
-                  <UiTableRow
-                    key={row.id}
-                    className="hover:bg-primary/5"
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </UiTableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </div>

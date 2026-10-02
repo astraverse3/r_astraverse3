@@ -66,7 +66,8 @@ export function MillingFilterSheet({
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
-      <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-52px-3.5rem-env(safe-area-inset-bottom)-16px)] overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
+      {/* 바닥 = 탭바(60px + mb-4 + safe) 위 8px — 전엔 3.5rem이라 탭바와 12px 겹쳤다(백로그 §36). max-h도 같은 값 */}
+      <div className="fixed bottom-[calc(60px+1rem+env(safe-area-inset-bottom)+8px)] left-3 right-3 z-50 bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-52px-60px-1rem-env(safe-area-inset-bottom)-16px)] overflow-hidden sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-y-1/2 sm:-translate-x-1/2 sm:w-[480px] sm:max-h-[80dvh]">
 
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">

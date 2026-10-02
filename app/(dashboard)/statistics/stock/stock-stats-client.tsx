@@ -293,10 +293,11 @@ export function StockStatsClient({
     })),
   ), [data.byVariety])
 
-  const TABS: { key: StockTab; label: string }[] = [
-    { key: 'variety', label: '품종별' },
-    { key: 'group',   label: '작목반별' },
-    { key: 'farmer',  label: '생산자별' },
+  // short = 모바일 라벨 — 「별」을 떼야 탭이 360 폭에 여유 있게 들어간다(백로그 §97 · 판매분석과 같은 규칙)
+  const TABS: { key: StockTab; label: string; short: string }[] = [
+    { key: 'variety', label: '품종별',   short: '품종' },
+    { key: 'group',   label: '작목반별', short: '작목반' },
+    { key: 'farmer',  label: '생산자별', short: '생산자' },
   ]
 
   // barSize=14 기준 아이템당 높이 (barCategoryGap=30% → band ≈ 20px gap + 14px bar = 34px)
@@ -332,13 +333,14 @@ export function StockStatsClient({
             <button
               key={tab.key}
               onClick={() => handleTabChange(tab.key)}
-              className={`px-5 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+              className={`px-3 md:px-5 py-3 text-[13px] md:text-sm font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              {tab.label}
+              <span className="md:hidden">{tab.short}</span>
+              <span className="hidden md:inline">{tab.label}</span>
             </button>
           ))}
           <div className="ml-auto flex items-center gap-1 pr-2">
@@ -619,15 +621,17 @@ export function StockStatsClient({
         </div>
 
         {/* 서머리 카드 (모바일: 2x2, PC: 수직 1열) */}
-        <StockSummaryCards summary={data.summary} />
+        <StockSummaryCards summary={data.summary} empty={data.summary.totalKg === 0} />
       </div>
 
-      {/* ── 테이블 ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-2">
-        {activeTab === 'farmer'  && <FarmerTable  rows={data.byFarmer}  />}
-        {activeTab === 'group'   && <GroupTable   rows={data.byGroup}   />}
-        {activeTab === 'variety' && <VarietyTable rows={data.byVariety} />}
-      </div>
+      {/* ── 테이블 — 비면 숨긴다(「없다」는 차트 자리 한 곳에서만, 백로그 §97) ── */}
+      {activeItems.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-2">
+          {activeTab === 'farmer'  && <FarmerTable  rows={data.byFarmer}  />}
+          {activeTab === 'group'   && <GroupTable   rows={data.byGroup}   />}
+          {activeTab === 'variety' && <VarietyTable rows={data.byVariety} />}
+        </div>
+      )}
 
     </div>
   )

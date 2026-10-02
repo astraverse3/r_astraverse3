@@ -2,10 +2,11 @@ import type { QuickPeriod } from '@/app/actions/statistics'
 
 export type MainTab = 'period' | 'variety' | 'millingType'
 
-export const MAIN_TABS: { key: MainTab; label: string }[] = [
-  { key: 'period',      label: '기간별' },
-  { key: 'variety',     label: '품종별' },
-  { key: 'millingType', label: '도정구분별' },
+/** short = 모바일 라벨 — 「별」을 뗀다(백로그 §97 · 판매분석과 같은 규칙) */
+export const MAIN_TABS: { key: MainTab; label: string; short: string }[] = [
+  { key: 'period',      label: '기간별',     short: '기간' },
+  { key: 'variety',     label: '품종별',     short: '품종' },
+  { key: 'millingType', label: '도정구분별', short: '도정구분' },
 ]
 
 export const QUICK_PERIODS: { key: QuickPeriod; label: string }[] = [

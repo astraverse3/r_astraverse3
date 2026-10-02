@@ -55,6 +55,8 @@ export function MillingStatsClient({
   const [data, setData]                             = useState(initialData)
   const [varietyChartData, setVarietyChartData]     = useState<MultiSeriesChartData>(() => emptyMultiSeries(initialData.groupBy))
   const [millingTypeChartData, setMillingTypeChartData] = useState<MultiSeriesChartData>(() => emptyMultiSeries(initialData.groupBy))
+  // 조건에 맞는 도정이 0건 — 카드는 0, 표는 숨기고, 차트 자리에서 한 번만 말한다(백로그 §97)
+  const empty = data.summary.millingCount === 0
 
   const [mainTab, setMainTab]             = useState<MainTab>('period')
   const [quickPeriod, setQuickPeriod]     = useState<QuickPeriod>('6m')
@@ -390,13 +392,14 @@ export function MillingStatsClient({
             <button
               key={tab.key}
               onClick={() => handleTabChange(tab.key)}
-              className={`px-5 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+              className={`px-3 md:px-5 py-3 text-[13px] md:text-sm font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap ${
                 mainTab === tab.key
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              {tab.label}
+              <span className="md:hidden">{tab.short}</span>
+              <span className="hidden md:inline">{tab.label}</span>
             </button>
           ))}
           <div className="ml-auto flex items-center gap-1 pr-2">
@@ -685,21 +688,22 @@ export function MillingStatsClient({
           {mainTab === 'period' && (
             <MillingChart data={data.chartData} groupBy={data.groupBy} />
           )}
+          {/* 품종별은 아무것도 안 고르면 차트만 기본 5품종으로 그린다(표·카드는 전체) — 차트만 빌 수 있어서 그때는 차트 사정만 말한다 */}
           {mainTab === 'variety' && (
-            <MultiSeriesChart data={varietyChartData} title="품종별" />
+            <MultiSeriesChart data={varietyChartData} title="품종별" emptyText={empty ? undefined : '고른 품종에는 도정 기록이 없어요'} />
           )}
           {mainTab === 'millingType' && (
-            <MultiSeriesChart data={millingTypeChartData} title="도정구분별" />
+            <MultiSeriesChart data={millingTypeChartData} title="도정구분별" emptyText={empty ? undefined : '고른 도정구분에는 도정 기록이 없어요'} />
           )}
         </div>
-        {/* 카드: 모바일 차트 아래 / PC 오른쪽 */}
-        <div className="md:w-48 md:shrink-0">
+        {/* 카드: 모바일 차트 위(숫자 먼저, order-first) / PC 오른쪽 */}
+        <div className="order-first md:order-none md:w-48 md:shrink-0">
           <SummaryCards summary={data.summary} />
         </div>
       </div>
 
-      {/* ── 테이블 ── */}
-      <MillingTable data={data.tableData} />
+      {/* ── 테이블 — 비면 숨긴다(「없다」는 차트 자리 한 곳에서만, 백로그 §97) ── */}
+      {!empty && <MillingTable data={data.tableData} />}
     </div>
   )
 }

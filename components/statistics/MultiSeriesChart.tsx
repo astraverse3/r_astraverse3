@@ -177,9 +177,11 @@ const YIELD_DOMAIN: [number, number] = [55, 75]
 type Props = {
   data: MultiSeriesChartData
   title: string
+  /** 비었을 때 문구 — 표·카드는 남고 차트만 빈 경우(고른 품종에 기록 없음) 부모가 바꿔 넘긴다 */
+  emptyText?: string
 }
 
-export function MultiSeriesChart({ data, title }: Props) {
+export function MultiSeriesChart({ data, title, emptyText = '이 조건에 맞는 도정 기록이 없어요' }: Props) {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -220,7 +222,8 @@ export function MultiSeriesChart({ data, title }: Props) {
   const maxBarSize = getMaxBarSize(seriesNames.length)
 
   const margin     = isMobile ? { top: 4, right: 4, left: 0, bottom: 0 } : { top: 5, right: 16, left: 0, bottom: 5 }
-  const tickFontSz = isMobile ? 10 : 12
+  // 모바일 눈금 11px · slate-500(작업지시 ③ T2·T3 — 전엔 10px·slate-400). 일별이면 7칸마다(1·8·15·22·29, 백로그 §97)
+  const tickFontSz = isMobile ? 11 : 12
 
   return (
     <div className="bg-white rounded-2xl p-3 md:p-5 shadow-sm border border-slate-100 h-full flex flex-col">
@@ -242,8 +245,9 @@ export function MultiSeriesChart({ data, title }: Props) {
       </div>
 
       {isEmpty ? (
-        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-          조회된 데이터가 없습니다
+        // 「없다」는 화면에서 여기 한 곳만 말한다 — 표는 부모가 숨기고 카드는 0(백로그 §97)
+        <div className="flex-1 flex items-center justify-center text-sm font-semibold text-slate-600">
+          {emptyText}
         </div>
       ) : (
         <div className="flex-1 min-h-0">
@@ -251,18 +255,18 @@ export function MultiSeriesChart({ data, title }: Props) {
             <ComposedChart data={chartData} margin={margin}>
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
+                tick={{ fontSize: tickFontSz, fill: '#64748b' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={v => formatXTick(v, groupBy)}
-                interval="preserveStartEnd"
+                interval={isMobile && groupBy === 'day' ? 6 : 'preserveStartEnd'}
               />
               <YAxis
                 yAxisId="kg"
                 orientation="left"
                 ticks={tonTicks}
                 domain={[0, tonTicks[tonTicks.length - 1]]}
-                tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
+                tick={{ fontSize: tickFontSz, fill: '#64748b' }}
                 axisLine={false}
                 tickLine={false}
                 width={isMobile ? 28 : 40}
@@ -274,7 +278,7 @@ export function MultiSeriesChart({ data, title }: Props) {
                   orientation="right"
                   domain={YIELD_DOMAIN}
                   ticks={YIELD_TICKS}
-                  tick={{ fontSize: tickFontSz, fill: '#94A3B8' }}
+                  tick={{ fontSize: tickFontSz, fill: '#64748b' }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={v => `${v}%`}
