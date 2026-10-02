@@ -27,7 +27,7 @@
 
 - `loading-cell.tsx` today 칩 `bg-red-600 text-white` → `border-red-200 bg-red-50 text-red-700`(호버 `red-100`·시계 `red-500`·`py-[3px]`) · 연필 `text-red-300` · `upload-table.tsx` 「오늘」 행 틴트 `bg-red-50/40` 제거
 - 착수 전 대조: 「오늘」을 칠하는 곳은 이 두 곳뿐(매트릭스 머리글은 회색 글자만)
-- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면은 사용자 확인
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. ✅ 사용자 화면 확인
 
 ## 2026-10-01
 
