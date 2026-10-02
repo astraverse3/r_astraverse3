@@ -65,11 +65,11 @@ export function ChartLegend() {
   return <StockLegend />
 }
 
-/** 이름 칸 — 생산자는 뒤에 작목반, 작목반은 뒤에 인증 */
-export function StockName({ row, sub = STAT_SUB }: { row: StockListRow; sub?: string }) {
+/** 이름 칸 — 생산자는 뒤에 작목반, 작목반은 뒤에 인증. 모바일은 글자 크기를 넘겨 받는다 */
+export function StockName({ row, name = STAT_NAME, sub = STAT_SUB }: { row: StockListRow; name?: string; sub?: string }) {
   return (
     <span className="flex items-center gap-1.5 min-w-0">
-      <span className={`truncate ${STAT_NAME}`}>{row.name}</span>
+      <span className={`truncate ${name}`}>{row.name}</span>
       {row.cert && <CertBadge certType={row.cert} />}
       {row.group && <span className={`truncate ${sub}`}>{row.group}</span>}
     </span>
