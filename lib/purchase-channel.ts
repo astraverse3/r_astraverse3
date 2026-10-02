@@ -12,24 +12,19 @@ export const PURCHASE_CHANNELS = [
 ] as const satisfies readonly PurchaseChannel[]
 
 /**
- * 채널 라벨과 색 — `color`는 판매분석 차트 색(`components/statistics/sales-colors.ts`)과 한 원천이다.
- * 쌓는 순서(= 이 순서)로 이웃한 두 색이 색약에서도 갈리게 검증했다(작업지시 ⑪ A-2, dataviz validate_palette).
- * 이마트는 보라(T1 금지)에서 벽돌색으로 바꿨다.
+ * 채널 배지 — 시안(`docs/handoff/발주서판매처리/엑셀업로드-2단계-데스크탑.html`) 색에서 이마트만 보라(T1 금지) → 분홍
+ * (작업지시 ⑪ A-2 개정판, 사용자 결정 2026-10-02).
+ * 🔴 **색 바탕만, 점 없음.** 발주서 목록 같은 줄의 진행 배지(「완료」·「부분」)가 「색 바탕 + 점」이라 점 유무로 모양이 갈린다.
+ * 🔴 채널에 쓰면 안 되는 색: emerald·green(완료) · amber·yellow(부분·배차 미정) · red(오늘) · violet(T1).
+ * 판매분석 차트 색(`components/statistics/sales-colors.ts`)과는 따로 간다 — 차트의 초록·노랑을 가져오면 진행 배지와 겹친다.
  */
-export const CHANNEL_META: Record<PurchaseChannel, { label: string; color: string }> = {
-  DELIVERY: { label: '택배', color: '#2a78d6' },
-  EMART: { label: '이마트', color: '#b9472a' },
-  MEAL_SEOUL: { label: '서울급식', color: '#1baf7a' },
-  MEAL_HAENAM: { label: '해남급식', color: '#eda100' },
-  CORPORATE: { label: '기업별', color: '#e87ba4' },
+export const CHANNEL_META: Record<PurchaseChannel, { label: string; badge: string }> = {
+  DELIVERY: { label: '택배', badge: 'bg-blue-50 text-blue-700' },
+  EMART: { label: '이마트', badge: 'bg-pink-50 text-pink-700' },
+  MEAL_SEOUL: { label: '서울급식', badge: 'bg-teal-50 text-teal-700' },
+  MEAL_HAENAM: { label: '해남급식', badge: 'bg-cyan-50 text-cyan-700' },
+  CORPORATE: { label: '기업별', badge: 'bg-slate-100 text-slate-600' },
 }
-
-/**
- * 채널 배지 — 분류는 회색 외곽선(작업지시 ③ T1) + 채널 색 점.
- * 🔴 색 배경으로 칠하지 않는다: 발주서 목록 같은 줄의 처리 상태 배지(「완료」 emerald · 「부분」 amber,
- * 둘 다 색 배경 + 점)와 같은 모양이 된다(작업지시 ⑪ 시안의 서울급식 = 「완료」였다).
- */
-export const CHANNEL_BADGE_CLASS = 'border border-slate-300 bg-white text-slate-700'
 
 export function channelLabel(channel: PurchaseChannel): string {
   return CHANNEL_META[channel].label

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Package, MessageSquareText, ChevronUp } from 'lucide-react'
-import { CHANNEL_BADGE_CLASS, CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
+import { CHANNEL_META, PURCHASE_CHANNELS } from '@/lib/purchase-channel'
 import Link from 'next/link'
 import { UploadRowMenu } from './upload-row-menu'
 import { LoadingCell } from './loading-cell'
@@ -103,12 +103,8 @@ export function UploadTable({
                         <div className={`${GRID} py-2.5`}>
                             <div>
                                 <span
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold ${CHANNEL_BADGE_CLASS}`}
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${CHANNEL_META[r.channel].badge}`}
                                 >
-                                    <span
-                                        className="w-1.5 h-1.5 rounded-full shrink-0"
-                                        style={{ backgroundColor: CHANNEL_META[r.channel].color }}
-                                    />
                                     {CHANNEL_META[r.channel].label}
                                 </span>
                             </div>

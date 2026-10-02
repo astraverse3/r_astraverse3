@@ -26,11 +26,11 @@ function App() {
         <DCArtboard id="pc-cust" label="제안 — 거래처별 (상위 N + 더 보기 · 시안은 6곳으로 줄여 보임)" width={1100} height={940}><SsDesktop variant="next" tab="customer" limit={6}></SsDesktop></DCArtboard>
         <DCArtboard id="pc-empty" label="빈 상태 — 차트 자리에서 한 번만 · 카드 0 · 표 숨김" width={1100} height={570}><SsDesktop variant="empty"></SsDesktop></DCArtboard>
       </DCSection>
-      <DCSection id="a2" title="A-2 · 채널 색 (보라 제거)" subtitle="이마트만 바꾼다(나머지 5색은 검증 통과값 유지). 추천 A 벽돌색 — 옆 택배(파랑)와는 색상축이 반대, 서울급식(초록)과는 밝기가 갈려 색약에서도 떨어진다. B 먹색은 안전하지만 「기타/미분류」처럼 읽힐 위험. 수치는 시안 안에서 계산한 참고값(ΔE2000, Machado 심도 1.0) — 확정은 기존 검증으로. 채널 배지(lib/purchase-channel.ts)도 T1 대상: 차트 색과 계열을 맞춘다.">
+      <DCSection id="a2" title="A-2 · 채널 색 (보라 제거)" subtitle="이마트만 바꾼다(나머지 5색은 검증 통과값 유지). 추천 A 벽돌색 — 옆 택배(파랑)와는 색상축이 반대, 서울급식(초록)과는 밝기가 갈려 색약에서도 떨어진다. B 먹색은 안전하지만 「기타/미분류」처럼 읽힐 위험. 수치는 시안 안에서 계산한 참고값(ΔE2000, Machado 심도 1.0) — 확정은 기존 검증으로. 채널 배지는 색 바탕만(점 없음) — 원래 색에서 이마트만 보라 → 분홍.">
         <DCArtboard id="cc-now" label="현재" width={520} height={280}><CcPalette pk="now"></CcPalette></DCArtboard>
         <DCArtboard id="cc-a" label="A안 (추천)" width={520} height={280}><CcPalette pk="brick"></CcPalette></DCArtboard>
         <DCArtboard id="cc-b" label="B안" width={520} height={280}><CcPalette pk="ink"></CcPalette></DCArtboard>
-        <DCArtboard id="cc-badge" label="채널 배지 — 차트와 같은 계열로" width={520} height={150}><CcBadges></CcBadges></DCArtboard>
+        <DCArtboard id="cc-badge" label="채널 배지 — 색 바탕 · 점 없음 (목록 한 줄에서)" width={620} height={330}><CcBadges></CcBadges></DCArtboard>
       </DCSection>
       <DCSection id="a3" title="A-3 · 모바일 360" subtitle="① 필터는 재고분석과 같은 시트. 카드 안엔 기간 한 줄 + 「조건」 버튼(걸린 개수 뱃지) + 엑셀 ② 탭은 모바일에서 「별」을 뗀다 — 채널·거래처·품종·제품 | 원물출고 = 약 300px, 360에 들어간다 ③ 요약 카드를 차트 위로(숫자 먼저) ④ 표 → 두 줄 목록: 이름·kg / 비중 막대·개수·주문·% ⑤ 일별 31개는 칸을 줄이고 눈금을 1·8·15·22·29로 솎는다.">
         <DCArtboard id="m-now" label="실데이터 (10/1~10/2)" width={360} height={1000}><SsMobile h={1000}></SsMobile></DCArtboard>

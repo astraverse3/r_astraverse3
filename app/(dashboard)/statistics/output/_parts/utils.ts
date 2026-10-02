@@ -15,7 +15,11 @@ export const SALES_TABS: { key: SalesTab; label: string; short: string; column: 
   { key: 'product', label: '제품별', short: '제품', column: '제품' },
 ]
 
-/** 거래처 탭은 앞 20곳만(작업지시 ⑪ A-1 ③) — 택배는 주문자가 거래처라 곧 수백 곳이 된다. 엑셀은 전체 */
+/**
+ * 거래처 탭은 앞 20곳만(작업지시 ⑪ A-1 ③). 엑셀은 전체.
+ * 거래처 = 모든 채널에서 발주처(`PurchaseOrder.vendor`)다. 택배는 발주처가 판매처(스토어·식당)라 여러 곳이고
+ * 개인 주문자는 수령인 쪽이라 세지 않는다 — 「수백 곳」은 아니다(10/2 실측 8곳). 서울급식은 구청별로 는다
+ */
 export const CUSTOMER_LIMIT = 20
 
 /** 탭 표에 보일 줄 + 접어 둔 줄 수 — PC 표·모바일 목록이 같은 규칙을 쓴다 */

@@ -56,12 +56,32 @@ function CcPalette({ pk }) {
   );
 }
 function CcBadges() {
-  const now = [['택배', 'bg-blue-50 text-blue-700'], ['이마트', 'bg-violet-50 text-violet-700'], ['서울급식', 'bg-teal-50 text-teal-700'], ['해남급식', 'bg-cyan-50 text-cyan-700'], ['기업별', 'bg-slate-100 text-slate-600']];
-  const next = [['택배', 'bg-blue-50 text-blue-700', 'DELIVERY'], ['이마트', 'bg-orange-50 text-orange-800', 'EMART'], ['서울급식', 'bg-emerald-50 text-emerald-700', 'MEAL_SEOUL'], ['해남급식', 'bg-amber-50 text-amber-800', 'MEAL_HAENAM'], ['기업별', 'bg-pink-50 text-pink-700', 'CORPORATE']];
+  const Prog = ({ l, cls, dot }) => <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 ${cls}`}><span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }}></span>{l}</span>;
+  const C = [['택배', 'bg-blue-50 text-blue-700'], ['이마트', 'bg-pink-50 text-pink-700'], ['서울급식', 'bg-teal-50 text-teal-700'], ['해남급식', 'bg-cyan-50 text-cyan-700'], ['기업별', 'bg-slate-100 text-slate-600']];
+  const rows = [[0, '오늘 오전', 'done'], [1, '오늘', 'part'], [2, '10/6 오전', 'done'], [3, '10/7', 'part'], [4, '10/8', 'wait']];
+  return (
+    <div className="bg-white p-4 h-full flex flex-col gap-2 text-[12px]">
+      <p className="text-slate-600 font-semibold">C′ · 채널마다 색 바탕, 점 없음 — 원래 색 그대로, 이마트만 보라 → 분홍</p>
+      <div className="border border-slate-100 rounded-lg overflow-hidden">
+        {rows.map(([i, ld, st]) => <div key={i} className="grid grid-cols-[80px_minmax(0,1fr)_130px_80px] items-center h-10 px-3 border-t border-slate-100 first:border-0">
+          <span className={`justify-self-start px-2 py-0.5 rounded-md text-[11px] font-bold ${C[i][1]}`}>{C[i][0]}</span>
+          <span className="text-[13px] font-bold text-slate-800 truncate">{C[i][0]}_2610{String(i + 2).padStart(2, '0')}</span>
+          <span className={`justify-self-start text-[12px] font-bold ${ld.startsWith('오늘') ? 'px-2 py-0.5 rounded-md border border-red-200 bg-red-50 text-red-700' : 'text-slate-700'}`}>{ld}</span>
+          {st === 'done' ? <Prog l="완료" cls="bg-emerald-50 text-emerald-700" dot="#10b981"></Prog> : st === 'part' ? <Prog l="부분" cls="bg-amber-50 text-amber-700" dot="#f59e0b"></Prog> : <span className="text-[12px] text-slate-500">대기</span>}
+        </div>)}
+      </div>
+      <p className="text-slate-500">서울급식(teal)과 「완료」(emerald)는 가까운 색이지만, 열이 떨어져 있고 점 유무로 모양이 갈린다. 노랑·빨강은 채널에 안 쓴다(부분·오늘 자리).</p>
+    </div>
+  );
+}
+function CcBadgesOld() {
+  const Badge = ({ k, cls }) => <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 border ${cls}`}><span className="w-1.5 h-1.5 rounded-full" style={{ background: SS_COL[k] }}></span>{SS_LABEL[k]}</span>;
+  const Prog = ({ l, cls, dot }) => <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1 ${cls}`}><span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }}></span>{l}</span>;
+  const opts = [['A · 흰 바탕 (지금)', 'bg-white border-slate-300 text-slate-700'], ['B · slate-100 바탕 (결정)', 'bg-slate-100 border-slate-200 text-slate-700']];
   return (
     <div className="bg-white p-4 h-full flex flex-col gap-3 text-[12px]">
-      <div><p className="text-slate-500 mb-1.5">현재 — 배지와 차트 색이 택배 말고는 다 따로 논다</p><div className="flex gap-1.5">{now.map(([l, c]) => <span key={l} className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${c}`}>{l}</span>)}</div></div>
-      <div><p className="text-slate-500 mb-1.5">제안 — 배지 색 계열 = 차트 색 (점·막대·배지가 같은 뜻)</p><div className="flex gap-1.5">{next.map(([l, c, k]) => <span key={l} className={`px-1.5 py-0.5 rounded text-[11px] font-bold flex items-center gap-1 ${c}`}><span className="w-1.5 h-1.5 rounded-full" style={{ background: SS_COL[k] }}></span>{l}</span>)}</div></div>
+      {opts.map(([t, cls]) => <div key={t}><p className="text-slate-600 font-semibold mb-1.5">{t}</p><div className="flex items-center gap-1.5 border-y border-slate-100 py-2">{['DELIVERY', 'EMART', 'MEAL_SEOUL', 'MEAL_HAENAM', 'CORPORATE'].map(k => <Badge key={k} k={k} cls={cls}></Badge>)}<span className="w-px h-4 bg-slate-200 mx-1"></span><Prog l="완료" cls="bg-emerald-50 text-emerald-700" dot="#10b981"></Prog><Prog l="부분" cls="bg-amber-50 text-amber-800" dot="#f59e0b"></Prog></div></div>)}
+      <p className="text-slate-500">채널마다 색 바탕(C)을 깔면 서울급식이 「완료」, 해남급식이 「부분」과 겹친다 → 채널은 회색 덩어리 + 점, 진행은 색 바탕.</p>
     </div>
   );
 }
