@@ -22,7 +22,7 @@
 
 ### 상차 「오늘」 칩 톤다운 (디자이너 작업지시 ⑩ A안)
 
-보고서 `docs/report/report-상차-오늘-톤다운-2026-10-02.md`(2파일 — 계획서 생략, 지시서 그대로).
+커밋 `cdd7112`. 보고서 `docs/report/report-상차-오늘-톤다운-2026-10-02.md`(2파일 — 계획서 생략, 지시서 그대로).
 지시서 이유: 빨간 꽉 찬 칩이 목록에서 가장 강해 매일 보는 「진행」 열보다 먼저 눈에 들어온다.
 
 - `loading-cell.tsx` today 칩 `bg-red-600 text-white` → `border-red-200 bg-red-50 text-red-700`(호버 `red-100`·시계 `red-500`·`py-[3px]`) · 연필 `text-red-300` · `upload-table.tsx` 「오늘」 행 틴트 `bg-red-50/40` 제거
