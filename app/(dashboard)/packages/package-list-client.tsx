@@ -153,11 +153,10 @@ export function PackageListClient({
 
     return (
         <>
-            {selectMode && (
+            {/* 차감 모드엔 안내 문구를 두지 않는다(사용자 2026-10-02 「굳이 안 필요해」) */}
+            {mode === 'repack' && (
                 <p className="px-1 text-[11.5px] text-slate-500">
-                    {mode === 'repack'
-                        ? '합칠·나눌 재고를 고르세요. 품종·도정유형·출처가 같아야 해요.'
-                        : '재고에서 뺄 항목을 고르세요. 사유와 발생일은 다음 단계에서 정합니다.'}
+                    합칠·나눌 재고를 고르세요. 품종·도정유형·출처가 같아야 해요.
                 </p>
             )}
 
