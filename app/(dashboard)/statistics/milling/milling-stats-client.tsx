@@ -93,6 +93,15 @@ export function MillingStatsClient({
   )
 
   // ── 데이터 fetch ─────────────────────────────────
+  // 연산 모드면 날짜 대신 원물 생산연도로 거른다(서버 `cropYear`).
+  // 🔴 예전엔 빠른기간 「N년산」을 누를 때만 넘겨서, 그다음 탭 전환·검색·칩 빼기는 날짜 모드
+  //    (1/1 ~ 이듬해 3/31, resolveQuickPeriod)로 빠졌다 → 「2025년산」인데 2501~2603 칸이 나왔다(2026-10-02 사용자 신고).
+  //    넘긴 값이 있으면(undefined 포함 — 다른 기간을 막 골랐을 때) 그걸, 없으면 지금 고른 기간을 따른다
+  function resolveCropYear(overrides?: { cropYear?: number }): number | undefined {
+    if (overrides && 'cropYear' in overrides) return overrides.cropYear
+    return quickPeriod === 'cropYear' ? cropYear : undefined
+  }
+
   function fetchPeriod(overrides?: {
     from?: string; to?: string
     groupBy?: GroupBy
@@ -115,7 +124,7 @@ export function MillingStatsClient({
         varieties: resolvedVars.length ? resolvedVars : undefined,
         millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
         farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-        cropYear: overrides?.cropYear,
+        cropYear: resolveCropYear(overrides),
       })
       setData(result)
     })
@@ -143,7 +152,7 @@ export function MillingStatsClient({
           varieties: resolvedVars.length ? resolvedVars : DEFAULT_VARIETIES,
           millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
           farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-          cropYear: overrides?.cropYear,
+          cropYear: resolveCropYear(overrides),
         }),
         getMillingStatistics({
           from: new Date(resolvedFrom),
@@ -152,7 +161,7 @@ export function MillingStatsClient({
           varieties: resolvedVars.length ? resolvedVars : undefined,
           millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
           farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-          cropYear: overrides?.cropYear,
+          cropYear: resolveCropYear(overrides),
         }),
       ])
       setVarietyChartData(chart)
@@ -182,7 +191,7 @@ export function MillingStatsClient({
           millingTypes: resolvedTypes.length ? resolvedTypes : millingTypeOptions,
           varieties: resolvedVars.length ? resolvedVars : undefined,
           farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-          cropYear: overrides?.cropYear,
+          cropYear: resolveCropYear(overrides),
         }),
         getMillingStatistics({
           from: new Date(resolvedFrom),
@@ -191,7 +200,7 @@ export function MillingStatsClient({
           millingTypes: resolvedTypes.length ? resolvedTypes : undefined,
           varieties: resolvedVars.length ? resolvedVars : undefined,
           farmers: resolvedFarmers.length ? resolvedFarmers : undefined,
-          cropYear: overrides?.cropYear,
+          cropYear: resolveCropYear(overrides),
         }),
       ])
       setMillingTypeChartData(chart)
@@ -264,16 +273,16 @@ export function MillingStatsClient({
     setAppliedFarmers([])
 
     if (mainTab === 'period') {
-      fetchPeriod({ from: newFrom, to: newTo, groupBy: r.groupBy, varieties: DEFAULT_PERIOD_VARIETIES, millingTypes: ['백미'], farmers: [] })
+      fetchPeriod({ from: newFrom, to: newTo, groupBy: r.groupBy, varieties: DEFAULT_PERIOD_VARIETIES, millingTypes: ['백미'], farmers: [], cropYear: undefined })
     } else if (mainTab === 'variety') {
       setSelectedVarieties(DEFAULT_VARIETIES)
-      fetchVariety({ from: newFrom, to: newTo, varieties: DEFAULT_VARIETIES, millingTypes: [] })
+      fetchVariety({ from: newFrom, to: newTo, varieties: DEFAULT_VARIETIES, millingTypes: [], cropYear: undefined })
     } else {
       const allTypes = millingTypeOptions
       const vars = DEFAULT_MILLINGTYPE_VARIETIES.filter(v => varietyOptions.includes(v))
       setSelectedMillingTypes(allTypes)
       setSelectedVarieties(vars)
-      fetchMillingType({ from: newFrom, to: newTo, millingTypes: allTypes, varieties: vars })
+      fetchMillingType({ from: newFrom, to: newTo, millingTypes: allTypes, varieties: vars, cropYear: undefined })
     }
   }
 
