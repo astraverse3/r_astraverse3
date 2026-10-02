@@ -1,76 +1,64 @@
 # Claude Design 워크플로우 가이드
 
-이 프로젝트(`milling-log`)에서 **Claude Design → Claude Code 핸드오프 번들**로 UI를 만드는 표준 절차다. 2026-04-23부터 Stitch MCP는 제거됐고, 모든 디자인 작업은 Claude Design에서 한다.
+이 프로젝트(`milling-log`)의 UI 디자인은 **Claude Design**(claude.ai)에서 한다. 2026-04-23부터 Stitch MCP는 제거됐다.
 
-## 전체 흐름
+> 2026-10-02 개정 — 요청·질문을 **파일로** 주고받는다(Claude Design 제안, 사용자 합의).
+> 그 전에는 요청서를 대화창에 통째로 붙여넣고, 4월 초기엔 「Send to Claude Code」 번들 URL을 `WebFetch`로 읽었다. 둘 다 이제 안 쓴다.
+
+## 두 Claude가 볼 수 있는 것
+
+| | 이 PC의 `milling-log/` 읽기 | 쓰기 |
+|---|---|---|
+| Claude Code (VS Code) | ✅ | ✅ |
+| Claude Design | ✅ **저장하는 순간 보인다** — GitHub가 아니라 PC 폴더를 읽는다. 푸시 불필요 | ❌ → 결과는 다운로드 묶음으로 |
+
+⚠️ Claude Design은 **그 대화에 `milling-log` 폴더가 연결돼 있을 때만** 읽는다. 새 대화를 열면 폴더를 다시 연결한다.
+
+## 흐름
 
 ```
-[claude.ai Claude Design]
-        │
-        │ 1. 코드베이스 attach (최초 1회)
-        │ 2. 프롬프트로 시안 제작 / 변형 / 편집
-        │ 3. Export → "Send to Claude Code"
-        ▼
-[핸드오프 번들 생성]
-   ├─ 디자인 파일
-   ├─ 채팅 로그
-   ├─ PROMPT.md (스택·컨벤션·우선순위)
-   └─ 공유 URL
-        │
-        │ 4. 생성된 "붙여넣기용 프롬프트" 복사
-        ▼
-[VSCode Claude Code (여기)]
-        │
-        │ 5. 복사한 프롬프트 붙여넣기
-        │ 6. Claude가 번들 URL 읽고 PROMPT.md 따라 구현
-        │ 7. 타입체크 / 빌드 / 수동 확인
-        ▼
-[커밋 + worklog 기록]
+[Claude Code]  docs/design-requests/요청-{주제}.md 작성
+      │
+      │  사용자 → Claude Design: 「새 요청 확인해줘」   (붙여넣기 없음)
+      ▼
+[Claude Design]  폴더에서 요청을 읽고 시안·지시서 제작 → 다운로드 묶음
+      │
+      │  사용자: 묶음을 docs/handoff/ 에 풀기 → Claude Code: 「⑬ 반영해」
+      ▼
+[Claude Code]  현재 코드와 전수 대조 → 적용/완료/기각 표 보고 → 승인 → 구현
+      │
+      │  되물을 게 있으면 docs/design-requests/질문-{주제}.md 작성
+      │  사용자 → Claude Design: 「질문 확인해줘」
+      ▼
+[Claude Design]  답을 지시서에 고쳐 넣어 묶음으로 다시 → 묶음 안 「답한 질문」 절
 ```
 
-## 1. Claude Design 쪽에서
+## 파일 위치
 
-### 최초 세팅 (한 번만)
-- [claude.ai](https://claude.ai) → Claude Design 진입
-- **Attach codebase** → `milling-log` 리포 연결 (완료: 2026-04-23)
-- Claude가 기존 컴포넌트·컬러·타이포 읽어서 디자인 시스템 자동 구성
+| 무엇 | 어디 | 누가 씀 |
+|---|---|---|
+| 디자인 요청 | `docs/design-requests/요청-{주제}.md` | Claude Code |
+| 되묻는 질문 | `docs/design-requests/질문-{주제}.md` (요청과 같은 폴더) | Claude Code |
+| 작업지시·시안 | `docs/handoff/작업지시-N-{주제}/지시서.md` + `시안/` | Claude Design(묶음) → 사용자가 풂 |
+| 질문에 대한 답 | 개정된 지시서의 「답한 질문」 절 | Claude Design |
 
-### 디자인 작업
-- 프롬프트로 화면/프로토타입/목업 생성
-- 캔버스에서 인라인 코멘트·드래그로 수정
-- `generate_variants` 대신 채팅으로 "다른 톤으로 3개 만들어줘" 식으로 변형
+- `docs/design-requests/` 폴더는 첫 요청을 쓸 때 만든다.
+- 10/2 이전 요청서(`docs/handoff/요청-*.md` 3개)는 백로그·계획서가 그 경로를 가리키고 있어 옮기지 않았다.
+- 요청서는 **그것만 읽어도 되게** 쓴다 — 대상 파일 경로, 현재 동작, 바꾸고 싶은 것, 실데이터 수치(가짜 예시 금지).
 
-### 핸드오프
-- 완성되면 **Export** 클릭
-- **"Send to Claude Code"** 선택 (터미널 밖이면 "Send to Claude Code Web")
-- 번들이 패키징되고, **붙여넣기용 프롬프트**가 생성됨 (번들 URL 포함)
+## 받은 뒤 (Claude Code)
 
-## 2. 여기(VSCode Claude Code)에서
+- **구현 전에 현재 코드와 전수 대조** — 시안이 낡았거나·불완전하거나·근거 소스가 다른 일이 반복됐다. 「시안이 지목한 것」이 아니라 그 프리미티브를 쓰는 **전부**를 grep한다.
+- 대조 결과를 **적용/완료/기각 표**로 먼저 보고하고 사용자 판단을 받는다. 기각 이유는 계획서·커밋 메시지에 남긴다.
+- 시안은 디자인 의도·맥락만 차용한다. 빠진 기능은 현재 코드 기준으로 채운다.
+- 착수 직전에 지시서 **수정 시각을 다시** 본다(대조 보고 뒤 개정되는 일이 있었다). 이의가 나오면 `git diff -- docs/handoff/<폴더>`로 개정부터 확인.
+- 지시서와 CLAUDE.md 규칙이 부딪히면 **CLAUDE.md 우선**. 3개 이상 파일 변경이면 계획서 먼저.
 
-### 붙여넣기 단계
-Claude Design에서 복사한 프롬프트를 그대로 이 창에 붙여넣으면 된다. 프롬프트에는:
-- 번들 URL
-- "이 URL을 읽고 PROMPT.md의 지시를 따르라"는 안내
-- 구현 우선순위
+## 커밋·문서화
 
-### Claude가 자동으로 할 일
-1. 번들 URL을 `WebFetch`로 읽어 `PROMPT.md` 확인
-2. 이 프로젝트 규칙(CLAUDE.md, 기존 컴포넌트 패턴)과 대조
-3. **3개 이상 파일 변경이면 `/plan` 먼저** (전역 CLAUDE.md 규칙)
-4. 승인 후 구현 → 타입체크·빌드 → 결과보고서 작성
-
-### 사용자 확인 포인트
-- 번들이 기존 컴포넌트를 **재사용**하는지, 중복 컴포넌트를 **새로 만드는지** 확인 (재사용 우선)
-- 색상·타이포 토큰이 이 프로젝트의 디자인 토큰을 쓰는지 확인
-- 모바일 대응 (이 프로젝트는 모바일 중심)
-
-## 3. 커밋·문서화
-
-기존 규칙 그대로:
-- `docs/plan-{작업명}.md` 승인 후 작업
-- `docs/report/report-{작업명}-{날짜}.md` 작성
-- `docs/worklog.md` 업데이트
-- 커밋 메시지: `feat: ...` / `fix: ...` 관례 유지
+- 계획서 `docs/plan/plan-{작업명}.md` 승인 후 작업
+- 결과보고서 `docs/report/report-{작업명}-{날짜}.md`
+- `docs/worklog.md` 업데이트 · 미뤄둔 일은 `docs/리팩토링-백로그.md`에 § 번호로
 
 ## 제거된 것
 
@@ -80,13 +68,9 @@ Claude Design에서 복사한 프롬프트를 그대로 이 창에 붙여넣으�
 
 ## 트러블슈팅
 
-### 번들 URL이 열리지 않음
-- 조직 내부 URL이라 로그인 세션 필요
-- 만료됐으면 Claude Design에서 다시 Export
+### Claude Design이 「요청이 없다」고 함
+- 그 대화에 `milling-log` 폴더가 연결돼 있는지 — 새 대화면 다시 연결
+- 파일이 실제로 저장됐는지(`docs/design-requests/`)
 
-### PROMPT.md가 기존 컨벤션과 충돌
-- Claude가 번들 그대로 구현하지 말고, **CLAUDE.md 규칙 우선**으로 조정
-- 충돌 내역은 결과보고서 "확인이 필요한 사항"에 명시
-
-### 코드베이스 attach가 낡음
-- 리포에 큰 변경(폴더 구조, 컴포넌트 리네임) 있으면 Claude Design에서 re-attach
+### 시안 HTML이 안 열림
+- 시안의 jsx는 **HTML과 같은 폴더**에 있어야 열린다

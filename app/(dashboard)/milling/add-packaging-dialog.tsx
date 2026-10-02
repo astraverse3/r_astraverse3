@@ -16,7 +16,7 @@ import { suggestProductType } from '@/app/actions/product-type'
 import { mergeSpecButtons } from '@/lib/package-spec'
 import { mergeUnseenRows } from '@/lib/packaging-diff'
 import { PACKAGE_TEMPLATES, PKG_REMAINDER, PKG_TONBAG } from './packaging-constants'
-import { linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
+import { duplicatePackagingLines, duplicatePackagingMessage, linesMissingPackaging, missingPackagingMessage } from '@/lib/packaging-required'
 import { SpecSummaryBand } from './spec-summary'
 import { PackagingFooter } from './packaging-footer'
 import { PackagingRowsHeader, PackagingRowDesktop, PackagingRowReadOnlyDesktop, PackagingRowMobile, PackagingRowReadOnlyMobile, type RowHandlers } from './packaging-rows'
@@ -218,6 +218,12 @@ export function AddPackagingDialog({
             toast.warning(missingPackagingMessage(missing))
             return null
         }
+        // 같은 규격·포장지에 새 줄이 겹치면 한 줄로 쓰게 한다(§98 — 화면만 막는다, 이유는 함수 주석)
+        const duplicated = duplicatePackagingLines(valid)
+        if (duplicated.length > 0) {
+            toast.warning(duplicatePackagingMessage(duplicated))
+            return null
+        }
         if (valid.length === 0) {
             // 서버에도 아무것도 없으면 저장할 게 없다.
             if (serverOutputs.length === 0) {
@@ -415,46 +421,11 @@ export function AddPackagingDialog({
         }
     }
 
-    const addToGroup = (group: LotGroup, template: { label: string; weight: number }) => {
-        const stockId = group.representativeStockId
-        const label = template.label
-        // 톤백·잔량은 포장지 입력 없음(톤백=서버에서 '톤백' 강제, 잔량=SKU 미부여).
-        // → 수량 대신 중량(kg) 입력칸으로 포커스.
-        if (label === PKG_TONBAG || label === PKG_REMAINDER) {
-            pendingFocus.current = { index: outputs.length, field: 'weight' }
-            setOutputs(prev => [...prev, {
-                packageType: label,
-                weightPerUnit: 0,
-                count: 1,
-                totalWeight: 0,
-                stockId,
-                packagingId: null,
-            }])
-            return
-        }
-        // 기존 동일 라인이 있으면 수량만 증가(포장지 유지). 해당 행 수량칸으로 포커스.
-        const existingIndex = outputs.findIndex(o => o.packageType === label && o.stockId === stockId)
-        if (existingIndex !== -1) {
-            pendingFocus.current = { index: existingIndex, field: 'count' }
-            setOutputs(prev => prev.map(o => (o.packageType === label && o.stockId === stockId)
-                ? { ...o, count: o.count + 1, totalWeight: (o.count + 1) * o.weightPerUnit }
-                : o))
-            return
-        }
-        // 신규 라인: 행을 먼저 즉시 추가하고(포장지 미지정으로 시작), 수량칸으로 포커스.
-        // 서버 왕복(기본 포장지 추천)이 행 추가를 블로킹하지 않도록 낙관적으로 그린다.
-        pendingFocus.current = { index: outputs.length, field: 'count' }
-        setOutputs(prev => [...prev, {
-            packageType: label,
-            weightPerUnit: template.weight,
-            count: 1,
-            totalWeight: template.weight,
-            stockId,
-            packagingId: null,
-        }])
-        // (품종+도정+규격) 기본 포장지 추천은 백그라운드로 조회 → 응답이 오면 해당 라인의
-        // 포장지가 아직 미지정일 때만 채운다(사용자가 먼저 골랐으면 그 선택을 유지).
-        // 기본 SKU가 없으면 비어 남는다 → 「포장지 선택」이 뜨고 저장이 막힌다(§54)
+    // (품종+도정+규격) 기본 포장지 추천 — 백그라운드로 조회해 응답이 오면 **그 규격의 첫 빈 줄 하나만** 채운다.
+    // 같은 규격 둘째 줄은 다른 포장지를 쓰려고 만든 줄이라(§98) 채우면 안 된다 — 빈 줄을 전부 채우던 예전 식이면
+    // 응답 전에 두 번 누를 때 둘째 줄까지 기본값이 됐다. 기다리는 동안 그 줄은 회전 아이콘이라 사용자가 먼저 고를 수 없다.
+    // 기본 SKU가 없으면 비어 남는다 → 「포장지 선택」이 뜨고 저장이 막힌다(§54)
+    const suggestDefaultPackaging = (group: LotGroup, label: string, stockId: number) => {
         const suggestKey = `${label}|${stockId}`
         setSuggesting(prev => new Set(prev).add(suggestKey))
         settle(suggestProductType(group.varietyId, millingType, label)).then(res => {
@@ -465,11 +436,35 @@ export function AddPackagingDialog({
             })
             const defaultPackagingId = res.success && res.data ? (res.data.default?.packagingId ?? null) : null
             if (defaultPackagingId == null) return
-            setOutputs(prev => prev.map(o =>
-                (o.packageType === label && o.stockId === stockId && o.packagingId == null)
-                    ? { ...o, packagingId: defaultPackagingId }
-                    : o))
+            setOutputs(prev => {
+                const target = prev.findIndex(o => o.packageType === label && o.stockId === stockId && o.packagingId == null)
+                return target === -1 ? prev : prev.map((o, i) => i === target ? { ...o, packagingId: defaultPackagingId } : o)
+            })
         })
+    }
+
+    const addToGroup = (group: LotGroup, template: { label: string; weight: number }) => {
+        const stockId = group.representativeStockId
+        const label = template.label
+        // 톤백·잔량은 포장지 입력 없음(톤백=서버에서 '톤백' 강제, 잔량=SKU 미부여) → 수량 대신 중량(kg) 입력칸으로 포커스.
+        const weighed = label === PKG_TONBAG || label === PKG_REMAINDER
+        // 규격 버튼은 **언제나 새 줄**이다. 개수 늘리기는 줄의 ±·개수칸이 한다.
+        // 행을 먼저 즉시 추가하고(포장지 미지정으로 시작) 포커스 — 서버 왕복(기본 포장지 추천)이 행 추가를 막지 않게 낙관적으로 그린다.
+        pendingFocus.current = { index: outputs.length, field: weighed ? 'weight' : 'count' }
+        setOutputs(prev => [...prev, {
+            packageType: label,
+            weightPerUnit: weighed ? 0 : template.weight,
+            count: 1,
+            totalWeight: weighed ? 0 : template.weight,
+            stockId,
+            packagingId: null,
+        }])
+        if (weighed) return
+        // 🔴 같은 규격 줄이 이미 있으면 다른 포장지를 쓰려고 누른 것이다 — 기본값을 채우지 않고 「포장지 선택」으로 둔다.
+        // 예전엔 여기서 그 줄 개수만 +1 해서 같은 규격·다른 포장지 줄을 아예 만들 수 없었다(백로그 §98).
+        // 포장지까지 같게 고르면 저장 때 막힌다(collectValidOutputs).
+        if (outputs.some(o => o.packageType === label && o.stockId === stockId)) return
+        suggestDefaultPackaging(group, label, stockId)
     }
 
     const setPackaging = (index: number, packagingId: number | null) => {
