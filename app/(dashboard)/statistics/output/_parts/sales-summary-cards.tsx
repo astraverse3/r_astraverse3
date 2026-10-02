@@ -14,7 +14,8 @@ export function SalesSummaryCards({ summary, empty }: { summary: SalesSummary; e
   const valueTone = empty ? 'text-slate-300' : 'text-slate-800'
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:w-48 md:shrink-0">
+    // 모바일은 숫자 먼저(order-first) — 요약 → 차트 → 목록(작업지시 ⑪ A-3). PC는 차트 오른쪽 그대로
+    <div className="order-first md:order-none grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-3 md:w-48 md:shrink-0">
       {cards.map(card => (
         <div key={card.label} className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-slate-100 overflow-hidden md:flex-1 md:min-h-0">
           {/* 모바일: 컴팩트 가로 */}
