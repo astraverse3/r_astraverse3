@@ -29,6 +29,7 @@ import {
   STAT_TABLE,
   STAT_TABLE_CARD,
 } from './table-styles'
+import { MillingListMobile, MobileSortChips, farmersSummary } from './MillingListMobile'
 import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 type Props = {
@@ -161,18 +162,22 @@ function PackagingPopup({ row, onClose }: { row: TableRow; onClose: () => void }
   )
 }
 
-// ── 생산자 요약 표시 ──────────────────────────────
-function farmersSummary(farmers: string): string {
-  const list = farmers.split(', ').map(s => s.trim()).filter(Boolean)
-  if (list.length > 1) return `${list[0]} 외 ${list.length - 1}명`
-  return list[0] ?? '-'
-}
+/** 모바일은 페이지 넘김 대신 20건씩 늘린다(작업지시 ⑫ A-2) */
+const MOBILE_STEP = 20
 
 // ── 메인 테이블 ───────────────────────────────────
 export function MillingTable({ data }: Props) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }])
   const [inputPopup, setInputPopup] = useState<TableRow | null>(null)
   const [outputPopup, setOutputPopup] = useState<TableRow | null>(null)
+  // 모바일 목록 — 보일 건수 · 펼친 줄(한 번에 한 줄)
+  const [mobileCount, setMobileCount] = useState(MOBILE_STEP)
+  const [openId, setOpenId] = useState<number | null>(null)
+
+  // 모바일 정렬 칩: 같은 칩을 다시 누르면 방향만 바꾼다. 정렬 상태는 PC 머리글과 같다
+  function sortMobile(id: string) {
+    setSorting(prev => (prev[0]?.id === id ? [{ id, desc: !prev[0].desc }] : [{ id, desc: true }]))
+  }
 
   const yieldRates = useYieldRates()
 
@@ -282,12 +287,39 @@ export function MillingTable({ data }: Props) {
     <>
       <div className={STAT_TABLE_CARD}>
         {/* 카드 머리 — 이 표는 위 탭과 따로 돈다(탭은 차트만 바꾼다). 판매·재고 표엔 없다(작업지시 ⑫ C-2) */}
-        <div className="px-4 py-2.5 border-b border-slate-100 flex items-baseline gap-2">
+        <div className="px-3 md:px-4 py-2 md:py-2.5 border-b border-slate-100 flex items-center gap-2">
           <h3 className="text-[13px] font-semibold text-slate-800">도정 상세 내역</h3>
           <span className="text-xs text-slate-500 tabular-nums">{data.length.toLocaleString('ko-KR')}건</span>
+          <span className="ml-auto md:hidden">
+            <MobileSortChips sorting={sorting} onSort={sortMobile} />
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* 모바일 — 두 줄 목록 · 20건씩 더 보기 */}
+        <div className="md:hidden">
+          <MillingListMobile
+            rows={table.getSortedRowModel().rows.slice(0, mobileCount).map(r => r.original)}
+            openId={openId}
+            onToggle={id => setOpenId(o => (o === id ? null : id))}
+            onInput={setInputPopup}
+            onOutput={setOutputPopup}
+          />
+          {data.length > mobileCount && (
+            <button
+              type="button"
+              onClick={() => setMobileCount(c => c + MOBILE_STEP)}
+              className="w-full h-11 flex items-center justify-center gap-1 border-t border-slate-100 text-[13px] font-semibold text-slate-600"
+            >
+              <span className="mr-1 font-normal tabular-nums text-slate-500">
+                {mobileCount}/{data.length}
+              </span>
+              {MOBILE_STEP}건 더 보기
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+            </button>
+          )}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <Table className={STAT_TABLE}>
             <TableHeader>
               {table.getHeaderGroups().map(hg => (
@@ -324,8 +356,8 @@ export function MillingTable({ data }: Props) {
           </Table>
         </div>
 
-        {/* 페이지네이션 */}
-        <div className="h-11 px-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 tabular-nums">
+        {/* 페이지네이션 — PC만(모바일은 20건씩 더 보기) */}
+        <div className="hidden md:flex h-11 px-4 border-t border-slate-100 items-center justify-between text-xs text-slate-500 tabular-nums">
           <span>
             {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–
             {Math.min(
