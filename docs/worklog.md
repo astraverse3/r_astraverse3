@@ -4,7 +4,7 @@
 
 ### 잡곡 제품재고 PC 목록 — 도정구분 열 빼기 (백로그 §94)
 
-계획서 `docs/plan/plan-잡곡제품재고-도정구분열-제거.md`, 보고서 `docs/report/report-잡곡제품재고-도정구분열-제거-2026-10-02.md`.
+커밋 `eb83ca9`. 계획서 `docs/plan/plan-잡곡제품재고-도정구분열-제거.md`, 보고서 `docs/report/report-잡곡제품재고-도정구분열-제거-2026-10-02.md`.
 발단: 10/1 사용자 「잡곡 제품재고 목록에 도정구분 필요 없는 것 같은데」 → 10/2 「아무 때나 시간 날 때 해줘」.
 
 - `package-row.tsx` 그리드 상수 2개 → `pkgGrid(select, showMilling)`(4벌을 통째로 적음 — Tailwind는 이어 붙인 클래스를 못 만든다) · 헤더·낱개·서브행·그룹 행에 `showMilling` · `package-list-client.tsx` `showMillingType` prop(기본 true) · `misc-package-panel.tsx` `false`
