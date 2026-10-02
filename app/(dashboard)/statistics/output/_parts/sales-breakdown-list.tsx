@@ -1,5 +1,6 @@
 import { SALES_CHANNEL_COLOR, SALES_SINGLE_COLOR } from '@/components/statistics/sales-colors'
-import { ShowAllRow, type BreakdownProps } from './sales-breakdown-table'
+import { ShowAllRow } from '@/components/statistics/ShowAllRow'
+import type { BreakdownProps } from './sales-breakdown-table'
 import { formatKg } from './utils'
 
 /**

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>재고·수율분석 모바일 목록 시안</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif;margin:0}.font-mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}.tabular-nums{font-variant-numeric:tabular-nums}a{color:#2563eb}a:hover{color:#1d4ed8}</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="stats-mobile-parts.jsx"></script>
+<script type="text/babel" src="stats-table-parts.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="a1" title="A-1 · 재고분석 모바일 (360)" subtitle="① 둘째 줄 = 세 갈래 막대(길이 = 그 줄의 총 입고 100%). 숫자 세 개는 줄을 누르면 펼친다 ② 재고율은 막대 오른쪽 「재고 N%」 — 주황 칸 길이가 같은 값을 보여 주니 색만으로 판정하지 않는다 ③ 상위 20 + 더 보기, 그리고 「입고순 / 미처리순」 정렬 — 이 화면의 질문은 「누구 벼가 아직 남았나」다 ④ 작목반: 인증 배지는 이름 바로 뒤, 생산자수는 둘째 줄 「N명 ·」. 범례는 목록 머리에 한 번.">
+        <DCArtboard id="st-f" label="생산자 — 입고순" width={360} height={960}><SmStockScreen tab="생산자" more="111명" h={960}></SmStockScreen></DCArtboard>
+        <DCArtboard id="st-f-open" label="생산자 — 미처리순 · 한 줄 펼침" width={360} height={1020}><SmStockScreen tab="생산자" sort="미처리순" openIdx={0} more="111명" h={1020}></SmStockScreen></DCArtboard>
+        <DCArtboard id="st-g" label="작목반 — 이름 13자 · 인증 · 생산자수" width={360} height={780}><SmStockScreen tab="작목반" more="37곳" h={780}></SmStockScreen></DCArtboard>
+        <DCArtboard id="st-v" label="품종" width={360} height={780}><SmStockScreen tab="품종" more="17종" h={780}></SmStockScreen></DCArtboard>
+      </DCSection>
+      <DCSection id="a2" title="A-2 · 수율분석 모바일 (360)" subtitle="① 1줄 = 날짜(mm-dd) · 도정종류 · 품종 | 수율 배지, 2줄 = 생산자 | 투입 → 생산 kg. 비고는 목록에서 뺀다 ② 줄 전체가 한 터치 영역 — 누르면 펼쳐서 비고 + 「투입 원물」「포장 내역」 버튼(44px) 두 개. 한 줄에 작은 숫자 버튼 둘을 두면 잘못 누른다 ③ 정렬은 칩 세 개(날짜 · 수율 · 생산량), 다시 누르면 방향이 바뀐다 ④ 20건씩 더 보기 — PC 10건 페이지 넘김 대신.">
+        <DCArtboard id="ml" label="기본 — 날짜 내림차순" width={360} height={880}><SmMillScreen h={880}></SmMillScreen></DCArtboard>
+        <DCArtboard id="ml-open" label="한 줄 펼침" width={360} height={980}><SmMillScreen openIdx={0} h={980}></SmMillScreen></DCArtboard>
+        <DCArtboard id="ml-sort" label="수율 정렬" width={360} height={880}><SmMillScreen sort="수율" h={880}></SmMillScreen></DCArtboard>
+      </DCSection>
+      <DCSection id="b" title="B · 보라 칩 · 표 숫자 색" subtitle="① 필터 칩은 전부 파랑 하나(T1)로 한다. 구분은 색 대신 칩 앞의 조건 이름이 맡는다 — 「김영수」가 생산자인지 작목반인지 색으로는 어차피 못 읽는다 ② 표 숫자는 계열 색을 그만 칠하고 slate-700으로 둔다. 머리글에 차트와 같은 색 네모를 둬서 범례와 이어 준다 ③ 재고율만 판정 색을 남기고, 대비가 되는 진한 톤(emerald-700 · amber-700 · red-600)으로 바꾼다.">
+        <DCArtboard id="chips" label="필터 칩" width={620} height={250}><SmChipsCompare></SmChipsCompare></DCArtboard>
+        <DCArtboard id="tbl-now" label="PC 표 — 지금" width={620} height={210}><SmTableNumbers></SmTableNumbers></DCArtboard>
+        <DCArtboard id="tbl-next" label="PC 표 — 제안" width={620} height={210}><SmTableNumbers next></SmTableNumbers></DCArtboard>
+      </DCSection>
+      <DCSection id="a1pc" title="A-1 ⑤ · 재고분석 PC 표 — 판매분석 틀" subtitle="순위 · 더 보기는 판매분석과 같다. 막대는 모바일과 같은 답 = 세 갈래 누적(길이 = 그 줄 총 입고 100%). 「비중」 막대는 총 입고 칸이 이미 순서로 말해 주니 새 정보가 없다. 칸 이름은 「비중」 대신 「구성」. 정렬 토글(입고순/미처리순)은 표 카드 맨 위 도구 줄.">
+        <DCArtboard id="pc-stock" label="생산자 — 상위 20 + 더 보기 (시안은 6줄)" width={1100} height={440}><div className="p-5 bg-slate-50 h-full"><TbStock></TbStock></div></DCArtboard>
+        <DCArtboard id="pc-group" label="작목반 — 인증은 이름 뒤, 생산자수는 따로 칸" width={1100} height={240}><div className="p-5 bg-slate-50 h-full"><TbGroupRow></TbGroupRow></div></DCArtboard>
+      </DCSection>
+      <DCSection id="c" title="C · 통계 표 세 개 결" subtitle="기능은 그대로, 겠모양만 하나로. 기준은 판매분석 시안(⑪): 머리 12 · 행 13 · 회색 머리줄 · 줄무늬 없음 · 행 h-11.">
+        <DCArtboard id="c-spec" label="규칙 한 장" width={620} height={380}><TbSpec></TbSpec></DCArtboard>
+        <DCArtboard id="c-sales" label="판매분석 — 행 12 → 13" width={1100} height={230}><div className="p-5 bg-slate-50 h-full"><TbSales></TbSales></div></DCArtboard>
+        <DCArtboard id="c-mill-now" label="수율분석 — 지금" width={1100} height={360}><div className="p-5 bg-slate-50 h-full"><TbMilling now></TbMilling></div></DCArtboard>
+        <DCArtboard id="c-mill" label="수율분석 — 제안 (정렬 · 페이지 · 팝업 유지)" width={1100} height={370}><div className="p-5 bg-slate-50 h-full"><TbMilling></TbMilling></div></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

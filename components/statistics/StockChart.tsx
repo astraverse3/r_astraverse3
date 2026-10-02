@@ -28,7 +28,8 @@ type Props = {
   truncateLabels?: boolean
 }
 
-const COLORS = {
+// 재고 세 갈래 색 — 차트·표 머리글 네모·구성 막대·범례가 같이 쓴다(작업지시 ⑫ B-2)
+export const STOCK_COLORS = {
   consumed:  '#8dc540',
   available: '#f89c1e',
   released:  '#8b5cf6',
@@ -144,9 +145,9 @@ export function StockChart({ data, height = 360, truncateLabels = false }: Props
         />
         <CartesianGrid horizontal={false} stroke="#cbd5e1" strokeDasharray="3 3" />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
-        <Bar dataKey="consumed" name="도정완료" stackId="a" fill={COLORS.consumed} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-        <Bar dataKey="released" name="직접출고" stackId="a" fill={COLORS.released} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-        <Bar dataKey="available" name="미처리" stackId="a" fill={COLORS.available} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+        <Bar dataKey="consumed" name="도정완료" stackId="a" fill={STOCK_COLORS.consumed} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+        <Bar dataKey="released" name="직접출고" stackId="a" fill={STOCK_COLORS.released} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+        <Bar dataKey="available" name="미처리" stackId="a" fill={STOCK_COLORS.available} radius={[0, 4, 4, 0]} isAnimationActive={false}>
           <LabelList
             dataKey="total"
             position="right"

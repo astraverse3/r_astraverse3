@@ -22,17 +22,28 @@ import { Badge } from '@/components/ui/badge'
 import { MillingStockListDialog } from '@/app/(dashboard)/milling/stock-list-dialog'
 import type { TableRow, OutputDetail } from '@/app/actions/statistics'
 import { getYieldLevel, YIELD_BADGE_CLASS } from '@/lib/milling-yield'
+import {
+  STAT_HEAD,
+  STAT_HEAD_ROW,
+  STAT_LINK,
+  STAT_TABLE,
+  STAT_TABLE_CARD,
+} from './table-styles'
 import { useYieldRates } from '@/app/(dashboard)/yield-rates-context'
 
 type Props = {
   data: TableRow[]
 }
 
+// 정렬 아이콘 — 쉬는 칸 slate-400, 정렬 중인 칸은 머리글과 같이 slate-800(작업지시 ⑫ C-8)
 function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
-  if (sorted === 'asc') return <ChevronUp className="w-3 h-3" />
-  if (sorted === 'desc') return <ChevronDown className="w-3 h-3" />
-  return <ChevronsUpDown className="w-3 h-3 opacity-40" />
+  if (sorted === 'asc') return <ChevronUp className="w-3 h-3 text-slate-800" />
+  if (sorted === 'desc') return <ChevronDown className="w-3 h-3 text-slate-800" />
+  return <ChevronsUpDown className="w-3 h-3 text-slate-400" />
 }
+
+/** 숫자 칸 — 머리글·칸 모두 오른쪽 정렬(작업지시 ⑫ C-6) */
+const RIGHT_COLUMNS = new Set(['inputKg', 'outputKg', 'yieldRate'])
 
 // ── 포장 내역 팝업 (AddPackagingDialog 읽기전용 레이아웃 동일 적용) ──
 function PackagingPopup({ row, onClose }: { row: TableRow; onClose: () => void }) {
@@ -169,13 +180,13 @@ export function MillingTable({ data }: Props) {
     {
       accessorKey: 'date',
       header: '날짜',
-      cell: info => <span className="text-slate-600 font-mono text-xs">{info.getValue() as string}</span>,
+      cell: info => <span className="text-slate-600 font-mono text-xs tabular-nums">{info.getValue() as string}</span>,
     },
     {
       accessorKey: 'millingType',
       header: '도정종류',
       cell: info => (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary bg-primary/5 font-bold">
+        <Badge variant="outline" className="text-[11px] px-1.5 py-0 border-primary/30 text-primary bg-primary/5 font-bold">
           {info.getValue() as string}
         </Badge>
       ),
@@ -183,7 +194,7 @@ export function MillingTable({ data }: Props) {
     {
       accessorKey: 'varieties',
       header: '품종',
-      cell: info => <span className="text-slate-500 text-xs">{info.getValue() as string}</span>,
+      cell: info => <span className="text-slate-800">{info.getValue() as string}</span>,
     },
     {
       accessorKey: 'farmers',
@@ -191,7 +202,7 @@ export function MillingTable({ data }: Props) {
       cell: info => {
         const val = info.getValue() as string
         return (
-          <span className="text-slate-500 text-xs" title={val}>
+          <span className="text-slate-600 text-xs" title={val}>
             {farmersSummary(val)}
           </span>
         )
@@ -205,7 +216,7 @@ export function MillingTable({ data }: Props) {
         return (
           <button
             onClick={e => { e.stopPropagation(); setInputPopup(row) }}
-            className="font-medium text-slate-700 underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
+            className={`tabular-nums text-slate-600 ${STAT_LINK}`}
           >
             {(info.getValue() as number).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}
           </button>
@@ -220,11 +231,11 @@ export function MillingTable({ data }: Props) {
         return (
           <button
             onClick={e => { e.stopPropagation(); setOutputPopup(row) }}
-            className="font-bold text-[#0080c8] underline decoration-dashed decoration-[#0080c8]/40 underline-offset-2 hover:decoration-[#0080c8] hover:text-[#006097] transition-colors"
+            className={`tabular-nums font-semibold text-slate-800 ${STAT_LINK}`}
           >
             {(info.getValue() as number) > 0
               ? (info.getValue() as number).toLocaleString('ko-KR', { maximumFractionDigits: 1 })
-              : <span className="text-slate-300 no-underline">-</span>
+              : <span className="text-slate-400 no-underline">-</span>
             }
           </button>
         )
@@ -248,7 +259,7 @@ export function MillingTable({ data }: Props) {
       accessorKey: 'remarks',
       header: '비고',
       cell: info => (
-        <span className="text-slate-400 text-xs line-clamp-1">
+        <span className="text-slate-500 text-xs line-clamp-1">
           {(info.getValue() as string | null) ?? '-'}
         </span>
       ),
@@ -269,24 +280,27 @@ export function MillingTable({ data }: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-50">
-          <h3 className="text-sm font-semibold text-slate-700">도정 상세 내역</h3>
-          <p className="text-xs text-slate-400 mt-0.5">총 {data.length}건</p>
+      <div className={STAT_TABLE_CARD}>
+        {/* 카드 머리 — 이 표는 위 탭과 따로 돈다(탭은 차트만 바꾼다). 판매·재고 표엔 없다(작업지시 ⑫ C-2) */}
+        <div className="px-4 py-2.5 border-b border-slate-100 flex items-baseline gap-2">
+          <h3 className="text-[13px] font-semibold text-slate-800">도정 상세 내역</h3>
+          <span className="text-xs text-slate-500 tabular-nums">{data.length.toLocaleString('ko-KR')}건</span>
         </div>
 
         <div className="overflow-x-auto">
-          <Table className="w-full text-sm">
+          <Table className={STAT_TABLE}>
             <TableHeader>
               {table.getHeaderGroups().map(hg => (
-                <UiTableRow key={hg.id} className="bg-white border-b border-slate-200 hover:bg-transparent">
+                <UiTableRow key={hg.id} className={STAT_HEAD_ROW}>
                   {hg.headers.map(header => (
                     <TableHead
                       key={header.id}
-                      className="text-left cursor-pointer select-none"
+                      className={`${STAT_HEAD} cursor-pointer select-none ${RIGHT_COLUMNS.has(header.column.id) ? 'text-right' : ''} ${
+                        header.column.getIsSorted() ? 'text-slate-800' : ''
+                      }`}
                       onClick={header.column.getToggleSortingHandler()}
                     >
-                      <div className="flex items-center gap-1">
+                      <div className={`flex items-center gap-1 ${RIGHT_COLUMNS.has(header.column.id) ? 'justify-end' : ''}`}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         <SortIcon sorted={header.column.getIsSorted()} />
                       </div>
@@ -298,12 +312,9 @@ export function MillingTable({ data }: Props) {
             <TableBody>
               {/* 비면 부모가 표를 숨긴다 — 「없다」는 차트 자리 한 곳에서만(백로그 §97) */}
               {table.getRowModel().rows.map(row => (
-                <UiTableRow
-                  key={row.id}
-                  className="hover:bg-primary/5"
-                >
+                <UiTableRow key={row.id}>
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className={RIGHT_COLUMNS.has(cell.column.id) ? 'text-right' : ''}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -314,7 +325,7 @@ export function MillingTable({ data }: Props) {
         </div>
 
         {/* 페이지네이션 */}
-        <div className="px-5 py-3 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
+        <div className="h-11 px-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 tabular-nums">
           <span>
             {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–
             {Math.min(
@@ -326,17 +337,19 @@ export function MillingTable({ data }: Props) {
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+              aria-label="이전 쪽"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-2 font-medium text-slate-700">
+            <span className="px-1 font-semibold text-slate-700">
               {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
             </span>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+              aria-label="다음 쪽"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

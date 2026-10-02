@@ -11,6 +11,15 @@ import type { StatsExcelRow } from '@/app/actions/stats-excel'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
 import { RAW_RELEASE_COLOR, RawReleaseChart } from '@/components/statistics/SalesChart'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  STAT_HEAD,
+  STAT_HEAD_ROW,
+  STAT_NAME,
+  STAT_NUM,
+  STAT_NUM_MAIN,
+  STAT_RANK,
+  STAT_TABLE,
+} from '@/components/statistics/table-styles'
 import { CHIPS_ROW, PeriodChip, PeriodPicker, SearchButtons } from './sales-filter-bar'
 import { SalesFilterSheet } from './sales-filter-sheet'
 import { MobileFilterRow } from './mobile-filter-row'
@@ -143,31 +152,29 @@ function RawSummaryCards({ data, empty }: { data: RawReleaseStatisticsData; empt
   )
 }
 
-/** PC 출고처별 표 — 판매 탭 표(sales-breakdown-table.tsx)와 같은 틀. 막대는 1위 대비, 숫자는 전체 대비 % */
+/** PC 출고처별 표 — 판매 탭 표(sales-breakdown-table.tsx)와 같은 틀·겉모양(table-styles). 막대는 1위 대비, 숫자는 전체 대비 % */
 function DestinationTable({ data }: { data: RawReleaseStatisticsData }) {
   const maxKg = data.byDestination[0]?.kg ?? 0
   return (
     <div className="overflow-x-auto">
-      <Table className="w-full text-xs" style={{ minWidth: '560px' }}>
+      <Table className={STAT_TABLE} style={{ minWidth: '560px' }}>
         <TableHeader>
-          <TableRow className="border-b border-slate-200 bg-slate-50">
-            <TableHead className="w-12 text-right">순위</TableHead>
-            <TableHead className="text-left">출고처</TableHead>
-            <TableHead className="text-right">출고량 (톤)</TableHead>
-            <TableHead className="text-right">건</TableHead>
-            <TableHead className="w-[32%] text-left">비중</TableHead>
+          <TableRow className={STAT_HEAD_ROW}>
+            <TableHead className={`${STAT_HEAD} w-12 text-right`}>순위</TableHead>
+            <TableHead className={STAT_HEAD}>출고처</TableHead>
+            <TableHead className={`${STAT_HEAD} text-right`}>출고량 (톤)</TableHead>
+            <TableHead className={`${STAT_HEAD} text-right`}>건</TableHead>
+            <TableHead className={`${STAT_HEAD} w-[32%]`}>비중</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.byDestination.map((d, i) => (
-            <TableRow key={d.key} className="border-b border-slate-50">
-              <TableCell className="py-2.5 px-3 text-right tabular-nums text-slate-500">{i + 1}</TableCell>
-              <TableCell className="py-2.5 px-3 font-medium text-slate-700 truncate">{d.label}</TableCell>
-              <TableCell className="py-2.5 px-3 text-right font-semibold tabular-nums text-slate-800 whitespace-nowrap">
-                {formatTon(d.kg)}
-              </TableCell>
-              <TableCell className="py-2.5 px-3 text-right tabular-nums text-slate-600">{d.releases.toLocaleString('ko-KR')}</TableCell>
-              <TableCell className="py-2.5 px-3">
+            <TableRow key={d.key}>
+              <TableCell className={STAT_RANK}>{i + 1}</TableCell>
+              <TableCell className={`${STAT_NAME} truncate`}>{d.label}</TableCell>
+              <TableCell className={STAT_NUM_MAIN}>{formatTon(d.kg)}</TableCell>
+              <TableCell className={STAT_NUM}>{d.releases.toLocaleString('ko-KR')}</TableCell>
+              <TableCell>
                 <span className="flex items-center gap-2">
                   <span className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                     <span

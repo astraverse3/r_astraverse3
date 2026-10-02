@@ -19,9 +19,11 @@ import {
   CERT_TYPE_OPTIONS,
   MAX_CHART_ITEMS,
   toChartItems,
+  toStockRows,
 } from './_parts/utils'
 import { StockSummaryCards } from './_parts/stock-summary-cards'
-import { ChartLegend, FarmerTable, GroupTable, VarietyTable } from './_parts/stock-tables'
+import { ChartLegend } from './_parts/stock-tables'
+import { StockBreakdown } from './_parts/stock-breakdown'
 import { StockFilterSheet } from './_parts/stock-filter-sheet'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
 import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
@@ -304,6 +306,9 @@ export function StockStatsClient({
   const ITEM_H = 34
   // 스크롤 영역 최대 높이: 10개 분량
   const CHART_SCROLL_MAX_H = 10 * ITEM_H
+
+  // 표·모바일 목록 줄 — 세 탭을 한 모양으로(작업지시 ⑫ A-1)
+  const stockRows = useMemo(() => toStockRows(activeTab, data), [activeTab, data])
 
   const activeItems =
     activeTab === 'farmer'  ? farmerChartItems :
@@ -625,13 +630,7 @@ export function StockStatsClient({
       </div>
 
       {/* ── 테이블 — 비면 숨긴다(「없다」는 차트 자리 한 곳에서만, 백로그 §97) ── */}
-      {activeItems.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-2">
-          {activeTab === 'farmer'  && <FarmerTable  rows={data.byFarmer}  />}
-          {activeTab === 'group'   && <GroupTable   rows={data.byGroup}   />}
-          {activeTab === 'variety' && <VarietyTable rows={data.byVariety} />}
-        </div>
-      )}
+      {stockRows.length > 0 && <StockBreakdown key={activeTab} tab={activeTab} rows={stockRows} />}
 
     </div>
   )
