@@ -8,6 +8,7 @@ import { MillingChart } from '@/components/statistics/MillingChart'
 import { MultiSeriesChart } from '@/components/statistics/MultiSeriesChart'
 import { MillingTable } from '@/components/statistics/MillingTable'
 import { MultiSelectDropdown, type MultiSelectOption } from '@/components/statistics/MultiSelectDropdown'
+import { FILTER_CHIP, FILTER_CHIP_KEY } from '@/components/statistics/filter-chip'
 import {
   getMillingStatistics,
   getMillingStatsByVariety,
@@ -586,8 +587,8 @@ export function MillingStatsClient({
               기간: {getPeriodLabel()}
             </span>
             {selectedVarieties.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                <span className="font-semibold">품종:</span>
+              <span className={`${FILTER_CHIP} mr-1.5`}>
+                <span className={FILTER_CHIP_KEY}>품종</span>
                 {selectedVarieties.map((v, i) => (
                   <span key={v} className="inline-flex items-center gap-0.5">
                     {i > 0 && <span className="text-blue-300">·</span>}
@@ -600,13 +601,13 @@ export function MillingStatsClient({
               </span>
             )}
             {selectedMillingTypes.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
-                <span className="font-semibold">도정:</span>
+              <span className={`${FILTER_CHIP} mr-1.5`}>
+                <span className={FILTER_CHIP_KEY}>도정구분</span>
                 {selectedMillingTypes.map((t, i) => (
                   <span key={t} className="inline-flex items-center gap-0.5">
-                    {i > 0 && <span className="text-purple-300">·</span>}
+                    {i > 0 && <span className="text-blue-300">·</span>}
                     {t}
-                    <button onClick={() => removeMillingTypeChip(t)} className="text-purple-400 hover:text-purple-700 transition-colors ml-0.5">
+                    <button onClick={() => removeMillingTypeChip(t)} className="text-blue-400 hover:text-blue-700 transition-colors ml-0.5">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -614,13 +615,13 @@ export function MillingStatsClient({
               </span>
             )}
             {appliedFarmers.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 mr-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
-                <span className="font-semibold">생산자:</span>
+              <span className={`${FILTER_CHIP} mr-1.5`}>
+                <span className={FILTER_CHIP_KEY}>생산자</span>
                 {appliedFarmers.map((name, i) => (
                   <span key={name} className="inline-flex items-center gap-0.5">
-                    {i > 0 && <span className="text-emerald-300">·</span>}
+                    {i > 0 && <span className="text-blue-300">·</span>}
                     {name}
-                    <button onClick={() => removeFarmerChip(name)} className="text-emerald-400 hover:text-emerald-700 transition-colors ml-0.5">
+                    <button onClick={() => removeFarmerChip(name)} className="text-blue-400 hover:text-blue-700 transition-colors ml-0.5">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -636,7 +637,8 @@ export function MillingStatsClient({
             기간: {getPeriodLabel()}
           </span>
           {selectedVarieties.map(v => (
-            <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+            <span key={v} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>품종</span>
               {v}
               <button onClick={() => removeVarietyChip(v)} className="text-blue-400 hover:text-blue-700 transition-colors">
                 <X className="w-3 h-3" />
@@ -644,17 +646,19 @@ export function MillingStatsClient({
             </span>
           ))}
           {selectedMillingTypes.map(t => (
-            <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
+            <span key={t} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>도정구분</span>
               {t}
-              <button onClick={() => removeMillingTypeChip(t)} className="text-purple-400 hover:text-purple-700 transition-colors">
+              <button onClick={() => removeMillingTypeChip(t)} className="text-blue-400 hover:text-blue-700 transition-colors">
                 <X className="w-3 h-3" />
               </button>
             </span>
           ))}
           {appliedFarmers.map(name => (
-            <span key={name} className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+            <span key={name} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>생산자</span>
               {name}
-              <button onClick={() => removeFarmerChip(name)} className="text-emerald-400 hover:text-emerald-700 transition-colors">
+              <button onClick={() => removeFarmerChip(name)} className="text-blue-400 hover:text-blue-700 transition-colors">
                 <X className="w-3 h-3" />
               </button>
             </span>

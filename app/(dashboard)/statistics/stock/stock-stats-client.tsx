@@ -26,6 +26,7 @@ import { ChartLegend } from './_parts/stock-tables'
 import { StockBreakdown } from './_parts/stock-breakdown'
 import { StockFilterSheet } from './_parts/stock-filter-sheet'
 import { StatsExcelButton } from '@/components/statistics/StatsExcelButton'
+import { FILTER_ACTIVE, FILTER_CHIP, FILTER_CHIP_BUTTON, FILTER_CHIP_KEY } from '@/components/statistics/filter-chip'
 import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 
 type Props = {
@@ -432,7 +433,7 @@ export function StockStatsClient({
               selected={selectedCertTypes}
               onToggle={handleCertTypeToggle}
               placeholder="인증구분"
-              activeClass="bg-teal-50 text-teal-700"
+              activeClass={FILTER_ACTIVE}
               emptyLabel="(전체)"
               minWidth={140}
             />
@@ -443,7 +444,7 @@ export function StockStatsClient({
               selected={selectedGroupIds}
               onToggle={handleGroupToggle}
               placeholder="작목반"
-              activeClass="bg-blue-50 text-blue-600"
+              activeClass={FILTER_ACTIVE}
               emptyLabel="(전체)"
               minWidth={140}
             />
@@ -454,7 +455,7 @@ export function StockStatsClient({
               selected={selectedVarietyIds}
               onToggle={handleVarietyToggle}
               placeholder="품종"
-              activeClass="bg-green-50 text-green-700"
+              activeClass={FILTER_ACTIVE}
               emptyLabel="(전체)"
               minWidth={140}
             />
@@ -467,7 +468,7 @@ export function StockStatsClient({
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="생산자 (쉼표로 구분)"
               className={`pl-3 pr-3 py-1.5 text-xs font-semibold rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 w-44 ${
-                farmerNameInput.trim() ? 'bg-purple-50 text-purple-700 placeholder:text-purple-300' : 'bg-slate-100 text-slate-700 placeholder:text-slate-400'
+                farmerNameInput.trim() ? 'bg-blue-50 text-blue-700 placeholder:text-blue-300' : 'bg-slate-100 text-slate-700 placeholder:text-slate-400'
               }`}
             />
 
@@ -505,8 +506,9 @@ export function StockStatsClient({
                   key={c}
                   type="button"
                   onClick={() => handleCertTypeToggle(c)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-medium hover:bg-teal-100 transition-colors"
+                  className={FILTER_CHIP_BUTTON}
                 >
+                  <span className={FILTER_CHIP_KEY}>인증</span>
                   {c}
                   <X className="w-3 h-3" />
                 </button>
@@ -516,8 +518,9 @@ export function StockStatsClient({
                   key={id}
                   type="button"
                   onClick={() => handleGroupToggle(id)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                  className={FILTER_CHIP_BUTTON}
                 >
+                  <span className={FILTER_CHIP_KEY}>작목반</span>
                   {groupOptions.find(g => g.id === id)?.name ?? '작목반'}
                   <X className="w-3 h-3" />
                 </button>
@@ -527,8 +530,9 @@ export function StockStatsClient({
                   key={id}
                   type="button"
                   onClick={() => handleVarietyToggle(id)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium hover:bg-green-100 transition-colors"
+                  className={FILTER_CHIP_BUTTON}
                 >
+                  <span className={FILTER_CHIP_KEY}>품종</span>
                   {varietyOptions.find(v => v.id === id)?.name ?? '품종'}
                   <X className="w-3 h-3" />
                 </button>
@@ -537,9 +541,10 @@ export function StockStatsClient({
                 <button
                   type="button"
                   onClick={() => setFarmerNameInput('')}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-100 transition-colors"
+                  className={FILTER_CHIP_BUTTON}
                 >
-                  생산자: {farmerNameInput.trim()}
+                  <span className={FILTER_CHIP_KEY}>생산자</span>
+                  {farmerNameInput.trim()}
                   <X className="w-3 h-3" />
                 </button>
               )}
@@ -553,26 +558,30 @@ export function StockStatsClient({
             {year}년산
           </span>
           {selectedCertTypes.map(c => (
-            <span key={c} className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-medium">
+            <span key={c} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>인증</span>
               {c}
               <button onClick={() => removeChipCertType(c)}><X className="w-3 h-3" /></button>
             </span>
           ))}
           {selectedGroupIds.map(id => (
-            <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+            <span key={id} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>작목반</span>
               {groupOptions.find(g => g.id === id)?.name ?? '작목반'}
               <button onClick={() => removeChipGroup(id)}><X className="w-3 h-3" /></button>
             </span>
           ))}
           {selectedVarietyIds.map(id => (
-            <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+            <span key={id} className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>품종</span>
               {varietyOptions.find(v => v.id === id)?.name ?? '품종'}
               <button onClick={() => removeChipVariety(id)}><X className="w-3 h-3" /></button>
             </span>
           ))}
           {farmerNameInput.trim() && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
-              생산자: {farmerNameInput.trim()}
+            <span className={FILTER_CHIP}>
+              <span className={FILTER_CHIP_KEY}>생산자</span>
+              {farmerNameInput.trim()}
               <button onClick={() => removeChipFarmer()}><X className="w-3 h-3" /></button>
             </span>
           )}

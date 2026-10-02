@@ -2,6 +2,7 @@
 
 import { ChevronDown, RotateCcw, Search, X } from 'lucide-react'
 import { MultiSelectDropdown, type MultiSelectOption } from '@/components/statistics/MultiSelectDropdown'
+import { FILTER_ACTIVE, FILTER_CHIP_BUTTON, FILTER_CHIP_KEY } from '@/components/statistics/filter-chip'
 import { SALES_CHANNELS, SALES_CHANNEL_LABEL, type SalesChannel } from '@/lib/sales-stats'
 import { SALES_PERIOD_PRESETS, type SalesPeriodPreset } from '@/lib/sales-period'
 import { CATEGORY_OPTIONS, periodText, toggleIn, type PeriodDraft, type SalesDraft } from './utils'
@@ -32,7 +33,7 @@ export function SalesFilterBar({ draft, onChange, onPreset, varietyOptions, isPe
         selected={draft.categories}
         onToggle={id => onChange({ categories: toggleIn(draft.categories, id) })}
         placeholder="곡종"
-        activeClass="bg-amber-50 text-amber-700"
+        activeClass={FILTER_ACTIVE}
         emptyLabel="(전체)"
         minWidth={120}
       />
@@ -41,7 +42,7 @@ export function SalesFilterBar({ draft, onChange, onPreset, varietyOptions, isPe
         selected={draft.channels}
         onToggle={id => onChange({ channels: toggleIn(draft.channels, id) })}
         placeholder="채널"
-        activeClass="bg-blue-50 text-blue-600"
+        activeClass={FILTER_ACTIVE}
         emptyLabel="(전체)"
         minWidth={140}
       />
@@ -50,7 +51,7 @@ export function SalesFilterBar({ draft, onChange, onPreset, varietyOptions, isPe
         selected={draft.varietyIds}
         onToggle={id => onChange({ varietyIds: toggleIn(draft.varietyIds, id) })}
         placeholder="품종"
-        activeClass="bg-green-50 text-green-700"
+        activeClass={FILTER_ACTIVE}
         emptyLabel="(전체)"
         minWidth={140}
       />
@@ -144,25 +145,28 @@ export function PeriodChip({ period }: { period: PeriodDraft }) {
   )
 }
 
-/** 조회에 쓰인 조건 — 기간은 늘 보이고, 나머지는 눌러서 빼면 바로 다시 조회한다 */
+/** 조회에 쓰인 조건 — 기간은 늘 보이고, 나머지는 눌러서 빼면 바로 다시 조회한다. 조건 칩은 파랑 하나 + 앞에 조건 이름(작업지시 ⑫ B-1) */
 export function SalesAppliedChips({ applied, varietyName, onRemove }: ChipsProps) {
   return (
     <div className={CHIPS_ROW}>
       <PeriodChip period={applied} />
       {applied.categories.map(c => (
-        <button key={c} type="button" onClick={() => onRemove({ categories: applied.categories.filter(x => x !== c) })} className={`${CHIP} bg-amber-50 text-amber-700 hover:bg-amber-100`}>
+        <button key={c} type="button" onClick={() => onRemove({ categories: applied.categories.filter(x => x !== c) })} className={FILTER_CHIP_BUTTON}>
+          <span className={FILTER_CHIP_KEY}>곡종</span>
           {CATEGORY_OPTIONS.find(o => o.id === c)?.label}
           <X className="w-3 h-3" />
         </button>
       ))}
       {applied.channels.map(c => (
-        <button key={c} type="button" onClick={() => onRemove({ channels: applied.channels.filter(x => x !== c) })} className={`${CHIP} bg-blue-50 text-blue-700 hover:bg-blue-100`}>
+        <button key={c} type="button" onClick={() => onRemove({ channels: applied.channels.filter(x => x !== c) })} className={FILTER_CHIP_BUTTON}>
+          <span className={FILTER_CHIP_KEY}>채널</span>
           {SALES_CHANNEL_LABEL[c]}
           <X className="w-3 h-3" />
         </button>
       ))}
       {applied.varietyIds.map(id => (
-        <button key={id} type="button" onClick={() => onRemove({ varietyIds: applied.varietyIds.filter(x => x !== id) })} className={`${CHIP} bg-green-50 text-green-700 hover:bg-green-100`}>
+        <button key={id} type="button" onClick={() => onRemove({ varietyIds: applied.varietyIds.filter(x => x !== id) })} className={FILTER_CHIP_BUTTON}>
+          <span className={FILTER_CHIP_KEY}>품종</span>
           {varietyName(id)}
           <X className="w-3 h-3" />
         </button>

@@ -32,7 +32,7 @@ export function MultiSelectDropdown<T extends string | number>({
   selected,
   onToggle,
   placeholder,
-  activeClass = 'bg-blue-50 text-blue-600',
+  activeClass = 'bg-blue-50 text-blue-700', // = FILTER_ACTIVE(filter-chip.ts)
   maxSelect,
   maxSelectHint,
   onClearAll,

@@ -185,7 +185,7 @@ export function MillingFilterSheet({
                   onClick={() => onToggleMillingType(t)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
                     selectedMillingTypes.includes(t)
-                      ? 'bg-purple-500 text-white'
+                      ? 'bg-blue-500 text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >

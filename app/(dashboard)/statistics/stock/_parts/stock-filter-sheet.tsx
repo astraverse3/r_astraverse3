@@ -95,7 +95,7 @@ export function StockFilterSheet({
                   key={c}
                   onClick={() => onCertTypeToggle(c)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                    selectedCertTypes.includes(c) ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    selectedCertTypes.includes(c) ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   {c}
@@ -139,7 +139,7 @@ export function StockFilterSheet({
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
               품종
               {selectedVarietyIds.length > 0 && (
-                <span className="ml-1.5 font-normal normal-case text-green-600">{selectedVarietyIds.length}개 선택</span>
+                <span className="ml-1.5 font-normal normal-case text-blue-500">{selectedVarietyIds.length}개 선택</span>
               )}
             </p>
             {varietyOptions.length === 0 ? (
@@ -155,7 +155,7 @@ export function StockFilterSheet({
                       type="checkbox"
                       checked={selectedVarietyIds.includes(v.id)}
                       onChange={() => onVarietyToggle(v.id)}
-                      className="w-3.5 h-3.5 rounded accent-green-500 shrink-0"
+                      className="w-3.5 h-3.5 rounded accent-blue-500 shrink-0"
                     />
                     <span className="text-xs text-slate-700">{v.name}</span>
                   </label>
