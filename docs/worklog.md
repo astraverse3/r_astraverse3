@@ -9,7 +9,7 @@
 
 - `package-row.tsx` 그리드 상수 2개 → `pkgGrid(select, showMilling)`(4벌을 통째로 적음 — Tailwind는 이어 붙인 클래스를 못 만든다) · 헤더·낱개·서브행·그룹 행에 `showMilling` · `package-list-client.tsx` `showMillingType` prop(기본 true) · `misc-package-panel.tsx` `false`
 - 잡곡 포장은 `batchId: null`이라 도정구분이 늘 「—」 → 빠지는 정보 없음. 벼 탭·모바일·엑셀은 그대로
-- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면은 사용자 확인
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. ✅ 사용자 화면 확인
 - 작업지시 ⑨(`a73c971`) 사용자 화면 확인 → 백로그 §95 마감
 
 ### 제품재고 차감 모드 안내 문구 빼기
@@ -18,7 +18,7 @@
 발단: 사용자 「재고에서 뺄 항목을 고르세요. 사유와 발생일은 다음 단계에서 정합니다. — 이 문구는 굳이 안 필요해」.
 
 - `package-list-client.tsx` 목록 위 안내 문구를 재포장 모드에서만 보여 줌(PC·모바일 공통 한 곳). 재포장 문구는 그대로
-- 검증 tsc 0 · eslint 0. 🖐 화면은 사용자 확인
+- 검증 tsc 0 · eslint 0. ✅ 사용자 화면 확인
 
 ## 2026-10-01
 
