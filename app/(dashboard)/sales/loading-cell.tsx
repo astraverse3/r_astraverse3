@@ -84,11 +84,12 @@ function LoadingLabel({ display, editable }: { display: LoadingDisplay; editable
             </span>
         )
     }
-    // 오늘 나가는 건은 눈에 먼저 들어와야 한다
+    // 오늘 나가는 건은 구분만 되면 된다 — 꽉 찬 빨강은 매일 보는 「진행」 열보다 먼저 눈에 들어와서
+    // 진행 칩과 같은 무게의 연한 칩으로 낮췄다(디자이너 작업지시 ⑩ A안)
     if (display.tone === 'today') {
         return (
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-600 text-white text-[11.5px] font-bold transition-colors group-hover:bg-red-700">
-                <Clock className="w-3 h-3 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-md border border-red-200 bg-red-50 text-red-700 text-[11.5px] font-bold transition-colors group-hover:bg-red-100">
+                <Clock className="w-3 h-3 shrink-0 text-red-500" />
                 <span className="truncate">
                     {display.label}
                     {display.vendorName && ` · ${display.vendorName}`}
@@ -230,7 +231,7 @@ function EditHint({ tone }: { tone?: 'today' }) {
     return (
         <Pencil
             className={`w-2.5 h-2.5 shrink-0 transition-colors ${
-                tone === 'today' ? 'text-white/60 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-500'
+                tone === 'today' ? 'text-red-300 group-hover:text-red-500' : 'text-slate-300 group-hover:text-slate-500'
             }`}
         />
     )

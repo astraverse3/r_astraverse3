@@ -95,12 +95,9 @@ export function UploadTable({
                 {filtered.map((r) => (
                     <div
                         key={r.id}
+                        // 「오늘」 행 배경 틴트는 뺐다 — 상차 칩만으로 충분하다(디자이너 작업지시 ⑩)
                         className={`border-b border-slate-100 last:border-b-0 ${
-                            r.loadingDisplay.tone === 'today'
-                                ? 'bg-red-50/40'
-                                : r.loadingDisplay.tone === 'done'
-                                  ? 'opacity-60'
-                                  : ''
+                            r.loadingDisplay.tone === 'done' ? 'opacity-60' : ''
                         }`}
                     >
                         <div className={`${GRID} py-2.5`}>
