@@ -199,7 +199,10 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                         ))}
                     </div>
 
-                    <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-[190px_1fr]">
+                    {/* 거래처 칸은 늘 자리에 둔다 — 판매가 아니면 비활성(작업지시 ⑪ B ④). 전에는 「판매」일 때만
+                        나타나서 사유를 오갈 때 모바일(한 칸씩 쌓임)에서 아래가 밀렸다. 모바일도 발생일과 두 칸.
+                        사유를 바꿔도 적은 거래처는 버리지 않고(다시 판매로 오면 그대로), 서버로는 판매일 때만 보낸다 */}
+                    <div className="mt-3 grid grid-cols-[132px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[190px_1fr]">
                         <label className="flex flex-col gap-1">
                             <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
                                 발생일
@@ -215,26 +218,25 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                 className="h-9 text-[12.5px] tabular-nums sm:h-8"
                             />
                         </label>
-                        {type === 'SALE' && (
-                            <label className="flex flex-col gap-1">
-                                <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                                    거래처{' '}
-                                    <span className="normal-case tracking-normal text-primary">
-                                        · 판매는 필수
-                                    </span>
-                                </span>
-                                <Input
-                                    value={customer}
-                                    maxLength={100}
-                                    onChange={e => {
-                                        touch()
-                                        setCustomer(e.target.value)
-                                    }}
-                                    placeholder="예) 한살림 서울, 현장판매"
-                                    className="h-9 text-[12.5px] sm:h-8"
-                                />
-                            </label>
-                        )}
+                        <label className="flex min-w-0 flex-col gap-1">
+                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                                거래처
+                                {type === 'SALE' && (
+                                    <span className="ml-1 normal-case tracking-normal text-primary">· 필수</span>
+                                )}
+                            </span>
+                            <Input
+                                value={customer}
+                                maxLength={100}
+                                disabled={type !== 'SALE'}
+                                onChange={e => {
+                                    touch()
+                                    setCustomer(e.target.value)
+                                }}
+                                placeholder={type === 'SALE' ? '예) 한살림 서울, 현장판매' : '판매일 때만 적어요'}
+                                className="h-9 text-[12.5px] sm:h-8 disabled:bg-slate-100 disabled:text-slate-500 disabled:opacity-100"
+                            />
+                        </label>
                     </div>
                     {isBackdated && (
                         <p className="mt-2 flex items-center gap-1.5 text-[11.5px] text-amber-700">
