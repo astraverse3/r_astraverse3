@@ -2,6 +2,17 @@
 
 ## 2026-10-02
 
+### 포장 다이얼로그 — 같은 규격·다른 포장지 줄 (백로그 §98)
+
+커밋 `12dd30d`. 계획서 `docs/plan/plan-포장-같은규격-다른포장지.md`, 보고서 `docs/report/report-포장-같은규격-다른포장지-2026-10-02.md`.
+발단: 사용자 「도정포장 다이얼로그에서, 규격은 같은데 포장지가 다른 건을 등록할 수 없다」.
+
+- `add-packaging-dialog.tsx` 규격 버튼 = 언제나 새 줄(예전엔 같은 재고·규격 줄의 개수만 +1 — 라인별 포장지 `c7b03d5` 전부터 있던 병합) · 같은 규격이 있으면 새 줄은 포장지 비움 · 추천 응답은 첫 빈 줄 하나만 · 저장 전 겹침 검사
+- `lib/packaging-required.ts` `duplicatePackagingLines`(새 줄이 섞인 재고·규격·포장지 묶음만, 톤백·잔량 제외) · 테스트 7개
+- `docs/claude-design-workflow.md` 개정 — Claude Design 요청·질문을 파일로(`docs/design-requests/`), Claude Design은 PC 폴더를 저장 즉시 읽고 답은 작업지시 묶음 「답한 질문」 절로
+- 백로그 §99(재도정) 신규
+- 검증 test 604/604 · tsc 0 · `eslint .` 0. ✅ 사용자 화면 확인
+
 ### 잡곡 제품재고 PC 목록 — 도정구분 열 빼기 (백로그 §94)
 
 커밋 `eb83ca9`. 계획서 `docs/plan/plan-잡곡제품재고-도정구분열-제거.md`, 보고서 `docs/report/report-잡곡제품재고-도정구분열-제거-2026-10-02.md`.
