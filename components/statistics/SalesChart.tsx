@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { GroupBy } from '@/app/actions/statistics'
 import { SALES_CHANNELS, SALES_CHANNEL_LABEL, type SalesChannel, type SalesTrendBucket } from '@/lib/sales-stats'
 import { SALES_RECORDED_SINCE } from '@/lib/sales-period'
+import type { ReleaseMonthBucket } from '@/lib/raw-release-stats'
 import { SALES_CHANNEL_COLOR } from './sales-colors'
 import type { ChartTooltipProps } from './chart-tooltip'
 
@@ -132,6 +133,67 @@ export function SalesTrendChart({ data, groupBy }: { data: SalesTrendBucket[]; g
             isAnimationActive={false}
           />
         ))}
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+// ── 원물출고 탭 ──────────────────────────────────────────────────────────
+
+/** 원물출고 막대 색 — 판매 탭 채널 색과 다른 계열(단위가 톤이라 섞어 읽지 않게, 작업지시 ⑪ A-4) */
+export const RAW_RELEASE_COLOR = '#0f766e'
+
+const ton = (kg: number) => `${(kg / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 2 })}톤`
+
+function ReleaseTooltip({ active, payload }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null
+  const row = payload[0].payload as ReleaseMonthBucket
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-xs">
+      <p className="font-semibold text-slate-700 mb-1">{row.tooltipLabel}</p>
+      <p className="tabular-nums text-slate-500">
+        출고 <span className="font-semibold text-slate-800">{ton(row.kg)}</span>
+      </p>
+    </div>
+  )
+}
+
+/**
+ * 원물 출고 추이 — 월별 한 색 막대. 목적으로 판매/판매 아님을 가르지 않는다
+ * (비고 칸이라 믿을 수 없다 — 사용자 2026-10-02). 계열이 하나라 범례 없이 카드 제목이 말한다
+ */
+export function RawReleaseChart({ data }: { data: ReleaseMonthBucket[] }) {
+  const isMobile = useIsMobile()
+  const height = isMobile ? 170 : 240
+  if (data.every(b => b.kg === 0)) {
+    return (
+      <div className="flex items-center justify-center text-sm font-semibold text-slate-600" style={{ height }}>
+        이 기간에 원물 출고가 없어요
+      </div>
+    )
+  }
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 4 }} barCategoryGap="25%" maxBarSize={isMobile ? 22 : 40}>
+        <XAxis
+          dataKey="label"
+          tick={{ fontSize: 11, fill: '#64748b' }}
+          axisLine={false}
+          tickLine={false}
+          interval="preserveStartEnd"
+          minTickGap={8}
+        />
+        <YAxis
+          dataKey="kg"
+          tickFormatter={(v: number) => (v / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}
+          tick={{ fontSize: 11, fill: '#64748b' }}
+          axisLine={false}
+          tickLine={false}
+          width={isMobile ? 36 : 44}
+        />
+        <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+        <Tooltip content={<ReleaseTooltip />} cursor={{ fill: '#f1f5f9' }} />
+        <Bar dataKey="kg" name="원물 출고" fill={RAW_RELEASE_COLOR} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>
   )
