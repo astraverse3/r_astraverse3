@@ -1,5 +1,17 @@
 # 작업일지
 
+## 2026-10-02
+
+### 잡곡 제품재고 PC 목록 — 도정구분 열 빼기 (백로그 §94)
+
+계획서 `docs/plan/plan-잡곡제품재고-도정구분열-제거.md`, 보고서 `docs/report/report-잡곡제품재고-도정구분열-제거-2026-10-02.md`.
+발단: 10/1 사용자 「잡곡 제품재고 목록에 도정구분 필요 없는 것 같은데」 → 10/2 「아무 때나 시간 날 때 해줘」.
+
+- `package-row.tsx` 그리드 상수 2개 → `pkgGrid(select, showMilling)`(4벌을 통째로 적음 — Tailwind는 이어 붙인 클래스를 못 만든다) · 헤더·낱개·서브행·그룹 행에 `showMilling` · `package-list-client.tsx` `showMillingType` prop(기본 true) · `misc-package-panel.tsx` `false`
+- 잡곡 포장은 `batchId: null`이라 도정구분이 늘 「—」 → 빠지는 정보 없음. 벼 탭·모바일·엑셀은 그대로
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면은 사용자 확인
+- 작업지시 ⑨(`a73c971`) 사용자 화면 확인 → 백로그 §95 마감
+
 ## 2026-10-01
 
 ### 발주서 매칭 대소문자 무시 — 규격 `10KG` · 영문 품종명
@@ -151,7 +163,7 @@
 
 - `matrix-header.tsx` `SheetActions`(재매칭 회색 글자 버튼 + 주문 추가 테두리 버튼, PC 32) · 줄 조건에 `onAddOrder` · `order-list-mobile.tsx` 같은 묶음 높이 40
 - `bg-white` → `bg-card`(§25)
-- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면 확인 전에 사용자 요청으로 묶어 푸시
+- 검증 test 572/572 · tsc 0 · `eslint .` 0. 🖐 화면 확인 전에 사용자 요청으로 묶어 푸시 → ✅ 10/2 사용자 화면 확인
 
 ## 2026-09-30
 

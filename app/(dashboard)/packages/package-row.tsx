@@ -21,13 +21,20 @@ import { MOVEMENT_TYPE_LABEL } from '@/lib/movement-label'
 //  - 도정구분은 재포장 도입(결정 #43)과 함께 추가. 잡곡·sentinel은 '—'
 //  - 포장지는 2026-10-01 사용자 요청으로 규격 왼쪽에 추가(plan-제품재고-포장지열). SKU 없는 행(잔량)은 '—'
 //  - 액션 셀(36px 고정): 콜백 prop이 있을 때만 메뉴 노출 (벼 탭은 콜백 미전달 → 빈 셀)
-export const PKG_GRID =
-    'grid grid-cols-[0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+//  - 잡곡 탭은 도정구분 열을 뺀다(백로그 §94) — 잡곡 포장은 batchId가 없어 늘 「—」였다
+//  - 재포장·차감 선택 모드는 맨 앞에 체크박스 열(28px)을 덧댄다 (결정 #43 R2)
+// 🔴 Tailwind는 소스에 통째로 적힌 클래스만 만든다 — 조각을 이어 붙이지 말고 네 벌을 다 적는다
+const PKG_GRIDS = {
+    base: 'grid grid-cols-[0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]',
+    select: 'grid grid-cols-[28px_0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]',
+    noMilling: 'grid grid-cols-[0.65fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]',
+    selectNoMilling: 'grid grid-cols-[28px_0.65fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]',
+}
 
-// 재포장 선택 모드 — 맨 앞에 체크박스 열을 덧댄다 (결정 #43 R2).
-// 평소엔 쓰지 않아 기존 레이아웃은 그대로다.
-export const PKG_GRID_SELECT =
-    'grid grid-cols-[28px_0.65fr_0.5fr_0.75fr_1.4fr_0.7fr_0.5fr_0.55fr_0.8fr_0.8fr_36px]'
+function pkgGrid(select: boolean, showMilling: boolean): string {
+    if (showMilling) return select ? PKG_GRIDS.select : PKG_GRIDS.base
+    return select ? PKG_GRIDS.selectNoMilling : PKG_GRIDS.noMilling
+}
 
 /**
  * 재포장 선택 상태 — list-client 한 곳에서만 관리하고 하위는 prop으로 받는다.
@@ -91,12 +98,18 @@ export function deductionSummary(row: PackageRowData): string {
 }
 
 // -- 컬럼 헤더 (정렬은 데이터 셀과 동일) --
-export function PackageColumnHeader({ selectMode = false }: { selectMode?: boolean }) {
+export function PackageColumnHeader({
+    selectMode = false,
+    showMilling = true,
+}: {
+    selectMode?: boolean
+    showMilling?: boolean
+}) {
     return (
-        <div className={`${selectMode ? PKG_GRID_SELECT : PKG_GRID} h-10 items-center px-3 text-sm font-medium text-muted-foreground bg-white border-b border-slate-200`}>
+        <div className={`${pkgGrid(selectMode, showMilling)} h-10 items-center px-3 text-sm font-medium text-muted-foreground bg-white border-b border-slate-200`}>
             {selectMode && <span />}
             <span>품종</span>
-            <span>도정구분</span>
+            {showMilling && <span>도정구분</span>}
             <span>생산자</span>
             <span className="text-center">로트번호</span>
             <span>포장지</span>
@@ -218,10 +231,12 @@ export function PackageSingleRow({
     item,
     actions,
     selection,
+    showMilling = true,
 }: {
     item: PackageSingle
     actions?: PackageRowActions
     selection?: PackageSelection
+    showMilling?: boolean
 }) {
     // PackageSingle은 PackageRow + { type: 'single' } 형태 — 액션 메뉴엔 row 형식만 필요
     const row: PackageRowData = item
@@ -229,7 +244,7 @@ export function PackageSingleRow({
     const deducted = isDeducted(row)
     return (
         <div
-            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center ${
+            className={`${pkgGrid(Boolean(selection), showMilling)} text-sm px-3 h-11 items-center ${
                 deducted
                     ? 'bg-slate-50/70 text-slate-400'
                     : `text-slate-700 ${selected ? 'bg-primary/5' : 'hover:bg-slate-50'}`
@@ -241,7 +256,7 @@ export function PackageSingleRow({
                 <span className="truncate">{item.variety}</span>
                 {deducted && <DeductedBadge />}
             </span>
-            <MillingTypeCell label={item.millingTypeLabel} />
+            {showMilling && <MillingTypeCell label={item.millingTypeLabel} />}
             <span className={`truncate ${deducted ? '' : 'text-slate-600'}`}>{item.producer}</span>
             <span className={`flex items-center justify-center ${deducted ? 'opacity-60' : ''}`}>
                 {item.lot ? (
@@ -278,10 +293,12 @@ function PackageSubRow({
     row,
     actions,
     selection,
+    showMilling,
 }: {
     row: PackageRowData
     actions?: PackageRowActions
     selection?: PackageSelection
+    showMilling: boolean
 }) {
     const selected = selection?.selectedIds.has(row.id)
     const deducted = isDeducted(row)
@@ -289,7 +306,7 @@ function PackageSubRow({
         <div
             // 2026-09-29 밝은 톤 개정: 서브행만 옅은 톤(bg-slate-50/40) + 흰 톤 위 기본 선 slate-100
             // (docs/handoff/list-standard/밝은톤-개정-2026-09-29.md). 묶음 끝선은 여기가 아니라 그룹 래퍼가 맡는다 — 아래 PackageGroupRow
-            className={`${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center border-t border-slate-100 ${
+            className={`${pkgGrid(Boolean(selection), showMilling)} text-sm px-3 h-11 items-center border-t border-slate-100 ${
                 deducted
                     ? 'bg-slate-50/70 text-slate-400'
                     : `text-slate-600 ${selected ? 'bg-primary/5' : 'bg-slate-50/40 hover:bg-slate-50'}`
@@ -300,7 +317,7 @@ function PackageSubRow({
                 <span className="w-2 h-px bg-slate-300 shrink-0" />
                 {deducted && <DeductedBadge />}
             </span>
-            <MillingTypeCell label={row.millingTypeLabel} />
+            {showMilling && <MillingTypeCell label={row.millingTypeLabel} />}
             <span className={`truncate ${deducted ? '' : 'text-slate-600'}`}>{row.producer}</span>
             <span className={`flex items-center justify-center ${deducted ? 'opacity-60' : ''}`}>
                 {row.lot ? (
@@ -338,12 +355,14 @@ export function PackageGroupRow({
     onToggle,
     actions,
     selection,
+    showMilling = true,
 }: {
     item: PackageGroup
     isOpen: boolean
     onToggle: () => void
     actions?: PackageRowActions
     selection?: PackageSelection
+    showMilling?: boolean
 }) {
     // 남은 개수의 합 — 일부 차감 줄은 남은 만큼, 차감 완료 줄은 0 (줄 표시·kg 합계와 같은 기준)
     const totalQty = item.rows.reduce((a, r) => a + Math.max(0, r.available), 0)
@@ -364,7 +383,7 @@ export function PackageGroupRow({
                 type="button"
                 onClick={onToggle}
                 // 호버가 바탕보다 밝으면 얼룩이 된다 — 바탕 위로 한 단 어둡게
-                className={`w-full ${selection ? PKG_GRID_SELECT : PKG_GRID} text-sm px-3 h-11 items-center text-left transition-colors hover:bg-slate-50`}
+                className={`w-full ${pkgGrid(Boolean(selection), showMilling)} text-sm px-3 h-11 items-center text-left transition-colors hover:bg-slate-50`}
             >
                 {/* 그룹은 품종 묶음이라 그 자체를 재포장할 수 없다 — 안의 행만 고른다 */}
                 {selection && <span />}
@@ -375,7 +394,7 @@ export function PackageGroupRow({
                     <span className="truncate">{item.variety}</span>
                 </span>
                 {/* 그룹은 도정구분·로트·포장지가 섞일 수 있어 비운다. 생산자만 인원수로 요약 */}
-                <span className="text-slate-300">—</span>
+                {showMilling && <span className="text-slate-300">—</span>}
                 <span className="text-slate-400 text-[12.5px] tabular-nums truncate">{producerCount}명</span>
                 <span className="text-slate-300 text-center">—</span>
                 <span className="text-slate-300">—</span>
@@ -395,6 +414,7 @@ export function PackageGroupRow({
                         row={row}
                         actions={actions}
                         selection={selection}
+                        showMilling={showMilling}
                     />
                 ))}
         </div>

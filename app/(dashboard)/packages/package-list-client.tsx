@@ -35,6 +35,8 @@ interface Props {
     mode?: PackageSelectMode
     /** 재포장·차감이 끝나거나 취소될 때 패널의 mode를 내린다 */
     onExitSelectMode?: () => void
+    /** PC 목록의 도정구분 열 — 잡곡 탭은 늘 「—」라 뺀다 (백로그 §94) */
+    showMillingType?: boolean
 }
 
 /** 재포장 동질성 키 (결정 #43 §3.2) — 품종·도정유형·출처가 같아야 함께 재포장할 수 있다. */
@@ -56,6 +58,7 @@ export function PackageListClient({
     onHistoryRow,
     mode = null,
     onExitSelectMode,
+    showMillingType = true,
 }: Props) {
     const router = useRouter()
     const selectMode = mode !== null
@@ -183,7 +186,7 @@ export function PackageListClient({
 
             {/* 데스크톱 테이블 */}
             <section className="hidden sm:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <PackageColumnHeader selectMode={selectMode} />
+                <PackageColumnHeader selectMode={selectMode} showMilling={showMillingType} />
                 <div className="divide-y divide-slate-100">
                     {items.map(item =>
                         item.type === 'group' ? (
@@ -194,6 +197,7 @@ export function PackageListClient({
                                 onToggle={() => toggle(item.varietyId)}
                                 actions={actions}
                                 selection={selection}
+                                showMilling={showMillingType}
                             />
                         ) : (
                             <PackageSingleRow
@@ -201,6 +205,7 @@ export function PackageListClient({
                                 item={item}
                                 actions={actions}
                                 selection={selection}
+                                showMilling={showMillingType}
                             />
                         ),
                     )}

@@ -231,6 +231,7 @@ export function MiscPackagePanel({ items, varieties, filters }: Props) {
                 }}
                 mode={mode}
                 onExitSelectMode={() => setMode(null)}
+                showMillingType={false}
             />
 
             <MovementHistoryDialog
