@@ -18,6 +18,9 @@ export type SalesPresetWithRange = Exclude<SalesPeriodPreset, 'custom'>
 
 export const DEFAULT_SALES_PERIOD: SalesPresetWithRange = 'thisMonth'
 
+/** 판매 기록이 시작된 날 — 제품재고·판매관리 실사용 오픈(2026-10-01). 빈 기간 안내에 쓴다 */
+export const SALES_RECORDED_SINCE = '2026-10-01'
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** (연, 0-based 월)의 1일 'yyyy-mm-01' — 월이 범위를 넘으면 해를 넘긴다 */

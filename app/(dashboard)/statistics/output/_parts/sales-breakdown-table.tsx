@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import type { SalesBreakdownRow } from '@/lib/sales-stats'
 import { SALES_CHANNEL_COLOR, SALES_SINGLE_COLOR } from '@/components/statistics/sales-colors'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -7,12 +8,11 @@ import { formatKg } from './utils'
  * 탭(채널·거래처·품종·제품)별 표 — 비중 칸에 가로 막대를 같이 그린다.
  * 막대 길이는 1위 대비(가장 긴 줄이 꽉 찬다), 숫자는 기간 전체 대비 %.
  * 채널·거래처 줄은 채널 색, 품종·제품 줄은 채널이 섞여 한 색.
+ * 빈 기간에는 부모가 이 표를 숨긴다(「없다」는 차트 자리 한 곳에서만 — 작업지시 ⑪ A-1 ④).
+ * 거래처 탭은 앞 20곳만 받고 나머지는 「더 보기」로 접어 둔다(visibleRows).
  */
-export function SalesBreakdownTable({ rows, column }: { rows: SalesBreakdownRow[]; column: string }) {
-  if (rows.length === 0) {
-    return <div className="py-10 text-center text-sm text-slate-500">이 기간에 판매가 없어요</div>
-  }
-  const maxKg = rows[0].kg // kg 많은 순으로 온다(salesBreakdown)
+export function SalesBreakdownTable({ rows, column, hidden, onShowAll }: BreakdownProps) {
+  const maxKg = rows[0]?.kg ?? 0 // kg 많은 순으로 온다(salesBreakdown)
   return (
     <div className="overflow-x-auto">
       <Table className="w-full text-xs" style={{ minWidth: '640px' }}>
@@ -68,6 +68,31 @@ export function SalesBreakdownTable({ rows, column }: { rows: SalesBreakdownRow[
           })}
         </TableBody>
       </Table>
+      <ShowAllRow hidden={hidden} onShowAll={onShowAll} />
     </div>
+  )
+}
+
+export type BreakdownProps = {
+  /** 보일 줄만(앞에서부터) — 순위는 줄 위치라 접어도 그대로 맞다 */
+  rows: SalesBreakdownRow[]
+  column: string
+  /** 접어 둔 줄 수 */
+  hidden: number
+  onShowAll: () => void
+}
+
+/** 「나머지 N곳 더 보기」 — PC 표·모바일 목록 공용 */
+export function ShowAllRow({ hidden, onShowAll }: { hidden: number; onShowAll: () => void }) {
+  if (hidden <= 0) return null
+  return (
+    <button
+      type="button"
+      onClick={onShowAll}
+      className="w-full h-11 flex items-center justify-center gap-1 border-t border-slate-100 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+    >
+      나머지 {hidden.toLocaleString('ko-KR')}곳 더 보기
+      <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+    </button>
   )
 }

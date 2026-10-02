@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>판매분석 · 재고차감 사유 시안</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>html,body{font-family:'Pretendard Variable',-apple-system,system-ui,sans-serif;margin:0}.font-mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}.tabular-nums{font-variant-numeric:tabular-nums}a{color:#2563eb}a:hover{color:#1d4ed8}</style>
+</head>
+<body class="bg-slate-100">
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="sales-stats-parts.jsx"></script>
+<script type="text/babel" src="sales-stats-parts2.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="a1" title="A-1 · PC 점검" subtitle="틀은 그대로 둔다. 바꿀 것 4가지: ① 요약 카드 색 띠·점 제거 — 판매량=파랑·개수=초록·주문=노랑이 바로 옆 차트의 택배·서울급식·해남급식 색과 겹쳐 「채널」로 읽힌다 ② 탭 끝에 구분선 + 원물출고 ③ 거래처 탭은 상위 20곳 + 「나머지 N곳 더 보기」(택배가 들어오면 수백 곳) ④ 빈 상태는 차트 자리 하나에서만 말하고 표는 숨긴다(지금은 차트·표가 같은 말을 두 번).">
+        <DCArtboard id="pc-now" label="현재 코드 (0d97dde)" width={1100} height={770}><SsDesktop variant="now"></SsDesktop></DCArtboard>
+        <DCArtboard id="pc-next" label="제안 — 채널별" width={1100} height={770}><SsDesktop variant="next"></SsDesktop></DCArtboard>
+        <DCArtboard id="pc-cust" label="제안 — 거래처별 (상위 N + 더 보기 · 시안은 6곳으로 줄여 보임)" width={1100} height={940}><SsDesktop variant="next" tab="customer" limit={6}></SsDesktop></DCArtboard>
+        <DCArtboard id="pc-empty" label="빈 상태 — 차트 자리에서 한 번만 · 카드 0 · 표 숨김" width={1100} height={570}><SsDesktop variant="empty"></SsDesktop></DCArtboard>
+      </DCSection>
+      <DCSection id="a2" title="A-2 · 채널 색 (보라 제거)" subtitle="이마트만 바꾼다(나머지 5색은 검증 통과값 유지). 추천 A 벽돌색 — 옆 택배(파랑)와는 색상축이 반대, 서울급식(초록)과는 밝기가 갈려 색약에서도 떨어진다. B 먹색은 안전하지만 「기타/미분류」처럼 읽힐 위험. 수치는 시안 안에서 계산한 참고값(ΔE2000, Machado 심도 1.0) — 확정은 기존 검증으로. 채널 배지(lib/purchase-channel.ts)도 T1 대상: 차트 색과 계열을 맞춘다.">
+        <DCArtboard id="cc-now" label="현재" width={520} height={280}><CcPalette pk="now"></CcPalette></DCArtboard>
+        <DCArtboard id="cc-a" label="A안 (추천)" width={520} height={280}><CcPalette pk="brick"></CcPalette></DCArtboard>
+        <DCArtboard id="cc-b" label="B안" width={520} height={280}><CcPalette pk="ink"></CcPalette></DCArtboard>
+        <DCArtboard id="cc-badge" label="채널 배지 — 차트와 같은 계열로" width={520} height={150}><CcBadges></CcBadges></DCArtboard>
+      </DCSection>
+      <DCSection id="a3" title="A-3 · 모바일 360" subtitle="① 필터는 재고분석과 같은 시트. 카드 안엔 기간 한 줄 + 「조건」 버튼(걸린 개수 뱃지) + 엑셀 ② 탭은 모바일에서 「별」을 뗀다 — 채널·거래처·품종·제품 | 원물출고 = 약 300px, 360에 들어간다 ③ 요약 카드를 차트 위로(숫자 먼저) ④ 표 → 두 줄 목록: 이름·kg / 비중 막대·개수·주문·% ⑤ 일별 31개는 칸을 줄이고 눈금을 1·8·15·22·29로 솎는다.">
+        <DCArtboard id="m-now" label="실데이터 (10/1~10/2)" width={360} height={1000}><SsMobile h={1000}></SsMobile></DCArtboard>
+        <DCArtboard id="m-full" label="몇 달 뒤 — 한 달 가득 · 거래처별" width={360} height={1180}><SsMobile tab="customer" data={SS_TREND_FULL} limit={6} h={1180}></SsMobile></DCArtboard>
+        <DCArtboard id="m-sheet" label="조건 시트 (탭바 위 · z-50)" width={360} height={720}><SsFilterSheet></SsFilterSheet></DCArtboard>
+      </DCSection>
+      <DCSection id="a3d" title="A-3 · 일별 31개 처리 비교" subtitle="추천 = 칸 줄이기. 가로 스크롤은 한 달 모양이 안 보이고, 주별 강제는 PC와 같은 조건에서 모양이 달라진다.">
+        <DCArtboard id="d-thin" label="칸 줄이기 + 눈금 솎기 (추천)" width={360} height={260}><SsDensity kind="thin"></SsDensity></DCArtboard>
+        <DCArtboard id="d-scroll" label="가로 스크롤" width={360} height={260}><SsDensity kind="scroll"></SsDensity></DCArtboard>
+        <DCArtboard id="d-week" label="주별 강제" width={360} height={260}><SsDensity kind="week"></SsDensity></DCArtboard>
+      </DCSection>
+      <DCSection id="a4" title="A-4 · 원물출고 탭" subtitle="자리: 제품 탭들 뒤 구분선 너머 5번째. 단위가 다르다는 건 ① 탭 바로 아래 노란 안내 한 줄 ② 모든 숫자에 「톤」 ③ 판매 탭과 다른 색(청록)으로 낸다. 구성: 월별 막대(판매 / 판매 아님 누적) + 요약 3장 + 표(출고처별·목적별 토글). 필터는 기간 + 목적만 — 곡종·채널·품종은 원물에 없다. 🔴 결정 필요: 이 탭의 기본 기간은 「올해」(1월에 몰려 있어 「이번 달」이면 늘 비어 보인다) → 탭마다 기간을 따로 들고 있어야 한다.">
+        <DCArtboard id="rw-pc" label="PC — 출고처별" width={1100} height={910}><RwDesktop></RwDesktop></DCArtboard>
+        <DCArtboard id="rw-pc2" label="PC — 목적별" width={1100} height={870}><RwDesktop by="purpose"></RwDesktop></DCArtboard>
+        <DCArtboard id="rw-m" label="모바일 360" width={360} height={1000}><RwMobile></RwMobile></DCArtboard>
+      </DCSection>
+      <DCSection id="b" title="B · 재고차감 — 사유 기본값 없음" subtitle="① 안 고른 칩은 점선 테두리 + 라벨 옆 「하나 골라주세요」(회색) — 빨강 아님 ② 안내는 푸터에 회색 한 줄 「사유를 고르면 차감할 수 있어요」. 빨간 줄은 사람이 뭔가 넣었는데 틀렸을 때만 ③ 거래처 칸은 늘 자리에 둔다 — 판매가 아니면 회색 비활성 「판매일 때만 적어요」. 모바일도 발생일 | 거래처 두 칸으로 나란히 → 사유를 오가도 아래가 안 밀린다.">
+        <DCArtboard id="b-now" label="현재 — 판매가 골라진 채 열림" width={390} height={680}><DdDialog type="판매" variant="now"></DdDialog></DCArtboard>
+        <DCArtboard id="b-open" label="제안 ① 막 열었을 때" width={390} height={680}><DdDialog></DdDialog></DCArtboard>
+        <DCArtboard id="b-sale" label="제안 ② 판매 고름 (거래처 비어 있음)" width={390} height={680}><DdDialog type="판매"></DdDialog></DCArtboard>
+        <DCArtboard id="b-loss" label="제안 ③ 분실 고름 — 칸 자리 그대로" width={390} height={680}><DdDialog type="분실"></DdDialog></DCArtboard>
+        <DCArtboard id="b-pc" label="PC 720 — 막 열었을 때" width={720} height={600}><DdDialog mobile={false}></DdDialog></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

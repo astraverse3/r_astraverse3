@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { SALES_CHANNELS, SALES_CHANNEL_LABEL, type SalesChannel, type SalesTrendBucket } from '@/lib/sales-stats'
+import { SALES_RECORDED_SINCE } from '@/lib/sales-period'
 import { SALES_CHANNEL_COLOR } from './sales-colors'
 import type { ChartTooltipProps } from './chart-tooltip'
 
@@ -62,9 +63,11 @@ export function SalesChannelLegend({ channels }: { channels: SalesChannel[] }) {
 export function SalesTrendChart({ data, height = 260 }: { data: SalesTrendBucket[]; height?: number }) {
   const channels = presentChannels(data)
   if (channels.length === 0) {
+    // 「없다」는 화면에서 여기 한 곳만 말한다 — 표는 숨기고 카드는 0(작업지시 ⑪ A-1 ④)
     return (
-      <div className="flex items-center justify-center text-sm text-slate-500" style={{ height }}>
-        이 기간에 판매가 없어요
+      <div className="flex flex-col items-center justify-center gap-1.5 text-center" style={{ height }}>
+        <p className="text-sm font-semibold text-slate-600">이 기간에 판매가 없어요</p>
+        <p className="text-xs text-slate-500">판매는 {SALES_RECORDED_SINCE.replaceAll('-', '.')}부터 기록되고 있어요</p>
       </div>
     )
   }

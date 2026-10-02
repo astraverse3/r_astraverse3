@@ -15,7 +15,7 @@ import { useSafeTransition } from '@/app/(dashboard)/use-safe-transition'
 import { SalesSummaryCards } from './_parts/sales-summary-cards'
 import { SalesBreakdownTable } from './_parts/sales-breakdown-table'
 import { SalesAppliedChips, SalesFilterBar } from './_parts/sales-filter-bar'
-import { SALES_TABS, defaultDraft, type SalesDraft, type SalesTab } from './_parts/utils'
+import { SALES_TABS, defaultDraft, visibleRows, type SalesDraft, type SalesTab } from './_parts/utils'
 
 const GROUP_LABEL = { day: '일별', week: '주별', month: '월별' } as const
 
@@ -26,7 +26,11 @@ export function SalesStatsClient({ initialData, initialDraft, today }: Props) {
   const [draft, setDraft] = useState(initialDraft)
   const [applied, setApplied] = useState(initialDraft)
   const [tab, setTab] = useState<SalesTab>('channel')
+  // 거래처 「더 보기」 — 탭을 바꾸거나 다시 조회하면 다시 접는다
+  const [showAll, setShowAll] = useState(false)
   const [isPending, start] = useSafeTransition('판매 통계를 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')
+  const empty = data.summary.count === 0
+  const shown = visibleRows(rowsOf(data, tab), tab, showAll)
 
   const varietyOptions = useMemo(
     () => data.varietyOptions.map(v => ({ id: v.id, label: v.name })),
@@ -44,7 +48,13 @@ export function SalesStatsClient({ initialData, initialDraft, today }: Props) {
       setData(res.data)
       setApplied(next)
       setDraft(next)
+      setShowAll(false)
     })
+  }
+
+  function handleTab(next: SalesTab) {
+    setTab(next)
+    setShowAll(false)
   }
 
   function handlePreset(preset: SalesPeriodPreset) {
@@ -55,7 +65,7 @@ export function SalesStatsClient({ initialData, initialDraft, today }: Props) {
   return (
     <div className="w-full flex flex-col gap-2 px-1.5 sm:px-0 sm:gap-4">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-        <TabBar tab={tab} onTab={setTab} data={data} applied={applied} isPending={isPending} />
+        <TabBar tab={tab} onTab={handleTab} data={data} applied={applied} isPending={isPending} />
         <div className="hidden md:block">
           <SalesFilterBar
             draft={draft}
@@ -76,12 +86,19 @@ export function SalesStatsClient({ initialData, initialDraft, today }: Props) {
 
       <div className="flex flex-col md:flex-row gap-2 md:gap-3 md:items-stretch">
         <TrendCard data={data} />
-        <SalesSummaryCards summary={data.summary} />
+        <SalesSummaryCards summary={data.summary} empty={empty} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-2">
-        <SalesBreakdownTable rows={rowsOf(data, tab)} column={SALES_TABS.find(t => t.key === tab)!.column} />
-      </div>
+      {!empty && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-2">
+          <SalesBreakdownTable
+            rows={shown.rows}
+            hidden={shown.hidden}
+            onShowAll={() => setShowAll(true)}
+            column={SALES_TABS.find(t => t.key === tab)!.column}
+          />
+        </div>
+      )}
     </div>
   )
 }

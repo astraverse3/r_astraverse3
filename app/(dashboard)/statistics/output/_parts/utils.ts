@@ -11,6 +11,15 @@ export const SALES_TABS: { key: SalesTab; label: string; column: string }[] = [
   { key: 'product', label: '제품별', column: '제품' },
 ]
 
+/** 거래처 탭은 앞 20곳만(작업지시 ⑪ A-1 ③) — 택배는 주문자가 거래처라 곧 수백 곳이 된다. 엑셀은 전체 */
+export const CUSTOMER_LIMIT = 20
+
+/** 탭 표에 보일 줄 + 접어 둔 줄 수 — PC 표·모바일 목록이 같은 규칙을 쓴다 */
+export function visibleRows<T>(rows: T[], tab: SalesTab, showAll: boolean): { rows: T[]; hidden: number } {
+  if (tab !== 'customer' || showAll || rows.length <= CUSTOMER_LIMIT) return { rows, hidden: 0 }
+  return { rows: rows.slice(0, CUSTOMER_LIMIT), hidden: rows.length - CUSTOMER_LIMIT }
+}
+
 export function formatKg(v: number) {
   return v.toLocaleString('ko-KR', { maximumFractionDigits: 1 })
 }
