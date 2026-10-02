@@ -217,6 +217,9 @@ export async function createBulkMovements(
   try {
     const session = await requirePermission('OPERATION_MANAGE')
     const data = CreateBulkSchema.parse(input)
+    // 판매는 거래처 필수 — 화면(deduct-dialog.tsx blockingReason)과 한 쌍(백로그 §96).
+    // zod refine으로 걸면 메시지가 JSON째 화면에 나가서 여기서 한 줄로 막는다
+    if (data.type === 'SALE' && !data.customer) throw new Error('판매는 거래처를 적어주세요.')
     // 거래처는 판매에서만 의미가 있다 — 금액은 관리하지 않는다(#25).
     const customer = data.type === 'SALE' ? (data.customer ?? null) : null
     const occurredAt = data.occurredAt ?? new Date()

@@ -112,8 +112,11 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
         if (parsed.rowErrors.size > 0) return '개수를 넘거나 잘못된 줄이 있어요.'
         if (parsed.items.length === 0) return '차감할 개수를 넣어주세요.'
         if (type === 'OTHER' && !note.trim()) return '기타 사유는 메모를 남겨주세요.'
+        // 판매는 거래처 필수(백로그 §96) — 10/1 재고정리 89톤이 기본 사유 「판매」·거래처 빈칸으로 들어가
+        // 판매분석이 그 하루에 묻혔다. 거래처에서 막히면 사유가 맞는지 한 번 더 보게 된다
+        if (type === 'SALE' && !customer.trim()) return '판매는 거래처를 적어주세요.'
         return null
-    }, [parsed, type, note])
+    }, [parsed, type, note, customer])
 
     const todayStr = toDateInput(new Date())
     const isBackdated = occurredAt !== '' && occurredAt !== todayStr
@@ -217,7 +220,7 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                 <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
                                     거래처{' '}
                                     <span className="normal-case tracking-normal text-primary">
-                                        · 판매일 때만
+                                        · 판매는 필수
                                     </span>
                                 </span>
                                 <Input
@@ -227,7 +230,7 @@ export function DeductDialog({ open, onOpenChange, rows, onDone }: Props) {
                                         touch()
                                         setCustomer(e.target.value)
                                     }}
-                                    placeholder="예) 한살림 서울"
+                                    placeholder="예) 한살림 서울, 현장판매"
                                     className="h-9 text-[12.5px] sm:h-8"
                                 />
                             </label>
