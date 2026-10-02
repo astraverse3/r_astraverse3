@@ -1,22 +1,20 @@
-import { getOutputStatistics, getOutputVarietyOptions } from '@/app/actions/output-statistics'
-import { OutputStatsClient } from './output-stats-client'
+import { getSalesStatistics } from '@/app/actions/sales-statistics'
+import { todayKst } from '@/lib/kst-date'
+import { SalesStatsClient } from './sales-stats-client'
+import { defaultDraft } from './_parts/utils'
 
-export default async function OutputStatisticsPage() {
-  const to = new Date()
-  const from = new Date(to)
-  from.setMonth(from.getMonth() - 12)
+// 판매분석 — 판매 = 제품재고에서 「판매」로 빠진 것(docs/plan/plan-판매분석.md). 기본 기간은 이번 달
+export default async function SalesStatisticsPage() {
+  const today = todayKst()
+  const draft = defaultDraft(today)
+  const res = await getSalesStatistics({ from: draft.from, to: draft.to })
 
-  const [initialData, varietyOptions] = await Promise.all([
-    getOutputStatistics({ from, to }),
-    getOutputVarietyOptions(from, to),
-  ])
-
-  return (
-    <OutputStatsClient
-      initialData={initialData}
-      defaultFrom={from.toISOString()}
-      defaultTo={to.toISOString()}
-      varietyOptions={varietyOptions}
-    />
-  )
+  if (!res.success) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 py-16 text-center text-sm text-slate-500">
+        {res.error}
+      </div>
+    )
+  }
+  return <SalesStatsClient initialData={res.data} initialDraft={draft} today={today} />
 }
