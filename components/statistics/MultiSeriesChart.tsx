@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import {
   ComposedChart,
   Bar,
@@ -179,9 +180,13 @@ type Props = {
   title: string
   /** 비었을 때 문구 — 표·카드는 남고 차트만 빈 경우(고른 품종에 기록 없음) 부모가 바꿔 넘긴다 */
   emptyText?: string
+  /** 제목 옆 보조 표기 — 품종을 안 고르면 차트만 기본 5품종으로 그린다는 것(사용자 10/2 B안) */
+  note?: string
+  /** 조회 중 — 비어 있어도 「없다」 대신 불러오는 중으로 보인다 */
+  loading?: boolean
 }
 
-export function MultiSeriesChart({ data, title, emptyText = '이 조건에 맞는 도정 기록이 없어요' }: Props) {
+export function MultiSeriesChart({ data, title, emptyText = '이 조건에 맞는 도정 기록이 없어요', note, loading = false }: Props) {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -230,6 +235,7 @@ export function MultiSeriesChart({ data, title, emptyText = '이 조건에 맞�
       <div className="flex items-start justify-between mb-2 md:mb-4 shrink-0 gap-2 flex-wrap">
         <h3 className="text-xs md:text-sm font-semibold text-slate-700">
           {GROUP_BY_LABEL[groupBy]} {title} 투입/생산량 및 수율
+          {note && <span className="ml-1.5 font-normal text-slate-500">· {note}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] md:text-xs md:gap-x-3 text-slate-400">
           {seriesNames.map((name, i) => {
@@ -244,7 +250,13 @@ export function MultiSeriesChart({ data, title, emptyText = '이 조건에 맞�
         </div>
       </div>
 
-      {isEmpty ? (
+      {isEmpty && loading ? (
+        // 불러오는 중엔 「없다」고 하지 않는다 — 탭을 바꾸면 빈 데이터로 먼저 그려져서 1초쯤 「없어요」가 비쳤다(사용자 10/2)
+        <div className="flex-1 flex items-center justify-center gap-1.5 text-sm text-slate-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          불러오는 중…
+        </div>
+      ) : isEmpty ? (
         // 「없다」는 화면에서 여기 한 곳만 말한다 — 표는 부모가 숨기고 카드는 0(백로그 §97)
         <div className="flex-1 flex items-center justify-center text-sm font-semibold text-slate-600">
           {emptyText}

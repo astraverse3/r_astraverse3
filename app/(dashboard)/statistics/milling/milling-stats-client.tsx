@@ -695,14 +695,25 @@ export function MillingStatsClient({
         {/* 차트 */}
         <div className="h-[260px] md:h-auto md:flex-1 md:min-w-0">
           {mainTab === 'period' && (
-            <MillingChart data={data.chartData} groupBy={data.groupBy} />
+            <MillingChart data={data.chartData} groupBy={data.groupBy} loading={isPending} />
           )}
           {/* 품종별은 아무것도 안 고르면 차트만 기본 5품종으로 그린다(표·카드는 전체) — 차트만 빌 수 있어서 그때는 차트 사정만 말한다 */}
           {mainTab === 'variety' && (
-            <MultiSeriesChart data={varietyChartData} title="품종별" emptyText={empty ? undefined : '고른 품종에는 도정 기록이 없어요'} />
+            <MultiSeriesChart
+              data={varietyChartData}
+              title="품종별"
+              emptyText={empty ? undefined : '고른 품종에는 도정 기록이 없어요'}
+              note={selectedVarieties.length === 0 ? '기본 5품종' : undefined}
+              loading={isPending}
+            />
           )}
           {mainTab === 'millingType' && (
-            <MultiSeriesChart data={millingTypeChartData} title="도정구분별" emptyText={empty ? undefined : '고른 도정구분에는 도정 기록이 없어요'} />
+            <MultiSeriesChart
+              data={millingTypeChartData}
+              title="도정구분별"
+              emptyText={empty ? undefined : '고른 도정구분에는 도정 기록이 없어요'}
+              loading={isPending}
+            />
           )}
         </div>
         {/* 카드: 모바일 차트 위(숫자 먼저, order-first) / PC 오른쪽 */}

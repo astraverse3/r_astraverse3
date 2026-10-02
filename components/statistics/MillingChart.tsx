@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import {
   ComposedChart,
   Bar,
@@ -70,6 +71,8 @@ function interpYieldSeries(points: ChartDataPoint[]): (number | null)[] {
 type Props = {
   data: ChartDataPoint[]
   groupBy: GroupBy
+  /** 조회 중 — 비어 있어도 「없다」 대신 불러오는 중으로 보인다 */
+  loading?: boolean
 }
 
 const COLOR_INPUT  = 'rgba(0, 128, 200, 0.18)'
@@ -157,7 +160,7 @@ function formatXTick(value: string, groupBy: GroupBy): string {
   return value
 }
 
-export function MillingChart({ data, groupBy }: Props) {
+export function MillingChart({ data, groupBy, loading = false }: Props) {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -213,7 +216,13 @@ export function MillingChart({ data, groupBy }: Props) {
         </div>
       </div>
 
-      {isEmpty ? (
+      {isEmpty && loading ? (
+        // 불러오는 중엔 「없다」고 하지 않는다 — 탭을 바꾸면 빈 데이터로 먼저 그려져서 1초쯤 「없어요」가 비쳤다(사용자 10/2)
+        <div className="flex-1 flex items-center justify-center gap-1.5 text-sm text-slate-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          불러오는 중…
+        </div>
+      ) : isEmpty ? (
         // 「없다」는 화면에서 여기 한 곳만 말한다 — 표는 부모가 숨기고 카드는 0(백로그 §97)
         <div className="flex-1 flex items-center justify-center text-sm font-semibold text-slate-600">
           이 조건에 맞는 도정 기록이 없어요
