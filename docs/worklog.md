@@ -77,7 +77,7 @@
 - `deduct-dialog.tsx` `blockingReason`에 「판매는 거래처를 적어주세요.」 · 라벨 「· 판매일 때만」 → 「· 판매는 필수」 · placeholder 「예) 한살림 서울, 현장판매」
 - `package-movement.ts` `createBulkMovements` 같은 조건으로 throw(화면·서버 한 쌍 — zod refine은 메시지가 JSON째 나가서 안 씀)
 - 디자인 요청서에서 B 철회 — 요청서는 판매분석 한 건만
-- 검증 tsc 0 · eslint 0. 🖐 화면은 사용자 확인(창을 열면 바로 버튼이 막히고 빨간 줄이 뜬다 — 거슬리면 말해 달라고 함)
+- 검증 tsc 0 · eslint 0. ✅ 사용자 화면 확인(실서버)
 
 ## 2026-10-01
 
